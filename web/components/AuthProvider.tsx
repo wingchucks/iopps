@@ -15,8 +15,7 @@ import {
   ReactNode,
 } from "react";
 import { auth, db, googleProvider } from "@/lib/firebase";
-
-type UserRole = "community" | "employer";
+import { UserRole } from "@/lib/types";
 
 type AuthContextValue = {
   user: FirebaseUser | null;
