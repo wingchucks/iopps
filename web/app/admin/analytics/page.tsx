@@ -81,7 +81,7 @@ export default function AdminAnalyticsPage() {
       setLoading(true);
 
       // Get all users
-      const usersRef = collection(db, "users");
+      const usersRef = collection(db!, "users");
       const usersSnap = await getDocs(usersRef);
       const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -93,7 +93,7 @@ export default function AdminAnalyticsPage() {
       const usersByMonth = aggregateByMonth(users, "createdAt");
 
       // Get all jobs
-      const jobsRef = collection(db, "jobs");
+      const jobsRef = collection(db!, "jobs");
       const jobsSnap = await getDocs(jobsRef);
       const jobs = jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -115,7 +115,7 @@ export default function AdminAnalyticsPage() {
         .sort((a, b) => b.count - a.count);
 
       // Get all applications
-      const applicationsRef = collection(db, "applications");
+      const applicationsRef = collection(db!, "applications");
       const applicationsSnap = await getDocs(applicationsRef);
       const applications = applicationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -142,28 +142,28 @@ export default function AdminAnalyticsPage() {
         : 0;
 
       // Get conferences
-      const conferencesRef = collection(db, "conferences");
+      const conferencesRef = collection(db!, "conferences");
       const conferencesSnap = await getDocs(conferencesRef);
       const conferences = conferencesSnap.docs.map(doc => doc.data());
       const totalConferences = conferences.length;
       const activeConferences = conferences.filter(c => c.active === true).length;
 
       // Get scholarships
-      const scholarshipsRef = collection(db, "scholarships");
+      const scholarshipsRef = collection(db!, "scholarships");
       const scholarshipsSnap = await getDocs(scholarshipsRef);
       const scholarships = scholarshipsSnap.docs.map(doc => doc.data());
       const totalScholarships = scholarships.length;
       const activeScholarships = scholarships.filter(s => s.active === true).length;
 
       // Get powwows
-      const powwowsRef = collection(db, "powwows");
+      const powwowsRef = collection(db!, "powwows");
       const powwowsSnap = await getDocs(powwowsRef);
       const powwows = powwowsSnap.docs.map(doc => doc.data());
       const totalPowwows = powwows.length;
       const activePowwows = powwows.filter(p => p.active === true).length;
 
       // Get vendors
-      const vendorsRef = collection(db, "vendors");
+      const vendorsRef = collection(db!, "vendors");
       const vendorsSnap = await getDocs(vendorsRef);
       const vendors = vendorsSnap.docs.map(doc => doc.data());
       const totalVendors = vendors.length;
