@@ -51,11 +51,11 @@ export default function AdminJobsPage() {
       setLoading(true);
 
       // Get all jobs
-      const jobsRef = collection(db, "jobs");
+      const jobsRef = collection(db!, "jobs");
       const jobsSnap = await getDocs(query(jobsRef, orderBy("createdAt", "desc")));
 
       // Get employer info
-      const employersRef = collection(db, "employers");
+      const employersRef = collection(db!, "employers");
       const employersSnap = await getDocs(employersRef);
       const employerMap = new Map<string, { name: string; logoUrl?: string }>();
       employersSnap.forEach((doc) => {

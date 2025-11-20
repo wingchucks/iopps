@@ -51,13 +51,13 @@ export default function AdminPowwowsPage() {
       setLoading(true);
 
       // Get all pow wows
-      const powwowsRef = collection(db, "powwows");
+      const powwowsRef = collection(db!, "powwows");
       const powwowsSnap = await getDocs(
         query(powwowsRef, orderBy("createdAt", "desc"))
       );
 
       // Get employer info
-      const employersRef = collection(db, "employers");
+      const employersRef = collection(db!, "employers");
       const employersSnap = await getDocs(employersRef);
       const employerMap = new Map<string, { name: string; logoUrl?: string }>();
       employersSnap.forEach((doc) => {

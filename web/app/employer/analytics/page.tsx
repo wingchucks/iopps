@@ -59,7 +59,7 @@ export default function EmployerAnalyticsPage() {
       setLoading(true);
 
       // Get employer's jobs
-      const jobsRef = collection(db, "jobs");
+      const jobsRef = collection(db!, "jobs");
       const jobsQuery = query(
         jobsRef,
         where("employerId", "==", user.uid),
@@ -73,7 +73,7 @@ export default function EmployerAnalyticsPage() {
       const inactiveJobs = jobs.filter(j => j.active === false).length;
 
       // Get employer's applications
-      const applicationsRef = collection(db, "applications");
+      const applicationsRef = collection(db!, "applications");
       const applicationsQuery = query(
         applicationsRef,
         where("employerId", "==", user.uid),
@@ -135,9 +135,9 @@ export default function EmployerAnalyticsPage() {
       const applicationsByMonth = aggregateByMonth(applications, "createdAt");
 
       // Get platform average (simplified - just use all jobs for comparison)
-      const allJobsRef = collection(db, "jobs");
+      const allJobsRef = collection(db!, "jobs");
       const allJobsSnap = await getDocs(allJobsRef);
-      const allApplicationsRef = collection(db, "applications");
+      const allApplicationsRef = collection(db!, "applications");
       const allApplicationsSnap = await getDocs(allApplicationsRef);
       const platformAvgApplicationsPerJob = allJobsSnap.size > 0
         ? Math.round((allApplicationsSnap.size / allJobsSnap.size) * 10) / 10

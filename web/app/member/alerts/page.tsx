@@ -57,7 +57,7 @@ export default function MemberAlertsPage() {
     try {
       setLoading(true);
 
-      const alertsRef = collection(db, "jobAlerts");
+      const alertsRef = collection(db!, "jobAlerts");
       const alertsQuery = query(
         alertsRef,
         where("memberId", "==", user.uid),
@@ -157,7 +157,7 @@ export default function MemberAlertsPage() {
         );
       } else {
         // Create new alert
-        const alertsRef = collection(db, "jobAlerts");
+        const alertsRef = collection(db!, "jobAlerts");
         const docRef = await addDoc(alertsRef, {
           ...alertData,
           createdAt: serverTimestamp(),

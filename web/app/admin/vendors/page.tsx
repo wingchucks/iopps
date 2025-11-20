@@ -52,7 +52,7 @@ export default function AdminVendorsPage() {
       setLoading(true);
 
       // Get all vendors
-      const vendorsRef = collection(db, "vendors");
+      const vendorsRef = collection(db!, "vendors");
       const vendorsSnap = await getDocs(
         query(vendorsRef, orderBy("createdAt", "desc"))
       );

@@ -52,7 +52,7 @@ export default function AdminUsersPage() {
     try {
       setLoading(true);
 
-      const usersRef = collection(db, "users");
+      const usersRef = collection(db!, "users");
       const usersSnap = await getDocs(query(usersRef, orderBy("createdAt", "desc")));
 
       const usersList: User[] = usersSnap.docs.map((doc) => ({

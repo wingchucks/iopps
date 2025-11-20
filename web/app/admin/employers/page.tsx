@@ -48,11 +48,11 @@ export default function AdminEmployersPage() {
       setLoading(true);
 
       // Get all employers
-      const employersRef = collection(db, "employers");
+      const employersRef = collection(db!, "employers");
       const employersSnap = await getDocs(query(employersRef, orderBy("createdAt", "desc")));
 
       // Get user emails
-      const usersRef = collection(db, "users");
+      const usersRef = collection(db!, "users");
       const usersSnap = await getDocs(usersRef);
       const userEmails = new Map<string, string>();
       usersSnap.forEach((doc) => {

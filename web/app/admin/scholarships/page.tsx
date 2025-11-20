@@ -50,13 +50,13 @@ export default function AdminScholarshipsPage() {
       setLoading(true);
 
       // Get all scholarships
-      const scholarshipsRef = collection(db, "scholarships");
+      const scholarshipsRef = collection(db!, "scholarships");
       const scholarshipsSnap = await getDocs(
         query(scholarshipsRef, orderBy("createdAt", "desc"))
       );
 
       // Get employer info
-      const employersRef = collection(db, "employers");
+      const employersRef = collection(db!, "employers");
       const employersSnap = await getDocs(employersRef);
       const employerMap = new Map<string, { name: string; logoUrl?: string }>();
       employersSnap.forEach((doc) => {

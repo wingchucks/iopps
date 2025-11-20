@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       setLoading(true);
 
       // Get total users
-      const usersRef = collection(db, "users");
+      const usersRef = collection(db!, "users");
       const usersSnap = await getDocs(usersRef);
       const totalUsers = usersSnap.size;
 
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
       });
 
       // Get employer profiles with status
-      const employersRef = collection(db, "employers");
+      const employersRef = collection(db!, "employers");
       const employersSnap = await getDocs(employersRef);
       let pendingEmployers = 0;
       let approvedEmployers = 0;
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
       });
 
       // Get jobs
-      const jobsRef = collection(db, "jobs");
+      const jobsRef = collection(db!, "jobs");
       const jobsSnap = await getDocs(jobsRef);
       const totalJobs = jobsSnap.size;
       const activeJobs = jobsSnap.docs.filter(
@@ -99,27 +99,27 @@ export default function AdminDashboard() {
       ).length;
 
       // Get applications
-      const applicationsRef = collection(db, "applications");
+      const applicationsRef = collection(db!, "applications");
       const applicationsSnap = await getDocs(applicationsRef);
       const totalApplications = applicationsSnap.size;
 
       // Get conferences
-      const conferencesRef = collection(db, "conferences");
+      const conferencesRef = collection(db!, "conferences");
       const conferencesSnap = await getDocs(conferencesRef);
       const totalConferences = conferencesSnap.size;
 
       // Get scholarships
-      const scholarshipsRef = collection(db, "scholarships");
+      const scholarshipsRef = collection(db!, "scholarships");
       const scholarshipsSnap = await getDocs(scholarshipsRef);
       const totalScholarships = scholarshipsSnap.size;
 
       // Get powwows
-      const powwowsRef = collection(db, "powwows");
+      const powwowsRef = collection(db!, "powwows");
       const powwowsSnap = await getDocs(powwowsRef);
       const totalPowwows = powwowsSnap.size;
 
       // Get vendors
-      const vendorsRef = collection(db, "vendors");
+      const vendorsRef = collection(db!, "vendors");
       const vendorsSnap = await getDocs(vendorsRef);
       const totalVendors = vendorsSnap.size;
 

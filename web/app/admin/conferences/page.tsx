@@ -50,13 +50,13 @@ export default function AdminConferencesPage() {
       setLoading(true);
 
       // Get all conferences
-      const conferencesRef = collection(db, "conferences");
+      const conferencesRef = collection(db!, "conferences");
       const conferencesSnap = await getDocs(
         query(conferencesRef, orderBy("createdAt", "desc"))
       );
 
       // Get employer info
-      const employersRef = collection(db, "employers");
+      const employersRef = collection(db!, "employers");
       const employersSnap = await getDocs(employersRef);
       const employerMap = new Map<string, { name: string; logoUrl?: string }>();
       employersSnap.forEach((doc) => {

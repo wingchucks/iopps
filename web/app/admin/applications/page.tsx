@@ -50,13 +50,13 @@ export default function AdminApplicationsPage() {
       setLoading(true);
 
       // Get all applications
-      const applicationsRef = collection(db, "applications");
+      const applicationsRef = collection(db!, "applications");
       const applicationsSnap = await getDocs(
         query(applicationsRef, orderBy("createdAt", "desc"))
       );
 
       // Get jobs for job titles
-      const jobsRef = collection(db, "jobs");
+      const jobsRef = collection(db!, "jobs");
       const jobsSnap = await getDocs(jobsRef);
       const jobMap = new Map<string, { title: string; employerName?: string }>();
       jobsSnap.forEach((doc) => {
