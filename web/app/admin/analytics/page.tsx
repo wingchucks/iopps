@@ -61,12 +61,7 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user || !role) {
-      router.push("/");
-      return;
-    }
-
-    if (role !== "admin" && role !== "moderator") {
+    if (!user || !role || (role !== "admin" && role !== "moderator")) {
       router.push("/");
       return;
     }
