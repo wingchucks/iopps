@@ -65,7 +65,7 @@ export default function EmployerConferencesPage() {
         </p>
         <Link
           href="/login"
-          className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           Login
         </Link>
@@ -90,7 +90,7 @@ export default function EmployerConferencesPage() {
     <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-teal-300">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#14B8A6]">
             Conferences
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -102,7 +102,7 @@ export default function EmployerConferencesPage() {
         </div>
         <Link
           href="/employer/conferences/new"
-          className="inline-flex rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+          className="inline-flex rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           New conference
         </Link>
@@ -141,7 +141,7 @@ export default function EmployerConferencesPage() {
                   <span
                     className={`rounded-full px-3 py-1 ${
                       conf.active
-                        ? "bg-teal-500/10 text-teal-200"
+                        ? "bg-[#14B8A6]/10 text-[#14B8A6]"
                         : "bg-slate-800 text-slate-300"
                     }`}
                   >
@@ -149,14 +149,14 @@ export default function EmployerConferencesPage() {
                   </span>
                   <Link
                     href={`/employer/conferences/${conf.id}/edit`}
-                    className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400"
+                    className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6]"
                   >
                     Edit
                   </Link>
                   <button
                     onClick={() => handleToggleActive(conf)}
                     disabled={updatingId === conf.id}
-                    className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400 disabled:opacity-60"
+                    className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6] disabled:opacity-60"
                   >
                     {conf.active ? "Close" : "Reopen"}
                   </button>

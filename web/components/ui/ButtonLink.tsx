@@ -28,14 +28,32 @@ type ButtonLinkProps = LinkProps & {
   children: ReactNode;
   className?: string;
   variant?: Variant;
+  target?: string;
+  rel?: string;
 };
 
 export function ButtonLink({
   children,
   className = "",
   variant = "primary",
+  target,
+  rel,
   ...props
 }: ButtonLinkProps) {
+  // Use anchor tag for external links (when target is specified)
+  if (target) {
+    return (
+      <a
+        href={props.href as string}
+        target={target}
+        rel={rel || (target === "_blank" ? "noopener noreferrer" : undefined)}
+        className={buttonClasses(variant, className)}
+      >
+        {children}
+      </a>
+    );
+  }
+
   return (
     <Link {...props} className={buttonClasses(variant, className)}>
       {children}

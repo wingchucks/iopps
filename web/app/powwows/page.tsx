@@ -1,65 +1,31 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { listPowwowEvents } from "@/lib/firestore";
 import type { PowwowEvent } from "@/lib/types";
+import { PageShell } from "@/components/PageShell";
+import { SectionHeader } from "@/components/SectionHeader";
+import { FilterCard } from "@/components/FilterCard";
+import { useSearchParams } from "@/lib/useSearchParams";
 
-const fallbackPowwows: PowwowEvent[] = [
-  {
-    id: "pow-1",
-    employerId: "demo",
-    name: "Treaty 6 Winter Pow Wow",
-    location: "Edmonton, AB",
-    season: "Winter",
-    dateRange: "Feb 7-9, 2025",
-    host: "Saddle Lake Cree Nation",
-    description:
-      "Three days of pow wow specials, Inuit throat singing, and youth round dance workshops.",
-    registrationStatus: "Open",
-    livestream: true,
-    active: true,
-  },
-  {
-    id: "pow-2",
-    employerId: "demo",
-    name: "Manitoba Spring Gathering",
-    location: "Brandon, MB",
-    season: "Spring",
-    dateRange: "Apr 18-20, 2025",
-    host: "Manitoba First Nations Education Resource Centre",
-    description:
-      "Competition pow wow with drum contests, artisan market, and education fair.",
-    registrationStatus: "Coming Soon",
-    livestream: false,
-    active: true,
-  },
-  {
-    id: "pow-3",
-    employerId: "demo",
-    name: "Coastal Celebration Pow Wow",
-    location: "Campbell River, BC",
-    season: "Summer",
-    dateRange: "Jul 11-13, 2025",
-    host: "Wei Wai Kum First Nation",
-    description:
-      "Grand entry at sunset, oceanfront vendors, and canoe races with coastal nations.",
-    registrationStatus: "Open",
-    livestream: false,
-    active: true,
-  },
-];
+// Sample data removed - using live data only
 
-const seasonFilters = ["All", "Winter", "Spring", "Summer", "Fall"] as const;
+// Removed typeFilters - using season filter instead
 
 export default function PowwowsPage() {
-  const [events, setEvents] = useState<PowwowEvent[]>(fallbackPowwows);
+  const [events, setEvents] = useState<PowwowEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [keyword, setKeyword] = useState("");
-  const [provinceFilter, setProvinceFilter] = useState("");
-  const [seasonFilter, setSeasonFilter] =
-    useState<(typeof seasonFilters)[number]>("All");
-  const [showLivestreamOnly, setShowLivestreamOnly] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState(20);
+
+  // URL-synced filter parameters
+  const { params, updateParam, resetParams } = useSearchParams({
+    keyword: "",
+    provinceFilter: "",
+    typeFilter: "",
+    showLivestreamOnly: false,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -67,11 +33,10 @@ export default function PowwowsPage() {
       setError(null);
       try {
         const data = await listPowwowEvents();
-        setEvents(data.length ? data : fallbackPowwows);
+        setEvents(data);
       } catch (err) {
         console.error(err);
         setError("Unable to load pow wow listings right now.");
-        setEvents(fallbackPowwows);
       } finally {
         setLoading(false);
       }
@@ -85,38 +50,36 @@ export default function PowwowsPage() {
         event.description ?? ""
       }`
         .toLowerCase()
-        .includes(keyword.toLowerCase());
-      const matchesSeason =
-        seasonFilter === "All" ? true : event.season === seasonFilter;
-      const matchesProvince = provinceFilter
+        .includes(params.keyword.toLowerCase());
+      // Note: Removed type filter as PowwowEvent doesn't have a type field
+      const matchesProvince = params.provinceFilter
         ? (event.location ?? "")
             .toLowerCase()
-            .includes(provinceFilter.toLowerCase())
+            .includes(params.provinceFilter.toLowerCase())
         : true;
-      const matchesStream = showLivestreamOnly ? Boolean(event.livestream) : true;
+      const matchesStream = params.showLivestreamOnly ? Boolean(event.livestream) : true;
       return (
-        matchesKeyword && matchesSeason && matchesProvince && matchesStream
+        matchesKeyword && matchesProvince && matchesStream
       );
     });
-  }, [events, keyword, provinceFilter, seasonFilter, showLivestreamOnly]);
+  }, [events, params.keyword, params.provinceFilter, params.showLivestreamOnly]);
+
+  const displayedEvents = useMemo(
+    () => filtered.slice(0, displayLimit),
+    [displayLimit, filtered]
+  );
+
+  const hasMore = displayLimit < filtered.length;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <section className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.4em] text-teal-300">
-          Pow Wow Listings
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Cultural celebrations across Turtle Island
-        </h1>
-        <p className="text-sm text-slate-300 sm:text-base">
-          Find pow wows hosted by Nations, universities, and community partners.
-          We highlight events with livestream coverage so distant families can
-          join in.
-        </p>
-      </section>
+    <PageShell>
+      <SectionHeader
+        eyebrow="Pow Wow Listings"
+        title="Cultural celebrations across Turtle Island"
+        subtitle="Find traditional and competition pow wows hosted by Nations, universities, and community partners across North America. We highlight events with livestream coverage so distant families can join in."
+      />
 
-      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/60 p-5 shadow-lg">
+      <FilterCard className="mt-8">
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -124,21 +87,21 @@ export default function PowwowsPage() {
             </label>
             <input
               type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              value={params.keyword}
+              onChange={(e) => updateParam("keyword", e.target.value)}
               placeholder="Nation, host, theme..."
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Province / Territory
+              Location
             </label>
             <input
               type="text"
-              value={provinceFilter}
-              onChange={(e) => setProvinceFilter(e.target.value)}
-              placeholder="AB, BC, MB..."
+              value={params.provinceFilter}
+              onChange={(e) => updateParam("provinceFilter", e.target.value)}
+              placeholder="State, province, or territory..."
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
           </div>
@@ -146,44 +109,38 @@ export default function PowwowsPage() {
             <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
               Season
             </label>
-            <select
-              value={seasonFilter}
+            <input
+              type="text"
+              value={params.typeFilter}
               onChange={(e) =>
-                setSeasonFilter(e.target.value as (typeof seasonFilters)[number])
+                updateParam("typeFilter", e.target.value)
               }
+              placeholder="Winter, Spring, Summer, Fall..."
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
-            >
-              {seasonFilters.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-200">
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
-              checked={showLivestreamOnly}
-              onChange={(e) => setShowLivestreamOnly(e.target.checked)}
+              checked={params.showLivestreamOnly}
+              onChange={(e) => updateParam("showLivestreamOnly", e.target.checked)}
             />
             Livestream available
           </label>
           <button
             type="button"
             onClick={() => {
-              setKeyword("");
-              setProvinceFilter("");
-              setSeasonFilter("All");
-              setShowLivestreamOnly(false);
+              resetParams();
+              setDisplayLimit(20);
             }}
-            className="text-xs font-semibold text-teal-300 underline"
+            className="text-xs font-semibold text-[#14B8A6] underline"
           >
             Reset filters
           </button>
         </div>
-      </section>
+      </FilterCard>
 
       <section className="mt-8 space-y-4">
         {error && (
@@ -200,23 +157,41 @@ export default function PowwowsPage() {
               />
             ))}
           </div>
+        ) : events.length === 0 && params.keyword === "" && params.provinceFilter === "" && params.typeFilter === "" && !params.showLivestreamOnly ? (
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-8 text-center">
+            <h3 className="text-xl font-bold text-slate-200">No pow wows scheduled yet</h3>
+            <p className="mt-3 text-sm text-slate-400">
+              Check back for upcoming events! Nations and communities are adding pow wow listings regularly.
+            </p>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-6 text-center text-sm text-slate-300">
-            No pow wows match your filters yet. New celebrations are added each
-            week—check back soon or adjust filters.
+            No pow wows match your filters yet. Try adjusting your filters or check back soon as new celebrations are added each week.
           </div>
         ) : (
-          <div className="space-y-4">
-            {filtered.map((event) => (
-              <article
+          <>
+            <div className="mb-3 text-sm text-slate-400">
+              Showing {displayedEvents.length} of {filtered.length} pow wow{filtered.length === 1 ? "" : "s"}
+            </div>
+            <div className="space-y-4">
+              {displayedEvents.map((event) => (
+              <Link
                 key={event.id}
-                className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-teal-400"
+                href={`/powwows/${event.id}`}
+                className="block rounded-2xl border border-slate-800 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.4em] text-teal-300">
-                      {event.season ?? "Season"}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
+                        Pow wow
+                      </p>
+                      {event.season && (
+                        <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
+                          {event.season}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="mt-1 text-xl font-semibold text-slate-50">
                       {event.name}
                     </h3>
@@ -230,18 +205,38 @@ export default function PowwowsPage() {
                   <div className="text-right text-xs uppercase tracking-[0.3em] text-slate-500">
                     Registration {event.registrationStatus ?? "TBA"}
                     {event.livestream && (
-                      <p className="mt-1 rounded-full border border-teal-500 px-3 py-1 text-[0.6rem] text-teal-300">
+                      <p className="mt-1 rounded-full border border-teal-500 px-3 py-1 text-[0.6rem] text-[#14B8A6]">
                         Livestream on IOPPS Live
                       </p>
                     )}
                   </div>
                 </div>
                 <p className="mt-3 text-sm text-slate-200">{event.description}</p>
-              </article>
-            ))}
-          </div>
+                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14B8A6]">
+                  View details & register
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-10 flex justify-center">
+                <button
+                  onClick={() => setDisplayLimit((prev) => prev + 20)}
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-800/80 bg-[#08090C] px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                >
+                  Load more events
+                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
-    </div>
+    </PageShell>
   );
 }

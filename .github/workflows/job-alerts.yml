@@ -1,0 +1,36 @@
+name: Send Job Alerts
+
+on:
+  schedule:
+    # Instant alerts - every 15 minutes
+    - cron: '*/15 * * * *'
+    # Daily digest - 9 AM UTC daily
+    - cron: '0 9 * * *'
+    # Weekly digest - 9 AM UTC every Monday
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  send-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine frequency
+        id: frequency
+        run: |
+          if [ "${{ github.event.schedule }}" == "*/15 * * * *" ]; then
+            echo "frequency=instant" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.schedule }}" == "0 9 * * 1" ]; then
+            echo "frequency=weekly" >> $GITHUB_OUTPUT
+          else
+            echo "frequency=daily" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send job alerts
+        run: |
+          FREQUENCY="${{ steps.frequency.outputs.frequency }}"
+          curl -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/emails/send-job-alerts/${FREQUENCY}"
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}

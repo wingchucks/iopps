@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { getConference, updateConference } from "@/lib/firestore";
+import { getConference, updateConference, deleteConference } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 
 export default function EditConferencePage() {
@@ -22,6 +22,8 @@ export default function EditConferencePage() {
   const [cost, setCost] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!conferenceId) return;
@@ -63,12 +65,26 @@ export default function EditConferencePage() {
         registrationLink,
         cost,
       });
-      router.push("/employer/conferences");
+      router.push("/employer/dashboard");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not save changes.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!conferenceId) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteConference(conferenceId);
+      router.push("/employer/dashboard");
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Could not delete conference.");
+      setDeleting(false);
     }
   };
 
@@ -91,7 +107,7 @@ export default function EditConferencePage() {
         </p>
         <Link
           href="/login"
-          className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           Login
         </Link>
@@ -107,9 +123,38 @@ export default function EditConferencePage() {
       </p>
 
       {error && (
-        <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+        <div className="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-100">
           {error}
-        </p>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+          <p className="text-sm font-semibold text-amber-100">
+            Are you sure you want to delete this conference?
+          </p>
+          <p className="mt-1 text-xs text-amber-200">
+            This action cannot be undone.
+          </p>
+          <div className="mt-3 flex gap-3">
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="rounded-md bg-red-600 px-3 py-1 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+            >
+              {deleting ? "Deleting..." : "Delete conference"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+              className="rounded-md border border-slate-700 px-3 py-1 text-sm text-slate-200 hover:border-slate-600 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -122,7 +167,7 @@ export default function EditConferencePage() {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div>
@@ -134,7 +179,7 @@ export default function EditConferencePage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div>
@@ -146,7 +191,7 @@ export default function EditConferencePage() {
             required
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -159,7 +204,7 @@ export default function EditConferencePage() {
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
           <div>
@@ -170,7 +215,7 @@ export default function EditConferencePage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
         </div>
@@ -182,7 +227,7 @@ export default function EditConferencePage() {
             type="url"
             value={registrationLink}
             onChange={(e) => setRegistrationLink(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div>
@@ -193,17 +238,27 @@ export default function EditConferencePage() {
             type="text"
             value={cost}
             onChange={(e) => setCost(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400 disabled:opacity-60"
-        >
-          {saving ? "Saving..." : "Save changes"}
-        </button>
+        <div className="flex items-center justify-between pt-4">
+          <button
+            type="submit"
+            disabled={saving || deleting}
+            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+          >
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={saving || deleting}
+            className="rounded-md border border-red-700 px-4 py-2 text-sm text-red-300 hover:border-red-600 hover:bg-red-900/20 transition-colors disabled:opacity-60"
+          >
+            Delete conference
+          </button>
+        </div>
       </form>
     </div>
   );

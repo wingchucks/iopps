@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
 
 const navLinks = [
@@ -11,150 +12,203 @@ const navLinks = [
   { href: "/shop", label: "Shop Indigenous" },
   { href: "/powwows", label: "Pow Wows" },
   { href: "/live", label: "Live Streams" },
-];
-
-const portalLinks = [
-  { href: "/member/profile", label: "Member Area" },
-  { href: "/employer", label: "Employer Portal" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 export default function SiteHeader() {
   const { user, role, loading, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="flex flex-col">
-            <span className="text-lg font-semibold tracking-tight text-teal-400">
-              IOPPS
-            </span>
-            <span className="text-xs text-slate-300">
-              Empowering Indigenous Success across Canada
-            </span>
+    <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-gradient-to-r from-[#0D0D0F] via-[#0A0A0C] to-[#0D0D0F] shadow-lg shadow-black/20 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4">
+        {/* Single row with logo, navigation, and account */}
+        <div className="flex items-center justify-between py-3">
+          {/* Branding */}
+          <Link href="/" className="group flex items-center gap-3">
+            <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-lg shadow-[#14B8A6]/20">
+              <Image
+                src="/logo.png"
+                alt="IOPPS Logo"
+                width={40}
+                height={40}
+                className="object-cover"
+                priority
+              />
+            </div>
+            <div className="hidden sm:flex flex-col">
+              <span className="text-lg font-bold tracking-tight text-[#14B8A6]">
+                IOPPS
+              </span>
+              <span className="text-[0.65rem] text-slate-400">
+                Empowering Indigenous Success
+              </span>
+            </div>
           </Link>
-          <nav className="hidden gap-4 text-sm text-slate-200 md:flex">
+
+          {/* Navigation bar */}
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="hover:text-teal-400">
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-200 md:justify-end">
-          <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-            {portalLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400 hover:text-teal-300"
+                className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]"
               >
                 {link.label}
               </Link>
             ))}
-          </div>
-          <div className="relative">
+          </nav>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            className="lg:hidden rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
+            aria-label="Toggle menu"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {mobileNavOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+
+          {/* Account section */}
+          <div className="hidden lg:flex items-center gap-3">
             {loading ? (
-              <div className="text-xs text-slate-400">Checking account...</div>
+              <div className="text-xs text-slate-400">Loading...</div>
             ) : user ? (
-              <>
+              <div className="relative">
                 <button
-                  className="flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1 text-xs font-medium text-slate-100 hover:border-teal-400 hover:text-teal-200"
+                  className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-[#14B8A6]/50 hover:bg-slate-800/60"
                   onClick={() => setMenuOpen((prev) => !prev)}
                 >
-                  <span className="h-6 w-6 rounded-full bg-gradient-to-br from-teal-500 to-slate-600 text-center text-[0.65rem] font-semibold leading-6 text-slate-900">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#14B8A6] to-[#0B8A7A] text-[0.65rem] font-bold text-slate-900">
                     {user.displayName?.charAt(0)?.toUpperCase() ??
                       user.email?.charAt(0)?.toUpperCase() ??
                       "U"}
                   </span>
-                  <span>{user.displayName ?? user.email ?? "Account"}</span>
+                  <span className="hidden sm:inline">{user.displayName ?? user.email ?? "Account"}</span>
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 z-30 mt-2 w-56 rounded-lg border border-slate-800 bg-slate-950/95 p-3 text-xs text-slate-200 shadow-xl">
+                  <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-slate-800/80 bg-[#08090C] p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
                     <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
                       Account
                     </p>
-                    <p className="mt-1 truncate font-semibold text-slate-100">
+                    <p className="mt-1 truncate text-sm font-semibold text-slate-100">
                       {user.displayName ?? user.email}
                     </p>
-                    <div className="mt-3 space-y-2">
+                    <p className="text-xs text-slate-400 capitalize">{role ?? "User"}</p>
+
+                    <div className="my-3 border-t border-slate-800/50" />
+
+                    <div className="space-y-1.5">
                       {role === "community" && (
                         <>
                           <Link
-                            href="/member/profile"
-                            className="block rounded-md border border-slate-800 px-3 py-2 text-slate-200 hover:border-teal-400 hover:text-teal-200"
+                            href="/member/dashboard"
+                            className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
                             onClick={closeMenu}
                           >
-                            Member Profile
-                          </Link>
-                          <Link
-                            href="/member/applications"
-                            className="block rounded-md border border-slate-800 px-3 py-2 text-slate-200 hover:border-teal-400 hover:text-teal-200"
-                            onClick={closeMenu}
-                          >
-                            My Applications
+                            <span className="font-semibold">My Dashboard</span>
                           </Link>
                         </>
                       )}
                       {role === "employer" && (
-                        <Link
-                          href="/employer"
-                          className="block rounded-md border border-slate-800 px-3 py-2 text-slate-200 hover:border-teal-400 hover:text-teal-200"
-                          onClick={closeMenu}
-                        >
-                          Employer Dashboard
-                        </Link>
-                      )}
-                      {role === null && (
-                        <Link
-                          href="/employer"
-                          className="block rounded-md border border-slate-800 px-3 py-2 text-slate-200 hover:border-teal-400 hover:text-teal-200"
-                          onClick={closeMenu}
-                        >
-                          Go to Dashboard
-                        </Link>
+                        <>
+                          <Link
+                            href="/employer/dashboard"
+                            className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                            onClick={closeMenu}
+                          >
+                            <span className="font-semibold">Employer Dashboard</span>
+                          </Link>
+                          <Link
+                            href="/vendor/dashboard"
+                            className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                            onClick={closeMenu}
+                          >
+                            <span className="font-semibold">Vendor Dashboard</span>
+                          </Link>
+                        </>
                       )}
                     </div>
-                    <button
-                      onClick={() => {
-                        closeMenu();
-                        void logout();
-                      }}
-                      className="mt-3 w-full rounded-md bg-teal-500 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
-                    >
-                      Sign out
-                    </button>
+
+                    <div className="mt-3 border-t border-slate-800/50 pt-3">
+                      <button
+                        onClick={() => {
+                          closeMenu();
+                          void logout();
+                        }}
+                        className="w-full rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-3 py-2 text-xs font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]"
+                      >
+                        Sign out
+                      </button>
+                    </div>
                   </div>
                 )}
-              </>
+              </div>
             ) : (
               <div className="flex gap-2">
                 <Link
                   href="/login"
-                  className="rounded-full border border-slate-700 px-4 py-1 text-xs font-semibold text-slate-100 hover:border-teal-400 hover:text-teal-200"
+                  className="rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-full bg-teal-500 px-4 py-1 text-xs font-semibold text-slate-950 hover:bg-teal-400"
+                  className="rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]"
                 >
-                  Create Account
+                  Sign Up
                 </Link>
               </div>
             )}
           </div>
         </div>
-        <nav className="flex flex-wrap gap-3 text-xs text-slate-300 md:hidden">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-teal-400">
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+
+        {/* Mobile Navigation Menu */}
+        {mobileNavOpen && (
+          <div className="lg:hidden border-t border-slate-800/50 py-4">
+            <nav className="flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileNavOpen(false)}
+                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {!user && (
+                <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/50 pt-4">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="rounded-lg border border-slate-700/50 bg-slate-800/40 px-4 py-2.5 text-center text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileNavOpen(false)}
+                    className="rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-4 py-2.5 text-center text-sm font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );

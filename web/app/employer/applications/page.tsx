@@ -27,6 +27,7 @@ export default function ApplicationsInboxPage() {
   const [appsLoading, setAppsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState(50);
   const [memberInfo, setMemberInfo] = useState<
     Record<
       string,
@@ -87,6 +88,13 @@ export default function ApplicationsInboxPage() {
     });
   }, [applications, searchTerm, selectedJob, statusFilter]);
 
+  const displayedApps = useMemo(
+    () => filteredApps.slice(0, displayLimit),
+    [displayLimit, filteredApps]
+  );
+
+  const hasMore = displayLimit < filteredApps.length;
+
   const statusCounts = useMemo(() => {
     const counts: Record<ApplicationStatus, number> = {
       submitted: 0,
@@ -140,7 +148,7 @@ export default function ApplicationsInboxPage() {
         </p>
         <Link
           href="/login"
-          className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           Login
         </Link>
@@ -152,7 +160,7 @@ export default function ApplicationsInboxPage() {
     <div className="mx-auto max-w-6xl px-4 py-10 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-teal-300">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#14B8A6]">
             Applications inbox
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -162,12 +170,12 @@ export default function ApplicationsInboxPage() {
             Filter by job or status, update stages, and follow up quickly.
           </p>
         </div>
-        <Link href="/employer" className="text-xs text-teal-300 underline">
+        <Link href="/employer" className="text-xs text-[#14B8A6] underline">
           Back to dashboard
         </Link>
       </div>
 
-      <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-4">
+      <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 sm:p-8 space-y-4">
         <div className="grid gap-4 sm:grid-cols-5">
           {Object.entries(statusCounts).map(([status, count]) => (
             <div
@@ -188,7 +196,7 @@ export default function ApplicationsInboxPage() {
           <select
             value={selectedJob}
             onChange={(e) => setSelectedJob(e.target.value)}
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           >
             <option value="all">All jobs</option>
             {jobs.map((job) => (
@@ -202,7 +210,7 @@ export default function ApplicationsInboxPage() {
             onChange={(e) =>
               setStatusFilter(e.target.value as "all" | ApplicationStatus)
             }
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           >
             <option value="all">All statuses</option>
             <option value="submitted">Submitted</option>
@@ -216,7 +224,7 @@ export default function ApplicationsInboxPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search name or email"
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
@@ -229,8 +237,12 @@ export default function ApplicationsInboxPage() {
             No applications match your filters yet.
           </p>
         ) : (
-          <div className="mt-4 space-y-3">
-            {filteredApps.map((app) => (
+          <>
+            <div className="mb-3 text-sm text-slate-400">
+              Showing {displayedApps.length} of {filteredApps.length} application{filteredApps.length === 1 ? "" : "s"}
+            </div>
+            <div className="mt-4 space-y-3">
+              {displayedApps.map((app) => (
               <div
                 key={app.id}
                 className="rounded-md border border-slate-800 bg-slate-950/40 p-4"
@@ -253,7 +265,7 @@ export default function ApplicationsInboxPage() {
                     </p>
                     <Link
                       href={`/jobs/${app.jobId}`}
-                      className="mt-1 inline-flex text-xs text-teal-300 underline"
+                      className="mt-1 inline-flex text-xs text-[#14B8A6] underline"
                     >
                       View job posting
                     </Link>
@@ -277,7 +289,7 @@ export default function ApplicationsInboxPage() {
                         href={memberInfo[app.memberId]?.resumeUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400"
+                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6]"
                       >
                         Resume
                       </a>
@@ -290,7 +302,7 @@ export default function ApplicationsInboxPage() {
                         }
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400"
+                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6]"
                       >
                         Message
                       </a>
@@ -301,7 +313,7 @@ export default function ApplicationsInboxPage() {
                           jobs.find((job) => job.id === app.jobId)?.title ??
                             "IOPPS Opportunity"
                         )}`}
-                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400"
+                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6]"
                       >
                         Email
                       </a>
@@ -316,7 +328,7 @@ export default function ApplicationsInboxPage() {
                         )}&add=${encodeURIComponent(app.memberEmail)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-teal-400"
+                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6]"
                       >
                         Schedule
                       </a>
@@ -330,7 +342,7 @@ export default function ApplicationsInboxPage() {
                           e.target.value as ApplicationStatus
                         )
                       }
-                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
+                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
                     >
                       <option value="submitted">Submitted</option>
                       <option value="reviewed">Reviewed</option>
@@ -344,8 +356,22 @@ export default function ApplicationsInboxPage() {
                   <p className="mt-3 text-xs text-slate-300">Note: {app.note}</p>
                 )}
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => setDisplayLimit((prev) => prev + 50)}
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-800/80 bg-[#08090C] px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                >
+                  Load more applications
+                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

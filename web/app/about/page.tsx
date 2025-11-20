@@ -1,14 +1,14 @@
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-10 space-y-8">
       <section>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-teal-300">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#14B8A6]">
           About IOPPS
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Empowering Indigenous Success across Canada
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-50">
+          Supporting Indigenous economic reconciliation across Turtle Island
         </h1>
-        <p className="mt-4 text-sm text-slate-300">
+        <p className="mt-4 text-base leading-relaxed text-slate-300">
           IOPPS (Indigenous Opportunities &amp; Partnerships Platform) is a
           community-first initiative connecting Indigenous talent, employers,
           and partners. We help community members discover jobs, conferences,
@@ -19,37 +19,176 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-6">
-        <h2 className="text-xl font-semibold text-slate-50">Our Pillars</h2>
-        <p className="mt-3 text-sm text-slate-300">
-          Jobs · Conferences · Scholarships &amp; Grants · Shop Indigenous · Pow
-          Wows · Live Streams
+      {/* Mission Statement */}
+      <section className="rounded-2xl border border-[#14B8A6]/30 bg-gradient-to-br from-[#14B8A6]/10 to-transparent p-6 sm:p-8">
+        <h2 className="text-2xl font-bold text-[#14B8A6]">Our Mission</h2>
+        <p className="mt-4 text-base leading-relaxed text-slate-200">
+          To empower Indigenous communities through economic opportunity, cultural celebration, and meaningful partnerships. We believe that economic reconciliation begins with access—access to careers, education, business opportunities, and the cultural connections that strengthen our communities.
         </p>
-        <p className="mt-3 text-sm text-slate-300">
-          The same data and governance will support the future mobile app and
-          partner integrations, ensuring every improvement benefits web and
-          mobile users together.
+        <p className="mt-3 text-base leading-relaxed text-slate-200">
+          IOPPS exists to bridge the gap between Indigenous talent and organizations committed to reconciliation, creating pathways to prosperity while honoring Indigenous values, traditions, and sovereignty.
         </p>
       </section>
 
+      {/* TRC Call to Action #92 */}
+      <section className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[#14B8A6]/20">
+            <svg className="h-6 w-6 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-slate-50">
+              Commitment to TRC Call to Action #92
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              The Truth and Reconciliation Commission's Call to Action #92 calls upon the corporate sector to ensure that Indigenous peoples have equitable access to jobs, training, and education opportunities, and to commit to meaningful consultation, building respectful relationships, and obtaining informed consent.
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              IOPPS directly supports this call by providing a platform where employers can demonstrate their commitment to Indigenous employment and economic reconciliation. We facilitate connections that honor Indigenous knowledge, create sustainable careers, and build bridges between communities and organizations ready to walk the path of reconciliation together.
+            </p>
+            <a
+              href="https://www.rcaanc-cirnac.gc.ca/eng/1524494530110/1557511412801"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8]"
+            >
+              Learn more about TRC Call to Action #92
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* What We Offer */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold text-slate-50">What IOPPS Offers</h2>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-semibold text-slate-50">Jobs & Careers</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Discover employment opportunities from organizations committed to Indigenous hiring and reconciliation.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-semibold text-slate-50">Scholarships & Grants</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Access funding opportunities for education, training, and community development.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-semibold text-slate-50">Shop Indigenous</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Support Indigenous-owned businesses, artisans, and entrepreneurs across Turtle Island.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-semibold text-slate-50">Conferences & Events</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Connect at career fairs, leadership summits, and professional development events.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-semibold text-slate-50">Pow Wows</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Find and celebrate traditional gatherings, competitions, and cultural events.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-lg font-semibold text-slate-50">Live Streams</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Watch live broadcasts of pow wows, sports tournaments, and community events.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Values */}
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8">
+        <h2 className="text-2xl font-bold text-slate-50">Our Values & Principles</h2>
+        <div className="mt-6 space-y-4">
+          <div>
+            <h3 className="font-semibold text-[#14B8A6]">Community First</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Every decision we make prioritizes the needs and well-being of Indigenous communities.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-[#14B8A6]">Cultural Respect</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              We honor Indigenous knowledge, traditions, and protocols in all aspects of our platform.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-[#14B8A6]">Meaningful Partnership</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              We connect employers and organizations genuinely committed to reconciliation and Indigenous success.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold text-[#14B8A6]">Accessibility & Inclusion</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              IOPPS is free for community members and designed to be accessible to all.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* For Different Users */}
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-lg border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-lg font-semibold text-slate-50">For Employers</h3>
-          <p className="mt-2 text-sm text-slate-300">
+        <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <h3 className="text-xl font-bold text-slate-50">For Employers & Partners</h3>
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
             Create an employer profile, post jobs and programs, highlight
-            Indigenous-owned businesses, and access analytics that show your
-            impact. Future releases will add subscriptions, applicant tracking,
-            and partner tools.
+            Indigenous-owned businesses, and connect with Indigenous talent committed to making a difference. Demonstrate your commitment to reconciliation through meaningful action.
           </p>
         </article>
-        <article className="rounded-lg border border-slate-800 bg-slate-900/60 p-5">
-          <h3 className="text-lg font-semibold text-slate-50">
+        <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <h3 className="text-xl font-bold text-slate-50">
             For Community Members
           </h3>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">
             Discover opportunities tailored to Indigenous talent, save your
-            favourites, apply directly, and build a profile that travels across
-            the web app and future mobile app.
+            favourites, track applications, support Indigenous businesses, and connect with your community. All features are free and designed with you in mind.
           </p>
         </article>
       </section>

@@ -3,42 +3,26 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/ButtonLink";
-import { listJobPostings, listSavedJobIds, toggleSavedJob } from "@/lib/firestore";
+import {
+  listJobPostings,
+  listSavedJobIds,
+  toggleSavedJob,
+} from "@/lib/firestore";
 import type { JobPosting } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
+import { PageShell } from "@/components/PageShell";
+import { SectionHeader } from "@/components/SectionHeader";
+import { FilterCard } from "@/components/FilterCard";
+import { useSearchParams } from "@/lib/useSearchParams";
 
-const sampleJobs: JobPosting[] = [
-  {
-    id: "job-1",
-    employerId: "demo",
-    employerName: "Northern Lights Friendship Centre",
-    title: "Community Wellness Coordinator",
-    location: "Thunder Bay, ON",
-    employmentType: "Full-time",
-    description:
-      "Lead cultural programming, coordinate workshops, and connect community members with health resources.",
-    responsibilities: [],
-    qualifications: [],
-    salaryRange: "$62,000 - $70,000",
-    indigenousPreference: true,
-    active: true,
-  },
-  {
-    id: "job-2",
-    employerId: "demo",
-    employerName: "PrairieTech Solutions",
-    title: "Indigenous Partnerships Advisor",
-    location: "Calgary, AB (Hybrid)",
-    employmentType: "Hybrid",
-    description:
-      "Shape strategic partnerships with Indigenous communities and support reconciliation initiatives.",
-    responsibilities: [],
-    qualifications: [],
-    remoteFlag: true,
-    salaryRange: "$85,000 - $96,000",
-    active: true,
-  },
-];
+type MaybeDateInput =
+  | string
+  | Date
+  | { toDate: () => Date }
+  | null
+  | undefined;
+
+// Sample data removed - using live data only
 
 const employmentTypeOptions = [
   "All",
@@ -56,13 +40,6 @@ const sortOptions = [
   { value: "closing", label: "Closing soon" },
   { value: "alphabetical", label: "A-Z" },
 ];
-
-type MaybeDateInput =
-  | string
-  | Date
-  | { toDate: () => Date }
-  | null
-  | undefined;
 
 const getTimeValue = (
   value: MaybeDateInput,
@@ -83,22 +60,39 @@ const getTimeValue = (
   return fallback;
 };
 
+const formatDate = (value: MaybeDateInput) => {
+  const time = getTimeValue(value, Number.NaN);
+  if (Number.isNaN(time)) return null;
+  return new Date(time).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [keyword, setKeyword] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [remoteOnly, setRemoteOnly] = useState(false);
-  const [indigenousOnly, setIndigenousOnly] = useState(false);
-  const [activeOnly, setActiveOnly] = useState(true);
-  const [sortBy, setSortBy] = useState<(typeof sortOptions)[number]["value"]>(
-    "newest"
-  );
   const { user, role } = useAuth();
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState(20);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // URL-synced filter parameters
+  const { params, updateParam, resetParams } = useSearchParams({
+    keyword: "",
+    locationFilter: "",
+    typeFilter: "All" as typeof employmentTypeOptions[number],
+    remoteOnly: false,
+    indigenousOnly: false,
+    activeOnly: true,
+    savedOnly: false,
+    minSalary: "" as number | "",
+    maxSalary: "" as number | "",
+    sortBy: "newest" as typeof sortOptions[number]["value"],
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -106,22 +100,24 @@ export default function JobsPage() {
       try {
         setError(null);
         const data = await listJobPostings({
-          employmentType: typeFilter !== "All" ? typeFilter : undefined,
-          remoteOnly,
-          indigenousOnly,
-          activeOnly,
+          employmentType: params.typeFilter !== "All" ? params.typeFilter : undefined,
+          remoteOnly: params.remoteOnly,
+          indigenousOnly: params.indigenousOnly,
+          activeOnly: params.activeOnly,
         });
         setJobs(data);
       } catch (err) {
         console.error("Failed to load jobs", err);
-        setError("We couldn't load jobs right now. Please try again in a moment.");
+        setError(
+          "We couldn't load jobs right now. Please try again in a moment."
+        );
       } finally {
         setLoading(false);
       }
     })();
-  }, [activeOnly, indigenousOnly, remoteOnly, typeFilter]);
+  }, [params.activeOnly, params.indigenousOnly, params.remoteOnly, params.typeFilter]);
 
-  const listings = jobs.length > 0 ? jobs : sampleJobs;
+  const listings = jobs;
 
   useEffect(() => {
     const loadSaved = async () => {
@@ -163,49 +159,82 @@ export default function JobsPage() {
       const text = `${job.title ?? ""} ${job.employerName ?? ""} ${
         job.description ?? ""
       } ${job.location ?? ""}`.toLowerCase();
-      const matchesKeyword = keyword
-        ? text.includes(keyword.toLowerCase())
+      const matchesKeyword = params.keyword
+        ? text.includes(params.keyword.toLowerCase())
         : true;
-      const matchesLocation = locationFilter
+      const matchesLocation = params.locationFilter
         ? (job.location ?? "")
             .toLowerCase()
-            .includes(locationFilter.toLowerCase())
+            .includes(params.locationFilter.toLowerCase())
         : true;
       const matchesType =
-        typeFilter === "All" ||
-        (job.employmentType ?? "").toLowerCase() ===
-          typeFilter.toLowerCase();
-      const matchesRemote = !remoteOnly
+        params.typeFilter === "All" ||
+        (job.employmentType ?? "").toLowerCase() === params.typeFilter.toLowerCase();
+      const matchesRemote = !params.remoteOnly
         ? true
         : job.remoteFlag ||
           (job.location ?? "").toLowerCase().includes("remote");
-      const matchesIndigenous = !indigenousOnly
+      const matchesIndigenous = !params.indigenousOnly
         ? true
         : Boolean(job.indigenousPreference);
+      const matchesActive = !params.activeOnly ? true : job.active;
+      const matchesSaved = !params.savedOnly ? true : savedJobIds.has(job.id);
 
-      const matchesActive = !activeOnly ? true : job.active;
+      // Salary range filtering
+      const matchesSalary = (() => {
+        if (!params.minSalary && !params.maxSalary) return true;
+        if (!job.salaryRange) return false;
+
+        // Extract numbers from salary range (e.g., "$50,000 - $70,000" or "$60K-$80K")
+        const salaryNumbers = job.salaryRange.match(/\d+[,\d]*/g);
+        if (!salaryNumbers || salaryNumbers.length === 0) return false;
+
+        const jobSalaries = salaryNumbers.map(s => {
+          const num = parseFloat(s.replace(/,/g, ''));
+          // If salary is in K format (e.g., "60K"), multiply by 1000
+          if (job.salaryRange?.toLowerCase().includes('k')) {
+            return num * 1000;
+          }
+          return num;
+        });
+
+        const jobMinSalary = Math.min(...jobSalaries);
+        const jobMaxSalary = Math.max(...jobSalaries);
+
+        if (params.minSalary && jobMaxSalary < params.minSalary) return false;
+        if (params.maxSalary && jobMinSalary > params.maxSalary) return false;
+
+        return true;
+      })();
+
       return (
         matchesKeyword &&
         matchesLocation &&
         matchesType &&
         matchesRemote &&
         matchesIndigenous &&
-        matchesActive
+        matchesActive &&
+        matchesSaved &&
+        matchesSalary
       );
     });
   }, [
-    activeOnly,
-    indigenousOnly,
-    keyword,
+    params.activeOnly,
+    params.indigenousOnly,
+    params.keyword,
     listings,
-    locationFilter,
-    remoteOnly,
-    typeFilter,
+    params.locationFilter,
+    params.remoteOnly,
+    params.typeFilter,
+    params.savedOnly,
+    savedJobIds,
+    params.minSalary,
+    params.maxSalary,
   ]);
 
   const sortedJobs = useMemo(() => {
     const copy = [...filteredJobs];
-    switch (sortBy) {
+    switch (params.sortBy) {
       case "closing":
         return copy.sort((a, b) => {
           const aDate = getTimeValue(a.closingDate ?? null);
@@ -224,65 +253,64 @@ export default function JobsPage() {
           return bDate - aDate;
         });
     }
-  }, [filteredJobs, sortBy]);
+  }, [filteredJobs, params.sortBy]);
+
+  const displayedJobs = useMemo(
+    () => sortedJobs.slice(0, displayLimit),
+    [displayLimit, sortedJobs]
+  );
+
+  const hasMore = displayLimit < sortedJobs.length;
+
+  const handleLoadMore = () => setDisplayLimit((prev) => prev + 20);
+
+  const resetFilters = () => {
+    resetParams();
+    setDisplayLimit(20);
+  };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Indigenous job board
-          </h1>
-          <p className="mt-2 text-sm text-slate-300">
-            Opportunities shared by partners across Turtle Island. When employers
-            publish a job it appears here and in the upcoming mobile app.
-          </p>
-        </div>
-        <div className="text-xs text-slate-400">
-          {loading ? "Loading jobs..." : `Showing ${sortedJobs.length} jobs`}
-        </div>
-      </div>
+    <PageShell>
+      <SectionHeader
+        eyebrow="Jobs & Careers"
+        title="Build your career with these employers"
+        subtitle="Explore roles across Turtle Island with employers committed to Indigenous talent and community success."
+      />
 
-      {error && (
-        <div className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <FilterCard className="mt-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
               Keyword
             </label>
             <input
               type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="Search title or organization"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              value={params.keyword}
+              onChange={(e) => updateParam("keyword", e.target.value)}
+              placeholder="Project manager, health, remote..."
+              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
               Location
             </label>
             <input
               type="text"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              placeholder="City / province / remote"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              value={params.locationFilter}
+              onChange={(e) => updateParam("locationFilter", e.target.value)}
+              placeholder="City, province, or remote"
+              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
               Job type
             </label>
             <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              value={params.typeFilter}
+              onChange={(e) => updateParam("typeFilter", e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             >
               {employmentTypeOptions.map((option) => (
                 <option key={option} value={option}>
@@ -292,17 +320,15 @@ export default function JobsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
               Sort by
             </label>
             <select
-              value={sortBy}
+              value={params.sortBy}
               onChange={(e) =>
-                setSortBy(
-                  e.target.value as (typeof sortOptions)[number]["value"]
-                )
+                updateParam("sortBy", e.target.value as (typeof sortOptions)[number]["value"])
               }
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -312,136 +338,349 @@ export default function JobsPage() {
             </select>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-200">
-          <label className="inline-flex items-center gap-2">
+
+        {/* Salary Range Filter */}
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Min Salary
+            </label>
             <input
-              type="checkbox"
-              checked={remoteOnly}
-              onChange={(e) => setRemoteOnly(e.target.checked)}
+              type="number"
+              value={params.minSalary}
+              onChange={(e) => updateParam("minSalary", e.target.value ? Number(e.target.value) : "")}
+              placeholder="e.g., 50000"
+              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
-            Remote/hybrid only
-          </label>
-          <label className="inline-flex items-center gap-2">
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Max Salary
+            </label>
             <input
-              type="checkbox"
-              checked={indigenousOnly}
-              onChange={(e) => setIndigenousOnly(e.target.checked)}
+              type="number"
+              value={params.maxSalary}
+              onChange={(e) => updateParam("maxSalary", e.target.value ? Number(e.target.value) : "")}
+              placeholder="e.g., 100000"
+              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
-            Indigenous preference only
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={activeOnly}
-              onChange={(e) => setActiveOnly(e.target.checked)}
-            />
-            Active roles only
-          </label>
+          </div>
+        </div>
+
+        {/* Quick Filters - Toggle Chips */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Filters:
+          </span>
+
+          {/* Active Only Toggle */}
           <button
             type="button"
-            onClick={() => {
-              setKeyword("");
-              setLocationFilter("");
-              setTypeFilter("All");
-              setRemoteOnly(false);
-              setIndigenousOnly(false);
-              setActiveOnly(true);
-              setSortBy("newest");
-            }}
-            className="text-xs text-teal-300 underline"
+            onClick={() => updateParam("activeOnly", !params.activeOnly)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+              params.activeOnly
+                ? "bg-[#14B8A6] text-slate-900"
+                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+            }`}
           >
-            Reset filters
+            {params.activeOnly && (
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+            Active only
           </button>
+
+          {/* Remote Only Toggle */}
+          <button
+            type="button"
+            onClick={() => updateParam("remoteOnly", !params.remoteOnly)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+              params.remoteOnly
+                ? "bg-blue-500 text-white"
+                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+            }`}
+          >
+            {params.remoteOnly && (
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+            Remote / Hybrid
+          </button>
+
+          {/* Indigenous Preference Toggle */}
+          <button
+            type="button"
+            onClick={() => updateParam("indigenousOnly", !params.indigenousOnly)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+              params.indigenousOnly
+                ? "bg-[#14B8A6] text-slate-900"
+                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+            }`}
+          >
+            {params.indigenousOnly && (
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+            Indigenous preference
+          </button>
+
+          {/* Saved Jobs Toggle (Community Members Only) */}
+          {role === "community" && (
+            <button
+              type="button"
+              onClick={() => updateParam("savedOnly", !params.savedOnly)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                params.savedOnly
+                  ? "bg-amber-500 text-slate-900"
+                  : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+              }`}
+            >
+              {params.savedOnly && (
+                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+              </svg>
+              Saved only
+            </button>
+          )}
+
+          {/* Reset Button - Only show if filters are active */}
+          {(params.activeOnly || params.remoteOnly || params.indigenousOnly || params.savedOnly || params.keyword || params.locationFilter || params.typeFilter !== "All" || params.minSalary || params.maxSalary) && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="ml-auto inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-red-500/40 hover:text-red-400"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear all
+            </button>
+          )}
         </div>
+      </FilterCard>
+
+      {error && (
+        <div className="mt-6 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-6 text-sm text-slate-400">
+        {loading
+          ? "Loading jobs..."
+          : sortedJobs.length === 0
+          ? "No jobs match your filters right now."
+          : `Showing ${displayedJobs.length} of ${sortedJobs.length} job${
+              sortedJobs.length === 1 ? "" : "s"
+            }`}
       </div>
 
-      <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-5 text-sm text-slate-200 shadow-inner shadow-black/30">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              For employers
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-50">
-              Ready to post jobs across Indigenous communities?
-            </h2>
-            <p className="text-slate-300">
-              Share roles, conferences, and scholarships from your employer
-              dashboard and meet Indigenous talent nationwide.
-            </p>
-          </div>
-            <div className="flex flex-col gap-2 text-xs font-semibold sm:flex-row">
-              <ButtonLink href="/employer">Go to employer portal</ButtonLink>
-              <ButtonLink href="/contact" variant="outline">
-                Talk to IOPPS
-              </ButtonLink>
-            </div>
-        </div>
-      </section>
+      <section className="mt-8 space-y-4">
+        {displayedJobs.map((job) => {
+          const deadline = formatDate(job.closingDate ?? null);
+          return (
+            <article
+              key={job.id}
+              className="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 transition-all duration-300 hover:border-[#14B8A6]"
+            >
+              <div className="space-y-4">
+                {/* Title and Saved badge */}
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <Link
+                      href={`/jobs/${job.id}`}
+                      className="text-xl font-bold text-slate-50 transition-colors duration-200 group-hover:text-[#14B8A6]"
+                    >
+                      {job.title}
+                    </Link>
+                    {savedJobIds.has(job.id) && (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                        Saved
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-      <div className="mt-6 grid gap-4">
-        {sortedJobs.map((job) => (
-          <article
-            key={job.id}
-            className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 transition hover:border-teal-500"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
-              <div>
-                <Link
-                  href={`/jobs/${job.id}`}
-                  className="text-lg font-semibold text-slate-50 hover:text-teal-300"
-                >
-                  {job.title}
-                </Link>
-                <p className="text-sm text-slate-300">
-                  {job.employerName || "Employer"}
-                </p>
+                {/* Employer and Location */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  {job.employerName && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#14B8A6]/20 to-blue-500/20 text-xs font-bold text-[#14B8A6]">
+                        {job.employerName.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-semibold text-slate-300">{job.employerName}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>{job.location}</span>
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-2.5 py-1 text-xs font-semibold text-slate-300">
+                    {job.employmentType || "Job type"}
+                  </span>
+                  {job.remoteFlag && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-300">
+                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      Remote
+                    </span>
+                  )}
+                  {job.indigenousPreference && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-2.5 py-1 text-xs font-medium text-[#14B8A6]">
+                      <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                      </svg>
+                      Indigenous preference
+                    </span>
+                  )}
+                  {job.salaryRange && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/40 px-2.5 py-1 text-xs font-medium text-slate-300">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {job.salaryRange}
+                    </span>
+                  )}
+                  {deadline && (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-2.5 py-1 text-xs font-medium text-[#14B8A6]">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Closes {deadline}
+                    </span>
+                  )}
+                </div>
+
+                {/* Description snippet */}
+                {job.description && (
+                  <p className="line-clamp-2 text-sm leading-relaxed text-slate-400">
+                    {job.description}
+                  </p>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-2">
+                  <Link
+                    href={`/jobs/${job.id}`}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+                  >
+                    {role === "community" ? "Apply Now" : "View job"}
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                  {role === "community" && (
+                    <button
+                      onClick={() => handleToggleSave(job.id)}
+                      disabled={savingJobId === job.id}
+                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all ${
+                        savedJobIds.has(job.id)
+                          ? "border-amber-400/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                          : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:border-amber-400/40 hover:bg-slate-800 hover:text-amber-400"
+                      }`}
+                      aria-label={savedJobIds.has(job.id) ? "Unsave job" : "Save job"}
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill={savedJobIds.has(job.id) ? "currentColor" : "none"}
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                        />
+                      </svg>
+                      {savedJobIds.has(job.id) ? "Saved" : "Save"}
+                    </button>
+                  )}
+                </div>
               </div>
-              <span className="rounded-full border border-slate-700 px-3 py-1 text-xs font-medium text-slate-200">
-                {job.employmentType}
-              </span>
+            </article>
+          );
+        })}
+
+        {!loading && jobs.length === 0 && params.keyword === "" && params.locationFilter === "" && params.typeFilter === "All" && !params.remoteOnly && !params.indigenousOnly && !params.savedOnly && (
+          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] px-8 py-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800/40">
+              <svg className="h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
             </div>
-            {role === "community" && (
-              <button
-                onClick={() => handleToggleSave(job.id)}
-                disabled={savingJobId === job.id}
-                className={`mt-2 w-max rounded-md border px-3 py-1 text-xs ${
-                  savedJobIds.has(job.id)
-                    ? "border-teal-400 text-teal-200"
-                    : "border-slate-700 text-slate-300 hover:border-teal-400 hover:text-teal-200"
-                }`}
-              >
-                {savedJobIds.has(job.id)
-                  ? savingJobId === job.id
-                    ? "Updating..."
-                    : "Saved"
-                  : savingJobId === job.id
-                  ? "Saving..."
-                  : "Save"}
-              </button>
-            )}
-            <p className="mt-3 text-sm text-slate-300">
-              {job.description?.slice(0, 180)}
-              {job.description && job.description.length > 180 ? "..." : ""}
+            <h3 className="text-xl font-bold text-slate-200">No jobs posted yet</h3>
+            <p className="mt-3 text-sm text-slate-400">
+              Check back soon for opportunities! Employers are starting to post jobs daily.
             </p>
-            <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
-              <span>{job.location}</span>
-              {job.remoteFlag && <span>Remote friendly</span>}
-              {job.indigenousPreference && (
-                <span className="rounded-full bg-teal-500/10 px-3 py-1 text-teal-200">
-                  Indigenous preference
-                </span>
-              )}
-              {job.salaryRange && <span>{job.salaryRange}</span>}
-            </div>
-          </article>
-        ))}
-        {!loading && sortedJobs.length === 0 && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-center text-sm text-slate-300">
-            No jobs match your filters yet. Try clearing filters or check back
-            soon as employers add new opportunities.
+            {role === "employer" && (
+              <Link
+                href="/employer/jobs/new"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Post a job
+              </Link>
+            )}
           </div>
         )}
-      </div>
-    </div>
+        {!loading && sortedJobs.length === 0 && (params.keyword !== "" || params.locationFilter !== "" || params.typeFilter !== "All" || params.remoteOnly || params.indigenousOnly || params.savedOnly) && (
+          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] px-8 py-12 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800/40">
+              <svg className="h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-slate-200">No jobs match your filters</h3>
+            <p className="mt-3 text-sm text-slate-400">
+              Try clearing filters or check back soon as employers add new opportunities.
+            </p>
+            <button
+              onClick={resetFilters}
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Clear all filters
+            </button>
+          </div>
+        )}
+      </section>
+
+      {!loading && hasMore && (
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            className="group inline-flex items-center gap-2 rounded-xl border border-slate-800/80 bg-[#08090C] px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+          >
+            Load more jobs
+            <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </PageShell>
   );
 }

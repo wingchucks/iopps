@@ -7,6 +7,8 @@ import {
   getEmployerProfile,
   upsertEmployerProfile,
 } from "@/lib/firestore";
+import { storage } from "@/lib/firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 export default function EmployerSetupPage() {
   const { user, role, loading } = useAuth();
@@ -14,6 +16,9 @@ export default function EmployerSetupPage() {
   const [website, setWebsite] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoFileName, setLogoFileName] = useState("");
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +33,7 @@ export default function EmployerSetupPage() {
           setWebsite(profile.website ?? "");
           setLocation(profile.location ?? "");
           setDescription(profile.description ?? "");
+          setLogoUrl(profile.logoUrl ?? "");
         }
       } catch (err) {
         console.error(err);
@@ -35,6 +41,30 @@ export default function EmployerSetupPage() {
       }
     })();
   }, [user, role]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    try {
+      setUploadingLogo(true);
+      const logoRef = ref(
+        storage,
+        `logos/${user.uid}/${Date.now()}-${file.name}`
+      );
+      await uploadBytes(logoRef, file);
+      const url = await getDownloadURL(logoRef);
+      setLogoUrl(url);
+      setLogoFileName(file.name);
+      setSuccessMessage("Logo uploaded successfully.");
+    } catch (err) {
+      console.error(err);
+      setError(
+        err instanceof Error ? err.message : "Failed to upload logo."
+      );
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,7 +78,7 @@ export default function EmployerSetupPage() {
         website,
         location,
         description,
-        logoUrl: "",
+        logoUrl,
       });
       setSuccessMessage("Profile saved!");
     } catch (err) {
@@ -111,16 +141,21 @@ export default function EmployerSetupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Employer profile
-      </h1>
-      <p className="mt-2 text-sm text-slate-300">
-        Tell the community about your organization. This information will show
-        on job postings and dashboards.
-      </p>
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
+      <div>
+        <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
+          Setup
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+          Employer profile
+        </h1>
+        <p className="mt-3 text-sm text-slate-400 sm:text-base">
+          Tell the community about your organization. This information will show
+          on job postings and dashboards.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
         <div>
           <label className="block text-sm font-medium text-slate-200">
             Organization name
@@ -170,15 +205,69 @@ export default function EmployerSetupPage() {
           />
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        <div>
+          <label className="block text-sm font-medium text-slate-200">
+            Organization logo
+          </label>
+          <div className="mt-2 flex flex-col gap-3">
+            <label className="flex cursor-pointer flex-col text-xs text-slate-200">
+              <span className="mb-2 rounded-md border border-slate-700 bg-slate-900 px-4 py-2 text-center text-sm hover:border-teal-500">
+                {uploadingLogo ? "Uploading..." : "Choose logo file"}
+              </span>
+              <input
+                type="file"
+                accept=".png,.jpg,.jpeg,.svg"
+                onChange={handleLogoUpload}
+                disabled={uploadingLogo}
+                className="hidden"
+              />
+            </label>
+            {uploadingLogo && (
+              <p className="text-xs text-slate-400">Uploading logo...</p>
+            )}
+            {logoFileName && (
+              <p className="text-xs text-teal-300">
+                Uploaded: {logoFileName}
+              </p>
+            )}
+            {logoUrl && (
+              <div className="flex items-center gap-3">
+                <img
+                  src={logoUrl}
+                  alt="Organization logo"
+                  className="h-20 w-auto rounded-md border border-slate-700 object-contain"
+                />
+                <a
+                  href={logoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-teal-300 underline"
+                >
+                  View full size
+                </a>
+              </div>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-slate-400">
+            Upload a PNG, JPG, or SVG file. Recommended size: 200x200px or larger.
+          </p>
+        </div>
+
+        {error && (
+          <p className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {error}
+          </p>
+        )}
         {successMessage && (
-          <p className="text-sm text-teal-300">{successMessage}</p>
+          <p className="rounded-md border border-[#14B8A6]/40 bg-[#14B8A6]/10 px-3 py-2 text-sm text-[#14B8A6]">
+            {successMessage}
+          </p>
         )}
 
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400 disabled:opacity-60"
+          className="rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>

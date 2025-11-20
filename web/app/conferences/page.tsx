@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { listConferences } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
+import { PageShell } from "@/components/PageShell";
+import { SectionHeader } from "@/components/SectionHeader";
+import { FilterCard } from "@/components/FilterCard";
+import { useSearchParams } from "@/lib/useSearchParams";
 
 const timeframeFilters = ["All", "Next 30 days", "Next 90 days"] as const;
 const sortOptions = [
@@ -36,13 +40,15 @@ export default function ConferencesPage() {
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [keyword, setKeyword] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [timeframeFilter, setTimeframeFilter] =
-    useState<(typeof timeframeFilters)[number]>("All");
-  const [costFilter, setCostFilter] = useState<"all" | "free" | "paid">("all");
-  const [sortBy, setSortBy] =
-    useState<(typeof sortOptions)[number]["value"]>("soonest");
+
+  // URL-synced filter parameters
+  const { params, updateParam, resetParams } = useSearchParams({
+    keyword: "",
+    locationFilter: "",
+    timeframeFilter: "All" as typeof timeframeFilters[number],
+    costFilter: "all" as "all" | "free" | "paid",
+    sortBy: "soonest" as typeof sortOptions[number]["value"],
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -66,34 +72,34 @@ export default function ConferencesPage() {
     return conferences.filter((conf) => {
       const text = `${conf.title} ${conf.employerName ?? ""} ${conf.description}`
         .toLowerCase();
-      const matchesKeyword = keyword
-        ? text.includes(keyword.toLowerCase())
+      const matchesKeyword = params.keyword
+        ? text.includes(params.keyword.toLowerCase())
         : true;
-      const matchesLocation = locationFilter
-        ? conf.location.toLowerCase().includes(locationFilter.toLowerCase())
+      const matchesLocation = params.locationFilter
+        ? conf.location.toLowerCase().includes(params.locationFilter.toLowerCase())
         : true;
       const startTime = getTimeValue(conf.startDate ?? null);
       const matchesTimeframe =
-        timeframeFilter === "All"
+        params.timeframeFilter === "All"
           ? true
-          : timeframeFilter === "Next 30 days"
+          : params.timeframeFilter === "Next 30 days"
           ? startTime < now + 30 * 24 * 60 * 60 * 1000
           : startTime < now + 90 * 24 * 60 * 60 * 1000;
       const matchesCost =
-        costFilter === "all"
+        params.costFilter === "all"
           ? true
-          : costFilter === "free"
+          : params.costFilter === "free"
           ? !conf.cost ||
             conf.cost.toLowerCase().includes("free") ||
             conf.cost.toLowerCase().includes("no cost")
           : Boolean(conf.cost && !conf.cost.toLowerCase().includes("free"));
       return matchesKeyword && matchesLocation && matchesTimeframe && matchesCost;
     });
-  }, [conferences, costFilter, keyword, locationFilter, timeframeFilter]);
+  }, [conferences, params.costFilter, params.keyword, params.locationFilter, params.timeframeFilter]);
 
   const sortedConferences = useMemo(() => {
     const copy = [...filtered];
-    if (sortBy === "recent") {
+    if (params.sortBy === "recent") {
       return copy.sort(
         (a, b) =>
           getTimeValue(b.createdAt ?? null, 0) -
@@ -103,24 +109,17 @@ export default function ConferencesPage() {
     return copy.sort(
       (a, b) => getTimeValue(a.startDate ?? null) - getTimeValue(b.startDate ?? null)
     );
-  }, [filtered, sortBy]);
+  }, [filtered, params.sortBy]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <section className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.4em] text-teal-300">
-          Conferences & Gatherings
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Connect, learn, and celebrate Indigenous leadership
-        </h1>
-        <p className="text-sm text-slate-300 sm:text-base">
-          Explore conferences, summits, and gatherings from employers, Nations, and
-          education partners.
-        </p>
-      </section>
+    <PageShell>
+      <SectionHeader
+        eyebrow="Conferences & Gatherings"
+        title="Connect, learn, and celebrate Indigenous leadership"
+        subtitle="Explore conferences, summits, and gatherings from employers, Nations, and education partners."
+      />
 
-      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/60 p-5 shadow-lg">
+      <FilterCard className="mt-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -128,8 +127,8 @@ export default function ConferencesPage() {
             </label>
             <input
               type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              value={params.keyword}
+              onChange={(e) => updateParam("keyword", e.target.value)}
               placeholder="Summit, health, education..."
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
@@ -140,8 +139,8 @@ export default function ConferencesPage() {
             </label>
             <input
               type="text"
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
+              value={params.locationFilter}
+              onChange={(e) => updateParam("locationFilter", e.target.value)}
               placeholder="City / province"
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             />
@@ -151,9 +150,9 @@ export default function ConferencesPage() {
               Timeframe
             </label>
             <select
-              value={timeframeFilter}
+              value={params.timeframeFilter}
               onChange={(e) =>
-                setTimeframeFilter(e.target.value as (typeof timeframeFilters)[number])
+                updateParam("timeframeFilter", e.target.value as (typeof timeframeFilters)[number])
               }
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             >
@@ -169,9 +168,9 @@ export default function ConferencesPage() {
               Sort by
             </label>
             <select
-              value={sortBy}
+              value={params.sortBy}
               onChange={(e) =>
-                setSortBy(e.target.value as (typeof sortOptions)[number]["value"])
+                updateParam("sortBy", e.target.value as (typeof sortOptions)[number]["value"])
               }
               className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
             >
@@ -189,8 +188,8 @@ export default function ConferencesPage() {
               type="radio"
               name="cost-filter"
               value="all"
-              checked={costFilter === "all"}
-              onChange={() => setCostFilter("all")}
+              checked={params.costFilter === "all"}
+              onChange={() => updateParam("costFilter", "all")}
             />
             All costs
           </label>
@@ -199,8 +198,8 @@ export default function ConferencesPage() {
               type="radio"
               name="cost-filter"
               value="free"
-              checked={costFilter === "free"}
-              onChange={() => setCostFilter("free")}
+              checked={params.costFilter === "free"}
+              onChange={() => updateParam("costFilter", "free")}
             />
             Free / community sponsored
           </label>
@@ -209,28 +208,22 @@ export default function ConferencesPage() {
               type="radio"
               name="cost-filter"
               value="paid"
-              checked={costFilter === "paid"}
-              onChange={() => setCostFilter("paid")}
+              checked={params.costFilter === "paid"}
+              onChange={() => updateParam("costFilter", "paid")}
             />
             Paid registration
           </label>
           <button
             type="button"
-            onClick={() => {
-              setKeyword("");
-              setLocationFilter("");
-              setTimeframeFilter("All");
-              setCostFilter("all");
-              setSortBy("soonest");
-            }}
-            className="text-xs font-semibold text-teal-300 underline"
+            onClick={resetParams}
+            className="text-xs font-semibold text-[#14B8A6] underline hover:text-[#14B8A6]/80"
           >
             Reset filters
           </button>
         </div>
-      </section>
+      </FilterCard>
 
-      <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-5 text-sm text-slate-200 shadow-inner shadow-black/30">
+      <section className="mt-8 rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 sm:p-6 text-sm text-slate-200 shadow-lg shadow-black/30">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -247,13 +240,13 @@ export default function ConferencesPage() {
           <div className="flex flex-col gap-2 text-xs font-semibold sm:flex-row">
             <Link
               href="/employer#opportunities"
-              className="rounded-full bg-teal-500 px-4 py-2 text-center text-slate-900 hover:bg-teal-400"
+              className="rounded-full bg-[#14B8A6] px-4 py-2 text-center text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
             >
               Go to employer portal
             </Link>
             <Link
               href="/contact"
-              className="rounded-full border border-slate-700 px-4 py-2 text-center text-slate-100 hover:border-teal-400 hover:text-teal-200"
+              className="rounded-full border border-slate-700 px-4 py-2 text-center text-slate-100 hover:border-[#14B8A6] hover:text-[#14B8A6] transition-colors"
             >
               Talk to IOPPS
             </Link>
@@ -286,16 +279,16 @@ export default function ConferencesPage() {
             {sortedConferences.map((conf) => (
               <article
                 key={conf.id}
-                className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-teal-400"
+                className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.4em] text-teal-300">
+                    <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
                       {conf.employerName || "Organizer"}
                     </p>
                     <Link
                       href={`/conferences/${conf.id}`}
-                      className="mt-1 block text-xl font-semibold text-slate-50 hover:text-teal-300"
+                      className="mt-1 block text-xl font-semibold text-slate-50 hover:text-[#14B8A6]"
                     >
                       {conf.title}
                     </Link>
@@ -342,6 +335,6 @@ export default function ConferencesPage() {
           </div>
         )}
       </section>
-    </div>
+    </PageShell>
   );
 }

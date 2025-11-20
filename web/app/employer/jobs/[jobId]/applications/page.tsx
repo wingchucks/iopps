@@ -78,7 +78,7 @@ export default function EmployerJobApplicationsPage() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
           >
             Login
           </Link>
@@ -104,7 +104,7 @@ export default function EmployerJobApplicationsPage() {
     <div className="mx-auto max-w-5xl px-4 py-10 space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-teal-300">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#14B8A6]">
             Applications
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
@@ -117,7 +117,7 @@ export default function EmployerJobApplicationsPage() {
         </div>
         <Link
           href="/employer"
-          className="text-xs text-teal-300 underline"
+          className="text-xs text-[#14B8A6] underline"
         >
           Back to employer dashboard
         </Link>
@@ -165,7 +165,7 @@ export default function EmployerJobApplicationsPage() {
                           e.target.value as ApplicationStatus
                         )
                       }
-                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
+                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
                     >
                       <option value="submitted">submitted</option>
                       <option value="reviewed">reviewed</option>

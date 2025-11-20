@@ -52,29 +52,29 @@ export default function SavedJobsPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading your account...</p>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
+        <p className="mt-3 text-sm text-slate-400">Loading your account...</p>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
-        <p className="text-sm text-slate-300">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16 space-y-4">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Please sign in</h1>
+        <p className="mt-3 text-sm text-slate-400">
           Log in or register as a community member to see your saved jobs.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-teal-400 hover:text-teal-300"
+            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6]"
           >
             Register
           </Link>
@@ -85,11 +85,11 @@ export default function SavedJobsPage() {
 
   if (role !== "community") {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16 space-y-4">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           Community member area
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="mt-3 text-sm text-slate-400">
           Switch to your community account to view saved jobs.
         </p>
       </div>
@@ -97,19 +97,27 @@ export default function SavedJobsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 space-y-6">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-teal-300">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#14B8A6]">
             Saved jobs
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             Keep track of opportunities
           </h1>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 mt-3 text-sm text-slate-400">
             Saved jobs stay here even after you leave the site. Use the filters
             to find active roles or revisit older listings.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <Link
+              href="/member/dashboard"
+              className="rounded-md border border-slate-700 bg-slate-800/40 px-3 py-2 text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+            >
+              Go to Dashboard →
+            </Link>
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
@@ -117,12 +125,12 @@ export default function SavedJobsPage() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="Search job or employer"
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           >
             <option value="all">All</option>
             <option value="active">Active only</option>
@@ -138,9 +146,9 @@ export default function SavedJobsPage() {
       )}
 
       {listLoading ? (
-        <p className="text-sm text-slate-300">Loading saved jobs...</p>
+        <p className="mt-3 text-sm text-slate-400">Loading saved jobs...</p>
       ) : filteredJobs.length === 0 ? (
-        <p className="text-sm text-slate-300">
+        <p className="mt-3 text-sm text-slate-400">
           No saved jobs match your filters. Save jobs from the Jobs page and
           they will appear here.
         </p>
@@ -155,11 +163,11 @@ export default function SavedJobsPage() {
                 <div>
                   <Link
                     href={`/jobs/${entry.jobId}`}
-                    className="text-lg font-semibold text-slate-50 hover:text-teal-300"
+                    className="text-lg font-semibold text-slate-50 hover:text-[#14B8A6]"
                   >
                     {entry.job?.title}
                   </Link>
-                  <p className="text-sm text-slate-300">
+                  <p className="mt-3 text-sm text-slate-400">
                     {entry.job?.employerName}
                   </p>
                 </div>
@@ -167,7 +175,7 @@ export default function SavedJobsPage() {
                   {entry.job?.employmentType}
                 </span>
               </div>
-              <p className="mt-3 text-sm text-slate-300">
+              <p className="mt-3 mt-3 text-sm text-slate-400">
                 {entry.job?.description?.slice(0, 180)}
                 {entry.job?.description &&
                 entry.job.description.length > 180
@@ -178,7 +186,7 @@ export default function SavedJobsPage() {
                 <span>{entry.job?.location}</span>
                 {entry.job?.remoteFlag && <span>Remote friendly</span>}
                 {entry.job?.indigenousPreference && (
-                  <span className="rounded-full bg-teal-500/10 px-3 py-1 text-teal-200">
+                  <span className="rounded-full bg-[#14B8A6]/10 px-3 py-1 text-[#14B8A6]">
                     Indigenous preference
                   </span>
                 )}

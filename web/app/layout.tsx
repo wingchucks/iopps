@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,8 +18,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const year = new Date().getFullYear();
-
   return (
     <html lang="en">
       <body className={`${inter.className} bg-slate-950 text-slate-100`}>
@@ -28,11 +27,7 @@ export default function RootLayout({
 
             <main className="flex-1">{children}</main>
 
-            <footer className="border-t border-slate-800 bg-slate-900/80">
-              <div className="mx-auto max-w-6xl px-4 py-4 text-xs text-slate-400">
-                &copy; {year} IOPPS. Empowering Indigenous Success across Canada.
-              </div>
-            </footer>
+            <SiteFooter />
           </div>
         </AuthProvider>
       </body>

@@ -9,32 +9,32 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading your account...</p>
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
+        <p className="mt-3 text-sm text-slate-400">Loading your account...</p>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16 space-y-4">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           Sign in to view your account
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="mt-3 text-sm text-slate-400">
           You need to be logged in to see your account details. Head over to the
           login page to continue.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90"
           >
             Go to login
           </Link>
           <Link
             href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-teal-400 hover:text-teal-300"
+            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6]"
           >
             Need an account?
           </Link>
@@ -43,14 +43,10 @@ export default function AccountPage() {
     );
   }
 
-  if (role === "employer") {
-    redirect("/employer");
-  }
-
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">My Account</h1>
-      <p className="mt-1 text-sm text-slate-300">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">My Account</h1>
+      <p className="mt-1 mt-3 text-sm text-slate-400">
         Manage your IOPPS profile and learn what you can do next.
       </p>
 
@@ -80,36 +76,24 @@ export default function AccountPage() {
       </div>
 
       {role === "employer" ? (
-        <div className="mt-6 rounded-lg border border-teal-500/30 bg-teal-500/10 p-4 text-sm text-teal-200 space-y-3">
+        <div className="mt-6 rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/10 p-4 sm:p-8 text-sm text-slate-200 space-y-3">
           <div>
             <p className="font-semibold">Employer access</p>
             <p className="mt-1">
-              Keep your organization info up to date and share new postings.
+              Manage your opportunities, track applications, and update your organization profile.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/employer/setup"
-              className="rounded-md border border-teal-500/50 px-3 py-2 text-xs font-semibold uppercase tracking-widest"
+              href="/employer/dashboard"
+              className="inline-flex rounded-md bg-[#14B8A6] px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-[#14B8A6]/90"
             >
-              Edit employer profile
-            </Link>
-            <Link
-              href="/employer/jobs/new"
-              className="rounded-md bg-teal-500 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-teal-400"
-            >
-              Post a job
-            </Link>
-            <Link
-              href="/employer/conferences/new"
-              className="rounded-md border border-teal-500/50 px-3 py-2 text-xs font-semibold uppercase tracking-widest hover:border-teal-300"
-            >
-              Post a conference
+              Go to Dashboard
             </Link>
           </div>
         </div>
       ) : (
-        <div className="mt-6 rounded-lg border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-200 space-y-3">
+        <div className="mt-6 rounded-lg border border-slate-700 bg-slate-900/60 p-4 sm:p-8 text-sm text-slate-200 space-y-3">
           <div>
             <p className="font-semibold">Community member</p>
             <p className="mt-1">
@@ -119,22 +103,10 @@ export default function AccountPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/member/profile"
-              className="inline-flex rounded-md bg-teal-500 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-teal-400"
+              href="/member/dashboard"
+              className="inline-flex rounded-md bg-[#14B8A6] px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-[#14B8A6]/90"
             >
-              Update profile
-            </Link>
-            <Link
-              href="/member/applications"
-              className="inline-flex rounded-md border border-slate-600 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-200 hover:border-teal-400 hover:text-teal-300"
-            >
-              View applications
-            </Link>
-            <Link
-              href="/saved"
-              className="inline-flex rounded-md border border-slate-600 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-200 hover:border-teal-400 hover:text-teal-300"
-            >
-              View saved jobs
+              Go to Dashboard
             </Link>
           </div>
         </div>

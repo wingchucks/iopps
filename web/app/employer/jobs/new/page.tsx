@@ -32,6 +32,55 @@ export default function NewJobPage() {
   const [applicationEmail, setApplicationEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleGenerateWithAI = async () => {
+    if (!title.trim()) {
+      setAiError("Please enter a job title first");
+      return;
+    }
+
+    setGeneratingAI(true);
+    setAiError(null);
+
+    try {
+      const response = await fetch("/api/ai/job-description", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          location: location || undefined,
+          employmentType: employmentType || undefined,
+          salaryRange: salaryRange || undefined,
+          organizationName: organizationName || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || "Failed to generate job description");
+      }
+
+      const data = await response.json();
+
+      // Fill in the form fields with AI-generated content
+      setDescription(data.description);
+      setResponsibilities(data.responsibilities.join("\n"));
+      setQualifications(data.qualifications.join("\n"));
+    } catch (err) {
+      console.error(err);
+      setAiError(
+        err instanceof Error
+          ? err.message
+          : "Failed to generate job description with AI"
+      );
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
 
   useEffect(() => {
     if (!user || role !== "employer") return;
@@ -105,13 +154,13 @@ export default function NewJobPage() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-teal-400 hover:text-teal-300"
+            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6]"
           >
             Register
           </Link>
@@ -144,7 +193,7 @@ export default function NewJobPage() {
         </p>
         <Link
           href="/employer/setup"
-          className="inline-flex rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+          className="inline-flex rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           Go to employer setup
         </Link>
@@ -171,7 +220,7 @@ export default function NewJobPage() {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div>
@@ -183,7 +232,7 @@ export default function NewJobPage() {
             required
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -194,7 +243,7 @@ export default function NewJobPage() {
             <select
               value={employmentType}
               onChange={(e) => setEmploymentType(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
             >
               {employmentTypes.map((type) => (
                 <option key={type} value={type}>
@@ -212,7 +261,7 @@ export default function NewJobPage() {
               value={salaryRange}
               onChange={(e) => setSalaryRange(e.target.value)}
               placeholder="$65,000 - $78,000"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
         </div>
@@ -244,8 +293,51 @@ export default function NewJobPage() {
             type="date"
             value={closingDate}
             onChange={(e) => setClosingDate(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
+        </div>
+
+        {/* AI Generation Section */}
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="h-5 w-5 text-amber-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                <h3 className="text-sm font-semibold text-amber-300">
+                  AI-Powered Job Description
+                </h3>
+              </div>
+              <p className="mt-1 text-xs text-slate-300">
+                Save time by generating a professional job description,
+                responsibilities, and qualifications tailored to IOPPS's
+                Indigenous-focused platform. You can edit everything after
+                generation.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateWithAI}
+              disabled={generatingAI || !title.trim()}
+              className="rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {generatingAI ? "Generating..." : "Generate with AI"}
+            </button>
+          </div>
+          {aiError && (
+            <p className="mt-3 text-sm text-red-400">{aiError}</p>
+          )}
         </div>
 
         <div>
@@ -257,7 +349,7 @@ export default function NewJobPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={6}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
@@ -270,7 +362,7 @@ export default function NewJobPage() {
               value={responsibilities}
               onChange={(e) => setResponsibilities(e.target.value)}
               rows={5}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
           <div>
@@ -281,7 +373,7 @@ export default function NewJobPage() {
               value={qualifications}
               onChange={(e) => setQualifications(e.target.value)}
               rows={5}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
         </div>
@@ -295,7 +387,7 @@ export default function NewJobPage() {
             value={applicationLink}
             onChange={(e) => setApplicationLink(e.target.value)}
             placeholder="https://example.com/apply"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
         <div>
@@ -307,7 +399,7 @@ export default function NewJobPage() {
             value={applicationEmail}
             onChange={(e) => setApplicationEmail(e.target.value)}
             placeholder="talent@organization.ca"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
           <p className="mt-1 text-xs text-slate-400">
             Provide at least one of link or email so community members can apply.
@@ -319,7 +411,7 @@ export default function NewJobPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400 disabled:opacity-60"
+          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
         >
           {saving ? "Posting..." : "Publish job"}
         </button>

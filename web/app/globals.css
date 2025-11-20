@@ -1,8 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #e2e8f0;
+  /* Brand Colors */
+  --accent: #14B8A6;       /* IOPPS teal */
+  --accent-soft: #0B8A7A;  /* darker teal */
+  --accent-hover: #16cdb8; /* teal hover state */
+
+  /* Base Colors */
+  --background: #020617;   /* slate-950 */
+  --foreground: #e2e8f0;   /* slate-200 */
+
+  /* Card System */
+  --card-bg: #08090C;      /* dark card background */
+  --card-border: rgba(30, 41, 59, 0.8); /* slate-800 with 80% opacity */
+  --card-border-hover: rgba(20, 184, 166, 0.7); /* accent with 70% opacity */
+
+  /* Input System */
+  --input-bg: #020617;     /* slate-950 */
+  --input-border: #1e293b; /* slate-800 */
+  --input-focus: #14B8A6;  /* accent teal */
+
+  /* Text Colors */
+  --text-primary: #f8fafc;    /* slate-50 */
+  --text-secondary: #cbd5e1;  /* slate-300 */
+  --text-muted: #94a3b8;      /* slate-400 */
+  --text-subtle: #64748b;     /* slate-500 */
+
+  /* Semantic Colors */
+  --success: #14B8A6;      /* teal */
+  --warning: #fbbf24;      /* amber-400 */
+  --error: #ef4444;        /* red-500 */
+  --info: #38bdf8;         /* sky-400 */
 }
 
 @theme inline {
@@ -12,15 +40,42 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: light) {
+/* Removed light mode override to keep dark theme consistent */
+/* @media (prefers-color-scheme: light) {
   :root {
     --background: #f8fafc;
     --foreground: #0f172a;
   }
+} */
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.15), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.15), transparent 55%),
+    #020617;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Global Focus States */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Input Focus Override (for bordered inputs) */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--input-focus);
 }
