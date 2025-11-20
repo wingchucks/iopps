@@ -61,7 +61,14 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user || !role || (role !== "admin" && role !== "moderator")) {
+    if (!user || !role) {
+      router.push("/");
+      return;
+    }
+
+    // Check authorization with positive comparison for better type narrowing
+    const isAuthorized = role === "admin" || role === "moderator";
+    if (!isAuthorized) {
       router.push("/");
       return;
     }
