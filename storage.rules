@@ -1,0 +1,78 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is an employer
+    function isEmployer() {
+      return isSignedIn() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'employer';
+    }
+
+    // Vendor images (logos and hero images)
+    match /vendors/{vendorId}/{allPaths=**} {
+      // Allow read for all (public images)
+      allow read: if true;
+
+      // Only allow authenticated employers to upload/update/delete their own vendor images
+      allow write: if isSignedIn() && isEmployer() &&
+        request.auth.uid == vendorId;
+    }
+
+    // Product/service images
+    match /products/{vendorId}/{allPaths=**} {
+      // Allow read for all (public images)
+      allow read: if true;
+
+      // Only allow authenticated employers to upload/update/delete their own product images
+      allow write: if isSignedIn() && isEmployer() &&
+        request.auth.uid == vendorId;
+    }
+
+    // Member profile images (for future use)
+    match /profiles/{userId}/{allPaths=**} {
+      // Allow read for all
+      allow read: if true;
+
+      // Only allow users to upload/update/delete their own profile images
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Resumes for member profiles
+    match /resumes/{userId}/{allPaths=**} {
+      // Allow read for all (employers need to view applicant resumes)
+      allow read: if true;
+
+      // Only allow users to upload/update/delete their own resumes
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Employer/organization logos (for future use)
+    match /employers/{employerId}/{allPaths=**} {
+      // Allow read for all (public logos)
+      allow read: if true;
+
+      // Only allow authenticated employers to upload/update/delete their own logos
+      allow write: if isSignedIn() && isEmployer() &&
+        request.auth.uid == employerId;
+    }
+
+    // Conference images (for future use)
+    match /conferences/{conferenceId}/{allPaths=**} {
+      // Allow read for all (public images)
+      allow read: if true;
+
+      // Only allow the conference owner to upload/update/delete
+      allow write: if isSignedIn() && isEmployer() &&
+        firestore.get(/databases/(default)/documents/conferences/$(conferenceId)).data.employerId == request.auth.uid;
+    }
+
+    // Block all other paths by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
