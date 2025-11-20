@@ -78,7 +78,7 @@ export default function AdminVendorsPage() {
 
     try {
       setProcessing(vendorId);
-      const vendorRef = doc(db, "vendors", vendorId);
+      const vendorRef = doc(db!, "vendors", vendorId);
       await updateDoc(vendorRef, {
         active: !currentStatus,
         updatedAt: serverTimestamp(),
@@ -103,7 +103,7 @@ export default function AdminVendorsPage() {
 
     try {
       setProcessing(vendorId);
-      const vendorRef = doc(db, "vendors", vendorId);
+      const vendorRef = doc(db!, "vendors", vendorId);
       await updateDoc(vendorRef, {
         featured: !currentFeatured,
         updatedAt: serverTimestamp(),
@@ -136,7 +136,7 @@ export default function AdminVendorsPage() {
 
     try {
       setProcessing(vendorId);
-      const vendorRef = doc(db, "vendors", vendorId);
+      const vendorRef = doc(db!, "vendors", vendorId);
       await deleteDoc(vendorRef);
 
       // Update local state

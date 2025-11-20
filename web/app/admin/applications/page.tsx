@@ -99,7 +99,7 @@ export default function AdminApplicationsPage() {
 
     try {
       setProcessing(applicationId);
-      const applicationRef = doc(db, "applications", applicationId);
+      const applicationRef = doc(db!, "applications", applicationId);
       await deleteDoc(applicationRef);
 
       // Update local state

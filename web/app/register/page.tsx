@@ -60,7 +60,7 @@ export default function RegisterPage() {
 
       await updateProfile(cred.user, { displayName: displayName.trim() });
 
-      await setDoc(doc(db, "users", cred.user.uid), {
+      await setDoc(doc(db!, "users", cred.user.uid), {
         id: cred.user.uid,
         role,
         displayName: displayName.trim(),
@@ -144,7 +144,7 @@ export default function RegisterPage() {
     try {
       // Update user role in Firestore
       await setDoc(
-        doc(db, "users", auth.currentUser.uid),
+        doc(db!, "users", auth.currentUser.uid),
         { role: selectedRole },
         { merge: true }
       );

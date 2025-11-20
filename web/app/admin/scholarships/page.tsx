@@ -96,7 +96,7 @@ export default function AdminScholarshipsPage() {
 
     try {
       setProcessing(scholarshipId);
-      const scholarshipRef = doc(db, "scholarships", scholarshipId);
+      const scholarshipRef = doc(db!, "scholarships", scholarshipId);
       await updateDoc(scholarshipRef, {
         active: !currentStatus,
         updatedAt: serverTimestamp(),
@@ -129,7 +129,7 @@ export default function AdminScholarshipsPage() {
 
     try {
       setProcessing(scholarshipId);
-      const scholarshipRef = doc(db, "scholarships", scholarshipId);
+      const scholarshipRef = doc(db!, "scholarships", scholarshipId);
       await deleteDoc(scholarshipRef);
 
       // Update local state

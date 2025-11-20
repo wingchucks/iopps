@@ -144,7 +144,7 @@ export default function MemberAlertsPage() {
 
       if (editingAlert) {
         // Update existing alert
-        const alertRef = doc(db, "jobAlerts", editingAlert.id);
+        const alertRef = doc(db!, "jobAlerts", editingAlert.id);
         await updateDoc(alertRef, alertData);
 
         // Update local state
@@ -185,7 +185,7 @@ export default function MemberAlertsPage() {
 
   async function toggleAlertStatus(alertId: string, currentStatus: boolean) {
     try {
-      const alertRef = doc(db, "jobAlerts", alertId);
+      const alertRef = doc(db!, "jobAlerts", alertId);
       await updateDoc(alertRef, {
         active: !currentStatus,
         updatedAt: serverTimestamp(),
@@ -209,7 +209,7 @@ export default function MemberAlertsPage() {
     if (!confirmed) return;
 
     try {
-      const alertRef = doc(db, "jobAlerts", alertId);
+      const alertRef = doc(db!, "jobAlerts", alertId);
       await deleteDoc(alertRef);
 
       // Update local state

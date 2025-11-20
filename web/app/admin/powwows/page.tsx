@@ -92,7 +92,7 @@ export default function AdminPowwowsPage() {
 
     try {
       setProcessing(powwowId);
-      const powwowRef = doc(db, "powwows", powwowId);
+      const powwowRef = doc(db!, "powwows", powwowId);
       await updateDoc(powwowRef, {
         active: !currentStatus,
         updatedAt: serverTimestamp(),
@@ -123,7 +123,7 @@ export default function AdminPowwowsPage() {
 
     try {
       setProcessing(powwowId);
-      const powwowRef = doc(db, "powwows", powwowId);
+      const powwowRef = doc(db!, "powwows", powwowId);
       await deleteDoc(powwowRef);
 
       // Update local state

@@ -84,7 +84,7 @@ export default function AdminEmployersPage() {
 
     try {
       setProcessing(employerId);
-      const employerRef = doc(db, "employers", employerId);
+      const employerRef = doc(db!, "employers", employerId);
       await updateDoc(employerRef, {
         status: "approved",
         approvedAt: serverTimestamp(),
@@ -136,7 +136,7 @@ export default function AdminEmployersPage() {
 
     try {
       setProcessing(employerId);
-      const employerRef = doc(db, "employers", employerId);
+      const employerRef = doc(db!, "employers", employerId);
       await updateDoc(employerRef, {
         status: "rejected",
         rejectionReason: reason || undefined,

@@ -93,7 +93,7 @@ export default function AdminConferencesPage() {
 
     try {
       setProcessing(conferenceId);
-      const conferenceRef = doc(db, "conferences", conferenceId);
+      const conferenceRef = doc(db!, "conferences", conferenceId);
       await updateDoc(conferenceRef, {
         active: !currentStatus,
         updatedAt: serverTimestamp(),
@@ -124,7 +124,7 @@ export default function AdminConferencesPage() {
 
     try {
       setProcessing(conferenceId);
-      const conferenceRef = doc(db, "conferences", conferenceId);
+      const conferenceRef = doc(db!, "conferences", conferenceId);
       await deleteDoc(conferenceRef);
 
       // Update local state

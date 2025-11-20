@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
 
     try {
       setProcessing(userId);
-      const userRef = doc(db, "users", userId);
+      const userRef = doc(db!, "users", userId);
       await updateDoc(userRef, {
         role: newRole,
         updatedAt: serverTimestamp(),
@@ -98,7 +98,7 @@ export default function AdminUsersPage() {
 
     try {
       setProcessing(userId);
-      const userRef = doc(db, "users", userId);
+      const userRef = doc(db!, "users", userId);
       await updateDoc(userRef, {
         disabled: !currentStatus,
         updatedAt: serverTimestamp(),

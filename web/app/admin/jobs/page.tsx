@@ -90,7 +90,7 @@ export default function AdminJobsPage() {
 
     try {
       setProcessing(jobId);
-      const jobRef = doc(db, "jobs", jobId);
+      const jobRef = doc(db!, "jobs", jobId);
       await updateDoc(jobRef, {
         active: !currentStatus,
         updatedAt: serverTimestamp(),
@@ -121,7 +121,7 @@ export default function AdminJobsPage() {
 
     try {
       setProcessing(jobId);
-      const jobRef = doc(db, "jobs", jobId);
+      const jobRef = doc(db!, "jobs", jobId);
       await deleteDoc(jobRef);
 
       // Update local state
