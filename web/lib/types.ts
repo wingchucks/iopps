@@ -72,6 +72,7 @@ export interface Conference {
   endDate: Timestamp | string | null;
   registrationLink?: string;
   cost?: string;
+  format?: string;
   active: boolean;
   createdAt?: Timestamp | null;
 }
