@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const { frequency = "daily" } = body; // "instant", "daily", or "weekly"
 
     // Get all active alerts for the specified frequency
-    const alertsRef = collection(db, "jobAlerts");
+    const alertsRef = collection(db!, "jobAlerts");
     const alertsQuery = query(
       alertsRef,
       where("active", "==", true),
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     console.log(`Found ${alerts.length} active ${frequency} alerts`);
 
     // Get all jobs to match against alerts
-    const jobsRef = collection(db, "jobs");
+    const jobsRef = collection(db!, "jobs");
     const jobsQuery = query(
       jobsRef,
       where("active", "==", true),
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const userEmailMap = new Map<string, string>();
 
     for (const userId of userIds) {
-      const usersRef = collection(db, "users");
+      const usersRef = collection(db!, "users");
       const userQuery = query(usersRef, where("__name__", "==", userId));
       const userSnap = await getDocs(userQuery);
 
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
           results.failed++;
         } else {
           // Update lastSent timestamp
-          const alertRef = doc(db, "jobAlerts", alert.id);
+          const alertRef = doc(db!, "jobAlerts", alert.id);
           await updateDoc(alertRef, {
             lastSent: serverTimestamp(),
           });
