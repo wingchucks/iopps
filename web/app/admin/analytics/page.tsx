@@ -83,7 +83,7 @@ export default function AdminAnalyticsPage() {
       // Get all users
       const usersRef = collection(db!, "users");
       const usersSnap = await getDocs(usersRef);
-      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
       const totalUsers = users.length;
       const communityMembers = users.filter(u => u.role === "community").length;
@@ -95,7 +95,7 @@ export default function AdminAnalyticsPage() {
       // Get all jobs
       const jobsRef = collection(db!, "jobs");
       const jobsSnap = await getDocs(jobsRef);
-      const jobs = jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const jobs = jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
       const totalJobs = jobs.length;
       const activeJobs = jobs.filter(j => j.active === true).length;
@@ -117,7 +117,7 @@ export default function AdminAnalyticsPage() {
       // Get all applications
       const applicationsRef = collection(db!, "applications");
       const applicationsSnap = await getDocs(applicationsRef);
-      const applications = applicationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const applications = applicationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
       const totalApplications = applications.length;
 
@@ -144,28 +144,28 @@ export default function AdminAnalyticsPage() {
       // Get conferences
       const conferencesRef = collection(db!, "conferences");
       const conferencesSnap = await getDocs(conferencesRef);
-      const conferences = conferencesSnap.docs.map(doc => doc.data());
+      const conferences = conferencesSnap.docs.map(doc => doc.data()) as any[];
       const totalConferences = conferences.length;
       const activeConferences = conferences.filter(c => c.active === true).length;
 
       // Get scholarships
       const scholarshipsRef = collection(db!, "scholarships");
       const scholarshipsSnap = await getDocs(scholarshipsRef);
-      const scholarships = scholarshipsSnap.docs.map(doc => doc.data());
+      const scholarships = scholarshipsSnap.docs.map(doc => doc.data()) as any[];
       const totalScholarships = scholarships.length;
       const activeScholarships = scholarships.filter(s => s.active === true).length;
 
       // Get powwows
       const powwowsRef = collection(db!, "powwows");
       const powwowsSnap = await getDocs(powwowsRef);
-      const powwows = powwowsSnap.docs.map(doc => doc.data());
+      const powwows = powwowsSnap.docs.map(doc => doc.data()) as any[];
       const totalPowwows = powwows.length;
       const activePowwows = powwows.filter(p => p.active === true).length;
 
       // Get vendors
       const vendorsRef = collection(db!, "vendors");
       const vendorsSnap = await getDocs(vendorsRef);
-      const vendors = vendorsSnap.docs.map(doc => doc.data());
+      const vendors = vendorsSnap.docs.map(doc => doc.data()) as any[];
       const totalVendors = vendors.length;
       const activeVendors = vendors.filter(v => v.active === true).length;
       const featuredVendors = vendors.filter(v => v.featured === true).length;
