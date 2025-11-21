@@ -21,7 +21,9 @@ interface ApplicationWithDetails extends JobApplication {
   employerName?: string;
 }
 
-export default function AdminApplicationsPage() {
+import { Suspense } from "react";
+
+function AdminApplicationsContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -190,71 +192,64 @@ export default function AdminApplicationsPage() {
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "all"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
                 ? "bg-[#14B8A6] text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-            }`}
+              }`}
           >
             All ({applications.length})
           </button>
           <button
             onClick={() => setFilter("submitted")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "submitted"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "submitted"
                 ? "bg-blue-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-blue-500"
-            }`}
+              }`}
           >
             Submitted ({statusCounts.submitted})
           </button>
           <button
             onClick={() => setFilter("reviewed")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "reviewed"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "reviewed"
                 ? "bg-purple-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-purple-500"
-            }`}
+              }`}
           >
             Reviewed ({statusCounts.reviewed})
           </button>
           <button
             onClick={() => setFilter("shortlisted")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "shortlisted"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "shortlisted"
                 ? "bg-yellow-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-yellow-500"
-            }`}
+              }`}
           >
             Shortlisted ({statusCounts.shortlisted})
           </button>
           <button
             onClick={() => setFilter("hired")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "hired"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "hired"
                 ? "bg-green-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-green-500"
-            }`}
+              }`}
           >
             Hired ({statusCounts.hired})
           </button>
           <button
             onClick={() => setFilter("rejected")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "rejected"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "rejected"
                 ? "bg-red-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-red-500"
-            }`}
+              }`}
           >
             Rejected ({statusCounts.rejected})
           </button>
           <button
             onClick={() => setFilter("withdrawn")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "withdrawn"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "withdrawn"
                 ? "bg-slate-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-slate-500"
-            }`}
+              }`}
           >
             Withdrawn ({statusCounts.withdrawn})
           </button>
@@ -338,8 +333,8 @@ export default function AdminApplicationsPage() {
                               Applied:{" "}
                               {application.createdAt
                                 ? new Date(
-                                    application.createdAt.seconds * 1000
-                                  ).toLocaleDateString()
+                                  application.createdAt.seconds * 1000
+                                ).toLocaleDateString()
                                 : "Unknown"}
                             </span>
                             {application.updatedAt &&
@@ -394,5 +389,19 @@ export default function AdminApplicationsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminApplicationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-slate-400">Loading applications...</p>
+        </div>
+      </div>
+    }>
+      <AdminApplicationsContent />
+    </Suspense>
   );
 }
