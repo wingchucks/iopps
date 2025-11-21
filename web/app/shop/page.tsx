@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { listShopListings } from "@/lib/firestore";
 import type { ShopListing } from "@/lib/types";
@@ -23,7 +23,7 @@ const categoryOptions = [
   "Professional Services",
 ] as const;
 
-export default function ShopPage() {
+function ShopContent() {
   const [listings, setListings] = useState<ShopListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,16 +57,15 @@ export default function ShopPage() {
 
   const filtered = useMemo(() => {
     return listings.filter((listing) => {
-      const text = `${listing.name} ${listing.owner ?? ""} ${
-        listing.description ?? ""
-      } ${(listing.tags ?? []).join(" ")}`.toLowerCase();
+      const text = `${listing.name} ${listing.owner ?? ""} ${listing.description ?? ""
+        } ${(listing.tags ?? []).join(" ")}`.toLowerCase();
       const matchesKeyword = text.includes(params.keyword.toLowerCase());
       const matchesCategory =
         params.categoryFilter === "All" ? true : listing.category === params.categoryFilter;
       const matchesLocation = params.locationFilter
         ? (listing.location ?? "")
-            .toLowerCase()
-            .includes(params.locationFilter.toLowerCase())
+          .toLowerCase()
+          .includes(params.locationFilter.toLowerCase())
         : true;
       const matchesShipping = params.shipsCanadaWide
         ? Boolean(listing.shipsCanadaWide)
@@ -267,90 +266,90 @@ export default function ShopPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {displayedListings.map((listing) => (
-              <article
-                key={listing.id}
-                className="rounded-2xl border border-slate-800 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
-              >
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Indigenous-owned badge */}
-                    <span className="rounded-full bg-[#14B8A6]/10 border border-[#14B8A6]/30 px-2.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-[#14B8A6]">
-                      ✓ Indigenous-owned
-                    </span>
-                    <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
-                      {listing.category}
-                    </p>
+                <article
+                  key={listing.id}
+                  className="rounded-2xl border border-slate-800 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
+                >
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Indigenous-owned badge */}
+                      <span className="rounded-full bg-[#14B8A6]/10 border border-[#14B8A6]/30 px-2.5 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-[#14B8A6]">
+                        ✓ Indigenous-owned
+                      </span>
+                      <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+                        {listing.category}
+                      </p>
+                    </div>
+                    <h3 className="text-xl font-semibold text-slate-50">
+                      {listing.name}
+                    </h3>
+                    {listing.owner && (
+                      <p className="text-sm text-slate-300">
+                        by {listing.owner}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="text-slate-400">{listing.location}</span>
+                      {listing.shipsCanadaWide && (
+                        <>
+                          <span className="text-slate-600">·</span>
+                          <span className="text-slate-400">Shipping Worldwide</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-50">
-                    {listing.name}
-                  </h3>
-                  {listing.owner && (
-                    <p className="text-sm text-slate-300">
-                      by {listing.owner}
-                    </p>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-200">
+                    {listing.description && listing.description.length > 150
+                      ? `${listing.description.slice(0, 150)}...`
+                      : listing.description}
+                  </p>
+                  {(listing.tags ?? []).length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {(listing.tags ?? []).map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[0.65rem] text-slate-400"
+                        >
+                          {tag}
+                          {tag !== listing.tags![listing.tags!.length - 1] && " ·"}
+                        </span>
+                      ))}
+                    </div>
                   )}
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-slate-400">{listing.location}</span>
-                    {listing.shipsCanadaWide && (
-                      <>
-                        <span className="text-slate-600">·</span>
-                        <span className="text-slate-400">Shipping Worldwide</span>
-                      </>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {listing.website && (
+                      <a
+                        href={listing.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full bg-[#14B8A6] px-4 py-2 text-xs font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+                      >
+                        Visit shop
+                      </a>
+                    )}
+                    {listing.vendorId && (
+                      <Link
+                        href={`/shop/${listing.vendorId}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                      >
+                        View profile
+                        <svg
+                          className="h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </Link>
                     )}
                   </div>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-200">
-                  {listing.description && listing.description.length > 150
-                    ? `${listing.description.slice(0, 150)}...`
-                    : listing.description}
-                </p>
-                {(listing.tags ?? []).length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {(listing.tags ?? []).map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[0.65rem] text-slate-400"
-                      >
-                        {tag}
-                        {tag !== listing.tags![listing.tags!.length - 1] && " ·"}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {listing.website && (
-                    <a
-                      href={listing.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-full bg-[#14B8A6] px-4 py-2 text-xs font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
-                    >
-                      Visit shop
-                    </a>
-                  )}
-                  {listing.vendorId && (
-                    <Link
-                      href={`/shop/${listing.vendorId}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
-                    >
-                      View profile
-                      <svg
-                        className="h-3 w-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </Link>
-                  )}
-                </div>
-              </article>
+                </article>
               ))}
             </div>
             {hasMore && (
@@ -401,5 +400,27 @@ export default function ShopPage() {
         </div>
       </section>
     </PageShell>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <div className="mx-auto max-w-7xl">
+          <div className="h-32 w-full animate-pulse rounded-xl bg-slate-900/60 mb-8" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-2xl border border-slate-800/80 bg-[#08090C]"
+              />
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    }>
+      <ShopContent />
+    </Suspense>
   );
 }
