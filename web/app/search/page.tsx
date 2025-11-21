@@ -6,7 +6,9 @@ import Link from "next/link";
 import { globalSearch, type GlobalSearchResults } from "@/lib/firestore";
 import { PageShell } from "@/components/PageShell";
 
-export default function GlobalSearchPage() {
+import { Suspense } from "react";
+
+function GlobalSearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams?.get("q") || "";
 
@@ -378,5 +380,27 @@ export default function GlobalSearchPage() {
         )}
       </div>
     </PageShell>
+  );
+}
+
+export default function GlobalSearchPage() {
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <div className="mx-auto max-w-7xl px-4 py-10">
+          <div className="h-8 w-48 animate-pulse rounded bg-slate-800 mb-8" />
+          <div className="space-y-6">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-32 animate-pulse rounded-xl border border-slate-900 bg-slate-900/60"
+              />
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    }>
+      <GlobalSearchContent />
+    </Suspense>
   );
 }
