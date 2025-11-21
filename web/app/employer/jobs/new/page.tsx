@@ -4,7 +4,9 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createJobPosting, getEmployerProfile } from "@/lib/firestore";
+import { getEmployerProfile } from "@/lib/firestore";
+import { loadStripe } from "@stripe/stripe-js";
+import { JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
 
 const employmentTypes = [
   "Full-time",
@@ -13,6 +15,11 @@ const employmentTypes = [
   "Seasonal",
   "Internship",
 ];
+
+// Initialize Stripe
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
 
 export default function NewJobPage() {
   const { user, role, loading } = useAuth();
@@ -34,6 +41,7 @@ export default function NewJobPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<JobPostingProductType>("SINGLE");
 
   const handleGenerateWithAI = async () => {
     if (!title.trim()) {
@@ -101,7 +109,8 @@ export default function NewJobPage() {
     setError(null);
 
     try {
-      const jobId = await createJobPosting({
+      // Prepare job data
+      const jobData = {
         employerId: user.uid,
         employerName: organizationName ?? "",
         title,
@@ -122,14 +131,39 @@ export default function NewJobPage() {
           .filter(Boolean),
         applicationLink,
         applicationEmail,
+      };
+
+      // Create Stripe Checkout session
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productType: selectedProduct,
+          jobData,
+          userId: user.uid,
+        }),
       });
-      router.push(`/jobs/${jobId}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
+      }
+
+      const { url } = await response.json();
+
+      // Redirect to Stripe Checkout
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
     } catch (err) {
       console.error(err);
       setError(
-        err instanceof Error ? err.message : "Could not create job posting."
+        err instanceof Error ? err.message : "Could not initiate payment process."
       );
-    } finally {
       setSaving(false);
     }
   };
@@ -406,14 +440,123 @@ export default function NewJobPage() {
           </p>
         </div>
 
+        {/* Pricing Selection */}
+        <div className="mt-8 rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6">
+          <h3 className="text-lg font-semibold text-slate-50">Select Job Posting Package</h3>
+          <p className="mt-1 text-sm text-slate-300">
+            Choose the visibility and duration for your job posting
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {/* Single Job Post */}
+            <button
+              type="button"
+              onClick={() => setSelectedProduct("SINGLE")}
+              className={`text-left rounded-xl border-2 p-5 transition-all ${selectedProduct === "SINGLE"
+                ? "border-[#14B8A6] bg-[#14B8A6]/10"
+                : "border-slate-700 hover:border-slate-600"
+                }`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold text-slate-50">Single Job Post</h4>
+                  <p className="mt-1 text-2xl font-bold text-[#14B8A6]">
+                    ${JOB_POSTING_PRODUCTS.SINGLE.price / 100}
+                  </p>
+                </div>
+                <div className={`rounded-full p-1 ${selectedProduct === "SINGLE" ? "bg-[#14B8A6]" : "bg-slate-700"
+                  }`}>
+                  <svg className="h-5 w-5 text-slate-900" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Live for {JOB_POSTING_PRODUCTS.SINGLE.duration} days
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Standard placement on job board
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Basic employer profile
+                </li>
+              </ul>
+            </button>
+
+            {/* Featured Job Ad */}
+            <button
+              type="button"
+              onClick={() => setSelectedProduct("FEATURED")}
+              className={`relative text-left rounded-xl border-2 p-5 transition-all ${selectedProduct === "FEATURED"
+                ? "border-[#14B8A6] bg-[#14B8A6]/10"
+                : "border-slate-700 hover:border-slate-600"
+                }`}
+            >
+              <div className="absolute -top-3 right-4 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-slate-900">
+                FEATURED
+              </div>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold text-slate-50">Featured Job Ad</h4>
+                  <p className="mt-1 text-2xl font-bold text-[#14B8A6]">
+                    ${JOB_POSTING_PRODUCTS.FEATURED.price / 100}
+                  </p>
+                </div>
+                <div className={`rounded-full p-1 ${selectedProduct === "FEATURED" ? "bg-[#14B8A6]" : "bg-slate-700"
+                  }`}>
+                  <svg className="h-5 w-5 text-slate-900" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Live for {JOB_POSTING_PRODUCTS.FEATURED.duration} days
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  "Featured" spotlight placement
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Employer logo + branding
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Analytics (views & clicks)
+                </li>
+              </ul>
+            </button>
+          </div>
+        </div>
+
         {error && <p className="text-sm text-red-400">{error}</p>}
 
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+          className="rounded-md bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
         >
-          {saving ? "Posting..." : "Publish job"}
+          {saving ? "Redirecting to payment..." : `Continue to Payment ($${JOB_POSTING_PRODUCTS[selectedProduct].price / 100})`}
         </button>
       </form>
     </div>
