@@ -14,7 +14,7 @@ import {
 import { db } from "@/lib/firebase";
 import type { JobAlert, JobPosting } from "@/lib/types";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 interface JobWithAlert {
   alert: JobAlert;
@@ -23,6 +23,7 @@ interface JobWithAlert {
 }
 
 export async function POST(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     // Verify authorization (this should be called by a cron job)
     const authHeader = request.headers.get("authorization");
