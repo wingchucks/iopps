@@ -70,7 +70,9 @@ const formatDate = (value: MaybeDateInput) => {
   });
 };
 
-export default function JobsPage() {
+import { Suspense } from "react";
+
+function JobsContent() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -156,16 +158,15 @@ export default function JobsPage() {
 
   const filteredJobs = useMemo(() => {
     return listings.filter((job) => {
-      const text = `${job.title ?? ""} ${job.employerName ?? ""} ${
-        job.description ?? ""
-      } ${job.location ?? ""}`.toLowerCase();
+      const text = `${job.title ?? ""} ${job.employerName ?? ""} ${job.description ?? ""
+        } ${job.location ?? ""}`.toLowerCase();
       const matchesKeyword = params.keyword
         ? text.includes(params.keyword.toLowerCase())
         : true;
       const matchesLocation = params.locationFilter
         ? (job.location ?? "")
-            .toLowerCase()
-            .includes(params.locationFilter.toLowerCase())
+          .toLowerCase()
+          .includes(params.locationFilter.toLowerCase())
         : true;
       const matchesType =
         params.typeFilter === "All" ||
@@ -173,7 +174,7 @@ export default function JobsPage() {
       const matchesRemote = !params.remoteOnly
         ? true
         : job.remoteFlag ||
-          (job.location ?? "").toLowerCase().includes("remote");
+        (job.location ?? "").toLowerCase().includes("remote");
       const matchesIndigenous = !params.indigenousOnly
         ? true
         : Boolean(job.indigenousPreference);
@@ -377,11 +378,10 @@ export default function JobsPage() {
           <button
             type="button"
             onClick={() => updateParam("activeOnly", !params.activeOnly)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-              params.activeOnly
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
-            }`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${params.activeOnly
+              ? "bg-[#14B8A6] text-slate-900"
+              : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+              }`}
           >
             {params.activeOnly && (
               <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -395,11 +395,10 @@ export default function JobsPage() {
           <button
             type="button"
             onClick={() => updateParam("remoteOnly", !params.remoteOnly)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-              params.remoteOnly
-                ? "bg-blue-500 text-white"
-                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
-            }`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${params.remoteOnly
+              ? "bg-blue-500 text-white"
+              : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+              }`}
           >
             {params.remoteOnly && (
               <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -413,11 +412,10 @@ export default function JobsPage() {
           <button
             type="button"
             onClick={() => updateParam("indigenousOnly", !params.indigenousOnly)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-              params.indigenousOnly
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
-            }`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${params.indigenousOnly
+              ? "bg-[#14B8A6] text-slate-900"
+              : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+              }`}
           >
             {params.indigenousOnly && (
               <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -432,11 +430,10 @@ export default function JobsPage() {
             <button
               type="button"
               onClick={() => updateParam("savedOnly", !params.savedOnly)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                params.savedOnly
-                  ? "bg-amber-500 text-slate-900"
-                  : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
-              }`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${params.savedOnly
+                ? "bg-amber-500 text-slate-900"
+                : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                }`}
             >
               {params.savedOnly && (
                 <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
@@ -476,9 +473,8 @@ export default function JobsPage() {
         {loading
           ? "Loading jobs..."
           : sortedJobs.length === 0
-          ? "No jobs match your filters right now."
-          : `Showing ${displayedJobs.length} of ${sortedJobs.length} job${
-              sortedJobs.length === 1 ? "" : "s"
+            ? "No jobs match your filters right now."
+            : `Showing ${displayedJobs.length} of ${sortedJobs.length} job${sortedJobs.length === 1 ? "" : "s"
             }`}
       </div>
 
@@ -591,11 +587,10 @@ export default function JobsPage() {
                     <button
                       onClick={() => handleToggleSave(job.id)}
                       disabled={savingJobId === job.id}
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all ${
-                        savedJobIds.has(job.id)
-                          ? "border-amber-400/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                          : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:border-amber-400/40 hover:bg-slate-800 hover:text-amber-400"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all ${savedJobIds.has(job.id)
+                        ? "border-amber-400/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                        : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:border-amber-400/40 hover:bg-slate-800 hover:text-amber-400"
+                        }`}
                       aria-label={savedJobIds.has(job.id) ? "Unsave job" : "Save job"}
                     >
                       <svg
@@ -682,5 +677,27 @@ export default function JobsPage() {
         </div>
       )}
     </PageShell>
+  );
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <div className="mx-auto max-w-7xl">
+          <div className="h-32 w-full animate-pulse rounded-xl bg-slate-900/60 mb-8" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-2xl border border-slate-800/80 bg-[#08090C]"
+              />
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    }>
+      <JobsContent />
+    </Suspense>
   );
 }
