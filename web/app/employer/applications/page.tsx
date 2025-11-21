@@ -102,6 +102,7 @@ export default function ApplicationsInboxPage() {
       shortlisted: 0,
       rejected: 0,
       hired: 0,
+      withdrawn: 0,
     };
     applications.forEach((app) => {
       counts[app.status] = (counts[app.status] ?? 0) + 1;
