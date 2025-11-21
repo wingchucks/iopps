@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { listPowwowEvents } from "@/lib/firestore";
 import type { PowwowEvent } from "@/lib/types";
@@ -13,7 +13,7 @@ import { useSearchParams } from "@/lib/useSearchParams";
 
 // Removed typeFilters - using season filter instead
 
-export default function PowwowsPage() {
+function PowwowsContent() {
   const [events, setEvents] = useState<PowwowEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,16 +46,15 @@ export default function PowwowsPage() {
 
   const filtered = useMemo(() => {
     return events.filter((event) => {
-      const matchesKeyword = `${event.name} ${event.host ?? ""} ${
-        event.description ?? ""
-      }`
+      const matchesKeyword = `${event.name} ${event.host ?? ""} ${event.description ?? ""
+        }`
         .toLowerCase()
         .includes(params.keyword.toLowerCase());
       // Note: Removed type filter as PowwowEvent doesn't have a type field
       const matchesProvince = params.provinceFilter
         ? (event.location ?? "")
-            .toLowerCase()
-            .includes(params.provinceFilter.toLowerCase())
+          .toLowerCase()
+          .includes(params.provinceFilter.toLowerCase())
         : true;
       const matchesStream = params.showLivestreamOnly ? Boolean(event.livestream) : true;
       return (
@@ -175,50 +174,50 @@ export default function PowwowsPage() {
             </div>
             <div className="space-y-4">
               {displayedEvents.map((event) => (
-              <Link
-                key={event.id}
-                href={`/powwows/${event.id}`}
-                className="block rounded-2xl border border-slate-800 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
-                        Pow wow
+                <Link
+                  key={event.id}
+                  href={`/powwows/${event.id}`}
+                  className="block rounded-2xl border border-slate-800 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
+                          Pow wow
+                        </p>
+                        {event.season && (
+                          <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
+                            {event.season}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-1 text-xl font-semibold text-slate-50">
+                        {event.name}
+                      </h3>
+                      {event.host && (
+                        <p className="text-sm text-slate-300">{event.host}</p>
+                      )}
+                      <p className="text-xs text-slate-500">
+                        {event.location} {event.dateRange ? `· ${event.dateRange}` : ""}
                       </p>
-                      {event.season && (
-                        <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
-                          {event.season}
-                        </span>
+                    </div>
+                    <div className="text-right text-xs uppercase tracking-[0.3em] text-slate-500">
+                      Registration {event.registrationStatus ?? "TBA"}
+                      {event.livestream && (
+                        <p className="mt-1 rounded-full border border-teal-500 px-3 py-1 text-[0.6rem] text-[#14B8A6]">
+                          Livestream on IOPPS Live
+                        </p>
                       )}
                     </div>
-                    <h3 className="mt-1 text-xl font-semibold text-slate-50">
-                      {event.name}
-                    </h3>
-                    {event.host && (
-                      <p className="text-sm text-slate-300">{event.host}</p>
-                    )}
-                    <p className="text-xs text-slate-500">
-                      {event.location} {event.dateRange ? `· ${event.dateRange}` : ""}
-                    </p>
                   </div>
-                  <div className="text-right text-xs uppercase tracking-[0.3em] text-slate-500">
-                    Registration {event.registrationStatus ?? "TBA"}
-                    {event.livestream && (
-                      <p className="mt-1 rounded-full border border-teal-500 px-3 py-1 text-[0.6rem] text-[#14B8A6]">
-                        Livestream on IOPPS Live
-                      </p>
-                    )}
+                  <p className="mt-3 text-sm text-slate-200">{event.description}</p>
+                  <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14B8A6]">
+                    View details & register
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-                </div>
-                <p className="mt-3 text-sm text-slate-200">{event.description}</p>
-                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#14B8A6]">
-                  View details & register
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
+                </Link>
               ))}
             </div>
             {hasMore && (
@@ -238,5 +237,27 @@ export default function PowwowsPage() {
         )}
       </section>
     </PageShell>
+  );
+}
+
+export default function PowwowsPage() {
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <div className="mx-auto max-w-7xl">
+          <div className="h-32 w-full animate-pulse rounded-xl bg-slate-900/60 mb-8" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-2xl border border-slate-800/80 bg-[#08090C]"
+              />
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    }>
+      <PowwowsContent />
+    </Suspense>
   );
 }

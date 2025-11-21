@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { listConferences } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
@@ -36,7 +36,7 @@ const getTimeValue = (
   return fallback;
 };
 
-export default function ConferencesPage() {
+function ConferencesContent() {
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,16 +83,16 @@ export default function ConferencesPage() {
         params.timeframeFilter === "All"
           ? true
           : params.timeframeFilter === "Next 30 days"
-          ? startTime < now + 30 * 24 * 60 * 60 * 1000
-          : startTime < now + 90 * 24 * 60 * 60 * 1000;
+            ? startTime < now + 30 * 24 * 60 * 60 * 1000
+            : startTime < now + 90 * 24 * 60 * 60 * 1000;
       const matchesCost =
         params.costFilter === "all"
           ? true
           : params.costFilter === "free"
-          ? !conf.cost ||
+            ? !conf.cost ||
             conf.cost.toLowerCase().includes("free") ||
             conf.cost.toLowerCase().includes("no cost")
-          : Boolean(conf.cost && !conf.cost.toLowerCase().includes("free"));
+            : Boolean(conf.cost && !conf.cost.toLowerCase().includes("free"));
       return matchesKeyword && matchesLocation && matchesTimeframe && matchesCost;
     });
   }, [conferences, params.costFilter, params.keyword, params.locationFilter, params.timeframeFilter]);
@@ -336,5 +336,27 @@ export default function ConferencesPage() {
         )}
       </section>
     </PageShell>
+  );
+}
+
+export default function ConferencesPage() {
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <div className="mx-auto max-w-7xl">
+          <div className="h-32 w-full animate-pulse rounded-xl bg-slate-900/60 mb-8" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-2xl border border-slate-800/80 bg-[#08090C]"
+              />
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    }>
+      <ConferencesContent />
+    </Suspense>
   );
 }
