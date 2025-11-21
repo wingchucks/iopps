@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { listScholarships } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
@@ -39,7 +39,7 @@ const toDateValue = (
   return null;
 };
 
-export default function ScholarshipsPage() {
+function ScholarshipsContent() {
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +85,8 @@ export default function ScholarshipsPage() {
         params.level === "All" ? true : item.level === params.level;
       const matchesRegion = params.region
         ? (item.region ?? "")
-            .toLowerCase()
-            .includes(params.region.toLowerCase())
+          .toLowerCase()
+          .includes(params.region.toLowerCase())
         : true;
 
       // Amount filtering
@@ -353,53 +353,53 @@ export default function ScholarshipsPage() {
             </div>
             <div className="space-y-4">
               {displayedScholarships.map((item) => (
-              <Link
-                href={`/scholarships/${item.id}`}
-                key={item.id}
-              >
-                <article
-                  className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
+                <Link
+                  href={`/scholarships/${item.id}`}
+                  key={item.id}
                 >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
-                        {item.type}
-                      </p>
-                      <h3 className="mt-1 text-xl font-semibold text-slate-50">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-slate-300">
-                        {item.provider}
-                      </p>
-                    </div>
-                    <div className="text-sm text-right text-slate-300">
-                      {item.amount && (
-                        <p className="font-semibold text-[#14B8A6]">
-                          {item.amount}
+                  <article
+                    className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
+                          {item.type}
                         </p>
-                      )}
-                      {formatDeadline(item.deadline) && (
-                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                          Deadline {formatDeadline(item.deadline)}
+                        <h3 className="mt-1 text-xl font-semibold text-slate-50">
+                          {item.title}
+                        </h3>
+                        <p className="text-sm text-slate-300">
+                          {item.provider}
                         </p>
-                      )}
+                      </div>
+                      <div className="text-sm text-right text-slate-300">
+                        {item.amount && (
+                          <p className="font-semibold text-[#14B8A6]">
+                            {item.amount}
+                          </p>
+                        )}
+                        {formatDeadline(item.deadline) && (
+                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                            Deadline {formatDeadline(item.deadline)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <p className="mt-3 text-sm text-slate-200">
-                    {item.description}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
-                    <span className="rounded-full border border-slate-700 px-3 py-1">
-                      {item.level}
-                    </span>
-                    {item.region && (
+                    <p className="mt-3 text-sm text-slate-200">
+                      {item.description}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
                       <span className="rounded-full border border-slate-700 px-3 py-1">
-                        {item.region}
+                        {item.level}
                       </span>
-                    )}
-                  </div>
-                </article>
-              </Link>
+                      {item.region && (
+                        <span className="rounded-full border border-slate-700 px-3 py-1">
+                          {item.region}
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                </Link>
               ))}
             </div>
             {hasMore && (
@@ -419,5 +419,27 @@ export default function ScholarshipsPage() {
         )}
       </section>
     </PageShell>
+  );
+}
+
+export default function ScholarshipsPage() {
+  return (
+    <Suspense fallback={
+      <PageShell>
+        <div className="mx-auto max-w-7xl">
+          <div className="h-32 w-full animate-pulse rounded-xl bg-slate-900/60 mb-8" />
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-48 animate-pulse rounded-2xl border border-slate-800/80 bg-[#08090C]"
+              />
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    }>
+      <ScholarshipsContent />
+    </Suspense>
   );
 }
