@@ -350,7 +350,17 @@ export default function OpportunitiesTab() {
 
                       <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400">
                         <span>📍 {conf.location || "TBD"}</span>
-                        <span>📅 {conf.startDate} - {conf.endDate}</span>
+                        <span>📅 {
+                          typeof conf.startDate === 'string' ? conf.startDate :
+                          conf.startDate && typeof conf.startDate === 'object' && 'toDate' in conf.startDate
+                            ? conf.startDate.toDate().toLocaleDateString()
+                            : 'TBD'
+                        } - {
+                          typeof conf.endDate === 'string' ? conf.endDate :
+                          conf.endDate && typeof conf.endDate === 'object' && 'toDate' in conf.endDate
+                            ? conf.endDate.toDate().toLocaleDateString()
+                            : 'TBD'
+                        }</span>
                         {conf.registrationUrl && <span>🔗 Registration available</span>}
                       </div>
                     </div>

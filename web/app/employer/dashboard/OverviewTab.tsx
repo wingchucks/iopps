@@ -57,7 +57,7 @@ export default function OverviewTab() {
   const activeJobs = jobs.filter((j) => j.active !== false);
   const activeConferences = conferences.filter((c) => c.active !== false);
   const pendingApplications = applications.filter(
-    (a) => a.status === "submitted" || a.status === "in review"
+    (a) => a.status === "submitted" || a.status === "reviewed"
   );
   const recentApplications = applications.slice(0, 5);
 
@@ -214,9 +214,9 @@ export default function OverviewTab() {
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      app.status === "submitted" || app.status === "in review"
+                      app.status === "submitted" || app.status === "reviewed"
                         ? "bg-blue-500/20 text-blue-300"
-                        : app.status === "hired" || app.status === "accepted"
+                        : app.status === "hired" || app.status === "shortlisted"
                         ? "bg-green-500/20 text-green-300"
                         : "bg-slate-500/20 text-slate-400"
                     }`}

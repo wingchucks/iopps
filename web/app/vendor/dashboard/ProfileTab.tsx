@@ -131,7 +131,7 @@ export default function ProfileTab() {
     try {
       const fileExtension = file.name.split(".").pop();
       const fileName = `vendors/${user.uid}/logo-${Date.now()}.${fileExtension}`;
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage!, fileName);
 
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
@@ -157,7 +157,7 @@ export default function ProfileTab() {
     try {
       const fileExtension = file.name.split(".").pop();
       const fileName = `vendors/${user.uid}/hero-${Date.now()}.${fileExtension}`;
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage!, fileName);
 
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);

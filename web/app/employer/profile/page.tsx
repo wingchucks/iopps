@@ -48,7 +48,7 @@ export default function EmployerProfilePage() {
       setUploadingLogo(true);
       setError(null);
       const logoRef = ref(
-        storage,
+        storage!,
         `logos/${user.uid}/${Date.now()}-${file.name}`
       );
       await uploadBytes(logoRef, file);

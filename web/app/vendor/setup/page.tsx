@@ -130,7 +130,7 @@ export default function VendorSetupPage() {
     try {
       const fileExtension = logoFile.name.split(".").pop();
       const fileName = `vendors/${user.uid}/logo-${Date.now()}.${fileExtension}`;
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage!, fileName);
 
       await uploadBytes(storageRef, logoFile);
       const url = await getDownloadURL(storageRef);
@@ -157,7 +157,7 @@ export default function VendorSetupPage() {
     try {
       const fileExtension = heroImageFile.name.split(".").pop();
       const fileName = `vendors/${user.uid}/hero-${Date.now()}.${fileExtension}`;
-      const storageRef = ref(storage, fileName);
+      const storageRef = ref(storage!, fileName);
 
       await uploadBytes(storageRef, heroImageFile);
       const url = await getDownloadURL(storageRef);

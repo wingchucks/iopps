@@ -69,7 +69,7 @@ export default function LivePage() {
     return { liveNow, upcoming, replays };
   }, [filtered]);
 
-  const getButtonText = (status: StreamStatus | undefined) => {
+  const getButtonText = (status: string | undefined) => {
     if (status === "Live Now") return "Watch now";
     if (status === "Upcoming") return "Set reminder";
     return "View replay";

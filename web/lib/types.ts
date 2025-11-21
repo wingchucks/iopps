@@ -65,12 +65,14 @@ export interface Conference {
   id: string;
   employerId: string;
   employerName?: string;
+  organizerName?: string;
   title: string;
   description: string;
   location: string;
   startDate: Timestamp | string | null;
   endDate: Timestamp | string | null;
   registrationLink?: string;
+  registrationUrl?: string;
   cost?: string;
   format?: string;
   active: boolean;

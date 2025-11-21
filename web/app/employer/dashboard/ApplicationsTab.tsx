@@ -72,11 +72,11 @@ export default function ApplicationsTab() {
 
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
-    if (s === "hired" || s === "accepted")
+    if (s === "hired" || s === "hired")
       return "bg-green-500/20 text-green-300 border-green-500/40";
-    if (s === "in review" || s === "reviewing")
+    if (s === "reviewed" || s === "reviewing")
       return "bg-blue-500/20 text-blue-300 border-blue-500/40";
-    if (s === "not selected" || s === "rejected")
+    if (s === "rejected" || s === "rejected")
       return "bg-slate-500/20 text-slate-400 border-slate-500/40";
     if (s === "withdrawn")
       return "bg-orange-500/20 text-orange-300 border-orange-500/40";
@@ -87,9 +87,9 @@ export default function ApplicationsTab() {
     return {
       total: applications.length,
       submitted: applications.filter((a) => a.status === "submitted").length,
-      inReview: applications.filter((a) => a.status === "in review").length,
+      inReview: applications.filter((a) => a.status === "reviewed").length,
       hired: applications.filter((a) => a.status === "hired").length,
-      rejected: applications.filter((a) => a.status === "not selected").length,
+      rejected: applications.filter((a) => a.status === "rejected").length,
     };
   }, [applications]);
 
@@ -189,9 +189,9 @@ export default function ApplicationsTab() {
           >
             <option value="all">All statuses</option>
             <option value="submitted">Submitted</option>
-            <option value="in review">In review</option>
+            <option value="reviewed">In review</option>
             <option value="hired">Hired</option>
-            <option value="not selected">Not selected</option>
+            <option value="rejected">Not selected</option>
             <option value="withdrawn">Withdrawn</option>
           </select>
         </div>
@@ -285,9 +285,9 @@ export default function ApplicationsTab() {
                         className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100 transition-all hover:border-emerald-500/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                       >
                         <option value="submitted">Submitted</option>
-                        <option value="in review">In review</option>
+                        <option value="reviewed">In review</option>
                         <option value="hired">Hired</option>
-                        <option value="not selected">Not selected</option>
+                        <option value="rejected">Not selected</option>
                       </select>
                     </div>
                   </div>

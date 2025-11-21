@@ -76,7 +76,7 @@ export async function getEmployerProfile(
 }
 
 export async function updateEmployerLogo(userId: string, logoUrl: string) {
-  const ref = doc(db, employerCollection, userId);
+  const ref = doc(db!, employerCollection, userId);
   const snap = await getDoc(ref);
   if (snap.exists()) {
     await updateDoc(ref, {
@@ -102,7 +102,7 @@ export async function upsertEmployerProfile(
   userId: string,
   data: Omit<EmployerProfile, "id" | "userId" | "createdAt" | "updatedAt">
 ) {
-  const ref = doc(db, employerCollection, userId);
+  const ref = doc(db!, employerCollection, userId);
   const base = {
     organizationName: data.organizationName,
     description: data.description ?? "",
@@ -132,7 +132,7 @@ export async function addEmployerInterview(
   userId: string,
   interview: Omit<Interview, "id" | "createdAt">
 ) {
-  const ref = doc(db, employerCollection, userId);
+  const ref = doc(db!, employerCollection, userId);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("Employer profile not found");
 
@@ -158,7 +158,7 @@ export async function updateEmployerInterview(
   interviewId: string,
   updates: Partial<Omit<Interview, "id" | "createdAt">>
 ) {
-  const ref = doc(db, employerCollection, userId);
+  const ref = doc(db!, employerCollection, userId);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("Employer profile not found");
 
@@ -181,7 +181,7 @@ export async function deleteEmployerInterview(
   userId: string,
   interviewId: string
 ) {
-  const ref = doc(db, employerCollection, userId);
+  const ref = doc(db!, employerCollection, userId);
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("Employer profile not found");
 
@@ -204,7 +204,7 @@ export async function trackInterviewView(
 ) {
   if (!db) return;
   try {
-    const ref = doc(db, employerCollection, employerId);
+    const ref = doc(db!, employerCollection, employerId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       const profile = snap.data() as EmployerProfile;
@@ -230,7 +230,7 @@ export async function trackInterviewView(
 export async function getMemberProfile(
   userId: string
 ): Promise<MemberProfile | null> {
-  const ref = doc(db, memberCollection, userId);
+  const ref = doc(db!, memberCollection, userId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   return snap.data() as MemberProfile;
@@ -240,7 +240,7 @@ export async function upsertMemberProfile(
   userId: string,
   data: Omit<MemberProfile, "id" | "userId" | "createdAt" | "updatedAt">
 ) {
-  const ref = doc(db, memberCollection, userId);
+  const ref = doc(db!, memberCollection, userId);
   const base = {
     displayName: data.displayName ?? "",
     location: data.location ?? "",
@@ -277,7 +277,7 @@ type JobInput = Omit<
 > & { employerId: string; active?: boolean };
 
 export async function createJobPosting(data: JobInput): Promise<string> {
-  const ref = collection(db, jobsCollection);
+  const ref = collection(db!, jobsCollection);
   const docRef = await addDoc(ref, {
     ...data,
     active: data.active ?? true,
@@ -285,7 +285,7 @@ export async function createJobPosting(data: JobInput): Promise<string> {
     applicationsCount: 0,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, jobsCollection, docRef.id), {
+  await updateDoc(doc(db!, jobsCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -338,7 +338,7 @@ export async function listJobPostings(
 }
 
 export async function getJobPosting(jobId: string): Promise<JobPosting | null> {
-  const ref = doc(db, jobsCollection, jobId);
+  const ref = doc(db!, jobsCollection, jobId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   const data = snap.data() as JobPosting;
@@ -351,7 +351,7 @@ export async function getJobPosting(jobId: string): Promise<JobPosting | null> {
 export async function listEmployerJobs(
   employerId: string
 ): Promise<JobPosting[]> {
-  const ref = collection(db, jobsCollection);
+  const ref = collection(db!, jobsCollection);
   const q = query(
     ref,
     where("employerId", "==", employerId),
@@ -368,7 +368,7 @@ export async function listEmployerJobs(
 }
 
 export async function updateJobStatus(jobId: string, active: boolean) {
-  const ref = doc(db, jobsCollection, jobId);
+  const ref = doc(db!, jobsCollection, jobId);
   await updateDoc(ref, {
     active,
     updatedAt: serverTimestamp(),
@@ -379,7 +379,7 @@ export async function updateJobPosting(
   jobId: string,
   data: Partial<Omit<JobPosting, "id" | "createdAt" | "employerId">>
 ) {
-  const ref = doc(db, jobsCollection, jobId);
+  const ref = doc(db!, jobsCollection, jobId);
   await updateDoc(ref, {
     ...data,
     updatedAt: serverTimestamp(),
@@ -387,7 +387,7 @@ export async function updateJobPosting(
 }
 
 export async function incrementJobViews(jobId: string) {
-  const ref = doc(db, jobsCollection, jobId);
+  const ref = doc(db!, jobsCollection, jobId);
   await updateDoc(ref, {
     viewsCount: increment(1),
   });
@@ -407,7 +407,7 @@ type ApplicationInput = {
 export async function createJobApplication(
   input: ApplicationInput
 ): Promise<string> {
-  const ref = collection(db, applicationsCollection);
+  const ref = collection(db!, applicationsCollection);
   const docRef = await addDoc(ref, {
     ...input,
     status: "submitted" as ApplicationStatus,
@@ -416,7 +416,7 @@ export async function createJobApplication(
   });
 
   // Increment count on the job
-  const jobRef = doc(db, jobsCollection, input.jobId);
+  const jobRef = doc(db!, jobsCollection, input.jobId);
   await updateDoc(jobRef, {
     applicationsCount: increment(1),
   });
@@ -427,7 +427,7 @@ export async function createJobApplication(
 export async function listMemberApplications(
   memberId: string
 ): Promise<JobApplication[]> {
-  const ref = collection(db, applicationsCollection);
+  const ref = collection(db!, applicationsCollection);
   const q = query(
     ref,
     where("memberId", "==", memberId),
@@ -443,7 +443,7 @@ export async function listMemberApplications(
 export async function listJobApplications(
   jobId: string
 ): Promise<JobApplication[]> {
-  const ref = collection(db, applicationsCollection);
+  const ref = collection(db!, applicationsCollection);
   const q = query(
     ref,
     where("jobId", "==", jobId),
@@ -459,7 +459,7 @@ export async function listJobApplications(
 export async function listEmployerApplications(
   employerId: string
 ): Promise<JobApplication[]> {
-  const ref = collection(db, applicationsCollection);
+  const ref = collection(db!, applicationsCollection);
   const q = query(
     ref,
     where("employerId", "==", employerId),
@@ -476,7 +476,7 @@ export async function updateApplicationStatus(
   applicationId: string,
   status: ApplicationStatus
 ) {
-  const ref = doc(db, applicationsCollection, applicationId);
+  const ref = doc(db!, applicationsCollection, applicationId);
   await updateDoc(ref, {
     status,
     updatedAt: serverTimestamp(),
@@ -484,7 +484,7 @@ export async function updateApplicationStatus(
 }
 
 export async function withdrawJobApplication(applicationId: string) {
-  const ref = doc(db, applicationsCollection, applicationId);
+  const ref = doc(db!, applicationsCollection, applicationId);
   await updateDoc(ref, {
     status: "withdrawn" as ApplicationStatus,
     updatedAt: serverTimestamp(),
@@ -498,7 +498,7 @@ export async function toggleSavedJob(
 ) {
   const snapshot = await getDocs(
     query(
-      collection(db, savedJobsCollection),
+      collection(db!, savedJobsCollection),
       where("memberId", "==", memberId),
       where("jobId", "==", jobId)
     )
@@ -506,7 +506,7 @@ export async function toggleSavedJob(
 
   if (shouldSave) {
     if (snapshot.empty) {
-      await addDoc(collection(db, savedJobsCollection), {
+      await addDoc(collection(db!, savedJobsCollection), {
         memberId,
         jobId,
         createdAt: serverTimestamp(),
@@ -520,7 +520,7 @@ export async function toggleSavedJob(
 export async function listSavedJobs(
   memberId: string
 ): Promise<SavedJob[]> {
-  const ref = collection(db, savedJobsCollection);
+  const ref = collection(db!, savedJobsCollection);
   const q = query(
     ref,
     where("memberId", "==", memberId),
@@ -542,7 +542,7 @@ export async function listSavedJobs(
 }
 
 export async function listSavedJobIds(memberId: string): Promise<string[]> {
-  const ref = collection(db, savedJobsCollection);
+  const ref = collection(db!, savedJobsCollection);
   const q = query(ref, where("memberId", "==", memberId));
   const snap = await getDocs(q);
   return snap.docs.map((docSnap) => {
@@ -557,13 +557,13 @@ type ConferenceInput = Omit<
 > & { employerId: string; active?: boolean };
 
 export async function createConference(input: ConferenceInput): Promise<string> {
-  const ref = collection(db, conferencesCollection);
+  const ref = collection(db!, conferencesCollection);
   const docRef = await addDoc(ref, {
     ...input,
     active: input.active ?? true,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, conferencesCollection, docRef.id), {
+  await updateDoc(doc(db!, conferencesCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -584,7 +584,7 @@ export async function listConferences(): Promise<Conference[]> {
 export async function listEmployerConferences(
   employerId: string
 ): Promise<Conference[]> {
-  const ref = collection(db, conferencesCollection);
+  const ref = collection(db!, conferencesCollection);
   const q = query(
     ref,
     where("employerId", "==", employerId),
@@ -595,7 +595,7 @@ export async function listEmployerConferences(
 }
 
 export async function getConference(id: string): Promise<Conference | null> {
-  const ref = doc(db, conferencesCollection, id);
+  const ref = doc(db!, conferencesCollection, id);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   return snap.data() as Conference;
@@ -605,17 +605,17 @@ export async function updateConference(
   id: string,
   data: Partial<Conference>
 ) {
-  const ref = doc(db, conferencesCollection, id);
+  const ref = doc(db!, conferencesCollection, id);
   await updateDoc(ref, data);
 }
 
 export async function deleteConference(id: string) {
-  const ref = doc(db, conferencesCollection, id);
+  const ref = doc(db!, conferencesCollection, id);
   await deleteDoc(ref);
 }
 
 export async function deleteJobPosting(id: string) {
-  const ref = doc(db, jobsCollection, id);
+  const ref = doc(db!, jobsCollection, id);
   await deleteDoc(ref);
 }
 
@@ -627,13 +627,13 @@ type ScholarshipInput = Omit<
 export async function createScholarship(
   input: ScholarshipInput
 ): Promise<string> {
-  const ref = collection(db, scholarshipsCollection);
+  const ref = collection(db!, scholarshipsCollection);
   const docRef = await addDoc(ref, {
     ...input,
     active: input.active ?? true,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, scholarshipsCollection, docRef.id), {
+  await updateDoc(doc(db!, scholarshipsCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -655,7 +655,7 @@ export async function updateScholarship(
   id: string,
   data: Partial<Scholarship>
 ) {
-  const ref = doc(db, scholarshipsCollection, id);
+  const ref = doc(db!, scholarshipsCollection, id);
   await updateDoc(ref, data);
 }
 
@@ -667,13 +667,13 @@ type ShopListingInput = Omit<
 export async function createShopListing(
   input: ShopListingInput
 ): Promise<string> {
-  const ref = collection(db, shopCollection);
+  const ref = collection(db!, shopCollection);
   const docRef = await addDoc(ref, {
     ...input,
     active: input.active ?? true,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, shopCollection, docRef.id), {
+  await updateDoc(doc(db!, shopCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -695,7 +695,7 @@ export async function updateShopListing(
   id: string,
   data: Partial<ShopListing>
 ) {
-  const ref = doc(db, shopCollection, id);
+  const ref = doc(db!, shopCollection, id);
   await updateDoc(ref, data);
 }
 
@@ -707,13 +707,13 @@ type PowwowInput = Omit<
 export async function createPowwowEvent(
   input: PowwowInput
 ): Promise<string> {
-  const ref = collection(db, powwowsCollection);
+  const ref = collection(db!, powwowsCollection);
   const docRef = await addDoc(ref, {
     ...input,
     active: input.active ?? true,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, powwowsCollection, docRef.id), {
+  await updateDoc(doc(db!, powwowsCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -735,7 +735,7 @@ export async function updatePowwowEvent(
   id: string,
   data: Partial<PowwowEvent>
 ) {
-  const ref = doc(db, powwowsCollection, id);
+  const ref = doc(db!, powwowsCollection, id);
   await updateDoc(ref, data);
 }
 
@@ -747,13 +747,13 @@ type LiveStreamInput = Omit<
 export async function createLiveStream(
   input: LiveStreamInput
 ): Promise<string> {
-  const ref = collection(db, liveStreamsCollection);
+  const ref = collection(db!, liveStreamsCollection);
   const docRef = await addDoc(ref, {
     ...input,
     active: input.active ?? true,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, liveStreamsCollection, docRef.id), {
+  await updateDoc(doc(db!, liveStreamsCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -775,7 +775,7 @@ export async function updateLiveStream(
   id: string,
   data: Partial<LiveStreamEvent>
 ) {
-  const ref = doc(db, liveStreamsCollection, id);
+  const ref = doc(db!, liveStreamsCollection, id);
   await updateDoc(ref, data);
 }
 
@@ -788,7 +788,7 @@ export async function getVendorProfile(
 ): Promise<VendorProfile | null> {
   try {
     checkFirebase();
-    const ref = doc(db, vendorsCollection, userId);
+    const ref = doc(db!, vendorsCollection, userId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       return { id: snap.id, ...snap.data() } as VendorProfile;
@@ -804,7 +804,7 @@ export async function getVendorProfileById(
 ): Promise<VendorProfile | null> {
   try {
     checkFirebase();
-    const ref = doc(db, vendorsCollection, vendorId);
+    const ref = doc(db!, vendorsCollection, vendorId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       return { id: snap.id, ...snap.data() } as VendorProfile;
@@ -820,7 +820,7 @@ export async function upsertVendorProfile(
   data: Partial<VendorProfile>
 ): Promise<void> {
   checkFirebase();
-  const ref = doc(db, vendorsCollection, userId);
+  const ref = doc(db!, vendorsCollection, userId);
   const snap = await getDoc(ref);
 
   const timestamp = serverTimestamp();
@@ -845,7 +845,7 @@ export async function upsertVendorProfile(
 
 export async function deleteVendorProfile(vendorId: string): Promise<void> {
   checkFirebase();
-  const ref = doc(db, vendorsCollection, vendorId);
+  const ref = doc(db!, vendorsCollection, vendorId);
   await deleteDoc(ref);
 }
 
@@ -866,7 +866,7 @@ type ScholarshipApplicationInput = {
 export async function createScholarshipApplication(
   input: ScholarshipApplicationInput
 ): Promise<string> {
-  const ref = collection(db, scholarshipApplicationsCollection);
+  const ref = collection(db!, scholarshipApplicationsCollection);
   const docRef = await addDoc(ref, {
     ...input,
     status: "submitted" as ApplicationStatus,
@@ -879,7 +879,7 @@ export async function createScholarshipApplication(
 export async function listMemberScholarshipApplications(
   memberId: string
 ): Promise<ScholarshipApplication[]> {
-  const ref = collection(db, scholarshipApplicationsCollection);
+  const ref = collection(db!, scholarshipApplicationsCollection);
   const q = query(
     ref,
     where("memberId", "==", memberId),
@@ -896,8 +896,8 @@ export async function listScholarshipApplicantsForEmployer(
   employerId: string,
   scholarshipId?: string
 ): Promise<ScholarshipApplication[]> {
-  const ref = collection(db, scholarshipApplicationsCollection);
-  const constraints = [where("employerId", "==", employerId)];
+  const ref = collection(db!, scholarshipApplicationsCollection);
+  const constraints: any[] = [where("employerId", "==", employerId)];
   if (scholarshipId) {
     constraints.push(where("scholarshipId", "==", scholarshipId));
   }
@@ -912,7 +912,7 @@ export async function listScholarshipApplicantsForEmployer(
 
 export async function getScholarship(id: string): Promise<Scholarship | null> {
   try {
-    const ref = doc(db, scholarshipsCollection, id);
+    const ref = doc(db!, scholarshipsCollection, id);
     const snap = await getDoc(ref);
     if (!snap.exists()) return null;
     return snap.data() as Scholarship;
@@ -925,7 +925,7 @@ export async function updateScholarshipApplicationStatus(
   applicationId: string,
   status: ApplicationStatus
 ) {
-  const ref = doc(db, scholarshipApplicationsCollection, applicationId);
+  const ref = doc(db!, scholarshipApplicationsCollection, applicationId);
   await updateDoc(ref, {
     status,
     updatedAt: serverTimestamp(),
@@ -933,7 +933,7 @@ export async function updateScholarshipApplicationStatus(
 }
 
 export async function withdrawScholarshipApplication(applicationId: string) {
-  const ref = doc(db, scholarshipApplicationsCollection, applicationId);
+  const ref = doc(db!, scholarshipApplicationsCollection, applicationId);
   await updateDoc(ref, {
     status: "withdrawn" as ApplicationStatus,
     updatedAt: serverTimestamp(),
@@ -946,7 +946,7 @@ export async function withdrawScholarshipApplication(applicationId: string) {
 
 export async function getPowwowEvent(id: string): Promise<PowwowEvent | null> {
   try {
-    const ref = doc(db, powwowsCollection, id);
+    const ref = doc(db!, powwowsCollection, id);
     const snap = await getDoc(ref);
     if (!snap.exists()) return null;
     return snap.data() as PowwowEvent;
@@ -963,12 +963,12 @@ type PowwowRegistrationInput = Omit<
 export async function createPowwowRegistration(
   input: PowwowRegistrationInput
 ): Promise<string> {
-  const ref = collection(db, powwowRegistrationsCollection);
+  const ref = collection(db!, powwowRegistrationsCollection);
   const docRef = await addDoc(ref, {
     ...input,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, powwowRegistrationsCollection, docRef.id), {
+  await updateDoc(doc(db!, powwowRegistrationsCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -977,7 +977,7 @@ export async function createPowwowRegistration(
 export async function listMemberPowwowRegistrations(
   memberId: string
 ): Promise<PowwowRegistration[]> {
-  const ref = collection(db, powwowRegistrationsCollection);
+  const ref = collection(db!, powwowRegistrationsCollection);
   const q = query(
     ref,
     where("email", "==", memberId),
@@ -994,8 +994,8 @@ export async function listPowwowRegistrants(
   employerId: string,
   powwowId?: string
 ): Promise<PowwowRegistration[]> {
-  const ref = collection(db, powwowRegistrationsCollection);
-  const constraints = [where("employerId", "==", employerId)];
+  const ref = collection(db!, powwowRegistrationsCollection);
+  const constraints: any[] = [where("employerId", "==", employerId)];
   if (powwowId) {
     constraints.push(where("powwowId", "==", powwowId));
   }
@@ -1021,14 +1021,14 @@ export async function createShopListingForVendor(
   vendorId: string,
   data: Omit<ProductServiceInput, "vendorId">
 ): Promise<string> {
-  const ref = collection(db, productServiceListingsCollection);
+  const ref = collection(db!, productServiceListingsCollection);
   const docRef = await addDoc(ref, {
     vendorId,
     ...data,
     active: data.active ?? true,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db, productServiceListingsCollection, docRef.id), {
+  await updateDoc(doc(db!, productServiceListingsCollection, docRef.id), {
     id: docRef.id,
   });
   return docRef.id;
@@ -1038,12 +1038,12 @@ export async function updateShopListingForVendor(
   id: string,
   data: Partial<Omit<ProductServiceListing, "id" | "createdAt" | "vendorId">>
 ) {
-  const ref = doc(db, productServiceListingsCollection, id);
+  const ref = doc(db!, productServiceListingsCollection, id);
   await updateDoc(ref, data);
 }
 
 export async function deleteShopListingForVendor(id: string) {
-  const ref = doc(db, productServiceListingsCollection, id);
+  const ref = doc(db!, productServiceListingsCollection, id);
   await deleteDoc(ref);
 }
 
@@ -1211,7 +1211,7 @@ export async function createContactSubmission(
     };
 
     const docRef = await addDoc(
-      collection(db, contactSubmissionsCollection),
+      collection(db!, contactSubmissionsCollection),
       submissionData
     );
 

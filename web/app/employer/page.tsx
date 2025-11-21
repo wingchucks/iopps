@@ -964,7 +964,7 @@ export default function EmployerDashboardPage() {
   const renderInterview = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [videoUrl, setVideoUrl] = useState("");
-    const [videoProvider, setVideoProvider] = useState<"youtube" | "vimeo">("youtube");
+    const [videoProvider, setVideoProvider] = useState<"youtube" | "vimeo" | "custom">("youtube");
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [duration, setDuration] = useState("");

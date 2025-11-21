@@ -147,11 +147,12 @@ export default function MemberAlertsPage() {
         const alertRef = doc(db!, "jobAlerts", editingAlert.id);
         await updateDoc(alertRef, alertData);
 
-        // Update local state
+        // Update local state (exclude updatedAt since it's a FieldValue)
+        const { updatedAt, ...localAlertData } = alertData;
         setAlerts((prev) =>
           prev.map((a) =>
             a.id === editingAlert.id
-              ? { ...a, ...alertData, id: editingAlert.id }
+              ? { ...a, ...localAlertData, id: editingAlert.id, updatedAt: null }
               : a
           )
         );
