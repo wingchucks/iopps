@@ -21,7 +21,9 @@ interface ConferenceWithEmployer extends Conference {
   employerLogoUrl?: string;
 }
 
-export default function AdminConferencesPage() {
+import { Suspense } from "react";
+
+function AdminConferencesContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -192,31 +194,28 @@ export default function AdminConferencesPage() {
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "all"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
                 ? "bg-[#14B8A6] text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-            }`}
+              }`}
           >
             All ({conferences.length})
           </button>
           <button
             onClick={() => setFilter("active")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "active"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
                 ? "bg-green-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-green-500"
-            }`}
+              }`}
           >
             Active ({activeCount})
           </button>
           <button
             onClick={() => setFilter("inactive")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "inactive"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
                 ? "bg-slate-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-slate-500"
-            }`}
+              }`}
           >
             Inactive ({inactiveCount})
           </button>
@@ -262,11 +261,10 @@ export default function AdminConferencesPage() {
                               </p>
                             </div>
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                isActive
+                              className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
                                   ? "bg-green-500/10 text-green-400"
                                   : "bg-slate-500/10 text-slate-400"
-                              }`}
+                                }`}
                             >
                               {isActive ? "Active" : "Inactive"}
                             </span>
@@ -316,8 +314,8 @@ export default function AdminConferencesPage() {
                                 {typeof conference.startDate === "string"
                                   ? conference.startDate
                                   : new Date(
-                                      conference.startDate.seconds * 1000
-                                    ).toLocaleDateString()}
+                                    conference.startDate.seconds * 1000
+                                  ).toLocaleDateString()}
                               </span>
                             )}
                             {conference.endDate && (
@@ -326,8 +324,8 @@ export default function AdminConferencesPage() {
                                 {typeof conference.endDate === "string"
                                   ? conference.endDate
                                   : new Date(
-                                      conference.endDate.seconds * 1000
-                                    ).toLocaleDateString()}
+                                    conference.endDate.seconds * 1000
+                                  ).toLocaleDateString()}
                               </span>
                             )}
                           </div>
@@ -349,17 +347,16 @@ export default function AdminConferencesPage() {
                           toggleConferenceStatus(conference.id, isActive)
                         }
                         disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                          isActive
+                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
                             ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
                             : "bg-green-600 text-white hover:bg-green-500"
-                        }`}
+                          }`}
                       >
                         {isProcessing
                           ? "Processing..."
                           : isActive
-                          ? "Deactivate"
-                          : "Activate"}
+                            ? "Deactivate"
+                            : "Activate"}
                       </button>
 
                       <button
@@ -380,5 +377,19 @@ export default function AdminConferencesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminConferencesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-slate-400">Loading conferences...</p>
+        </div>
+      </div>
+    }>
+      <AdminConferencesContent />
+    </Suspense>
   );
 }
