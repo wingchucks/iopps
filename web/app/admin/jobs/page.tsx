@@ -22,7 +22,9 @@ interface JobWithEmployer extends JobPosting {
   employerLogoUrl?: string;
 }
 
-export default function AdminJobsPage() {
+import { Suspense } from "react";
+
+function AdminJobsContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -188,31 +190,28 @@ export default function AdminJobsPage() {
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "all"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
                 ? "bg-[#14B8A6] text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-            }`}
+              }`}
           >
             All ({jobs.length})
           </button>
           <button
             onClick={() => setFilter("active")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "active"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
                 ? "bg-green-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-green-500"
-            }`}
+              }`}
           >
             Active ({activeCount})
           </button>
           <button
             onClick={() => setFilter("inactive")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "inactive"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
                 ? "bg-slate-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-slate-500"
-            }`}
+              }`}
           >
             Inactive ({inactiveCount})
           </button>
@@ -256,11 +255,10 @@ export default function AdminJobsPage() {
                               </p>
                             </div>
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                isActive
+                              className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
                                   ? "bg-green-500/10 text-green-400"
                                   : "bg-slate-500/10 text-slate-400"
-                              }`}
+                                }`}
                             >
                               {isActive ? "Active" : "Inactive"}
                             </span>
@@ -309,8 +307,8 @@ export default function AdminJobsPage() {
                               Posted:{" "}
                               {job.createdAt
                                 ? new Date(
-                                    job.createdAt.seconds * 1000
-                                  ).toLocaleDateString()
+                                  job.createdAt.seconds * 1000
+                                ).toLocaleDateString()
                                 : "Unknown"}
                             </span>
                             {job.closingDate && (
@@ -319,8 +317,8 @@ export default function AdminJobsPage() {
                                 {typeof job.closingDate === "string"
                                   ? job.closingDate
                                   : new Date(
-                                      job.closingDate.seconds * 1000
-                                    ).toLocaleDateString()}
+                                    job.closingDate.seconds * 1000
+                                  ).toLocaleDateString()}
                               </span>
                             )}
                             {job.applicationsCount !== undefined && (
@@ -345,17 +343,16 @@ export default function AdminJobsPage() {
                       <button
                         onClick={() => toggleJobStatus(job.id, isActive)}
                         disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                          isActive
+                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
                             ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
                             : "bg-green-600 text-white hover:bg-green-500"
-                        }`}
+                          }`}
                       >
                         {isProcessing
                           ? "Processing..."
                           : isActive
-                          ? "Deactivate"
-                          : "Activate"}
+                            ? "Deactivate"
+                            : "Activate"}
                       </button>
 
                       <button
@@ -374,5 +371,19 @@ export default function AdminJobsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminJobsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-slate-400">Loading jobs...</p>
+        </div>
+      </div>
+    }>
+      <AdminJobsContent />
+    </Suspense>
   );
 }

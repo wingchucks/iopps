@@ -22,7 +22,9 @@ interface PowwowWithEmployer extends PowwowEvent {
   employerLogoUrl?: string;
 }
 
-export default function AdminPowwowsPage() {
+import { Suspense } from "react";
+
+function AdminPowwowsContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -190,31 +192,28 @@ export default function AdminPowwowsPage() {
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "all"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
                 ? "bg-[#14B8A6] text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-            }`}
+              }`}
           >
             All ({powwows.length})
           </button>
           <button
             onClick={() => setFilter("active")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "active"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
                 ? "bg-green-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-green-500"
-            }`}
+              }`}
           >
             Active ({activeCount})
           </button>
           <button
             onClick={() => setFilter("inactive")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "inactive"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
                 ? "bg-slate-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-slate-500"
-            }`}
+              }`}
           >
             Inactive ({inactiveCount})
           </button>
@@ -263,11 +262,10 @@ export default function AdminPowwowsPage() {
                               </p>
                             </div>
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                isActive
+                              className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
                                   ? "bg-green-500/10 text-green-400"
                                   : "bg-slate-500/10 text-slate-400"
-                              }`}
+                                }`}
                             >
                               {isActive ? "Active" : "Inactive"}
                             </span>
@@ -331,8 +329,8 @@ export default function AdminPowwowsPage() {
                                     {typeof powwow.startDate === "string"
                                       ? powwow.startDate
                                       : new Date(
-                                          powwow.startDate.seconds * 1000
-                                        ).toLocaleDateString()}
+                                        powwow.startDate.seconds * 1000
+                                      ).toLocaleDateString()}
                                   </span>
                                 )}
                                 {powwow.endDate && (
@@ -341,8 +339,8 @@ export default function AdminPowwowsPage() {
                                     {typeof powwow.endDate === "string"
                                       ? powwow.endDate
                                       : new Date(
-                                          powwow.endDate.seconds * 1000
-                                        ).toLocaleDateString()}
+                                        powwow.endDate.seconds * 1000
+                                      ).toLocaleDateString()}
                                   </span>
                                 )}
                               </>
@@ -364,17 +362,16 @@ export default function AdminPowwowsPage() {
                       <button
                         onClick={() => togglePowwowStatus(powwow.id, isActive)}
                         disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                          isActive
+                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
                             ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
                             : "bg-green-600 text-white hover:bg-green-500"
-                        }`}
+                          }`}
                       >
                         {isProcessing
                           ? "Processing..."
                           : isActive
-                          ? "Deactivate"
-                          : "Activate"}
+                            ? "Deactivate"
+                            : "Activate"}
                       </button>
 
                       <button
@@ -393,5 +390,19 @@ export default function AdminPowwowsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminPowwowsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-slate-400">Loading pow wows...</p>
+        </div>
+      </div>
+    }>
+      <AdminPowwowsContent />
+    </Suspense>
   );
 }

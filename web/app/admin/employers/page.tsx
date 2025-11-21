@@ -21,7 +21,9 @@ interface EmployerWithUser extends EmployerProfile {
   userEmail?: string;
 }
 
-export default function AdminEmployersPage() {
+import { Suspense } from "react";
+
+function AdminEmployersContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -237,41 +239,37 @@ export default function AdminEmployersPage() {
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "all"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
                 ? "bg-[#14B8A6] text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-            }`}
+              }`}
           >
             All ({employers.length})
           </button>
           <button
             onClick={() => setFilter("pending")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "pending"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "pending"
                 ? "bg-yellow-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-yellow-500"
-            }`}
+              }`}
           >
             Pending ({pendingCount})
           </button>
           <button
             onClick={() => setFilter("approved")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "approved"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "approved"
                 ? "bg-green-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-green-500"
-            }`}
+              }`}
           >
             Approved ({approvedCount})
           </button>
           <button
             onClick={() => setFilter("rejected")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === "rejected"
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "rejected"
                 ? "bg-red-500 text-slate-900"
                 : "border border-slate-700 text-slate-300 hover:border-red-500"
-            }`}
+              }`}
           >
             Rejected ({rejectedCount})
           </button>
@@ -319,19 +317,18 @@ export default function AdminEmployersPage() {
                               )}
                             </div>
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                status === "pending"
+                              className={`rounded-full px-3 py-1 text-xs font-medium ${status === "pending"
                                   ? "bg-yellow-500/10 text-yellow-400"
                                   : status === "approved"
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-red-500/10 text-red-400"
-                              }`}
+                                    ? "bg-green-500/10 text-green-400"
+                                    : "bg-red-500/10 text-red-400"
+                                }`}
                             >
                               {status === "pending"
                                 ? "Pending"
                                 : status === "approved"
-                                ? "Approved"
-                                : "Rejected"}
+                                  ? "Approved"
+                                  : "Rejected"}
                             </span>
                           </div>
 
@@ -374,8 +371,8 @@ export default function AdminEmployersPage() {
                               Created:{" "}
                               {employer.createdAt
                                 ? new Date(
-                                    employer.createdAt.seconds * 1000
-                                  ).toLocaleDateString()
+                                  employer.createdAt.seconds * 1000
+                                ).toLocaleDateString()
                                 : "Unknown"}
                             </span>
                             {employer.approvedAt && (
@@ -437,5 +434,19 @@ export default function AdminEmployersPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminEmployersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-slate-400">Loading employers...</p>
+        </div>
+      </div>
+    }>
+      <AdminEmployersContent />
+    </Suspense>
   );
 }

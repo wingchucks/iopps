@@ -25,7 +25,9 @@ interface User {
   disabled?: boolean;
 }
 
-export default function AdminUsersPage() {
+import { Suspense } from "react";
+
+function AdminUsersContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -183,41 +185,37 @@ export default function AdminUsersPage() {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setFilter("all")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                filter === "all"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
                   ? "bg-[#14B8A6] text-slate-900"
                   : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-              }`}
+                }`}
             >
               All ({users.length})
             </button>
             <button
               onClick={() => setFilter("community")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                filter === "community"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "community"
                   ? "bg-[#14B8A6] text-slate-900"
                   : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-              }`}
+                }`}
             >
               Community ({communityCount})
             </button>
             <button
               onClick={() => setFilter("employer")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                filter === "employer"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "employer"
                   ? "bg-[#14B8A6] text-slate-900"
                   : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-              }`}
+                }`}
             >
               Employers ({employerCount})
             </button>
             <button
               onClick={() => setFilter("moderator")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                filter === "moderator"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "moderator"
                   ? "bg-purple-500 text-slate-900"
                   : "border border-slate-700 text-slate-300 hover:border-purple-500"
-              }`}
+                }`}
             >
               Moderators ({moderatorCount})
             </button>
@@ -316,11 +314,10 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${
-                              userData.disabled
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${userData.disabled
                                 ? "bg-red-500/10 text-red-400"
                                 : "bg-green-500/10 text-green-400"
-                            }`}
+                              }`}
                           >
                             {userData.disabled ? "Disabled" : "Active"}
                           </span>
@@ -328,8 +325,8 @@ export default function AdminUsersPage() {
                         <td className="px-6 py-4 text-sm text-slate-400">
                           {userData.createdAt
                             ? new Date(
-                                userData.createdAt.seconds * 1000
-                              ).toLocaleDateString()
+                              userData.createdAt.seconds * 1000
+                            ).toLocaleDateString()
                             : "Unknown"}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -344,8 +341,8 @@ export default function AdminUsersPage() {
                               {isProcessing
                                 ? "..."
                                 : userData.disabled
-                                ? "Enable"
-                                : "Disable"}
+                                  ? "Enable"
+                                  : "Disable"}
                             </button>
                             {userData.role === "employer" && (
                               <Link
@@ -367,5 +364,19 @@ export default function AdminUsersPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-slate-400">Loading users...</p>
+        </div>
+      </div>
+    }>
+      <AdminUsersContent />
+    </Suspense>
   );
 }
