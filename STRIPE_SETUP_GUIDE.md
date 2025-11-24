@@ -95,10 +95,10 @@ Go to your Vercel project settings and add:
 ### Payment Flow:
 
 1. **Employer fills out job form** → Selects pricing tier
-2. **Clicks "Continue to Payment"** → Redirected to Stripe Checkout
+2. **Clicks "Continue to Payment"** → Draft job created (inactive) & redirected to Stripe
 3. **Completes payment** → Stripe processes payment
 4. **Webhook triggered** → Your server receives notification
-5. **Job created automatically** → Posted with expiration date
+5. **Job activated automatically** → Status updated to active with expiration date
 6. **Success page shown** → Confirmation to employer
 
 ---

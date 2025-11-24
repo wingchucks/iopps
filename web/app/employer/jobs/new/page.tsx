@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { getEmployerProfile } from "@/lib/firestore";
+import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
 import { loadStripe } from "@stripe/stripe-js";
 import { JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
 
@@ -133,6 +133,14 @@ export default function NewJobPage() {
         applicationEmail,
       };
 
+      // Create job in Firestore first (inactive, pending payment)
+      const jobId = await createJobPosting({
+        ...jobData,
+        active: false,
+        paymentStatus: "pending",
+        productType: selectedProduct,
+      });
+
       // Create Stripe Checkout session
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -141,7 +149,7 @@ export default function NewJobPage() {
         },
         body: JSON.stringify({
           productType: selectedProduct,
-          jobData,
+          jobId,
           userId: user.uid,
         }),
       });

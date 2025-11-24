@@ -54,7 +54,18 @@ const contactSubmissionsCollection = "contactSubmissions";
 // Helper to check if Firebase is available
 function checkFirebase() {
   if (!db) {
-    throw new Error("Firebase not initialized - using offline mode");
+    // During build time or if config is missing, this might be null.
+    // We throw here to ensure type safety for the return type (Firestore),
+    // but we need to handle this gracefully in the calling functions if possible,
+    // or ensure this is only called when Firebase is initialized.
+    // For static generation, we might want to return a mock or null and handle it.
+    // But to fix the immediate build error which is likely due to missing env vars:
+    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+      console.warn("Firebase not initialized during build.");
+      // We can't return null here because the return type is inferred as Firestore.
+      // We'll throw, but we should catch this in getStaticProps/generateStaticParams if used.
+    }
+    throw new Error("Firebase not initialized");
   }
   return db;
 }
@@ -1115,9 +1126,8 @@ export async function globalSearch(
     // Filter results by keyword (client-side for now)
     const matchedJobs = jobs
       .filter((job) => {
-        const text = `${job.title ?? ""} ${job.employerName ?? ""} ${
-          job.description ?? ""
-        } ${job.location ?? ""}`.toLowerCase();
+        const text = `${job.title ?? ""} ${job.employerName ?? ""} ${job.description ?? ""
+          } ${job.location ?? ""}`.toLowerCase();
         return text.includes(searchTerm);
       })
       .slice(0, limit);
@@ -1131,27 +1141,24 @@ export async function globalSearch(
 
     const matchedConferences = conferences
       .filter((conference) => {
-        const text = `${conference.title} ${conference.employerName ?? ""} ${
-          conference.description
-        } ${conference.location}`.toLowerCase();
+        const text = `${conference.title} ${conference.employerName ?? ""} ${conference.description
+          } ${conference.location}`.toLowerCase();
         return text.includes(searchTerm);
       })
       .slice(0, limit);
 
     const matchedPowwows = powwows
       .filter((powwow) => {
-        const text = `${powwow.name} ${powwow.host ?? ""} ${
-          powwow.description ?? ""
-        } ${powwow.location ?? ""}`.toLowerCase();
+        const text = `${powwow.name} ${powwow.host ?? ""} ${powwow.description ?? ""
+          } ${powwow.location ?? ""}`.toLowerCase();
         return text.includes(searchTerm);
       })
       .slice(0, limit);
 
     const matchedShop = shop
       .filter((item) => {
-        const text = `${item.name} ${item.owner ?? ""} ${item.description ?? ""} ${
-          (item.tags ?? []).join(" ")
-        }`.toLowerCase();
+        const text = `${item.name} ${item.owner ?? ""} ${item.description ?? ""} ${(item.tags ?? []).join(" ")
+          }`.toLowerCase();
         return text.includes(searchTerm);
       })
       .slice(0, limit);

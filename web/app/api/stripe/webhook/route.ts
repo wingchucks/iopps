@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { db } from "@/lib/firebase-admin";
 import Stripe from "stripe";
+
+//  Lazy-load firebase-admin to prevent build-time initialization errors
+function getFirebaseAdmin() {
+    const { db } = require("@/lib/firebase-admin");
+    return db;
+}
+
+// Mark this route as dynamic to prevent static analysis
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
     const body = await request.text();
@@ -43,37 +52,41 @@ export async function POST(request: NextRequest) {
                 const session = event.data.object as Stripe.Checkout.Session;
 
                 // Extract metadata
-                const { userId, jobData, duration, featured, productType } = session.metadata || {};
+                const { productType, userId, jobId, duration, featured } = session.metadata || {};
 
-                if (!userId || !jobData) {
-                    console.error("Missing required metadata in session");
+                if (!jobId) {
+                    console.error("Missing jobId in metadata");
                     break;
                 }
-
-                // Parse job data
-                const parsedJobData = JSON.parse(jobData);
 
                 // Calculate expiration date
                 const expirationDate = new Date();
                 expirationDate.setDate(expirationDate.getDate() + parseInt(duration || "30"));
 
-                // Create job posting in Firestore
-                const jobRef = db.collection("jobs").doc();
-                await jobRef.set({
-                    ...parsedJobData,
-                    id: jobRef.id,
-                    employerId: userId,
+                // Update the existing job in Firestore
+                const db = getFirebaseAdmin();
+                if (!db) {
+                    console.error("Firebase Admin not initialized");
+                    return NextResponse.json(
+                        { error: "Server configuration error" },
+                        { status: 500 }
+                    );
+                }
+
+                const jobRef = db.collection("jobs").doc(jobId);
+
+                await jobRef.update({
                     active: true,
                     featured: featured === "true",
-                    createdAt: new Date(),
+                    createdAt: new Date(), // Reset created at to payment time
                     expiresAt: expirationDate,
                     paymentStatus: "paid",
-                    paymentId: session.payment_intent,
+                    paymentId: session.payment_intent as string,
                     productType: productType,
                     amountPaid: session.amount_total,
                 });
 
-                console.log(`Job created successfully: ${jobRef.id}`);
+                console.log(`Job ${jobId} activated successfully`);
                 break;
             }
 

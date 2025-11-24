@@ -3,8 +3,15 @@ import { getAuth, connectAuthEmulator, GoogleAuthProvider, type Auth } from "fir
 import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
 import { getStorage, connectStorageEmulator, type FirebaseStorage } from "firebase/storage";
 
-// Check if Firebase credentials are available
-const hasFirebaseConfig = Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+// Check if Firebase credentials are available and valid
+const hasFirebaseConfig = Boolean(
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
+  process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
+  process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
+  process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+);
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;

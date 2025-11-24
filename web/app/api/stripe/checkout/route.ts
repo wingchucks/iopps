@@ -4,9 +4,9 @@ import { stripe, JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/strip
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { productType, jobData, userId } = body as {
+        const { productType, jobId, userId } = body as {
             productType: JobPostingProductType;
-            jobData: any;
+            jobId: string;
             userId: string;
         };
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
             metadata: {
                 productType,
                 userId,
-                jobData: JSON.stringify(jobData),
+                jobId,
                 duration: product.duration.toString(),
                 featured: product.featured.toString(),
             },

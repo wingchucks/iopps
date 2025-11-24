@@ -59,6 +59,12 @@ export interface JobPosting {
   active: boolean;
   viewsCount?: number;
   applicationsCount?: number;
+  // Payment fields
+  paymentStatus?: "paid" | "pending" | "failed";
+  paymentId?: string;
+  productType?: string;
+  amountPaid?: number;
+  expiresAt?: Timestamp | Date | string | null;
 }
 
 export interface Conference {
