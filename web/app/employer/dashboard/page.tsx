@@ -7,8 +7,9 @@ import OverviewTab from "./OverviewTab";
 import OpportunitiesTab from "./OpportunitiesTab";
 import ApplicationsTab from "./ApplicationsTab";
 import ProfileTab from "./ProfileTab";
+import BillingTab from "./BillingTab";
 
-type TabType = "overview" | "opportunities" | "applications" | "profile";
+type TabType = "overview" | "opportunities" | "applications" | "billing" | "profile";
 
 export default function EmployerDashboard() {
   const { user, role, loading } = useAuth();
@@ -30,6 +31,7 @@ export default function EmployerDashboard() {
     { id: "overview" as TabType, label: "Overview", icon: "📊" },
     { id: "opportunities" as TabType, label: "Opportunities", icon: "💼" },
     { id: "applications" as TabType, label: "Applications", icon: "📝" },
+    { id: "billing" as TabType, label: "Billing & Payments", icon: "💳" },
     { id: "profile" as TabType, label: "Profile & Settings", icon: "⚙️" },
   ];
 
@@ -52,11 +54,10 @@ export default function EmployerDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                  : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-              }`}
+              className={`whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${activeTab === tab.id
+                ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+                }`}
             >
               <span className="mr-2">{tab.icon}</span>
               {tab.label}
@@ -69,6 +70,7 @@ export default function EmployerDashboard() {
           {activeTab === "overview" && <OverviewTab />}
           {activeTab === "opportunities" && <OpportunitiesTab />}
           {activeTab === "applications" && <ApplicationsTab />}
+          {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab />}
         </div>
       </div>
