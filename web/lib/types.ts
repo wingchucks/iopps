@@ -83,6 +83,14 @@ export interface Conference {
   format?: string;
   active: boolean;
   createdAt?: Timestamp | null;
+  // Payment fields
+  featured?: boolean;
+  paymentStatus?: "paid" | "pending" | "failed";
+  paymentId?: string;
+  productType?: string;
+  amountPaid?: number;
+  expiresAt?: Timestamp | Date | string | null;
+  viewsCount?: number;
 }
 
 export type ApplicationStatus =

@@ -28,3 +28,31 @@ export const JOB_POSTING_PRODUCTS = {
 } as const;
 
 export type JobPostingProductType = keyof typeof JOB_POSTING_PRODUCTS;
+
+// Conference/Event product configurations
+export const CONFERENCE_PRODUCTS = {
+    FREE: {
+        name: "Free Conference Listing",
+        price: 0, // Free
+        duration: 60, // days
+        featured: false,
+        description: "Basic conference listing visible for 60 days",
+    },
+    PREMIUM: {
+        name: "Premium Conference Listing",
+        price: 15000, // $150.00
+        duration: 90, // days
+        featured: false,
+        description: "Enhanced listing with priority placement for 90 days",
+    },
+    FEATURED: {
+        name: "Featured Conference Spotlight",
+        price: 35000, // $350.00
+        duration: 120, // days
+        featured: true,
+        description: "Premium spotlight placement with banner image, featured badge, and top positioning for 120 days",
+    },
+} as const;
+
+export type ConferenceProductType = keyof typeof CONFERENCE_PRODUCTS;
+

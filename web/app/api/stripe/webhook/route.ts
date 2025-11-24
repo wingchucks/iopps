@@ -52,18 +52,8 @@ export async function POST(request: NextRequest) {
                 const session = event.data.object as Stripe.Checkout.Session;
 
                 // Extract metadata
-                const { productType, userId, jobId, duration, featured } = session.metadata || {};
+                const { productType, userId, jobId, conferenceId, duration, featured } = session.metadata || {};
 
-                if (!jobId) {
-                    console.error("Missing jobId in metadata");
-                    break;
-                }
-
-                // Calculate expiration date
-                const expirationDate = new Date();
-                expirationDate.setDate(expirationDate.getDate() + parseInt(duration || "30"));
-
-                // Update the existing job in Firestore
                 const db = getFirebaseAdmin();
                 if (!db) {
                     console.error("Firebase Admin not initialized");
@@ -73,20 +63,53 @@ export async function POST(request: NextRequest) {
                     );
                 }
 
-                const jobRef = db.collection("jobs").doc(jobId);
+                // Handle job posting payment
+                if (jobId) {
+                    // Calculate expiration date
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + parseInt(duration || "30"));
 
-                await jobRef.update({
-                    active: true,
-                    featured: featured === "true",
-                    createdAt: new Date(), // Reset created at to payment time
-                    expiresAt: expirationDate,
-                    paymentStatus: "paid",
-                    paymentId: session.payment_intent as string,
-                    productType: productType,
-                    amountPaid: session.amount_total,
-                });
+                    const jobRef = db.collection("jobs").doc(jobId);
 
-                console.log(`Job ${jobId} activated successfully`);
+                    await jobRef.update({
+                        active: true,
+                        featured: featured === "true",
+                        createdAt: new Date(), // Reset created at to payment time
+                        expiresAt: expirationDate,
+                        paymentStatus: "paid",
+                        paymentId: session.payment_intent as string,
+                        productType: productType,
+                        amountPaid: session.amount_total,
+                    });
+
+                    console.log(`Job ${jobId} activated successfully`);
+                    break;
+                }
+
+                // Handle conference payment
+                if (conferenceId) {
+                    // Calculate expiration date
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + parseInt(duration || "60"));
+
+                    const conferenceRef = db.collection("conferences").doc(conferenceId);
+
+                    await conferenceRef.update({
+                        active: true,
+                        featured: featured === "true",
+                        createdAt: new Date(), // Reset created at to payment time
+                        expiresAt: expirationDate,
+                        paymentStatus: "paid",
+                        paymentId: session.payment_intent as string,
+                        productType: productType,
+                        amountPaid: session.amount_total,
+                    });
+
+                    console.log(`Conference ${conferenceId} activated successfully`);
+                    break;
+                }
+
+                console.error("Missing jobId or conferenceId in metadata");
                 break;
             }
 
