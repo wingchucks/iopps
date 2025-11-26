@@ -10,15 +10,18 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@heroicons/react": "^2.2.0",
     "@stripe/stripe-js": "^8.5.2",
     "firebase": "^12.6.0",
     "firebase-admin": "^13.6.0",
+    "he": "^1.2.0",
     "json2csv": "^6.0.0-alpha.2",
     "next": "16.0.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "resend": "^6.5.0",
-    "stripe": "^20.0.0"
+    "stripe": "^20.0.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

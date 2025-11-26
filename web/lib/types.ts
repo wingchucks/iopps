@@ -51,7 +51,12 @@ export interface JobPosting {
   qualifications?: string[];
   requirements?: string;
   benefits?: string;
-  salaryRange?: string;
+  salaryRange?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    disclosed?: boolean;
+  } | string; // Support both structured and legacy string format
   applicationLink?: string;
   applicationEmail?: string;
   createdAt?: Timestamp | null;
@@ -59,6 +64,9 @@ export interface JobPosting {
   active: boolean;
   viewsCount?: number;
   applicationsCount?: number;
+  // Quick Apply & Enhanced Features
+  quickApplyEnabled?: boolean; // Allow applications through IOPPS
+  companyLogoUrl?: string; // For enhanced job cards
   // Payment fields
   paymentStatus?: "paid" | "pending" | "failed";
   paymentId?: string;
@@ -163,6 +171,9 @@ export interface MemberProfile {
   indigenousAffiliation?: string;
   availableForInterviews?: string;
   messagingHandle?: string;
+  // Quick Apply Settings
+  quickApplyEnabled?: boolean; // Allow using saved resume for quick applications
+  defaultCoverLetter?: string; // Pre-filled cover letter for quick applies
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -336,7 +347,40 @@ export interface ContactSubmission {
   name: string;
   email: string;
   subject?: string;
-  message: string;
-  createdAt?: Timestamp | null;
-  status?: "new" | "read" | "responded";
+  jobId: string;
+  appliedAt: Timestamp;
+  status: "submitted" | "viewed" | "interviewing" | "rejected" | "accepted";
 }
+
+export interface PlatformSettings {
+  maintenanceMode: boolean;
+  announcementBanner: {
+    active: boolean;
+    message: string;
+    link?: string;
+    type: "info" | "warning" | "error" | "success";
+  };
+  features: {
+    enableStripe: boolean;
+    enableJobPosting: boolean;
+    enableScholarships: boolean;
+  };
+  updatedAt?: Timestamp | null;
+  updatedBy?: string;
+}
+
+export interface RSSFeed {
+  id: string;
+  employerId: string;
+  employerName?: string;
+  feedUrl: string;
+  feedName: string; // User-friendly name
+  active: boolean;
+  lastSyncedAt?: Timestamp | null;
+  syncFrequency: "manual" | "hourly" | "daily" | "weekly";
+  syncErrors?: string[];
+  totalJobsImported?: number;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+

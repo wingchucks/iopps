@@ -9,6 +9,7 @@ import EmployerInterviewSection from "@/components/employer/EmployerInterviewSec
 import ShareButtons from "@/components/ShareButtons";
 import { getJobPosting, createJobApplication, getMemberProfile, getEmployerProfile } from "@/lib/firestore";
 import type { JobPosting, MemberProfile, EmployerProfile } from "@/lib/types";
+import QuickApplyButton from "@/components/QuickApplyButton";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -353,6 +354,30 @@ export default function JobDetailPage() {
             <h2 className="text-xl font-bold text-slate-200">
               Apply for this position
             </h2>
+
+            {job.quickApplyEnabled && memberProfile && (
+              <div className="mt-6 mb-8">
+                <div className="flex flex-col items-center justify-center rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6 text-center">
+                  <h3 className="mb-2 text-lg font-semibold text-slate-200">
+                    Fast Track Your Application
+                  </h3>
+                  <p className="mb-4 text-sm text-slate-400">
+                    Use your profile to apply in seconds.
+                  </p>
+                  <QuickApplyButton job={job} memberProfile={memberProfile} />
+                </div>
+                <div className="relative mt-8">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-slate-800"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-[#08090C] px-2 text-sm text-slate-500">
+                      Or apply manually
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {success ? (
               <div className="mt-6 rounded-lg border border-green-500/40 bg-green-500/10 p-6 text-center">

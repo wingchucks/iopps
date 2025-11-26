@@ -30,6 +30,7 @@ export default function NewJobPage() {
   const [employmentType, setEmploymentType] = useState("Full-time");
   const [remoteFlag, setRemoteFlag] = useState(false);
   const [indigenousPreference, setIndigenousPreference] = useState(true);
+  const [quickApplyEnabled, setQuickApplyEnabled] = useState(true);
   const [salaryRange, setSalaryRange] = useState("");
   const [closingDate, setClosingDate] = useState("");
   const [description, setDescription] = useState("");
@@ -118,6 +119,7 @@ export default function NewJobPage() {
         employmentType,
         remoteFlag,
         indigenousPreference,
+        quickApplyEnabled,
         salaryRange,
         closingDate,
         description,
@@ -324,6 +326,19 @@ export default function NewJobPage() {
               onChange={(e) => setIndigenousPreference(e.target.checked)}
             />
             Indigenous preference / targeted hiring
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-200 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={quickApplyEnabled}
+              onChange={(e) => setQuickApplyEnabled(e.target.checked)}
+            />
+            <span className="flex items-center gap-2">
+              Enable Quick Apply
+              <span className="rounded-full bg-[#14B8A6]/20 px-2 py-0.5 text-xs font-semibold text-[#14B8A6]">
+                Recommended
+              </span>
+            </span>
           </label>
         </div>
 

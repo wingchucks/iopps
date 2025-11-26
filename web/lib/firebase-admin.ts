@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 // Initialize Firebase Admin
 if (!getApps().length) {
@@ -32,4 +33,6 @@ if (!getApps().length) {
 }
 
 // Export a function to get DB to ensure it's initialized or throw error at runtime
+// Export a function to get DB to ensure it's initialized or throw error at runtime
 export const db = getApps().length ? getFirestore() : null as any;
+export const auth = getApps().length ? getAuth() : null as any;

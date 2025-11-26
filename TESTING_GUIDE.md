@@ -1,721 +1,364 @@
-# IOPPS Testing Guide
-
-This guide provides comprehensive testing procedures for the Indigenous Opportunities Platform.
+# 🧪 IOPPS Admin Features - Testing Guide
 
 ## Prerequisites
 
-Ensure Firebase emulators are running:
-```bash
-firebase emulators:start
-```
-
-Ensure Next.js dev server is running:
-```bash
-cd web && npm run dev
-```
-
-Access points:
-- **App**: http://localhost:3000
-- **Emulator UI**: http://localhost:4000
-- **Auth Emulator**: http://localhost:9099
-- **Firestore Emulator**: http://localhost:8080
-- **Storage Emulator**: http://localhost:9199
-
-## Test Accounts Setup
-
-### Create Test Accounts
-
-**Community Member Account:**
-- Email: `member@test.com`
-- Password: `testpass123`
-- Role: `community`
-
-**Employer Account:**
-- Email: `employer@test.com`
-- Password: `testpass123`
-- Role: `employer`
-
-**Note**: Create these accounts through the registration flow and verify the role is set correctly in Firestore.
+Before starting, make sure:
+- [x] Development server is running (`npm run dev`)
+- [ ] You're logged in as **nathan.arias@iopps.ca** (admin account)
+- [ ] Browser is open to http://localhost:3000
 
 ---
 
-## Testing Checklist
+## Test 1: Admin Dashboard
 
-### 1. Authentication Flow Testing
+**URL**: http://localhost:3000/admin
 
-#### Registration (Community Member)
-- [ ] Navigate to `/register`
-- [ ] Fill out form with community role selected
-- [ ] Submit registration
-- [ ] Verify email verification prompt appears
-- [ ] Check Firestore `/users/{uid}` has `role: "community"`
-- [ ] Verify redirect to `/jobs`
+### What to Check:
+- [ ] Page loads without errors
+- [ ] See statistics cards:
+  - Total Users
+  - Total Jobs
+  - Total Conferences
+  - Total Scholarships
+  - Active Employers
+  - Total Applications
+- [ ] Quick action links visible:
+  - User Management
+  - Employer Management
+  - Content Moderation
+  - Platform Settings
+  - RSS Feeds (new!)
+  - Analytics
+- [ ] Recent activity section displays
 
-#### Registration (Employer)
-- [ ] Navigate to `/register`
-- [ ] Fill out form with employer role selected
-- [ ] Submit registration
-- [ ] Verify email verification prompt appears
-- [ ] Check Firestore `/users/{uid}` has `role: "employer"`
-- [ ] Verify redirect to `/employer`
-
-#### Login
-- [ ] Navigate to `/login`
-- [ ] Enter valid credentials
-- [ ] Verify successful login and redirect
-- [ ] Check auth state in browser console
-- [ ] Verify role-based navigation (community → /jobs, employer → /employer)
-
-#### Google Sign-In
-- [ ] Click "Continue with Google"
-- [ ] Complete Google auth flow (emulator)
-- [ ] Verify account creation with correct role
-- [ ] Verify successful redirect
-
-#### Password Reset
-- [ ] Navigate to `/login`
-- [ ] Click "Forgot password?"
-- [ ] Enter email address
-- [ ] Verify success message appears
-- [ ] Check emulator for password reset email
-
-#### Logout
-- [ ] Click user menu
-- [ ] Click "Sign out"
-- [ ] Verify redirect to home page
-- [ ] Verify auth state cleared
+### Expected Result:
+✅ Dashboard displays with all statistics and navigation links
 
 ---
 
-### 2. Community Member Flow Testing
+## Test 2: User Management
 
-Login as: `member@test.com`
+**URL**: http://localhost:3000/admin/users
 
-#### Job Browsing
-- [ ] Navigate to `/jobs`
-- [ ] Verify job listings are visible
-- [ ] Test keyword search filter
-- [ ] Test location filter
-- [ ] Test employment type filter
-- [ ] Test salary range filter
-- [ ] Test "TRC #92 Commitment" filter
-- [ ] Test "Indigenous-owned" filter
-- [ ] Click on a job to view details
+### What to Check:
+- [ ] User list loads
+- [ ] Filter buttons work:
+  - All Users
+  - Community Members
+  - Employers
+  - Moderators
+- [ ] Search box is functional
+- [ ] For each user, see:
+  - Name and email
+  - Role badge
+  - Enabled/Disabled status
+  - Actions: Update Role, Enable/Disable
+- [ ] **"Login As" button** only visible if you're logged in as nathan.arias@iopps.ca
 
-#### Job Application
-- [ ] On job detail page, fill out application form
-- [ ] Attach resume (test file upload)
-- [ ] Provide cover letter or message
-- [ ] Submit application
-- [ ] Verify success message
-- [ ] Check Firestore `/applications` collection for new doc
-- [ ] Verify `memberId` matches your uid
-- [ ] Verify `status: "submitted"`
+### Test Actions:
+1. **Search for a user** - Type in search box
+2. **Filter users** - Click "Employers" filter
+3. **Update role** - Change a test user's role (CAREFUL: make a test account first!)
+4. **DO NOT test "Login As"** unless you want to be logged out
 
-#### View Applications
-- [ ] Navigate to `/member/applications`
-- [ ] Verify "Jobs" tab shows your applications
-- [ ] Check application status displays
-- [ ] Verify job details are visible
-
-#### Withdraw Application
-- [ ] On `/member/applications` page
-- [ ] Find a submitted application
-- [ ] Click "Withdraw Application"
-- [ ] Confirm withdrawal in dialog
-- [ ] Verify status changes to "withdrawn"
-- [ ] Check Firestore shows `status: "withdrawn"`
-
-#### Scholarship Browsing
-- [ ] Navigate to `/scholarships`
-- [ ] Verify scholarship listings visible
-- [ ] Test filters (keyword, amount, deadline)
-- [ ] Click on scholarship to view details
-
-#### Scholarship Application
-- [ ] On scholarship detail page
-- [ ] Fill out application form (education, essay)
-- [ ] Submit application
-- [ ] Verify success message
-- [ ] Check Firestore `/scholarshipApplications`
-
-#### View Scholarship Applications
-- [ ] Navigate to `/member/applications`
-- [ ] Switch to "Scholarships" tab
-- [ ] Verify scholarship applications are listed
-- [ ] Test withdrawal functionality
-
-#### Shop Indigenous
-- [ ] Navigate to `/shop`
-- [ ] Browse vendor listings
-- [ ] Test category filters
-- [ ] Test location filter
-- [ ] Test "Shipping Worldwide" filter
-- [ ] Test "Online only" filter
-- [ ] Click "Visit shop" button (external link)
-- [ ] Click "View profile" for a vendor
-
-#### Conferences
-- [ ] Navigate to `/conferences`
-- [ ] Browse conference listings
-- [ ] Test filters
-- [ ] Click on conference for details
-
-#### Pow Wows
-- [ ] Navigate to `/powwows`
-- [ ] Browse pow wow listings
-- [ ] Click on pow wow for details
-- [ ] Fill out registration form
-- [ ] Submit registration
-- [ ] Verify success message
-- [ ] Check Firestore `/powwowRegistrations`
-
-#### Member Profile
-- [ ] Navigate to `/member/profile`
-- [ ] Update profile information
-- [ ] Save changes
-- [ ] Verify updates persist
+### Expected Result:
+✅ All user management features work, "Login As" restricted correctly
 
 ---
 
-### 3. Employer Flow Testing
+## Test 3: Employer Management
 
-Login as: `employer@test.com`
+**URL**: http://localhost:3000/admin/employers
 
-#### Employer Dashboard
-- [ ] Navigate to `/employer`
-- [ ] Verify dashboard loads
-- [ ] See list of posted jobs
-- [ ] See list of conferences
-- [ ] See application statistics
+### What to Check:
+- [ ] Employer list loads
+- [ ] Filter buttons work:
+  - All
+  - Pending
+  - Approved
+  - Rejected
+- [ ] For each employer, see:
+  - Company name
+  - Status badge (Pending/Approved/Rejected)
+  - Actions: Approve/Reject
+- [ ] **"Login As" button** only visible if you're nathan.arias@iopps.ca
 
-#### Post a Job
-- [ ] Click "Post a job" or navigate to `/employer/jobs/new`
-- [ ] Fill out job posting form:
-  - [ ] Title, description, location
-  - [ ] Employment type, salary range
-  - [ ] Application email/link
-  - [ ] Requirements, benefits
-  - [ ] TRC #92 commitment checkbox
-  - [ ] Indigenous-owned checkbox
-- [ ] Submit job posting
-- [ ] Verify success message
-- [ ] Check Firestore `/jobs` collection
-- [ ] Verify `employerId` matches your uid
-- [ ] Verify job appears on `/jobs` page
+### Test Actions:
+1. **Filter by status** - Click "Pending"
+2. **View employer details** - Click on an employer card
+3. **Approve an employer** (if any pending) - Click "Approve"
 
-#### Edit a Job
-- [ ] On `/employer` dashboard, find a job
-- [ ] Click "Edit" button
-- [ ] Navigate to `/employer/jobs/[jobId]/edit`
-- [ ] Verify form is pre-filled with existing data
-- [ ] Make changes to job details
-- [ ] Save changes
-- [ ] Verify success message
-- [ ] Check updates in Firestore
-
-#### Delete a Job
-- [ ] On `/employer` dashboard
-- [ ] Click "Delete" on a job
-- [ ] Verify confirmation dialog appears
-- [ ] Confirm deletion
-- [ ] Verify job is removed from list
-- [ ] Check Firestore - job should be deleted
-
-#### View Applications
-- [ ] Navigate to `/employer/applications`
-- [ ] Verify applications to your jobs are listed
-- [ ] Check application details (resume, cover letter)
-- [ ] Verify you CAN see applications to your jobs
-- [ ] Verify you CANNOT see applications to other employers' jobs
-
-#### Update Application Status
-- [ ] On `/employer/applications` page
-- [ ] Select an application
-- [ ] Change status dropdown (submitted → in review → accepted/rejected)
-- [ ] Verify status updates in UI
-- [ ] Check Firestore for updated status
-
-#### Employer Profile
-- [ ] Navigate to `/employer/profile`
-- [ ] Update employer profile:
-  - [ ] Company name, description
-  - [ ] TRC #92 commitment statement
-  - [ ] Indigenous-owned checkbox
-  - [ ] Contact information
-  - [ ] Logo upload (test)
-- [ ] Save profile
-- [ ] Verify updates persist
-- [ ] Visit public profile at `/employers/[employerId]`
-- [ ] Verify public data is visible
-
-#### Post a Conference
-- [ ] Navigate to `/employer/conferences/new`
-- [ ] Fill out conference form
-- [ ] Submit conference
-- [ ] Verify success message
-- [ ] Check Firestore `/conferences`
-
-#### Edit Conference
-- [ ] Navigate to conference list
-- [ ] Click edit on a conference
-- [ ] Update details
-- [ ] Save changes
-- [ ] Verify updates
-
-#### Delete Conference
-- [ ] Click delete on a conference
-- [ ] Confirm deletion
-- [ ] Verify removed from Firestore
-
-#### Post a Scholarship
-- [ ] Create scholarship posting
-- [ ] Fill out details (amount, deadline, criteria)
-- [ ] Submit
-- [ ] Verify in Firestore `/scholarships`
-- [ ] Check it appears on `/scholarships` page
-
-#### Vendor Profile Setup
-- [ ] Navigate to `/vendor/setup`
-- [ ] Fill out vendor profile form:
-  - [ ] Business name, tagline, category
-  - [ ] Location, region
-  - [ ] About, origin story, community connections
-  - [ ] Offerings
-  - [ ] Shipping options (Worldwide, Online, In-person)
-  - [ ] Contact info (email, phone, website)
-  - [ ] Social media links (Instagram, Facebook, TikTok)
-- [ ] Upload logo image
-- [ ] Verify upload success and preview
-- [ ] Upload hero image
-- [ ] Verify upload success and preview
-- [ ] Save vendor profile
-- [ ] Check Firestore `/vendors/{uid}`
-- [ ] Verify vendor appears on `/shop` page
-
-#### Vendor Image Upload Testing
-- [ ] On `/vendor/setup` page
-- [ ] Select logo image file
-- [ ] Click "Upload"
-- [ ] Verify upload progress
-- [ ] Check Firebase Storage at `/vendors/{uid}/logo-{timestamp}.jpg`
-- [ ] Verify image URL saved to Firestore
-- [ ] Verify image preview displays
-- [ ] Test "Remove" button for logo
-- [ ] Repeat for hero image
-
-#### Manage Products/Services
-- [ ] Navigate to `/vendor/products`
-- [ ] Click "Add Product/Service"
-- [ ] Fill out product form:
-  - [ ] Name, description, category
-  - [ ] Price (optional)
-  - [ ] Tags
-  - [ ] Image URL (optional)
-- [ ] Create product
-- [ ] Verify appears in list
-- [ ] Check Firestore `/productServiceListings`
-- [ ] Edit a product
-- [ ] Delete a product (with confirmation)
-
-#### Delete Vendor Profile
-- [ ] Scroll to "Danger Zone" on `/vendor/setup`
-- [ ] Click "Delete vendor profile"
-- [ ] Verify first confirmation dialog
-- [ ] Click again to confirm
-- [ ] Verify second confirmation
-- [ ] Confirm deletion
-- [ ] Verify redirect to home
-- [ ] Check vendor removed from Firestore
-- [ ] Check vendor no longer appears on `/shop`
+### Expected Result:
+✅ Employer approval workflow functional
 
 ---
 
-### 4. Security Rules Testing
+## Test 4: Content Moderation ⭐ NEW
 
-#### Test Unauthorized Access
+**URL**: http://localhost:3000/admin/content
 
-**Community Member Attempting Employer Actions:**
-- [ ] Login as community member
-- [ ] Try to access `/employer` - should redirect
-- [ ] Try to navigate to `/employer/jobs/new` - should be blocked
-- [ ] Try to access `/vendor/setup` - should be blocked
-- [ ] Check browser console for permission errors
+### What to Check:
+- [ ] Contact submission list loads
+- [ ] Filter buttons work:
+  - All
+  - New
+  - Read
+  - Responded
+- [ ] For each submission, see:
+  - Name and email
+  - Subject
+  - Status badge
+  - Actions: Mark as Read, Mark as Responded, Reply via Email
 
-**Employer Attempting Community Actions:**
-- [ ] Login as employer
-- [ ] Try to access `/member/profile` - should redirect
-- [ ] Try to apply to a job - form should not appear
+### Test Actions:
+1. **Filter by status** - Click "New"
+2. **Mark as read** - Click "Mark as Read" on a submission
+3. **Click "Reply via Email"** - Should open email client with pre-filled address
 
-#### Test Data Access Restrictions
-
-**Applications Access:**
-- [ ] Login as employer A
-- [ ] Create a job
-- [ ] Login as community member
-- [ ] Apply to employer A's job
-- [ ] Login as employer B (different account)
-- [ ] Navigate to `/employer/applications`
-- [ ] Verify you CANNOT see employer A's applications
-- [ ] Check Firestore security rules preventing access
-
-**Vendor Profile Access:**
-- [ ] Login as employer A
-- [ ] Create vendor profile
-- [ ] Login as employer B
-- [ ] Try to edit employer A's vendor profile
-- [ ] Verify blocked by security rules
-
-**Member Profile Privacy:**
-- [ ] Login as member A
-- [ ] Create member profile
-- [ ] Logout
-- [ ] Try to access member A's profile data via direct Firestore query
-- [ ] Verify blocked by security rules
-
-#### Test Storage Security Rules
-
-**Vendor Image Upload:**
-- [ ] Login as employer A with uid `employerA123`
-- [ ] Try to upload image to `/vendors/employerA123/logo.jpg` - should succeed
-- [ ] Try to upload image to `/vendors/employerB456/logo.jpg` - should fail
-- [ ] Check browser console for permission denied error
-
-**Public Image Access:**
-- [ ] Logout or use incognito
-- [ ] Access vendor image URL directly
-- [ ] Verify image loads (public read access)
+### Expected Result:
+✅ Content moderation interface works, status updates persist
 
 ---
 
-### 5. Page Load & Navigation Testing
+## Test 5: Platform Settings ⭐ NEW
 
-#### Public Pages (No Auth Required)
-- [ ] `/` - Home page loads
-- [ ] `/about` - About page loads
-- [ ] `/contact` - Contact page loads
-- [ ] `/jobs` - Jobs page loads
-- [ ] `/shop` - Shop page loads
-- [ ] `/conferences` - Conferences page loads
-- [ ] `/powwows` - Pow wows page loads
-- [ ] `/scholarships` - Scholarships page loads
-- [ ] `/live` - Live streams page loads
-- [ ] `/privacy` - Privacy policy loads
-- [ ] `/terms` - Terms of service loads
-- [ ] `/login` - Login page loads
-- [ ] `/register` - Registration page loads
-- [ ] `/forgot-password` - Password reset page loads
+**URL**: http://localhost:3000/admin/settings
 
-#### Protected Pages (Auth Required)
-- [ ] `/member/profile` - Loads for community members
-- [ ] `/member/applications` - Loads for community members
-- [ ] `/employer` - Loads for employers
-- [ ] `/employer/jobs/new` - Loads for employers
-- [ ] `/employer/applications` - Loads for employers
-- [ ] `/vendor/setup` - Loads for employers
-- [ ] `/vendor/products` - Loads for employers
+### What to Check:
+- [ ] Settings page loads
+- [ ] Three main sections visible:
+  1. Maintenance Mode
+  2. Announcement Banner
+  3. Feature Flags
 
-#### Public Profile Pages
-- [ ] `/employers/[employerId]` - Employer profile loads
-- [ ] `/shop/[vendorId]` - Vendor profile loads
-- [ ] Test with demo vendors: `/shop/demo-vendor-1`, `/shop/demo-vendor-2`, `/shop/demo-vendor-3`
+### Test Actions:
 
----
+#### Maintenance Mode:
+1. **Toggle maintenance mode** - Switch on
+2. **Check effect** - Open http://localhost:3000 in incognito mode
+   - Should show maintenance message (or check as regular user)
+3. **Turn it back off** - Return to settings, toggle off
 
-### 6. Filter & Search Testing
+#### Announcement Banner:
+1. **Enable banner** - Toggle "Active"
+2. **Set message** - Type: "Test announcement!"
+3. **Choose type** - Select "Info"
+4. **Save settings** - Click "Save Changes"
+5. **Verify** - Open homepage, should see blue banner at top
+6. **Disable banner** - Return to settings, toggle off
 
-#### Jobs Page Filters
-- [ ] Keyword search (test: "developer", "manager")
-- [ ] Location filter (test: "Remote", "Vancouver")
-- [ ] Employment type (Full-time, Part-time, Contract)
-- [ ] Salary range filter
-- [ ] TRC #92 commitment filter
-- [ ] Indigenous-owned filter
-- [ ] Combine multiple filters
-- [ ] Reset filters button
+#### Feature Flags:
+1. **Toggle Stripe Payments** - Switch off
+2. **Toggle Job Posting** - Switch off
+3. **Save settings**
+4. **Verify** - Jobs page should handle disabled features
+5. **Re-enable everything**
 
-#### Shop Page Filters
-- [ ] Quick filter chips (Gifts & Art, Services, Food, etc.)
-- [ ] Keyword search
-- [ ] Category dropdown
-- [ ] Location filter
-- [ ] "Shipping Worldwide" checkbox
-- [ ] "Online only" checkbox
-- [ ] Reset filters
-
-#### Scholarships Page Filters
-- [ ] Keyword search
-- [ ] Amount range filter
-- [ ] Deadline filter
-- [ ] Category filter
-
-#### Employer Applications Filters
-- [ ] Status filter (All, Submitted, In Review, Accepted, Rejected, Withdrawn)
-- [ ] Job filter dropdown
-- [ ] Search by applicant name/email
+### Expected Result:
+✅ Settings save and take effect immediately
+✅ Maintenance mode works
+✅ Announcement banner appears/disappears correctly
 
 ---
 
-### 7. Pagination Testing
+## Test 6: RSS Feeds ⭐ NEW
 
-#### Jobs Page
-- [ ] Load page with 20+ jobs
-- [ ] Verify initial load shows 20 jobs
-- [ ] Click "Load More"
-- [ ] Verify next batch loads
-- [ ] Continue until all jobs shown
+**URL**: http://localhost:3000/admin/feeds
 
-#### Shop Page
-- [ ] Load with 20+ vendor listings
-- [ ] Verify pagination works
-- [ ] Test "Load more businesses" button
+### What to Check:
+- [ ] Feeds page loads
+- [ ] "+ Add Feed" button visible
+- [ ] If feeds exist, see:
+  - Feed name
+  - Feed URL
+  - Last synced time
+  - Total jobs imported
+  - Actions: Sync Now, Activate/Deactivate, Delete
 
-#### Scholarships Page
-- [ ] Test pagination with multiple scholarships
-- [ ] Verify load more functionality
+### Test Actions:
 
-#### Employer Applications
-- [ ] With 50+ applications
-- [ ] Verify initial load shows 50
-- [ ] Test "Load More Applications" button
+#### Add a New Feed:
+1. **Click "+ Add Feed"**
+2. **Fill in form**:
+   - Feed Name: "Test IOPPS Feed"
+   - Feed URL: `https://iopps.ca/feeds/standard.xml`
+   - Employer ID: (use your own Firebase UID or a test employer ID)
+   - Employer Name: "Test Employer"
+3. **Click "Add Feed"**
+4. **Verify** - Feed appears in list
 
----
+#### Sync a Feed:
+1. **Click "Sync Now"** on the test feed
+2. **Wait for completion** - Should take 5-10 seconds
+3. **Check result** - Should see alert:
+   - "Imported: X jobs"
+   - "Skipped: Y jobs"
+   - "Total in feed: 27"
+4. **Verify jobs imported**:
+   - Go to http://localhost:3000/jobs
+   - Look for "Summer Student", "Slot Attendant", etc.
 
-### 8. Empty State Testing
+#### Sync Again (Duplicate Detection):
+1. **Click "Sync Now" again** on same feed
+2. **Check result** - Should see:
+   - "Imported: 0 jobs"
+   - "Skipped: 27 jobs" (all duplicates)
 
-#### No Data Scenarios
-- [ ] Jobs page with no jobs posted - verify empty state with CTA
-- [ ] Shop page with no vendors - verify empty state
-- [ ] Scholarships with no listings - verify empty state
-- [ ] Conferences with no events - verify empty state
-- [ ] Pow wows with no events - verify empty state
-- [ ] Member applications with no applications - verify empty state
-- [ ] Employer dashboard with no jobs - verify empty state
+#### Deactivate Feed:
+1. **Click "Deactivate"**
+2. **Verify** - "Sync Now" button should be disabled
+3. **Reactivate** - Click "Activate"
 
-#### Filtered Results
-- [ ] Apply filters that return no results
-- [ ] Verify "No results match your filters" message
-- [ ] Verify filter reset works
-
----
-
-### 9. Form Validation Testing
-
-#### Registration Form
-- [ ] Submit without email - verify error
-- [ ] Submit with invalid email format - verify error
-- [ ] Submit without password - verify error
-- [ ] Submit with weak password - verify error
-- [ ] Submit without name - verify error
-- [ ] Submit without role selected - verify error
-
-#### Job Posting Form
-- [ ] Submit without title - verify error
-- [ ] Submit without description - verify error
-- [ ] Submit without location - verify error
-- [ ] Submit without employment type - verify error
-- [ ] Verify all required fields validated
-
-#### Vendor Profile Form
-- [ ] Submit without business name - verify error
-- [ ] Submit without category - verify error
-- [ ] Submit without location - verify error
-- [ ] Submit with invalid email - verify error
-- [ ] Submit with invalid website URL - verify error
+### Expected Result:
+✅ Feeds can be added successfully
+✅ Jobs are imported from XML feed
+✅ Duplicate detection prevents re-importing
+✅ Feed management (activate/deactivate) works
 
 ---
 
-### 10. Contact Form Testing
+## Test 7: Impersonation Feature (CAREFUL!)
 
-- [ ] Navigate to `/contact`
-- [ ] Fill out contact form (name, email, subject, message)
-- [ ] Submit form
-- [ ] Verify success message
-- [ ] Check Firestore `/contactSubmissions` collection
-- [ ] Verify submission created with correct data
-- [ ] Test form validation (required fields)
+**Only test if absolutely necessary**
 
----
+### Prerequisites:
+- You are logged in as **nathan.arias@iopps.ca**
+- You have a test user account created
 
-### 11. Error Handling Testing
+### Test Actions:
+1. Go to `/admin/users`
+2. Find a test user
+3. Click "Login As"
+4. **Confirm** - You'll be logged out and logged in as that user
+5. **Verify** - Check that:
+   - You're now viewing the site as that user
+   - Admin pages are not accessible
+6. **Log out** and log back in as admin
 
-#### Network Errors
-- [ ] Stop Firebase emulators
-- [ ] Try to load data-dependent page
-- [ ] Verify error message displays
-- [ ] Restart emulators
-- [ ] Verify recovery
+### Expected Result:
+✅ Impersonation works
+✅ Only nathan.arias@iopps.ca can see the button
+✅ Successfully logs in as target user
 
-#### Authentication Errors
-- [ ] Login with wrong password - verify error message
-- [ ] Login with non-existent email - verify error message
-- [ ] Logout and try to access protected page - verify redirect
-
-#### Permission Errors
-- [ ] Try to access data you don't own
-- [ ] Verify permission denied error
-- [ ] Check console for security rule violations
+⚠️ **WARNING**: You'll be logged out of your admin account!
 
 ---
 
-### 12. Mobile Responsiveness Testing
+## Test 8: Analytics (Existing)
 
-Test on different screen sizes (use browser dev tools):
-- [ ] Mobile (375px) - iPhone SE
-- [ ] Mobile (390px) - iPhone 12 Pro
-- [ ] Tablet (768px) - iPad
-- [ ] Desktop (1024px)
-- [ ] Large Desktop (1440px)
+**URL**: http://localhost:3000/admin/analytics
 
-Verify for each breakpoint:
-- [ ] Navigation menu (hamburger on mobile)
-- [ ] Job cards layout
-- [ ] Vendor cards layout
-- [ ] Forms are usable
-- [ ] Filters are accessible
-- [ ] Buttons are tappable
-- [ ] Images scale properly
+### What to Check:
+- [ ] Page loads
+- [ ] Charts render
+- [ ] Statistics display correctly
+
+### Expected Result:
+✅ Analytics page shows platform metrics
 
 ---
 
-### 13. Performance Testing
+## Test 9: Mobile Responsiveness
 
-#### Page Load Times
-- [ ] Jobs page load time < 2s
-- [ ] Shop page load time < 2s
-- [ ] Dashboard load time < 2s
-- [ ] Vendor profile page load time < 2s
+### Test Actions:
+1. **Open DevTools** - Press F12
+2. **Toggle device toolbar** - Ctrl+Shift+M (or click phone icon)
+3. **Select device** - iPhone 12 Pro
+4. **Navigate through admin pages**:
+   - Dashboard
+   - User Management
+   - Feeds
+   - Settings
 
-#### Large Dataset Testing
-- [ ] Create 100+ jobs - verify pagination works
-- [ ] Create 100+ applications - verify employer view performs well
-- [ ] Test search with large datasets
-
----
-
-### 14. Browser Compatibility Testing
-
-Test on multiple browsers:
-- [ ] Chrome (latest)
-- [ ] Firefox (latest)
-- [ ] Safari (latest)
-- [ ] Edge (latest)
-
-Verify:
-- [ ] All features work
-- [ ] Styling is consistent
-- [ ] No console errors
-- [ ] File uploads work
+### Expected Result:
+✅ All pages are usable on mobile
+✅ Tables scroll horizontally if needed
+✅ Buttons are tappable
 
 ---
 
-## Known Issues / Limitations
+## Test 10: Error Handling
 
-Document any issues found during testing:
+### Test Actions:
 
-1. **Issue**: [Description]
-   - **Steps to Reproduce**: [Steps]
-   - **Expected**: [Expected behavior]
-   - **Actual**: [Actual behavior]
-   - **Severity**: [Critical/High/Medium/Low]
+#### Test 404 Page:
+1. **Navigate to** http://localhost:3000/nonexistent-page
+2. **Check** - Custom 404 page displays
+3. **Click "Go Home"** - Returns to homepage
 
----
+#### Test Unauthorized Access:
+1. **Log out** (or use incognito)
+2. **Try to access** http://localhost:3000/admin
+3. **Check** - Redirected to login or homepage
+4. **Log back in**
 
-## Testing Completion Checklist
-
-- [ ] All authentication flows tested
-- [ ] All community member flows tested
-- [ ] All employer flows tested
-- [ ] Security rules verified
-- [ ] All pages load correctly
-- [ ] All filters work
-- [ ] Pagination tested
-- [ ] Empty states verified
-- [ ] Forms validated
-- [ ] Error handling tested
-- [ ] Mobile responsiveness checked
-- [ ] No console errors in production build
-- [ ] All user roles tested
-- [ ] Data access permissions verified
+### Expected Result:
+✅ Error pages are branded and helpful
+✅ Protected routes require authentication
 
 ---
 
-## Production Readiness Checklist
+## 📋 Testing Checklist Summary
 
-Before deploying to production:
+After completing all tests above, verify:
 
-- [ ] All tests passed
-- [ ] Security rules deployed and verified
-- [ ] Environment variables configured for production
-- [ ] Firebase project set up for production
-- [ ] Analytics configured (if applicable)
-- [ ] Error monitoring set up (e.g., Sentry)
-- [ ] Performance monitoring enabled
-- [ ] Email configuration for production
-- [ ] Domain configured and SSL enabled
-- [ ] Backup strategy in place
-- [ ] Data migration plan (if needed)
-- [ ] User documentation prepared
-- [ ] Support channels established
+- [ ] ✅ Admin Dashboard loads
+- [ ] ✅ User Management works (search, filter, role updates)
+- [ ] ✅ Employer Management works (approval workflow)
+- [ ] ✅ Content Moderation works (filter, status updates)
+- [ ] ✅ Platform Settings works (maintenance mode, banner, flags)
+- [ ] ✅ RSS Feeds works (add, sync, duplicate detection)
+- [ ] ✅ Impersonation restricted correctly
+- [ ] ✅ Analytics displays
+- [ ] ✅ Mobile responsive
+- [ ] ✅ Error pages work
 
 ---
 
-## Post-Launch Monitoring
+## 🐛 Common Issues & Solutions
 
-After launch, monitor:
+### Issue: Page doesn't load
+**Solution**: Check browser console (F12) for errors
 
-- [ ] User registration rate
-- [ ] Job posting rate
-- [ ] Application submission rate
-- [ ] Vendor profile creation rate
-- [ ] Error rates
-- [ ] Page load performance
-- [ ] User feedback
-- [ ] Security rule violations in logs
-- [ ] Storage usage
-- [ ] Database read/write counts
+### Issue: "Login As" button visible for wrong user
+**Solution**: Clear browser cache, verify logged-in email
 
----
+### Issue: RSS feed sync fails
+**Solution**: 
+- Check feed URL is accessible
+- Verify employer ID exists in Firebase
+- Check browser console for errors
 
-## Support & Troubleshooting
+### Issue: Settings don't save
+**Solution**:
+- Check browser console for errors
+- Verify Firestore connection
+- Check user has admin role
 
-### Common Issues
-
-**Issue: "Permission denied" errors**
-- Check user is logged in
-- Verify user role is correct in Firestore `/users/{uid}`
-- Check security rules match expected permissions
-- Review Firestore Rules logs in emulator UI
-
-**Issue: Images not loading**
-- Verify Storage emulator is running
-- Check image URLs are correct
-- Verify storage security rules allow read access
-- Check browser console for CORS errors
-
-**Issue: Data not appearing**
-- Check Firestore emulator for data
-- Verify collection names match code
-- Check query filters aren't too restrictive
-- Review browser console for errors
-
-**Issue: Filters not working**
-- Check filter state in React DevTools
-- Verify filter logic in useMemo dependencies
-- Check for typos in field names
-- Verify data has the fields being filtered
+### Issue: Maintenance mode not working
+**Solution**:
+- Verify settings are saved
+- Try hard refresh (Ctrl+F5)
+- Check `platformSettings` collection in Firestore
 
 ---
 
-## Feedback & Bug Reporting
+## ✅ Test Results Log
 
-Document user feedback and bugs discovered during testing:
+Document your test results:
 
-**Template:**
-- **Reporter**: [Name/Email]
-- **Date**: [Date]
-- **Feature**: [Which feature]
-- **Description**: [Detailed description]
-- **Steps**: [How to reproduce]
-- **Priority**: [High/Medium/Low]
-- **Status**: [New/In Progress/Resolved]
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Admin Dashboard | ⬜ Pass / ❌ Fail | |
+| User Management | ⬜ Pass / ❌ Fail | |
+| Employer Management | ⬜ Pass / ❌ Fail | |
+| Content Moderation | ⬜ Pass / ❌ Fail | |
+| Platform Settings | ⬜ Pass / ❌ Fail | |
+| RSS Feeds | ⬜ Pass / ❌ Fail | |
+| Impersonation | ⬜ Pass / ❌ Fail | |
+| Mobile Responsive | ⬜ Pass / ❌ Fail | |
+| Error Pages | ⬜ Pass / ❌ Fail | |
+
+---
+
+**When you're done testing, share your results and I'll help fix any issues!** 🚀

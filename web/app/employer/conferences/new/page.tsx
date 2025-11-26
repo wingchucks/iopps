@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createConference, getEmployerProfile } from "@/lib/firestore";
+import ConferencePricingSelector from "@/components/ConferencePricingSelector";
 
 export default function NewConferencePage() {
   const router = useRouter();
@@ -19,6 +20,10 @@ export default function NewConferencePage() {
   const [orgName, setOrgName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Step management
+  const [step, setStep] = useState<"form" | "pricing">("form");
+  const [conferenceId, setConferenceId] = useState<string | null>(null);
 
   if (loading) {
     return (
@@ -79,7 +84,7 @@ export default function NewConferencePage() {
         setOrgName(organizerName);
       }
 
-      const conferenceId = await createConference({
+      const newConferenceId = await createConference({
         employerId: user.uid,
         employerName: organizerName,
         title,
@@ -89,9 +94,11 @@ export default function NewConferencePage() {
         endDate,
         registrationLink,
         cost,
-        active: true,
+        active: false, // Start inactive until pricing selected
       });
-      router.push(`/conferences/${conferenceId}`);
+
+      setConferenceId(newConferenceId);
+      setStep("pricing");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not create conference.");
@@ -100,6 +107,44 @@ export default function NewConferencePage() {
     }
   };
 
+  const handleFreeSelect = async () => {
+    if (!conferenceId) return;
+
+    // For free listings, activate immediately
+    try {
+      const { updateConference } = await import("@/lib/firestore");
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 60); // 60 days for free
+
+      await updateConference(conferenceId, {
+        active: true,
+        featured: false,
+        paymentStatus: "paid",
+        productType: "FREE",
+        expiresAt: expirationDate,
+      });
+
+      router.push(`/employer/conferences?success=true`);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to activate free conference listing");
+    }
+  };
+
+  // Pricing step
+  if (step === "pricing" && conferenceId && user) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <ConferencePricingSelector
+          conferenceId={conferenceId}
+          userId={user.uid}
+          onFreeSelect={handleFreeSelect}
+        />
+      </div>
+    );
+  }
+
+  // Form step
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -207,7 +252,7 @@ export default function NewConferencePage() {
           disabled={saving}
           className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
         >
-          {saving ? "Publishing..." : "Publish conference"}
+          {saving ? "Creating..." : "Continue to Pricing"}
         </button>
       </form>
     </div>

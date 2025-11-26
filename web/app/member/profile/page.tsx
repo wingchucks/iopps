@@ -25,6 +25,8 @@ export default function MemberProfilePage() {
   const [indigenousAffiliation, setIndigenousAffiliation] = useState("");
   const [messagingHandle, setMessagingHandle] = useState("");
   const [availability, setAvailability] = useState("");
+  const [quickApplyEnabled, setQuickApplyEnabled] = useState(false);
+  const [defaultCoverLetter, setDefaultCoverLetter] = useState("");
 
   // Modal states
   const [showExperienceModal, setShowExperienceModal] = useState(false);
@@ -53,6 +55,8 @@ export default function MemberProfilePage() {
           setIndigenousAffiliation(profile.indigenousAffiliation || "");
           setMessagingHandle(profile.messagingHandle || "");
           setAvailability(profile.availableForInterviews || "");
+          setQuickApplyEnabled(profile.quickApplyEnabled || false);
+          setDefaultCoverLetter(profile.defaultCoverLetter || "");
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -96,6 +100,8 @@ export default function MemberProfilePage() {
         indigenousAffiliation,
         messagingHandle,
         availableForInterviews: availability,
+        quickApplyEnabled,
+        defaultCoverLetter,
       });
       alert("Profile saved successfully!");
     } catch (error) {
@@ -675,6 +681,53 @@ export default function MemberProfilePage() {
               onChange={handleResumeUpload}
               className="hidden"
             />
+          </section>
+
+          {/* Quick Apply Settings */}
+          <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">Quick Apply Settings</h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Enable one-click applications for jobs that support it.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-medium ${quickApplyEnabled ? "text-emerald-400" : "text-slate-400"}`}>
+                  {quickApplyEnabled ? "Enabled" : "Disabled"}
+                </span>
+                <button
+                  onClick={() => setQuickApplyEnabled(!quickApplyEnabled)}
+                  className={`relative h-7 w-12 rounded-full transition-colors ${quickApplyEnabled ? "bg-emerald-500" : "bg-slate-700"
+                    }`}
+                >
+                  <span
+                    className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${quickApplyEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {quickApplyEnabled && (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">
+                    Default Cover Letter / Introduction
+                  </label>
+                  <textarea
+                    value={defaultCoverLetter}
+                    onChange={(e) => setDefaultCoverLetter(e.target.value)}
+                    rows={6}
+                    className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    placeholder="Write a brief introduction that can be used for quick applications..."
+                  />
+                  <p className="mt-2 text-xs text-slate-400">
+                    This will be pre-filled when you use Quick Apply. You can always edit it before submitting.
+                  </p>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Save Button */}

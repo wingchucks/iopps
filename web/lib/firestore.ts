@@ -33,6 +33,10 @@ import type {
   PowwowRegistration,
   ProductServiceListing,
   ContactSubmission,
+  PlatformSettings,
+  RSSFeed,
+  JobAlert,
+  EmployerStatus,
 } from "@/lib/types";
 
 const employerCollection = "employers";
@@ -40,6 +44,7 @@ const memberCollection = "memberProfiles";
 const jobsCollection = "jobs";
 const applicationsCollection = "applications";
 const savedJobsCollection = "savedJobs";
+const jobAlertsCollection = "jobAlerts";
 const conferencesCollection = "conferences";
 const scholarshipsCollection = "scholarships";
 const scholarshipApplicationsCollection = "scholarshipApplications";
@@ -133,10 +138,55 @@ export async function upsertEmployerProfile(
       id: userId,
       userId,
       ...base,
+      status: "pending",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
   }
+}
+
+export async function listEmployers(status?: EmployerStatus): Promise<EmployerProfile[]> {
+  try {
+    const firestore = checkFirebase();
+    const ref = collection(firestore, employerCollection);
+    let q;
+
+    if (status) {
+      q = query(ref, where("status", "==", status), orderBy("createdAt", "desc"));
+    } else {
+      q = query(ref, orderBy("createdAt", "desc"));
+    }
+
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnapshot) => docSnapshot.data() as EmployerProfile);
+  } catch (error) {
+    console.error("Error listing employers:", error);
+    return [];
+  }
+}
+
+export async function updateEmployerStatus(
+  userId: string,
+  status: EmployerStatus,
+  approvedBy?: string,
+  rejectionReason?: string
+) {
+  const ref = doc(db!, employerCollection, userId);
+  const updates: any = {
+    status,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (status === "approved") {
+    updates.approvedAt = serverTimestamp();
+    updates.approvedBy = approvedBy;
+  }
+
+  if (status === "rejected" && rejectionReason) {
+    updates.rejectionReason = rejectionReason;
+  }
+
+  await updateDoc(ref, updates);
 }
 
 export async function addEmployerInterview(
@@ -1227,4 +1277,178 @@ export async function createContactSubmission(
     console.error("Error creating contact submission:", error);
     throw new Error("Failed to submit contact form");
   }
+}
+
+export async function listContactSubmissions(): Promise<ContactSubmission[]> {
+  checkFirebase();
+  try {
+    const q = query(
+      collection(db!, contactSubmissionsCollection),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    } as ContactSubmission));
+  } catch (error) {
+    console.error("Error listing contact submissions:", error);
+    return [];
+  }
+}
+
+export async function updateContactSubmissionStatus(
+  id: string,
+  status: "new" | "read" | "responded"
+) {
+  checkFirebase();
+  const ref = doc(db!, contactSubmissionsCollection, id);
+  await updateDoc(ref, {
+    status,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// ============================================================================
+// Platform Settings
+// ============================================================================
+
+const settingsCollection = "settings";
+const settingsDocId = "platform";
+
+export async function getPlatformSettings(): Promise<PlatformSettings | null> {
+  try {
+    checkFirebase();
+    const ref = doc(db!, settingsCollection, settingsDocId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as PlatformSettings;
+  } catch (error) {
+    console.error("Error fetching platform settings:", error);
+    return null;
+  }
+}
+
+export async function updatePlatformSettings(
+  settings: Partial<PlatformSettings>,
+  userId: string
+) {
+  checkFirebase();
+  const ref = doc(db!, settingsCollection, settingsDocId);
+  await setDoc(
+    ref,
+    {
+      ...settings,
+      updatedAt: serverTimestamp(),
+      updatedBy: userId,
+    },
+    { merge: true }
+  );
+}
+
+// ============================================================================
+// RSS Feeds for Job Scraping
+// ============================================================================
+
+const rssFeedsCollection = "rssFeeds";
+
+export async function createRSSFeed(
+  data: Omit<RSSFeed, "id" | "createdAt" | "updatedAt">
+): Promise<string> {
+  checkFirebase();
+  const ref = collection(db!, rssFeedsCollection);
+  const docRef = await addDoc(ref, {
+    ...data,
+    active: data.active ?? true,
+    totalJobsImported: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db!, rssFeedsCollection, docRef.id), { id: docRef.id });
+  return docRef.id;
+}
+
+export async function listRSSFeeds(employerId?: string): Promise<RSSFeed[]> {
+  checkFirebase();
+  try {
+    const ref = collection(db!, rssFeedsCollection);
+    const constraints = [];
+
+    if (employerId) {
+      constraints.push(where("employerId", "==", employerId));
+    }
+
+    constraints.push(orderBy("createdAt", "desc"));
+
+    const q = query(ref, ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map((doc) => doc.data() as RSSFeed);
+  } catch (error) {
+    console.error("Error listing RSS feeds:", error);
+    return [];
+  }
+}
+
+export async function getRSSFeed(id: string): Promise<RSSFeed | null> {
+  checkFirebase();
+  try {
+    const ref = doc(db!, rssFeedsCollection, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as RSSFeed;
+  } catch (error) {
+    console.error("Error getting RSS feed:", error);
+    return null;
+  }
+}
+
+export async function updateRSSFeed(
+  id: string,
+  data: Partial<RSSFeed>
+): Promise<void> {
+  checkFirebase();
+  const ref = doc(db!, rssFeedsCollection, id);
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteRSSFeed(id: string): Promise<void> {
+  checkFirebase();
+  const ref = doc(db!, rssFeedsCollection, id);
+  await deleteDoc(ref);
+}
+
+// Job Alerts
+export async function createJobAlert(alert: Omit<JobAlert, "id" | "createdAt" | "updatedAt">) {
+  const ref = collection(db!, jobAlertsCollection);
+  const docRef = await addDoc(ref, {
+    ...alert,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getMemberJobAlerts(memberId: string): Promise<JobAlert[]> {
+  const q = query(
+    collection(db!, jobAlertsCollection),
+    where("memberId", "==", memberId),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as JobAlert));
+}
+
+export async function deleteJobAlert(alertId: string) {
+  await deleteDoc(doc(db!, jobAlertsCollection, alertId));
+}
+
+export async function updateJobAlert(alertId: string, data: Partial<JobAlert>) {
+  const ref = doc(db!, jobAlertsCollection, alertId);
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
 }

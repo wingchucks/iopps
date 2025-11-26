@@ -14,6 +14,7 @@ import { PageShell } from "@/components/PageShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { FilterCard } from "@/components/FilterCard";
 import { useSearchParams } from "@/lib/useSearchParams";
+import CreateJobAlertModal from "@/components/CreateJobAlertModal";
 
 type MaybeDateInput =
   | string
@@ -81,6 +82,7 @@ function JobsContent() {
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState(20);
   const [showFilters, setShowFilters] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
 
   // URL-synced filter parameters
   const { params, updateParam, resetParams } = useSearchParams({
@@ -186,24 +188,33 @@ function JobsContent() {
         if (!params.minSalary && !params.maxSalary) return true;
         if (!job.salaryRange) return false;
 
-        // Extract numbers from salary range (e.g., "$50,000 - $70,000" or "$60K-$80K")
-        const salaryNumbers = job.salaryRange.match(/\d+[,\d]*/g);
-        if (!salaryNumbers || salaryNumbers.length === 0) return false;
+        let min = 0;
+        let max = 0;
 
-        const jobSalaries = salaryNumbers.map(s => {
-          const num = parseFloat(s.replace(/,/g, ''));
-          // If salary is in K format (e.g., "60K"), multiply by 1000
-          if (job.salaryRange?.toLowerCase().includes('k')) {
-            return num * 1000;
-          }
-          return num;
-        });
+        if (typeof job.salaryRange === "string") {
+          // Extract numbers from salary range string
+          const salaryNumbers = job.salaryRange.match(/\d+[,\d]*/g);
+          if (!salaryNumbers || salaryNumbers.length === 0) return false;
 
-        const jobMinSalary = Math.min(...jobSalaries);
-        const jobMaxSalary = Math.max(...jobSalaries);
+          const jobSalaries = salaryNumbers.map((s: string) => {
+            const num = parseFloat(s.replace(/,/g, ''));
+            if (typeof job.salaryRange === "string" && job.salaryRange.toLowerCase().includes('k')) {
+              return num * 1000;
+            }
+            return num;
+          });
 
-        if (params.minSalary && jobMaxSalary < params.minSalary) return false;
-        if (params.maxSalary && jobMinSalary > params.maxSalary) return false;
+          min = Math.min(...jobSalaries);
+          max = Math.max(...jobSalaries);
+        } else {
+          // Handle object salary range
+          if (job.salaryRange.disclosed === false) return false;
+          min = job.salaryRange.min || 0;
+          max = job.salaryRange.max || min;
+        }
+
+        if (params.minSalary && max < params.minSalary) return false;
+        if (params.maxSalary && min > params.maxSalary) return false;
 
         return true;
       })();
@@ -447,6 +458,20 @@ function JobsContent() {
             </button>
           )}
 
+          {/* Create Alert Button (Community Only) */}
+          {role === "community" && (
+            <button
+              type="button"
+              onClick={() => setShowAlertModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              Create Alert
+            </button>
+          )}
+
           {/* Reset Button - Only show if filters are active */}
           {(params.activeOnly || params.remoteOnly || params.indigenousOnly || params.savedOnly || params.keyword || params.locationFilter || params.typeFilter !== "All" || params.minSalary || params.maxSalary) && (
             <button
@@ -552,7 +577,12 @@ function JobsContent() {
                       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      {job.salaryRange}
+                      {typeof job.salaryRange === "string" ? job.salaryRange : (
+                        job.salaryRange.disclosed === false ? "Salary not disclosed" :
+                          job.salaryRange.min && job.salaryRange.max ? `$${job.salaryRange.min.toLocaleString()} - $${job.salaryRange.max.toLocaleString()}` :
+                            job.salaryRange.min ? `From $${job.salaryRange.min.toLocaleString()}` :
+                              job.salaryRange.max ? `Up to $${job.salaryRange.max.toLocaleString()}` : "Salary available"
+                      )}
                     </span>
                   )}
                   {deadline && (
@@ -675,6 +705,14 @@ function JobsContent() {
             </svg>
           </button>
         </div>
+      )}
+
+      {showAlertModal && (
+        <CreateJobAlertModal
+          initialKeywords={params.keyword}
+          initialLocation={params.locationFilter}
+          onClose={() => setShowAlertModal(false)}
+        />
       )}
     </PageShell>
   );

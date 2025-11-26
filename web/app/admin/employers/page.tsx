@@ -1,452 +1,171 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { listEmployers, updateEmployerStatus } from "@/lib/firestore";
+import { EmployerProfile } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import {
-  collection,
-  query,
-  getDocs,
-  where,
-  orderBy,
-  doc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import type { EmployerProfile, EmployerStatus } from "@/lib/types";
+  CheckCircleIcon,
+  XCircleIcon,
+  ArrowTopRightOnSquareIcon
+} from "@heroicons/react/24/outline";
 
-interface EmployerWithUser extends EmployerProfile {
-  userEmail?: string;
-}
-
-import { Suspense } from "react";
-
-function AdminEmployersContent() {
-  const { user, role, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const statusFilter = searchParams.get("status") as EmployerStatus | null;
-
+export default function AdminEmployersPage() {
+  const { user } = useAuth();
+  const [employers, setEmployers] = useState<EmployerProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [employers, setEmployers] = useState<EmployerWithUser[]>([]);
-  const [filter, setFilter] = useState<EmployerStatus | "all">(statusFilter || "all");
-  const [processing, setProcessing] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"pending" | "approved" | "rejected">("pending");
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user || (role !== "admin" && role !== "moderator")) {
-      router.push("/");
-      return;
-    }
-
-    loadEmployers();
-  }, [user, role, authLoading, router]);
-
-  async function loadEmployers() {
+  const fetchEmployers = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // Get all employers
-      const employersRef = collection(db!, "employers");
-      const employersSnap = await getDocs(query(employersRef, orderBy("createdAt", "desc")));
-
-      // Get user emails
-      const usersRef = collection(db!, "users");
-      const usersSnap = await getDocs(usersRef);
-      const userEmails = new Map<string, string>();
-      usersSnap.forEach((doc) => {
-        const userData = doc.data();
-        if (userData.email) {
-          userEmails.set(doc.id, userData.email);
-        }
-      });
-
-      const employersList: EmployerWithUser[] = employersSnap.docs.map((doc) => {
-        const data = doc.data() as EmployerProfile;
-        return {
-          ...data,
-          id: doc.id,
-          userEmail: userEmails.get(doc.id),
-        };
-      });
-
-      setEmployers(employersList);
+      const data = await listEmployers(filter);
+      setEmployers(data);
     } catch (error) {
-      console.error("Error loading employers:", error);
+      console.error("Failed to fetch employers:", error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  async function approveEmployer(employerId: string) {
+  useEffect(() => {
+    fetchEmployers();
+  }, [filter]);
+
+  const handleStatusUpdate = async (employerId: string, status: "approved" | "rejected") => {
     if (!user) return;
+    if (!confirm(`Are you sure you want to ${status} this employer?`)) return;
 
+    setProcessingId(employerId);
     try {
-      setProcessing(employerId);
-      const employerRef = doc(db!, "employers", employerId);
-      await updateDoc(employerRef, {
-        status: "approved",
-        approvedAt: serverTimestamp(),
-        approvedBy: user.uid,
-        updatedAt: serverTimestamp(),
-      });
-
-      // Update local state
-      const employer = employers.find((emp) => emp.id === employerId);
-      setEmployers((prev) =>
-        prev.map((emp) =>
-          emp.id === employerId
-            ? { ...emp, status: "approved" as EmployerStatus }
-            : emp
-        )
-      );
-
-      // Send approval email
-      if (employer?.userEmail && employer?.organizationName) {
-        try {
-          await fetch("/api/emails/send-approval", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: employer.userEmail,
-              organizationName: employer.organizationName,
-              status: "approved",
-            }),
-          });
-        } catch (emailError) {
-          console.error("Failed to send approval email:", emailError);
-          // Don't block the approval if email fails
-        }
-      }
+      await updateEmployerStatus(employerId, status, user.displayName || "Admin");
+      // Refresh list
+      await fetchEmployers();
     } catch (error) {
-      console.error("Error approving employer:", error);
-      alert("Failed to approve employer. Please try again.");
+      console.error(`Failed to ${status} employer:`, error);
+      alert(`Failed to ${status} employer`);
     } finally {
-      setProcessing(null);
+      setProcessingId(null);
     }
-  }
-
-  async function rejectEmployer(employerId: string) {
-    if (!user) return;
-
-    const reason = prompt(
-      "Please provide a reason for rejection (optional):"
-    );
-
-    try {
-      setProcessing(employerId);
-      const employerRef = doc(db!, "employers", employerId);
-      await updateDoc(employerRef, {
-        status: "rejected",
-        rejectionReason: reason || undefined,
-        approvedBy: user.uid,
-        updatedAt: serverTimestamp(),
-      });
-
-      // Update local state
-      const employer = employers.find((emp) => emp.id === employerId);
-      setEmployers((prev) =>
-        prev.map((emp) =>
-          emp.id === employerId
-            ? { ...emp, status: "rejected" as EmployerStatus, rejectionReason: reason || undefined }
-            : emp
-        )
-      );
-
-      // Send rejection email
-      if (employer?.userEmail && employer?.organizationName) {
-        try {
-          await fetch("/api/emails/send-approval", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: employer.userEmail,
-              organizationName: employer.organizationName,
-              status: "rejected",
-              rejectionReason: reason || undefined,
-            }),
-          });
-        } catch (emailError) {
-          console.error("Failed to send rejection email:", emailError);
-          // Don't block the rejection if email fails
-        }
-      }
-    } catch (error) {
-      console.error("Error rejecting employer:", error);
-      alert("Failed to reject employer. Please try again.");
-    } finally {
-      setProcessing(null);
-    }
-  }
-
-  if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading employers...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || (role !== "admin" && role !== "moderator")) {
-    return null;
-  }
-
-  const filteredEmployers = employers.filter((emp) => {
-    if (filter === "all") return true;
-    // Treat employers without status as approved (legacy)
-    const empStatus = emp.status || "approved";
-    return empStatus === filter;
-  });
-
-  const pendingCount = employers.filter((e) => e.status === "pending").length;
-  const approvedCount = employers.filter(
-    (e) => e.status === "approved" || !e.status
-  ).length;
-  const rejectedCount = employers.filter((e) => e.status === "rejected").length;
+  };
 
   return (
-    <div className="min-h-screen bg-[#020306]">
-      {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
-        <div className="mx-auto max-w-7xl px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link
-                href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
-              >
-                ← Admin Dashboard
-              </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
-                Employer Management
-              </h1>
-              <p className="mt-1 text-sm text-slate-400">
-                {filteredEmployers.length} employer{filteredEmployers.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Employer Approvals</h1>
+          <p className="text-slate-400">Manage employer access to the platform.</p>
+        </div>
+        <div className="flex rounded-md bg-slate-800 p-1">
+          {(["pending", "approved", "rejected"] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`rounded px-3 py-1.5 text-sm font-medium capitalize ${filter === status
+                  ? "bg-teal-500 text-slate-900 shadow"
+                  : "text-slate-400 hover:text-slate-200"
+                }`}
+            >
+              {status}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-3">
-          <button
-            onClick={() => setFilter("all")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
-              }`}
-          >
-            All ({employers.length})
-          </button>
-          <button
-            onClick={() => setFilter("pending")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "pending"
-                ? "bg-yellow-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-yellow-500"
-              }`}
-          >
-            Pending ({pendingCount})
-          </button>
-          <button
-            onClick={() => setFilter("approved")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "approved"
-                ? "bg-green-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-green-500"
-              }`}
-          >
-            Approved ({approvedCount})
-          </button>
-          <button
-            onClick={() => setFilter("rejected")}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "rejected"
-                ? "bg-red-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-red-500"
-              }`}
-          >
-            Rejected ({rejectedCount})
-          </button>
+      {loading ? (
+        <div className="text-slate-400">Loading employers...</div>
+      ) : employers.length === 0 ? (
+        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-10 text-center">
+          <p className="text-slate-400">No {filter} employers found.</p>
         </div>
-
-        {/* Employers List */}
-        <div className="space-y-4">
-          {filteredEmployers.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-              <p className="text-slate-400">
-                No employers found for this filter.
-              </p>
-            </div>
-          ) : (
-            filteredEmployers.map((employer) => {
-              const status = employer.status || "approved"; // Legacy employers without status are approved
-              const isProcessing = processing === employer.id;
-
-              return (
-                <div
-                  key={employer.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
-                >
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                    {/* Employer Info */}
-                    <div className="flex-1">
-                      <div className="flex items-start gap-4">
-                        {employer.logoUrl && (
-                          <img
-                            src={employer.logoUrl}
-                            alt={employer.organizationName}
-                            className="h-16 w-16 rounded-lg border border-slate-700 object-cover"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <h3 className="text-xl font-semibold text-slate-50">
-                                {employer.organizationName}
-                              </h3>
-                              {employer.userEmail && (
-                                <p className="mt-1 text-sm text-slate-400">
-                                  {employer.userEmail}
-                                </p>
-                              )}
-                            </div>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${status === "pending"
-                                  ? "bg-yellow-500/10 text-yellow-400"
-                                  : status === "approved"
-                                    ? "bg-green-500/10 text-green-400"
-                                    : "bg-red-500/10 text-red-400"
-                                }`}
-                            >
-                              {status === "pending"
-                                ? "Pending"
-                                : status === "approved"
-                                  ? "Approved"
-                                  : "Rejected"}
-                            </span>
-                          </div>
-
-                          {employer.location && (
-                            <p className="mt-2 text-sm text-slate-400">
-                              📍 {employer.location}
-                            </p>
-                          )}
-
-                          {employer.website && (
-                            <a
-                              href={employer.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-1 inline-block text-sm text-[#14B8A6] hover:underline"
-                            >
-                              {employer.website}
-                            </a>
-                          )}
-
-                          {employer.description && (
-                            <p className="mt-3 text-sm text-slate-300 line-clamp-2">
-                              {employer.description}
-                            </p>
-                          )}
-
-                          {employer.rejectionReason && (
-                            <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3">
-                              <p className="text-xs font-semibold text-red-400">
-                                Rejection Reason:
-                              </p>
-                              <p className="mt-1 text-sm text-red-300">
-                                {employer.rejectionReason}
-                              </p>
-                            </div>
-                          )}
-
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
-                            <span>
-                              Created:{" "}
-                              {employer.createdAt
-                                ? new Date(
-                                  employer.createdAt.seconds * 1000
-                                ).toLocaleDateString()
-                                : "Unknown"}
-                            </span>
-                            {employer.approvedAt && (
-                              <span>
-                                Approved:{" "}
-                                {new Date(
-                                  employer.approvedAt.seconds * 1000
-                                ).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-slate-800 bg-[#08090C]">
+          <ul className="divide-y divide-slate-800">
+            {employers.map((employer) => (
+              <li key={employer.id} className="p-6 hover:bg-slate-900/50">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    {employer.logoUrl ? (
+                      <img
+                        src={employer.logoUrl}
+                        alt=""
+                        className="h-12 w-12 rounded-md object-contain bg-white"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-slate-500">
+                        No Logo
                       </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col">
-                      <Link
-                        href={`/employers/${employer.id}`}
-                        className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
-                      >
-                        View Profile
-                      </Link>
-
-                      {status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => approveEmployer(employer.id)}
-                            disabled={isProcessing}
-                            className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
+                    )}
+                    <div>
+                      <h3 className="text-lg font-medium text-slate-100">
+                        {employer.organizationName}
+                      </h3>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-400">
+                        {employer.website && (
+                          <a
+                            href={employer.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center hover:text-teal-400"
                           >
-                            {isProcessing ? "Processing..." : "Approve"}
-                          </button>
-                          <button
-                            onClick={() => rejectEmployer(employer.id)}
-                            disabled={isProcessing}
-                            className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-
-                      {status === "rejected" && (
-                        <button
-                          onClick={() => approveEmployer(employer.id)}
-                          disabled={isProcessing}
-                          className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
-                        >
-                          {isProcessing ? "Processing..." : "Approve"}
-                        </button>
+                            {employer.website.replace(/^https?:\/\//, "")}
+                            <ArrowTopRightOnSquareIcon className="ml-1 h-3 w-3" />
+                          </a>
+                        )}
+                        <span>{employer.location || "No location"}</span>
+                        <span>
+                          Joined: {employer.createdAt?.toDate().toLocaleDateString() || "Unknown"}
+                        </span>
+                      </div>
+                      {employer.description && (
+                        <p className="mt-2 text-sm text-slate-400 line-clamp-2">
+                          {employer.description}
+                        </p>
                       )}
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
-export default function AdminEmployersPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading employers...</p>
+                  {filter === "pending" && (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleStatusUpdate(employer.id, "approved")}
+                        disabled={!!processingId}
+                        className="flex items-center rounded-md bg-teal-500/10 px-3 py-2 text-sm font-medium text-teal-400 hover:bg-teal-500/20 disabled:opacity-50"
+                      >
+                        <CheckCircleIcon className="mr-2 h-4 w-4" />
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(employer.id, "rejected")}
+                        disabled={!!processingId}
+                        className="flex items-center rounded-md bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 disabled:opacity-50"
+                      >
+                        <XCircleIcon className="mr-2 h-4 w-4" />
+                        Reject
+                      </button>
+                    </div>
+                  )}
+
+                  {filter === "approved" && (
+                    <div className="text-sm text-teal-500 flex items-center">
+                      <CheckCircleIcon className="mr-1 h-4 w-4" />
+                      Approved by {employer.approvedBy || "Admin"}
+                    </div>
+                  )}
+
+                  {filter === "rejected" && (
+                    <div className="text-sm text-red-500 flex items-center">
+                      <XCircleIcon className="mr-1 h-4 w-4" />
+                      Rejected
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
-    }>
-      <AdminEmployersContent />
-    </Suspense>
+      )}
+    </div>
   );
 }

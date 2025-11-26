@@ -22,8 +22,9 @@ import type {
 import ProfileTab from "./ProfileTab";
 import ApplicationsTab from "./ApplicationsTab";
 import SavedItemsTab from "./SavedItemsTab";
+import JobAlertsTab from "./JobAlertsTab";
 
-type TabType = "overview" | "profile" | "applications" | "saved";
+type TabType = "overview" | "profile" | "applications" | "saved" | "alerts";
 
 export default function MemberDashboard() {
   const { user, role, loading } = useAuth();
@@ -127,31 +128,28 @@ export default function MemberDashboard() {
         <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-800 pb-px">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${
-              activeTab === "overview"
-                ? "border-b-2 border-emerald-500 text-emerald-400"
-                : "text-slate-400 hover:text-slate-300"
-            }`}
+            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "overview"
+              ? "border-b-2 border-emerald-500 text-emerald-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab("profile")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${
-              activeTab === "profile"
-                ? "border-b-2 border-emerald-500 text-emerald-400"
-                : "text-slate-400 hover:text-slate-300"
-            }`}
+            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "profile"
+              ? "border-b-2 border-emerald-500 text-emerald-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
           >
             Profile
           </button>
           <button
             onClick={() => setActiveTab("applications")}
-            className={`relative whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${
-              activeTab === "applications"
-                ? "border-b-2 border-emerald-500 text-emerald-400"
-                : "text-slate-400 hover:text-slate-300"
-            }`}
+            className={`relative whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "applications"
+              ? "border-b-2 border-emerald-500 text-emerald-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
           >
             Applications
             {recentStats.totalApplications > 0 && (
@@ -162,13 +160,21 @@ export default function MemberDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("saved")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${
-              activeTab === "saved"
-                ? "border-b-2 border-emerald-500 text-emerald-400"
-                : "text-slate-400 hover:text-slate-300"
-            }`}
+            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "saved"
+              ? "border-b-2 border-emerald-500 text-emerald-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
           >
             Saved Items
+          </button>
+          <button
+            onClick={() => setActiveTab("alerts")}
+            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "alerts"
+              ? "border-b-2 border-emerald-500 text-emerald-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
+          >
+            Job Alerts
           </button>
         </div>
 
@@ -184,8 +190,13 @@ export default function MemberDashboard() {
           )}
           {activeTab === "profile" && <ProfileTab />}
           {activeTab === "applications" && <ApplicationsTab />}
-          {activeTab === "saved" && <SavedItemsTab />}
-        </div>
+          {activeTab === "saved" && (
+            <SavedItemsTab />
+          )}
+
+          {activeTab === "alerts" && (
+            <JobAlertsTab />
+          )}</div>
       </div>
     </div>
   );

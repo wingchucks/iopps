@@ -1,78 +1,129 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Helper function to check if user is signed in
+    
+    // Helper function to check if user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
-
-    // Helper function to check if user is an employer
-    function isEmployer() {
-      return isSignedIn() &&
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'employer';
+    
+    // Helper function to check file size (in MB)
+    function isValidSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
     }
-
-    // Vendor images (logos and hero images)
-    match /vendors/{vendorId}/{allPaths=**} {
-      // Allow read for all (public images)
+    
+    // Helper function to check file type
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isPDF() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    
+    function isDocument() {
+      return request.resource.contentType.matches('application/(pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)');
+    }
+    
+    // ===========================================================================
+    // USER PROFILE PICTURES
+    // ===========================================================================
+    match /users/{userId}/profile/{fileName} {
+      // Public read for profile pictures
       allow read: if true;
-
-      // Only allow authenticated employers to upload/update/delete their own vendor images
-      allow write: if isSignedIn() && isEmployer() &&
-        request.auth.uid == vendorId;
+      
+      // Users can upload their own profile picture
+      // Max 5MB, must be image
+      allow write: if isSignedIn() 
+                   && request.auth.uid == userId 
+                   && isImage() 
+                   && isValidSize(5);
     }
-
-    // Product/service images
-    match /products/{vendorId}/{allPaths=**} {
-      // Allow read for all (public images)
+    
+    // ===========================================================================
+    // MEMBER RESUMES
+    // ===========================================================================
+    match /users/{userId}/resumes/{fileName} {
+      // Only the owner can read their resume (or admins via backend)
+      // Employers get resume access through backend when member applies
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      
+      // Users can upload their own resume
+      // Max 10MB, must be PDF or DOC
+      allow write: if isSignedIn() 
+                   && request.auth.uid == userId 
+                   && isDocument() 
+                   && isValidSize(10);
+    }
+    
+    // ===========================================================================
+    // EMPLOYER LOGOS
+    // ===========================================================================
+    match /employers/{employerId}/logo/{fileName} {
+      // Public read for logos (displayed on job listings)
       allow read: if true;
-
-      // Only allow authenticated employers to upload/update/delete their own product images
-      allow write: if isSignedIn() && isEmployer() &&
-        request.auth.uid == vendorId;
+      
+      // Employers can upload their own logo
+      // Max 2MB, must be image
+      allow write: if isSignedIn() 
+                   && request.auth.uid == employerId 
+                   && isImage() 
+                   && isValidSize(2);
     }
-
-    // Member profile images (for future use)
-    match /profiles/{userId}/{allPaths=**} {
-      // Allow read for all
+    
+    // ===========================================================================
+    // VENDOR/SHOP IMAGES
+    // ===========================================================================
+    match /vendors/{vendorId}/images/{fileName} {
+      // Public read for shop images
       allow read: if true;
-
-      // Only allow users to upload/update/delete their own profile images
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      
+      // Vendors can upload shop images
+      // Max 5MB per image, must be image
+      allow write: if isSignedIn() 
+                   && request.auth.uid == vendorId 
+                   && isImage() 
+                   && isValidSize(5);
     }
-
-    // Resumes for member profiles
-    match /resumes/{userId}/{allPaths=**} {
-      // Allow read for all (employers need to view applicant resumes)
+    
+    // ===========================================================================
+    // CONFERENCE IMAGES
+    // ===========================================================================
+    match /conferences/{conferenceId}/images/{fileName} {
+      // Public read
       allow read: if true;
-
-      // Only allow users to upload/update/delete their own resumes
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      
+      // Authenticated users can upload conference images
+      // Max 5MB, must be image
+      allow write: if isSignedIn() 
+                   && isImage() 
+                   && isValidSize(5);
     }
-
-    // Employer/organization logos (for future use)
-    match /employers/{employerId}/{allPaths=**} {
-      // Allow read for all (public logos)
+    
+    // ===========================================================================
+    // SCHOLARSHIP DOCUMENTS
+    // ===========================================================================
+    match /scholarships/{scholarshipId}/documents/{fileName} {
+      // Public read for scholarship guidelines, etc.
       allow read: if true;
-
-      // Only allow authenticated employers to upload/update/delete their own logos
-      allow write: if isSignedIn() && isEmployer() &&
-        request.auth.uid == employerId;
+      
+      // Authenticated users can upload scholarship documents
+      // Max 10MB, PDF or images
+      allow write: if isSignedIn() 
+                   && (isDocument() || isImage()) 
+                   && isValidSize(10);
     }
-
-    // Conference images (for future use)
-    match /conferences/{conferenceId}/{allPaths=**} {
-      // Allow read for all (public images)
+    
+    // ===========================================================================
+    // GENERAL UPLOADS (ADMIN ONLY)
+    // ===========================================================================
+    match /uploads/{allPaths=**} {
+      // Public read for general uploads
       allow read: if true;
-
-      // Only allow the conference owner to upload/update/delete
-      allow write: if isSignedIn() && isEmployer() &&
-        firestore.get(/databases/(default)/documents/conferences/$(conferenceId)).data.employerId == request.auth.uid;
-    }
-
-    // Block all other paths by default
-    match /{allPaths=**} {
-      allow read, write: if false;
+      
+      // Only admins can upload to the general uploads folder
+      // This requires backend verification
+      allow write: if false; // Handled by backend with admin SDK
     }
   }
 }

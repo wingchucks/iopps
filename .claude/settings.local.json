@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(JobBillingContent.tsx)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

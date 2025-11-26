@@ -99,16 +99,26 @@ function ConferencesContent() {
 
   const sortedConferences = useMemo(() => {
     const copy = [...filtered];
+
+    // Sort by selected criteria
     if (params.sortBy === "recent") {
-      return copy.sort(
+      copy.sort(
         (a, b) =>
           getTimeValue(b.createdAt ?? null, 0) -
           getTimeValue(a.createdAt ?? null, 0)
       );
+    } else {
+      copy.sort(
+        (a, b) => getTimeValue(a.startDate ?? null) - getTimeValue(b.startDate ?? null)
+      );
     }
-    return copy.sort(
-      (a, b) => getTimeValue(a.startDate ?? null) - getTimeValue(b.startDate ?? null)
-    );
+
+    // Then prioritize featured at the top
+    return copy.sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return 0;
+    });
   }, [filtered, params.sortBy]);
 
   return (
@@ -279,10 +289,21 @@ function ConferencesContent() {
             {sortedConferences.map((conf) => (
               <article
                 key={conf.id}
-                className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 hover:border-[#14B8A6]/70"
+                className={`rounded-2xl border p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 ${conf.featured
+                  ? "border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-amber-600/5 hover:border-amber-500/70"
+                  : "border-slate-800/80 bg-[#08090C] hover:border-[#14B8A6]/70"
+                  }`}
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
+                  <div className="flex-1">
+                    {conf.featured && (
+                      <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-400">
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        FEATURED
+                      </div>
+                    )}
                     <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
                       {conf.employerName || "Organizer"}
                     </p>

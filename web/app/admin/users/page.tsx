@@ -13,7 +13,8 @@ import {
   serverTimestamp,
   orderBy,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
+import { signInWithCustomToken } from "firebase/auth";
 import type { UserRole } from "@/lib/types";
 
 interface User {
@@ -119,6 +120,45 @@ function AdminUsersContent() {
     }
   }
 
+  async function impersonateUser(userId: string) {
+    if (!user || !auth) return;
+    if (!confirm("Are you sure you want to sign in as this user? You will be logged out of your admin account.")) return;
+
+    try {
+      setProcessing(userId);
+
+      // Get the admin's ID token
+      const idToken = await user.getIdToken();
+
+      // Call the API to get a custom token for the target user
+      const response = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ targetUserId: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get impersonation token");
+      }
+
+      const { token } = await response.json();
+
+      // Sign in with the custom token
+      await signInWithCustomToken(auth, token);
+
+      // Redirect to home page
+      router.push("/");
+
+    } catch (error) {
+      console.error("Error impersonating user:", error);
+      alert("Failed to impersonate user. Please try again.");
+      setProcessing(null);
+    }
+  }
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-[#020306] px-4 py-10">
@@ -186,8 +226,8 @@ function AdminUsersContent() {
             <button
               onClick={() => setFilter("all")}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                  ? "bg-[#14B8A6] text-slate-900"
-                  : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                ? "bg-[#14B8A6] text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
                 }`}
             >
               All ({users.length})
@@ -195,8 +235,8 @@ function AdminUsersContent() {
             <button
               onClick={() => setFilter("community")}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "community"
-                  ? "bg-[#14B8A6] text-slate-900"
-                  : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                ? "bg-[#14B8A6] text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
                 }`}
             >
               Community ({communityCount})
@@ -204,8 +244,8 @@ function AdminUsersContent() {
             <button
               onClick={() => setFilter("employer")}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "employer"
-                  ? "bg-[#14B8A6] text-slate-900"
-                  : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                ? "bg-[#14B8A6] text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
                 }`}
             >
               Employers ({employerCount})
@@ -213,8 +253,8 @@ function AdminUsersContent() {
             <button
               onClick={() => setFilter("moderator")}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "moderator"
-                  ? "bg-purple-500 text-slate-900"
-                  : "border border-slate-700 text-slate-300 hover:border-purple-500"
+                ? "bg-purple-500 text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-purple-500"
                 }`}
             >
               Moderators ({moderatorCount})
@@ -315,8 +355,8 @@ function AdminUsersContent() {
                         <td className="px-6 py-4">
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-medium ${userData.disabled
-                                ? "bg-red-500/10 text-red-400"
-                                : "bg-green-500/10 text-green-400"
+                              ? "bg-red-500/10 text-red-400"
+                              : "bg-green-500/10 text-green-400"
                               }`}
                           >
                             {userData.disabled ? "Disabled" : "Active"}
@@ -331,6 +371,16 @@ function AdminUsersContent() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
+                            {user?.email === "nathan.arias@iopps.ca" && (
+                              <button
+                                onClick={() => impersonateUser(userData.id)}
+                                disabled={isProcessing || isCurrentUser}
+                                className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-yellow-500 hover:text-yellow-500 disabled:opacity-50"
+                                title="Sign in as this user"
+                              >
+                                Login As
+                              </button>
+                            )}
                             <button
                               onClick={() =>
                                 toggleUserStatus(userData.id, userData.disabled || false)
