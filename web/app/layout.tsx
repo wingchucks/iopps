@@ -2,9 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
+import MainLayout from "@/components/MainLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +33,27 @@ export const metadata: Metadata = {
   creator: "IOPPS",
   publisher: "IOPPS",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "IOPPS",
+  },
+  formatDetection: {
+    telephone: true,
+    email: true,
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover",
+  },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#14B8A6" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
   openGraph: {
     type: "website",
     locale: "en_CA",
@@ -72,7 +92,7 @@ export default function RootLayout({
   const websiteSchema = generateWebsiteSchema();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -89,13 +109,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-slate-950 text-slate-100`}>
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <SiteHeader />
-
-            <main className="flex-1">{children}</main>
-
-            <SiteFooter />
-          </div>
+          <MainLayout>{children}</MainLayout>
         </AuthProvider>
       </body>
     </html>
