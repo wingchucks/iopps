@@ -60,7 +60,23 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         setEmploymentType(jobData.employmentType || "Full-time");
         setRemoteFlag(jobData.remoteFlag ?? false);
         setIndigenousPreference(jobData.indigenousPreference ?? true);
-        setSalaryRange(jobData.salaryRange || "");
+        // Handle both string and object salary range formats
+        if (typeof jobData.salaryRange === "string") {
+          setSalaryRange(jobData.salaryRange);
+        } else if (jobData.salaryRange && typeof jobData.salaryRange === "object") {
+          const { min, max, currency = "CAD" } = jobData.salaryRange;
+          if (min && max) {
+            setSalaryRange(`$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`);
+          } else if (min) {
+            setSalaryRange(`$${min.toLocaleString()}+ ${currency}`);
+          } else if (max) {
+            setSalaryRange(`Up to $${max.toLocaleString()} ${currency}`);
+          } else {
+            setSalaryRange("");
+          }
+        } else {
+          setSalaryRange("");
+        }
 
         // Convert Firestore Timestamp to YYYY-MM-DD format
         if (jobData.closingDate) {

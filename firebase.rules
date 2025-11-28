@@ -43,12 +43,18 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      // Any signed-in user can read user profiles (for display names, etc.)
+      allow read: if isSignedIn();
+      // Users can only write to their own document
+      allow write: if isSignedIn() && request.auth.uid == userId;
     }
 
     match /employers/{userId} {
       allow read: if true;
-      allow write: if isSignedIn() && isEmployer() && request.auth.uid == userId;
+      // Employers can write to their own profile, admins/moderators can update any (for approval)
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isModerator());
+      allow delete: if isSignedIn() && isAdmin();
     }
 
     match /memberProfiles/{userId} {
@@ -239,6 +245,44 @@ service cloud.firestore {
         (isEmployer() && resource.data.employerId == request.auth.uid) ||
         isModerator()
       );
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      // Users can read their own notifications, admins can read all
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can update their own notifications (mark as read)
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can delete their own notifications
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Server creates notifications via Admin SDK
+      allow create: if false;
+    }
+
+    // Conversations (messaging)
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        request.auth.uid == resource.data.memberId ||
+        isModerator()
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.employerId == request.auth.uid ||
+        request.resource.data.memberId == request.auth.uid
+      );
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        request.auth.uid == resource.data.memberId
+      );
+      allow delete: if isModerator();
+    }
+
+    // Messages
+    match /messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update: if isSignedIn();
+      allow delete: if isModerator();
     }
   }
 }

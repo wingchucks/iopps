@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
     listRSSFeeds,
@@ -137,10 +136,8 @@ export default function AdminFeedsPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-[#020306] px-4 py-10">
-                <div className="mx-auto max-w-7xl">
-                    <p className="text-slate-400">Loading feeds...</p>
-                </div>
+            <div className="flex items-center justify-center py-20">
+                <p className="text-slate-400">Loading feeds...</p>
             </div>
         );
     }
@@ -150,114 +147,115 @@ export default function AdminFeedsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#020306]">
+        <div className="space-y-6">
             {/* Header */}
-            <div className="border-b border-slate-800 bg-[#08090C]">
-                <div className="mx-auto max-w-7xl px-4 py-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <Link
-                                href="/admin"
-                                className="text-sm text-slate-400 hover:text-[#14B8A6]"
-                            >
-                                ← Admin Dashboard
-                            </Link>
-                            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
-                                RSS Job Feeds
-                            </h1>
-                            <p className="mt-1 text-sm text-slate-400">
-                                Import jobs automatically from employer RSS feeds
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
-                        >
-                            + Add Feed
-                        </button>
-                    </div>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-100">Job Auto Import</h1>
+                    <p className="mt-1 text-sm text-slate-400">
+                        Import jobs automatically from XML/JSON feed or employer ATS.
+                    </p>
                 </div>
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                >
+                    Add new auto import
+                </button>
             </div>
 
-            {/* Main Content */}
-            <div className="mx-auto max-w-7xl px-4 py-8">
-                {/* Feeds List */}
+            {/* Feeds Table */}
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
                 {feeds.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
+                    <div className="p-12 text-center">
                         <p className="text-slate-400">
-                            No RSS feeds configured yet. Add one to start importing jobs automatically.
+                            No auto imports configured yet. Add one to start importing jobs automatically.
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
-                        {feeds.map((feed) => (
-                            <div
-                                key={feed.id}
-                                className="rounded-xl border border-slate-800 bg-slate-900/60 p-6"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <h3 className="font-semibold text-slate-50">{feed.feedName}</h3>
-                                            {!feed.active && (
-                                                <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-400">
-                                                    Inactive
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="mt-1 text-sm text-slate-400 break-all">{feed.feedUrl}</p>
-                                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                                            {feed.employerName && <span>Employer: {feed.employerName}</span>}
-                                            {feed.totalJobsImported !== undefined && (
-                                                <span>Total imported: {feed.totalJobsImported}</span>
-                                            )}
-                                            {feed.lastSyncedAt && (
-                                                <span>
-                                                    Last synced: {new Date(feed.lastSyncedAt.seconds * 1000).toLocaleString()}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {feed.syncErrors && feed.syncErrors.length > 0 && (
-                                            <div className="mt-2 text-xs text-red-400">
-                                                <details>
-                                                    <summary className="cursor-pointer">
-                                                        {feed.syncErrors.length} error(s) in last sync
-                                                    </summary>
-                                                    <ul className="mt-1 list-disc pl-4">
-                                                        {feed.syncErrors.slice(0, 3).map((error, idx) => (
-                                                            <li key={idx}>{error}</li>
-                                                        ))}
-                                                    </ul>
-                                                </details>
-                                            </div>
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-slate-800 text-left text-sm text-slate-400">
+                                <th className="px-6 py-4 font-medium">Name</th>
+                                <th className="px-6 py-4 font-medium">Last Import</th>
+                                <th className="px-6 py-4 font-medium">Jobs Imported</th>
+                                <th className="px-6 py-4 font-medium">Status</th>
+                                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800">
+                            {feeds.map((feed) => (
+                                <tr key={feed.id} className="text-sm">
+                                    <td className="px-6 py-4">
+                                        <div className="font-medium text-slate-100">{feed.feedName}</div>
+                                        {feed.employerName && (
+                                            <div className="text-xs text-slate-500">{feed.employerName}</div>
                                         )}
-                                    </div>
-
-                                    <div className="flex shrink-0 gap-2">
-                                        <button
-                                            onClick={() => syncFeed(feed.id)}
-                                            disabled={syncing === feed.id || !feed.active}
-                                            className="rounded-md bg-[#14B8A6] px-3 py-1 text-sm font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
-                                        >
-                                            {syncing === feed.id ? "Syncing..." : "Sync Now"}
-                                        </button>
-                                        <button
-                                            onClick={() => toggleFeedStatus(feed.id, feed.active)}
-                                            className="rounded-md border border-slate-700 px-3 py-1 text-sm text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
-                                        >
-                                            {feed.active ? "Deactivate" : "Activate"}
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteFeed(feed.id, feed.feedName)}
-                                            className="rounded-md border border-red-500/30 px-3 py-1 text-sm text-red-400 transition hover:bg-red-500/10"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-300">
+                                        {feed.lastSyncedAt ? (
+                                            new Date(feed.lastSyncedAt.seconds * 1000).toLocaleString("en-US", {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })
+                                        ) : (
+                                            <span className="text-slate-500">Never</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-300">
+                                        {feed.totalJobsImported ?? 0}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {feed.active ? (
+                                            <span className="inline-flex items-center rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                                                Active
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center rounded-full bg-slate-700 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                                                Inactive
+                                            </span>
+                                        )}
+                                        {feed.syncErrors && feed.syncErrors.length > 0 && (
+                                            <span className="ml-2 text-xs text-amber-400" title={feed.syncErrors.join("\n")}>
+                                                ({feed.syncErrors.length} warnings)
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => syncFeed(feed.id)}
+                                                disabled={syncing === feed.id || !feed.active}
+                                                className="rounded-md bg-[#14B8A6] px-3 py-1.5 text-xs font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
+                                                title="Import jobs now"
+                                            >
+                                                {syncing === feed.id ? "Importing..." : "Import"}
+                                            </button>
+                                            <button
+                                                onClick={() => toggleFeedStatus(feed.id, feed.active)}
+                                                className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 transition hover:border-slate-600 hover:bg-slate-800"
+                                                title={feed.active ? "Deactivate" : "Activate"}
+                                            >
+                                                {feed.active ? "Pause" : "Resume"}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteFeed(feed.id, feed.feedName)}
+                                                className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-500/10 hover:text-red-400"
+                                                title="Delete"
+                                            >
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
 
@@ -265,11 +263,12 @@ export default function AdminFeedsPage() {
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                        <h2 className="text-xl font-bold text-slate-50">Add RSS Feed</h2>
-                        <form onSubmit={handleAddFeed} className="mt-4 space-y-4">
+                        <h2 className="text-xl font-bold text-slate-50">Add New Auto Import</h2>
+                        <p className="mt-1 text-sm text-slate-400">Connect an XML/JSON job feed to automatically import jobs.</p>
+                        <form onSubmit={handleAddFeed} className="mt-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-200">
-                                    Feed Name <span className="text-red-400">*</span>
+                                    Name <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -293,6 +292,9 @@ export default function AdminFeedsPage() {
                                     required
                                     className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
                                 />
+                                <p className="mt-1 text-xs text-slate-500">
+                                    XML or JSON feed URL from the employer&apos;s ATS
+                                </p>
                             </div>
 
                             <div>
@@ -308,13 +310,13 @@ export default function AdminFeedsPage() {
                                     className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
                                 />
                                 <p className="mt-1 text-xs text-slate-500">
-                                    The Firebase UID of the employer account
+                                    Jobs will be posted under this employer account
                                 </p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-200">
-                                    Employer Name (Optional)
+                                    Employer Name
                                 </label>
                                 <input
                                     type="text"
@@ -325,19 +327,19 @@ export default function AdminFeedsPage() {
                                 />
                             </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    type="submit"
-                                    className="flex-1 rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
-                                >
-                                    Add Feed
-                                </button>
+                            <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => setShowAddModal(false)}
                                     className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600"
                                 >
                                     Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                                >
+                                    Add Import
                                 </button>
                             </div>
                         </form>

@@ -509,7 +509,7 @@ function JobsContent() {
           return (
             <article
               key={job.id}
-              className="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 transition-all duration-300 hover:border-[#14B8A6]"
+              className="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-[#08090C] p-4 sm:p-6 transition-all duration-300 hover:border-[#14B8A6]"
             >
               <div className="space-y-4">
                 {/* Title and Saved badge */}
@@ -603,10 +603,10 @@ function JobsContent() {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
                   <Link
                     href={`/jobs/${job.id}`}
-                    className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-3 sm:py-2 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
                   >
                     {role === "community" ? "Apply Now" : "View job"}
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -617,7 +617,7 @@ function JobsContent() {
                     <button
                       onClick={() => handleToggleSave(job.id)}
                       disabled={savingJobId === job.id}
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all ${savedJobIds.has(job.id)
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3.5 py-3 sm:py-2 text-sm font-semibold transition-all ${savedJobIds.has(job.id)
                         ? "border-amber-400/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
                         : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:border-amber-400/40 hover:bg-slate-800 hover:text-amber-400"
                         }`}

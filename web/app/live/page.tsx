@@ -7,6 +7,7 @@ import type { LiveStreamEvent } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
 import { SectionHeader } from "@/components/SectionHeader";
 import { FilterCard } from "@/components/FilterCard";
+import { YouTubeSection } from "@/components/YouTubeSection";
 
 type StreamStatus = "Live Now" | "Upcoming" | "Replay";
 
@@ -128,6 +129,8 @@ export default function LivePage() {
           </div>
         </div>
       </div>
+
+      <YouTubeSection />
 
       {groupedStreams.liveNow.length > 0 && (
         <div className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">

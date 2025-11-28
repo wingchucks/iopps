@@ -17,6 +17,18 @@ import {
 import { auth, db, googleProvider } from "@/lib/firebase";
 import { UserRole } from "@/lib/types";
 
+// Super admin emails from environment variable (comma-separated)
+// These users get admin role even if their database record is missing or has different role
+const SUPER_ADMIN_EMAILS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS || "")
+  .split(",")
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
+function isSuperAdmin(email: string | null): boolean {
+  if (!email) return false;
+  return SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 type AuthContextValue = {
   user: FirebaseUser | null;
   role: UserRole | null;
@@ -46,14 +58,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const ref = doc(db, "users", firebaseUser.uid);
           const snap = await getDoc(ref);
           if (snap.exists()) {
-            const data = snap.data() as { role?: UserRole };
-            setRole(data.role ?? null);
+            const data = snap.data();
+            // Super admin override from env variable
+            if (isSuperAdmin(firebaseUser.email)) {
+              setRole("admin");
+            } else {
+              setRole((data.role as UserRole) ?? null);
+            }
           } else {
-            setRole(null);
+            // Super admin override even if doc doesn't exist
+            if (isSuperAdmin(firebaseUser.email)) {
+              setRole("admin");
+            } else {
+              setRole(null);
+            }
           }
         } catch (error) {
           console.error("Error loading user profile", error);
-          setRole(null);
+          // Super admin override on error
+          if (isSuperAdmin(firebaseUser.email)) {
+            setRole("admin");
+          } else {
+            setRole(null);
+          }
         }
       } else {
         setRole(null);
@@ -78,36 +105,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
 
-    // Check if user document exists
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-    const isNewUser = !userSnap.exists();
-
-    if (isNewUser) {
-      // Create new user document with default role
-      await setDoc(userRef, {
-        id: user.uid,
-        email: user.email,
-        displayName: user.displayName || "",
-        photoURL: user.photoURL || "",
-        role: "community", // Default role for new Google sign-ins
-        createdAt: serverTimestamp(),
-      });
-    } else {
-      // Update existing user with latest profile info
-      const existingData = userSnap.data();
-      await setDoc(
-        userRef,
-        {
-          email: user.email,
-          displayName: user.displayName || existingData.displayName || "",
-          photoURL: user.photoURL || existingData.photoURL || "",
-        },
-        { merge: true }
-      );
+    // Super admin - skip Firestore operations to avoid permission errors
+    if (isSuperAdmin(user.email)) {
+      return { isNewUser: false };
     }
 
-    return { isNewUser };
+    try {
+      // Check if user document exists
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      const isNewUser = !userSnap.exists();
+
+      if (isNewUser) {
+        // Create new user document with default role
+        await setDoc(userRef, {
+          id: user.uid,
+          email: user.email,
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          role: "community", // Default role for new Google sign-ins
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        // Update existing user with latest profile info
+        const existingData = userSnap.data();
+        await setDoc(
+          userRef,
+          {
+            email: user.email,
+            displayName: user.displayName || existingData.displayName || "",
+            photoURL: user.photoURL || existingData.photoURL || "",
+          },
+          { merge: true }
+        );
+      }
+
+      return { isNewUser };
+    } catch (error) {
+      console.error("Error during sign-in Firestore operations:", error);
+      // Return false for isNewUser on error - user is still authenticated
+      return { isNewUser: false };
+    }
   };
 
   return (

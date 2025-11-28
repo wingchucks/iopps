@@ -302,7 +302,7 @@ export default function BillingTab() {
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-emerald-500">ΓÇó</span>
-                                <span>You'll receive email notifications 7 days before expiration</span>
+                                <span>You&apos;ll receive email notifications 7 days before expiration</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-emerald-500">ΓÇó</span>

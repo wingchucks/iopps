@@ -261,5 +261,97 @@ service cloud.firestore {
       allow read: if isAdminOrModerator();
       allow write: if isAdminOrModerator();
     }
+
+    // ===========================================================================
+    // JOB ALERTS
+    // ===========================================================================
+    match /jobAlerts/{alertId} {
+      // Users can only read/write their own alerts
+      allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.memberId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
+    }
+
+    // ===========================================================================
+    // CONVERSATIONS (Messaging)
+    // ===========================================================================
+    match /conversations/{conversationId} {
+      // Participants can read their own conversations
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        request.auth.uid == resource.data.memberId ||
+        isAdminOrModerator()
+      );
+
+      // Authenticated users can create conversations they're part of
+      allow create: if isSignedIn() && (
+        request.resource.data.employerId == request.auth.uid ||
+        request.resource.data.memberId == request.auth.uid
+      );
+
+      // Participants can update (for marking read, archiving, etc.)
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        request.auth.uid == resource.data.memberId
+      );
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // MESSAGES
+    // ===========================================================================
+    match /messages/{messageId} {
+      // Participants of the conversation can read messages
+      allow read: if isSignedIn();
+
+      // Authenticated users can create messages in their conversations
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+
+      // Messages can be updated (for marking read)
+      allow update: if isSignedIn();
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // POW WOW REGISTRATIONS
+    // ===========================================================================
+    match /powwowRegistrations/{registrationId} {
+      // Anyone can create (register for event)
+      allow create: if true;
+
+      // Admins and event owners can read
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.employerId ||
+        isAdminOrModerator()
+      );
+
+      // Only admins can update/delete
+      allow update: if isAdminOrModerator();
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // NOTIFICATIONS
+    // ===========================================================================
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // System/server creates notifications (via admin SDK)
+      // Users can update their own notifications (mark as read)
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Users can delete their own notifications
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Only server-side (admin SDK) can create notifications
+      // This is handled through API routes, not client-side
+      allow create: if false;
+    }
   }
 }

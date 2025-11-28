@@ -5,8 +5,23 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { globalSearch, type GlobalSearchResults } from "@/lib/firestore";
 import { PageShell } from "@/components/PageShell";
+import type { JobPosting } from "@/lib/types";
 
 import { Suspense } from "react";
+
+function formatSalaryRange(salaryRange: JobPosting["salaryRange"]): string {
+  if (!salaryRange) return "";
+  if (typeof salaryRange === "string") return salaryRange;
+  if (!salaryRange.disclosed) return "";
+
+  const { min, max, currency = "CAD" } = salaryRange;
+  if (min && max) {
+    return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
+  }
+  if (min) return `$${min.toLocaleString()}+ ${currency}`;
+  if (max) return `Up to $${max.toLocaleString()} ${currency}`;
+  return "";
+}
 
 function GlobalSearchContent() {
   const searchParams = useSearchParams();
@@ -180,10 +195,10 @@ function GlobalSearchContent() {
                             </p>
                           )}
                         </div>
-                        {job.salaryRange && (
+                        {job.salaryRange && formatSalaryRange(job.salaryRange) && (
                           <div className="flex-shrink-0 text-right">
                             <p className="text-sm font-semibold text-[#14B8A6]">
-                              {job.salaryRange}
+                              {formatSalaryRange(job.salaryRange)}
                             </p>
                           </div>
                         )}

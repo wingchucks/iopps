@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import { CONFERENCE_PRODUCTS, ConferenceProductType } from "@/lib/stripe";
-import { loadStripe } from "@stripe/stripe-js";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface ConferencePricingSelectorProps {
     conferenceId: string;
@@ -48,16 +45,11 @@ export default function ConferencePricingSelector({ conferenceId, userId, onFree
                 throw new Error(data.error || "Failed to create checkout session");
             }
 
-            // Redirect to Stripe checkout
-            const stripe = await stripePromise;
-            if (!stripe) throw new Error("Stripe failed to load");
-
-            const { error: stripeError } = await stripe.redirectToCheckout({
-                sessionId: data.sessionId,
-            });
-
-            if (stripeError) {
-                throw stripeError;
+            // Redirect to Stripe checkout using the URL from the session
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                throw new Error("No checkout URL received");
             }
         } catch (err: any) {
             console.error("Checkout error:", err);

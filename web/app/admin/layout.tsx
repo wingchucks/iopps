@@ -9,7 +9,8 @@ import {
     UsersIcon,
     BriefcaseIcon,
     ChartBarIcon,
-    ArrowLeftOnRectangleIcon
+    ArrowLeftOnRectangleIcon,
+    ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminLayout({
@@ -47,6 +48,7 @@ export default function AdminLayout({
         { name: "Dashboard", href: "/admin", icon: ChartBarIcon },
         { name: "Employers", href: "/admin/employers", icon: BriefcaseIcon },
         { name: "Users", href: "/admin/users", icon: UsersIcon },
+        { name: "Job Auto Import", href: "/admin/feeds", icon: ArrowDownTrayIcon },
     ];
 
     return (

@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
+import { auth, db } from "@/lib/firebase-admin";
 
 export async function POST(request: NextRequest) {
     try {
+        // Verify authentication
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const idToken = authHeader.split("Bearer ")[1];
+        const decodedToken = await auth.verifyIdToken(idToken);
+        const userId = decodedToken.uid;
+
         const body = await request.json();
-        const { productType, jobId, userId } = body as {
+        const { productType, jobId } = body as {
             productType: JobPostingProductType;
             jobId: string;
-            userId: string;
         };
 
         // Validate product type
@@ -15,6 +25,31 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: "Invalid product type" },
                 { status: 400 }
+            );
+        }
+
+        // Validate jobId
+        if (!jobId) {
+            return NextResponse.json(
+                { error: "Missing jobId" },
+                { status: 400 }
+            );
+        }
+
+        // Verify the user owns this job
+        const jobDoc = await db.collection("jobs").doc(jobId).get();
+        if (!jobDoc.exists) {
+            return NextResponse.json(
+                { error: "Job not found" },
+                { status: 404 }
+            );
+        }
+
+        const jobData = jobDoc.data();
+        if (jobData?.employerId !== userId) {
+            return NextResponse.json(
+                { error: "Forbidden: You do not own this job" },
+                { status: 403 }
             );
         }
 

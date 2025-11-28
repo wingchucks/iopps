@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: "IOPPS <noreply@iopps.com>",
+      from: "IOPPS <noreply@iopps.ca>",
       to: [to],
       subject,
       html: htmlContent,

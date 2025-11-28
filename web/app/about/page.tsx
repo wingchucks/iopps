@@ -43,7 +43,7 @@ export default function AboutPage() {
               Commitment to TRC Call to Action #92
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-300">
-              The Truth and Reconciliation Commission's Call to Action #92 calls upon the corporate sector to ensure that Indigenous peoples have equitable access to jobs, training, and education opportunities, and to commit to meaningful consultation, building respectful relationships, and obtaining informed consent.
+              The Truth and Reconciliation Commission&apos;s Call to Action #92 calls upon the corporate sector to ensure that Indigenous peoples have equitable access to jobs, training, and education opportunities, and to commit to meaningful consultation, building respectful relationships, and obtaining informed consent.
             </p>
             <p className="mt-3 text-sm leading-relaxed text-slate-300">
               IOPPS directly supports this call by providing a platform where employers can demonstrate their commitment to Indigenous employment and economic reconciliation. We facilitate connections that honor Indigenous knowledge, create sustainable careers, and build bridges between communities and organizations ready to walk the path of reconciliation together.

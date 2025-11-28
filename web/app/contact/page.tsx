@@ -67,7 +67,7 @@ export default function ContactPage() {
       <section className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8">
         <h2 className="text-2xl font-bold text-slate-50">Send us a message</h2>
         <p className="mt-2 text-sm text-slate-400">
-          Fill out the form below and we'll get back to you within two business days.
+          Fill out the form below and we&apos;ll get back to you within two business days.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
@@ -134,7 +134,7 @@ export default function ContactPage() {
 
           {success && (
             <div className="rounded-md border border-green-500/50 bg-green-500/10 px-4 py-3 text-sm text-green-200">
-              Thank you for your message! We'll be in touch within two business days.
+              Thank you for your message! We&apos;ll be in touch within two business days.
             </div>
           )}
 
@@ -167,7 +167,7 @@ export default function ContactPage() {
               How do I post a job or scholarship opportunity?
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-300">
-              Create an employer account, complete your organization profile, and you'll be able to post jobs, scholarships, conferences, and more. Contact us at nathan.arias@iopps.ca for assistance.
+              Create an employer account, complete your organization profile, and you&apos;ll be able to post jobs, scholarships, conferences, and more. Contact us at nathan.arias@iopps.ca for assistance.
             </p>
           </div>
 
@@ -194,7 +194,7 @@ export default function ContactPage() {
               Will there be a mobile app?
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-300">
-              Yes! We're planning a mobile app to make it even easier for community members to access opportunities on the go. All your data and saved items will sync seamlessly between web and mobile.
+              Yes! We&apos;re planning a mobile app to make it even easier for community members to access opportunities on the go. All your data and saved items will sync seamlessly between web and mobile.
             </p>
           </div>
 
@@ -203,7 +203,7 @@ export default function ContactPage() {
               How do I report an issue or suggest a feature?
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-300">
-              We'd love to hear from you! Use the contact form above or email nathan.arias@iopps.ca with your feedback, bug reports, or feature suggestions.
+              We&apos;d love to hear from you! Use the contact form above or email nathan.arias@iopps.ca with your feedback, bug reports, or feature suggestions.
             </p>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function ContactPage() {
       <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
         <h2 className="text-xl font-bold text-slate-50">Stay Connected</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-300">
-          We're preparing job alerts, newsletters, and partner spotlights.
+          We&apos;re preparing job alerts, newsletters, and partner spotlights.
           In the meantime, bookmark this page and follow @ioppsca on your
           favourite social platform for updates.
         </p>

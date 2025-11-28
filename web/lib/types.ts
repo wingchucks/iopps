@@ -347,9 +347,9 @@ export interface ContactSubmission {
   name: string;
   email: string;
   subject?: string;
-  jobId: string;
-  appliedAt: Timestamp;
-  status: "submitted" | "viewed" | "interviewing" | "rejected" | "accepted";
+  message?: string;
+  createdAt?: Timestamp | null;
+  status: "new" | "read" | "responded";
 }
 
 export interface PlatformSettings {
@@ -382,5 +382,68 @@ export interface RSSFeed {
   totalJobsImported?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Messaging Types
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderType: "employer" | "member";
+  content: string;
+  read: boolean;
+  createdAt?: Timestamp | null;
+}
+
+export interface Conversation {
+  id: string;
+  employerId: string;
+  memberId: string;
+  jobId?: string; // Optional link to job application
+  applicationId?: string; // Optional link to specific application
+  // Denormalized fields for quick display
+  employerName?: string;
+  memberName?: string;
+  memberEmail?: string;
+  jobTitle?: string;
+  // Conversation state
+  lastMessage?: string;
+  lastMessageAt?: Timestamp | null;
+  lastMessageBy?: string;
+  employerUnreadCount: number;
+  memberUnreadCount: number;
+  // Status
+  status: "active" | "archived";
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+// Notification Types
+export type NotificationType =
+  | "new_application"      // Employer receives when someone applies
+  | "application_status"   // Member receives when status changes
+  | "new_message"          // Both receive when new message arrives
+  | "job_alert"            // Member receives matching job alert
+  | "employer_approved"    // Employer receives when approved
+  | "employer_rejected"    // Employer receives when rejected
+  | "scholarship_status"   // Member receives scholarship updates
+  | "system";              // System announcements
+
+export interface Notification {
+  id: string;
+  userId: string;          // Who receives this notification
+  type: NotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  // Optional links for navigation
+  link?: string;           // URL to navigate to when clicked
+  // Related entity IDs for context
+  relatedJobId?: string;
+  relatedApplicationId?: string;
+  relatedConversationId?: string;
+  relatedEmployerId?: string;
+  // Metadata
+  createdAt?: Timestamp | null;
 }
 

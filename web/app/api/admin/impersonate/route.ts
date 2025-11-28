@@ -24,9 +24,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        // Restrict impersonation to the main admin only
-        if (decodedToken.email !== "nathan.arias@iopps.ca") {
-            return NextResponse.json({ error: "Forbidden: Only the main admin can impersonate users." }, { status: 403 });
+        // Restrict impersonation to super admins only
+        const SUPER_ADMIN_EMAILS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS || "")
+            .split(",")
+            .map((email) => email.trim().toLowerCase())
+            .filter(Boolean);
+
+        if (!decodedToken.email || !SUPER_ADMIN_EMAILS.includes(decodedToken.email.toLowerCase())) {
+            return NextResponse.json({ error: "Forbidden: Only super admins can impersonate users." }, { status: 403 });
         }
 
         const body = await req.json();

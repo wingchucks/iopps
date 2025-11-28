@@ -1,0 +1,46 @@
+{
+  "name": "IOPPS - Indigenous Opportunities & Partnerships Platform",
+  "short_name": "IOPPS",
+  "description": "Empowering Indigenous success across Canada through jobs, conferences, scholarships, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#14B8A6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "education", "social"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Browse Jobs",
+      "short_name": "Jobs",
+      "url": "/jobs",
+      "description": "Search Indigenous job opportunities"
+    },
+    {
+      "name": "Conferences",
+      "short_name": "Events",
+      "url": "/conferences",
+      "description": "Discover upcoming Indigenous conferences"
+    },
+    {
+      "name": "Scholarships",
+      "short_name": "Scholarships",
+      "url": "/scholarships",
+      "description": "Find Indigenous scholarships"
+    }
+  ]
+}

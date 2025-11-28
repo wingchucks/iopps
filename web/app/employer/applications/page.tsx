@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import {
   getMemberProfile,
   listEmployerApplications,
   listEmployerJobs,
   updateApplicationStatus,
+  getOrCreateConversation,
+  getEmployerProfile,
 } from "@/lib/firestore";
 import type {
   ApplicationStatus,
@@ -17,6 +20,7 @@ import type {
 
 export default function ApplicationsInboxPage() {
   const { user, role, loading } = useAuth();
+  const router = useRouter();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [selectedJob, setSelectedJob] = useState("all");
@@ -127,6 +131,33 @@ export default function ApplicationsInboxPage() {
       setError("Could not update status.");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const startConversation = async (app: JobApplication) => {
+    if (!user) return;
+
+    try {
+      // Get employer profile for name
+      const employerProfile = await getEmployerProfile(user.uid);
+      const job = jobs.find((j) => j.id === app.jobId);
+
+      const conversation = await getOrCreateConversation({
+        employerId: user.uid,
+        memberId: app.memberId,
+        jobId: app.jobId,
+        applicationId: app.id,
+        employerName: employerProfile?.organizationName,
+        memberName: app.memberDisplayName,
+        memberEmail: app.memberEmail,
+        jobTitle: job?.title,
+      });
+
+      // Navigate to messages with this conversation
+      router.push(`/employer/messages?id=${conversation.id}`);
+    } catch (err) {
+      console.error("Error starting conversation:", err);
+      alert("Failed to start conversation. Please try again.");
     }
   };
 
@@ -296,17 +327,12 @@ export default function ApplicationsInboxPage() {
                       </a>
                     )}
                     {app.memberEmail && (
-                      <a
-                        href={
-                          memberInfo[app.memberId]?.messagingHandle ||
-                          `mailto:${app.memberEmail}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-full border border-slate-700 px-3 py-1 hover:border-[#14B8A6]"
+                      <button
+                        onClick={() => startConversation(app)}
+                        className="rounded-full border border-[#14B8A6] bg-[#14B8A6]/10 px-3 py-1 text-[#14B8A6] hover:bg-[#14B8A6]/20 transition"
                       >
                         Message
-                      </a>
+                      </button>
                     )}
                     {app.memberEmail && (
                       <a

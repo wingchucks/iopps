@@ -22,6 +22,20 @@ interface JobWithEmployer extends JobPosting {
   employerLogoUrl?: string;
 }
 
+function formatSalaryRange(salaryRange: JobPosting["salaryRange"]): string {
+  if (!salaryRange) return "";
+  if (typeof salaryRange === "string") return salaryRange;
+  if (!salaryRange.disclosed) return "";
+
+  const { min, max, currency = "CAD" } = salaryRange;
+  if (min && max) {
+    return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
+  }
+  if (min) return `$${min.toLocaleString()}+ ${currency}`;
+  if (max) return `Up to $${max.toLocaleString()} ${currency}`;
+  return "";
+}
+
 import { Suspense } from "react";
 
 function AdminJobsContent() {
@@ -290,9 +304,9 @@ function AdminJobsContent() {
                             )}
                           </div>
 
-                          {job.salaryRange && (
+                          {job.salaryRange && formatSalaryRange(job.salaryRange) && (
                             <p className="mt-2 text-sm font-medium text-green-400">
-                              {job.salaryRange}
+                              {formatSalaryRange(job.salaryRange)}
                             </p>
                           )}
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, CONFERENCE_PRODUCTS, ConferenceProductType } from "@/lib/stripe";
+import { auth, db } from "@/lib/firebase-admin";
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic';
@@ -7,10 +8,20 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { conferenceId, productType, userId } = body;
+        // Verify authentication
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        if (!conferenceId || !productType || !userId) {
+        const idToken = authHeader.split("Bearer ")[1];
+        const decodedToken = await auth.verifyIdToken(idToken);
+        const userId = decodedToken.uid;
+
+        const body = await request.json();
+        const { conferenceId, productType } = body;
+
+        if (!conferenceId || !productType) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
@@ -22,6 +33,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: "Invalid product type" },
                 { status: 400 }
+            );
+        }
+
+        // Verify the user owns this conference
+        const conferenceDoc = await db.collection("conferences").doc(conferenceId).get();
+        if (!conferenceDoc.exists) {
+            return NextResponse.json(
+                { error: "Conference not found" },
+                { status: 404 }
+            );
+        }
+
+        const conferenceData = conferenceDoc.data();
+        if (conferenceData?.employerId !== userId) {
+            return NextResponse.json(
+                { error: "Forbidden: You do not own this conference" },
+                { status: 403 }
             );
         }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
+import NotificationBell from "@/components/NotificationBell";
 
 const navLinks = [
   { href: "/jobs", label: "Jobs" },
@@ -82,7 +83,9 @@ export default function SiteHeader() {
             {loading ? (
               <div className="text-xs text-slate-400">Loading...</div>
             ) : user ? (
-              <div className="relative">
+              <>
+                <NotificationBell />
+                <div className="relative">
                 <button
                   className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-[#14B8A6]/50 hover:bg-slate-800/60"
                   onClick={() => setMenuOpen((prev) => !prev)}
@@ -119,6 +122,13 @@ export default function SiteHeader() {
                           >
                             <span className="font-semibold">My Dashboard</span>
                           </Link>
+                          <Link
+                            href="/member/messages"
+                            className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                            onClick={closeMenu}
+                          >
+                            <span className="font-semibold">Messages</span>
+                          </Link>
                         </>
                       )}
                       {role === "employer" && (
@@ -131,11 +141,29 @@ export default function SiteHeader() {
                             <span className="font-semibold">Employer Dashboard</span>
                           </Link>
                           <Link
+                            href="/employer/messages"
+                            className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                            onClick={closeMenu}
+                          >
+                            <span className="font-semibold">Messages</span>
+                          </Link>
+                          <Link
                             href="/vendor/dashboard"
                             className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
                             onClick={closeMenu}
                           >
                             <span className="font-semibold">Vendor Dashboard</span>
+                          </Link>
+                        </>
+                      )}
+                      {(role === "admin" || role === "moderator") && (
+                        <>
+                          <Link
+                            href="/admin"
+                            className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                            onClick={closeMenu}
+                          >
+                            <span className="font-semibold">Admin Dashboard</span>
                           </Link>
                         </>
                       )}
@@ -154,7 +182,8 @@ export default function SiteHeader() {
                     </div>
                   </div>
                 )}
-              </div>
+                </div>
+              </>
             ) : (
               <div className="flex gap-2">
                 <Link
