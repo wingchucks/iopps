@@ -144,10 +144,12 @@ export default function NewJobPage() {
       });
 
       // Create Stripe Checkout session
+      const idToken = await user.getIdToken();
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           productType: selectedProduct,
@@ -256,10 +258,11 @@ export default function NewJobPage() {
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label htmlFor="title" className="block text-sm font-medium text-slate-200">
             Job title
           </label>
           <input
+            id="title"
             type="text"
             required
             value={title}
@@ -268,10 +271,11 @@ export default function NewJobPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label htmlFor="location" className="block text-sm font-medium text-slate-200">
             Location
           </label>
           <input
+            id="location"
             type="text"
             required
             value={location}
@@ -281,10 +285,11 @@ export default function NewJobPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label htmlFor="employmentType" className="block text-sm font-medium text-slate-200">
               Employment type
             </label>
             <select
+              id="employmentType"
               value={employmentType}
               onChange={(e) => setEmploymentType(e.target.value)}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
@@ -297,10 +302,11 @@ export default function NewJobPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label htmlFor="salaryRange" className="block text-sm font-medium text-slate-200">
               Salary range (optional)
             </label>
             <input
+              id="salaryRange"
               type="text"
               value={salaryRange}
               onChange={(e) => setSalaryRange(e.target.value)}
@@ -313,6 +319,7 @@ export default function NewJobPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="inline-flex items-center gap-2 text-sm text-slate-200">
             <input
+              id="remoteFlag"
               type="checkbox"
               checked={remoteFlag}
               onChange={(e) => setRemoteFlag(e.target.checked)}
@@ -321,6 +328,7 @@ export default function NewJobPage() {
           </label>
           <label className="inline-flex items-center gap-2 text-sm text-slate-200">
             <input
+              id="indigenousPreference"
               type="checkbox"
               checked={indigenousPreference}
               onChange={(e) => setIndigenousPreference(e.target.checked)}
@@ -329,6 +337,7 @@ export default function NewJobPage() {
           </label>
           <label className="inline-flex items-center gap-2 text-sm text-slate-200 sm:col-span-2">
             <input
+              id="quickApplyEnabled"
               type="checkbox"
               checked={quickApplyEnabled}
               onChange={(e) => setQuickApplyEnabled(e.target.checked)}
@@ -343,10 +352,11 @@ export default function NewJobPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label htmlFor="closingDate" className="block text-sm font-medium text-slate-200">
             Closing date (optional)
           </label>
           <input
+            id="closingDate"
             type="date"
             value={closingDate}
             onChange={(e) => setClosingDate(e.target.value)}
@@ -398,10 +408,11 @@ export default function NewJobPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label htmlFor="description" className="block text-sm font-medium text-slate-200">
             Job description
           </label>
           <textarea
+            id="description"
             required
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -412,10 +423,11 @@ export default function NewJobPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label htmlFor="responsibilities" className="block text-sm font-medium text-slate-200">
               Responsibilities (one per line)
             </label>
             <textarea
+              id="responsibilities"
               value={responsibilities}
               onChange={(e) => setResponsibilities(e.target.value)}
               rows={5}
@@ -423,10 +435,11 @@ export default function NewJobPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label htmlFor="qualifications" className="block text-sm font-medium text-slate-200">
               Qualifications (one per line)
             </label>
             <textarea
+              id="qualifications"
               value={qualifications}
               onChange={(e) => setQualifications(e.target.value)}
               rows={5}
@@ -436,10 +449,11 @@ export default function NewJobPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label htmlFor="applicationLink" className="block text-sm font-medium text-slate-200">
             Application link (URL)
           </label>
           <input
+            id="applicationLink"
             type="url"
             value={applicationLink}
             onChange={(e) => setApplicationLink(e.target.value)}
@@ -448,10 +462,11 @@ export default function NewJobPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label htmlFor="applicationEmail" className="block text-sm font-medium text-slate-200">
             Application email (optional)
           </label>
           <input
+            id="applicationEmail"
             type="email"
             value={applicationEmail}
             onChange={(e) => setApplicationEmail(e.target.value)}
