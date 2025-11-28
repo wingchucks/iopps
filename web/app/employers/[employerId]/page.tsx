@@ -56,7 +56,7 @@ async function getEmployerData(employerId: string): Promise<{
       .limit(20)
       .get();
 
-    const jobs = jobsSnapshot.docs.map(doc => ({
+    const jobs = jobsSnapshot.docs.map((doc: any) => ({
       ...doc.data(),
       id: doc.id,
     })) as JobPosting[];
