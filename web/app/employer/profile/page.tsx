@@ -49,7 +49,7 @@ export default function EmployerProfilePage() {
       setError(null);
       const logoRef = ref(
         storage!,
-        `logos/${user.uid}/${Date.now()}-${file.name}`
+        `employers/${user.uid}/logo/${Date.now()}-${file.name}`
       );
       await uploadBytes(logoRef, file);
       const url = await getDownloadURL(logoRef);
