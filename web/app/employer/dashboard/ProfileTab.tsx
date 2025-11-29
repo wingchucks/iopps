@@ -90,7 +90,7 @@ export default function ProfileTab() {
 
     setUploadingLogo(true);
     try {
-      const storageRef = ref(storage!, `employers/${user.uid}/logo_${Date.now()}.${file.name.split('.').pop()}`);
+      const storageRef = ref(storage!, `employers/${user.uid}/logo/logo_${Date.now()}.${file.name.split('.').pop()}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       setLogoUrl(url);
