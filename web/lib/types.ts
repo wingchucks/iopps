@@ -20,6 +20,20 @@ export interface Interview {
   createdAt?: Timestamp | null;
 }
 
+export interface EmployerSubscription {
+  active: boolean;
+  tier: string;
+  purchasedAt?: Timestamp | Date | null;
+  expiresAt?: Timestamp | Date | null;
+  paymentId?: string;
+  amountPaid?: number;
+  jobCredits: number;
+  jobCreditsUsed: number;
+  featuredJobCredits: number;
+  featuredJobCreditsUsed: number;
+  unlimitedPosts: boolean;
+}
+
 export interface EmployerProfile {
   id: string;
   userId: string;
@@ -33,6 +47,7 @@ export interface EmployerProfile {
   approvedAt?: Timestamp | null;
   approvedBy?: string;
   rejectionReason?: string;
+  subscription?: EmployerSubscription;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }

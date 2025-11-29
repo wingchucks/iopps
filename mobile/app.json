@@ -38,9 +38,6 @@
       "eas": {
         "projectId": "iopps-mobile"
       }
-    },
-    "plugins": [
-      "expo-router"
-    ]
+    }
   }
 }

@@ -2,10 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
-import { loadStripe } from "@stripe/stripe-js";
 import { JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
 
 const employmentTypes = [
@@ -16,15 +15,23 @@ const employmentTypes = [
   "Internship",
 ];
 
-// Initialize Stripe
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+type SubscriptionInfo = {
+  active: boolean;
+  tier: string;
+  expiresAt: Date;
+  jobCredits: number;
+  jobCreditsUsed: number;
+  featuredJobCredits: number;
+  featuredJobCreditsUsed: number;
+  unlimitedPosts: boolean;
+} | null;
 
 export default function NewJobPage() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [organizationName, setOrganizationName] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo>(null);
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [employmentType, setEmploymentType] = useState("Full-time");
@@ -42,7 +49,9 @@ export default function NewJobPage() {
   const [error, setError] = useState<string | null>(null);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<JobPostingProductType>("SINGLE");
+  const [selectedProduct, setSelectedProduct] = useState<JobPostingProductType | "SUBSCRIPTION">(
+    searchParams.get("featured") === "true" ? "FEATURED" : "SINGLE"
+  );
 
   const handleGenerateWithAI = async () => {
     if (!title.trim()) {
@@ -97,6 +106,27 @@ export default function NewJobPage() {
       const profile = await getEmployerProfile(user.uid);
       if (profile) {
         setOrganizationName(profile.organizationName);
+        // Check for active subscription
+        if (profile.subscription?.active && profile.subscription.expiresAt) {
+          const rawExpires = profile.subscription.expiresAt;
+          const expiresAt = typeof (rawExpires as any).toDate === 'function'
+            ? (rawExpires as any).toDate()
+            : new Date(rawExpires as any);
+          if (expiresAt > new Date()) {
+            setSubscription({
+              active: true,
+              tier: profile.subscription.tier,
+              expiresAt,
+              jobCredits: profile.subscription.jobCredits || 0,
+              jobCreditsUsed: profile.subscription.jobCreditsUsed || 0,
+              featuredJobCredits: profile.subscription.featuredJobCredits || 0,
+              featuredJobCreditsUsed: profile.subscription.featuredJobCreditsUsed || 0,
+              unlimitedPosts: profile.subscription.unlimitedPosts || false,
+            });
+            // Auto-select subscription posting if they have an active subscription
+            setSelectedProduct("SUBSCRIPTION");
+          }
+        }
       } else {
         setOrganizationName("");
       }
@@ -134,6 +164,33 @@ export default function NewJobPage() {
         applicationLink,
         applicationEmail,
       };
+
+      // If using subscription, post job for free
+      if (selectedProduct === "SUBSCRIPTION" && subscription) {
+        // Verify subscription is still valid
+        if (!subscription.unlimitedPosts) {
+          const remainingCredits = subscription.jobCredits - subscription.jobCreditsUsed;
+          if (remainingCredits <= 0) {
+            throw new Error("No job credits remaining. Please purchase additional credits or upgrade your subscription.");
+          }
+        }
+
+        // Create job directly (active, paid via subscription)
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 30);
+
+        const jobId = await createJobPosting({
+          ...jobData,
+          active: true,
+          paymentStatus: "paid",
+          productType: "SUBSCRIPTION",
+          expiresAt: expirationDate,
+        });
+
+        // Redirect to success page
+        router.push(`/employer/jobs/success?job_id=${jobId}&subscription=true`);
+        return;
+      }
 
       // Create job in Firestore first (inactive, pending payment)
       const jobId = await createJobPosting({
@@ -485,7 +542,72 @@ export default function NewJobPage() {
             Choose the visibility and duration for your job posting
           </p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {/* Active Subscription Banner */}
+          {subscription && (
+            <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+              <div className="flex items-center gap-2">
+                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold text-emerald-300">Active Subscription: {subscription.tier}</span>
+              </div>
+              <p className="mt-1 text-sm text-slate-300">
+                {subscription.unlimitedPosts
+                  ? "Unlimited job postings included!"
+                  : `${subscription.jobCredits - subscription.jobCreditsUsed} job credits remaining`}
+                {" • "}Expires {subscription.expiresAt.toLocaleDateString()}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* Subscription Option (if active) */}
+            {subscription && (
+              <button
+                type="button"
+                onClick={() => setSelectedProduct("SUBSCRIPTION")}
+                className={`relative text-left rounded-xl border-2 p-5 transition-all ${selectedProduct === "SUBSCRIPTION"
+                  ? "border-emerald-500 bg-emerald-500/10"
+                  : "border-slate-700 hover:border-slate-600"
+                  }`}
+              >
+                <div className="absolute -top-3 right-4 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-slate-900">
+                  INCLUDED
+                </div>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="text-lg font-semibold text-slate-50">Use Subscription</h4>
+                    <p className="mt-1 text-2xl font-bold text-emerald-400">FREE</p>
+                  </div>
+                  <div className={`rounded-full p-1 ${selectedProduct === "SUBSCRIPTION" ? "bg-emerald-500" : "bg-slate-700"}`}>
+                    <svg className="h-5 w-5 text-slate-900" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                  <li className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Included with your {subscription.tier} plan
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Live for 30 days
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    No additional payment required
+                  </li>
+                </ul>
+              </button>
+            )}
+
             {/* Single Job Post */}
             <button
               type="button"
@@ -585,6 +707,19 @@ export default function NewJobPage() {
               </ul>
             </button>
           </div>
+
+          {/* Link to Subscription Plans */}
+          {!subscription && (
+            <div className="mt-6 rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+              <p className="text-sm text-slate-300">
+                <span className="font-semibold text-[#14B8A6]">Save money with a subscription!</span>{" "}
+                Get unlimited job postings starting at $1,250/year.{" "}
+                <Link href="/pricing" className="text-[#14B8A6] hover:underline">
+                  View subscription plans →
+                </Link>
+              </p>
+            </div>
+          )}
         </div>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
@@ -594,7 +729,13 @@ export default function NewJobPage() {
           disabled={saving}
           className="rounded-md bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
         >
-          {saving ? "Redirecting to payment..." : `Continue to Payment ($${JOB_POSTING_PRODUCTS[selectedProduct].price / 100})`}
+          {saving
+            ? selectedProduct === "SUBSCRIPTION"
+              ? "Publishing job..."
+              : "Redirecting to payment..."
+            : selectedProduct === "SUBSCRIPTION"
+              ? "Publish Job (Free with subscription)"
+              : `Continue to Payment ($${JOB_POSTING_PRODUCTS[selectedProduct as JobPostingProductType].price / 100})`}
         </button>
       </form>
     </div>

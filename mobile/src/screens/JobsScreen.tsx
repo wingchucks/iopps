@@ -25,7 +25,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
     try {
       const jobsQuery = query(
         collection(db, "jobs"),
-        where("status", "==", "active"),
+        where("active", "==", true),
         orderBy("createdAt", "desc"),
         limit(50)
       );

@@ -9,50 +9,143 @@ export const stripe = new Stripe(stripeKey, {
     typescript: true,
 });
 
-// Job posting product configurations
+// Job posting product configurations (single posts)
+// All prices in CAD cents
 export const JOB_POSTING_PRODUCTS = {
     SINGLE: {
         name: "Single Job Post",
-        price: 12500, // $125.00
+        price: 12500, // $125.00 CAD
         duration: 30, // days
         featured: false,
+        jobCredits: 1,
         description: "1 job posting live for 30 days with standard placement",
     },
     FEATURED: {
         name: "Featured Job Ad",
-        price: 30000, // $300.00
+        price: 30000, // $300.00 CAD
         duration: 45, // days
         featured: true,
+        jobCredits: 1,
         description: 'Posted for 45 days with "Featured" spotlight placement, employer logo & branding, and analytics',
     },
 } as const;
 
 export type JobPostingProductType = keyof typeof JOB_POSTING_PRODUCTS;
 
+// Employer subscription tiers (annual plans)
+export const SUBSCRIPTION_PRODUCTS = {
+    TIER1: {
+        name: "Tier 1 – Basic Visibility",
+        price: 125000, // $1,250.00
+        duration: 365, // days (1 year)
+        featured: false,
+        jobCredits: 15, // 15 job postings per year
+        featuredJobCredits: 15, // 15 featured listings included
+        unlimitedPosts: false,
+        description: "15 job postings per year with standard placement and basic employer profile",
+        features: [
+            "15 job postings per year",
+            "Standard placement",
+            "Basic employer profile page",
+            "Access to posting analytics",
+            "15 Featured Job Listings included",
+        ],
+    },
+    TIER2: {
+        name: "Tier 2 – Unlimited Basic",
+        price: 250000, // $2,500.00
+        duration: 365, // days (1 year)
+        featured: false,
+        jobCredits: -1, // unlimited
+        featuredJobCredits: 5, // 5 rotating featured
+        unlimitedPosts: true,
+        description: "Unlimited job postings for 12 months with employer branding",
+        features: [
+            "Unlimited job postings for 12 months",
+            "Employer branding on postings",
+            "Rotating featured listings on homepage & job board",
+            "Candidate engagement analytics",
+            "Standard customer support",
+            "Rotating Featured Jobs included",
+        ],
+    },
+    TIER3: {
+        name: "Tier 3 – Unlimited Pro",
+        price: 375000, // $3,750.00
+        duration: 365, // days (1 year)
+        featured: true,
+        jobCredits: -1, // unlimited
+        featuredJobCredits: -1, // unlimited featured
+        unlimitedPosts: true,
+        premiumEmployer: true,
+        description: "Ultimate package with unlimited postings, premium branding, and monthly podcast feature",
+        features: [
+            "Unlimited job postings (12 months)",
+            "Featured Employer status across IOPPS.ca",
+            "Premium branding + credibility boosts",
+            "Priority customer support",
+            "Full access to the candidate database",
+            "Rotating Featured Jobs",
+            "Monthly Podcast Feature (live or pre-recorded)",
+        ],
+    },
+} as const;
+
+export type SubscriptionProductType = keyof typeof SUBSCRIPTION_PRODUCTS;
+
 // Conference/Event product configurations
 export const CONFERENCE_PRODUCTS = {
-    FREE: {
-        name: "Free Conference Listing",
-        price: 0, // Free
-        duration: 60, // days
-        featured: false,
-        description: "Basic conference listing visible for 60 days",
-    },
-    PREMIUM: {
-        name: "Premium Conference Listing",
-        price: 15000, // $150.00
+    STANDARD: {
+        name: "Conference / Event Posting",
+        price: 25000, // $250.00
         duration: 90, // days
         featured: false,
-        description: "Enhanced listing with priority placement for 90 days",
+        description: "Upload any conference, summit, gathering, hiring event, or training with banner image and registration link",
     },
     FEATURED: {
         name: "Featured Conference Spotlight",
-        price: 35000, // $350.00
+        price: 40000, // $400.00
         duration: 120, // days
         featured: true,
-        description: "Premium spotlight placement with banner image, featured badge, and top positioning for 120 days",
+        description: "Premium spotlight placement with featured badge and top positioning for 120 days",
     },
 } as const;
 
 export type ConferenceProductType = keyof typeof CONFERENCE_PRODUCTS;
+
+// Shop Indigenous vendor products
+export const VENDOR_PRODUCTS = {
+    MONTHLY: {
+        name: "Monthly Vendor Listing",
+        price: 5000, // $50.00 per month
+        duration: 30, // days
+        featured: false,
+        recurring: true,
+        firstMonthFree: true,
+        description: "Your Indigenous-owned business listed in Shop Indigenous marketplace",
+        features: [
+            "Your Indigenous-owned business listed in Shop Indigenous",
+            "Products, services, images, descriptions",
+            "Direct contact links & social links",
+            "FIRST MONTH FREE",
+            "Renews monthly at $50/month",
+        ],
+    },
+    ANNUAL: {
+        name: "Annual Vendor Plan",
+        price: 40000, // $400.00 per year (save $200)
+        duration: 365, // days
+        featured: true,
+        recurring: false,
+        description: "Save $200 vs monthly with priority placement in Shop Indigenous marketplace",
+        features: [
+            "Save $200 vs monthly",
+            "Includes all features above",
+            "Priority placement inside the Shop Indigenous marketplace",
+            "Annual discounted rate",
+        ],
+    },
+} as const;
+
+export type VendorProductType = keyof typeof VENDOR_PRODUCTS;
 

@@ -1,27 +1,30 @@
 export interface JobPosting {
   id: string;
   employerId: string;
-  employerName: string;
+  employerName?: string;
   title: string;
   location: string;
   employmentType: string;
-  remoteFlag: boolean;
-  indigenousPreference: boolean;
-  quickApplyEnabled: boolean;
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  quickApplyEnabled?: boolean;
   salaryRange?: string;
   closingDate?: string;
   description: string;
-  responsibilities: string[];
-  qualifications: string[];
+  responsibilities?: string[];
+  qualifications?: string[];
   applicationLink?: string;
   applicationEmail?: string;
-  status: "pending" | "active" | "expired" | "rejected";
-  featured: boolean;
+  active: boolean;
+  featured?: boolean;
   createdAt: any;
   updatedAt?: any;
   expiresAt?: any;
-  views?: number;
-  applications?: number;
+  viewsCount?: number;
+  applicationsCount?: number;
+  paymentStatus?: "paid" | "pending" | "failed";
+  paymentId?: string;
+  companyLogoUrl?: string;
 }
 
 export interface EmployerProfile {

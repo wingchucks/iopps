@@ -76,7 +76,7 @@ service cloud.firestore {
       allow read: if true;
       
       // Only authenticated employers can create jobs
-      allow create: if isSignedIn() && request.resource.data.employerId == request.auth.uid;
+      allow create: if isSignedIn() && (request.resource.data.employerId == request.auth.uid || isAdminOrModerator());
       
       // Employers can update/delete their own jobs
       // Admins can modify any job

@@ -45,15 +45,23 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
   const handleApply = async () => {
     if (!job) return;
 
-    if (job.applicationLink) {
-      await Linking.openURL(job.applicationLink);
-    } else if (job.applicationEmail) {
-      await Linking.openURL(`mailto:${job.applicationEmail}?subject=Application: ${job.title}`);
-    } else if (job.quickApplyEnabled && user) {
-      // Navigate to quick apply screen
-      navigation.navigate("QuickApply", { jobId: job.id });
-    } else {
-      Alert.alert("Apply", "Please sign in to apply for this position.");
+    try {
+      if (job.applicationLink) {
+        await Linking.openURL(job.applicationLink);
+      } else if (job.applicationEmail) {
+        await Linking.openURL(`mailto:${job.applicationEmail}?subject=Application: ${job.title}`);
+      } else if (job.quickApplyEnabled && user) {
+        // Navigate to quick apply screen
+        navigation.navigate("QuickApply", { jobId: job.id });
+      } else {
+        Alert.alert("Apply", "Please sign in to apply for this position.");
+      }
+    } catch (error) {
+      console.error("Error opening application link:", error);
+      Alert.alert(
+        "Error",
+        "Unable to open the application link. Please try again or contact the employer directly."
+      );
     }
   };
 
@@ -126,7 +134,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
           <Text style={styles.description}>{job.description}</Text>
         </View>
 
-        {job.responsibilities.length > 0 && (
+        {job.responsibilities && job.responsibilities.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Responsibilities</Text>
             {job.responsibilities.map((item, index) => (
@@ -138,7 +146,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
           </View>
         )}
 
-        {job.qualifications.length > 0 && (
+        {job.qualifications && job.qualifications.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Qualifications</Text>
             {job.qualifications.map((item, index) => (

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
+import { stripe, SUBSCRIPTION_PRODUCTS, SubscriptionProductType } from "@/lib/stripe";
 import { auth, db } from "@/lib/firebase-admin";
 
 export async function POST(request: NextRequest) {
@@ -15,45 +15,31 @@ export async function POST(request: NextRequest) {
         const userId = decodedToken.uid;
 
         const body = await request.json();
-        const { productType, jobId } = body as {
-            productType: JobPostingProductType;
-            jobId: string;
+        const { productType } = body as {
+            productType: SubscriptionProductType;
         };
 
         // Validate product type
-        if (!productType || !(productType in JOB_POSTING_PRODUCTS)) {
+        if (!productType || !(productType in SUBSCRIPTION_PRODUCTS)) {
             return NextResponse.json(
-                { error: "Invalid product type" },
+                { error: "Invalid subscription type" },
                 { status: 400 }
             );
         }
 
-        // Validate jobId
-        if (!jobId) {
-            return NextResponse.json(
-                { error: "Missing jobId" },
-                { status: 400 }
-            );
+        // Check if user already has an active subscription
+        const employerDoc = await db.collection("employers").doc(userId).get();
+        if (employerDoc.exists) {
+            const employerData = employerDoc.data();
+            if (employerData?.subscription?.active && employerData?.subscription?.expiresAt?.toDate() > new Date()) {
+                return NextResponse.json(
+                    { error: "You already have an active subscription. Manage it from your dashboard." },
+                    { status: 400 }
+                );
+            }
         }
 
-        // Verify the user owns this job
-        const jobDoc = await db.collection("jobs").doc(jobId).get();
-        if (!jobDoc.exists) {
-            return NextResponse.json(
-                { error: "Job not found" },
-                { status: 404 }
-            );
-        }
-
-        const jobData = jobDoc.data();
-        if (jobData?.employerId !== userId) {
-            return NextResponse.json(
-                { error: "Forbidden: You do not own this job" },
-                { status: 403 }
-            );
-        }
-
-        const product = JOB_POSTING_PRODUCTS[productType];
+        const product = SUBSCRIPTION_PRODUCTS[productType];
 
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -72,20 +58,22 @@ export async function POST(request: NextRequest) {
                 },
             ],
             mode: "payment",
-            success_url: `${request.nextUrl.origin}/employer/jobs/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${request.nextUrl.origin}/employer/jobs/new?canceled=true`,
+            success_url: `${request.nextUrl.origin}/employer/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${request.nextUrl.origin}/pricing?canceled=true`,
             metadata: {
+                type: "subscription",
                 productType,
                 userId,
-                jobId,
                 duration: product.duration.toString(),
-                featured: product.featured.toString(),
+                jobCredits: product.jobCredits.toString(),
+                featuredJobCredits: product.featuredJobCredits.toString(),
+                unlimitedPosts: product.unlimitedPosts.toString(),
             },
         });
 
         return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error: any) {
-        console.error("Stripe checkout error:", error);
+        console.error("Stripe subscription checkout error:", error);
         return NextResponse.json(
             { error: error.message || "Failed to create checkout session" },
             { status: 500 }

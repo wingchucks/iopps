@@ -1,16 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { SectionHeader } from "@/components/SectionHeader";
+import { useAuth } from "@/components/AuthProvider";
+import {
+  JOB_POSTING_PRODUCTS,
+  SUBSCRIPTION_PRODUCTS,
+  CONFERENCE_PRODUCTS,
+  VENDOR_PRODUCTS,
+} from "@/lib/stripe";
 
 type PricingCardProps = {
   title: string;
   price: string;
   period?: string;
-  features: string[];
+  features: readonly string[];
   badge?: string;
   highlighted?: boolean;
+  buttonText?: string;
+  buttonAction?: () => void;
+  buttonHref?: string;
+  loading?: boolean;
+  requiresAuth?: boolean;
 };
 
 function PricingCard({
@@ -20,10 +34,25 @@ function PricingCard({
   features,
   badge,
   highlighted = false,
+  buttonText = "Get Started",
+  buttonAction,
+  buttonHref,
+  loading = false,
+  requiresAuth = false,
 }: PricingCardProps) {
+  const { user } = useAuth();
+
+  const handleClick = () => {
+    if (requiresAuth && !user) {
+      window.location.href = "/register?redirect=" + encodeURIComponent(window.location.pathname);
+      return;
+    }
+    if (buttonAction) buttonAction();
+  };
+
   return (
     <article
-      className={`rounded-2xl border p-6 shadow-lg shadow-black/30 transition-all ${
+      className={`flex flex-col rounded-2xl border p-6 shadow-lg shadow-black/30 transition-all ${
         highlighted
           ? "border-[#14B8A6] bg-[#14B8A6]/5"
           : "border-slate-800/80 bg-[#08090C]"
@@ -41,7 +70,7 @@ function PricingCard({
         <span className="text-4xl font-bold text-[#14B8A6]">{price}</span>
         {period && <span className="text-sm text-slate-400">{period}</span>}
       </div>
-      <ul className="mt-6 space-y-3">
+      <ul className="mt-6 flex-1 space-y-3">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start gap-3 text-sm text-slate-300">
             <svg
@@ -61,11 +90,80 @@ function PricingCard({
           </li>
         ))}
       </ul>
+      <div className="mt-6">
+        {buttonHref ? (
+          <Link
+            href={buttonHref}
+            className={`block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-all ${
+              highlighted
+                ? "bg-[#14B8A6] text-slate-900 hover:bg-[#16cdb8]"
+                : "border border-slate-700 bg-slate-800/60 text-slate-100 hover:border-[#14B8A6] hover:bg-slate-800"
+            }`}
+          >
+            {buttonText}
+          </Link>
+        ) : (
+          <button
+            onClick={handleClick}
+            disabled={loading}
+            className={`block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-all disabled:opacity-50 ${
+              highlighted
+                ? "bg-[#14B8A6] text-slate-900 hover:bg-[#16cdb8]"
+                : "border border-slate-700 bg-slate-800/60 text-slate-100 hover:border-[#14B8A6] hover:bg-slate-800"
+            }`}
+          >
+            {loading ? "Processing..." : buttonText}
+          </button>
+        )}
+      </div>
     </article>
   );
 }
 
 export default function PricingPage() {
+  const { user, role } = useAuth();
+  const router = useRouter();
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Hide "Create employer account" for employers, admins, and moderators
+  const shouldHideEmployerButton = user && role && role !== "community";
+
+  const handleSubscriptionCheckout = async (tier: "TIER1" | "TIER2" | "TIER3") => {
+    if (!user) {
+      router.push("/register?redirect=/pricing&role=employer");
+      return;
+    }
+
+    setLoadingTier(tier);
+    setError(null);
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/stripe/checkout-subscription", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ productType: tier }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
+      }
+
+      const { url } = await response.json();
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setLoadingTier(null);
+    }
+  };
+
   return (
     <PageShell>
       <SectionHeader
@@ -73,6 +171,12 @@ export default function PricingPage() {
         title="Partner with IOPPS to hire, promote, and grow"
         subtitle="Choose flexible options for single job posts, annual hiring plans, conferences, and Shop Indigenous vendors across Turtle Island."
       />
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
+          {error}
+        </div>
+      )}
 
       {/* CTA Section - Top */}
       <section className="mt-8 rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30">
@@ -92,12 +196,14 @@ export default function PricingPage() {
             >
               Talk to IOPPS about pricing
             </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-6 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
-            >
-              Create employer account
-            </Link>
+            {!shouldHideEmployerButton && (
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-6 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+              >
+                Create employer account
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -113,23 +219,27 @@ export default function PricingPage() {
         <div className="grid gap-6 md:grid-cols-2">
           <PricingCard
             title="Single Job Post"
-            price="$125"
+            price={`$${JOB_POSTING_PRODUCTS.SINGLE.price / 100}`}
             features={[
-              "1 job posting live for 30 days",
+              `Live for ${JOB_POSTING_PRODUCTS.SINGLE.duration} days`,
               "Standard placement on the IOPPS job board",
               "Basic employer profile",
             ]}
+            buttonText="Post a Job"
+            buttonHref="/employer/jobs/new"
           />
           <PricingCard
             title="Featured Job Ad"
-            price="$300"
+            price={`$${JOB_POSTING_PRODUCTS.FEATURED.price / 100}`}
             badge="Featured"
             features={[
-              "Posted for 45 days",
+              `Posted for ${JOB_POSTING_PRODUCTS.FEATURED.duration} days`,
               '"Featured" spotlight placement',
               "Employer logo + branding on listing",
               "Analytics (views & clicks)",
             ]}
+            buttonText="Post a Featured Job"
+            buttonHref="/employer/jobs/new?featured=true"
           />
         </div>
       </section>
@@ -139,52 +249,42 @@ export default function PricingPage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-50">Employer Subscription Tiers</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Annual plans for ongoing hiring and visibility.
+            Annual plans for ongoing hiring and visibility. Purchase now and start posting immediately.
           </p>
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <PricingCard
-            title="Tier 1 – Basic Visibility"
-            price="$1,250"
+            title={SUBSCRIPTION_PRODUCTS.TIER1.name}
+            price={`$${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}`}
             period="/ year"
-            features={[
-              "15 job postings per year",
-              "Standard placement",
-              "Basic employer profile page",
-              "Access to posting analytics",
-              "15 Featured Job Listings included",
-            ]}
+            features={SUBSCRIPTION_PRODUCTS.TIER1.features}
+            buttonText={loadingTier === "TIER1" ? "Processing..." : "Subscribe Now"}
+            buttonAction={() => handleSubscriptionCheckout("TIER1")}
+            loading={loadingTier === "TIER1"}
+            requiresAuth
           />
           <PricingCard
-            title="Tier 2 – Unlimited Basic"
-            price="$2,500"
+            title={SUBSCRIPTION_PRODUCTS.TIER2.name}
+            price={`$${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}`}
             period="/ year"
             badge="Popular"
-            features={[
-              "Unlimited job postings for 12 months",
-              "Employer branding on postings",
-              "Rotating featured listings on homepage & job board",
-              "Candidate engagement analytics",
-              "Standard customer support",
-              "Rotating Featured Jobs included",
-            ]}
+            features={SUBSCRIPTION_PRODUCTS.TIER2.features}
+            buttonText={loadingTier === "TIER2" ? "Processing..." : "Subscribe Now"}
+            buttonAction={() => handleSubscriptionCheckout("TIER2")}
+            loading={loadingTier === "TIER2"}
+            requiresAuth
           />
           <PricingCard
-            title="Tier 3 – Unlimited Pro"
-            price="$3,750"
+            title={SUBSCRIPTION_PRODUCTS.TIER3.name}
+            price={`$${(SUBSCRIPTION_PRODUCTS.TIER3.price / 100).toLocaleString()}`}
             period="/ year"
             badge="Best Value"
             highlighted={true}
-            features={[
-              "Unlimited job postings (12 months)",
-              "Featured Employer status across IOPPS.ca",
-              "Premium branding + credibility boosts",
-              "Priority customer support",
-              "Full access to the candidate database",
-              "Rotating Featured Jobs",
-              "Monthly Podcast Feature (live or pre-recorded)",
-              "💡 Ultimate package for visibility & engagement",
-            ]}
+            features={[...SUBSCRIPTION_PRODUCTS.TIER3.features, "Ultimate package for visibility & engagement"]}
+            buttonText={loadingTier === "TIER3" ? "Processing..." : "Subscribe Now"}
+            buttonAction={() => handleSubscriptionCheckout("TIER3")}
+            loading={loadingTier === "TIER3"}
+            requiresAuth
           />
         </div>
       </section>
@@ -197,10 +297,10 @@ export default function PricingPage() {
             Promote your conferences, summits, gatherings, and training events.
           </p>
         </div>
-        <div className="max-w-2xl">
+        <div className="grid gap-6 md:grid-cols-2">
           <PricingCard
-            title="Conference / Event Posting"
-            price="$250"
+            title={CONFERENCE_PRODUCTS.STANDARD.name}
+            price={`$${CONFERENCE_PRODUCTS.STANDARD.price / 100}`}
             period="per event"
             features={[
               "Upload any conference, summit, gathering, hiring event, or training",
@@ -208,6 +308,22 @@ export default function PricingPage() {
               "Includes banner image, description, registration link",
               "Social promo formatting",
             ]}
+            buttonText="Post an Event"
+            buttonHref="/employer/conferences/new"
+          />
+          <PricingCard
+            title={CONFERENCE_PRODUCTS.FEATURED.name}
+            price={`$${CONFERENCE_PRODUCTS.FEATURED.price / 100}`}
+            period="per event"
+            badge="Featured"
+            features={[
+              "All standard features included",
+              "Featured badge and top positioning",
+              `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
+              "Priority visibility on homepage",
+            ]}
+            buttonText="Post a Featured Event"
+            buttonHref="/employer/conferences/new?featured=true"
           />
         </div>
       </section>
@@ -222,29 +338,22 @@ export default function PricingPage() {
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <PricingCard
-            title="Monthly Vendor Listing"
-            price="$50"
+            title={VENDOR_PRODUCTS.MONTHLY.name}
+            price={`$${VENDOR_PRODUCTS.MONTHLY.price / 100}`}
             period="/ month"
             badge="First month FREE"
-            features={[
-              "Your Indigenous-owned business listed in Shop Indigenous",
-              "Products, services, images, descriptions",
-              "Direct contact links & social links",
-              "FIRST MONTH FREE",
-              "Renews monthly at $50/month",
-            ]}
+            features={VENDOR_PRODUCTS.MONTHLY.features}
+            buttonText="List Your Business"
+            buttonHref="/vendor/register"
           />
           <PricingCard
-            title="Annual Vendor Plan"
-            price="$400"
+            title={VENDOR_PRODUCTS.ANNUAL.name}
+            price={`$${VENDOR_PRODUCTS.ANNUAL.price / 100}`}
             period="/ year"
             badge="Save $200"
-            features={[
-              "Save $200 vs monthly",
-              "Includes all features above",
-              "Priority placement inside the Shop Indigenous marketplace",
-              "Annual discounted rate",
-            ]}
+            features={VENDOR_PRODUCTS.ANNUAL.features}
+            buttonText="Get Annual Plan"
+            buttonHref="/vendor/register?plan=annual"
           />
         </div>
       </section>
@@ -344,12 +453,14 @@ export default function PricingPage() {
           >
             Talk to IOPPS about pricing
           </Link>
-          <Link
-            href="/register"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-8 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
-          >
-            Create employer account
-          </Link>
+          {!shouldHideEmployerButton && (
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-8 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+            >
+              Create employer account
+            </Link>
+          )}
         </div>
       </section>
     </PageShell>

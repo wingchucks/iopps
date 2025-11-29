@@ -7,13 +7,11 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 
-interface ProfileScreenProps {
-  navigation: any;
-}
-
-export default function ProfileScreen({ navigation }: ProfileScreenProps) {
+export default function ProfileScreen() {
+  const navigation = useNavigation();
   const { user, role, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -47,14 +45,14 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
           <TouchableOpacity
             style={styles.signInButton}
-            onPress={() => navigation.navigate("SignIn")}
+            onPress={() => (navigation as any).navigate("SignIn")}
           >
             <Text style={styles.signInButtonText}>Sign In</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.signUpButton}
-            onPress={() => navigation.navigate("SignUp")}
+            onPress={() => (navigation as any).navigate("SignUp")}
           >
             <Text style={styles.signUpButtonText}>Create Account</Text>
           </TouchableOpacity>

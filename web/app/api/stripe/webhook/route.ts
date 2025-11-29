@@ -51,8 +51,18 @@ export async function POST(request: NextRequest) {
             case "checkout.session.completed": {
                 const session = event.data.object as Stripe.Checkout.Session;
 
-                // Extract metadata
-                const { productType, userId, jobId, conferenceId, duration, featured } = session.metadata || {};
+                // Extract and validate metadata
+                const metadata = session.metadata || {};
+                const { type, productType, userId, jobId, conferenceId, vendorId, duration, featured, jobCredits, featuredJobCredits, unlimitedPosts } = metadata;
+
+                // Validate required metadata
+                if (!type) {
+                    console.error("Missing required metadata: type");
+                    return NextResponse.json(
+                        { error: "Invalid payment session: missing type" },
+                        { status: 400 }
+                    );
+                }
 
                 const db = getFirebaseAdmin();
                 if (!db) {
@@ -63,22 +73,80 @@ export async function POST(request: NextRequest) {
                     );
                 }
 
+                // Handle subscription purchase
+                if (type === "subscription" && userId) {
+                    // Parse and validate numeric metadata with proper defaults
+                    const durationDays = duration ? parseInt(duration, 10) : 365;
+                    const credits = jobCredits ? parseInt(jobCredits, 10) : 0;
+                    const featuredCredits = featuredJobCredits ? parseInt(featuredJobCredits, 10) : 0;
+
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + durationDays);
+
+                    const employerRef = db.collection("employers").doc(userId);
+
+                    await employerRef.update({
+                        subscription: {
+                            active: true,
+                            tier: productType || "TIER1",
+                            purchasedAt: new Date(),
+                            expiresAt: expirationDate,
+                            paymentId: session.payment_intent as string,
+                            amountPaid: session.amount_total,
+                            jobCredits: credits,
+                            jobCreditsUsed: 0,
+                            featuredJobCredits: featuredCredits,
+                            featuredJobCreditsUsed: 0,
+                            unlimitedPosts: unlimitedPosts === "true",
+                        },
+                    });
+
+                    console.log(`Subscription ${productType} activated for user ${userId}`);
+                    break;
+                }
+
+                // Handle vendor subscription
+                if (type === "vendor" && vendorId) {
+                    const durationDays = duration ? parseInt(duration, 10) : 30;
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + durationDays);
+
+                    const vendorRef = db.collection("vendors").doc(vendorId);
+
+                    await vendorRef.update({
+                        active: true,
+                        featured: featured === "true",
+                        subscription: {
+                            active: true,
+                            type: productType || "MONTHLY",
+                            purchasedAt: new Date(),
+                            expiresAt: expirationDate,
+                            paymentId: session.payment_intent as string,
+                            amountPaid: session.amount_total,
+                        },
+                    });
+
+                    console.log(`Vendor ${vendorId} subscription activated`);
+                    break;
+                }
+
                 // Handle job posting payment
                 if (jobId) {
+                    const durationDays = duration ? parseInt(duration, 10) : 30;
                     // Calculate expiration date
                     const expirationDate = new Date();
-                    expirationDate.setDate(expirationDate.getDate() + parseInt(duration || "30"));
+                    expirationDate.setDate(expirationDate.getDate() + durationDays);
 
                     const jobRef = db.collection("jobs").doc(jobId);
 
                     await jobRef.update({
                         active: true,
                         featured: featured === "true",
-                        createdAt: new Date(), // Reset created at to payment time
+                        // Don't reset createdAt - preserve original creation time
                         expiresAt: expirationDate,
                         paymentStatus: "paid",
                         paymentId: session.payment_intent as string,
-                        productType: productType,
+                        productType: productType || "SINGLE",
                         amountPaid: session.amount_total,
                     });
 
@@ -88,20 +156,21 @@ export async function POST(request: NextRequest) {
 
                 // Handle conference payment
                 if (conferenceId) {
+                    const durationDays = duration ? parseInt(duration, 10) : 60;
                     // Calculate expiration date
                     const expirationDate = new Date();
-                    expirationDate.setDate(expirationDate.getDate() + parseInt(duration || "60"));
+                    expirationDate.setDate(expirationDate.getDate() + durationDays);
 
                     const conferenceRef = db.collection("conferences").doc(conferenceId);
 
                     await conferenceRef.update({
                         active: true,
                         featured: featured === "true",
-                        createdAt: new Date(), // Reset created at to payment time
+                        // Don't reset createdAt - preserve original creation time
                         expiresAt: expirationDate,
                         paymentStatus: "paid",
                         paymentId: session.payment_intent as string,
-                        productType: productType,
+                        productType: productType || "STANDARD",
                         amountPaid: session.amount_total,
                     });
 
@@ -109,7 +178,7 @@ export async function POST(request: NextRequest) {
                     break;
                 }
 
-                console.error("Missing jobId or conferenceId in metadata");
+                console.error("Unknown payment type in metadata");
                 break;
             }
 

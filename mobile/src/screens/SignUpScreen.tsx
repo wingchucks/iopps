@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 
 interface SignUpScreenProps {
   navigation: any;
@@ -46,7 +46,6 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
       await signUp(email.trim(), password);
 
       // Create user document in Firestore
-      const { auth } = require("../lib/firebase");
       if (auth.currentUser) {
         await setDoc(doc(db, "users", auth.currentUser.uid), {
           email: email.trim(),
