@@ -191,15 +191,21 @@ export default function ProfileTab() {
         </p>
       </div>
 
+      {/* Employer ID (always visible) */}
+      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
+        <p className="text-sm text-slate-400">
+          <span className="font-semibold text-slate-300">Employer ID:</span> {user?.uid}
+        </p>
+      </div>
+
       {/* TRC #92 Status */}
       {profile?.status && (
-        <div className={`rounded-3xl border p-8 shadow-xl ${
-          profile.status === "approved"
-            ? "border-green-500/30 bg-green-500/10 shadow-green-900/20"
-            : profile.status === "rejected"
+        <div className={`rounded-3xl border p-8 shadow-xl ${profile.status === "approved"
+          ? "border-green-500/30 bg-green-500/10 shadow-green-900/20"
+          : profile.status === "rejected"
             ? "border-red-500/30 bg-red-500/10 shadow-red-900/20"
             : "border-amber-500/30 bg-amber-500/10 shadow-amber-900/20"
-        }`}>
+          }`}>
           <div className="flex items-start gap-4">
             <div className="text-3xl">
               {profile.status === "approved" ? "✅" : profile.status === "rejected" ? "❌" : "⏳"}
@@ -221,6 +227,22 @@ export default function ProfileTab() {
                   Approved on: {new Date(profile.approvedAt.seconds * 1000).toLocaleDateString()}
                 </p>
               )}
+
+              <div className="mt-4 border-t border-slate-700 pt-4">
+                {profile.status === "approved" && (
+                  <p className="mt-1 text-sm">
+                    <span className="font-semibold text-slate-300">Public Profile:</span>{" "}
+                    <a
+                      href={`/employers/${user?.uid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#14B8A6] hover:underline"
+                    >
+                      View Public Profile
+                    </a>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>

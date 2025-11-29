@@ -362,16 +362,17 @@ type JobInput = Omit<
 
 export async function createJobPosting(data: JobInput): Promise<string> {
   const ref = collection(db!, jobsCollection);
-  const docRef = await addDoc(ref, {
+  const docRef = doc(ref);
+
+  await setDoc(docRef, {
     ...data,
+    id: docRef.id,
     active: data.active ?? true,
     viewsCount: 0,
     applicationsCount: 0,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(doc(db!, jobsCollection, docRef.id), {
-    id: docRef.id,
-  });
+
   return docRef.id;
 }
 
