@@ -14,7 +14,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import type {
   EmployerProfile,
   Interview,
@@ -1776,6 +1776,9 @@ export async function createNotification(params: {
   relatedConversationId?: string;
   relatedEmployerId?: string;
 }): Promise<string> {
+  if (!auth) {
+    throw new Error("Auth not initialized");
+  }
   const user = auth.currentUser;
   if (!user) {
     throw new Error("Must be authenticated to create notifications");
