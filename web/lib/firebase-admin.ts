@@ -46,7 +46,26 @@ function parsePrivateKey(key: string | undefined): string | null {
 }
 
 // Try to parse service account from JSON string (alternative method)
+// Supports both raw JSON and base64-encoded JSON
 function tryParseServiceAccountJson(): { projectId?: string; clientEmail?: string; privateKey?: string } | null {
+    // Try base64-encoded version first (most reliable for Vercel)
+    const base64Str = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+    if (base64Str) {
+        try {
+            const jsonStr = Buffer.from(base64Str, "base64").toString("utf-8");
+            const parsed = JSON.parse(jsonStr);
+            console.log("✅ Parsed Firebase credentials from base64");
+            return {
+                projectId: parsed.project_id,
+                clientEmail: parsed.client_email,
+                privateKey: parsed.private_key,
+            };
+        } catch (e) {
+            console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64:", e);
+        }
+    }
+
+    // Fall back to raw JSON
     const jsonStr = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (!jsonStr) return null;
 
