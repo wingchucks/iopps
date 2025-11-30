@@ -46,8 +46,16 @@ export interface UserProfile {
   email: string;
   displayName?: string;
   photoURL?: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  resumeUrl?: string;
+  resumeName?: string;
+  linkedIn?: string;
+  website?: string;
   role: "user" | "employer" | "admin" | "moderator";
   createdAt: any;
+  updatedAt?: any;
 }
 
 export interface Application {

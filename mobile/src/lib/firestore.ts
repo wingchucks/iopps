@@ -28,6 +28,7 @@ import type {
   Conversation,
   Message,
   Notification,
+  UserProfile,
 } from "../types";
 
 // ============ SAVED JOBS ============
@@ -434,5 +435,38 @@ export function formatDateTime(timestamp: any): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  });
+}
+
+// ============ USER PROFILE ============
+
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  const docSnap = await getDoc(doc(db, "users", userId));
+  if (!docSnap.exists()) return null;
+  return { uid: docSnap.id, ...docSnap.data() } as UserProfile;
+}
+
+export async function updateUserProfile(
+  userId: string,
+  updates: Partial<Omit<UserProfile, "uid" | "email" | "role" | "createdAt">>
+): Promise<void> {
+  await updateDoc(doc(db, "users", userId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function createUserProfile(
+  userId: string,
+  email: string,
+  displayName?: string
+): Promise<void> {
+  const { setDoc } = await import("firebase/firestore");
+  await setDoc(doc(db, "users", userId), {
+    email,
+    displayName: displayName || "",
+    role: "user",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
 }

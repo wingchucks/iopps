@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,13 +6,36 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
+import { getUserProfile } from "../lib/firestore";
+import type { UserProfile } from "../types";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
   const { user, role, signOut } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  // Reload profile when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadProfile();
+      }
+    }, [user])
+  );
+
+  const loadProfile = async () => {
+    if (!user) return;
+    try {
+      const data = await getUserProfile(user.uid);
+      setProfile(data);
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    }
+  };
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -61,15 +84,24 @@ export default function ProfileScreen() {
     );
   }
 
+  const displayName = profile?.displayName || user.email?.split("@")[0] || "User";
+  const avatarLetter = displayName.charAt(0).toUpperCase();
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {user.email?.charAt(0).toUpperCase() || "U"}
-          </Text>
-        </View>
+        {profile?.photoURL ? (
+          <Image source={{ uri: profile.photoURL }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{avatarLetter}</Text>
+          </View>
+        )}
+        <Text style={styles.displayName}>{displayName}</Text>
         <Text style={styles.email}>{user.email}</Text>
+        {profile?.location && (
+          <Text style={styles.location}>📍 {profile.location}</Text>
+        )}
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>{role || "User"}</Text>
         </View>
@@ -78,7 +110,10 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => (navigation as any).navigate("EditProfile")}
+        >
           <Text style={styles.menuItemIcon}>✏️</Text>
           <Text style={styles.menuItemText}>Edit Profile</Text>
           <Text style={styles.menuArrow}>›</Text>
@@ -141,7 +176,7 @@ export default function ProfileScreen() {
         <Text style={styles.signOutButtonText}>Sign Out</Text>
       </TouchableOpacity>
 
-      <Text style={styles.version}>IOPPS Mobile v1.1.0</Text>
+      <Text style={styles.version}>IOPPS Mobile v1.2.0</Text>
     </ScrollView>
   );
 }
@@ -224,15 +259,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: "#14B8A6",
+  },
   avatarText: {
     fontSize: 32,
     fontWeight: "700",
     color: "#0F172A",
   },
-  email: {
-    fontSize: 16,
+  displayName: {
+    fontSize: 20,
+    fontWeight: "600",
     color: "#F8FAFC",
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 14,
+    color: "#94A3B8",
     marginBottom: 8,
+  },
+  location: {
+    fontSize: 14,
+    color: "#64748B",
+    marginBottom: 12,
   },
   roleBadge: {
     backgroundColor: "#1E293B",

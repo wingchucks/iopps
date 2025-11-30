@@ -33,6 +33,7 @@ import LiveStreamsScreen from "./src/screens/LiveStreamsScreen";
 import SavedJobsScreen from "./src/screens/SavedJobsScreen";
 import JobAlertsScreen from "./src/screens/JobAlertsScreen";
 import ApplicationsScreen from "./src/screens/ApplicationsScreen";
+import EditProfileScreen from "./src/screens/EditProfileScreen";
 
 // Messaging screens
 import MessagesScreen from "./src/screens/MessagesScreen";
@@ -251,6 +252,14 @@ function RootNavigator() {
       />
 
       {/* Member Screens */}
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          title: "Edit Profile",
+          headerBackTitle: "Profile",
+        }}
+      />
       <Stack.Screen
         name="SavedJobs"
         component={SavedJobsScreen}
