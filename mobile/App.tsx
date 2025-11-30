@@ -10,6 +10,9 @@ import * as Linking from "expo-linking";
 import { AuthProvider } from "./src/context/AuthContext";
 import { NotificationProvider, useNotifications } from "./src/context/NotificationContext";
 import { BadgeProvider, useBadges } from "./src/context/BadgeContext";
+import { ToastProvider } from "./src/context/ToastContext";
+import { NetworkProvider } from "./src/context/NetworkContext";
+import { ErrorBoundary } from "./src/components/ErrorBoundary";
 
 // Main screens
 import JobsScreen from "./src/screens/JobsScreen";
@@ -403,13 +406,19 @@ function NavigationWrapper() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <BadgeProvider>
-          <NotificationProvider>
-            <NavigationWrapper />
-          </NotificationProvider>
-        </BadgeProvider>
-      </AuthProvider>
+      <ErrorBoundary>
+        <NetworkProvider>
+          <AuthProvider>
+            <BadgeProvider>
+              <NotificationProvider>
+                <ToastProvider>
+                  <NavigationWrapper />
+                </ToastProvider>
+              </NotificationProvider>
+            </BadgeProvider>
+          </AuthProvider>
+        </NetworkProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
