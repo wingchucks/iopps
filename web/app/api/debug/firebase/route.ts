@@ -18,6 +18,19 @@ export async function GET() {
         }
     }
 
+    // Check private key format
+    let privateKeyInfo = null;
+    if (hasPrivateKey) {
+        const pk = process.env.FIREBASE_PRIVATE_KEY!;
+        privateKeyInfo = {
+            length: pk.length,
+            first30: pk.substring(0, 30),
+            containsBegin: pk.includes("-----BEGIN"),
+            containsLiteralNewline: pk.includes("\\n"),
+            containsActualNewline: pk.includes("\n"),
+        };
+    }
+
     // Check if Firebase Admin initialized
     const { getApps } = require("firebase-admin/app");
     const appsCount = getApps().length;
@@ -29,6 +42,7 @@ export async function GET() {
             FIREBASE_CLIENT_EMAIL: hasClientEmail ? "SET" : "MISSING",
             FIREBASE_PRIVATE_KEY: hasPrivateKey ? "SET" : "MISSING",
         },
+        privateKeyInfo,
         jsonParse: jsonParseError ? `ERROR: ${jsonParseError}` : "OK",
         jsonKeys: jsonKeys,
         firebaseAppsInitialized: appsCount,
