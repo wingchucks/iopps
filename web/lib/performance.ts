@@ -14,7 +14,7 @@ export interface PerformanceMetric {
 
 export interface WebVitalsMetric {
   id: string;
-  name: 'CLS' | 'FID' | 'FCP' | 'LCP' | 'TTFB' | 'INP';
+  name: 'CLS' | 'FCP' | 'LCP' | 'TTFB' | 'INP';
   value: number;
   rating: 'good' | 'needs-improvement' | 'poor';
   delta: number;
@@ -40,7 +40,6 @@ export interface CustomMetric {
 // Core Web Vitals thresholds (in milliseconds, except CLS which is unitless)
 const THRESHOLDS = {
   LCP: { good: 2500, poor: 4000 },
-  FID: { good: 100, poor: 300 },
   CLS: { good: 0.1, poor: 0.25 },
   TTFB: { good: 800, poor: 1800 },
   INP: { good: 200, poor: 500 },
@@ -99,7 +98,7 @@ export async function trackWebVitals(
   if (typeof window === 'undefined') return;
 
   try {
-    const { onCLS, onFID, onFCP, onLCP, onTTFB, onINP } = await import('web-vitals');
+    const { onCLS, onFCP, onLCP, onTTFB, onINP } = await import('web-vitals');
 
     const handleMetric = (metric: WebVitalsMetric) => {
       // Log in development
@@ -127,9 +126,8 @@ export async function trackWebVitals(
       onMetric?.(metric);
     };
 
-    // Track all Core Web Vitals
+    // Track all Core Web Vitals (FID replaced by INP in web-vitals v4)
     onCLS(handleMetric);
-    onFID(handleMetric);
     onFCP(handleMetric);
     onLCP(handleMetric);
     onTTFB(handleMetric);

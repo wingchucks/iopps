@@ -160,8 +160,12 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
             <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
                 <h3 className="mb-4 text-lg font-bold text-slate-200">Share this Job</h3>
                 <ShareButtons
-                    title={`${job.title} at ${job.employerName || 'IOPPS'}`}
-                    description={job.description?.substring(0, 150) + '...' || 'Check out this job opportunity on IOPPS'}
+                    item={{
+                        id: job.id,
+                        title: `${job.title} at ${job.employerName || 'IOPPS'}`,
+                        description: job.description?.substring(0, 150) + '...' || 'Check out this job opportunity on IOPPS',
+                        type: 'job'
+                    }}
                 />
             </div>
         </div>

@@ -76,20 +76,11 @@ export function initSentry() {
       return event;
     },
 
-    // Integrations
-    integrations: [
-      new Sentry.BrowserTracing({
-        // Trace navigation and API requests
-        tracePropagationTargets: [
-          "localhost",
-          /^https:\/\/.*\.vercel\.app/,
-          /^https:\/\/.*\.yourdomain\.com/,
-        ],
-      }),
-      new Sentry.Replay({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
+    // Trace propagation targets for distributed tracing
+    tracePropagationTargets: [
+      "localhost",
+      /^https:\/\/.*\.vercel\.app/,
+      /^https:\/\/.*\.iopps\.ca/,
     ],
 
     // Breadcrumbs configuration
@@ -195,16 +186,14 @@ export function addBreadcrumb(
 }
 
 /**
- * Start a new Sentry transaction for performance monitoring
+ * Start a new Sentry span for performance monitoring
  */
-export function startTransaction(
+export function startSpan<T>(
   name: string,
-  op: string
-): Sentry.Transaction | undefined {
-  return Sentry.startTransaction({
-    name,
-    op,
-  });
+  op: string,
+  callback: () => T
+): T {
+  return Sentry.startSpan({ name, op }, callback);
 }
 
 /**
@@ -241,19 +230,14 @@ export async function profileAsync<T>(
   name: string,
   operation: () => Promise<T>
 ): Promise<T> {
-  const transaction = startTransaction(name, "function");
-
-  try {
-    const result = await operation();
-    transaction?.setStatus("ok");
-    return result;
-  } catch (error) {
-    transaction?.setStatus("internal_error");
-    captureException(error as Error, { operation: name });
-    throw error;
-  } finally {
-    transaction?.finish();
-  }
+  return Sentry.startSpan({ name, op: "function" }, async () => {
+    try {
+      return await operation();
+    } catch (error) {
+      captureException(error as Error, { operation: name });
+      throw error;
+    }
+  });
 }
 
 /**
