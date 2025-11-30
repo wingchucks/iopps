@@ -5,12 +5,13 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getMemberConversations, formatTimestamp } from "../lib/firestore";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
+import { MessageListSkeleton } from "../components/Skeleton";
 import type { Conversation } from "../types";
 
 export default function MessagesScreen() {
@@ -20,11 +21,23 @@ export default function MessagesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadConversations = async () => {
+  const loadConversations = async (forceRefresh = false) => {
     if (!user) return;
     try {
-      const data = await getMemberConversations(user.uid);
-      setConversations(data);
+      const cacheKey = CACHE_KEYS.CONVERSATIONS(user.uid);
+
+      if (forceRefresh) {
+        const data = await getMemberConversations(user.uid);
+        await saveToCache(cacheKey, data, CACHE_TTL.SHORT);
+        setConversations(data);
+      } else {
+        const { data, fromCache } = await fetchWithCache<Conversation[]>(
+          cacheKey,
+          () => getMemberConversations(user.uid),
+          CACHE_TTL.SHORT
+        );
+        setConversations(data);
+      }
     } catch (error) {
       console.error("Error loading conversations:", error);
     } finally {
@@ -41,7 +54,7 @@ export default function MessagesScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadConversations();
+    loadConversations(true);
   };
 
   const renderConversationCard = ({ item }: { item: Conversation }) => {
@@ -110,9 +123,12 @@ export default function MessagesScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#14B8A6" />
-        <Text style={styles.loadingText}>Loading messages...</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Messages</Text>
+          <Text style={styles.headerSubtitle}>Loading...</Text>
+        </View>
+        <MessageListSkeleton count={6} />
       </View>
     );
   }

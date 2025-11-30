@@ -1,13 +1,15 @@
 import React, { useRef, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, Text, StyleSheet } from "react-native";
-import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native";
+import { NavigationContainer, NavigationContainerRef, LinkingOptions } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as Linking from "expo-linking";
 
 import { AuthProvider } from "./src/context/AuthContext";
 import { NotificationProvider, useNotifications } from "./src/context/NotificationContext";
+import { BadgeProvider, useBadges } from "./src/context/BadgeContext";
 
 // Main screens
 import JobsScreen from "./src/screens/JobsScreen";
@@ -42,7 +44,7 @@ import ConversationScreen from "./src/screens/ConversationScreen";
 // Notifications
 import NotificationsScreen from "./src/screens/NotificationsScreen";
 
-// Tab icon components
+// Tab icon components with badge support
 function JobsIcon({ focused }: { focused: boolean }) {
   return (
     <View style={styles.iconContainer}>
@@ -59,18 +61,34 @@ function ExploreIcon({ focused }: { focused: boolean }) {
   );
 }
 
-function MessagesIcon({ focused }: { focused: boolean }) {
+function MessagesIconWithBadge({ focused }: { focused: boolean }) {
+  const { counts } = useBadges();
   return (
     <View style={styles.iconContainer}>
       <Text style={[styles.iconText, focused && styles.iconTextFocused]}>💬</Text>
+      {counts.messages > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {counts.messages > 99 ? "99+" : counts.messages}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
-function ProfileIcon({ focused }: { focused: boolean }) {
+function ProfileIconWithBadge({ focused }: { focused: boolean }) {
+  const { counts } = useBadges();
   return (
     <View style={styles.iconContainer}>
       <Text style={[styles.iconText, focused && styles.iconTextFocused]}>👤</Text>
+      {counts.notifications > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {counts.notifications > 99 ? "99+" : counts.notifications}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -86,6 +104,37 @@ const defaultHeaderOptions = {
   headerTintColor: "#F8FAFC",
   headerTitleStyle: {
     fontWeight: "600" as const,
+  },
+};
+
+// Deep linking configuration
+const prefix = Linking.createURL("/");
+const linking: LinkingOptions<any> = {
+  prefixes: [prefix, "iopps://", "https://iopps.ca"],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          Jobs: "jobs",
+          Explore: "explore",
+          Messages: "messages",
+          Profile: "profile",
+        },
+      },
+      JobDetail: "job/:jobId",
+      ConferenceDetail: "conference/:conferenceId",
+      ScholarshipDetail: "scholarship/:scholarshipId",
+      VendorDetail: "vendor/:vendorId",
+      PowwowDetail: "powwow/:powwowId",
+      Conversation: "conversation/:conversationId",
+      Notifications: "notifications",
+      Applications: "applications",
+      SavedJobs: "saved-jobs",
+      JobAlerts: "job-alerts",
+      EditProfile: "edit-profile",
+      SignIn: "sign-in",
+      SignUp: "sign-up",
+    },
   },
 };
 
@@ -133,7 +182,7 @@ function MainTabs() {
         component={MessagesScreen}
         options={{
           title: "Messages",
-          tabBarIcon: MessagesIcon,
+          tabBarIcon: MessagesIconWithBadge,
         }}
       />
       <Tab.Screen
@@ -141,7 +190,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           title: "Profile",
-          tabBarIcon: ProfileIcon,
+          tabBarIcon: ProfileIconWithBadge,
         }}
       />
     </Tab.Navigator>
@@ -338,6 +387,7 @@ function NavigationWrapper() {
   return (
     <NavigationContainer
       ref={navigationRef}
+      linking={linking}
       onReady={() => {
         if (navigationRef.current) {
           setNavigationRef(navigationRef.current);
@@ -354,9 +404,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NotificationProvider>
-          <NavigationWrapper />
-        </NotificationProvider>
+        <BadgeProvider>
+          <NotificationProvider>
+            <NavigationWrapper />
+          </NotificationProvider>
+        </BadgeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
@@ -366,6 +418,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
   },
   iconText: {
     fontSize: 20,
@@ -373,5 +426,22 @@ const styles = StyleSheet.create({
   },
   iconTextFocused: {
     opacity: 1,
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -10,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
   },
 });

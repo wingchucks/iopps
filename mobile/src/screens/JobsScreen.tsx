@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   RefreshControl,
   TextInput,
   Modal,
@@ -15,6 +14,8 @@ import {
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { JobPosting } from "../types";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
+import { JobListSkeleton } from "../components/Skeleton";
 
 interface JobsScreenProps {
   navigation: any;
@@ -57,22 +58,42 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
   const [tempFilters, setTempFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
 
-  const fetchJobs = async () => {
+  const fetchJobsFromFirestore = async (): Promise<JobPosting[]> => {
+    const jobsQuery = query(
+      collection(db, "jobs"),
+      where("active", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(100)
+    );
+
+    const snapshot = await getDocs(jobsQuery);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as JobPosting[];
+  };
+
+  const fetchJobs = async (forceRefresh = false) => {
     try {
-      const jobsQuery = query(
-        collection(db, "jobs"),
-        where("active", "==", true),
-        orderBy("createdAt", "desc"),
-        limit(100)
-      );
+      if (forceRefresh) {
+        // On refresh, fetch fresh data and update cache
+        const freshJobs = await fetchJobsFromFirestore();
+        await saveToCache(CACHE_KEYS.JOBS, freshJobs, CACHE_TTL.MEDIUM);
+        setJobs(freshJobs);
+      } else {
+        // Use cache-first strategy
+        const { data, fromCache } = await fetchWithCache<JobPosting[]>(
+          CACHE_KEYS.JOBS,
+          fetchJobsFromFirestore,
+          CACHE_TTL.MEDIUM
+        );
+        setJobs(data);
 
-      const snapshot = await getDocs(jobsQuery);
-      const jobsList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as JobPosting[];
-
-      setJobs(jobsList);
+        // If from cache, data is being refreshed in background
+        if (fromCache) {
+          console.log("Jobs loaded from cache, refreshing in background...");
+        }
+      }
     } catch (error) {
       console.error("Error fetching jobs:", error);
     } finally {
@@ -87,7 +108,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchJobs();
+    fetchJobs(true); // Force refresh from server
   };
 
   // Filter and search jobs
@@ -240,9 +261,17 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#14B8A6" />
-        <Text style={styles.loadingText}>Loading opportunities...</Text>
+      <View style={styles.container}>
+        <View style={styles.searchContainer}>
+          <View style={[styles.searchInputContainer, { opacity: 0.5 }]}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <View style={{ flex: 1, height: 44 }} />
+          </View>
+          <View style={[styles.filterButton, { opacity: 0.5 }]}>
+            <Text style={styles.filterIcon}>⚙️</Text>
+          </View>
+        </View>
+        <JobListSkeleton count={6} />
       </View>
     );
   }

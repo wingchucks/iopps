@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -16,6 +15,8 @@ import {
   markAllNotificationsAsRead,
   formatTimestamp,
 } from "../lib/firestore";
+import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
+import { NotificationListSkeleton } from "../components/Skeleton";
 import type { Notification, NotificationType } from "../types";
 
 const NOTIFICATION_CONFIG: Record<
@@ -39,11 +40,23 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (forceRefresh = false) => {
     if (!user) return;
     try {
-      const data = await getMemberNotifications(user.uid, 50);
-      setNotifications(data);
+      const cacheKey = CACHE_KEYS.NOTIFICATIONS(user.uid);
+
+      if (forceRefresh) {
+        const data = await getMemberNotifications(user.uid, 50);
+        await saveToCache(cacheKey, data, CACHE_TTL.SHORT);
+        setNotifications(data);
+      } else {
+        const { data } = await fetchWithCache<Notification[]>(
+          cacheKey,
+          () => getMemberNotifications(user.uid, 50),
+          CACHE_TTL.SHORT
+        );
+        setNotifications(data);
+      }
     } catch (error) {
       console.error("Error loading notifications:", error);
     } finally {
@@ -60,7 +73,7 @@ export default function NotificationsScreen() {
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadNotifications();
+    loadNotifications(true);
   };
 
   const handleNotificationPress = async (notification: Notification) => {
@@ -150,9 +163,14 @@ export default function NotificationsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#14B8A6" />
-        <Text style={styles.loadingText}>Loading notifications...</Text>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Notifications</Text>
+            <Text style={styles.headerSubtitle}>Loading...</Text>
+          </View>
+        </View>
+        <NotificationListSkeleton count={8} />
       </View>
     );
   }

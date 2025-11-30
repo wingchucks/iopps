@@ -13,9 +13,11 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile, updateUserProfile } from "../lib/firestore";
+import { uploadProfilePhoto, uploadResume } from "../lib/storage";
 import type { UserProfile } from "../types";
 
 export default function EditProfileScreen() {
@@ -23,8 +25,10 @@ export default function EditProfileScreen() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageChanged, setImageChanged] = useState(false);
 
   // Form state
   const [displayName, setDisplayName] = useState("");
@@ -33,6 +37,8 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState("");
   const [linkedIn, setLinkedIn] = useState("");
   const [website, setWebsite] = useState("");
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+  const [resumeName, setResumeName] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -50,6 +56,8 @@ export default function EditProfileScreen() {
         setBio(data.bio || "");
         setLinkedIn(data.linkedIn || "");
         setWebsite(data.website || "");
+        setResumeUrl(data.resumeUrl || null);
+        setResumeName(data.resumeName || null);
         if (data.photoURL) {
           setSelectedImage(data.photoURL);
         }
@@ -63,7 +71,6 @@ export default function EditProfileScreen() {
   };
 
   const pickImage = async () => {
-    // Request permission
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
@@ -82,6 +89,7 @@ export default function EditProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
+      setImageChanged(true);
     }
   };
 
@@ -103,6 +111,7 @@ export default function EditProfileScreen() {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
+      setImageChanged(true);
     }
   };
 
@@ -115,7 +124,10 @@ export default function EditProfileScreen() {
             {
               text: "Remove Photo",
               style: "destructive" as const,
-              onPress: () => setSelectedImage(null),
+              onPress: () => {
+                setSelectedImage(null);
+                setImageChanged(true);
+              },
             },
           ]
         : []),
@@ -123,11 +135,84 @@ export default function EditProfileScreen() {
     ]);
   };
 
+  const pickResume = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const file = result.assets[0];
+        if (!user) return;
+
+        setUploadProgress(0);
+        try {
+          const uploadResult = await uploadResume(
+            user.uid,
+            file.uri,
+            file.name,
+            (progress) => setUploadProgress(progress.progress)
+          );
+          setResumeUrl(uploadResult.downloadURL);
+          setResumeName(file.name);
+          Alert.alert("Success", "Resume uploaded successfully!");
+        } catch (error) {
+          console.error("Error uploading resume:", error);
+          Alert.alert("Error", "Failed to upload resume. Please try again.");
+        } finally {
+          setUploadProgress(null);
+        }
+      }
+    } catch (error) {
+      console.error("Error picking document:", error);
+    }
+  };
+
+  const removeResume = () => {
+    Alert.alert(
+      "Remove Resume",
+      "Are you sure you want to remove your resume?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            setResumeUrl(null);
+            setResumeName(null);
+          },
+        },
+      ]
+    );
+  };
+
   const handleSave = async () => {
     if (!user) return;
 
     setSaving(true);
     try {
+      let photoURL = profile.photoURL;
+
+      // Upload new photo if changed
+      if (imageChanged && selectedImage && !selectedImage.startsWith("http")) {
+        setUploadProgress(0);
+        try {
+          const uploadResult = await uploadProfilePhoto(
+            user.uid,
+            selectedImage,
+            (progress) => setUploadProgress(progress.progress)
+          );
+          photoURL = uploadResult.downloadURL;
+        } catch (error) {
+          console.error("Error uploading photo:", error);
+          Alert.alert("Warning", "Failed to upload photo, but other changes will be saved.");
+        }
+        setUploadProgress(null);
+      } else if (imageChanged && !selectedImage) {
+        photoURL = undefined;
+      }
+
       const updates: Partial<UserProfile> = {
         displayName: displayName.trim(),
         phone: phone.trim(),
@@ -135,11 +220,10 @@ export default function EditProfileScreen() {
         bio: bio.trim(),
         linkedIn: linkedIn.trim(),
         website: website.trim(),
+        photoURL,
+        resumeUrl: resumeUrl || undefined,
+        resumeName: resumeName || undefined,
       };
-
-      // Note: Photo upload to Firebase Storage would go here
-      // For now, we'll just save the other fields
-      // In a production app, you'd upload the image and get a URL
 
       await updateUserProfile(user.uid, updates);
       Alert.alert("Success", "Your profile has been updated.", [
@@ -180,6 +264,16 @@ export default function EditProfileScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Upload Progress */}
+        {uploadProgress !== null && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${uploadProgress}%` }]} />
+            </View>
+            <Text style={styles.progressText}>{Math.round(uploadProgress)}% uploading...</Text>
+          </View>
+        )}
+
         {/* Profile Photo */}
         <View style={styles.photoSection}>
           <TouchableOpacity style={styles.photoContainer} onPress={showImageOptions}>
@@ -264,6 +358,30 @@ export default function EditProfileScreen() {
           <Text style={styles.charCount}>{bio.length}/500</Text>
         </View>
 
+        {/* Resume Upload */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Resume</Text>
+          {resumeUrl ? (
+            <View style={styles.resumeContainer}>
+              <View style={styles.resumeInfo}>
+                <Text style={styles.resumeIcon}>📄</Text>
+                <Text style={styles.resumeName} numberOfLines={1}>
+                  {resumeName || "Resume"}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.resumeRemove} onPress={removeResume}>
+                <Text style={styles.resumeRemoveText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.uploadButton} onPress={pickResume}>
+              <Text style={styles.uploadIcon}>📎</Text>
+              <Text style={styles.uploadText}>Upload Resume (PDF, DOC)</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.fieldHint}>Your resume will be used for Quick Apply</Text>
+        </View>
+
         {/* LinkedIn */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>LinkedIn Profile</Text>
@@ -345,6 +463,27 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#EF4444",
     fontSize: 16,
+  },
+
+  // Progress
+  progressContainer: {
+    marginBottom: 20,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: "#1E293B",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#14B8A6",
+  },
+  progressText: {
+    color: "#94A3B8",
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: "center",
   },
 
   // Photo Section
@@ -444,6 +583,60 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
     marginTop: 4,
+  },
+
+  // Resume
+  resumeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1E293B",
+    borderWidth: 1,
+    borderColor: "#14B8A6",
+    borderRadius: 12,
+    padding: 14,
+  },
+  resumeInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  resumeIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  resumeName: {
+    color: "#F8FAFC",
+    fontSize: 14,
+    flex: 1,
+  },
+  resumeRemove: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  resumeRemoveText: {
+    color: "#EF4444",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  uploadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1E293B",
+    borderWidth: 1,
+    borderColor: "#334155",
+    borderRadius: 12,
+    padding: 14,
+    borderStyle: "dashed",
+  },
+  uploadIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  uploadText: {
+    color: "#94A3B8",
+    fontSize: 14,
   },
 
   // Buttons
