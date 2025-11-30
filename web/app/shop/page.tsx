@@ -246,7 +246,7 @@ function ShopContent() {
               Check back soon! Indigenous vendors and businesses are joining the platform daily.
             </p>
             <Link
-              href="/vendor/setup"
+              href="/organization/shop/setup"
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -385,7 +385,7 @@ function ShopContent() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link
-              href="/vendor/setup"
+              href="/organization/shop/setup"
               className="rounded-full bg-[#14B8A6] px-5 py-2.5 text-center text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
             >
               Set up vendor profile

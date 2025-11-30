@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
                 },
             ],
             mode: "payment",
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/employer/conferences?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/employer/conferences?canceled=true`,
+            success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/organization/conferences?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/organization/conferences?canceled=true`,
             metadata: {
                 productType: productType,
                 userId: userId,

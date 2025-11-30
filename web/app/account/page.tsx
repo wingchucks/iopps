@@ -85,7 +85,7 @@ export default function AccountPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/employer/dashboard"
+              href="/organization/dashboard"
               className="inline-flex rounded-md bg-[#14B8A6] px-3 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-[#14B8A6]/90"
             >
               Go to Dashboard

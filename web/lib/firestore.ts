@@ -544,7 +544,7 @@ export async function createJobApplication(
       type: "new_application",
       title: "New Application Received",
       message: `${applicantName} applied to "${jobTitle}"`,
-      link: `/employer/jobs/${input.jobId}/applications`,
+      link: `/organization/jobs/${input.jobId}/applications`,
       relatedJobId: input.jobId,
       relatedApplicationId: docRef.id,
     });

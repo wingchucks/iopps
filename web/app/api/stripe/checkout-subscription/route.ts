@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
                 },
             ],
             mode: "payment",
-            success_url: `${request.nextUrl.origin}/employer/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${request.nextUrl.origin}/organization/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${request.nextUrl.origin}/pricing?canceled=true`,
             metadata: {
                 type: "subscription",
