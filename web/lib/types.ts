@@ -268,6 +268,8 @@ export interface ShopListing {
   active: boolean;
 }
 
+export type VendorApprovalStatus = 'approved' | 'pending_review' | 'rejected';
+
 export interface VendorProfile {
   id: string;
   ownerUserId: string;
@@ -297,6 +299,8 @@ export interface VendorProfile {
   galleryImageUrls?: string[];
   active?: boolean;
   featured?: boolean;
+  approvalStatus?: VendorApprovalStatus;
+  duplicateFlags?: string[]; // Reasons why it was flagged (e.g., "similar_business_name", "same_website")
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }

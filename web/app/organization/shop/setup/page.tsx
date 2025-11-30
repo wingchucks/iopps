@@ -2,13 +2,15 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { getVendorProfile, upsertVendorProfile, deleteVendorProfile } from "@/lib/firestore";
+import { getVendorProfile, upsertVendorProfile, deleteVendorProfile, type UpsertVendorResult } from "@/lib/firestore";
+import type { VendorApprovalStatus } from "@/lib/types";
 import { storage } from "@/lib/firebase";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { PageShell } from "@/components/PageShell";
 import { SectionHeader } from "@/components/SectionHeader";
+import { VENDOR_PRODUCTS } from "@/lib/stripe";
 
 const categoryOptions = [
   "Traditional Arts",
@@ -24,6 +26,15 @@ const categoryOptions = [
 export default function VendorSetupPage() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Checkout state for community members
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Check for success/canceled from redirect
+  const isSuccess = searchParams.get("success") === "true";
+  const isCanceled = searchParams.get("canceled") === "true";
 
   // Form state
   const [businessName, setBusinessName] = useState("");
@@ -65,6 +76,8 @@ export default function VendorSetupPage() {
   const [hasProfile, setHasProfile] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<VendorApprovalStatus | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   // Load existing profile
   useEffect(() => {
@@ -96,6 +109,7 @@ export default function VendorSetupPage() {
           setOtherLink(profile.otherLink ?? "");
           setLogoUrl(profile.logoUrl ?? "");
           setHeroImageUrl(profile.heroImageUrl ?? "");
+          setApprovalStatus(profile.approvalStatus ?? null);
         }
       } catch (err) {
         console.error(err);
@@ -186,9 +200,10 @@ export default function VendorSetupPage() {
     setSaving(true);
     setError(null);
     setSuccess(false);
+    setPendingMessage(null);
 
     try {
-      await upsertVendorProfile(user.uid, {
+      const result = await upsertVendorProfile(user.uid, {
         businessName,
         tagline,
         category,
@@ -213,8 +228,15 @@ export default function VendorSetupPage() {
         heroImageUrl,
         active: true,
       });
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+
+      setApprovalStatus(result.approvalStatus);
+
+      if (result.approvalStatus === 'pending_review') {
+        setPendingMessage(result.message || 'Your profile is pending review.');
+      } else {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to save vendor profile. Please try again.");
@@ -239,6 +261,41 @@ export default function VendorSetupPage() {
     }
   };
 
+  // Handle vendor checkout for community members upgrading
+  const handleVendorCheckout = async (plan: "MONTHLY" | "ANNUAL") => {
+    if (!user) return;
+
+    setCheckingOut(true);
+    setCheckoutError(null);
+
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/stripe/checkout-vendor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ productType: plan }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Vendor checkout error:", err);
+      setCheckoutError(err instanceof Error ? err.message : "Checkout failed");
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
@@ -249,39 +306,155 @@ export default function VendorSetupPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Sign in to manage your vendor profile
-        </h1>
-        <p className="text-sm text-slate-300">
-          Create an employer account to set up your vendor profile.
-        </p>
-        <div className="flex gap-3">
-          <Link
-            href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6]"
-          >
-            Register
-          </Link>
+      <PageShell>
+        <div className="mx-auto max-w-2xl space-y-6">
+          <SectionHeader
+            eyebrow="Shop Indigenous"
+            title="List your Indigenous business"
+            subtitle="Sign in or create an organization account to set up your vendor profile and list your business on Shop Indigenous."
+          />
+
+          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/login?redirect=/organization/shop/setup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/register?role=employer&redirect=/organization/shop/setup"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+              >
+                Create organization account
+              </Link>
+            </div>
+            <p className="text-xs text-slate-400">
+              Organization accounts give you access to post jobs, list your business on Shop Indigenous, and manage your organization profile.
+            </p>
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (role !== "employer") {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Vendor access only</h1>
-        <p className="text-sm text-slate-300">
-          Switch to your employer account to manage your vendor profile.
-        </p>
-      </div>
+      <PageShell>
+        <div className="mx-auto max-w-2xl space-y-6">
+          <SectionHeader
+            eyebrow="Shop Indigenous"
+            title="List your Indigenous business"
+            subtitle="Subscribe to Shop Indigenous to list your business and upgrade your account."
+          />
+
+          {isCanceled && (
+            <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+              Checkout was canceled. You can try again when you&apos;re ready.
+            </div>
+          )}
+
+          {checkoutError && (
+            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {checkoutError}
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30 space-y-6">
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-50">
+                Choose your vendor plan
+              </h2>
+              <p className="text-sm text-slate-300">
+                Purchase a vendor subscription to list your Indigenous-owned business on Shop Indigenous. Your account will automatically be upgraded to an organization account.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Monthly Plan */}
+              <div className="rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-5 relative">
+                <div className="absolute -top-3 left-4">
+                  <span className="rounded-full bg-[#14B8A6] px-3 py-1 text-xs font-semibold text-slate-900">
+                    First month FREE
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <h3 className="font-semibold text-slate-100">{VENDOR_PRODUCTS.MONTHLY.name}</h3>
+                  <p className="mt-2 text-2xl font-bold text-slate-50">
+                    $0 <span className="text-sm font-normal text-slate-400">first month</span>
+                  </p>
+                  <p className="text-xs text-slate-400">then ${VENDOR_PRODUCTS.MONTHLY.price / 100}/month</p>
+                </div>
+                <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                  {VENDOR_PRODUCTS.MONTHLY.features.slice(0, 3).map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <svg className="h-4 w-4 mt-0.5 text-[#14B8A6] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => handleVendorCheckout("MONTHLY")}
+                  disabled={checkingOut}
+                  className="mt-4 w-full rounded-full bg-[#14B8A6] px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {checkingOut ? "Processing..." : "Start free month"}
+                </button>
+              </div>
+
+              {/* Annual Plan */}
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-5 relative">
+                <div className="absolute -top-3 left-4">
+                  <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-semibold text-slate-200">
+                    Save $200
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <h3 className="font-semibold text-slate-100">{VENDOR_PRODUCTS.ANNUAL.name}</h3>
+                  <p className="mt-2 text-2xl font-bold text-slate-50">
+                    ${VENDOR_PRODUCTS.ANNUAL.price / 100} <span className="text-sm font-normal text-slate-400">/ year</span>
+                  </p>
+                  <p className="text-xs text-slate-400">priority placement included</p>
+                </div>
+                <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                  {VENDOR_PRODUCTS.ANNUAL.features.slice(0, 3).map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <svg className="h-4 w-4 mt-0.5 text-[#14B8A6] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => handleVendorCheckout("ANNUAL")}
+                  disabled={checkingOut}
+                  className="mt-4 w-full rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {checkingOut ? "Processing..." : "Get annual plan"}
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800 pt-5">
+              <p className="text-xs text-slate-400">
+                Your account will be upgraded to an organization account after purchase, giving you access to list your business on Shop Indigenous.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/pricing"
+              className="text-sm text-[#14B8A6] hover:underline"
+            >
+              View all pricing details →
+            </Link>
+          </div>
+        </div>
+      </PageShell>
     );
   }
 
@@ -292,6 +465,48 @@ export default function VendorSetupPage() {
         title="Your vendor profile"
         subtitle="Share your story, offerings, and contact details so community members can find and support your business."
       />
+
+      {/* Approval status banners */}
+      {approvalStatus === 'pending_review' && (
+        <div className="mt-6 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-yellow-200">Profile pending review</h3>
+              <p className="mt-1 text-sm text-yellow-200/80">
+                Your vendor profile is being reviewed by our team. This usually happens when we detect a similar business already listed. Your listing won&apos;t appear publicly until approved.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {approvalStatus === 'rejected' && (
+        <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-red-200">Profile not approved</h3>
+              <p className="mt-1 text-sm text-red-200/80">
+                Your vendor profile was not approved. This may be because a similar business is already listed. Please contact us if you believe this is an error.
+              </p>
+              <Link href="/contact" className="mt-2 inline-block text-sm text-red-200 underline hover:text-red-100">
+                Contact support
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingMessage && (
+        <div className="mt-6 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4">
+          <p className="text-sm text-yellow-200">{pendingMessage}</p>
+        </div>
+      )}
 
       {/* Profile completion indicator */}
       <div className="mt-8 rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 shadow-lg shadow-black/30">

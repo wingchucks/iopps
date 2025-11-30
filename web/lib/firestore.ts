@@ -31,6 +31,7 @@ import type {
   PowwowEvent,
   LiveStreamEvent,
   VendorProfile,
+  VendorApprovalStatus,
   PowwowRegistration,
   ProductServiceListing,
   ContactSubmission,
@@ -958,6 +959,120 @@ export async function updateLiveStream(
 // Vendor Profile functions
 // ===============================================
 
+// Helper to normalize strings for comparison (lowercase, remove extra spaces, remove common suffixes)
+function normalizeBusinessName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\b(inc|llc|ltd|corp|company|co|limited)\b\.?/gi, '')
+    .replace(/[^\w\s]/g, '')
+    .trim();
+}
+
+// Helper to normalize URLs for comparison
+function normalizeUrl(url: string): string {
+  return url
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/+$/, '')
+    .trim();
+}
+
+// Check for potential duplicate vendors
+export async function checkForDuplicateVendor(
+  userId: string,
+  businessName: string,
+  websiteUrl?: string,
+  contactEmail?: string,
+  contactPhone?: string
+): Promise<{ isDuplicate: boolean; flags: string[]; matchingVendors: string[] }> {
+  checkFirebase();
+
+  const flags: string[] = [];
+  const matchingVendors: string[] = [];
+
+  // Get all active vendors (excluding current user's profile if it exists)
+  const vendorsRef = collection(db!, vendorsCollection);
+  const vendorsSnap = await getDocs(vendorsRef);
+
+  const normalizedNewName = normalizeBusinessName(businessName);
+  const normalizedNewUrl = websiteUrl ? normalizeUrl(websiteUrl) : null;
+  const normalizedNewEmail = contactEmail?.toLowerCase().trim();
+  const normalizedNewPhone = contactPhone?.replace(/\D/g, ''); // Remove non-digits
+
+  vendorsSnap.forEach((vendorDoc) => {
+    const vendor = vendorDoc.data() as VendorProfile;
+
+    // Skip the current user's own profile
+    if (vendorDoc.id === userId) return;
+
+    // Skip inactive or rejected vendors
+    if (vendor.approvalStatus === 'rejected') return;
+
+    // Check for similar business name (using normalized comparison)
+    if (vendor.businessName) {
+      const normalizedExistingName = normalizeBusinessName(vendor.businessName);
+      // Check for exact match or very similar names
+      if (normalizedNewName === normalizedExistingName) {
+        flags.push('exact_business_name_match');
+        matchingVendors.push(vendorDoc.id);
+      } else if (
+        normalizedNewName.includes(normalizedExistingName) ||
+        normalizedExistingName.includes(normalizedNewName)
+      ) {
+        // Partial match - one name contains the other
+        if (normalizedNewName.length > 3 && normalizedExistingName.length > 3) {
+          flags.push('similar_business_name');
+          matchingVendors.push(vendorDoc.id);
+        }
+      }
+    }
+
+    // Check for same website
+    if (normalizedNewUrl && vendor.websiteUrl) {
+      const normalizedExistingUrl = normalizeUrl(vendor.websiteUrl);
+      if (normalizedNewUrl === normalizedExistingUrl) {
+        flags.push('same_website');
+        if (!matchingVendors.includes(vendorDoc.id)) {
+          matchingVendors.push(vendorDoc.id);
+        }
+      }
+    }
+
+    // Check for same contact email
+    if (normalizedNewEmail && vendor.contactEmail) {
+      if (normalizedNewEmail === vendor.contactEmail.toLowerCase().trim()) {
+        flags.push('same_contact_email');
+        if (!matchingVendors.includes(vendorDoc.id)) {
+          matchingVendors.push(vendorDoc.id);
+        }
+      }
+    }
+
+    // Check for same phone number
+    if (normalizedNewPhone && normalizedNewPhone.length >= 10 && vendor.contactPhone) {
+      const normalizedExistingPhone = vendor.contactPhone.replace(/\D/g, '');
+      if (normalizedNewPhone === normalizedExistingPhone) {
+        flags.push('same_phone_number');
+        if (!matchingVendors.includes(vendorDoc.id)) {
+          matchingVendors.push(vendorDoc.id);
+        }
+      }
+    }
+  });
+
+  // Remove duplicates from flags
+  const uniqueFlags = [...new Set(flags)];
+
+  return {
+    isDuplicate: uniqueFlags.length > 0,
+    flags: uniqueFlags,
+    matchingVendors: [...new Set(matchingVendors)],
+  };
+}
+
 export async function getVendorProfile(
   userId: string
 ): Promise<VendorProfile | null> {
@@ -990,20 +1105,76 @@ export async function getVendorProfileById(
   }
 }
 
+export type UpsertVendorResult = {
+  success: boolean;
+  approvalStatus: VendorApprovalStatus;
+  duplicateFlags?: string[];
+  message?: string;
+};
+
 export async function upsertVendorProfile(
   userId: string,
   data: Partial<VendorProfile>
-): Promise<void> {
+): Promise<UpsertVendorResult> {
   checkFirebase();
   const ref = doc(db!, vendorsCollection, userId);
   const snap = await getDoc(ref);
 
   const timestamp = serverTimestamp();
+  const isNewProfile = !snap.exists();
+
+  // For new profiles or profiles that don't have business name yet, check for duplicates
+  let approvalStatus: VendorApprovalStatus = 'approved';
+  let duplicateFlags: string[] = [];
+
+  if (data.businessName) {
+    const duplicateCheck = await checkForDuplicateVendor(
+      userId,
+      data.businessName,
+      data.websiteUrl,
+      data.contactEmail,
+      data.contactPhone
+    );
+
+    if (duplicateCheck.isDuplicate) {
+      // Flag for review if potential duplicate found
+      approvalStatus = 'pending_review';
+      duplicateFlags = duplicateCheck.flags;
+    }
+  }
 
   if (snap.exists()) {
-    // Update existing
+    // Update existing - check if business details changed significantly
+    const existingData = snap.data() as VendorProfile;
+    const businessNameChanged = data.businessName &&
+      normalizeBusinessName(data.businessName) !== normalizeBusinessName(existingData.businessName || '');
+
+    // Only re-check duplicates if business name changed
+    if (businessNameChanged && data.businessName) {
+      const duplicateCheck = await checkForDuplicateVendor(
+        userId,
+        data.businessName,
+        data.websiteUrl || existingData.websiteUrl,
+        data.contactEmail || existingData.contactEmail,
+        data.contactPhone || existingData.contactPhone
+      );
+
+      if (duplicateCheck.isDuplicate) {
+        approvalStatus = 'pending_review';
+        duplicateFlags = duplicateCheck.flags;
+      } else {
+        // If no duplicates and was pending, keep as approved
+        approvalStatus = existingData.approvalStatus === 'rejected' ? 'rejected' : 'approved';
+      }
+    } else {
+      // Keep existing approval status if not checking for duplicates
+      approvalStatus = existingData.approvalStatus || 'approved';
+    }
+
     await updateDoc(ref, {
       ...data,
+      approvalStatus,
+      duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       updatedAt: timestamp,
     });
   } else {
@@ -1012,16 +1183,70 @@ export async function upsertVendorProfile(
       id: userId,
       ownerUserId: userId,
       ...data,
+      approvalStatus,
+      duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       createdAt: timestamp,
       updatedAt: timestamp,
     });
   }
+
+  return {
+    success: true,
+    approvalStatus,
+    duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : undefined,
+    message: approvalStatus === 'pending_review'
+      ? 'Your vendor profile has been submitted for review due to potential duplicate detection.'
+      : undefined,
+  };
 }
 
 export async function deleteVendorProfile(vendorId: string): Promise<void> {
   checkFirebase();
   const ref = doc(db!, vendorsCollection, vendorId);
   await deleteDoc(ref);
+}
+
+// Admin function to approve/reject vendor profiles
+export async function updateVendorApprovalStatus(
+  vendorId: string,
+  status: VendorApprovalStatus
+): Promise<void> {
+  checkFirebase();
+  const ref = doc(db!, vendorsCollection, vendorId);
+  await updateDoc(ref, {
+    approvalStatus: status,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Get vendors pending review (for admin)
+export async function getVendorsPendingReview(): Promise<VendorProfile[]> {
+  checkFirebase();
+  const vendorsRef = collection(db!, vendorsCollection);
+  const q = query(
+    vendorsRef,
+    where('approvalStatus', '==', 'pending_review'),
+    orderBy('createdAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as VendorProfile));
+}
+
+// List all approved and active vendors for public display
+export async function listApprovedVendors(): Promise<VendorProfile[]> {
+  checkFirebase();
+  const vendorsRef = collection(db!, vendorsCollection);
+  // Get all vendors that are active
+  const q = query(
+    vendorsRef,
+    where('active', '==', true),
+    orderBy('createdAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  // Filter client-side for approved or no approval status (legacy)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as VendorProfile))
+    .filter((v) => !v.approvalStatus || v.approvalStatus === 'approved');
 }
 
 // ===============================================
