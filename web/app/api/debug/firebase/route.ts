@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+    // List all env vars that contain "FIREBASE" in the name
+    const allFirebaseVars: Record<string, string> = {};
+    for (const key of Object.keys(process.env)) {
+        if (key.includes("FIREBASE") || key.includes("firebase")) {
+            allFirebaseVars[key] = process.env[key]?.substring(0, 50) + "..." || "empty";
+        }
+    }
+
     const hasServiceAccountJson = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     const hasProjectId = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     const hasClientEmail = !!process.env.FIREBASE_CLIENT_EMAIL;
@@ -36,6 +44,7 @@ export async function GET() {
     const appsCount = getApps().length;
 
     return NextResponse.json({
+        allFirebaseVars,
         envVars: {
             FIREBASE_SERVICE_ACCOUNT_JSON: hasServiceAccountJson ? "SET" : "MISSING",
             NEXT_PUBLIC_FIREBASE_PROJECT_ID: hasProjectId ? "SET" : "MISSING",
