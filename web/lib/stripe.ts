@@ -119,6 +119,7 @@ export const VENDOR_PRODUCTS = {
         duration: 365, // days
         featured: true,
         recurring: false,
+        firstMonthFree: false,
         description: "Save $200 vs monthly with priority placement in Shop Indigenous marketplace",
         features: [
             "Save $200 vs monthly",
