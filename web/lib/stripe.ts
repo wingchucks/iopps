@@ -32,7 +32,7 @@ export const JOB_POSTING_PRODUCTS = {
 
 export type JobPostingProductType = keyof typeof JOB_POSTING_PRODUCTS;
 
-// Employer subscription tiers (annual plans)
+// Organization subscription tiers (annual plans)
 export const SUBSCRIPTION_PRODUCTS = {
     TIER1: {
         name: "Tier 1 – Basic Visibility",
@@ -42,51 +42,33 @@ export const SUBSCRIPTION_PRODUCTS = {
         jobCredits: 15, // 15 job postings per year
         featuredJobCredits: 15, // 15 featured listings included
         unlimitedPosts: false,
-        description: "15 job postings per year with standard placement and basic employer profile",
+        description: "15 job postings per year with standard placement and basic organization profile",
         features: [
             "15 job postings per year",
             "Standard placement",
-            "Basic employer profile page",
+            "Basic organization profile page",
             "Access to posting analytics",
             "15 Featured Job Listings included",
         ],
     },
     TIER2: {
-        name: "Tier 2 – Unlimited Basic",
+        name: "Tier 2 – Unlimited + Shop",
         price: 250000, // $2,500.00
         duration: 365, // days (1 year)
-        featured: false,
+        featured: true,
         jobCredits: -1, // unlimited
         featuredJobCredits: 5, // 5 rotating featured
         unlimitedPosts: true,
-        description: "Unlimited job postings for 12 months with employer branding",
+        shopListingIncluded: true,
+        description: "Unlimited job postings for 12 months with Shop Indigenous listing included",
         features: [
             "Unlimited job postings for 12 months",
-            "Employer branding on postings",
+            "Organization branding on postings",
             "Rotating featured listings on homepage & job board",
             "Candidate engagement analytics",
             "Standard customer support",
             "Rotating Featured Jobs included",
-        ],
-    },
-    TIER3: {
-        name: "Tier 3 – Unlimited Pro",
-        price: 375000, // $3,750.00
-        duration: 365, // days (1 year)
-        featured: true,
-        jobCredits: -1, // unlimited
-        featuredJobCredits: -1, // unlimited featured
-        unlimitedPosts: true,
-        premiumEmployer: true,
-        description: "Ultimate package with unlimited postings, premium branding, and monthly podcast feature",
-        features: [
-            "Unlimited job postings (12 months)",
-            "Featured Employer status across IOPPS.ca",
-            "Premium branding + credibility boosts",
-            "Priority customer support",
-            "Full access to the candidate database",
-            "Rotating Featured Jobs",
-            "Monthly Podcast Feature (live or pre-recorded)",
+            "Shop Indigenous listing included",
         ],
     },
 } as const;

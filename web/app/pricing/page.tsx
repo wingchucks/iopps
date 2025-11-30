@@ -129,7 +129,7 @@ export default function PricingPage() {
   // Hide "Create employer account" for employers, admins, and moderators
   const shouldHideEmployerButton = user && role && role !== "community";
 
-  const handleSubscriptionCheckout = async (tier: "TIER1" | "TIER2" | "TIER3") => {
+  const handleSubscriptionCheckout = async (tier: "TIER1" | "TIER2") => {
     if (!user) {
       router.push("/register?redirect=/pricing&role=employer");
       return;
@@ -201,7 +201,7 @@ export default function PricingPage() {
                 href="/register"
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-6 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
               >
-                Create employer account
+                Create organization account
               </Link>
             )}
           </div>
@@ -244,15 +244,15 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 2: Employer Subscription Tiers */}
+      {/* Section 2: Organization Subscription Tiers */}
       <section className="mt-12">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-50">Employer Subscription Tiers</h2>
+          <h2 className="text-2xl font-bold text-slate-50">Organization Subscription Tiers</h2>
           <p className="mt-2 text-sm text-slate-400">
             Annual plans for ongoing hiring and visibility. Purchase now and start posting immediately.
           </p>
         </div>
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           <PricingCard
             title={SUBSCRIPTION_PRODUCTS.TIER1.name}
             price={`$${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}`}
@@ -267,23 +267,12 @@ export default function PricingPage() {
             title={SUBSCRIPTION_PRODUCTS.TIER2.name}
             price={`$${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}`}
             period="/ year"
-            badge="Popular"
+            badge="Best Value"
+            highlighted={true}
             features={SUBSCRIPTION_PRODUCTS.TIER2.features}
             buttonText={loadingTier === "TIER2" ? "Processing..." : "Subscribe Now"}
             buttonAction={() => handleSubscriptionCheckout("TIER2")}
             loading={loadingTier === "TIER2"}
-            requiresAuth
-          />
-          <PricingCard
-            title={SUBSCRIPTION_PRODUCTS.TIER3.name}
-            price={`$${(SUBSCRIPTION_PRODUCTS.TIER3.price / 100).toLocaleString()}`}
-            period="/ year"
-            badge="Best Value"
-            highlighted={true}
-            features={[...SUBSCRIPTION_PRODUCTS.TIER3.features, "Ultimate package for visibility & engagement"]}
-            buttonText={loadingTier === "TIER3" ? "Processing..." : "Subscribe Now"}
-            buttonAction={() => handleSubscriptionCheckout("TIER3")}
-            loading={loadingTier === "TIER3"}
             requiresAuth
           />
         </div>
@@ -399,7 +388,71 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 6: Everything in One Clean List */}
+      {/* Section 6: IOPPS Spotlight */}
+      <section className="mt-12">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-slate-50">IOPPS Spotlight</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Premium visibility and featured placement across IOPPS platforms.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[#14B8A6]/20">
+              <svg className="h-6 w-6 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-slate-50">
+                Custom Spotlight Packages
+              </h3>
+              <p className="mt-2 text-sm text-slate-300">
+                Get premium featured placement across IOPPS.ca, including homepage spotlight, featured employer status, podcast features, and custom promotional campaigns tailored to your organization.
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Featured Employer status across IOPPS.ca
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Premium branding and credibility boosts
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Podcast feature (live or pre-recorded)
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Priority customer support
+                </li>
+              </ul>
+              <div className="mt-4">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Contact for Quote
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 7: Everything in One Clean List */}
       <section className="mt-12">
         <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30">
           <h2 className="text-xl font-bold text-slate-50">Everything in One Clean List</h2>
@@ -417,12 +470,8 @@ export default function PricingPage() {
               <span className="font-semibold text-[#14B8A6]">$1,250/yr</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
-              <span className="text-sm text-slate-300">Tier 2 (Unlimited Basic)</span>
+              <span className="text-sm text-slate-300">Tier 2 (Unlimited + Shop)</span>
               <span className="font-semibold text-[#14B8A6]">$2,500/yr</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
-              <span className="text-sm text-slate-300">Tier 3 (Unlimited Pro)</span>
-              <span className="font-semibold text-[#14B8A6]">$3,750/yr</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
               <span className="text-sm text-slate-300">Conference/Event</span>
@@ -435,6 +484,10 @@ export default function PricingPage() {
             <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
               <span className="text-sm text-slate-300">Shop Vendor (Annual)</span>
               <span className="font-semibold text-[#14B8A6]">$400/yr</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/5 px-4 py-3">
+              <span className="text-sm text-slate-300">IOPPS Spotlight</span>
+              <span className="font-semibold text-[#14B8A6]">Contact</span>
             </div>
           </div>
         </div>
@@ -458,7 +511,7 @@ export default function PricingPage() {
               href="/register"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-8 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
             >
-              Create employer account
+              Create organization account
             </Link>
           )}
         </div>

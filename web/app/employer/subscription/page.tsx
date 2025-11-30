@@ -54,8 +54,7 @@ function FeatureItem({ icon, title, description }: FeatureItemProps) {
 function TierBadge({ tier }: { tier: string }) {
   const tierLabels: Record<string, { label: string; color: string }> = {
     TIER1: { label: "Basic", color: "bg-slate-700/50 border-slate-600 text-slate-200" },
-    TIER2: { label: "Professional", color: "bg-blue-500/20 border-blue-500/40 text-blue-300" },
-    TIER3: { label: "Premium", color: "bg-[#14B8A6]/20 border-[#14B8A6]/40 text-[#14B8A6]" },
+    TIER2: { label: "Unlimited + Shop", color: "bg-[#14B8A6]/20 border-[#14B8A6]/40 text-[#14B8A6]" },
   };
 
   const tierInfo = tierLabels[tier as keyof typeof tierLabels] || tierLabels.TIER1;
@@ -457,7 +456,7 @@ export default function SubscriptionPage() {
                     />
                     <FeatureItem
                       icon="⭐"
-                      title="3 Featured Listings"
+                      title="Rotating Featured Listings"
                       description="Premium visibility for top positions"
                     />
                     <FeatureItem
@@ -466,54 +465,19 @@ export default function SubscriptionPage() {
                       description="Detailed insights and reporting"
                     />
                     <FeatureItem
-                      icon="🎯"
-                      title="Priority Support"
-                      description="Faster response times for inquiries"
+                      icon="🛍️"
+                      title="Shop Indigenous Listing"
+                      description="Your business in the Shop Indigenous marketplace"
                     />
                     <FeatureItem
                       icon="🏢"
-                      title="Enhanced Employer Profile"
-                      description="Company videos and media showcase"
+                      title="Organization Branding"
+                      description="Logo and branding on all postings"
                     />
                     <FeatureItem
                       icon="💬"
                       title="Direct Messaging"
                       description="Full messaging suite with applicants"
-                    />
-                  </>
-                )}
-
-                {subscription.tier === "TIER3" && (
-                  <>
-                    <FeatureItem
-                      icon="🚀"
-                      title="Unlimited Everything"
-                      description="Posts, featured listings, and more"
-                    />
-                    <FeatureItem
-                      icon="⭐"
-                      title="Unlimited Featured"
-                      description="Premium placement for all listings"
-                    />
-                    <FeatureItem
-                      icon="📊"
-                      title="Premium Analytics"
-                      description="Full insights with custom reports"
-                    />
-                    <FeatureItem
-                      icon="🎯"
-                      title="Dedicated Support"
-                      description="Premium support with direct contact"
-                    />
-                    <FeatureItem
-                      icon="🏆"
-                      title="Premium Branding"
-                      description="Logo, videos, interviews, and gallery"
-                    />
-                    <FeatureItem
-                      icon="🌟"
-                      title="VIP Visibility"
-                      description="Featured placement on homepage"
                     />
                   </>
                 )}

@@ -152,7 +152,7 @@ export default function SiteHeader() {
                               className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
                               onClick={closeMenu}
                             >
-                              <span className="font-semibold">Employer Dashboard</span>
+                              <span className="font-semibold">Organization Dashboard</span>
                             </Link>
                             <Link
                               href="/employer/messages"
@@ -166,7 +166,7 @@ export default function SiteHeader() {
                               className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
                               onClick={closeMenu}
                             >
-                              <span className="font-semibold">Vendor Dashboard</span>
+                              <span className="font-semibold">Shop Indigenous</span>
                             </Link>
                           </>
                         )}
