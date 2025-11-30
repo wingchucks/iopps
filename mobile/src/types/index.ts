@@ -10,7 +10,12 @@ export interface JobPosting {
   remoteFlag?: boolean;
   indigenousPreference?: boolean;
   quickApplyEnabled?: boolean;
-  salaryRange?: string;
+  salaryRange?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    disclosed?: boolean;
+  } | string;
   closingDate?: string;
   description: string;
   responsibilities?: string[];
