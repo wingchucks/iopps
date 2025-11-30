@@ -658,7 +658,7 @@ function JobsContent() {
             </p>
             {role === "employer" && (
               <Link
-                href="/employer/jobs/new"
+                href="/organization/jobs/new"
                 className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

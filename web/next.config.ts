@@ -34,6 +34,24 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  /* Redirects for backwards compatibility (employer/vendor -> organization) */
+  async redirects() {
+    return [
+      // Employer to Organization redirects
+      {
+        source: "/employer/:path*",
+        destination: "/organization/:path*",
+        permanent: true,
+      },
+      // Vendor to Organization/Shop redirects
+      {
+        source: "/vendor/:path*",
+        destination: "/organization/shop/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -216,10 +216,10 @@ export default function ConferenceDetailPage() {
                   You published this conference
                 </p>
                 <p className="mt-1 text-sm text-amber-300/80">
-                  Edit details, manage registrations, or promote live streams from your employer dashboard.
+                  Edit details, manage registrations, or promote live streams from your organization dashboard.
                 </p>
                 <Link
-                  href={`/employer/conferences/${conference.id}/edit`}
+                  href={`/organization/conferences/${conference.id}/edit`}
                   className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-amber-400 hover:text-amber-300"
                 >
                   Edit Conference

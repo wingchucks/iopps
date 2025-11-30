@@ -226,7 +226,7 @@ export default function PricingPage() {
               "Basic employer profile",
             ]}
             buttonText="Post a Job"
-            buttonHref="/employer/jobs/new"
+            buttonHref="/organization/jobs/new"
           />
           <PricingCard
             title="Featured Job Ad"
@@ -239,7 +239,7 @@ export default function PricingPage() {
               "Analytics (views & clicks)",
             ]}
             buttonText="Post a Featured Job"
-            buttonHref="/employer/jobs/new?featured=true"
+            buttonHref="/organization/jobs/new?featured=true"
           />
         </div>
       </section>
@@ -298,7 +298,7 @@ export default function PricingPage() {
               "Social promo formatting",
             ]}
             buttonText="Post an Event"
-            buttonHref="/employer/conferences/new"
+            buttonHref="/organization/conferences/new"
           />
           <PricingCard
             title={CONFERENCE_PRODUCTS.FEATURED.name}
@@ -312,7 +312,7 @@ export default function PricingPage() {
               "Priority visibility on homepage",
             ]}
             buttonText="Post a Featured Event"
-            buttonHref="/employer/conferences/new?featured=true"
+            buttonHref="/organization/conferences/new?featured=true"
           />
         </div>
       </section>
@@ -333,7 +333,7 @@ export default function PricingPage() {
             badge="First month FREE"
             features={VENDOR_PRODUCTS.MONTHLY.features}
             buttonText="List Your Business"
-            buttonHref="/vendor/register"
+            buttonHref="/organization/shop/setup"
           />
           <PricingCard
             title={VENDOR_PRODUCTS.ANNUAL.name}
@@ -342,7 +342,7 @@ export default function PricingPage() {
             badge="Save $200"
             features={VENDOR_PRODUCTS.ANNUAL.features}
             buttonText="Get Annual Plan"
-            buttonHref="/vendor/register?plan=annual"
+            buttonHref="/organization/shop/setup?plan=annual"
           />
         </div>
       </section>

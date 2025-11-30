@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
                 },
             ],
             mode: "payment",
-            success_url: `${request.nextUrl.origin}/employer/jobs/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${request.nextUrl.origin}/employer/jobs/new?canceled=true`,
+            success_url: `${request.nextUrl.origin}/organization/jobs/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${request.nextUrl.origin}/organization/jobs/new?canceled=true`,
             metadata: {
                 productType,
                 userId,

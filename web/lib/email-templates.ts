@@ -381,7 +381,7 @@ export function subscriptionEmail(plan: string, expiryDate: string, userName: st
         </td>
       </tr>
     </table>
-    ${button('Go to Dashboard', 'https://your-domain.com/employer/dashboard')}
+    ${button('Go to Dashboard', 'https://your-domain.com/organization/dashboard')}
     <p style="margin: 20px 0 0; font-size: 14px; color: #94A3B8; line-height: 1.6;">
       Need help? Visit our <a href="https://your-domain.com/help" style="color: #14B8A6; text-decoration: underline;">Help Center</a> or contact support.
     </p>
