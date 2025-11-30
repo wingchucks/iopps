@@ -236,7 +236,21 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
           <Text style={styles.separator}>•</Text>
           <Text style={styles.employmentType}>{item.employmentType}</Text>
         </View>
-        {item.salaryRange && <Text style={styles.salary}>{item.salaryRange}</Text>}
+        {item.salaryRange && (
+          <Text style={styles.salary}>
+            {typeof item.salaryRange === "string"
+              ? item.salaryRange
+              : item.salaryRange.disclosed === false
+              ? null
+              : item.salaryRange.min && item.salaryRange.max
+              ? `$${item.salaryRange.min.toLocaleString()} - $${item.salaryRange.max.toLocaleString()} ${item.salaryRange.currency || "CAD"}`
+              : item.salaryRange.min
+              ? `From $${item.salaryRange.min.toLocaleString()} ${item.salaryRange.currency || "CAD"}`
+              : item.salaryRange.max
+              ? `Up to $${item.salaryRange.max.toLocaleString()} ${item.salaryRange.currency || "CAD"}`
+              : null}
+          </Text>
+        )}
         <View style={styles.tags}>
           {item.remoteFlag && (
             <View style={styles.tag}>
