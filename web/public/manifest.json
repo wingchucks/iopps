@@ -1,11 +1,12 @@
 {
-  "name": "IOPPS - Indigenous Opportunities & Partnerships Platform",
+  "name": "IOPPS - Indigenous Jobs",
   "short_name": "IOPPS",
   "description": "Empowering Indigenous success across Canada through jobs, conferences, scholarships, and more.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#14B8A6",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
   "orientation": "portrait-primary",
   "icons": [
     {
