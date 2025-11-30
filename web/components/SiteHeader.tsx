@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
@@ -20,8 +20,26 @@ export default function SiteHeader() {
   const { user, role, loading, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-gradient-to-r from-[#0D0D0F] via-[#0A0A0C] to-[#0D0D0F] shadow-lg shadow-black/20 backdrop-blur-xl">
@@ -85,7 +103,7 @@ export default function SiteHeader() {
             ) : user ? (
               <>
                 <NotificationBell />
-                <div className="relative">
+                <div className="relative" ref={menuRef}>
                 <button
                   className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-[#14B8A6]/50 hover:bg-slate-800/60"
                   onClick={() => setMenuOpen((prev) => !prev)}
