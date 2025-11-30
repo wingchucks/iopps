@@ -41,7 +41,7 @@ export default function ShopScreen() {
     loadVendors();
   };
 
-  const categories = ["all", ...new Set(vendors.map((v) => v.category).filter(Boolean))];
+  const categories: string[] = ["all", ...new Set(vendors.map((v) => v.category).filter((c): c is string => Boolean(c)))];
 
   const filteredVendors = vendors.filter((v) => {
     if (filter === "all") return true;

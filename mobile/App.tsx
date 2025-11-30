@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View, Text, StyleSheet } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, NavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider } from "./src/context/AuthContext";
+import { NotificationProvider, useNotifications } from "./src/context/NotificationContext";
 
 // Main screens
 import JobsScreen from "./src/screens/JobsScreen";
@@ -314,14 +315,39 @@ function RootNavigator() {
   );
 }
 
+// Navigation wrapper that passes ref to NotificationContext
+function NavigationWrapper() {
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
+  const { setNavigationRef } = useNotifications();
+
+  useEffect(() => {
+    if (navigationRef.current) {
+      setNavigationRef(navigationRef.current);
+    }
+  }, [setNavigationRef]);
+
+  return (
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (navigationRef.current) {
+          setNavigationRef(navigationRef.current);
+        }
+      }}
+    >
+      <RootNavigator />
+      <StatusBar style="light" />
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-          <StatusBar style="light" />
-        </NavigationContainer>
+        <NotificationProvider>
+          <NavigationWrapper />
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
