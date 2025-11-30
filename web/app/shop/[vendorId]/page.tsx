@@ -164,8 +164,11 @@ export default function VendorDetailPage() {
 
               <div className="mt-6 pt-6 border-t border-slate-800">
                 <ShareButtons
-                  title={`${vendor.businessName} - Indigenous-Owned Business on IOPPS`}
-                  description={vendor.about?.substring(0, 150) + '...' || `Support ${vendor.businessName}, an Indigenous-owned business`}
+                  item={{
+                    id: vendor.id,
+                    title: `${vendor.businessName} - Indigenous-Owned Business on IOPPS`,
+                    description: vendor.about?.substring(0, 150) + '...' || `Support ${vendor.businessName}, an Indigenous-owned business`,
+                  }}
                 />
               </div>
             </div>

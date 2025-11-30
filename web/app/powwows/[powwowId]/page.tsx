@@ -223,8 +223,11 @@ export default function PowwowDetailPage() {
           {/* Share Buttons */}
           <div className="mt-6 pt-6 border-t border-slate-800">
             <ShareButtons
-              title={`${powwow.name} - Pow Wow`}
-              description={powwow.description.substring(0, 150) + '...'}
+              item={{
+                id: powwow.id,
+                title: `${powwow.name} - Pow Wow`,
+                description: powwow.description.substring(0, 150) + '...',
+              }}
             />
           </div>
         </div>

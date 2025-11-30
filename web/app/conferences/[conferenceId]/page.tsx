@@ -194,8 +194,12 @@ export default function ConferenceDetailPage() {
           {/* Share Buttons */}
           <div className="mt-6 pt-6 border-t border-slate-800">
             <ShareButtons
-              title={`${conference.title} - Conference`}
-              description={`${conference.location} | ${startDate || 'Date TBA'}`}
+              item={{
+                id: conference.id,
+                title: `${conference.title} - Conference`,
+                description: `${conference.location} | ${startDate || 'Date TBA'}`,
+                type: 'conference'
+              }}
             />
           </div>
         </div>

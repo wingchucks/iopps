@@ -200,8 +200,12 @@ export default function ScholarshipDetailPage() {
           {/* Share Buttons */}
           <div className="mt-6 pt-6 border-t border-slate-800">
             <ShareButtons
-              title={`${scholarship.title} - ${scholarship.provider}`}
-              description={scholarship.description.substring(0, 150) + '...'}
+              item={{
+                id: scholarship.id,
+                title: `${scholarship.title} - ${scholarship.provider}`,
+                description: scholarship.description.substring(0, 150) + '...',
+                type: 'scholarship'
+              }}
             />
           </div>
         </div>

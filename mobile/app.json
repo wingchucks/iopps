@@ -2,7 +2,7 @@
   "expo": {
     "name": "IOPPS",
     "slug": "iopps",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -18,7 +18,8 @@
       "bundleIdentifier": "ca.iopps.app",
       "infoPlist": {
         "NSCameraUsageDescription": "IOPPS needs camera access to upload profile photos and documents.",
-        "NSPhotoLibraryUsageDescription": "IOPPS needs photo library access to upload profile photos and resumes."
+        "NSPhotoLibraryUsageDescription": "IOPPS needs photo library access to upload profile photos and resumes.",
+        "NSFaceIDUsageDescription": "IOPPS uses Face ID for secure and quick sign-in to your account."
       }
     },
     "android": {
@@ -28,8 +29,24 @@
       },
       "package": "ca.iopps.app",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#14B8A6"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow IOPPS to use Face ID for quick sign-in."
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"

@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
 import MainLayout from "@/components/MainLayout";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -106,11 +107,31 @@ export default function RootLayout({
             __html: JSON.stringify(websiteSchema),
           }}
         />
+        {/* Service Worker Registration for PWA */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('SW registered: ', registration.scope);
+                    },
+                    function(err) {
+                      console.log('SW registration failed: ', err);
+                    }
+                  );
+                });
+              }
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.className} bg-slate-950 text-slate-100`}>
         <AuthProvider>
           <MainLayout>{children}</MainLayout>
         </AuthProvider>
+        <PerformanceMonitor />
       </body>
     </html>
   );
