@@ -55,15 +55,6 @@ export async function POST(request: NextRequest) {
 
         const product = CONFERENCE_PRODUCTS[productType as ConferenceProductType];
 
-        // For free listings, no checkout needed
-        if (product.price === 0) {
-            return NextResponse.json({
-                success: true,
-                isFree: true,
-                message: "Free listing - no payment required"
-            });
-        }
-
         // Create Stripe checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],

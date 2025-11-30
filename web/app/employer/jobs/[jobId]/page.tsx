@@ -121,7 +121,7 @@ export default function EmployerJobDetailPage({ params }: { params: { jobId: str
             >
               {job.active ? "Active" : "Inactive"}
             </span>
-            {job.featured && (
+            {job.productType === "FEATURED" && (
               <span className="inline-flex rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-400">
                 Featured
               </span>
@@ -225,23 +225,25 @@ export default function EmployerJobDetailPage({ params }: { params: { jobId: str
                   >
                     <div>
                       <p className="text-sm font-medium text-slate-200">
-                        {app.applicantName || "Anonymous"}
+                        {app.memberDisplayName || app.memberEmail || "Anonymous"}
                       </p>
                       <p className="text-xs text-slate-400">
-                        Applied {app.appliedAt?.toDate().toLocaleDateString() || "Unknown"}
+                        Applied {app.createdAt && typeof (app.createdAt as any).toDate === "function"
+                          ? (app.createdAt as any).toDate().toLocaleDateString()
+                          : "Unknown"}
                       </p>
                     </div>
                     <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${app.status === "pending"
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${app.status === "submitted"
                         ? "bg-amber-500/10 text-amber-400"
-                        : app.status === "reviewing"
+                        : app.status === "reviewed"
                           ? "bg-blue-500/10 text-blue-400"
-                          : app.status === "accepted"
+                          : app.status === "shortlisted" || app.status === "hired"
                             ? "bg-emerald-500/10 text-emerald-400"
                             : "bg-slate-700/50 text-slate-400"
                         }`}
                     >
-                      {app.status || "Pending"}
+                      {app.status || "Submitted"}
                     </span>
                   </div>
                 ))}
@@ -268,19 +270,33 @@ export default function EmployerJobDetailPage({ params }: { params: { jobId: str
               {job.salaryRange && (
                 <div>
                   <dt className="text-xs text-slate-400">Salary Range</dt>
-                  <dd className="text-sm text-slate-200 mt-1">{job.salaryRange}</dd>
+                  <dd className="text-sm text-slate-200 mt-1">
+                    {typeof job.salaryRange === "string"
+                      ? job.salaryRange
+                      : job.salaryRange.disclosed === false
+                        ? "Not disclosed"
+                        : `${job.salaryRange.currency || "$"}${job.salaryRange.min?.toLocaleString() || ""}${job.salaryRange.max ? ` - ${job.salaryRange.currency || "$"}${job.salaryRange.max.toLocaleString()}` : "+"}`}
+                  </dd>
                 </div>
               )}
               {job.closingDate && (
                 <div>
                   <dt className="text-xs text-slate-400">Application Deadline</dt>
-                  <dd className="text-sm text-slate-200 mt-1">{job.closingDate}</dd>
+                  <dd className="text-sm text-slate-200 mt-1">
+                    {typeof job.closingDate === "string"
+                      ? job.closingDate
+                      : typeof (job.closingDate as any).toDate === "function"
+                        ? (job.closingDate as any).toDate().toLocaleDateString()
+                        : new Date(job.closingDate as any).toLocaleDateString()}
+                  </dd>
                 </div>
               )}
               <div>
                 <dt className="text-xs text-slate-400">Posted Date</dt>
                 <dd className="text-sm text-slate-200 mt-1">
-                  {job.createdAt?.toDate().toLocaleDateString() || "N/A"}
+                  {job.createdAt && typeof (job.createdAt as any).toDate === "function"
+                    ? (job.createdAt as any).toDate().toLocaleDateString()
+                    : "N/A"}
                 </dd>
               </div>
             </dl>

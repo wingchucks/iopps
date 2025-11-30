@@ -107,30 +107,6 @@ export default function NewConferencePage() {
     }
   };
 
-  const handleFreeSelect = async () => {
-    if (!conferenceId) return;
-
-    // For free listings, activate immediately
-    try {
-      const { updateConference } = await import("@/lib/firestore");
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + 60); // 60 days for free
-
-      await updateConference(conferenceId, {
-        active: true,
-        featured: false,
-        paymentStatus: "paid",
-        productType: "FREE",
-        expiresAt: expirationDate,
-      });
-
-      router.push(`/employer/conferences?success=true`);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to activate free conference listing");
-    }
-  };
-
   // Pricing step
   if (step === "pricing" && conferenceId && user) {
     return (
@@ -138,7 +114,6 @@ export default function NewConferencePage() {
         <ConferencePricingSelector
           conferenceId={conferenceId}
           userId={user.uid}
-          onFreeSelect={handleFreeSelect}
         />
       </div>
     );

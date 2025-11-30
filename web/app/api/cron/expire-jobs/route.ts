@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  updateDoc,
-  doc,
-  serverTimestamp,
-} from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 // Mark this route as dynamic to prevent static analysis
 export const dynamic = "force-dynamic";
@@ -42,13 +34,11 @@ export async function GET(request: NextRequest) {
 
     // Query 1: Jobs where expiresAt <= current date AND active = true
     console.log("Querying jobs with expired expiresAt...");
-    const expiresAtQuery = query(
-      collection(db, "jobs"),
-      where("active", "==", true),
-      where("expiresAt", "<=", now)
-    );
-
-    const expiresAtSnapshot = await getDocs(expiresAtQuery);
+    const expiresAtSnapshot = await db
+      .collection("jobs")
+      .where("active", "==", true)
+      .where("expiresAt", "<=", now)
+      .get();
 
     if (!expiresAtSnapshot.empty) {
       console.log(
@@ -57,10 +47,9 @@ export async function GET(request: NextRequest) {
 
       for (const jobDoc of expiresAtSnapshot.docs) {
         try {
-          const jobRef = doc(db, "jobs", jobDoc.id);
-          await updateDoc(jobRef, {
+          await db.collection("jobs").doc(jobDoc.id).update({
             active: false,
-            updatedAt: serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           });
           expiredCount++;
           console.log(`Expired job: ${jobDoc.id} (expiresAt)`);
@@ -72,13 +61,11 @@ export async function GET(request: NextRequest) {
 
     // Query 2: Jobs where closingDate <= current date AND active = true
     console.log("Querying jobs with expired closingDate...");
-    const closingDateQuery = query(
-      collection(db, "jobs"),
-      where("active", "==", true),
-      where("closingDate", "<=", now)
-    );
-
-    const closingDateSnapshot = await getDocs(closingDateQuery);
+    const closingDateSnapshot = await db
+      .collection("jobs")
+      .where("active", "==", true)
+      .where("closingDate", "<=", now)
+      .get();
 
     if (!closingDateSnapshot.empty) {
       console.log(
@@ -87,16 +74,15 @@ export async function GET(request: NextRequest) {
 
       for (const jobDoc of closingDateSnapshot.docs) {
         // Skip if already processed in expiresAt query
-        if (expiresAtSnapshot.docs.some((doc) => doc.id === jobDoc.id)) {
+        if (expiresAtSnapshot.docs.some((d: { id: string }) => d.id === jobDoc.id)) {
           console.log(`Skipping job ${jobDoc.id} - already processed`);
           continue;
         }
 
         try {
-          const jobRef = doc(db, "jobs", jobDoc.id);
-          await updateDoc(jobRef, {
+          await db.collection("jobs").doc(jobDoc.id).update({
             active: false,
-            updatedAt: serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           });
           expiredCount++;
           console.log(`Expired job: ${jobDoc.id} (closingDate)`);
