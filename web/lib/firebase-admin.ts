@@ -6,15 +6,23 @@ import { getAuth } from "firebase-admin/auth";
 function parsePrivateKey(key: string | undefined): string | null {
     if (!key) return null;
 
-    // Remove surrounding quotes if present
     let parsedKey = key.trim();
+
+    // Remove surrounding quotes if present (single, double, or backticks)
     if ((parsedKey.startsWith('"') && parsedKey.endsWith('"')) ||
-        (parsedKey.startsWith("'") && parsedKey.endsWith("'"))) {
+        (parsedKey.startsWith("'") && parsedKey.endsWith("'")) ||
+        (parsedKey.startsWith('`') && parsedKey.endsWith('`'))) {
         parsedKey = parsedKey.slice(1, -1);
     }
 
+    // Handle double-escaped newlines (\\\\n -> \\n -> \n)
+    parsedKey = parsedKey.replace(/\\\\n/g, "\\n");
+
     // Replace literal \n with actual newlines
     parsedKey = parsedKey.replace(/\\n/g, "\n");
+
+    // Handle Windows-style line endings
+    parsedKey = parsedKey.replace(/\r\n/g, "\n");
 
     // Try to decode from base64 if it doesn't look like a PEM key
     if (!parsedKey.includes("-----BEGIN")) {
@@ -28,7 +36,31 @@ function parsePrivateKey(key: string | undefined): string | null {
         }
     }
 
+    // Final validation - must contain BEGIN PRIVATE KEY
+    if (!parsedKey.includes("-----BEGIN PRIVATE KEY-----")) {
+        console.error("Private key does not contain valid PEM header. First 50 chars:", parsedKey.substring(0, 50));
+        return null;
+    }
+
     return parsedKey;
+}
+
+// Try to parse service account from JSON string (alternative method)
+function tryParseServiceAccountJson(): { projectId?: string; clientEmail?: string; privateKey?: string } | null {
+    const jsonStr = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (!jsonStr) return null;
+
+    try {
+        const parsed = JSON.parse(jsonStr);
+        return {
+            projectId: parsed.project_id,
+            clientEmail: parsed.client_email,
+            privateKey: parsed.private_key,
+        };
+    } catch {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON");
+        return null;
+    }
 }
 
 // Initialize Firebase Admin
@@ -45,10 +77,13 @@ if (!getApps().length) {
                 projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-iopps",
             });
         } else {
-            // Check if we have the necessary credentials
-            const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-            const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-            const privateKey = parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+            // Try JSON service account first (most reliable)
+            const serviceAccount = tryParseServiceAccountJson();
+
+            // Fall back to individual env vars
+            const projectId = serviceAccount?.projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+            const clientEmail = serviceAccount?.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
+            const privateKey = serviceAccount?.privateKey || parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
             // Only attempt to initialize with cert if we have credentials
             if (projectId && clientEmail && privateKey) {
