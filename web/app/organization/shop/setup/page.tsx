@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,6 +24,18 @@ const categoryOptions = [
 ] as const;
 
 export default function VendorSetupPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <p className="text-sm text-slate-300">Loading your vendor profile...</p>
+      </div>
+    }>
+      <VendorSetupContent />
+    </Suspense>
+  );
+}
+
+function VendorSetupContent() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
