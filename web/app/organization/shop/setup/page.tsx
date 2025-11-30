@@ -249,39 +249,109 @@ export default function VendorSetupPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Sign in to manage your vendor profile
-        </h1>
-        <p className="text-sm text-slate-300">
-          Create an employer account to set up your vendor profile.
-        </p>
-        <div className="flex gap-3">
-          <Link
-            href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90"
-          >
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6]"
-          >
-            Register
-          </Link>
+      <PageShell>
+        <div className="mx-auto max-w-2xl space-y-6">
+          <SectionHeader
+            eyebrow="Shop Indigenous"
+            title="List your Indigenous business"
+            subtitle="Sign in or create an organization account to set up your vendor profile and list your business on Shop Indigenous."
+          />
+
+          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/login?redirect=/organization/shop/setup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/register?role=employer&redirect=/organization/shop/setup"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+              >
+                Create organization account
+              </Link>
+            </div>
+            <p className="text-xs text-slate-400">
+              Organization accounts give you access to post jobs, list your business on Shop Indigenous, and manage your organization profile.
+            </p>
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (role !== "employer") {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Vendor access only</h1>
-        <p className="text-sm text-slate-300">
-          Switch to your employer account to manage your vendor profile.
-        </p>
-      </div>
+      <PageShell>
+        <div className="mx-auto max-w-2xl space-y-6">
+          <SectionHeader
+            eyebrow="Shop Indigenous"
+            title="List your Indigenous business"
+            subtitle="To set up a vendor profile and list your business on Shop Indigenous, you'll need an organization account."
+          />
+
+          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30 space-y-6">
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-50">
+                How to get started
+              </h2>
+              <p className="text-sm text-slate-300">
+                You&apos;re currently signed in as a community member. To list your business on Shop Indigenous, you have two options:
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-5">
+                <h3 className="font-semibold text-slate-100">Option 1: Create an organization account</h3>
+                <p className="mt-2 text-sm text-slate-300">
+                  Register a new organization account to access vendor features, post jobs, and list your business.
+                </p>
+                <Link
+                  href="/register?role=employer&redirect=/organization/shop/setup"
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  Create organization account
+                </Link>
+              </div>
+
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-5">
+                <h3 className="font-semibold text-slate-100">Option 2: Upgrade your existing account</h3>
+                <p className="mt-2 text-sm text-slate-300">
+                  Contact IOPPS to upgrade your community account to an organization account while keeping your existing profile.
+                </p>
+                <Link
+                  href="/contact"
+                  className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Contact IOPPS
+                </Link>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-800 pt-5">
+              <p className="text-xs text-slate-400">
+                Organization accounts require approval and give you access to post jobs, list your business on Shop Indigenous, and manage your organization profile.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="/pricing"
+              className="text-sm text-[#14B8A6] hover:underline"
+            >
+              View pricing details →
+            </Link>
+          </div>
+        </div>
+      </PageShell>
     );
   }
 
