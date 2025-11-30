@@ -20,6 +20,15 @@ interface CreateNotificationRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Firebase Admin is initialized
+    if (!auth || !db) {
+      console.error("Firebase Admin not initialized - check environment variables");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 503 }
+      );
+    }
+
     // Verify authentication - only logged-in users can create notifications
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -33,13 +42,6 @@ export async function POST(request: NextRequest) {
     // (e.g., employer gets notified when member applies to job)
     // The Firestore rules on the triggering action (applications, messages, etc.)
     // provide the actual authorization
-
-    if (!db) {
-      return NextResponse.json(
-        { error: "Database not available" },
-        { status: 503 }
-      );
-    }
 
     const body: CreateNotificationRequest = await request.json();
 

@@ -3,6 +3,15 @@ import { auth, db } from "@/lib/firebase-admin";
 
 export async function POST(req: NextRequest) {
     try {
+        // Check if Firebase Admin is initialized
+        if (!auth || !db) {
+            console.error("Firebase Admin not initialized - check environment variables");
+            return NextResponse.json(
+                { error: "Server configuration error" },
+                { status: 503 }
+            );
+        }
+
         const authHeader = req.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer ")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

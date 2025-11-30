@@ -2,6 +2,35 @@ import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
+// Helper to parse the private key from various formats
+function parsePrivateKey(key: string | undefined): string | null {
+    if (!key) return null;
+
+    // Remove surrounding quotes if present
+    let parsedKey = key.trim();
+    if ((parsedKey.startsWith('"') && parsedKey.endsWith('"')) ||
+        (parsedKey.startsWith("'") && parsedKey.endsWith("'"))) {
+        parsedKey = parsedKey.slice(1, -1);
+    }
+
+    // Replace literal \n with actual newlines
+    parsedKey = parsedKey.replace(/\\n/g, "\n");
+
+    // Try to decode from base64 if it doesn't look like a PEM key
+    if (!parsedKey.includes("-----BEGIN")) {
+        try {
+            const decoded = Buffer.from(parsedKey, "base64").toString("utf-8");
+            if (decoded.includes("-----BEGIN")) {
+                parsedKey = decoded;
+            }
+        } catch {
+            // Not base64, continue with original
+        }
+    }
+
+    return parsedKey;
+}
+
 // Initialize Firebase Admin
 if (!getApps().length) {
     try {
@@ -19,7 +48,7 @@ if (!getApps().length) {
             // Check if we have the necessary credentials
             const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
             const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-            const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+            const privateKey = parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
             // Only attempt to initialize with cert if we have credentials
             if (projectId && clientEmail && privateKey) {
@@ -27,16 +56,17 @@ if (!getApps().length) {
                     credential: cert({
                         projectId,
                         clientEmail,
-                        privateKey: privateKey.replace(/\\n/g, "\n"),
+                        privateKey,
                     }),
                 });
+                console.log("✅ Firebase Admin initialized successfully");
             } else {
-                // If missing credentials (e.g. during build), initialize with default (will fail at runtime if used)
-                // or just don't initialize if we want to be safer
-                console.warn("Firebase Admin credentials missing. Skipping initialization.");
-                if (process.env.NODE_ENV === "development") {
-                    initializeApp();
-                }
+                // Log which credentials are missing
+                const missing = [];
+                if (!projectId) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+                if (!clientEmail) missing.push("FIREBASE_CLIENT_EMAIL");
+                if (!privateKey) missing.push("FIREBASE_PRIVATE_KEY");
+                console.warn(`Firebase Admin credentials missing: ${missing.join(", ")}. API routes requiring auth will fail.`);
             }
         }
     } catch (error) {
@@ -44,6 +74,6 @@ if (!getApps().length) {
     }
 }
 
-// Export a function to get DB to ensure it's initialized or throw error at runtime
-export const db = getApps().length ? getFirestore() : null as any;
-export const auth = getApps().length ? getAuth() : null as any;
+// Export auth and db - they may be null if initialization failed
+export const db = getApps().length ? getFirestore() : null;
+export const auth = getApps().length ? getAuth() : null;
