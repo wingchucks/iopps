@@ -13,6 +13,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { JobPosting } from "../types";
 import { useAuth } from "../context/AuthContext";
+import { isJobSaved, saveJob, unsaveJob } from "../lib/firestore";
 
 interface JobDetailScreenProps {
   route: any;
@@ -24,6 +25,8 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
   const { user } = useAuth();
   const [job, setJob] = useState<JobPosting | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingJob, setSavingJob] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -31,6 +34,12 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         const jobDoc = await getDoc(doc(db, "jobs", jobId));
         if (jobDoc.exists()) {
           setJob({ id: jobDoc.id, ...jobDoc.data() } as JobPosting);
+        }
+
+        // Check if job is saved
+        if (user) {
+          const saved = await isJobSaved(user.uid, jobId);
+          setIsSaved(saved);
         }
       } catch (error) {
         console.error("Error fetching job:", error);
@@ -40,21 +49,60 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
     };
 
     fetchJob();
-  }, [jobId]);
+  }, [jobId, user]);
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      Alert.alert(
+        "Sign In Required",
+        "Please sign in to save jobs.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Sign In", onPress: () => navigation.navigate("SignIn") },
+        ]
+      );
+      return;
+    }
+
+    setSavingJob(true);
+    try {
+      if (isSaved) {
+        await unsaveJob(user.uid, jobId);
+        setIsSaved(false);
+      } else {
+        await saveJob(user.uid, jobId);
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error("Error toggling save:", error);
+      Alert.alert("Error", "Failed to save job. Please try again.");
+    } finally {
+      setSavingJob(false);
+    }
+  };
 
   const handleApply = async () => {
     if (!job) return;
 
     try {
-      if (job.applicationLink) {
+      if (job.quickApplyEnabled && user) {
+        // Navigate to quick apply screen
+        navigation.navigate("QuickApply", { jobId: job.id });
+      } else if (job.quickApplyEnabled && !user) {
+        Alert.alert(
+          "Sign In Required",
+          "Please sign in to use Quick Apply.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Sign In", onPress: () => navigation.navigate("SignIn") },
+          ]
+        );
+      } else if (job.applicationLink) {
         await Linking.openURL(job.applicationLink);
       } else if (job.applicationEmail) {
         await Linking.openURL(`mailto:${job.applicationEmail}?subject=Application: ${job.title}`);
-      } else if (job.quickApplyEnabled && user) {
-        // Navigate to quick apply screen
-        navigation.navigate("QuickApply", { jobId: job.id });
       } else {
-        Alert.alert("Apply", "Please sign in to apply for this position.");
+        Alert.alert("Apply", "No application method available for this job.");
       }
     } catch (error) {
       console.error("Error opening application link:", error);
@@ -90,8 +138,19 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
           </View>
         )}
 
-        <Text style={styles.title}>{job.title}</Text>
-        <Text style={styles.employer}>{job.employerName}</Text>
+        <View style={styles.titleRow}>
+          <View style={styles.titleContent}>
+            <Text style={styles.title}>{job.title}</Text>
+            <Text style={styles.employer}>{job.employerName}</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.saveButton, isSaved && styles.savedButton]}
+            onPress={handleToggleSave}
+            disabled={savingJob}
+          >
+            <Text style={styles.saveIcon}>{isSaved ? "🔖" : "📑"}</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
@@ -167,6 +226,15 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
       </ScrollView>
 
       <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.saveFooterButton, isSaved && styles.savedFooterButton]}
+          onPress={handleToggleSave}
+          disabled={savingJob}
+        >
+          <Text style={styles.saveFooterText}>
+            {savingJob ? "..." : isSaved ? "Saved" : "Save"}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
           <Text style={styles.applyButtonText}>
             {job.quickApplyEnabled ? "Quick Apply" : "Apply Now"}
@@ -203,7 +271,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   featuredBanner: {
     backgroundColor: "#F59E0B",
@@ -218,6 +286,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  titleContent: {
+    flex: 1,
+    marginRight: 12,
+  },
   title: {
     fontSize: 24,
     fontWeight: "700",
@@ -227,7 +305,23 @@ const styles = StyleSheet.create({
   employer: {
     fontSize: 16,
     color: "#14B8A6",
-    marginBottom: 16,
+  },
+  saveButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#1E293B",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  savedButton: {
+    backgroundColor: "#14B8A620",
+    borderColor: "#14B8A6",
+  },
+  saveIcon: {
+    fontSize: 20,
   },
   metaRow: {
     flexDirection: "row",
@@ -338,10 +432,31 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "#1E293B",
     padding: 16,
+    paddingBottom: 32,
     borderTopWidth: 1,
     borderTopColor: "#334155",
+    flexDirection: "row",
+    gap: 12,
+  },
+  saveFooterButton: {
+    backgroundColor: "#0F172A",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  savedFooterButton: {
+    backgroundColor: "#14B8A620",
+    borderColor: "#14B8A6",
+  },
+  saveFooterText: {
+    color: "#F8FAFC",
+    fontSize: 14,
+    fontWeight: "600",
   },
   applyButton: {
+    flex: 1,
     backgroundColor: "#14B8A6",
     paddingVertical: 16,
     borderRadius: 12,

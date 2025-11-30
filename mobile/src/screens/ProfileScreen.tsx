@@ -79,21 +79,34 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Account</Text>
 
         <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuItemIcon}>✏️</Text>
           <Text style={styles.menuItemText}>Edit Profile</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => (navigation as any).navigate("SavedJobs")}
+        >
+          <Text style={styles.menuItemIcon}>🔖</Text>
           <Text style={styles.menuItemText}>Saved Jobs</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => (navigation as any).navigate("Applications")}
+        >
+          <Text style={styles.menuItemIcon}>📋</Text>
           <Text style={styles.menuItemText}>My Applications</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => (navigation as any).navigate("JobAlerts")}
+        >
+          <Text style={styles.menuItemIcon}>🔔</Text>
           <Text style={styles.menuItemText}>Job Alerts</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
@@ -102,17 +115,23 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => (navigation as any).navigate("Notifications")}
+        >
+          <Text style={styles.menuItemIcon}>📢</Text>
           <Text style={styles.menuItemText}>Notifications</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuItemIcon}>🔒</Text>
           <Text style={styles.menuItemText}>Privacy</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem}>
+          <Text style={styles.menuItemIcon}>❓</Text>
           <Text style={styles.menuItemText}>Help & Support</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
@@ -122,7 +141,7 @@ export default function ProfileScreen() {
         <Text style={styles.signOutButtonText}>Sign Out</Text>
       </TouchableOpacity>
 
-      <Text style={styles.version}>IOPPS Mobile v1.0.0</Text>
+      <Text style={styles.version}>IOPPS Mobile v1.1.0</Text>
     </ScrollView>
   );
 }
@@ -240,14 +259,18 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: "#1E293B",
     padding: 16,
     borderRadius: 12,
     marginBottom: 8,
   },
+  menuItemIcon: {
+    fontSize: 18,
+    marginRight: 12,
+  },
   menuItemText: {
+    flex: 1,
     fontSize: 16,
     color: "#F8FAFC",
   },
