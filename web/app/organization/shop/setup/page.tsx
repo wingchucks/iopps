@@ -4,7 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { getVendorProfile, upsertVendorProfile, deleteVendorProfile } from "@/lib/firestore";
+import { getVendorProfile, upsertVendorProfile, deleteVendorProfile, type UpsertVendorResult } from "@/lib/firestore";
+import type { VendorApprovalStatus } from "@/lib/types";
 import { storage } from "@/lib/firebase";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { PageShell } from "@/components/PageShell";
@@ -75,6 +76,8 @@ export default function VendorSetupPage() {
   const [hasProfile, setHasProfile] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<VendorApprovalStatus | null>(null);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   // Load existing profile
   useEffect(() => {
@@ -106,6 +109,7 @@ export default function VendorSetupPage() {
           setOtherLink(profile.otherLink ?? "");
           setLogoUrl(profile.logoUrl ?? "");
           setHeroImageUrl(profile.heroImageUrl ?? "");
+          setApprovalStatus(profile.approvalStatus ?? null);
         }
       } catch (err) {
         console.error(err);
@@ -196,9 +200,10 @@ export default function VendorSetupPage() {
     setSaving(true);
     setError(null);
     setSuccess(false);
+    setPendingMessage(null);
 
     try {
-      await upsertVendorProfile(user.uid, {
+      const result = await upsertVendorProfile(user.uid, {
         businessName,
         tagline,
         category,
@@ -223,8 +228,15 @@ export default function VendorSetupPage() {
         heroImageUrl,
         active: true,
       });
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+
+      setApprovalStatus(result.approvalStatus);
+
+      if (result.approvalStatus === 'pending_review') {
+        setPendingMessage(result.message || 'Your profile is pending review.');
+      } else {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to save vendor profile. Please try again.");
@@ -453,6 +465,48 @@ export default function VendorSetupPage() {
         title="Your vendor profile"
         subtitle="Share your story, offerings, and contact details so community members can find and support your business."
       />
+
+      {/* Approval status banners */}
+      {approvalStatus === 'pending_review' && (
+        <div className="mt-6 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-yellow-200">Profile pending review</h3>
+              <p className="mt-1 text-sm text-yellow-200/80">
+                Your vendor profile is being reviewed by our team. This usually happens when we detect a similar business already listed. Your listing won&apos;t appear publicly until approved.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {approvalStatus === 'rejected' && (
+        <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="font-semibold text-red-200">Profile not approved</h3>
+              <p className="mt-1 text-sm text-red-200/80">
+                Your vendor profile was not approved. This may be because a similar business is already listed. Please contact us if you believe this is an error.
+              </p>
+              <Link href="/contact" className="mt-2 inline-block text-sm text-red-200 underline hover:text-red-100">
+                Contact support
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingMessage && (
+        <div className="mt-6 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-4">
+          <p className="text-sm text-yellow-200">{pendingMessage}</p>
+        </div>
+      )}
 
       {/* Profile completion indicator */}
       <div className="mt-8 rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 shadow-lg shadow-black/30">
