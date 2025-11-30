@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import ReloadButton from './ReloadButton';
 
 export const metadata: Metadata = {
   title: 'Offline',
@@ -36,34 +37,16 @@ export default function OfflinePage() {
 
         {/* Main Content */}
         <h1 className="text-3xl font-bold text-slate-100 mb-4">
-          You're Offline
+          You&apos;re Offline
         </h1>
 
         <p className="text-slate-400 mb-8 leading-relaxed">
-          It looks like you've lost your internet connection. Don't worry, you can still access previously viewed pages.
+          It looks like you&apos;ve lost your internet connection. Don&apos;t worry, you can still access previously viewed pages.
         </p>
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            Try Again
-          </button>
+          <ReloadButton />
 
           <Link
             href="/"
