@@ -112,19 +112,66 @@ export async function POST(request: NextRequest) {
                     expirationDate.setDate(expirationDate.getDate() + durationDays);
 
                     const vendorRef = db.collection("vendors").doc(vendorId);
+                    const vendorDoc = await vendorRef.get();
 
-                    await vendorRef.update({
-                        active: true,
-                        featured: featured === "true",
-                        subscription: {
+                    // Create or update vendor document
+                    if (vendorDoc.exists) {
+                        await vendorRef.update({
                             active: true,
-                            type: productType || "MONTHLY",
-                            purchasedAt: new Date(),
-                            expiresAt: expirationDate,
-                            paymentId: session.payment_intent as string,
-                            amountPaid: session.amount_total,
-                        },
-                    });
+                            featured: featured === "true",
+                            subscription: {
+                                active: true,
+                                type: productType || "MONTHLY",
+                                purchasedAt: new Date(),
+                                expiresAt: expirationDate,
+                                paymentId: session.payment_intent as string,
+                                amountPaid: session.amount_total,
+                            },
+                        });
+                    } else {
+                        // Create new vendor document
+                        await vendorRef.set({
+                            id: vendorId,
+                            active: true,
+                            featured: featured === "true",
+                            createdAt: new Date(),
+                            subscription: {
+                                active: true,
+                                type: productType || "MONTHLY",
+                                purchasedAt: new Date(),
+                                expiresAt: expirationDate,
+                                paymentId: session.payment_intent as string,
+                                amountPaid: session.amount_total,
+                            },
+                        });
+                    }
+
+                    // If upgrading from community to employer, update user role
+                    const { upgradeToEmployer } = metadata;
+                    const vendorUserId = metadata.userId;
+                    if (upgradeToEmployer === "true" && vendorUserId) {
+                        const userRef = db.collection("users").doc(vendorUserId);
+                        await userRef.update({
+                            role: "employer",
+                        });
+
+                        // Also create employer document if it doesn't exist
+                        const employerRef = db.collection("employers").doc(vendorUserId);
+                        const employerDoc = await employerRef.get();
+                        if (!employerDoc.exists) {
+                            const userDoc = await userRef.get();
+                            const userData = userDoc.data();
+                            await employerRef.set({
+                                id: vendorUserId,
+                                name: userData?.displayName || "",
+                                email: userData?.email || "",
+                                createdAt: new Date(),
+                                subscription: null,
+                            });
+                        }
+
+                        console.log(`User ${vendorUserId} upgraded from community to employer`);
+                    }
 
                     console.log(`Vendor ${vendorId} subscription activated`);
                     break;
