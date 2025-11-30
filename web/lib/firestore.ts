@@ -489,9 +489,34 @@ type ApplicationInput = {
   note?: string;
 };
 
+export async function checkExistingApplication(
+  memberId: string,
+  jobId: string
+): Promise<boolean> {
+  const ref = collection(db!, applicationsCollection);
+  const q = query(
+    ref,
+    where("memberId", "==", memberId),
+    where("jobId", "==", jobId),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
 export async function createJobApplication(
   input: ApplicationInput
 ): Promise<string> {
+  // Check for duplicate application
+  const existingApplication = await checkExistingApplication(
+    input.memberId,
+    input.jobId
+  );
+
+  if (existingApplication) {
+    throw new Error("You have already applied to this job");
+  }
+
   const ref = collection(db!, applicationsCollection);
   const docRef = await addDoc(ref, {
     ...input,

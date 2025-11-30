@@ -9,7 +9,21 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  query,
+  where,
+  getDocs,
+  limit,
+  updateDoc,
+  increment,
+  serverTimestamp,
+} from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import { db } from "../lib/firebase";
 
 interface QuickApplyScreenProps {
   route: any;
@@ -35,15 +49,54 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
 
     setLoading(true);
     try {
-      // TODO: Submit application to Firestore
-      // const applicationData = {
-      //   jobId,
-      //   userId: user.uid,
-      //   coverLetter: coverLetter.trim(),
-      //   status: "pending",
-      //   createdAt: new Date(),
-      // };
-      // await addDoc(collection(db, "applications"), applicationData);
+      // Check for duplicate application
+      const applicationsRef = collection(db, "applications");
+      const duplicateQuery = query(
+        applicationsRef,
+        where("memberId", "==", user.uid),
+        where("jobId", "==", jobId),
+        limit(1)
+      );
+      const duplicateSnap = await getDocs(duplicateQuery);
+
+      if (!duplicateSnap.empty) {
+        Alert.alert("Already Applied", "You have already applied to this job");
+        setLoading(false);
+        return;
+      }
+
+      // Get job details to find employerId
+      const jobRef = doc(db, "jobs", jobId);
+      const jobSnap = await getDoc(jobRef);
+
+      if (!jobSnap.exists()) {
+        Alert.alert("Error", "Job not found");
+        setLoading(false);
+        return;
+      }
+
+      const jobData = jobSnap.data();
+      const employerId = jobData.employerId;
+
+      // Create application
+      const applicationData = {
+        jobId,
+        memberId: user.uid,
+        employerId,
+        memberEmail: user.email || "",
+        memberDisplayName: user.displayName || "",
+        coverLetter: coverLetter.trim(),
+        status: "submitted",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await addDoc(applicationsRef, applicationData);
+
+      // Increment application count on job
+      await updateDoc(jobRef, {
+        applicationsCount: increment(1),
+      });
 
       Alert.alert(
         "Success",
