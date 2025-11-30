@@ -143,6 +143,14 @@ export default function SiteHeader() {
                             >
                               <span className="font-semibold">Messages</span>
                             </Link>
+                            <Link
+                              href="/organization/shop/setup"
+                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                              onClick={closeMenu}
+                            >
+                              <span className="font-semibold">Become a Vendor</span>
+                              <span className="ml-1.5 rounded bg-[#14B8A6]/20 px-1.5 py-0.5 text-[0.6rem] font-medium text-[#14B8A6]">NEW</span>
+                            </Link>
                           </>
                         )}
                         {role === "employer" && (
