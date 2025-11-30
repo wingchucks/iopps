@@ -8,6 +8,15 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
     try {
+        // Check if Firebase Admin is initialized
+        if (!auth || !db) {
+            console.error("Firebase Admin not initialized - check environment variables");
+            return NextResponse.json(
+                { error: "Server configuration error" },
+                { status: 503 }
+            );
+        }
+
         // Verify authentication
         const authHeader = request.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer ")) {
