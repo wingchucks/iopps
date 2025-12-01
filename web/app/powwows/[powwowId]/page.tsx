@@ -34,11 +34,11 @@ export default function PowwowDetailPage() {
         if (data) {
           setPowwow(data);
         } else {
-          setError("Pow wow not found");
+          setError("Event not found");
         }
       } catch (err) {
-        console.error("Failed to load pow wow", err);
-        setError("Failed to load pow wow details");
+        console.error("Failed to load event", err);
+        setError("Failed to load event details");
       } finally {
         setLoading(false);
       }
@@ -94,7 +94,7 @@ export default function PowwowDetailPage() {
     return (
       <PageShell>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <p className="text-slate-400">Loading pow wow details...</p>
+          <p className="text-slate-400">Loading event details...</p>
         </div>
       </PageShell>
     );
@@ -105,7 +105,7 @@ export default function PowwowDetailPage() {
       <PageShell>
         <div className="mx-auto max-w-4xl py-12 text-center">
           <h1 className="text-2xl font-bold text-slate-200">
-            {error || "Pow wow not found"}
+            {error || "Event not found"}
           </h1>
           <Link
             href="/powwows"
@@ -154,7 +154,7 @@ export default function PowwowDetailPage() {
         <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
-              Pow Wow
+              Event
             </span>
             {powwow.season && (
               <span className="inline-flex items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-300">
@@ -225,7 +225,7 @@ export default function PowwowDetailPage() {
             <ShareButtons
               item={{
                 id: powwow.id,
-                title: `${powwow.name} - Pow Wow`,
+                title: powwow.name,
                 description: powwow.description.substring(0, 150) + '...',
               }}
             />
@@ -250,7 +250,7 @@ export default function PowwowDetailPage() {
             Register to Attend
           </h2>
           <p className="mt-2 text-sm text-slate-400">
-            Pre-register for this pow wow to help organizers plan for attendance.
+            Pre-register for this event to help organizers plan for attendance.
           </p>
 
           {success ? (
@@ -259,7 +259,7 @@ export default function PowwowDetailPage() {
                 ✓ Registration submitted successfully!
               </p>
               <p className="mt-2 text-sm text-slate-300">
-                We look forward to seeing you at the pow wow!
+                We look forward to seeing you at the event!
               </p>
             </div>
           ) : (

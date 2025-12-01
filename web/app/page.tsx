@@ -47,7 +47,7 @@ const pillars = [
   },
   {
     title: "Pow Wows & Events",
-    description: "See upcoming pow wows, cultural gatherings, and community celebrations.",
+    description: "Discover pow wows, sporting events, and community celebrations.",
     href: "/powwows",
     icon: (
       <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">

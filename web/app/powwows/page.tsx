@@ -36,7 +36,7 @@ function PowwowsContent() {
         setEvents(data);
       } catch (err) {
         console.error(err);
-        setError("Unable to load pow wow listings right now.");
+        setError("Unable to load events right now.");
       } finally {
         setLoading(false);
       }
@@ -74,8 +74,8 @@ function PowwowsContent() {
     <PageShell>
       <SectionHeader
         eyebrow="Pow Wows & Events"
-        title="Cultural celebrations across Turtle Island"
-        subtitle="Find traditional and competition pow wows, cultural gatherings, and community events hosted by Nations, universities, and partners across North America. We highlight events with livestream coverage so distant families can join in."
+        title="Celebrations & gatherings across Turtle Island"
+        subtitle="Find pow wows, sporting events, cultural gatherings, and community celebrations hosted by Nations, universities, and partners across North America. From traditional ceremonies to lacrosse tournaments—we highlight events with livestream coverage so distant families can join in."
       />
 
       <FilterCard className="mt-8">
@@ -160,12 +160,12 @@ function PowwowsContent() {
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-8 text-center">
             <h3 className="text-xl font-bold text-slate-200">No events scheduled yet</h3>
             <p className="mt-3 text-sm text-slate-400">
-              Check back for upcoming pow wows and events! Nations and communities are adding listings regularly.
+              Check back for upcoming pow wows, sporting events, and community gatherings! Nations and communities are adding listings regularly.
             </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-6 text-center text-sm text-slate-300">
-            No events match your filters yet. Try adjusting your filters or check back soon as new pow wows and events are added each week.
+            No events match your filters yet. Try adjusting your filters or check back soon as new events are added each week.
           </div>
         ) : (
           <>
@@ -183,7 +183,7 @@ function PowwowsContent() {
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
-                          Pow wow
+                          Event
                         </p>
                         {event.season && (
                           <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
