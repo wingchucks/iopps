@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/PageShell";
+import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { FavoritesPageClient } from "./FavoritesPageClient";
 
 export const metadata: Metadata = {
@@ -11,7 +12,9 @@ export const metadata: Metadata = {
 export default function FavoritesPage() {
   return (
     <PageShell>
-      <FavoritesPageClient />
+      <FavoritesProvider>
+        <FavoritesPageClient />
+      </FavoritesProvider>
     </PageShell>
   );
 }
