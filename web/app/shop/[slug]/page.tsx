@@ -211,19 +211,25 @@ function PreviewBanner({ status }: { status: string }) {
 export default async function VendorStorefrontPage({ params }: PageProps) {
   const { slug } = await params;
 
+  console.log("[Shop Page] Looking for vendor with slug:", slug);
+
   // First try to get active vendor (public view)
   let vendor = await getVendorBySlug(slug);
   let isPreviewMode = false;
 
+  console.log("[Shop Page] getVendorBySlug result:", vendor ? `Found: ${vendor.businessName}` : "Not found");
+
   // If not found, try preview mode (any status - for owner preview)
   if (!vendor) {
     vendor = await getVendorBySlugForPreview(slug);
+    console.log("[Shop Page] getVendorBySlugForPreview result:", vendor ? `Found: ${vendor.businessName}` : "Not found");
     if (vendor) {
       isPreviewMode = true;
     }
   }
 
   if (!vendor) {
+    console.log("[Shop Page] No vendor found for slug:", slug);
     notFound();
   }
 
