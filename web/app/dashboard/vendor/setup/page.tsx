@@ -94,14 +94,6 @@ export default function VendorSetupPage() {
     }));
   }, []);
 
-  // Generate slug from business name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
-
   // Handle form submission
   const handleSubmit = async () => {
     if (!user) return;
@@ -112,7 +104,6 @@ export default function VendorSetupPage() {
     try {
       const vendorInput: VendorInput = {
         businessName: formData.businessName,
-        slug: generateSlug(formData.businessName),
         tagline: formData.tagline,
         description: formData.description,
         nation: formData.nationName,
@@ -121,14 +112,7 @@ export default function VendorSetupPage() {
         website: formData.website,
         email: formData.email || user.email || "",
         phone: formData.phone,
-        profileImage: "",
-        coverImage: "",
-        gallery: [],
-        videoUrl: "",
-        categories: [],
         categoryIds: formData.categoryIds,
-        materials: [],
-        techniques: [],
         priceRange: formData.priceRange,
         acceptsCustomOrders: formData.acceptsCustomOrders,
         madeToOrder: false,
@@ -139,8 +123,6 @@ export default function VendorSetupPage() {
           region: formData.province,
         },
         socialLinks: {},
-        status: "draft",
-        featured: false,
       };
 
       await createVendor(user.uid, vendorInput);
