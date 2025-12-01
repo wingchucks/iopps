@@ -568,8 +568,9 @@ export async function getVendors(
 
     // Client-side filtering for array conditions
     if (filters.category && Array.isArray(filters.category) && filters.category.length > 1) {
+      const categoryArray = filters.category as string[];
       vendors = vendors.filter((v) =>
-        filters.category!.some((cat: string) => v.categoryIds.includes(cat))
+        categoryArray.some((cat: string) => v.categoryIds.includes(cat))
       );
     }
 
