@@ -300,6 +300,9 @@ export interface VendorProfile {
   active?: boolean;
   featured?: boolean;
   approvalStatus?: VendorApprovalStatus;
+  slug?: string; // URL-friendly identifier for vendor profile pages
+  status?: string; // 'active' | 'draft' | 'suspended' - for shop listing visibility
+  verificationStatus?: string; // 'verified' | 'pending' | 'rejected' - for shop listing
   duplicateFlags?: string[]; // Reasons why it was flagged (e.g., "similar_business_name", "same_website")
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
