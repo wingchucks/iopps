@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/PageShell";
-import { FavoritesProvider } from "@/contexts/FavoritesContext";
-import { FavoritesPageClient } from "./FavoritesPageClient";
+import { FavoritesPageWrapper } from "./FavoritesPageWrapper";
 
 export const metadata: Metadata = {
   title: "My Favorites | Shop Indigenous",
@@ -12,9 +11,7 @@ export const metadata: Metadata = {
 export default function FavoritesPage() {
   return (
     <PageShell>
-      <FavoritesProvider>
-        <FavoritesPageClient />
-      </FavoritesProvider>
+      <FavoritesPageWrapper />
     </PageShell>
   );
 }
