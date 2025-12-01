@@ -184,7 +184,7 @@ export async function followVendor(
 
       // Increment vendor follower count
       transaction.update(vendorRef, {
-        followerCount: increment(1),
+        followers: increment(1),
       });
     });
 
@@ -223,7 +223,7 @@ export async function unfollowVendor(
 
       // Decrement vendor follower count
       transaction.update(vendorRef, {
-        followerCount: increment(-1),
+        followers: increment(-1),
       });
     });
 
