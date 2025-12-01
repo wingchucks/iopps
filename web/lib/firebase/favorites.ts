@@ -88,7 +88,7 @@ export function getGuestFavorites(): GuestFavorite[] {
 export function addGuestFavorite(vendor: {
   id: string;
   slug: string;
-  name: string;
+  businessName: string;
   profileImage?: string;
 }): GuestFavorite[] {
   if (typeof window === "undefined") return [];
@@ -104,7 +104,7 @@ export function addGuestFavorite(vendor: {
     const newFavorite: GuestFavorite = {
       vendorId: vendor.id,
       vendorSlug: vendor.slug,
-      vendorName: vendor.name,
+      vendorName: vendor.businessName,
       vendorImage: vendor.profileImage,
       createdAt: Date.now(),
     };
@@ -190,7 +190,7 @@ export async function addUserFavorite(
   vendor: {
     id: string;
     slug: string;
-    name: string;
+    businessName: string;
     profileImage?: string;
   }
 ): Promise<string | null> {
@@ -211,7 +211,7 @@ export async function addUserFavorite(
       userId,
       vendorId: vendor.id,
       vendorSlug: vendor.slug,
-      vendorName: vendor.name,
+      vendorName: vendor.businessName,
       vendorImage: vendor.profileImage || null,
       createdAt: serverTimestamp(),
     });
@@ -271,7 +271,7 @@ export async function toggleUserFavorite(
   vendor: {
     id: string;
     slug: string;
-    name: string;
+    businessName: string;
     profileImage?: string;
   }
 ): Promise<boolean> {
@@ -393,7 +393,7 @@ export async function toggleFavorite(
   vendor: {
     id: string;
     slug: string;
-    name: string;
+    businessName: string;
     profileImage?: string;
   },
   userId?: string | null

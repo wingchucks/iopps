@@ -47,7 +47,7 @@ interface FavoritesContextValue {
   toggleFavorite: (vendor: {
     id: string;
     slug: string;
-    name: string;
+    businessName: string;
     profileImage?: string;
   }) => Promise<boolean>;
   isFavorited: (vendorId: string) => boolean;
@@ -184,7 +184,7 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
     async (vendor: {
       id: string;
       slug: string;
-      name: string;
+      businessName: string;
       profileImage?: string;
     }): Promise<boolean> => {
       const wasInFavorites = favoriteIds.has(vendor.id);
@@ -201,7 +201,7 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
         const newFav = {
           vendorId: vendor.id,
           vendorSlug: vendor.slug,
-          vendorName: vendor.name,
+          vendorName: vendor.businessName,
           vendorImage: vendor.profileImage,
         };
         setFavorites((prev) => [newFav, ...prev]);

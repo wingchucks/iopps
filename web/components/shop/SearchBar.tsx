@@ -78,7 +78,7 @@ export function SearchBar({
         ...vendors.map((vendor: Vendor) => ({
           type: "vendor" as const,
           id: vendor.id,
-          name: vendor.name,
+          name: vendor.businessName,
           slug: vendor.slug,
           subtitle: vendor.nation,
           imageUrl: vendor.profileImage,
