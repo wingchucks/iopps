@@ -306,6 +306,7 @@ export interface VendorProfile {
   profileViews?: number; // Shop display metric
   websiteClicks?: number; // Shop display metric
   favorites?: number; // Shop display metric
+  followers?: number; // Shop display metric
   duplicateFlags?: string[]; // Reasons why it was flagged (e.g., "similar_business_name", "same_website")
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
