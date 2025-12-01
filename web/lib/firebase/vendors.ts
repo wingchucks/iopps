@@ -379,6 +379,32 @@ export async function getVendorById(id: string): Promise<Vendor | null> {
 }
 
 /**
+ * Get vendor by owner user ID
+ */
+export async function getVendorByOwnerId(userId: string): Promise<Vendor | null> {
+  try {
+    const firestore = checkFirebase();
+    const ref = collection(firestore, VENDORS_COLLECTION);
+
+    const q = query(ref, where("userId", "==", userId), limit(1));
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      return null;
+    }
+
+    return {
+      id: snap.docs[0].id,
+      ...snap.docs[0].data(),
+    } as Vendor;
+  } catch (error) {
+    console.error("Error getting vendor by owner ID:", error);
+    return null;
+  }
+}
+
+/**
  * Update a vendor profile
  */
 export async function updateVendor(
