@@ -356,6 +356,39 @@ export async function getVendorBySlug(slug: string): Promise<Vendor | null> {
 }
 
 /**
+ * Get a vendor by their URL slug regardless of status (for owner preview)
+ * This allows shop owners to preview their shop even when status is 'draft'
+ */
+export async function getVendorBySlugForPreview(slug: string): Promise<Vendor | null> {
+  try {
+    const firestore = checkFirebase();
+    const ref = collection(firestore, VENDORS_COLLECTION);
+
+    // Query by slug only, without status filter
+    const q = query(
+      ref,
+      where("slug", "==", slug),
+      limit(1)
+    );
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      return null;
+    }
+
+    const docData = snap.docs[0];
+    return {
+      id: docData.id,
+      ...docData.data(),
+    } as Vendor;
+  } catch (error) {
+    console.error("Error getting vendor by slug for preview:", error);
+    return null;
+  }
+}
+
+/**
  * Get a vendor by their ID (any status)
  */
 export async function getVendorById(id: string): Promise<Vendor | null> {
