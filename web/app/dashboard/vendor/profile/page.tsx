@@ -8,6 +8,7 @@ import {
   updateVendor,
   type Vendor,
   type VendorInput,
+  type PriceRange,
 } from "@/lib/firebase/vendors";
 import { getCategories, type CategoryWithChildren } from "@/lib/firebase/categories";
 import { getNations, type NationsByRegion } from "@/lib/firebase/nations";
@@ -35,7 +36,7 @@ export default function VendorProfilePage() {
     city: "",
     province: "",
     country: "",
-    priceRange: "mid" as const,
+    priceRange: "mid" as PriceRange,
     acceptsCustomOrders: false,
     madeToOrder: false,
     materials: [] as string[],

@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createVendor, type VendorInput } from "@/lib/firebase/vendors";
+import { createVendor, type VendorInput, type PriceRange } from "@/lib/firebase/vendors";
 import { getNations, type NationsByRegion } from "@/lib/firebase/nations";
 import { getCategories, type CategoryWithChildren } from "@/lib/firebase/categories";
 import { useEffect } from "react";
@@ -35,7 +35,7 @@ export default function VendorSetupPage() {
     city: "",
     province: "",
     country: "Canada",
-    priceRange: "mid" as const,
+    priceRange: "mid" as PriceRange,
     acceptsCustomOrders: false,
   });
 
