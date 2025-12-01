@@ -11,15 +11,15 @@ service cloud.firestore {
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    
+
     // Helper function to check if user is admin or moderator
     function isAdminOrModerator() {
-      return isSignedIn() && getUserData().role in ['admin', 'moderator'];
+      return isSignedIn() && getUserData() != null && getUserData().role in ['admin', 'moderator'];
     }
-    
+
     // Helper function to check if user is admin
     function isAdmin() {
-      return isSignedIn() && getUserData().role == 'admin';
+      return isSignedIn() && getUserData() != null && getUserData().role == 'admin';
     }
     
     // Helper function to check if user owns the resource

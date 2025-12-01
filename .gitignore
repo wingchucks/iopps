@@ -76,3 +76,4 @@ auth_users.json
 
 # dataconnect generated files
 .dataconnect
+.vercel

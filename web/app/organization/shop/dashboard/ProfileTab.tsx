@@ -214,9 +214,10 @@ export default function ProfileTab() {
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to save vendor profile. Please try again.");
+    } catch (err: any) {
+      console.error("Vendor profile save error:", err);
+      const errorMessage = err?.message || err?.code || "Unknown error";
+      setError(`Failed to save vendor profile: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
