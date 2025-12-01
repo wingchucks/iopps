@@ -1220,6 +1220,24 @@ export async function upsertVendorProfile(
       updateData.verificationStatus = 'rejected';
     }
 
+    // Map VendorProfile fields to Vendor fields for shop display compatibility
+    // The shop display pages expect different field names
+    if (data.contactEmail) updateData.email = data.contactEmail;
+    if (data.contactPhone) updateData.phone = data.contactPhone;
+    if (data.websiteUrl) updateData.website = data.websiteUrl;
+    if (data.about) updateData.description = data.about;
+    if (data.heroImageUrl) updateData.coverImage = data.heroImageUrl;
+    if (data.logoUrl) updateData.profileImage = data.logoUrl;
+    if (data.tagline) updateData.tagline = data.tagline;
+
+    // Set userId for shop display compatibility (distinct from ownerUserId)
+    updateData.userId = userId;
+
+    // Initialize shop display metrics if not present
+    if (existingData.profileViews === undefined) updateData.profileViews = 0;
+    if (existingData.websiteClicks === undefined) updateData.websiteClicks = 0;
+    if (existingData.favorites === undefined) updateData.favorites = 0;
+
     await updateDoc(ref, updateData);
   } else {
     // Create new
@@ -1237,10 +1255,22 @@ export async function upsertVendorProfile(
     await setDoc(ref, {
       id: userId,
       ownerUserId: userId,
+      userId, // For shop display compatibility
       slug,
       status,
       verificationStatus,
       ...data,
+      // Map VendorProfile fields to Vendor fields for shop display compatibility
+      email: data.contactEmail || '',
+      phone: data.contactPhone || '',
+      website: data.websiteUrl || '',
+      description: data.about || '',
+      coverImage: data.heroImageUrl || '',
+      profileImage: data.logoUrl || '',
+      // Initialize shop display metrics
+      profileViews: 0,
+      websiteClicks: 0,
+      favorites: 0,
       approvalStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       createdAt: timestamp,
