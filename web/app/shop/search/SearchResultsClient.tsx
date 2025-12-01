@@ -108,7 +108,7 @@ export function SearchResultsClient({
         }
         if (filters.region) {
           results = results.filter(
-            (v) => v.region?.toLowerCase() === filters.region!.toLowerCase()
+            (v) => v.location?.region?.toLowerCase() === filters.region!.toLowerCase()
           );
         }
       } else {
