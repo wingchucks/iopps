@@ -154,7 +154,7 @@ export default function OverviewTab() {
           </button>
 
           <Link
-            href="/shop"
+            href={profile?.slug ? `/shop/${profile.slug}` : "/shop"}
             className="group rounded-xl border border-purple-500/30 bg-purple-500/10 p-6 transition-all hover:border-purple-500/50 hover:bg-purple-500/20"
           >
             <div className="mb-2 text-2xl">🏪</div>
@@ -162,7 +162,7 @@ export default function OverviewTab() {
               View Public Shop
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              See how your shop appears to visitors
+              {profile?.slug ? "See how your shop appears to visitors" : "Complete your profile to view your shop"}
             </p>
           </Link>
         </div>

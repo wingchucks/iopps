@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   listVendorShopListings,
@@ -8,6 +8,8 @@ import {
   updateShopListingForVendor,
   deleteShopListingForVendor,
 } from "@/lib/firestore";
+import { storage } from "@/lib/firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import type { ProductServiceListing } from "@/lib/types";
 
 export default function ProductsTab() {
@@ -29,6 +31,10 @@ export default function ProductsTab() {
     imageUrl: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // File input ref
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -152,6 +158,32 @@ export default function ProductsTab() {
     });
     setEditingId(null);
     setShowForm(false);
+  };
+
+  // Image upload handler
+  const handleImageUpload = async (file: File) => {
+    if (!file || !user) return;
+
+    setUploadingImage(true);
+    setError(null);
+
+    try {
+      const fileExtension = file.name.split(".").pop();
+      const fileName = `vendors/${user.uid}/products/product-${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage!, fileName);
+
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      setFormData({ ...formData, imageUrl: url });
+      setSuccessMessage("Image uploaded successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error("Image upload error:", err);
+      setError("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   return (
@@ -313,15 +345,61 @@ export default function ProductsTab() {
 
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Image URL (optional)
+                Product Image (optional)
               </label>
+
+              {/* Image preview */}
+              {formData.imageUrl && (
+                <div className="mb-3 rounded-lg border border-emerald-500/20 bg-slate-900/50 p-3">
+                  <p className="mb-2 text-xs text-slate-400">Current image:</p>
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Product preview"
+                      className="h-24 w-24 rounded-lg border border-emerald-500/30 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, imageUrl: "" })}
+                      className="text-xs text-red-400 transition hover:text-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload button */}
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file);
+                  }}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {uploadingImage ? "Uploading..." : formData.imageUrl ? "Change image" : "Upload image"}
+                </button>
+                <span className="text-xs text-slate-500">or paste URL below</span>
+              </div>
+
+              {/* URL input as fallback */}
               <input
                 type="url"
                 value={formData.imageUrl}
                 onChange={(e) =>
                   setFormData({ ...formData, imageUrl: e.target.value })
                 }
-                className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="mt-2 w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 placeholder="https://example.com/image.jpg"
               />
             </div>

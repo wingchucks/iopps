@@ -994,8 +994,11 @@ export async function checkForDuplicateVendor(
   const matchingVendors: string[] = [];
 
   // Get all active vendors (excluding current user's profile if it exists)
+  // We must filter by active == true because security rules only allow reading
+  // active vendors or the user's own vendor profile
   const vendorsRef = collection(db!, vendorsCollection);
-  const vendorsSnap = await getDocs(vendorsRef);
+  const activeVendorsQuery = query(vendorsRef, where('active', '==', true));
+  const vendorsSnap = await getDocs(activeVendorsQuery);
 
   const normalizedNewName = normalizeBusinessName(businessName);
   const normalizedNewUrl = websiteUrl ? normalizeUrl(websiteUrl) : null;
@@ -1105,6 +1108,21 @@ export async function getVendorProfileById(
   }
 }
 
+// Helper function to generate slug from business name
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function generateUniqueSlug(businessName: string): string {
+  const baseSlug = slugify(businessName);
+  const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+  return `${baseSlug}-${uniqueSuffix}`;
+}
+
 export type UpsertVendorResult = {
   success: boolean;
   approvalStatus: VendorApprovalStatus;
@@ -1184,13 +1202,75 @@ export async function upsertVendorProfile(
       updateData.ownerUserId = userId;
     }
 
+    // Generate slug if missing (required for shop listing)
+    if (!existingData.slug && data.businessName) {
+      updateData.slug = generateUniqueSlug(data.businessName);
+    }
+
+    // Set status fields for shop listing compatibility
+    // Map approvalStatus to verificationStatus for the shop page queries
+    if (approvalStatus === 'approved') {
+      updateData.status = 'active';
+      updateData.verificationStatus = 'verified';
+    } else if (approvalStatus === 'pending_review') {
+      updateData.status = 'draft';
+      updateData.verificationStatus = 'pending';
+    } else if (approvalStatus === 'rejected') {
+      updateData.status = 'suspended';
+      updateData.verificationStatus = 'rejected';
+    }
+
+    // Map VendorProfile fields to Vendor fields for shop display compatibility
+    // The shop display pages expect different field names
+    if (data.contactEmail) updateData.email = data.contactEmail;
+    if (data.contactPhone) updateData.phone = data.contactPhone;
+    if (data.websiteUrl) updateData.website = data.websiteUrl;
+    if (data.about) updateData.description = data.about;
+    if (data.heroImageUrl) updateData.coverImage = data.heroImageUrl;
+    if (data.logoUrl) updateData.profileImage = data.logoUrl;
+    if (data.tagline) updateData.tagline = data.tagline;
+
+    // Set userId for shop display compatibility (distinct from ownerUserId)
+    updateData.userId = userId;
+
+    // Initialize shop display metrics if not present
+    if (existingData.profileViews === undefined) updateData.profileViews = 0;
+    if (existingData.websiteClicks === undefined) updateData.websiteClicks = 0;
+    if (existingData.favorites === undefined) updateData.favorites = 0;
+
     await updateDoc(ref, updateData);
   } else {
     // Create new
+    // Generate slug for new vendor profiles
+    const slug = data.businessName ? generateUniqueSlug(data.businessName) : '';
+
+    // Map approval status to shop listing status fields
+    let status = 'draft';
+    let verificationStatus = 'pending';
+    if (approvalStatus === 'approved') {
+      status = 'active';
+      verificationStatus = 'verified';
+    }
+
     await setDoc(ref, {
       id: userId,
       ownerUserId: userId,
+      userId, // For shop display compatibility
+      slug,
+      status,
+      verificationStatus,
       ...data,
+      // Map VendorProfile fields to Vendor fields for shop display compatibility
+      email: data.contactEmail || '',
+      phone: data.contactPhone || '',
+      website: data.websiteUrl || '',
+      description: data.about || '',
+      coverImage: data.heroImageUrl || '',
+      profileImage: data.logoUrl || '',
+      // Initialize shop display metrics
+      profileViews: 0,
+      websiteClicks: 0,
+      favorites: 0,
       approvalStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       createdAt: timestamp,
