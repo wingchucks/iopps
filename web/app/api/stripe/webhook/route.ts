@@ -241,11 +241,28 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ received: true });
-    } catch (error: any) {
-        console.error("Error processing webhook:", error);
+    } catch (err: any) {
+        console.error("Webhook error:", err);
+
+        // Emergency logging to Firestore
+        try {
+            const { getFirestore } = await import("firebase-admin/firestore");
+            const { initAdmin } = await import("@/lib/firebase-admin");
+            await initAdmin();
+            const db = getFirestore();
+            await db.collection("system_logs").add({
+                event: "stripe_webhook_error",
+                error: err.message || "Unknown error",
+                stack: err.stack || null,
+                timestamp: new Date(),
+            });
+        } catch (logErr) {
+            console.error("Failed to log to Firestore:", logErr);
+        }
+
         return NextResponse.json(
-            { error: "Webhook processing failed" },
-            { status: 500 }
+            { error: `Webhook Error: ${err.message}` },
+            { status: 400 }
         );
     }
 }

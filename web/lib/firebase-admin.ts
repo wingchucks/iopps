@@ -82,51 +82,55 @@ function tryParseServiceAccountJson(): { projectId?: string; clientEmail?: strin
     }
 }
 
-// Initialize Firebase Admin
-if (!getApps().length) {
-    try {
-        // Connect to emulators if enabled
-        if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") {
-            process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
-            process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
-            process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
-            console.log("🔧 Firebase Admin using Emulators");
+export async function initAdmin() {
+    if (!getApps().length) {
+        try {
+            // Connect to emulators if enabled
+            if (process.env.NEXT_PUBLIC_USE_EMULATORS === "true") {
+                process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+                process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
+                process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
+                console.log("🔧 Firebase Admin using Emulators");
 
-            initializeApp({
-                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-iopps",
-            });
-        } else {
-            // Try JSON service account first (most reliable)
-            const serviceAccount = tryParseServiceAccountJson();
-
-            // Fall back to individual env vars
-            const projectId = serviceAccount?.projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-            const clientEmail = serviceAccount?.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
-            const privateKey = serviceAccount?.privateKey || parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-
-            // Only attempt to initialize with cert if we have credentials
-            if (projectId && clientEmail && privateKey) {
                 initializeApp({
-                    credential: cert({
-                        projectId,
-                        clientEmail,
-                        privateKey,
-                    }),
+                    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-iopps",
                 });
-                console.log("✅ Firebase Admin initialized successfully");
             } else {
-                // Log which credentials are missing
-                const missing = [];
-                if (!projectId) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
-                if (!clientEmail) missing.push("FIREBASE_CLIENT_EMAIL");
-                if (!privateKey) missing.push("FIREBASE_PRIVATE_KEY");
-                console.warn(`Firebase Admin credentials missing: ${missing.join(", ")}. API routes requiring auth will fail.`);
+                // Try JSON service account first (most reliable)
+                const serviceAccount = tryParseServiceAccountJson();
+
+                // Fall back to individual env vars
+                const projectId = serviceAccount?.projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+                const clientEmail = serviceAccount?.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
+                const privateKey = serviceAccount?.privateKey || parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+
+                // Only attempt to initialize with cert if we have credentials
+                if (projectId && clientEmail && privateKey) {
+                    initializeApp({
+                        credential: cert({
+                            projectId,
+                            clientEmail,
+                            privateKey,
+                        }),
+                    });
+                    console.log("✅ Firebase Admin initialized successfully");
+                } else {
+                    // Log which credentials are missing
+                    const missing = [];
+                    if (!projectId) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+                    if (!clientEmail) missing.push("FIREBASE_CLIENT_EMAIL");
+                    if (!privateKey) missing.push("FIREBASE_PRIVATE_KEY");
+                    console.warn(`Firebase Admin credentials missing: ${missing.join(", ")}. API routes requiring auth will fail.`);
+                }
             }
+        } catch (error) {
+            console.error("Firebase Admin initialization error:", error);
         }
-    } catch (error) {
-        console.error("Firebase Admin initialization error:", error);
     }
 }
+
+// Initialize on module load
+initAdmin();
 
 // Export auth and db - they may be null if initialization failed
 export const db = getApps().length ? getFirestore() : null;

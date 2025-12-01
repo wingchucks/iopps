@@ -47,6 +47,48 @@ function VendorSetupContent() {
   // Check for success/canceled from redirect
   const isSuccess = searchParams.get("success") === "true";
   const isCanceled = searchParams.get("canceled") === "true";
+  const sessionId = searchParams.get("session_id");
+
+  // Verification state for post-checkout
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
+  // Verify session and update role when redirected from successful checkout
+  useEffect(() => {
+    if (!isSuccess || !sessionId || !user || role === "employer") return;
+
+    const verifySession = async () => {
+      setVerifying(true);
+      setVerifyError(null);
+
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch("/api/stripe/verify-vendor-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to verify session");
+        }
+
+        // Role will be updated via the AuthProvider's onSnapshot listener
+      } catch (err) {
+        console.error("Session verification error:", err);
+        setVerifyError(err instanceof Error ? err.message : "Verification failed");
+      } finally {
+        setVerifying(false);
+      }
+    };
+
+    verifySession();
+  }, [isSuccess, sessionId, user, role]);
 
   // Form state
   const [businessName, setBusinessName] = useState("");
@@ -355,9 +397,31 @@ function VendorSetupContent() {
     if (isSuccess) {
       return (
         <div className="mx-auto max-w-4xl px-4 py-20 text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#14B8A6] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          <h2 className="mt-4 text-xl font-semibold text-slate-50">Verifying your subscription...</h2>
-          <p className="mt-2 text-slate-400">Please wait while we upgrade your account.</p>
+          {verifyError ? (
+            <>
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 className="mt-4 text-xl font-semibold text-slate-50">Verification failed</h2>
+              <p className="mt-2 text-slate-400">{verifyError}</p>
+              <div className="mt-6 flex justify-center gap-3">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="rounded-full bg-[#14B8A6] px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+                >
+                  Refresh page
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#14B8A6] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+              <h2 className="mt-4 text-xl font-semibold text-slate-50">Verifying your subscription...</h2>
+              <p className="mt-2 text-slate-400">Please wait while we upgrade your account.</p>
+            </>
+          )}
         </div>
       );
     }
