@@ -1202,10 +1202,9 @@ export async function upsertVendorProfile(
       updateData.ownerUserId = userId;
     }
 
-    // Generate slug if missing or empty (required for shop listing)
-    // Use the new businessName if provided, otherwise use existing businessName
+    // Generate slug if missing (required for shop listing)
     const businessNameForSlug = data.businessName || existingData.businessName;
-    if ((!existingData.slug || existingData.slug === '') && businessNameForSlug) {
+    if (!existingData.slug && businessNameForSlug) {
       updateData.slug = generateUniqueSlug(businessNameForSlug);
     }
 
@@ -1255,14 +1254,13 @@ export async function upsertVendorProfile(
     }
 
     await setDoc(ref, {
-      ...data,
-      // These must come AFTER ...data to ensure they're not overwritten
       id: userId,
       ownerUserId: userId,
       userId, // For shop display compatibility
-      slug, // Generated slug - must not be overwritten by data.slug
-      status, // Computed status - must not be overwritten
-      verificationStatus, // Computed verification status
+      slug,
+      status,
+      verificationStatus,
+      ...data,
       // Map VendorProfile fields to Vendor fields for shop display compatibility
       email: data.contactEmail || '',
       phone: data.contactPhone || '',
