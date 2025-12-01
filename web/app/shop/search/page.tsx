@@ -5,7 +5,7 @@ import { PageShell } from "@/components/PageShell";
 import { VendorCard, VendorCardSkeleton } from "@/components/shop/VendorCard";
 import { SearchBar } from "@/components/shop/SearchBar";
 import { searchVendors, getVendors } from "@/lib/firebase/vendors";
-import { getNationsByRegion, getNationBySlug } from "@/lib/firebase/nations";
+import { getNations, getNationBySlug } from "@/lib/firebase/nations";
 import { getCategories } from "@/lib/firebase/categories";
 import { SearchResultsClient } from "./SearchResultsClient";
 
@@ -59,7 +59,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   // Fetch filter options and initial results in parallel
   const [categories, nationsByRegion, initialResults] = await Promise.all([
     getCategories(),
-    getNationsByRegion(),
+    getNations(),
     query
       ? searchVendors(query, 24)
       : getVendors(

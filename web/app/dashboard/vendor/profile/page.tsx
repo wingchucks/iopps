@@ -10,7 +10,7 @@ import {
   type VendorInput,
 } from "@/lib/firebase/vendors";
 import { getCategories, type CategoryWithChildren } from "@/lib/firebase/categories";
-import { getNationsByRegion, type NationsByRegion } from "@/lib/firebase/nations";
+import { getNations, type NationsByRegion } from "@/lib/firebase/nations";
 
 export default function VendorProfilePage() {
   const { user } = useAuth();
@@ -57,7 +57,7 @@ export default function VendorProfilePage() {
         const [vendorData, categoriesData, nationsData] = await Promise.all([
           getVendorByOwnerId(user.uid),
           getCategories(),
-          getNationsByRegion(),
+          getNations(),
         ]);
 
         setVendor(vendorData);

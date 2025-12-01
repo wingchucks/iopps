@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { getVendors } from "@/lib/firebase/vendors";
-import { getNationsByRegion } from "@/lib/firebase/nations";
+import { getNations } from "@/lib/firebase/nations";
 import { MapPageClient } from "./MapPageClient";
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default async function MapPage() {
   // Fetch vendors with location data
   const [vendorsResult, nationsByRegion] = await Promise.all([
     getVendors({}, { sortBy: "newest", limit: 100 }),
-    getNationsByRegion(),
+    getNations(),
   ]);
 
   // Filter vendors with coordinates

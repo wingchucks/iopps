@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createVendor, type VendorInput } from "@/lib/firebase/vendors";
-import { getNationsByRegion, type NationsByRegion } from "@/lib/firebase/nations";
+import { getNations, type NationsByRegion } from "@/lib/firebase/nations";
 import { getCategories, type CategoryWithChildren } from "@/lib/firebase/categories";
 import { useEffect } from "react";
 
@@ -44,7 +44,7 @@ export default function VendorSetupPage() {
     async function loadData() {
       try {
         const [nationsData, categoriesData] = await Promise.all([
-          getNationsByRegion(),
+          getNations(),
           getCategories(),
         ]);
         setNationsByRegion(nationsData);
