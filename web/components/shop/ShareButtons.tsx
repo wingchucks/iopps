@@ -164,9 +164,11 @@ export function ShareButtons({
     },
   };
 
+  const activePlatforms = platforms ?? defaultPlatforms;
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {platforms.map((platform) => {
+      {activePlatforms.map((platform) => {
         const { icon, label, color } = icons[platform];
 
         if (variant === "icon") {
