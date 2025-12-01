@@ -1202,9 +1202,10 @@ export async function upsertVendorProfile(
       updateData.ownerUserId = userId;
     }
 
-    // Generate slug if missing (required for shop listing)
+    // Generate slug if missing or empty (required for shop listing)
+    // Use the new businessName if provided, otherwise use existing businessName
     const businessNameForSlug = data.businessName || existingData.businessName;
-    if (!existingData.slug && businessNameForSlug) {
+    if ((!existingData.slug || existingData.slug === '') && businessNameForSlug) {
       updateData.slug = generateUniqueSlug(businessNameForSlug);
     }
 
