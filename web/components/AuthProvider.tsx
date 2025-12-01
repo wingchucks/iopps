@@ -6,7 +6,7 @@ import {
   signInWithPopup,
   User as FirebaseUser,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import {
   createContext,
   useContext,
@@ -50,43 +50,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
 
       if (firebaseUser && db) {
-        try {
-          const ref = doc(db, "users", firebaseUser.uid);
-          const snap = await getDoc(ref);
-          if (snap.exists()) {
-            const data = snap.data();
-            // Super admin override from env variable
-            if (isSuperAdmin(firebaseUser.email)) {
-              setRole("admin");
+        // Subscribe to real-time user profile changes
+        const ref = doc(db, "users", firebaseUser.uid);
+
+        const unsubscribeSnapshot = onSnapshot(
+          ref,
+          (snap) => {
+            if (snap.exists()) {
+              const data = snap.data();
+              // Super admin override from env variable
+              if (isSuperAdmin(firebaseUser.email)) {
+                setRole("admin");
+              } else {
+                setRole((data.role as UserRole) ?? null);
+              }
             } else {
-              setRole((data.role as UserRole) ?? null);
+              // Super admin override even if doc doesn't exist
+              if (isSuperAdmin(firebaseUser.email)) {
+                setRole("admin");
+              } else {
+                setRole(null);
+              }
             }
-          } else {
-            // Super admin override even if doc doesn't exist
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error listening to user profile:", error);
+            // Super admin override on error
             if (isSuperAdmin(firebaseUser.email)) {
               setRole("admin");
             } else {
               setRole(null);
             }
+            setLoading(false);
           }
-        } catch (error) {
-          console.error("Error loading user profile", error);
-          // Super admin override on error
-          if (isSuperAdmin(firebaseUser.email)) {
-            setRole("admin");
-          } else {
-            setRole(null);
-          }
-        }
+        );
+
+        // Cleanup snapshot listener when auth state changes or component unmounts
+        return () => unsubscribeSnapshot();
       } else {
         setRole(null);
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => unsubscribe();

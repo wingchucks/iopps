@@ -351,6 +351,17 @@ function VendorSetupContent() {
   }
 
   if (role !== "employer") {
+    // If we just came back from a successful payment but role isn't updated yet, show loading
+    if (isSuccess) {
+      return (
+        <div className="mx-auto max-w-4xl px-4 py-20 text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#14B8A6] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <h2 className="mt-4 text-xl font-semibold text-slate-50">Verifying your subscription...</h2>
+          <p className="mt-2 text-slate-400">Please wait while we upgrade your account.</p>
+        </div>
+      );
+    }
+
     return (
       <PageShell>
         <div className="mx-auto max-w-2xl space-y-6">
