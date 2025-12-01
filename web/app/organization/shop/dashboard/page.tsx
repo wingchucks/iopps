@@ -6,8 +6,9 @@ import { useAuth } from "@/components/AuthProvider";
 import OverviewTab from "./OverviewTab";
 import ProductsTab from "./ProductsTab";
 import ProfileTab from "./ProfileTab";
+import { AnalyticsTab } from "./AnalyticsTab";
 
-type TabType = "overview" | "products" | "profile";
+type TabType = "overview" | "products" | "profile" | "analytics";
 
 export default function VendorDashboard() {
   const { user, role, loading } = useAuth();
@@ -41,6 +42,7 @@ export default function VendorDashboard() {
     { id: "overview" as TabType, label: "Overview", icon: "📊" },
     { id: "products" as TabType, label: "Products & Services", icon: "🛍️" },
     { id: "profile" as TabType, label: "Profile & Shop", icon: "🏪" },
+    { id: "analytics" as TabType, label: "Analytics", icon: "📈" },
   ];
 
   return (
@@ -79,6 +81,7 @@ export default function VendorDashboard() {
           {activeTab === "overview" && <OverviewTab />}
           {activeTab === "products" && <ProductsTab />}
           {activeTab === "profile" && <ProfileTab />}
+          {activeTab === "analytics" && <AnalyticsTab />}
         </div>
       </div>
     </div>
