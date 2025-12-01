@@ -204,15 +204,115 @@ service cloud.firestore {
     }
     
     // ===========================================================================
-    // VENDOR PROFILES
+    // VENDOR PROFILES (Shop Indigenous)
     // ===========================================================================
     match /vendors/{vendorId} {
-      // Public read
+      // Public read for active vendors only, or owner/admin can see any status
       allow read: if true;
-      
-      // Vendors can create/update their own profile
+
+      // Vendors can create their own profile (vendorId should match userId)
       allow create: if isOwner(vendorId);
+
+      // Vendors can update their own profile, admins can update any
       allow update: if isOwner(vendorId) || isAdminOrModerator();
+
+      // Only admins can delete vendor profiles
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // SHOP INDIGENOUS CATEGORIES
+    // ===========================================================================
+    match /categories/{categoryId} {
+      // Public read for all categories
+      allow read: if true;
+
+      // Only admins can create/update/delete categories
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // SHOP INDIGENOUS NATIONS
+    // ===========================================================================
+    match /nations/{nationId} {
+      // Public read for all nations
+      allow read: if true;
+
+      // Only admins can create/update/delete nations
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // SHOP INDIGENOUS FAVORITES
+    // ===========================================================================
+    match /favorites/{favoriteId} {
+      // Users can only read their own favorites
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Users can create favorites for themselves
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Users can delete their own favorites
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // No updates needed - favorites are create/delete only
+      allow update: if false;
+    }
+
+    // ===========================================================================
+    // SHOP INDIGENOUS FOLLOWS
+    // ===========================================================================
+    match /follows/{followId} {
+      // Users can only read their own follows
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Users can create follows for themselves
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own follows (notification preferences)
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Users can delete their own follows
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ===========================================================================
+    // SHOP INDIGENOUS REVIEWS
+    // ===========================================================================
+    match /reviews/{reviewId} {
+      // Public read for all reviews
+      allow read: if true;
+
+      // Authenticated users can create reviews
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own reviews, admins can update any
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdminOrModerator()
+      );
+
+      // Users can delete their own reviews, admins can delete any
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdminOrModerator()
+      );
+    }
+
+    // ===========================================================================
+    // SHOP INDIGENOUS FEATURED ROTATION
+    // ===========================================================================
+    match /featuredRotation/{rotationId} {
+      // Public read for featured vendor display
+      allow read: if true;
+
+      // Only admins can manage featured rotation
+      allow create: if isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
     
