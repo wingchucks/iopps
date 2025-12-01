@@ -8,9 +8,10 @@ import {
   updateVendor,
   type Vendor,
   type VendorInput,
+  type PriceRange,
 } from "@/lib/firebase/vendors";
 import { getCategories, type CategoryWithChildren } from "@/lib/firebase/categories";
-import { getNationsByRegion, type NationsByRegion } from "@/lib/firebase/nations";
+import { getNations, type NationsByRegion } from "@/lib/firebase/nations";
 
 export default function VendorProfilePage() {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export default function VendorProfilePage() {
     city: "",
     province: "",
     country: "",
-    priceRange: "mid" as const,
+    priceRange: "mid" as PriceRange,
     acceptsCustomOrders: false,
     madeToOrder: false,
     materials: [] as string[],
@@ -57,7 +58,7 @@ export default function VendorProfilePage() {
         const [vendorData, categoriesData, nationsData] = await Promise.all([
           getVendorByOwnerId(user.uid),
           getCategories(),
-          getNationsByRegion(),
+          getNations(),
         ]);
 
         setVendor(vendorData);
@@ -185,7 +186,7 @@ export default function VendorProfilePage() {
         },
       };
 
-      await updateVendor(vendor.id, updates);
+      await updateVendor(vendor.id, user!.uid, updates);
 
       setSaveMessage({ type: "success", text: "Profile saved successfully!" });
 

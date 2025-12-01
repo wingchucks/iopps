@@ -19,7 +19,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { updateVendor, getVendorById, type Vendor } from "./vendors";
+import { getVendorById, type Vendor } from "./vendors";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -145,9 +145,11 @@ export async function submitVerificationRequest(
       updatedAt: serverTimestamp(),
     });
 
-    // Update vendor verification status
-    await updateVendor(vendorId, {
+    // Update vendor verification status directly (not through VendorInput)
+    const vendorRef = doc(db!, "vendors", vendorId);
+    await updateDoc(vendorRef, {
       verificationStatus: "pending",
+      updatedAt: serverTimestamp(),
     });
 
     return docRef.id;
@@ -271,10 +273,12 @@ export async function approveVerificationRequest(
       updatedAt: serverTimestamp(),
     });
 
-    // Update vendor verification status
-    await updateVendor(request.vendorId, {
+    // Update vendor verification status directly
+    const vendorRef = doc(firestore, "vendors", request.vendorId);
+    await updateDoc(vendorRef, {
       verificationStatus: "verified",
       verifiedAt: Timestamp.now(),
+      updatedAt: serverTimestamp(),
     });
 
     return true;
@@ -313,10 +317,12 @@ export async function rejectVerificationRequest(
       updatedAt: serverTimestamp(),
     });
 
-    // Update vendor verification status
-    await updateVendor(request.vendorId, {
+    // Update vendor verification status directly
+    const vendorRef = doc(firestore, "vendors", request.vendorId);
+    await updateDoc(vendorRef, {
       verificationStatus: "rejected",
       rejectionReason: reason,
+      updatedAt: serverTimestamp(),
     });
 
     return true;
@@ -420,10 +426,13 @@ export async function revokeVerification(
   reason: string
 ): Promise<boolean> {
   try {
-    await updateVendor(vendorId, {
+    if (!db) throw new Error("Firebase not initialized");
+    const vendorRef = doc(db, "vendors", vendorId);
+    await updateDoc(vendorRef, {
       verificationStatus: "rejected",
       verifiedAt: null,
       rejectionReason: reason,
+      updatedAt: serverTimestamp(),
     });
 
     return true;

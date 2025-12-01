@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createVendor, type VendorInput } from "@/lib/firebase/vendors";
-import { getNationsByRegion, type NationsByRegion } from "@/lib/firebase/nations";
+import { createVendor, type VendorInput, type PriceRange } from "@/lib/firebase/vendors";
+import { getNations, type NationsByRegion } from "@/lib/firebase/nations";
 import { getCategories, type CategoryWithChildren } from "@/lib/firebase/categories";
 import { useEffect } from "react";
 
@@ -35,7 +35,7 @@ export default function VendorSetupPage() {
     city: "",
     province: "",
     country: "Canada",
-    priceRange: "mid" as const,
+    priceRange: "mid" as PriceRange,
     acceptsCustomOrders: false,
   });
 
@@ -44,7 +44,7 @@ export default function VendorSetupPage() {
     async function loadData() {
       try {
         const [nationsData, categoriesData] = await Promise.all([
-          getNationsByRegion(),
+          getNations(),
           getCategories(),
         ]);
         setNationsByRegion(nationsData);
@@ -94,14 +94,6 @@ export default function VendorSetupPage() {
     }));
   }, []);
 
-  // Generate slug from business name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
-
   // Handle form submission
   const handleSubmit = async () => {
     if (!user) return;
@@ -111,9 +103,7 @@ export default function VendorSetupPage() {
 
     try {
       const vendorInput: VendorInput = {
-        userId: user.uid,
         businessName: formData.businessName,
-        slug: generateSlug(formData.businessName),
         tagline: formData.tagline,
         description: formData.description,
         nation: formData.nationName,
@@ -122,14 +112,7 @@ export default function VendorSetupPage() {
         website: formData.website,
         email: formData.email || user.email || "",
         phone: formData.phone,
-        profileImage: "",
-        coverImage: "",
-        gallery: [],
-        videoUrl: "",
-        categories: [],
         categoryIds: formData.categoryIds,
-        materials: [],
-        techniques: [],
         priceRange: formData.priceRange,
         acceptsCustomOrders: formData.acceptsCustomOrders,
         madeToOrder: false,
@@ -140,11 +123,9 @@ export default function VendorSetupPage() {
           region: formData.province,
         },
         socialLinks: {},
-        status: "draft",
-        featured: false,
       };
 
-      await createVendor(vendorInput);
+      await createVendor(user.uid, vendorInput);
 
       // Redirect to dashboard
       router.push("/dashboard/vendor");

@@ -167,15 +167,15 @@ export default function VendorDashboardLayout({
               {vendor.profileImage ? (
                 <img
                   src={vendor.profileImage}
-                  alt={vendor.name}
+                  alt={vendor.businessName}
                   className="h-8 w-8 rounded-full object-cover"
                 />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#14B8A6] text-sm font-bold text-slate-900">
-                  {vendor.name.charAt(0)}
+                  {vendor.businessName.charAt(0)}
                 </div>
               )}
-              <span className="truncate">{vendor.name}</span>
+              <span className="truncate">{vendor.businessName}</span>
             </Link>
           </div>
 
@@ -238,15 +238,15 @@ export default function VendorDashboardLayout({
               {vendor.profileImage ? (
                 <img
                   src={vendor.profileImage}
-                  alt={vendor.name}
+                  alt={vendor.businessName}
                   className="h-8 w-8 rounded-full object-cover"
                 />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#14B8A6] text-sm font-bold text-slate-900">
-                  {vendor.name.charAt(0)}
+                  {vendor.businessName.charAt(0)}
                 </div>
               )}
-              <span className="truncate max-w-[150px]">{vendor.name}</span>
+              <span className="truncate max-w-[150px]">{vendor.businessName}</span>
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

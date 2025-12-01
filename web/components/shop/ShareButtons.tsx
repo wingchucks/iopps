@@ -13,7 +13,7 @@ interface ShareButtonsProps {
   onShare?: (platform: string) => void;
 }
 
-const defaultPlatforms: ShareButtonsProps["platforms"] = [
+const defaultPlatforms: ("facebook" | "twitter" | "linkedin" | "pinterest" | "email" | "copy")[] = [
   "facebook",
   "twitter",
   "linkedin",
@@ -164,9 +164,11 @@ export function ShareButtons({
     },
   };
 
+  const activePlatforms = platforms ?? defaultPlatforms;
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {platforms.map((platform) => {
+      {activePlatforms.map((platform) => {
         const { icon, label, color } = icons[platform];
 
         if (variant === "icon") {
