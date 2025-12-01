@@ -186,7 +186,7 @@ export default function VendorProfilePage() {
         },
       };
 
-      await updateVendor(vendor.id, updates);
+      await updateVendor(vendor.id, user!.uid, updates);
 
       setSaveMessage({ type: "success", text: "Profile saved successfully!" });
 
