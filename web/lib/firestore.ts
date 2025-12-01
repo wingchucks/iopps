@@ -1108,6 +1108,21 @@ export async function getVendorProfileById(
   }
 }
 
+// Helper function to generate slug from business name
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function generateUniqueSlug(businessName: string): string {
+  const baseSlug = slugify(businessName);
+  const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+  return `${baseSlug}-${uniqueSuffix}`;
+}
+
 export type UpsertVendorResult = {
   success: boolean;
   approvalStatus: VendorApprovalStatus;
@@ -1187,12 +1202,44 @@ export async function upsertVendorProfile(
       updateData.ownerUserId = userId;
     }
 
+    // Generate slug if missing (required for shop listing)
+    if (!existingData.slug && data.businessName) {
+      updateData.slug = generateUniqueSlug(data.businessName);
+    }
+
+    // Set status fields for shop listing compatibility
+    // Map approvalStatus to verificationStatus for the shop page queries
+    if (approvalStatus === 'approved') {
+      updateData.status = 'active';
+      updateData.verificationStatus = 'verified';
+    } else if (approvalStatus === 'pending_review') {
+      updateData.status = 'draft';
+      updateData.verificationStatus = 'pending';
+    } else if (approvalStatus === 'rejected') {
+      updateData.status = 'suspended';
+      updateData.verificationStatus = 'rejected';
+    }
+
     await updateDoc(ref, updateData);
   } else {
     // Create new
+    // Generate slug for new vendor profiles
+    const slug = data.businessName ? generateUniqueSlug(data.businessName) : '';
+
+    // Map approval status to shop listing status fields
+    let status = 'draft';
+    let verificationStatus = 'pending';
+    if (approvalStatus === 'approved') {
+      status = 'active';
+      verificationStatus = 'verified';
+    }
+
     await setDoc(ref, {
       id: userId,
       ownerUserId: userId,
+      slug,
+      status,
+      verificationStatus,
       ...data,
       approvalStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,

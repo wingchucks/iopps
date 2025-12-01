@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -9,6 +9,8 @@ import {
   updateShopListingForVendor,
   deleteShopListingForVendor,
 } from "@/lib/firestore";
+import { storage } from "@/lib/firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import type { ProductServiceListing } from "@/lib/types";
 
 export default function VendorProductsPage() {
@@ -30,6 +32,10 @@ export default function VendorProductsPage() {
     imageUrl: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // File input ref
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -163,6 +169,32 @@ export default function VendorProductsPage() {
     });
     setEditingId(null);
     setShowForm(false);
+  };
+
+  // Image upload handler
+  const handleImageUpload = async (file: File) => {
+    if (!file || !user) return;
+
+    setUploadingImage(true);
+    setError(null);
+
+    try {
+      const fileExtension = file.name.split(".").pop();
+      const fileName = `vendors/${user.uid}/products/product-${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage!, fileName);
+
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      setFormData({ ...formData, imageUrl: url });
+      setSuccessMessage("Image uploaded successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error("Image upload error:", err);
+      setError("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   if (authLoading || loading) {
@@ -380,12 +412,55 @@ export default function VendorProductsPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="imageUrl"
-                  className="block text-sm font-semibold text-slate-200"
-                >
-                  Image URL (optional)
+                <label className="block text-sm font-semibold text-slate-200">
+                  Product Image (optional)
                 </label>
+
+                {/* Image preview */}
+                {formData.imageUrl && (
+                  <div className="mt-2 mb-3 rounded-lg border border-slate-700 bg-slate-900/50 p-3">
+                    <p className="mb-2 text-xs text-slate-400">Current image:</p>
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={formData.imageUrl}
+                        alt="Product preview"
+                        className="h-24 w-24 rounded-lg border border-slate-600 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, imageUrl: "" })}
+                        className="text-xs text-red-400 transition hover:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload button */}
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {uploadingImage ? "Uploading..." : formData.imageUrl ? "Change image" : "Upload image"}
+                  </button>
+                  <span className="text-xs text-slate-500">or</span>
+                </div>
+
+                {/* URL input */}
                 <input
                   type="url"
                   id="imageUrl"
@@ -394,8 +469,11 @@ export default function VendorProductsPage() {
                     setFormData({ ...formData, imageUrl: e.target.value })
                   }
                   className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
-                  placeholder="https://example.com/image.jpg"
+                  placeholder="Paste image URL here"
                 />
+                <p className="mt-1 text-xs text-slate-500">
+                  Upload an image or paste an image URL
+                </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
