@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/components/AuthProvider";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { VendorCard, VendorCardSkeleton } from "@/components/shop/VendorCard";
 import { getVendorById, type Vendor } from "@/lib/firebase/vendors";

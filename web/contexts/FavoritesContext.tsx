@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/components/AuthProvider";
 import {
   getGuestFavorites,
   addGuestFavorite,
