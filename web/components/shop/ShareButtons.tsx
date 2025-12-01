@@ -13,7 +13,7 @@ interface ShareButtonsProps {
   onShare?: (platform: string) => void;
 }
 
-const defaultPlatforms: ShareButtonsProps["platforms"] = [
+const defaultPlatforms: ("facebook" | "twitter" | "linkedin" | "pinterest" | "email" | "copy")[] = [
   "facebook",
   "twitter",
   "linkedin",
