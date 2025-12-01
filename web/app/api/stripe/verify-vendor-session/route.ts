@@ -86,7 +86,8 @@ export async function POST(request: NextRequest) {
 
         // Create or update vendor document
         if (vendorDoc.exists) {
-            await vendorRef.update({
+            const existingData = vendorDoc.data() || {};
+            const updateData: Record<string, any> = {
                 active: true,
                 featured: featured === "true",
                 subscription: {
@@ -97,10 +98,18 @@ export async function POST(request: NextRequest) {
                     paymentId: session.payment_intent as string,
                     amountPaid: session.amount_total,
                 },
-            });
+            };
+
+            // Ensure ownerUserId is set if missing
+            if (!existingData.ownerUserId) {
+                updateData.ownerUserId = userId;
+            }
+
+            await vendorRef.update(updateData);
         } else {
             await vendorRef.set({
                 id: vendorId || userId,
+                ownerUserId: userId, // Always set ownerUserId for new vendor documents
                 active: true,
                 featured: featured === "true",
                 createdAt: new Date(),

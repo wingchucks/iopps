@@ -1171,12 +1171,20 @@ export async function upsertVendorProfile(
       approvalStatus = existingData.approvalStatus || 'approved';
     }
 
-    await updateDoc(ref, {
+    // Ensure ownerUserId is set (may be missing if doc was created by verify-vendor-session)
+    const updateData: Record<string, any> = {
       ...data,
       approvalStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       updatedAt: timestamp,
-    });
+    };
+
+    // Add ownerUserId if missing from existing document
+    if (!existingData.ownerUserId) {
+      updateData.ownerUserId = userId;
+    }
+
+    await updateDoc(ref, updateData);
   } else {
     // Create new
     await setDoc(ref, {
