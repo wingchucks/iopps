@@ -111,7 +111,6 @@ export default function VendorSetupPage() {
 
     try {
       const vendorInput: VendorInput = {
-        userId: user.uid,
         businessName: formData.businessName,
         slug: generateSlug(formData.businessName),
         tagline: formData.tagline,
@@ -144,7 +143,7 @@ export default function VendorSetupPage() {
         featured: false,
       };
 
-      await createVendor(vendorInput);
+      await createVendor(user.uid, vendorInput);
 
       // Redirect to dashboard
       router.push("/dashboard/vendor");
