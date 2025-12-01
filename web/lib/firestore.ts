@@ -994,8 +994,11 @@ export async function checkForDuplicateVendor(
   const matchingVendors: string[] = [];
 
   // Get all active vendors (excluding current user's profile if it exists)
+  // We must filter by active == true because security rules only allow reading
+  // active vendors or the user's own vendor profile
   const vendorsRef = collection(db!, vendorsCollection);
-  const vendorsSnap = await getDocs(vendorsRef);
+  const activeVendorsQuery = query(vendorsRef, where('active', '==', true));
+  const vendorsSnap = await getDocs(activeVendorsQuery);
 
   const normalizedNewName = normalizeBusinessName(businessName);
   const normalizedNewUrl = websiteUrl ? normalizeUrl(websiteUrl) : null;
