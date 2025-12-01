@@ -46,8 +46,8 @@ const pillars = [
     ),
   },
   {
-    title: "Pow Wow Listings",
-    description: "See upcoming community gatherings and celebrations.",
+    title: "Pow Wows & Events",
+    description: "See upcoming pow wows, cultural gatherings, and community celebrations.",
     href: "/powwows",
     icon: (
       <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,7 +85,7 @@ export default function Home() {
           </h1>
           <p className="mt-6 text-base text-slate-400 sm:text-lg">
             IOPPS brings together jobs, conferences, scholarships, Indigenous
-            businesses, pow wows, and live streams in one place.
+            businesses, pow wows & events, and live streams in one place.
           </p>
 
           {/* Multi-color gradient pill with glow */}

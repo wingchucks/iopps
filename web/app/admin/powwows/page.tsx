@@ -142,7 +142,7 @@ function AdminPowwowsContent() {
     return (
       <div className="min-h-screen bg-[#020306] px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading pow wows...</p>
+          <p className="text-slate-400">Loading events...</p>
         </div>
       </div>
     );
@@ -176,10 +176,10 @@ function AdminPowwowsContent() {
                 ← Admin Dashboard
               </Link>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
-                Pow Wows Moderation
+                Pow Wows & Events Moderation
               </h1>
               <p className="mt-1 text-sm text-slate-400">
-                {filteredPowwows.length} pow wow{filteredPowwows.length !== 1 ? "s" : ""}
+                {filteredPowwows.length} event{filteredPowwows.length !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function AdminPowwowsPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-[#020306] px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading pow wows...</p>
+          <p className="text-slate-400">Loading events...</p>
         </div>
       </div>
     }>

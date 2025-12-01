@@ -196,13 +196,28 @@ service cloud.firestore {
     match /shopListings/{listingId} {
       // Public read
       allow read: if true;
-      
+
       // Vendors can create listings
       allow create: if isSignedIn();
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
       allow delete: if isAdminOrModerator();
     }
-    
+
+    // ===========================================================================
+    // PRODUCT/SERVICE LISTINGS (Vendor Products)
+    // ===========================================================================
+    match /productServiceListings/{listingId} {
+      // Public read for product listings
+      allow read: if true;
+
+      // Vendors can create their own product listings
+      allow create: if isSignedIn();
+
+      // Vendors can update/delete their own listings, admins can manage any
+      allow update: if isOwner(resource.data.vendorId) || isAdminOrModerator();
+      allow delete: if isOwner(resource.data.vendorId) || isAdminOrModerator();
+    }
+
     // ===========================================================================
     // VENDOR PROFILES (Shop Indigenous)
     // ===========================================================================

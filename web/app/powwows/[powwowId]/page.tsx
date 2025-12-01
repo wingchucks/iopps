@@ -111,7 +111,7 @@ export default function PowwowDetailPage() {
             href="/powwows"
             className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
-            Back to Pow Wows
+            Back to Pow Wows & Events
           </Link>
         </div>
       </PageShell>
@@ -147,7 +147,7 @@ export default function PowwowDetailPage() {
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Pow Wows
+          Back to Pow Wows & Events
         </Link>
 
         {/* Pow Wow Header */}

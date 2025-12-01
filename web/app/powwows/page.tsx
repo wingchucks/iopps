@@ -73,9 +73,9 @@ function PowwowsContent() {
   return (
     <PageShell>
       <SectionHeader
-        eyebrow="Pow Wow Listings"
+        eyebrow="Pow Wows & Events"
         title="Cultural celebrations across Turtle Island"
-        subtitle="Find traditional and competition pow wows hosted by Nations, universities, and community partners across North America. We highlight events with livestream coverage so distant families can join in."
+        subtitle="Find traditional and competition pow wows, cultural gatherings, and community events hosted by Nations, universities, and partners across North America. We highlight events with livestream coverage so distant families can join in."
       />
 
       <FilterCard className="mt-8">
@@ -158,19 +158,19 @@ function PowwowsContent() {
           </div>
         ) : events.length === 0 && params.keyword === "" && params.provinceFilter === "" && params.typeFilter === "" && !params.showLivestreamOnly ? (
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-8 text-center">
-            <h3 className="text-xl font-bold text-slate-200">No pow wows scheduled yet</h3>
+            <h3 className="text-xl font-bold text-slate-200">No events scheduled yet</h3>
             <p className="mt-3 text-sm text-slate-400">
-              Check back for upcoming events! Nations and communities are adding pow wow listings regularly.
+              Check back for upcoming pow wows and events! Nations and communities are adding listings regularly.
             </p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-6 text-center text-sm text-slate-300">
-            No pow wows match your filters yet. Try adjusting your filters or check back soon as new celebrations are added each week.
+            No events match your filters yet. Try adjusting your filters or check back soon as new pow wows and events are added each week.
           </div>
         ) : (
           <>
             <div className="mb-3 text-sm text-slate-400">
-              Showing {displayedEvents.length} of {filtered.length} pow wow{filtered.length === 1 ? "" : "s"}
+              Showing {displayedEvents.length} of {filtered.length} event{filtered.length === 1 ? "" : "s"}
             </div>
             <div className="space-y-4">
               {displayedEvents.map((event) => (

@@ -10,7 +10,7 @@ const primaryLinks = [
   { href: "/conferences", label: "Conferences" },
   { href: "/scholarships", label: "Scholarships & Grants" },
   { href: "/shop", label: "Shop Indigenous" },
-  { href: "/powwows", label: "Pow Wows" },
+  { href: "/powwows", label: "Pow Wows & Events" },
   { href: "/live", label: "Live Streams" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

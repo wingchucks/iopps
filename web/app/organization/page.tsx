@@ -480,7 +480,7 @@ export default function EmployerDashboardPage() {
       return acc;
     }, {});
 
-    const pillarOrder = ["Job", "Conference", "Scholarship", "Pow Wow", "Shop"];
+    const pillarOrder = ["Job", "Conference", "Scholarship", "Pow Wow", "Event", "Shop"];
     const sortedPillars = pillarOrder.filter((p) => groupedOpportunities[p]);
 
     return (

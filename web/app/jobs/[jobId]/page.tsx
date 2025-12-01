@@ -185,6 +185,18 @@ export default function JobDetailPage() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <JobHeader job={job} />
 
+        {/* Share Section */}
+        <div className="mt-4 rounded-xl border border-slate-800 bg-[#08090C] p-4">
+          <ShareButtons
+            item={{
+              id: job.id,
+              title: `${job.title} at ${job.employerName || 'Company'}`,
+              description: job.description?.substring(0, 150) + '...',
+              type: 'job'
+            }}
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Main Content */}
           <div className="lg:col-span-8">
