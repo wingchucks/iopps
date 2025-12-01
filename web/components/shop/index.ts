@@ -11,3 +11,4 @@ export * from "./VendorCTA";
 export * from "./CategoryFilter";
 export * from "./BusinessOfTheDay";
 export * from "./VendorBadges";
+export * from "./ShareButtons";
