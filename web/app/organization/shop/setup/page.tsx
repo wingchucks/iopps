@@ -197,7 +197,7 @@ function VendorSetupContent() {
 
     try {
       const fileExtension = logoFile.name.split(".").pop();
-      const fileName = `vendors/${user.uid}/logo-${Date.now()}.${fileExtension}`;
+      const fileName = `vendors/${user.uid}/images/logo-${Date.now()}.${fileExtension}`;
       const storageRef = ref(storage!, fileName);
 
       await uploadBytes(storageRef, logoFile);
@@ -224,7 +224,7 @@ function VendorSetupContent() {
 
     try {
       const fileExtension = heroImageFile.name.split(".").pop();
-      const fileName = `vendors/${user.uid}/hero-${Date.now()}.${fileExtension}`;
+      const fileName = `vendors/${user.uid}/images/hero-${Date.now()}.${fileExtension}`;
       const storageRef = ref(storage!, fileName);
 
       await uploadBytes(storageRef, heroImageFile);
