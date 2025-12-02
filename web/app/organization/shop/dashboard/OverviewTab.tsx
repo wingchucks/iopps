@@ -140,7 +140,7 @@ export default function OverviewTab() {
               Welcome back{profile?.businessName ? `, ${profile.businessName}` : ""}!
             </h2>
             <p className="mt-2 text-slate-400">
-              Here's an overview of your shop and products.
+              Here&apos;s an overview of your shop and products.
             </p>
           </div>
 
