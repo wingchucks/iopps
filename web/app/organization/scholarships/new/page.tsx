@@ -4,40 +4,35 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createConference, getEmployerProfile } from "@/lib/firestore";
-import ConferencePricingSelector from "@/components/ConferencePricingSelector";
+import { createScholarship, getEmployerProfile } from "@/lib/firestore";
 import { PosterUploader } from "@/components/PosterUploader";
-import type { ConferenceExtractedData } from "@/lib/googleAi";
+import type { ScholarshipExtractedData } from "@/lib/googleAi";
 
-export default function NewConferencePage() {
+export default function NewScholarshipPage() {
   const router = useRouter();
   const { user, role, loading } = useAuth();
   const [title, setTitle] = useState("");
+  const [provider, setProvider] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [registrationLink, setRegistrationLink] = useState("");
-  const [cost, setCost] = useState("");
-  const [orgName, setOrgName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [level, setLevel] = useState("");
+  const [region, setRegion] = useState("");
+  const [type, setType] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
 
-  // Step management
-  const [step, setStep] = useState<"form" | "pricing">("form");
-  const [conferenceId, setConferenceId] = useState<string | null>(null);
-
   // Handle data extracted from poster
-  const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
+  const handlePosterDataExtracted = (data: ScholarshipExtractedData) => {
     if (data.title) setTitle(data.title);
+    if (data.provider) setProvider(data.provider);
     if (data.description) setDescription(data.description);
-    if (data.location) setLocation(data.location);
-    if (data.startDate) setStartDate(data.startDate);
-    if (data.endDate) setEndDate(data.endDate);
-    if (data.registrationUrl) setRegistrationLink(data.registrationUrl);
-    if (data.cost) setCost(data.cost);
-    if (data.organizerName) setOrgName(data.organizerName);
+    if (data.amount) setAmount(data.amount);
+    if (data.deadline) setDeadline(data.deadline);
+    if (data.level) setLevel(data.level);
+    if (data.region) setRegion(data.region);
+    if (data.type) setType(data.type);
   };
 
   if (loading) {
@@ -55,7 +50,7 @@ export default function NewConferencePage() {
           Please sign in
         </h1>
         <p className="text-sm text-slate-300">
-          Employers must be signed in to create conferences.
+          Employers must be signed in to create scholarships.
         </p>
         <div className="flex gap-3">
           <Link
@@ -76,7 +71,7 @@ export default function NewConferencePage() {
           Employer access required
         </h1>
         <p className="text-sm text-slate-300">
-          Switch to an employer account to create conferences.
+          Switch to an employer account to create scholarships.
         </p>
       </div>
     );
@@ -88,60 +83,55 @@ export default function NewConferencePage() {
     setSaving(true);
     setError(null);
     try {
-      let organizerName = orgName;
-      if (!organizerName) {
+      let providerName = provider;
+      if (!providerName) {
         const profile = await getEmployerProfile(user.uid);
-        organizerName =
+        providerName =
           profile?.organizationName ??
           user.displayName ??
           user.email ??
           "Employer";
-        setOrgName(organizerName);
+        setProvider(providerName);
       }
 
-      const newConferenceId = await createConference({
+      await createScholarship({
         employerId: user.uid,
-        employerName: organizerName,
+        employerName: providerName,
         title,
+        provider: providerName,
         description,
-        location,
-        startDate,
-        endDate,
-        registrationLink,
-        cost,
-        active: false, // Start inactive until pricing selected
+        amount: amount || undefined,
+        deadline: deadline || undefined,
+        level,
+        region: region || undefined,
+        type,
       });
 
-      setConferenceId(newConferenceId);
-      setStep("pricing");
+      router.push("/organization/scholarships");
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Could not create conference.");
+      setError(err instanceof Error ? err.message : "Could not create scholarship.");
     } finally {
       setSaving(false);
     }
   };
 
-  // Pricing step
-  if (step === "pricing" && conferenceId && user) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <ConferencePricingSelector
-          conferenceId={conferenceId}
-          userId={user.uid}
-        />
-      </div>
-    );
-  }
-
-  // Form step
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mb-6">
+        <Link
+          href="/organization/scholarships"
+          className="text-sm text-slate-400 hover:text-white transition-colors"
+        >
+          ← Back to Scholarships
+        </Link>
+      </div>
+
       <h1 className="text-2xl font-semibold tracking-tight">
-        Create a conference or gathering
+        Create a Scholarship or Grant
       </h1>
       <p className="mt-2 text-sm text-slate-300">
-        Share gatherings, summits, and community events with the IOPPS network.
+        Share scholarship and grant opportunities with Indigenous students and community members.
       </p>
 
       {error && (
@@ -165,8 +155,11 @@ export default function NewConferencePage() {
               Skip this step
             </button>
           </div>
+          <p className="mb-4 text-sm text-slate-400">
+            Upload a scholarship poster or flyer and our AI will automatically extract the details.
+          </p>
           <PosterUploader
-            eventType="conference"
+            eventType="scholarship"
             onDataExtracted={handlePosterDataExtracted as any}
           />
           <div className="my-6 flex items-center gap-4">
@@ -180,97 +173,138 @@ export default function NewConferencePage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-200">
-            Title
+            Scholarship Title *
           </label>
           <input
             type="text"
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Indigenous Student Leadership Award"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-slate-200">
-            Description
+            Provider / Organization
+          </label>
+          <input
+            type="text"
+            value={provider}
+            onChange={(e) => setProvider(e.target.value)}
+            placeholder="e.g., Indigenous Education Foundation"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Leave blank to use your organization name
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-200">
+            Description *
           </label>
           <textarea
             required
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Location
-          </label>
-          <input
-            type="text"
-            required
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-200">
-              Start date
-            </label>
-            <input
-              type="date"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-200">
-              End date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Registration link
-          </label>
-          <input
-            type="url"
-            value={registrationLink}
-            onChange={(e) => setRegistrationLink(e.target.value)}
-            placeholder="https://example.com/register"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Cost or ticket info
-          </label>
-          <input
-            type="text"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-            placeholder="Free / $150 early bird"
+            placeholder="Describe the scholarship, eligibility requirements, and how to apply..."
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
-        >
-          {saving ? "Creating..." : "Continue to Pricing"}
-        </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Award Amount
+            </label>
+            <input
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="e.g., $5,000 or $1,000-$5,000"
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Application Deadline
+            </label>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Education Level *
+            </label>
+            <select
+              required
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+              <option value="">Select level</option>
+              <option value="high_school">High School</option>
+              <option value="undergraduate">Undergraduate</option>
+              <option value="graduate">Graduate</option>
+              <option value="postgraduate">Postgraduate / PhD</option>
+              <option value="vocational">Vocational / Trade</option>
+              <option value="any">Any Level</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Scholarship Type *
+            </label>
+            <select
+              required
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+              <option value="">Select type</option>
+              <option value="merit">Merit-Based</option>
+              <option value="need_based">Need-Based</option>
+              <option value="indigenous">Indigenous-Specific</option>
+              <option value="field_specific">Field-Specific</option>
+              <option value="community">Community Service</option>
+              <option value="athletic">Athletic</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-200">
+            Eligible Region
+          </label>
+          <input
+            type="text"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            placeholder="e.g., Canada-wide, Ontario, Alberta"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+          />
+        </div>
+
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+          >
+            {saving ? "Creating..." : "Create Scholarship"}
+          </button>
+        </div>
       </form>
     </div>
   );

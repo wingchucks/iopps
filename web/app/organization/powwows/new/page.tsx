@@ -4,40 +4,38 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createConference, getEmployerProfile } from "@/lib/firestore";
-import ConferencePricingSelector from "@/components/ConferencePricingSelector";
+import { createPowwowEvent } from "@/lib/firestore";
 import { PosterUploader } from "@/components/PosterUploader";
-import type { ConferenceExtractedData } from "@/lib/googleAi";
+import type { PowwowExtractedData } from "@/lib/googleAi";
 
-export default function NewConferencePage() {
+export default function NewPowwowPage() {
   const router = useRouter();
   const { user, role, loading } = useAuth();
-  const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
+  const [host, setHost] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [registrationLink, setRegistrationLink] = useState("");
-  const [cost, setCost] = useState("");
-  const [orgName, setOrgName] = useState("");
+  const [dateRange, setDateRange] = useState("");
+  const [season, setSeason] = useState("");
+  const [registrationStatus, setRegistrationStatus] = useState("open");
+  const [livestream, setLivestream] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
 
-  // Step management
-  const [step, setStep] = useState<"form" | "pricing">("form");
-  const [conferenceId, setConferenceId] = useState<string | null>(null);
-
   // Handle data extracted from poster
-  const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
-    if (data.title) setTitle(data.title);
+  const handlePosterDataExtracted = (data: PowwowExtractedData) => {
+    if (data.name) setName(data.name);
+    if (data.host) setHost(data.host);
     if (data.description) setDescription(data.description);
     if (data.location) setLocation(data.location);
     if (data.startDate) setStartDate(data.startDate);
     if (data.endDate) setEndDate(data.endDate);
-    if (data.registrationUrl) setRegistrationLink(data.registrationUrl);
-    if (data.cost) setCost(data.cost);
-    if (data.organizerName) setOrgName(data.organizerName);
+    if (data.dateRange) setDateRange(data.dateRange);
+    if (data.registrationStatus) setRegistrationStatus(data.registrationStatus);
+    if (data.livestream !== undefined) setLivestream(data.livestream);
   };
 
   if (loading) {
@@ -55,7 +53,7 @@ export default function NewConferencePage() {
           Please sign in
         </h1>
         <p className="text-sm text-slate-300">
-          Employers must be signed in to create conferences.
+          Employers must be signed in to create pow wow events.
         </p>
         <div className="flex gap-3">
           <Link
@@ -76,7 +74,7 @@ export default function NewConferencePage() {
           Employer access required
         </h1>
         <p className="text-sm text-slate-300">
-          Switch to an employer account to create conferences.
+          Switch to an employer account to create pow wow events.
         </p>
       </div>
     );
@@ -88,60 +86,45 @@ export default function NewConferencePage() {
     setSaving(true);
     setError(null);
     try {
-      let organizerName = orgName;
-      if (!organizerName) {
-        const profile = await getEmployerProfile(user.uid);
-        organizerName =
-          profile?.organizationName ??
-          user.displayName ??
-          user.email ??
-          "Employer";
-        setOrgName(organizerName);
-      }
-
-      const newConferenceId = await createConference({
+      await createPowwowEvent({
         employerId: user.uid,
-        employerName: organizerName,
-        title,
+        name,
+        host: host || undefined,
         description,
         location,
-        startDate,
-        endDate,
-        registrationLink,
-        cost,
-        active: false, // Start inactive until pricing selected
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        dateRange: dateRange || undefined,
+        season: season || undefined,
+        registrationStatus: registrationStatus || undefined,
+        livestream,
       });
 
-      setConferenceId(newConferenceId);
-      setStep("pricing");
+      router.push("/organization/powwows");
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Could not create conference.");
+      setError(err instanceof Error ? err.message : "Could not create pow wow.");
     } finally {
       setSaving(false);
     }
   };
 
-  // Pricing step
-  if (step === "pricing" && conferenceId && user) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <ConferencePricingSelector
-          conferenceId={conferenceId}
-          userId={user.uid}
-        />
-      </div>
-    );
-  }
-
-  // Form step
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mb-6">
+        <Link
+          href="/organization/powwows"
+          className="text-sm text-slate-400 hover:text-white transition-colors"
+        >
+          ← Back to Pow Wows
+        </Link>
+      </div>
+
       <h1 className="text-2xl font-semibold tracking-tight">
-        Create a conference or gathering
+        Create a Pow Wow Event
       </h1>
       <p className="mt-2 text-sm text-slate-300">
-        Share gatherings, summits, and community events with the IOPPS network.
+        Share pow wow gatherings and cultural events with the IOPPS community.
       </p>
 
       {error && (
@@ -165,8 +148,11 @@ export default function NewConferencePage() {
               Skip this step
             </button>
           </div>
+          <p className="mb-4 text-sm text-slate-400">
+            Upload a pow wow poster or flyer and our AI will automatically extract the event details.
+          </p>
           <PosterUploader
-            eventType="conference"
+            eventType="powwow"
             onDataExtracted={handlePosterDataExtracted as any}
           />
           <div className="my-6 flex items-center gap-4">
@@ -180,48 +166,66 @@ export default function NewConferencePage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-200">
-            Title
+            Pow Wow Name *
           </label>
           <input
             type="text"
             required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Annual Traditional Pow Wow"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-slate-200">
-            Description
+            Host Organization / Nation
+          </label>
+          <input
+            type="text"
+            value={host}
+            onChange={(e) => setHost(e.target.value)}
+            placeholder="e.g., First Nations Community Center"
+            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-200">
+            Description *
           </label>
           <textarea
             required
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
+            placeholder="Describe the pow wow, activities, categories, and what attendees can expect..."
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-slate-200">
-            Location
+            Location *
           </label>
           <input
             type="text"
             required
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g., Community Grounds, Edmonton, AB"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-slate-200">
-              Start date
+              Start Date
             </label>
             <input
               type="date"
-              required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
@@ -229,7 +233,7 @@ export default function NewConferencePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-200">
-              End date
+              End Date
             </label>
             <input
               type="date"
@@ -239,38 +243,76 @@ export default function NewConferencePage() {
             />
           </div>
         </div>
+
         <div>
           <label className="block text-sm font-medium text-slate-200">
-            Registration link
-          </label>
-          <input
-            type="url"
-            value={registrationLink}
-            onChange={(e) => setRegistrationLink(e.target.value)}
-            placeholder="https://example.com/register"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Cost or ticket info
+            Date Range (if dates are tentative)
           </label>
           <input
             type="text"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-            placeholder="Free / $150 early bird"
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            placeholder="e.g., June 15-17, 2024 or Summer 2024"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
-        >
-          {saving ? "Creating..." : "Continue to Pricing"}
-        </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Season
+            </label>
+            <select
+              value={season}
+              onChange={(e) => setSeason(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+              <option value="">Select season</option>
+              <option value="spring">Spring</option>
+              <option value="summer">Summer</option>
+              <option value="fall">Fall</option>
+              <option value="winter">Winter</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Registration Status
+            </label>
+            <select
+              value={registrationStatus}
+              onChange={(e) => setRegistrationStatus(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+              <option value="required">Registration Required</option>
+              <option value="not_required">No Registration Needed</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="livestream"
+            checked={livestream}
+            onChange={(e) => setLivestream(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#14B8A6] focus:ring-[#14B8A6]"
+          />
+          <label htmlFor="livestream" className="text-sm text-slate-200">
+            This event will be livestreamed
+          </label>
+        </div>
+
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+          >
+            {saving ? "Creating..." : "Create Pow Wow"}
+          </button>
+        </div>
       </form>
     </div>
   );
