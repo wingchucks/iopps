@@ -1232,6 +1232,41 @@ export async function upsertVendorProfile(
     if (data.logoUrl) updateData.profileImage = data.logoUrl;
     if (data.tagline) updateData.tagline = data.tagline;
 
+    // Map category string to categories array for shop display filtering
+    if (data.category) {
+      updateData.categories = [data.category];
+      updateData.categoryIds = [data.category.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')];
+    }
+
+    // Map location and region for shop display
+    // Note: These are extended fields not in VendorProfile type but needed for shop display
+    if (data.location || data.region) {
+      const existingDoc = existingData as Record<string, any>;
+      const existingLocation = existingDoc.location || {};
+      updateData.location = {
+        ...existingLocation,
+        city: data.location || existingLocation.city || '',
+        province: existingLocation.province || '',
+        country: existingLocation.country || 'Canada',
+        region: data.region || existingLocation.region || '',
+      };
+    }
+
+    // Map social links for shop display
+    // Note: These are extended fields not in VendorProfile type but needed for shop display
+    const hasSocialLinks = data.instagram || data.facebook || data.tiktok || data.otherLink;
+    if (hasSocialLinks) {
+      const existingDoc = existingData as Record<string, any>;
+      const existingSocialLinks = existingDoc.socialLinks || {};
+      updateData.socialLinks = {
+        instagram: data.instagram || existingSocialLinks.instagram || '',
+        facebook: data.facebook || existingSocialLinks.facebook || '',
+        tiktok: data.tiktok || existingSocialLinks.tiktok || '',
+        pinterest: existingSocialLinks.pinterest || '',
+        youtube: existingSocialLinks.youtube || '',
+      };
+    }
+
     // Set userId for shop display compatibility (distinct from ownerUserId)
     updateData.userId = userId;
 
@@ -1239,6 +1274,7 @@ export async function upsertVendorProfile(
     if (existingData.profileViews === undefined) updateData.profileViews = 0;
     if (existingData.websiteClicks === undefined) updateData.websiteClicks = 0;
     if (existingData.favorites === undefined) updateData.favorites = 0;
+    if (existingData.followers === undefined) updateData.followers = 0;
 
     await updateDoc(ref, updateData);
   } else {
@@ -1253,6 +1289,29 @@ export async function upsertVendorProfile(
       status = 'active';
       verificationStatus = 'verified';
     }
+
+    // Map category to categories array
+    const categories = data.category ? [data.category] : [];
+    const categoryIds = data.category
+      ? [data.category.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')]
+      : [];
+
+    // Build location object for shop display
+    const locationObj = {
+      city: data.location || '',
+      province: '',
+      country: 'Canada',
+      region: data.region || '',
+    };
+
+    // Build social links object for shop display
+    const socialLinks = {
+      instagram: data.instagram || '',
+      facebook: data.facebook || '',
+      tiktok: data.tiktok || '',
+      pinterest: '',
+      youtube: '',
+    };
 
     await setDoc(ref, {
       id: userId,
@@ -1269,10 +1328,16 @@ export async function upsertVendorProfile(
       description: data.about || '',
       coverImage: data.heroImageUrl || '',
       profileImage: data.logoUrl || '',
+      // Additional shop display fields
+      categories,
+      categoryIds,
+      location: locationObj,
+      socialLinks,
       // Initialize shop display metrics
       profileViews: 0,
       websiteClicks: 0,
       favorites: 0,
+      followers: 0,
       approvalStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       createdAt: timestamp,
@@ -1294,6 +1359,54 @@ export async function deleteVendorProfile(vendorId: string): Promise<void> {
   checkFirebase();
   const ref = doc(db!, vendorsCollection, vendorId);
   await deleteDoc(ref);
+}
+
+// Update vendor shop status (publish/unpublish)
+// This allows vendors to control if their shop is visible publicly
+export async function updateVendorShopStatus(
+  vendorId: string,
+  userId: string,
+  isPublished: boolean
+): Promise<{ success: boolean; error?: string }> {
+  checkFirebase();
+  const ref = doc(db!, vendorsCollection, vendorId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    return { success: false, error: 'Vendor profile not found' };
+  }
+
+  const existingData = snap.data() as VendorProfile;
+
+  // Verify ownership
+  if (existingData.ownerUserId !== userId) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  // Check if profile can be published (needs basic info)
+  if (isPublished) {
+    if (!existingData.businessName || !existingData.slug) {
+      return { success: false, error: 'Please complete your business name before publishing' };
+    }
+
+    // Check if profile was rejected - cannot publish
+    if (existingData.approvalStatus === 'rejected') {
+      return { success: false, error: 'Your profile was not approved. Please contact support.' };
+    }
+
+    // Check if profile is pending review - cannot publish yet
+    if (existingData.approvalStatus === 'pending_review') {
+      return { success: false, error: 'Your profile is pending review and will be published once approved.' };
+    }
+  }
+
+  // Update status
+  await updateDoc(ref, {
+    status: isPublished ? 'active' : 'draft',
+    updatedAt: serverTimestamp(),
+  });
+
+  return { success: true };
 }
 
 // Admin function to approve/reject vendor profiles
