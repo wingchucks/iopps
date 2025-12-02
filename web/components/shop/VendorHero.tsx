@@ -15,7 +15,7 @@ export function VendorHero({ vendor }: VendorHeroProps) {
         {vendor.coverImage ? (
           <Image
             src={vendor.coverImage}
-            alt={`${vendor.businessName} cover`}
+            alt={`${vendor.businessName || "Shop"} cover`}
             fill
             className="object-cover"
             priority
@@ -34,14 +34,14 @@ export function VendorHero({ vendor }: VendorHeroProps) {
             {vendor.profileImage ? (
               <Image
                 src={vendor.profileImage}
-                alt={vendor.businessName}
+                alt={vendor.businessName || "Shop"}
                 width={144}
                 height={144}
                 className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#14B8A6] to-teal-600 text-4xl font-bold text-white">
-                {vendor.businessName.charAt(0)}
+                {vendor.businessName?.charAt(0) || "?"}
               </div>
             )}
           </div>
@@ -78,7 +78,7 @@ export function VendorHero({ vendor }: VendorHeroProps) {
 
             {/* Business Name */}
             <h1 className="mt-2 text-2xl font-bold text-slate-50 sm:text-3xl md:text-4xl">
-              {vendor.businessName}
+              {vendor.businessName || "Untitled Shop"}
             </h1>
 
             {/* Tagline */}

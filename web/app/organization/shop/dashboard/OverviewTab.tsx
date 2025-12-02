@@ -63,6 +63,9 @@ export default function OverviewTab() {
   const isPublished = profile?.status === "active";
   const canPublish = profile?.businessName && profile?.slug && profile?.approvalStatus !== "rejected" && profile?.approvalStatus !== "pending_review";
 
+  // Check if profile setup is incomplete (no business name = needs setup)
+  const needsSetup = !profile?.businessName;
+
   const handleTogglePublish = async () => {
     if (!user || !profile) return;
 
@@ -97,6 +100,38 @@ export default function OverviewTab() {
 
   return (
     <div className="space-y-8">
+      {/* Setup Required Banner */}
+      {needsSetup && (
+        <div className="rounded-3xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-yellow-500/10 p-8 shadow-xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="rounded-full bg-amber-500/20 p-3">
+                <svg className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-amber-200">Complete Your Shop Setup</h2>
+                <p className="mt-1 text-slate-300">
+                  Your subscription is active! Set up your vendor profile to get your shop URL and start attracting customers.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const event = new CustomEvent("switchTab", {
+                  detail: { tab: "profile" },
+                });
+                window.dispatchEvent(event);
+              }}
+              className="shrink-0 rounded-xl bg-amber-500 px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg transition-all hover:bg-amber-400"
+            >
+              Set Up Profile
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -105,7 +140,7 @@ export default function OverviewTab() {
               Welcome back{profile?.businessName ? `, ${profile.businessName}` : ""}!
             </h2>
             <p className="mt-2 text-slate-400">
-              Here's an overview of your shop and products.
+              Here&apos;s an overview of your shop and products.
             </p>
           </div>
 
@@ -257,9 +292,10 @@ export default function OverviewTab() {
             </p>
           </button>
 
-          {profile?.slug ? (
+          {/* View Shop Link - use slug if available, otherwise use user ID as fallback */}
+          {(profile?.slug || user?.uid) && profile?.businessName ? (
             <Link
-              href={`/shop/${profile.slug}`}
+              href={`/shop/${profile.slug || user?.uid}`}
               target="_blank"
               className="group rounded-xl border border-purple-500/30 bg-purple-500/10 p-6 transition-all hover:border-purple-500/50 hover:bg-purple-500/20"
             >

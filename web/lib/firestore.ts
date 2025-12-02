@@ -835,6 +835,23 @@ export async function updateScholarship(
   await updateDoc(ref, data);
 }
 
+export async function listEmployerScholarships(employerId: string): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    const ref = collection(firestore, scholarshipsCollection);
+    const q = query(ref, where("employerId", "==", employerId), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Scholarship));
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteScholarship(id: string): Promise<void> {
+  const ref = doc(db!, scholarshipsCollection, id);
+  await deleteDoc(ref);
+}
+
 type ShopListingInput = Omit<
   ShopListing,
   "id" | "createdAt" | "active"
@@ -913,6 +930,23 @@ export async function updatePowwowEvent(
 ) {
   const ref = doc(db!, powwowsCollection, id);
   await updateDoc(ref, data);
+}
+
+export async function listEmployerPowwows(employerId: string): Promise<PowwowEvent[]> {
+  try {
+    const firestore = checkFirebase();
+    const ref = collection(firestore, powwowsCollection);
+    const q = query(ref, where("employerId", "==", employerId), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as PowwowEvent));
+  } catch {
+    return [];
+  }
+}
+
+export async function deletePowwow(id: string): Promise<void> {
+  const ref = doc(db!, powwowsCollection, id);
+  await deleteDoc(ref);
 }
 
 type LiveStreamInput = Omit<
