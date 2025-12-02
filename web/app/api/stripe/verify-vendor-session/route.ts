@@ -110,8 +110,20 @@ export async function POST(request: NextRequest) {
             await vendorRef.set({
                 id: vendorId || userId,
                 ownerUserId: userId, // Always set ownerUserId for new vendor documents
+                userId: userId, // For shop display compatibility
                 active: true,
                 featured: featured === "true",
+                // Shop display fields - will be populated when user completes profile
+                slug: '', // Empty until profile is set up
+                businessName: '',
+                status: 'draft', // Draft until profile is completed
+                verificationStatus: 'pending',
+                approvalStatus: 'approved', // Pre-approved since they paid
+                // Initialize metrics
+                profileViews: 0,
+                websiteClicks: 0,
+                favorites: 0,
+                followers: 0,
                 createdAt: new Date(),
                 subscription: {
                     active: true,
