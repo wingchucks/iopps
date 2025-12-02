@@ -292,9 +292,10 @@ export default function OverviewTab() {
             </p>
           </button>
 
-          {profile?.slug ? (
+          {/* View Shop Link - use slug if available, otherwise use user ID as fallback */}
+          {(profile?.slug || user?.uid) && profile?.businessName ? (
             <Link
-              href={`/shop/${profile.slug}`}
+              href={`/shop/${profile.slug || user?.uid}`}
               target="_blank"
               className="group rounded-xl border border-purple-500/30 bg-purple-500/10 p-6 transition-all hover:border-purple-500/50 hover:bg-purple-500/20"
             >

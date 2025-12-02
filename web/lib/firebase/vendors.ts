@@ -358,30 +358,45 @@ export async function getVendorBySlug(slug: string): Promise<Vendor | null> {
 /**
  * Get a vendor by their URL slug regardless of status (for owner preview)
  * This allows shop owners to preview their shop even when status is 'draft'
+ * Also supports querying by userId/document ID as a fallback for legacy data
  */
 export async function getVendorBySlugForPreview(slug: string): Promise<Vendor | null> {
   try {
     const firestore = checkFirebase();
-    const ref = collection(firestore, VENDORS_COLLECTION);
+    const collRef = collection(firestore, VENDORS_COLLECTION);
 
-    // Query by slug only, without status filter
+    // First try to query by slug
     const q = query(
-      ref,
+      collRef,
       where("slug", "==", slug),
       limit(1)
     );
 
     const snap = await getDocs(q);
 
-    if (snap.empty) {
-      return null;
+    if (!snap.empty) {
+      const docData = snap.docs[0];
+      return {
+        id: docData.id,
+        ...docData.data(),
+      } as Vendor;
     }
 
-    const docData = snap.docs[0];
-    return {
-      id: docData.id,
-      ...docData.data(),
-    } as Vendor;
+    // If slug query fails, try to get by document ID (userId)
+    // This handles legacy data where slug might be empty but document exists
+    console.log("[getVendorBySlugForPreview] Slug query failed, trying document ID:", slug);
+    const docRef = doc(firestore, VENDORS_COLLECTION, slug);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      console.log("[getVendorBySlugForPreview] Found vendor by document ID");
+      return {
+        id: docSnap.id,
+        ...docSnap.data(),
+      } as Vendor;
+    }
+
+    return null;
   } catch (error) {
     console.error("Error getting vendor by slug for preview:", error);
     return null;
