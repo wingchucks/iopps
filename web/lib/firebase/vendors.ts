@@ -345,9 +345,18 @@ export async function getVendorBySlug(slug: string): Promise<Vendor | null> {
     }
 
     const docData = snap.docs[0];
+    const data = docData.data() as any;
+
+    // Convert Timestamps to serializable dates
+    if (data.createdAt?.toDate) data.createdAt = data.createdAt.toDate();
+    if (data.updatedAt?.toDate) data.updatedAt = data.updatedAt.toDate();
+    if (data.lastActiveAt?.toDate) data.lastActiveAt = data.lastActiveAt.toDate();
+    if (data.verifiedAt?.toDate) data.verifiedAt = data.verifiedAt.toDate();
+    if (data.newVendorBoostExpires?.toDate) data.newVendorBoostExpires = data.newVendorBoostExpires.toDate();
+
     return {
       id: docData.id,
-      ...docData.data(),
+      ...data,
     } as Vendor;
   } catch (error) {
     console.error("Error getting vendor by slug:", error);
@@ -390,9 +399,18 @@ export async function getVendorBySlugForPreview(slug: string): Promise<Vendor | 
 
     if (docSnap.exists()) {
       console.log("[getVendorBySlugForPreview] Found vendor by document ID");
+      const data = docSnap.data() as any;
+
+      // Convert Timestamps to serializable dates
+      if (data.createdAt?.toDate) data.createdAt = data.createdAt.toDate();
+      if (data.updatedAt?.toDate) data.updatedAt = data.updatedAt.toDate();
+      if (data.lastActiveAt?.toDate) data.lastActiveAt = data.lastActiveAt.toDate();
+      if (data.verifiedAt?.toDate) data.verifiedAt = data.verifiedAt.toDate();
+      if (data.newVendorBoostExpires?.toDate) data.newVendorBoostExpires = data.newVendorBoostExpires.toDate();
+
       return {
         id: docSnap.id,
-        ...docSnap.data(),
+        ...data,
       } as Vendor;
     }
 

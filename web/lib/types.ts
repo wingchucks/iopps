@@ -90,6 +90,78 @@ export interface JobPosting {
   expiresAt?: Timestamp | Date | string | null;
 }
 
+// Conference sub-types
+export interface ConferenceVenue {
+  name: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  mapUrl?: string;
+  parkingInfo?: string;
+  transitInfo?: string;
+  accessibilityInfo?: string;
+  nearbyHotels?: string;
+}
+
+export interface ConferenceSession {
+  id: string;
+  time: string;
+  endTime?: string;
+  title: string;
+  description?: string;
+  speakerIds?: string[];
+  location?: string;
+  track?: string;
+  type?: 'keynote' | 'workshop' | 'panel' | 'networking' | 'break' | 'ceremony' | 'other';
+}
+
+export interface ConferenceAgendaDay {
+  date: string;
+  title?: string;
+  sessions: ConferenceSession[];
+}
+
+export interface ConferenceSpeaker {
+  id: string;
+  name: string;
+  title?: string;
+  organization?: string;
+  nation?: string;
+  bio?: string;
+  photoUrl?: string;
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  websiteUrl?: string;
+  topics?: string[];
+}
+
+export interface ConferenceSponsor {
+  id: string;
+  name: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  tier?: 'platinum' | 'gold' | 'silver' | 'bronze' | 'community';
+  description?: string;
+}
+
+export interface ConferenceFAQ {
+  question: string;
+  answer: string;
+}
+
+export interface ConferenceRegistrationOptions {
+  earlyBirdPrice?: string;
+  earlyBirdDeadline?: Timestamp | string | null;
+  regularPrice?: string;
+  groupRate?: string;
+  groupMinimum?: number;
+  indigenousRate?: string;
+  studentRate?: string;
+  virtualPrice?: string;
+  registrationDeadline?: Timestamp | string | null;
+}
+
 export interface Conference {
   id: string;
   employerId: string;
@@ -106,6 +178,7 @@ export interface Conference {
   format?: string;
   active: boolean;
   createdAt?: Timestamp | null;
+
   // Payment fields
   featured?: boolean;
   paymentStatus?: "paid" | "pending" | "failed";
@@ -114,6 +187,66 @@ export interface Conference {
   amountPaid?: number;
   expiresAt?: Timestamp | Date | string | null;
   viewsCount?: number;
+
+  // Rich Media
+  bannerImageUrl?: string;
+  galleryImageUrls?: string[];
+  promoVideoUrl?: string;
+
+  // Venue Details
+  venue?: ConferenceVenue;
+
+  // Schedule & Agenda
+  agenda?: ConferenceAgendaDay[];
+
+  // Speakers
+  speakers?: ConferenceSpeaker[];
+
+  // Registration Options
+  registrationOptions?: ConferenceRegistrationOptions;
+
+  // Event Details
+  eventType?: 'in-person' | 'virtual' | 'hybrid';
+  livestreamUrl?: string;
+  virtualPlatform?: string;
+  expectedAttendees?: string;
+  targetAudience?: string[];
+  topics?: string[];
+  timezone?: string;
+
+  // Indigenous-Specific
+  trc92Commitment?: boolean;
+  indigenousProtocols?: string;
+  elderAcknowledgement?: string;
+  territoryAcknowledgement?: string;
+  indigenousLanguageSupport?: string[];
+  indigenousFocused?: boolean;
+
+  // Accessibility
+  accessibilityFeatures?: string[];
+
+  // Sponsors
+  sponsors?: ConferenceSponsor[];
+
+  // FAQ
+  faqs?: ConferenceFAQ[];
+
+  // Contact
+  contactEmail?: string;
+  contactPhone?: string;
+
+  // Social
+  socialLinks?: {
+    website?: string;
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+    instagram?: string;
+  };
+
+  // Analytics
+  registrationClicks?: number;
+  savedCount?: number;
 }
 
 export type ApplicationStatus =
@@ -308,8 +441,8 @@ export interface VendorProfile {
   favorites?: number; // Shop display metric
   followers?: number; // Shop display metric
   duplicateFlags?: string[]; // Reasons why it was flagged (e.g., "similar_business_name", "same_website")
-  createdAt?: Timestamp | null;
-  updatedAt?: Timestamp | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
 }
 
 export interface PowwowEvent {

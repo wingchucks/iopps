@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
-import ShareButtons from "@/components/ShareButtons";
 import { useAuth } from "@/components/AuthProvider";
 import { getConference } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
+import {
+  ConferenceHero,
+  ConferenceAgenda,
+  ConferenceSpeakers,
+  ConferenceVenue,
+  ConferenceSidebar,
+} from "@/components/conferences";
 
 export default function ConferenceDetailPage() {
   const params = useParams();
@@ -17,6 +23,8 @@ export default function ConferenceDetailPage() {
   const [conference, setConference] = useState<Conference | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [highlightedSpeakerId, setHighlightedSpeakerId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadConference = async () => {
@@ -37,11 +45,32 @@ export default function ConferenceDetailPage() {
     loadConference();
   }, [conferenceId]);
 
+  const handleSave = useCallback(() => {
+    // TODO: Implement save functionality with Firestore
+    setIsSaved((prev) => !prev);
+  }, []);
+
+  const handleSpeakerClick = useCallback((speakerId: string) => {
+    setHighlightedSpeakerId(speakerId);
+    // Scroll to speakers section
+    const speakersSection = document.getElementById("speakers-section");
+    if (speakersSection) {
+      speakersSection.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
   if (loading) {
     return (
       <PageShell>
-        <div className="mx-auto max-w-4xl py-12 text-center">
-          <p className="text-slate-400">Loading conference details...</p>
+        <div className="mx-auto max-w-7xl py-8">
+          {/* Loading skeleton */}
+          <div className="animate-pulse">
+            <div className="h-80 rounded-2xl bg-slate-800/50" />
+            <div className="mt-6 space-y-4">
+              <div className="h-8 w-2/3 rounded bg-slate-800/50" />
+              <div className="h-4 w-1/2 rounded bg-slate-800/50" />
+            </div>
+          </div>
         </div>
       </PageShell>
     );
@@ -51,311 +80,426 @@ export default function ConferenceDetailPage() {
     return (
       <PageShell>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <h1 className="text-2xl font-bold text-slate-200">
-            {error || "Conference not found"}
-          </h1>
-          <Link
-            href="/conferences"
-            className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
-          >
-            Back to Conferences
-          </Link>
+          <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-12">
+            <svg
+              className="mx-auto h-16 w-16 text-slate-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h1 className="mt-6 text-2xl font-bold text-slate-200">
+              {error || "Conference not found"}
+            </h1>
+            <p className="mt-2 text-slate-400">
+              The conference you're looking for might have ended or been removed.
+            </p>
+            <Link
+              href="/conferences"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Browse All Conferences
+            </Link>
+          </div>
         </div>
       </PageShell>
     );
   }
 
-  const formatDate = (value: Conference["startDate"]) => {
-    if (!value) return null;
-    try {
-      const date = typeof value === "object" && "toDate" in value
-        ? value.toDate()
-        : new Date(value);
-      return date.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return typeof value === "string" ? value : null;
-    }
-  };
-
-  const formatDateLong = (value: Conference["startDate"]) => {
-    if (!value) return null;
-    try {
-      const date = typeof value === "object" && "toDate" in value
-        ? value.toDate()
-        : new Date(value);
-      return date.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return typeof value === "string" ? value : null;
-    }
-  };
-
-  const startDate = formatDate(conference.startDate);
-  const endDate = formatDate(conference.endDate);
-  const startDateLong = formatDateLong(conference.startDate);
-  const endDateLong = formatDateLong(conference.endDate);
-
   const isEmployerOwner =
     role === "employer" && user && conference.employerId === user.uid;
 
   return (
-    <PageShell>
-      <div className="mx-auto max-w-4xl py-8">
+    <PageShell className="pb-24 md:pb-10">
+      <div className="mx-auto max-w-7xl">
+        {/* Back Link */}
         <Link
           href="/conferences"
           className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-[#14B8A6]"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Back to Conferences
         </Link>
 
-        {/* Conference Header */}
-        <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
-              Conference
-            </span>
-            {conference.format && (
-              <span className="inline-flex items-center rounded-lg border border-slate-700/60 bg-slate-800/60 px-3 py-1 text-xs font-medium text-slate-300">
-                {conference.format}
-              </span>
-            )}
-          </div>
-
-          <h1 className="mt-4 text-3xl font-bold text-slate-50">{conference.title}</h1>
-
-          <div className="mt-3 flex flex-col gap-2 text-base">
-            {conference.employerName && (
-              <div className="flex items-center gap-2 text-slate-300">
-                <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <span>Organized by <span className="font-semibold">{conference.employerName}</span></span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-slate-300">
-              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span className="font-semibold">{conference.location}</span>
-            </div>
-          </div>
-
-          {/* Dates and Cost */}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {(startDate || endDate) && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-base font-medium text-blue-300">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                {startDate && endDate && startDate !== endDate
-                  ? `${startDate} - ${endDate}`
-                  : startDate || endDate}
-              </span>
-            )}
-            {conference.cost && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-base font-medium text-emerald-300">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {conference.cost}
-              </span>
-            )}
-          </div>
-
-          {/* Primary Actions */}
-          {conference.registrationLink && (
-            <div className="mt-6">
-              <a
-                href={conference.registrationLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
-              >
-                Register for Conference
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-          )}
-
-          {/* Share Buttons */}
-          <div className="mt-6 pt-6 border-t border-slate-800">
-            <ShareButtons
-              item={{
-                id: conference.id,
-                title: `${conference.title} - Conference`,
-                description: `${conference.location} | ${startDate || 'Date TBA'}`,
-                type: 'conference'
-              }}
-            />
-          </div>
+        {/* Hero Section */}
+        <div className="mt-4">
+          <ConferenceHero
+            conference={conference}
+            onSave={handleSave}
+            isSaved={isSaved}
+          />
         </div>
 
-        {/* Owner Message */}
+        {/* Owner Banner */}
         {isEmployerOwner && (
-          <div className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6">
-            <div className="flex items-start gap-3">
-              <svg className="h-5 w-5 text-amber-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="font-semibold text-amber-200">
-                  You published this conference
-                </p>
-                <p className="mt-1 text-sm text-amber-300/80">
-                  Edit details, manage registrations, or promote live streams from your organization dashboard.
-                </p>
-                <Link
-                  href={`/organization/conferences/${conference.id}/edit`}
-                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-amber-400 hover:text-amber-300"
+          <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <svg
+                  className="h-6 w-6 text-amber-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  Edit Conference
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Event Details */}
-        <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
-          <h2 className="text-xl font-bold text-slate-200">Event Details</h2>
-
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            {/* Date & Time */}
-            <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-5">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                Date & Time
-              </div>
-              <div className="mt-3 space-y-1">
-                <p className="text-sm font-medium text-slate-200">
-                  {startDateLong || "Date TBA"}
-                </p>
-                {endDateLong && startDateLong !== endDateLong && (
-                  <p className="text-xs text-slate-400">
-                    Ends: {endDateLong}
+                <div>
+                  <p className="font-semibold text-amber-200">
+                    You published this conference
                   </p>
-                )}
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-5">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Location
-              </div>
-              <p className="mt-3 text-sm font-medium text-slate-200">
-                {conference.location}
-              </p>
-            </div>
-
-            {/* Cost */}
-            {conference.cost && (
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Cost
+                  <p className="text-sm text-amber-300/70">
+                    {conference.viewsCount || 0} views
+                  </p>
                 </div>
-                <p className="mt-3 text-sm font-medium text-slate-200">
-                  {conference.cost}
-                </p>
               </div>
-            )}
-
-            {/* Format */}
-            {conference.format && (
-              <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Format
-                </div>
-                <p className="mt-3 text-sm font-medium text-slate-200">
-                  {conference.format}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* About Section */}
-        <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
-          <h2 className="text-xl font-bold text-slate-200">About This Conference</h2>
-          <div className="mt-4 space-y-4 text-slate-300">
-            {conference.description.split("\n").map((paragraph, i) => (
-              <p key={i} className="leading-relaxed">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-
-          {conference.registrationLink && (
-            <div className="mt-6 pt-6 border-t border-slate-800">
-              <a
-                href={conference.registrationLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+              <Link
+                href={`/organization/conferences/${conference.id}/edit`}
+                className="inline-flex items-center gap-2 rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-400 transition-colors hover:bg-amber-500/30"
               >
-                Register / Learn More
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                Edit Conference
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* Sign-in CTA for non-logged users */}
-        {!user && (
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8 text-center">
-            <h3 className="text-lg font-bold text-slate-200">
-              Join IOPPS to stay updated
-            </h3>
-            <p className="mt-2 text-slate-400">
-              Create an account to save conferences, get event reminders, and connect with the Indigenous professional community.
-            </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <Link
-                href="/login"
-                className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
-              >
-                Create Account
               </Link>
             </div>
           </div>
         )}
+
+        {/* Main Content Grid */}
+        <div className="mt-8 grid gap-8 lg:grid-cols-3">
+          {/* Main Column */}
+          <div className="space-y-8 lg:col-span-2">
+            {/* About Section */}
+            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+              <h2 className="text-xl font-bold text-slate-200">
+                About This Conference
+              </h2>
+              <div className="mt-4 space-y-4 text-slate-300">
+                {conference.description.split("\n").map((paragraph, i) => (
+                  <p key={i} className="leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+
+              {/* Target Audience */}
+              {conference.targetAudience && conference.targetAudience.length > 0 && (
+                <div className="mt-6 border-t border-slate-800 pt-4">
+                  <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                    Who Should Attend
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {conference.targetAudience.map((audience, index) => (
+                      <span
+                        key={index}
+                        className="rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1 text-sm text-[#14B8A6]"
+                      >
+                        {audience}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Indigenous Protocols Section */}
+            {(conference.territoryAcknowledgement ||
+              conference.elderAcknowledgement ||
+              conference.indigenousProtocols ||
+              conference.trc92Commitment) && (
+              <section className="rounded-2xl border border-[#14B8A6]/30 bg-gradient-to-br from-[#14B8A6]/5 to-transparent p-6 sm:p-8">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/10">
+                    <svg
+                      className="h-5 w-5 text-[#14B8A6]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-200">
+                    Indigenous Protocols
+                  </h2>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  {conference.territoryAcknowledgement && (
+                    <div>
+                      <h3 className="text-sm font-medium text-[#14B8A6]">
+                        Territory Acknowledgement
+                      </h3>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                        {conference.territoryAcknowledgement}
+                      </p>
+                    </div>
+                  )}
+
+                  {conference.elderAcknowledgement && (
+                    <div>
+                      <h3 className="text-sm font-medium text-[#14B8A6]">
+                        Elder Acknowledgement
+                      </h3>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                        {conference.elderAcknowledgement}
+                      </p>
+                    </div>
+                  )}
+
+                  {conference.indigenousProtocols && (
+                    <div>
+                      <h3 className="text-sm font-medium text-[#14B8A6]">
+                        Cultural Protocols
+                      </h3>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                        {conference.indigenousProtocols}
+                      </p>
+                    </div>
+                  )}
+
+                  {conference.indigenousLanguageSupport &&
+                    conference.indigenousLanguageSupport.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-medium text-[#14B8A6]">
+                          Language Support
+                        </h3>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {conference.indigenousLanguageSupport.map((lang, index) => (
+                            <span
+                              key={index}
+                              className="rounded-full bg-[#14B8A6]/10 px-3 py-1 text-sm text-[#14B8A6]"
+                            >
+                              {lang}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {conference.trc92Commitment && (
+                    <div className="rounded-lg border border-[#14B8A6]/20 bg-[#14B8A6]/5 p-4">
+                      <p className="text-sm leading-relaxed text-slate-400">
+                        <span className="font-semibold text-[#14B8A6]">
+                          TRC Call to Action #92:
+                        </span>{" "}
+                        This conference is committed to meaningful engagement
+                        with Indigenous peoples and advancing reconciliation
+                        through education and dialogue.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Agenda Section */}
+            {conference.agenda && conference.agenda.length > 0 && (
+              <ConferenceAgenda
+                agenda={conference.agenda}
+                speakers={conference.speakers}
+                onSpeakerClick={handleSpeakerClick}
+              />
+            )}
+
+            {/* Speakers Section */}
+            {conference.speakers && conference.speakers.length > 0 && (
+              <div id="speakers-section">
+                <ConferenceSpeakers
+                  speakers={conference.speakers}
+                  agenda={conference.agenda}
+                  highlightedSpeakerId={highlightedSpeakerId}
+                />
+              </div>
+            )}
+
+            {/* Venue Section */}
+            {conference.venue && (
+              <ConferenceVenue
+                venue={conference.venue}
+                location={conference.location}
+                accessibilityFeatures={conference.accessibilityFeatures}
+              />
+            )}
+
+            {/* Sponsors Section */}
+            {conference.sponsors && conference.sponsors.length > 0 && (
+              <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+                <h2 className="text-xl font-bold text-slate-200">Sponsors</h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Thank you to our sponsors for making this event possible
+                </p>
+
+                <div className="mt-6 space-y-6">
+                  {["platinum", "gold", "silver", "bronze", "community"].map(
+                    (tier) => {
+                      const tierSponsors = conference.sponsors?.filter(
+                        (s) => s.tier === tier
+                      );
+                      if (!tierSponsors || tierSponsors.length === 0) return null;
+
+                      return (
+                        <div key={tier}>
+                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500 capitalize">
+                            {tier} Sponsors
+                          </h3>
+                          <div className="mt-3 flex flex-wrap gap-4">
+                            {tierSponsors.map((sponsor) => (
+                              <a
+                                key={sponsor.id}
+                                href={sponsor.websiteUrl || "#"}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900/50 p-3 transition-colors hover:border-slate-600"
+                              >
+                                {sponsor.logoUrl ? (
+                                  <img
+                                    src={sponsor.logoUrl}
+                                    alt={sponsor.name}
+                                    className="h-10 w-auto max-w-[120px] object-contain"
+                                  />
+                                ) : (
+                                  <span className="font-medium text-slate-300">
+                                    {sponsor.name}
+                                  </span>
+                                )}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* FAQ Section */}
+            {conference.faqs && conference.faqs.length > 0 && (
+              <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+                <h2 className="text-xl font-bold text-slate-200">
+                  Frequently Asked Questions
+                </h2>
+
+                <div className="mt-6 space-y-4">
+                  {conference.faqs.map((faq, index) => (
+                    <details
+                      key={index}
+                      className="group rounded-lg border border-slate-700 bg-slate-900/50"
+                    >
+                      <summary className="flex cursor-pointer items-center justify-between p-4 font-medium text-slate-200">
+                        {faq.question}
+                        <svg
+                          className="h-5 w-5 text-slate-500 transition-transform group-open:rotate-180"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </summary>
+                      <div className="border-t border-slate-700 p-4">
+                        <p className="text-sm leading-relaxed text-slate-400">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Sign-up CTA for non-logged users */}
+            {!user && (
+              <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 text-center">
+                <h3 className="text-lg font-bold text-slate-200">
+                  Join IOPPS to stay updated
+                </h3>
+                <p className="mt-2 text-slate-400">
+                  Create an account to save conferences, get event reminders, and
+                  connect with the Indigenous professional community.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link
+                    href="/login"
+                    className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8">
+              <ConferenceSidebar conference={conference} />
+            </div>
+          </div>
+        </div>
       </div>
     </PageShell>
   );

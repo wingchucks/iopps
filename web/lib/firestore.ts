@@ -1118,7 +1118,13 @@ export async function getVendorProfile(
     const ref = doc(db!, vendorsCollection, userId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
-      return { id: snap.id, ...snap.data() } as VendorProfile;
+      const data = snap.data() as any;
+      // Convert Timestamps to Dates
+      if (data.createdAt?.toDate) data.createdAt = data.createdAt.toDate();
+      if (data.updatedAt?.toDate) data.updatedAt = data.updatedAt.toDate();
+      if (data.approvedAt?.toDate) data.approvedAt = data.approvedAt.toDate();
+
+      return { id: snap.id, ...data } as VendorProfile;
     }
     return null;
   } catch {
@@ -1134,7 +1140,13 @@ export async function getVendorProfileById(
     const ref = doc(db!, vendorsCollection, vendorId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
-      return { id: snap.id, ...snap.data() } as VendorProfile;
+      const data = snap.data() as any;
+      // Convert Timestamps to Dates
+      if (data.createdAt?.toDate) data.createdAt = data.createdAt.toDate();
+      if (data.updatedAt?.toDate) data.updatedAt = data.updatedAt.toDate();
+      if (data.approvedAt?.toDate) data.approvedAt = data.approvedAt.toDate();
+
+      return { id: snap.id, ...data } as VendorProfile;
     }
     return null;
   } catch {

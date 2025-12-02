@@ -60,11 +60,14 @@ function AdminVendorsContent() {
       );
 
       const vendorsList: VendorProfile[] = vendorsSnap.docs.map((doc) => {
-        const data = doc.data() as VendorProfile;
+        const data = doc.data() as any;
         return {
           ...data,
           id: doc.id,
-        };
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : null,
+          updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : null,
+          approvedAt: data.approvedAt?.toDate ? data.approvedAt.toDate() : null,
+        } as VendorProfile;
       });
 
       setVendors(vendorsList);
@@ -208,8 +211,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+              ? "bg-[#14B8A6] text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
               }`}
           >
             All ({vendors.length})
@@ -217,8 +220,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-                ? "bg-green-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-green-500"
+              ? "bg-green-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-green-500"
               }`}
           >
             Active ({activeCount})
@@ -226,8 +229,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-                ? "bg-slate-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-slate-500"
+              ? "bg-slate-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-slate-500"
               }`}
           >
             Inactive ({inactiveCount})
@@ -235,8 +238,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("featured")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "featured"
-                ? "bg-yellow-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-yellow-500"
+              ? "bg-yellow-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-yellow-500"
               }`}
           >
             Featured ({featuredCount})
@@ -286,8 +289,8 @@ function AdminVendorsContent() {
                             <div className="flex gap-2">
                               <span
                                 className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
-                                    ? "bg-green-500/10 text-green-400"
-                                    : "bg-slate-500/10 text-slate-400"
+                                  ? "bg-green-500/10 text-green-400"
+                                  : "bg-slate-500/10 text-slate-400"
                                   }`}
                               >
                                 {isActive ? "Active" : "Inactive"}
@@ -363,9 +366,7 @@ function AdminVendorsContent() {
                             {vendor.createdAt && (
                               <span>
                                 Listed:{" "}
-                                {new Date(
-                                  vendor.createdAt.seconds * 1000
-                                ).toLocaleDateString()}
+                                {vendor.createdAt && new Date(vendor.createdAt).toLocaleDateString()}
                               </span>
                             )}
                             {vendor.region && <span>Region: {vendor.region}</span>}
@@ -387,8 +388,8 @@ function AdminVendorsContent() {
                         onClick={() => toggleVendorStatus(vendor.id, isActive)}
                         disabled={isProcessing}
                         className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                            ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                            : "bg-green-600 text-white hover:bg-green-500"
+                          ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
+                          : "bg-green-600 text-white hover:bg-green-500"
                           }`}
                       >
                         {isProcessing
@@ -402,8 +403,8 @@ function AdminVendorsContent() {
                         onClick={() => toggleFeaturedStatus(vendor.id, isFeatured)}
                         disabled={isProcessing}
                         className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isFeatured
-                            ? "bg-yellow-600 text-white hover:bg-yellow-500"
-                            : "border border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
+                          ? "bg-yellow-600 text-white hover:bg-yellow-500"
+                          : "border border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
                           }`}
                       >
                         {isProcessing
