@@ -1061,8 +1061,8 @@ export async function checkForDuplicateVendor(
     }
 
     // Check for same website
-    if (normalizedNewUrl && vendor.websiteUrl) {
-      const normalizedExistingUrl = normalizeUrl(vendor.websiteUrl);
+    if (normalizedNewUrl && vendor.website) {
+      const normalizedExistingUrl = normalizeUrl(vendor.website);
       if (normalizedNewUrl === normalizedExistingUrl) {
         flags.push('same_website');
         if (!matchingVendors.includes(vendorDoc.id)) {
@@ -1072,8 +1072,8 @@ export async function checkForDuplicateVendor(
     }
 
     // Check for same contact email
-    if (normalizedNewEmail && vendor.contactEmail) {
-      if (normalizedNewEmail === vendor.contactEmail.toLowerCase().trim()) {
+    if (normalizedNewEmail && vendor.email) {
+      if (normalizedNewEmail === vendor.email.toLowerCase().trim()) {
         flags.push('same_contact_email');
         if (!matchingVendors.includes(vendorDoc.id)) {
           matchingVendors.push(vendorDoc.id);
@@ -1082,8 +1082,8 @@ export async function checkForDuplicateVendor(
     }
 
     // Check for same phone number
-    if (normalizedNewPhone && normalizedNewPhone.length >= 10 && vendor.contactPhone) {
-      const normalizedExistingPhone = vendor.contactPhone.replace(/\D/g, '');
+    if (normalizedNewPhone && normalizedNewPhone.length >= 10 && vendor.phone) {
+      const normalizedExistingPhone = vendor.phone.replace(/\D/g, '');
       if (normalizedNewPhone === normalizedExistingPhone) {
         flags.push('same_phone_number');
         if (!matchingVendors.includes(vendorDoc.id)) {
@@ -1199,9 +1199,9 @@ export async function upsertVendorProfile(
       const duplicateCheck = await checkForDuplicateVendor(
         userId,
         data.businessName,
-        data.websiteUrl || existingData.websiteUrl,
-        data.contactEmail || existingData.contactEmail,
-        data.contactPhone || existingData.contactPhone
+        data.websiteUrl || existingData.website,
+        data.contactEmail || existingData.email,
+        data.contactPhone || existingData.phone
       );
 
       if (duplicateCheck.isDuplicate) {
