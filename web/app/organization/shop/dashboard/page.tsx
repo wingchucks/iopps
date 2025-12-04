@@ -15,14 +15,18 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
+  CreditCardIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
+import { VENDOR_PRODUCTS, type VendorProductType } from '@/lib/stripe';
+import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct, VendorCategory, CanadianRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, CANADIAN_REGIONS } from '@/lib/types';
 
-type Tab = 'overview' | 'profile' | 'products';
+type Tab = 'overview' | 'profile' | 'products' | 'subscription';
 
 export default function VendorDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -185,6 +189,7 @@ export default function VendorDashboard() {
             { id: 'overview', label: 'Overview', icon: ChartBarIcon },
             { id: 'profile', label: 'Edit Profile', icon: PencilSquareIcon },
             { id: 'products', label: 'Products', icon: PhotoIcon },
+            { id: 'subscription', label: 'Subscription', icon: CreditCardIcon },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -586,6 +591,188 @@ export default function VendorDashboard() {
           )}
         </div>
       )}
+
+      {/* Subscription Tab */}
+      {activeTab === 'subscription' && vendor && (
+        <SubscriptionTab vendor={vendor} onRefresh={loadVendor} />
+      )}
     </PageShell>
+  );
+}
+
+// Subscription Tab Component
+function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () => Promise<void> }) {
+  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<VendorProductType | null>(null);
+
+  const hasActiveSubscription = vendor.subscriptionStatus === 'active' && vendor.subscriptionEndsAt;
+  const subscriptionEndDate = vendor.subscriptionEndsAt
+    ? new Date((vendor.subscriptionEndsAt as any).toDate ? (vendor.subscriptionEndsAt as any).toDate() : vendor.subscriptionEndsAt)
+    : null;
+  const isExpired = subscriptionEndDate && subscriptionEndDate < new Date();
+
+  const handleSubscribe = async (productType: VendorProductType) => {
+    setLoading(true);
+    setSelectedPlan(productType);
+
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+
+      const idToken = await user.getIdToken();
+
+      const response = await fetch('/api/stripe/checkout-vendor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          productType,
+          vendorId: vendor.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      alert('Failed to start checkout. Please try again.');
+    } finally {
+      setLoading(false);
+      setSelectedPlan(null);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Current Status */}
+      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Subscription Status</h3>
+
+        {hasActiveSubscription && !isExpired ? (
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
+              <CheckCircleIcon className="h-6 w-6 text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-white font-semibold">Active Subscription</p>
+              <p className="text-sm text-slate-400">
+                Your listing is live until {subscriptionEndDate?.toLocaleDateString('en-CA', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
+              <ExclamationTriangleIcon className="h-6 w-6 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-white font-semibold">
+                {isExpired ? 'Subscription Expired' : 'No Active Subscription'}
+              </p>
+              <p className="text-sm text-slate-400">
+                Subscribe to make your business visible in Shop Indigenous.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Pricing Plans */}
+      <div>
+        <h3 className="text-xl font-bold text-white mb-2">Choose Your Plan</h3>
+        <p className="text-slate-400 mb-6">
+          Get your Indigenous-owned business in front of customers across Canada.
+        </p>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Monthly Plan */}
+          <div className="relative rounded-2xl bg-slate-800/50 border border-slate-700 p-6 hover:border-teal-500/50 transition-colors">
+            <div className="absolute -top-3 left-6">
+              <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white">
+                First Month Free
+              </span>
+            </div>
+
+            <h4 className="text-lg font-bold text-white mt-2">{VENDOR_PRODUCTS.MONTHLY.name}</h4>
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="text-3xl font-bold text-white">${VENDOR_PRODUCTS.MONTHLY.price / 100}</span>
+              <span className="text-slate-400">/month</span>
+            </div>
+            <p className="mt-2 text-sm text-slate-400">{VENDOR_PRODUCTS.MONTHLY.description}</p>
+
+            <ul className="mt-4 space-y-2">
+              {VENDOR_PRODUCTS.MONTHLY.features.map((feature, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircleIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => handleSubscribe('MONTHLY')}
+              disabled={loading}
+              className="mt-6 w-full rounded-lg bg-slate-700 py-3 font-semibold text-white hover:bg-slate-600 transition-colors disabled:opacity-50"
+            >
+              {loading && selectedPlan === 'MONTHLY' ? 'Processing...' : 'Start Free Trial'}
+            </button>
+          </div>
+
+          {/* Annual Plan */}
+          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-teal-500/50 p-6">
+            <div className="absolute -top-3 left-6">
+              <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1 text-xs font-semibold text-white">
+                <SparklesIcon className="h-3 w-3" />
+                Best Value
+              </span>
+            </div>
+
+            <h4 className="text-lg font-bold text-white mt-2">{VENDOR_PRODUCTS.ANNUAL.name}</h4>
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="text-3xl font-bold text-white">${VENDOR_PRODUCTS.ANNUAL.price / 100}</span>
+              <span className="text-slate-400">/year</span>
+            </div>
+            <p className="mt-2 text-sm text-slate-400">{VENDOR_PRODUCTS.ANNUAL.description}</p>
+
+            <ul className="mt-4 space-y-2">
+              {VENDOR_PRODUCTS.ANNUAL.features.map((feature, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircleIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => handleSubscribe('ANNUAL')}
+              disabled={loading}
+              className="mt-6 w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 py-3 font-semibold text-white shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all disabled:opacity-50"
+            >
+              {loading && selectedPlan === 'ANNUAL' ? 'Processing...' : 'Subscribe Now'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Security */}
+      <div className="text-center text-sm text-slate-500">
+        <p>Secure payments powered by Stripe. Cancel anytime.</p>
+      </div>
+    </div>
   );
 }
