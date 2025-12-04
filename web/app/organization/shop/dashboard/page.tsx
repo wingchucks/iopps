@@ -126,12 +126,15 @@ export default function VendorDashboard() {
         setVendor(newVendor);
         setIsNewVendor(false);
         setActiveTab('overview');
+        alert('Profile created successfully!');
       } else if (vendor) {
         await updateVendor(vendor.id, formData);
         await loadVendor();
+        alert('Profile saved successfully!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving vendor:', error);
+      alert(`Failed to save profile: ${error?.message || 'Unknown error'}`);
     } finally {
       setSaving(false);
     }

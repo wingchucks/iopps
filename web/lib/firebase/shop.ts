@@ -20,7 +20,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Vendor, VendorProduct, VendorStatus, VendorCategory, CanadianRegion } from '@/lib/types';
+import type { Vendor, VendorProduct, VendorStatus, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 
 const VENDORS_COLLECTION = 'vendors';
 const PRODUCTS_COLLECTION = 'vendorProducts';
@@ -135,7 +135,7 @@ export async function deleteVendor(vendorId: string): Promise<void> {
 
 export interface VendorFilters {
   category?: VendorCategory;
-  region?: CanadianRegion;
+  region?: NorthAmericanRegion;
   featured?: boolean;
   search?: string;
 }
