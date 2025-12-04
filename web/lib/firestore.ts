@@ -27,13 +27,12 @@ import type {
   Conference,
   Scholarship,
   ScholarshipApplication,
-  ShopListing,
   PowwowEvent,
   LiveStreamEvent,
-  VendorProfile,
-  VendorApprovalStatus,
+  Vendor,
+  VendorStatus,
+  VendorProduct,
   PowwowRegistration,
-  ProductServiceListing,
   ContactSubmission,
   PlatformSettings,
   RSSFeed,
@@ -44,6 +43,12 @@ import type {
   Notification,
   NotificationType,
 } from "@/lib/types";
+
+// Type aliases for backwards compatibility with legacy code
+type VendorProfile = Vendor;
+type VendorApprovalStatus = VendorStatus;
+type ShopListing = Vendor;
+type ProductServiceListing = VendorProduct;
 
 const employerCollection = "employers";
 const memberCollection = "memberProfiles";
