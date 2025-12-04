@@ -428,12 +428,22 @@ export interface VendorProduct {
   updatedAt: Timestamp | null;
 }
 
+// Event type options for Pow Wows & Events
+export const POWWOW_EVENT_TYPES = [
+  'Pow Wow',
+  'Sports',
+  'Cultural Gathering',
+] as const;
+export type PowwowEventType = typeof POWWOW_EVENT_TYPES[number];
+
 export interface PowwowEvent {
   id: string;
   employerId: string;
   name: string;
   host?: string;
   location: string;
+  region?: NorthAmericanRegion;
+  eventType?: PowwowEventType;
   season?: string;
   startDate?: Timestamp | string | null;
   endDate?: Timestamp | string | null;
@@ -441,6 +451,8 @@ export interface PowwowEvent {
   description: string;
   registrationStatus?: string;
   livestream?: boolean;
+  imageUrl?: string;
+  featured?: boolean;
   createdAt?: Timestamp | null;
   active: boolean;
 }
