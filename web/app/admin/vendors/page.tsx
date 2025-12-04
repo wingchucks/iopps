@@ -336,9 +336,9 @@ function AdminVendorsContent() {
                                 {vendor.nation}
                               </span>
                             )}
-                            {vendor.shipsCanadaWide && (
+                            {vendor.offersShipping && (
                               <span className="text-xs text-slate-500">
-                                Ships Canada-wide
+                                Offers Shipping
                               </span>
                             )}
                           </div>

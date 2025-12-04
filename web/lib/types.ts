@@ -271,7 +271,8 @@ export const VENDOR_CATEGORIES = [
 
 export type VendorCategory = typeof VENDOR_CATEGORIES[number];
 
-export const CANADIAN_REGIONS = [
+export const NORTH_AMERICAN_REGIONS = [
+  // Canada
   'British Columbia',
   'Alberta',
   'Saskatchewan',
@@ -285,10 +286,66 @@ export const CANADIAN_REGIONS = [
   'Yukon',
   'Northwest Territories',
   'Nunavut',
+  // United States
+  'Alabama',
+  'Alaska',
+  'Arizona',
+  'Arkansas',
+  'California',
+  'Colorado',
+  'Connecticut',
+  'Delaware',
+  'Florida',
+  'Georgia',
+  'Hawaii',
+  'Idaho',
+  'Illinois',
+  'Indiana',
+  'Iowa',
+  'Kansas',
+  'Kentucky',
+  'Louisiana',
+  'Maine',
+  'Maryland',
+  'Massachusetts',
+  'Michigan',
+  'Minnesota',
+  'Mississippi',
+  'Missouri',
+  'Montana',
+  'Nebraska',
+  'Nevada',
+  'New Hampshire',
+  'New Jersey',
+  'New Mexico',
+  'New York',
+  'North Carolina',
+  'North Dakota',
+  'Ohio',
+  'Oklahoma',
+  'Oregon',
+  'Pennsylvania',
+  'Rhode Island',
+  'South Carolina',
+  'South Dakota',
+  'Tennessee',
+  'Texas',
+  'Utah',
+  'Vermont',
+  'Virginia',
+  'Washington',
+  'West Virginia',
+  'Wisconsin',
+  'Wyoming',
+  // Online
   'National / Online Only',
 ] as const;
 
-export type CanadianRegion = typeof CANADIAN_REGIONS[number];
+export type NorthAmericanRegion = typeof NORTH_AMERICAN_REGIONS[number];
+
+// Backwards compatibility aliases
+export const CANADIAN_REGIONS = NORTH_AMERICAN_REGIONS;
+export type CanadianRegion = NorthAmericanRegion;
 
 export interface Vendor {
   id: string;
@@ -303,8 +360,8 @@ export interface Vendor {
 
   // Location
   location?: string; // City/Town
-  region: CanadianRegion;
-  shipsCanadaWide: boolean;
+  region: NorthAmericanRegion;
+  offersShipping: boolean;
   onlineOnly: boolean;
 
   // Contact & Links

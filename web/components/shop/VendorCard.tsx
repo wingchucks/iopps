@@ -98,10 +98,10 @@ export function VendorCard({ vendor, featured = false }: VendorCardProps) {
               {vendor.location}
             </span>
           )}
-          {vendor.shipsCanadaWide && (
+          {vendor.offersShipping && (
             <span className="flex items-center gap-1">
               <GlobeAltIcon className="h-3.5 w-3.5" />
-              Ships Canada-wide
+              Offers Shipping
             </span>
           )}
         </div>

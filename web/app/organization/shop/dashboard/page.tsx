@@ -23,8 +23,9 @@ import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts } from '@/lib/firebase/shop';
-import type { Vendor, VendorProduct, VendorCategory, CanadianRegion } from '@/lib/types';
-import { VENDOR_CATEGORIES, CANADIAN_REGIONS } from '@/lib/types';
+import { uploadProfileImage } from '@/lib/firebase/storage';
+import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
+import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
 type Tab = 'overview' | 'profile' | 'products' | 'subscription';
 
@@ -45,8 +46,8 @@ export default function VendorDashboard() {
     description: '',
     category: 'Art & Crafts' as VendorCategory,
     location: '',
-    region: 'Ontario' as CanadianRegion,
-    shipsCanadaWide: false,
+    region: 'Ontario' as NorthAmericanRegion,
+    offersShipping: false,
     onlineOnly: false,
     email: '',
     phone: '',
@@ -56,7 +57,10 @@ export default function VendorDashboard() {
     tiktok: '',
     nation: '',
     communityStory: '',
+    logoUrl: '',
   });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const loadVendor = useCallback(async () => {
     if (!user) return;
@@ -72,7 +76,7 @@ export default function VendorDashboard() {
           category: existingVendor.category || 'Art & Crafts',
           location: existingVendor.location || '',
           region: existingVendor.region || 'Ontario',
-          shipsCanadaWide: existingVendor.shipsCanadaWide || false,
+          offersShipping: existingVendor.offersShipping || false,
           onlineOnly: existingVendor.onlineOnly || false,
           email: existingVendor.email || '',
           phone: existingVendor.phone || '',
@@ -82,6 +86,7 @@ export default function VendorDashboard() {
           tiktok: existingVendor.tiktok || '',
           nation: existingVendor.nation || '',
           communityStory: existingVendor.communityStory || '',
+          logoUrl: existingVendor.logoUrl || '',
         });
 
         // Load products
@@ -177,7 +182,7 @@ export default function VendorDashboard() {
         </div>
         <p className="text-slate-400">
           {isNewVendor
-            ? 'Create your business profile to start connecting with customers across Canada.'
+            ? 'Create your business profile to start connecting with customers across North America.'
             : 'Manage your Shop Indigenous business listing.'}
         </p>
       </div>
@@ -324,6 +329,89 @@ export default function VendorDashboard() {
           <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
             <h3 className="text-lg font-semibold text-white mb-6">Business Information</h3>
             <div className="grid gap-6 sm:grid-cols-2">
+              {/* Logo Upload */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Business Logo
+                </label>
+                <div className="flex items-center gap-6">
+                  {/* Logo Preview */}
+                  <div className="flex-shrink-0">
+                    {formData.logoUrl ? (
+                      <div className="relative">
+                        <Image
+                          src={formData.logoUrl}
+                          alt="Business logo"
+                          width={80}
+                          height={80}
+                          className="rounded-xl object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, logoUrl: '' })}
+                          className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                        >
+                          <span className="text-xs">×</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-700 border border-slate-600">
+                        <PhotoIcon className="h-8 w-8 text-slate-500" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Upload Button */}
+                  <div className="flex-1">
+                    <label className="relative cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file || !vendor) return;
+
+                          setUploadingLogo(true);
+                          setUploadProgress(0);
+                          try {
+                            const url = await uploadProfileImage(file, vendor.id, (progress) => {
+                              setUploadProgress(progress.progress);
+                            });
+                            setFormData({ ...formData, logoUrl: url });
+                          } catch (error) {
+                            console.error('Failed to upload logo:', error);
+                            alert('Failed to upload logo. Please try again.');
+                          } finally {
+                            setUploadingLogo(false);
+                          }
+                        }}
+                        disabled={uploadingLogo || !vendor}
+                      />
+                      <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                        uploadingLogo || !vendor
+                          ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                          : 'bg-slate-700 text-white hover:bg-slate-600'
+                      }`}>
+                        {uploadingLogo ? (
+                          <>
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                            Uploading {Math.round(uploadProgress)}%
+                          </>
+                        ) : (
+                          <>
+                            <PhotoIcon className="h-4 w-4" />
+                            {formData.logoUrl ? 'Change Logo' : 'Upload Logo'}
+                          </>
+                        )}
+                      </span>
+                    </label>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {!vendor ? 'Save your profile first to upload a logo' : 'JPEG, PNG or WebP, max 10MB'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Business Name *
@@ -415,14 +503,14 @@ export default function VendorDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Region *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Province / State *</label>
                 <select
                   required
                   value={formData.region}
-                  onChange={(e) => setFormData({ ...formData, region: e.target.value as CanadianRegion })}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value as NorthAmericanRegion })}
                   className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white focus:border-teal-500 focus:outline-none"
                 >
-                  {CANADIAN_REGIONS.map((region) => (
+                  {NORTH_AMERICAN_REGIONS.map((region) => (
                     <option key={region} value={region}>{region}</option>
                   ))}
                 </select>
@@ -431,11 +519,11 @@ export default function VendorDashboard() {
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={formData.shipsCanadaWide}
-                    onChange={(e) => setFormData({ ...formData, shipsCanadaWide: e.target.checked })}
+                    checked={formData.offersShipping}
+                    onChange={(e) => setFormData({ ...formData, offersShipping: e.target.checked })}
                     className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
                   />
-                  <span className="text-slate-300">Ships Canada-wide</span>
+                  <span className="text-slate-300">Offers Shipping</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
@@ -696,7 +784,7 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
       <div>
         <h3 className="text-xl font-bold text-white mb-2">Choose Your Plan</h3>
         <p className="text-slate-400 mb-6">
-          Get your Indigenous-owned business in front of customers across Canada.
+          Get your Indigenous-owned business in front of customers across North America.
         </p>
 
         <div className="grid gap-6 md:grid-cols-2">

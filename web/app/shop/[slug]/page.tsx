@@ -293,10 +293,10 @@ async function VendorPage({ params }: Props) {
           <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
             <h3 className="text-lg font-bold text-white mb-4">Shipping & Location</h3>
             <div className="space-y-3">
-              {vendor.shipsCanadaWide && (
+              {vendor.offersShipping && (
                 <div className="flex items-center gap-3 text-teal-400">
                   <TruckIcon className="h-5 w-5" />
-                  <span>Ships Canada-wide</span>
+                  <span>Offers Shipping</span>
                 </div>
               )}
               {vendor.onlineOnly ? (
