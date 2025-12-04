@@ -184,7 +184,7 @@ function JobsContent() {
   return (
     <PageShell>
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 px-6 py-16 sm:px-12 sm:py-24 mb-12">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -198,14 +198,14 @@ function JobsContent() {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-orange-300/30 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             Jobs & Careers
           </h1>
-          <p className="mt-4 text-lg text-orange-100 sm:text-xl">
+          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
             Build your career with employers committed to Indigenous talent and community success.
             Find opportunities across Turtle Island.
           </p>
@@ -229,7 +229,7 @@ function JobsContent() {
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-orange-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
                   !
                 </span>
               )}
@@ -250,7 +250,7 @@ function JobsContent() {
                 onClick={() => setSavedOnly(!savedOnly)}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                   savedOnly
-                    ? "bg-white text-orange-600"
+                    ? "bg-white text-teal-600"
                     : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
                 }`}
               >
@@ -287,7 +287,7 @@ function JobsContent() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="City, province, or remote"
-                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
               />
             </div>
 
@@ -301,7 +301,7 @@ function JobsContent() {
                     onClick={() => setJobType(type)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       jobType === type
-                        ? "bg-orange-500 text-white"
+                        ? "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -416,7 +416,7 @@ function JobsContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
             >
               Clear filters
             </button>
@@ -439,7 +439,7 @@ function JobsContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-orange-500 hover:text-orange-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
                 >
                   Load more jobs
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -462,7 +462,7 @@ function JobsContent() {
         </p>
         <a
           href="/organization/jobs/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:shadow-xl hover:shadow-orange-500/30 hover:scale-105"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
         >
           Post a Job
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -520,11 +520,11 @@ function JobCard({
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-orange-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
       }`}
     >
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-orange-500/20 to-amber-500/10 px-5 py-5">
+      <div className="relative bg-gradient-to-br from-teal-600/20 to-emerald-600/10 px-5 py-5">
         {/* Save Button */}
         {showSaveButton && (
           <button
@@ -573,13 +573,13 @@ function JobCard({
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
         {job.employerName && (
-          <p className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-teal-400 mb-1">
             {job.employerName}
           </p>
         )}
 
         <Link href={`/jobs/${job.id}`}>
-          <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-orange-300 transition-colors cursor-pointer">
+          <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors cursor-pointer">
             {job.title}
           </h3>
         </Link>
@@ -614,7 +614,7 @@ function JobCard({
           )}
           <Link
             href={`/jobs/${job.id}`}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-orange-400 group-hover:gap-2 transition-all"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 group-hover:gap-2 transition-all"
           >
             View
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

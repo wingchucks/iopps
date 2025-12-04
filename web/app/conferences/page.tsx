@@ -177,7 +177,7 @@ function ConferencesContent() {
   return (
     <PageShell>
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-16 sm:px-12 sm:py-24 mb-12">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -192,13 +192,13 @@ function ConferencesContent() {
 
         {/* Decorative Elements */}
         <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-violet-400/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             Conferences & Summits
           </h1>
-          <p className="mt-4 text-lg text-blue-100 sm:text-xl">
+          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
             Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits,
             and professional gatherings from organizations across Turtle Island.
           </p>
@@ -222,7 +222,7 @@ function ConferencesContent() {
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
                   !
                 </span>
               )}
@@ -258,7 +258,7 @@ function ConferencesContent() {
                     onClick={() => setTimeframe(option.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       timeframe === option.value
-                        ? "bg-blue-500 text-white"
+                        ? "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -278,7 +278,7 @@ function ConferencesContent() {
                     onClick={() => setCostFilter(option.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       costFilter === option.value
-                        ? "bg-blue-500 text-white"
+                        ? "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -355,7 +355,7 @@ function ConferencesContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
             >
               Clear filters
             </button>
@@ -371,7 +371,7 @@ function ConferencesContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-blue-500 hover:text-blue-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
                 >
                   Load more conferences
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -394,7 +394,7 @@ function ConferencesContent() {
         </p>
         <a
           href="/organization/conferences/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
         >
           Post a Conference
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -421,11 +421,11 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-blue-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
       }`}
     >
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-blue-600/20 to-indigo-600/10 px-5 py-6">
+      <div className="relative bg-gradient-to-br from-teal-600/20 to-emerald-600/10 px-5 py-6">
         {/* Featured Badge */}
         {featured && (
           <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
@@ -438,7 +438,7 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
 
         {/* Date */}
         {startDate && (
-          <div className="flex items-center gap-2 text-blue-300">
+          <div className="flex items-center gap-2 text-teal-300">
             <CalendarDaysIcon className="h-5 w-5" />
             <span className="text-sm font-medium">
               {startDate}
@@ -452,7 +452,7 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
             isFree
               ? "bg-emerald-500/20 text-emerald-300"
-              : "bg-blue-500/20 text-blue-300"
+              : "bg-teal-500/20 text-teal-300"
           }`}>
             <TicketIcon className="h-3 w-3" />
             {isFree ? "Free" : conference.cost}
@@ -463,12 +463,12 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
         {conference.employerName && (
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-teal-400 mb-1">
             {conference.employerName}
           </p>
         )}
 
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-blue-300 transition-colors">
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors">
           {conference.title}
         </h3>
 
@@ -490,7 +490,7 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
           ) : (
             <span className="text-xs text-slate-500">Details available</span>
           )}
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-400 group-hover:gap-2 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 group-hover:gap-2 transition-all">
             View details
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

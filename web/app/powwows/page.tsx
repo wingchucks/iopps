@@ -155,7 +155,7 @@ function PowwowsContent() {
   return (
     <PageShell>
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -170,13 +170,13 @@ function PowwowsContent() {
 
         {/* Decorative Elements */}
         <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-indigo-400/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             Pow Wows & Events
           </h1>
-          <p className="mt-4 text-lg text-purple-100 sm:text-xl">
+          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
             Celebrations & gatherings across Turtle Island. Find pow wows, sports events,
             and cultural gatherings hosted by Nations, communities, and partners across North America.
           </p>
@@ -200,7 +200,7 @@ function PowwowsContent() {
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-purple-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
                   !
                 </span>
               )}
@@ -234,7 +234,7 @@ function PowwowsContent() {
                   onClick={() => setEventType(null)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     eventType === null
-                      ? "bg-purple-500 text-white"
+                      ? "bg-teal-500 text-white"
                       : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                   }`}
                 >
@@ -246,7 +246,7 @@ function PowwowsContent() {
                     onClick={() => setEventType(type)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       eventType === type
-                        ? "bg-purple-500 text-white"
+                        ? "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -266,7 +266,7 @@ function PowwowsContent() {
                     onClick={() => setDateRange(range.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       dateRange === range.value
-                        ? "bg-purple-500 text-white"
+                        ? "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -282,7 +282,7 @@ function PowwowsContent() {
               <select
                 value={region || ""}
                 onChange={(e) => setRegion(e.target.value as NorthAmericanRegion || null)}
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:border-teal-500 focus:outline-none"
               >
                 <option value="">All Regions</option>
                 <optgroup label="Canada">
@@ -307,7 +307,7 @@ function PowwowsContent() {
                   type="checkbox"
                   checked={showLivestreamOnly}
                   onChange={(e) => setShowLivestreamOnly(e.target.checked)}
-                  className="rounded border-slate-600 bg-slate-700 text-purple-500 focus:ring-purple-500"
+                  className="rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
                 />
                 <span className="text-sm text-slate-300">Livestream available</span>
               </label>
@@ -380,7 +380,7 @@ function PowwowsContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
             >
               Clear filters
             </button>
@@ -396,7 +396,7 @@ function PowwowsContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-purple-500 hover:text-purple-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
                 >
                   Load more events
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -419,7 +419,7 @@ function PowwowsContent() {
         </p>
         <a
           href="/organization/dashboard"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-105"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
         >
           List Your Event
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -456,11 +456,11 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-purple-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
       }`}
     >
       {/* Event Image */}
-      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-purple-600 to-indigo-700">
+      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-teal-600 to-emerald-700">
         {event.imageUrl ? (
           <Image
             src={event.imageUrl}
@@ -524,7 +524,7 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
           )}
         </div>
 
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-purple-300 transition-colors">
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors">
           {event.name}
         </h3>
 
@@ -551,7 +551,7 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
               Registration {event.registrationStatus}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-purple-400 group-hover:gap-2 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 group-hover:gap-2 transition-all">
             View details
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

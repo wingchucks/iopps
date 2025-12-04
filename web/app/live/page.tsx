@@ -94,7 +94,7 @@ function LiveStreamsContent() {
   return (
     <PageShell>
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-600 to-pink-700 px-6 py-16 sm:px-12 sm:py-24 mb-12">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -109,13 +109,13 @@ function LiveStreamsContent() {
 
         {/* Decorative Elements */}
         <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-pink-400/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             IOPPS Live
           </h1>
-          <p className="mt-4 text-lg text-red-100 sm:text-xl">
+          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
             Cultural broadcasts and community media. Watch pow wows, tournaments, leadership summits,
             and community storytelling live or catch the replays.
           </p>
@@ -139,7 +139,7 @@ function LiveStreamsContent() {
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-red-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
                   !
                 </span>
               )}
@@ -188,7 +188,7 @@ function LiveStreamsContent() {
                       statusFilter === status
                         ? status === "Live Now"
                           ? "bg-red-500 text-white"
-                          : "bg-rose-500 text-white"
+                          : "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -211,7 +211,7 @@ function LiveStreamsContent() {
                     onClick={() => setCategoryFilter(category)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       categoryFilter === category
-                        ? "bg-rose-500 text-white"
+                        ? "bg-teal-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -225,13 +225,13 @@ function LiveStreamsContent() {
       )}
 
       {/* Information Banner */}
-      <div className="mb-8 rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-500/10 to-pink-500/5 p-6">
+      <div className="mb-8 rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-500/10 to-emerald-500/5 p-6">
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-500/20">
-            <VideoCameraIcon className="h-5 w-5 text-rose-400" />
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-teal-500/20">
+            <VideoCameraIcon className="h-5 w-5 text-teal-400" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-rose-300">
+            <h3 className="text-lg font-semibold text-teal-300">
               Live streams will be announced here when scheduled
             </h3>
             <p className="mt-2 text-sm text-slate-300">
@@ -330,7 +330,7 @@ function LiveStreamsContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
             >
               Clear filters
             </button>
@@ -341,7 +341,7 @@ function LiveStreamsContent() {
             {groupedStreams.upcoming.length > 0 && (
               <div className="mb-8">
                 <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-200 mb-4">
-                  <CalendarDaysIcon className="h-5 w-5 text-rose-400" />
+                  <CalendarDaysIcon className="h-5 w-5 text-teal-400" />
                   Upcoming
                 </h3>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -371,7 +371,7 @@ function LiveStreamsContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-rose-500 hover:text-rose-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
                 >
                   Load more streams
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -396,7 +396,7 @@ function LiveStreamsContent() {
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
           <a
             href="mailto:nathan.arias@iopps.ca"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-rose-500/25 transition-all hover:shadow-xl hover:shadow-rose-500/30 hover:scale-105"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -405,7 +405,7 @@ function LiveStreamsContent() {
           </a>
           <Link
             href="/contact"
-            className="inline-flex items-center justify-center rounded-full border border-slate-600 px-8 py-3 text-lg font-semibold text-slate-200 transition-all hover:border-rose-500 hover:text-rose-400"
+            className="inline-flex items-center justify-center rounded-full border border-slate-600 px-8 py-3 text-lg font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
           >
             Contact Form
           </Link>
@@ -427,9 +427,9 @@ function StreamCard({ stream }: { stream: LiveStreamEvent }) {
         };
       case "Upcoming":
         return {
-          badge: "bg-rose-500/20 text-rose-300",
-          border: "border-slate-700 bg-slate-800/50 hover:border-rose-500/50",
-          accent: "text-rose-400",
+          badge: "bg-teal-500/20 text-teal-300",
+          border: "border-slate-700 bg-slate-800/50 hover:border-teal-500/50",
+          accent: "text-teal-400",
         };
       case "Replay":
         return {
@@ -474,7 +474,7 @@ function StreamCard({ stream }: { stream: LiveStreamEvent }) {
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${styles.border}`}
     >
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-rose-600/20 to-pink-600/10 px-5 py-5">
+      <div className="relative bg-gradient-to-br from-teal-600/20 to-emerald-600/10 px-5 py-5">
         {/* Status Badge */}
         <div className="flex items-center justify-between mb-3">
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${styles.badge}`}>
@@ -502,7 +502,7 @@ function StreamCard({ stream }: { stream: LiveStreamEvent }) {
           </p>
         )}
 
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-rose-300 transition-colors">
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors">
           {stream.title}
         </h3>
 
