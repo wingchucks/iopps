@@ -299,7 +299,7 @@ export async function createFeaturedSlot(
       vendorId,
       vendorSlug: vendor.slug,
       vendorName: vendor.businessName,
-      vendorImage: vendor.profileImage || null,
+      vendorImage: vendor.logoUrl || null,
       startDate: Timestamp.fromDate(startDate),
       endDate: Timestamp.fromDate(endDate),
       reason: options.reason || null,
