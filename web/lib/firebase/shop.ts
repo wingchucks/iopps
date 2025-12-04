@@ -44,7 +44,7 @@ function generateSlug(businessName: string): string {
 
 export async function createVendor(
   userId: string,
-  data: Omit<Vendor, 'id' | 'slug' | 'status' | 'featured' | 'verified' | 'viewCount' | 'createdAt' | 'updatedAt'>
+  data: Omit<Vendor, 'id' | 'userId' | 'slug' | 'status' | 'featured' | 'verified' | 'viewCount' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
   if (!db) throw new Error('Firebase not initialized');
 
