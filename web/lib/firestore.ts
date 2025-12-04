@@ -48,6 +48,40 @@ import type {
 type VendorProfile = Vendor;
 type VendorApprovalStatus = VendorStatus;
 type ShopListing = Vendor;
+
+// Form input type that accepts both old and new field names
+// Used by upsertVendorProfile to accept form data with legacy field names
+type VendorFormInput = Partial<Vendor> & {
+  // Legacy field names from old VendorProfile type
+  websiteUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  about?: string;
+  heroImageUrl?: string;
+  otherLink?: string;
+  ownerUserId?: string;
+  // Analytics fields not in Vendor type but stored in Firestore
+  profileViews?: number;
+  websiteClicks?: number;
+  favorites?: number;
+  followers?: number;
+  // Legacy search fields
+  name?: string;
+  owner?: string;
+  tags?: string[];
+};
+
+// Extended type for data stored in Firestore that includes both new and legacy fields
+type VendorStoredData = Vendor & {
+  ownerUserId?: string;
+  profileViews?: number;
+  websiteClicks?: number;
+  favorites?: number;
+  followers?: number;
+  name?: string;
+  owner?: string;
+  tags?: string[];
+};
 type ProductServiceListing = VendorProduct;
 
 const employerCollection = "employers";
@@ -1159,7 +1193,7 @@ export type UpsertVendorResult = {
 
 export async function upsertVendorProfile(
   userId: string,
-  data: Partial<VendorProfile>
+  data: VendorFormInput
 ): Promise<UpsertVendorResult> {
   checkFirebase();
   const ref = doc(db!, vendorsCollection, userId);
@@ -1190,7 +1224,7 @@ export async function upsertVendorProfile(
 
   if (snap.exists()) {
     // Update existing - check if business details changed significantly
-    const existingData = snap.data() as VendorProfile;
+    const existingData = snap.data() as VendorStoredData;
     const businessNameChanged = data.businessName &&
       normalizeBusinessName(data.businessName) !== normalizeBusinessName(existingData.businessName || '');
 
@@ -1395,7 +1429,7 @@ export async function updateVendorShopStatus(
     return { success: false, error: 'Vendor profile not found' };
   }
 
-  const existingData = snap.data() as VendorProfile;
+  const existingData = snap.data() as VendorStoredData;
 
   // Verify ownership
   if (existingData.ownerUserId !== userId) {
@@ -1765,7 +1799,7 @@ export async function globalSearch(
 
     const matchedShop = shop
       .filter((item) => {
-        const text = `${item.name} ${item.owner ?? ""} ${item.description ?? ""} ${(item.tags ?? []).join(" ")
+        const text = `${item.businessName} ${item.nation ?? ""} ${item.description ?? ""} ${item.category ?? ""
           }`.toLowerCase();
         return text.includes(searchTerm);
       })
