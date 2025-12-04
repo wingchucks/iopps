@@ -155,10 +155,8 @@ export async function upsertEmployerProfile(
 }
 
 export async function listEmployers(status?: EmployerStatus): Promise<EmployerProfile[]> {
-  console.log("[listEmployers] Called with status:", status);
   try {
     const firestore = checkFirebase();
-    console.log("[listEmployers] Firestore initialized:", !!firestore);
     const ref = collection(firestore, employerCollection);
     let q;
 
@@ -168,14 +166,11 @@ export async function listEmployers(status?: EmployerStatus): Promise<EmployerPr
       q = query(ref, orderBy("createdAt", "desc"));
     }
 
-    console.log("[listEmployers] Executing query...");
     const snap = await getDocs(q);
-    console.log("[listEmployers] Query returned", snap.size, "documents");
     const results = snap.docs.map((docSnapshot) => ({
       id: docSnapshot.id,
       ...docSnapshot.data()
     } as EmployerProfile));
-    console.log("[listEmployers] Returning", results.length, "employers");
     return results;
   } catch (error) {
     console.error("[listEmployers] Error:", error);
@@ -189,7 +184,6 @@ export async function updateEmployerStatus(
   approvedBy?: string,
   rejectionReason?: string
 ) {
-  console.log("[updateEmployerStatus] Starting update for:", userId, "to status:", status);
   const ref = doc(db!, employerCollection, userId);
   const updates: any = {
     status,
@@ -205,13 +199,7 @@ export async function updateEmployerStatus(
     updates.rejectionReason = rejectionReason;
   }
 
-  try {
-    await updateDoc(ref, updates);
-    console.log("[updateEmployerStatus] Success!");
-  } catch (error) {
-    console.error("[updateEmployerStatus] Failed:", error);
-    throw error;
-  }
+  await updateDoc(ref, updates);
 }
 
 export async function addEmployerInterview(

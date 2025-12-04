@@ -233,9 +233,12 @@ export default async function VendorStorefrontPage({ params }: PageProps) {
     notFound();
   }
 
-  // Track profile view only for active vendors (fire and forget)
+  // Track profile view only for active vendors (fire and forget - non-blocking)
   if (!isPreviewMode) {
-    incrementProfileView(vendor.id).catch(() => {});
+    incrementProfileView(vendor.id).catch((err) => {
+      // Non-critical analytics - log but don't block
+      console.error("[Shop] Failed to track profile view:", err);
+    });
   }
 
   return (

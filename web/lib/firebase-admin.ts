@@ -1,6 +1,7 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import "./env-validation"; // Validate environment on startup
 
 // Helper to parse the private key from various formats
 function parsePrivateKey(key: string | undefined): string | null {

@@ -13,14 +13,9 @@ const hasFirebaseConfig = Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 );
 
-if (!hasFirebaseConfig && typeof window !== 'undefined') {
-  console.log("DEBUG: Firebase Config Missing. Checking keys:");
-  console.log("API_KEY:", !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-  console.log("AUTH_DOMAIN:", !!process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
-  console.log("PROJECT_ID:", !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-  console.log("STORAGE_BUCKET:", !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
-  console.log("MESSAGING_SENDER_ID:", !!process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID);
-  console.log("APP_ID:", !!process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
+// Only log missing config in development
+if (!hasFirebaseConfig && typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.warn("Firebase config incomplete - check environment variables");
 }
 
 let app: FirebaseApp | null = null;
@@ -54,18 +49,10 @@ if (hasFirebaseConfig) {
         connectFirestoreEmulator(db, 'localhost', 8080);
         connectStorageEmulator(storage, 'localhost', 9199);
         (window as any).__FIREBASE_EMULATOR_CONNECTED__ = true;
-        console.log('✅ Connected to Firebase Emulators (Auth, Firestore, Storage)');
-      } catch (error) {
-        console.log('⚠️ Emulators not available - using production Firebase');
+      } catch {
+        // Emulators not available - continue with production Firebase
       }
     }
-  } else if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('🔥 Using production Firebase (emulators disabled)');
-  }
-} else {
-  // No Firebase config - app will use fallback data only
-  if (typeof window !== 'undefined') {
-    console.log('📴 Firebase not configured - using offline mode with fallback data');
   }
 }
 

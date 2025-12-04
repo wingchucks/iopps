@@ -1,16 +1,34 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../firebase-admin-key.json');
+const crypto = require('crypto');
+
+// Initialize using environment variables (same as the app)
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+if (!projectId || !clientEmail || !privateKey) {
+    console.error('Missing Firebase credentials. Set NEXT_PUBLIC_FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.');
+    process.exit(1);
+}
 
 if (!admin.apps.length) {
     admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey,
+        })
     });
 }
 
 const db = admin.firestore();
-const email = 'admin_test@iopps.ca';
-const password = 'password123';
-const displayName = 'Admin Test';
+
+// Get email from command line or use default
+const email = process.argv[2] || 'admin_test@iopps.ca';
+const displayName = process.argv[3] || 'Admin Test';
+
+// Generate a secure random password
+const password = crypto.randomBytes(16).toString('hex');
 
 async function createAdmin() {
     try {
@@ -29,6 +47,8 @@ async function createAdmin() {
                 });
                 uid = userRecord.uid;
                 console.log(`Created user ${uid}`);
+                console.log(`Generated password: ${password}`);
+                console.log('⚠️  Save this password! The user should change it after first login.');
             } else {
                 throw error;
             }
