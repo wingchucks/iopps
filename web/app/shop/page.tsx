@@ -5,8 +5,8 @@ import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/
 import { PageShell } from '@/components/PageShell';
 import { VendorCard, CategoryFilter } from '@/components/shop';
 import { getActiveVendors, getFeaturedVendors } from '@/lib/firebase/shop';
-import type { Vendor, VendorCategory, CanadianRegion } from '@/lib/types';
-import { CANADIAN_REGIONS } from '@/lib/types';
+import type { Vendor, VendorCategory, NorthAmericanRegion } from '@/lib/types';
+import { NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
 export default function ShopPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -14,7 +14,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<VendorCategory | null>(null);
-  const [region, setRegion] = useState<CanadianRegion | null>(null);
+  const [region, setRegion] = useState<NorthAmericanRegion | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const loadVendors = useCallback(async () => {
@@ -70,7 +70,7 @@ export default function ShopPage() {
             Shop Indigenous
           </h1>
           <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Discover and support Indigenous-owned businesses across Canada.
+            Discover and support Indigenous-owned businesses across North America.
             Every purchase supports Indigenous entrepreneurs and communities.
           </p>
 
@@ -138,7 +138,7 @@ export default function ShopPage() {
               >
                 All Regions
               </button>
-              {CANADIAN_REGIONS.map((r) => (
+              {NORTH_AMERICAN_REGIONS.map((r) => (
                 <button
                   key={r}
                   onClick={() => setRegion(r)}
@@ -227,7 +227,7 @@ export default function ShopPage() {
           Own an Indigenous Business?
         </h2>
         <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Join our growing community of Indigenous entrepreneurs. List your business and connect with customers across Canada.
+          Join our growing community of Indigenous entrepreneurs. List your business and connect with customers across North America.
         </p>
         <a
           href="/organization/shop"
