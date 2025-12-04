@@ -1,549 +1,351 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import { PageShell } from "@/components/PageShell";
-import { VendorHero, VendorHeroSkeleton } from "@/components/shop/VendorHero";
-import { VendorStory, VendorStorySkeleton } from "@/components/shop/VendorStory";
+import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
-  VendorGallery,
-  VendorGallerySkeleton,
-} from "@/components/shop/VendorGallery";
-import { VendorCard, VendorCardSkeleton } from "@/components/shop/VendorCard";
-import {
-  getVendorBySlug,
-  getVendorBySlugForPreview,
-  getVendorsByNation,
-  getVendorsByCategory,
-  incrementProfileView,
-  type Vendor,
-} from "@/lib/firebase/vendors";
-import { VendorPageClient } from "./VendorPageClient";
+  MapPinIcon,
+  GlobeAltIcon,
+  EnvelopeIcon,
+  PhoneIcon,
+  CheckBadgeIcon,
+  ArrowLeftIcon,
+  TruckIcon,
+} from '@heroicons/react/24/outline';
+import { PageShell } from '@/components/PageShell';
+import { getVendorBySlug, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
+import type { Vendor, VendorProduct } from '@/lib/types';
 
-interface PageProps {
+// Social icons
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" />
+    </svg>
+  );
+}
+
+function FacebookIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+}
+
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+    </svg>
+  );
+}
+
+interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// Generate metadata for SEO
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+async function VendorPage({ params }: Props) {
   const { slug } = await params;
-
-  // First try active vendors, then fall back to preview mode
-  let vendor = await getVendorBySlug(slug);
-  if (!vendor) {
-    vendor = await getVendorBySlugForPreview(slug);
-  }
+  const vendor = await getVendorBySlug(slug);
 
   if (!vendor) {
-    return {
-      title: "Vendor Not Found | Shop Indigenous",
-    };
-  }
-
-  const isPreview = vendor.status !== "active";
-  const titleSuffix = isPreview ? " (Preview)" : "";
-
-  return {
-    title: `${vendor.businessName}${titleSuffix} | Shop Indigenous`,
-    description: vendor.tagline || vendor.description?.slice(0, 160),
-    openGraph: {
-      title: vendor.businessName,
-      description: vendor.tagline || vendor.description?.slice(0, 160),
-      images: vendor.coverImage ? [{ url: vendor.coverImage }] : undefined,
-      type: "profile",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: vendor.businessName,
-      description: vendor.tagline || vendor.description?.slice(0, 160),
-      images: vendor.coverImage ? [vendor.coverImage] : undefined,
-    },
-    // Prevent indexing of preview/draft pages
-    ...(isPreview && { robots: { index: false, follow: false } }),
-  };
-}
-
-// Revalidate every 5 minutes
-export const revalidate = 300;
-
-/**
- * Related Vendors Section (async server component)
- */
-async function RelatedVendorsSection({
-  vendor,
-}: {
-  vendor: Vendor;
-}) {
-  // Try to get vendors from same nation first
-  let relatedVendors = await getVendorsByNation(vendor.nationId, vendor.id, 4);
-
-  // If not enough, get from same category
-  if (relatedVendors.length < 4 && vendor.categoryIds.length > 0) {
-    const categoryVendors = await getVendorsByCategory(
-      vendor.categoryIds[0],
-      vendor.id,
-      4 - relatedVendors.length
-    );
-
-    // Merge without duplicates
-    const existingIds = new Set(relatedVendors.map((v) => v.id));
-    for (const cv of categoryVendors) {
-      if (!existingIds.has(cv.id)) {
-        relatedVendors.push(cv);
-      }
-    }
-  }
-
-  if (relatedVendors.length === 0) {
-    return null;
-  }
-
-  const sectionTitle = vendor.nation
-    ? `More ${vendor.nation} Artisans`
-    : "Similar Vendors";
-
-  return (
-    <section className="mt-12 border-t border-slate-800 pt-12">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-100">{sectionTitle}</h2>
-        <Link href="/shop" className="text-sm text-[#14B8A6] hover:underline">
-          View all vendors
-        </Link>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-        {relatedVendors.map((relatedVendor) => (
-          <VendorCard key={relatedVendor.id} vendor={relatedVendor} size="compact" />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RelatedVendorsSkeleton() {
-  return (
-    <section className="mt-12 border-t border-slate-800 pt-12">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="h-5 w-40 animate-pulse rounded bg-slate-800" />
-        <div className="h-4 w-24 animate-pulse rounded bg-slate-800" />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <VendorCardSkeleton key={i} size="compact" />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/**
- * Price range display helper
- */
-function getPriceRangeDisplay(range: string): string {
-  switch (range) {
-    case "budget":
-      return "$";
-    case "mid":
-      return "$$";
-    case "premium":
-      return "$$$";
-    case "luxury":
-      return "$$$$";
-    default:
-      return "$$";
-  }
-}
-
-/**
- * Preview Banner Component for draft/inactive vendors
- */
-function PreviewBanner({ status }: { status: string }) {
-  const statusMessages: Record<string, { title: string; description: string }> = {
-    draft: {
-      title: "Preview Mode",
-      description: "This shop is not yet published. Only you can see this preview.",
-    },
-    paused: {
-      title: "Shop Paused",
-      description: "This shop is currently paused and not visible to the public.",
-    },
-    suspended: {
-      title: "Shop Suspended",
-      description: "This shop has been suspended. Please contact support.",
-    },
-  };
-
-  const message = statusMessages[status] || statusMessages.draft;
-
-  return (
-    <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-      <div className="flex items-start gap-3">
-        <svg
-          className="h-5 w-5 flex-shrink-0 text-amber-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-          />
-        </svg>
-        <div>
-          <h3 className="font-semibold text-amber-300">{message.title}</h3>
-          <p className="mt-1 text-sm text-slate-300">{message.description}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Main Vendor Storefront Page
- */
-export default async function VendorStorefrontPage({ params }: PageProps) {
-  const { slug } = await params;
-
-  console.log("[Shop Page] Looking for vendor with slug:", slug);
-
-  // First try to get active vendor (public view)
-  let vendor = await getVendorBySlug(slug);
-  let isPreviewMode = false;
-
-  console.log("[Shop Page] getVendorBySlug result:", vendor ? `Found: ${vendor.businessName}` : "Not found");
-
-  // If not found, try preview mode (any status - for owner preview)
-  if (!vendor) {
-    vendor = await getVendorBySlugForPreview(slug);
-    console.log("[Shop Page] getVendorBySlugForPreview result:", vendor ? `Found: ${vendor.businessName}` : "Not found");
-    if (vendor) {
-      isPreviewMode = true;
-    }
-  }
-
-  if (!vendor) {
-    console.log("[Shop Page] No vendor found for slug:", slug);
     notFound();
   }
 
-  // Track profile view only for active vendors (fire and forget - non-blocking)
-  if (!isPreviewMode) {
-    incrementProfileView(vendor.id).catch((err) => {
-      // Non-critical analytics - log but don't block
-      console.error("[Shop] Failed to track profile view:", err);
-    });
-  }
+  // Increment view count (fire and forget)
+  incrementVendorViews(vendor.id).catch(() => {});
+
+  // Get vendor products
+  const products = await getVendorProducts(vendor.id);
 
   return (
-    <PageShell className="pb-24 md:pb-10">
-      {/* Preview Banner for non-active vendors */}
-      {isPreviewMode && <PreviewBanner status={vendor.status} />}
-
+    <PageShell className="pb-24">
       {/* Back Link */}
       <Link
         href="/shop"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-[#14B8A6]"
+        className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-teal-400 mb-6"
       >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
+        <ArrowLeftIcon className="h-4 w-4" />
         Back to Shop Indigenous
       </Link>
 
       {/* Hero Section */}
-      <div className="mt-6">
-        <VendorHero vendor={vendor} />
-      </div>
-
-      {/* CTA Bar - Client Component */}
-      <div className="mt-6">
-        <VendorPageClient vendor={vendor} />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        {/* Left Column - Main Content */}
-        <div className="space-y-8 lg:col-span-2">
-          {/* Story Section */}
-          {vendor.description && (
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <VendorStory vendor={vendor} />
-            </section>
+      <div className="relative overflow-hidden rounded-3xl bg-slate-800/50 border border-slate-700 mb-8">
+        {/* Cover Image */}
+        <div className="relative h-64 sm:h-80 overflow-hidden">
+          {vendor.coverImageUrl ? (
+            <Image
+              src={vendor.coverImageUrl}
+              alt={vendor.businessName}
+              fill
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800" />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
 
-          {/* Gallery Section */}
-          {vendor.gallery && vendor.gallery.length > 0 && (
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <h2 className="mb-4 text-xl font-bold text-slate-100">Gallery</h2>
-              <VendorGallery
-                images={vendor.gallery}
-                businessName={vendor.businessName}
-              />
-            </section>
-          )}
+          {/* Badges */}
+          <div className="absolute top-4 right-4 flex gap-2">
+            {vendor.featured && (
+              <span className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                Featured
+              </span>
+            )}
+            {vendor.verified && (
+              <span className="flex items-center gap-1.5 rounded-full bg-teal-500/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
+                <CheckBadgeIcon className="h-4 w-4" />
+                Verified
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Right Column - Details Sidebar */}
-        <div className="space-y-6">
-          {/* Details Card */}
-          <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-            <h3 className="text-lg font-semibold text-slate-100">Details</h3>
-
-            {/* Categories */}
-            {vendor.categories && vendor.categories.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Categories
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {vendor.categories.map((cat) => (
-                    <span
-                      key={cat}
-                      className="rounded-full border border-slate-700 bg-slate-800/50 px-3 py-1 text-xs font-medium text-slate-300"
-                    >
-                      {cat}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Materials */}
-            {vendor.materials && vendor.materials.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Materials
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {vendor.materials.map((mat) => (
-                    <span
-                      key={mat}
-                      className="rounded-full bg-slate-800/50 px-3 py-1 text-xs text-slate-400"
-                    >
-                      {mat}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Techniques */}
-            {vendor.techniques && vendor.techniques.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Techniques
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {vendor.techniques.map((tech) => (
-                    <span
-                      key={tech}
-                      className="rounded-full bg-slate-800/50 px-3 py-1 text-xs text-slate-400"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Price Range */}
-            {vendor.priceRange && (
-              <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Price Range
-                </p>
-                <p className="mt-1 text-lg font-semibold text-[#14B8A6]">
-                  {getPriceRangeDisplay(vendor.priceRange)}
-                </p>
-              </div>
-            )}
-
-            {/* Badges */}
-            <div className="mt-4 space-y-2">
-              {vendor.acceptsCustomOrders && (
-                <div className="flex items-center gap-2 text-sm text-slate-300">
-                  <svg
-                    className="h-4 w-4 text-[#14B8A6]"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Accepts Custom Orders
-                </div>
-              )}
-              {vendor.madeToOrder && (
-                <div className="flex items-center gap-2 text-sm text-slate-300">
-                  <svg
-                    className="h-4 w-4 text-[#14B8A6]"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Made to Order
+        {/* Profile Info */}
+        <div className="relative px-6 pb-6 sm:px-8">
+          {/* Logo */}
+          <div className="absolute -top-12 left-6 sm:left-8">
+            <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+              {vendor.logoUrl ? (
+                <Image
+                  src={vendor.logoUrl}
+                  alt={`${vendor.businessName} logo`}
+                  width={96}
+                  height={96}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
+                  {vendor.businessName.charAt(0)}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Social Links Card */}
-          {(vendor.socialLinks?.instagram ||
-            vendor.socialLinks?.facebook ||
-            vendor.socialLinks?.pinterest ||
-            vendor.socialLinks?.tiktok ||
-            vendor.socialLinks?.youtube) && (
-            <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <h3 className="text-lg font-semibold text-slate-100">
-                Follow Us
-              </h3>
-              <div className="mt-4 flex flex-wrap gap-3">
-                {vendor.socialLinks?.instagram && (
+          {/* Content */}
+          <div className="pt-16 sm:pt-4 sm:pl-32">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-white">{vendor.businessName}</h1>
+                {vendor.tagline && (
+                  <p className="mt-1 text-lg text-slate-400">{vendor.tagline}</p>
+                )}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-400">
+                    {vendor.category}
+                  </span>
+                  {vendor.nation && (
+                    <span className="text-sm text-slate-500">{vendor.nation}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="flex items-center gap-3">
+                {vendor.instagram && (
                   <a
-                    href={vendor.socialLinks.instagram}
+                    href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-pink-500/20 hover:text-pink-400"
                   >
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                    </svg>
-                    Instagram
+                    <InstagramIcon className="h-5 w-5" />
                   </a>
                 )}
-                {vendor.socialLinks?.facebook && (
+                {vendor.facebook && (
                   <a
-                    href={vendor.socialLinks.facebook}
+                    href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-blue-500/20 hover:text-blue-400"
                   >
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                    Facebook
+                    <FacebookIcon className="h-5 w-5" />
                   </a>
                 )}
-                {vendor.socialLinks?.pinterest && (
+                {vendor.tiktok && (
                   <a
-                    href={vendor.socialLinks.pinterest}
+                    href={`https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-slate-500/20 hover:text-white"
                   >
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-                    </svg>
-                    Pinterest
+                    <TikTokIcon className="h-5 w-5" />
+                  </a>
+                )}
+                {vendor.website && (
+                  <a
+                    href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-teal-500/20 hover:text-teal-400"
+                  >
+                    <GlobeAltIcon className="h-5 w-5" />
                   </a>
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* About */}
+          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <h2 className="text-xl font-bold text-white mb-4">About</h2>
+            <p className="text-slate-300 whitespace-pre-wrap">{vendor.description}</p>
+          </section>
+
+          {/* Community Story */}
+          {vendor.communityStory && (
+            <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+              <h2 className="text-xl font-bold text-white mb-4">Our Story</h2>
+              <p className="text-slate-300 whitespace-pre-wrap">{vendor.communityStory}</p>
+            </section>
           )}
 
+          {/* Products */}
+          {products.length > 0 && (
+            <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+              <h2 className="text-xl font-bold text-white mb-6">Products & Services</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Gallery */}
+          {vendor.galleryImages && vendor.galleryImages.length > 0 && (
+            <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+              <h2 className="text-xl font-bold text-white mb-6">Gallery</h2>
+              <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+                {vendor.galleryImages.map((image, index) => (
+                  <div key={index} className="relative aspect-square overflow-hidden rounded-xl">
+                    <Image
+                      src={image}
+                      alt={`${vendor.businessName} gallery image ${index + 1}`}
+                      fill
+                      className="object-cover transition-transform hover:scale-105"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
           {/* Contact Card */}
-          <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-            <h3 className="text-lg font-semibold text-slate-100">Contact</h3>
-            <div className="mt-4 space-y-3">
+          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
+            <div className="space-y-3">
+              {vendor.location && (
+                <div className="flex items-start gap-3 text-slate-300">
+                  <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p>{vendor.location}</p>
+                    <p className="text-sm text-slate-500">{vendor.region}</p>
+                  </div>
+                </div>
+              )}
               {vendor.email && (
                 <a
                   href={`mailto:${vendor.email}`}
-                  className="flex items-center gap-3 text-sm text-slate-300 transition hover:text-[#14B8A6]"
+                  className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
                 >
-                  <svg
-                    className="h-5 w-5 text-[#14B8A6]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <EnvelopeIcon className="h-5 w-5 text-slate-500" />
                   {vendor.email}
                 </a>
               )}
               {vendor.phone && (
                 <a
                   href={`tel:${vendor.phone}`}
-                  className="flex items-center gap-3 text-sm text-slate-300 transition hover:text-[#14B8A6]"
+                  className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
                 >
-                  <svg
-                    className="h-5 w-5 text-[#14B8A6]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    />
-                  </svg>
+                  <PhoneIcon className="h-5 w-5 text-slate-500" />
                   {vendor.phone}
                 </a>
               )}
-              {vendor.website && (
-                <a
-                  href={vendor.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm text-slate-300 transition hover:text-[#14B8A6]"
-                >
-                  <svg
-                    className="h-5 w-5 text-[#14B8A6]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                    />
-                  </svg>
-                  Visit Website
-                </a>
+            </div>
+
+            {/* Website Button */}
+            {vendor.website && (
+              <a
+                href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 py-3 font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30"
+              >
+                <GlobeAltIcon className="h-5 w-5" />
+                Visit Website
+              </a>
+            )}
+          </div>
+
+          {/* Shipping Info */}
+          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <h3 className="text-lg font-bold text-white mb-4">Shipping & Location</h3>
+            <div className="space-y-3">
+              {vendor.shipsCanadaWide && (
+                <div className="flex items-center gap-3 text-teal-400">
+                  <TruckIcon className="h-5 w-5" />
+                  <span>Ships Canada-wide</span>
+                </div>
+              )}
+              {vendor.onlineOnly ? (
+                <div className="flex items-center gap-3 text-slate-400">
+                  <GlobeAltIcon className="h-5 w-5" />
+                  <span>Online only</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 text-slate-400">
+                  <MapPinIcon className="h-5 w-5" />
+                  <span>Physical location available</span>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Related Vendors */}
-      <Suspense fallback={<RelatedVendorsSkeleton />}>
-        <RelatedVendorsSection vendor={vendor} />
-      </Suspense>
     </PageShell>
   );
 }
+
+function ProductCard({ product }: { product: VendorProduct }) {
+  return (
+    <div className="group overflow-hidden rounded-xl bg-slate-700/50 border border-slate-600 transition-all hover:border-teal-500/50">
+      {product.imageUrl && (
+        <div className="relative h-40 overflow-hidden">
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform group-hover:scale-105"
+          />
+        </div>
+      )}
+      <div className="p-4">
+        <h4 className="font-semibold text-white">{product.name}</h4>
+        <p className="mt-1 text-sm text-slate-400 line-clamp-2">{product.description}</p>
+        {(product.priceDisplay || product.price) && (
+          <p className="mt-2 font-semibold text-teal-400">
+            {product.priceDisplay || `$${(product.price! / 100).toFixed(2)}`}
+          </p>
+        )}
+        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+          {product.madeToOrder && <span className="rounded bg-slate-600 px-2 py-0.5">Made to order</span>}
+          {!product.inStock && <span className="rounded bg-amber-500/20 text-amber-400 px-2 py-0.5">Out of stock</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default VendorPage;
