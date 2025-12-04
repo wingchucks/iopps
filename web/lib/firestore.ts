@@ -1039,7 +1039,7 @@ export async function checkForDuplicateVendor(
     if (vendorDoc.id === userId) return;
 
     // Skip inactive or rejected vendors
-    if (vendor.approvalStatus === 'rejected') return;
+    if (vendor.status === 'suspended') return;
 
     // Check for similar business name (using normalized comparison)
     if (vendor.businessName) {
@@ -1152,7 +1152,7 @@ function generateUniqueSlug(businessName: string): string {
 
 export type UpsertVendorResult = {
   success: boolean;
-  approvalStatus: VendorApprovalStatus;
+  status: VendorApprovalStatus;
   duplicateFlags?: string[];
   message?: string;
 };
@@ -1169,7 +1169,7 @@ export async function upsertVendorProfile(
   const isNewProfile = !snap.exists();
 
   // For new profiles or profiles that don't have business name yet, check for duplicates
-  let approvalStatus: VendorApprovalStatus = 'approved';
+  let vendorStatus: VendorApprovalStatus = 'active';
   let duplicateFlags: string[] = [];
 
   if (data.businessName) {
@@ -1183,7 +1183,7 @@ export async function upsertVendorProfile(
 
     if (duplicateCheck.isDuplicate) {
       // Flag for review if potential duplicate found
-      approvalStatus = 'pending_review';
+      vendorStatus = 'pending';
       duplicateFlags = duplicateCheck.flags;
     }
   }
@@ -1205,21 +1205,21 @@ export async function upsertVendorProfile(
       );
 
       if (duplicateCheck.isDuplicate) {
-        approvalStatus = 'pending_review';
+        vendorStatus = 'pending';
         duplicateFlags = duplicateCheck.flags;
       } else {
-        // If no duplicates and was pending, keep as approved
-        approvalStatus = existingData.approvalStatus === 'rejected' ? 'rejected' : 'approved';
+        // If no duplicates and was suspended, keep as suspended
+        vendorStatus = existingData.status === 'suspended' ? 'suspended' : 'active';
       }
     } else {
-      // Keep existing approval status if not checking for duplicates
-      approvalStatus = existingData.approvalStatus || 'approved';
+      // Keep existing status if not checking for duplicates
+      vendorStatus = existingData.status || 'active';
     }
 
     // Ensure ownerUserId is set (may be missing if doc was created by verify-vendor-session)
     const updateData: Record<string, any> = {
       ...data,
-      approvalStatus,
+      status: vendorStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       updatedAt: timestamp,
     };
@@ -1237,15 +1237,12 @@ export async function upsertVendorProfile(
     }
 
     // Set status fields for shop listing compatibility
-    // Map approvalStatus to verificationStatus for the shop page queries
-    if (approvalStatus === 'approved') {
-      updateData.status = 'active';
+    // Map status to verificationStatus for the shop page queries
+    if (vendorStatus === 'active') {
       updateData.verificationStatus = 'verified';
-    } else if (approvalStatus === 'pending_review') {
-      updateData.status = 'draft';
+    } else if (vendorStatus === 'pending') {
       updateData.verificationStatus = 'pending';
-    } else if (approvalStatus === 'rejected') {
-      updateData.status = 'suspended';
+    } else if (vendorStatus === 'suspended') {
       updateData.verificationStatus = 'rejected';
     }
 
@@ -1309,13 +1306,9 @@ export async function upsertVendorProfile(
     // Generate slug for new vendor profiles
     const slug = data.businessName ? generateUniqueSlug(data.businessName) : '';
 
-    // Map approval status to shop listing status fields
-    let status = 'draft';
-    let verificationStatus = 'pending';
-    if (approvalStatus === 'approved') {
-      status = 'active';
-      verificationStatus = 'verified';
-    }
+    // Map status to shop listing status fields
+    let statusValue = vendorStatus === 'active' ? 'active' : 'draft';
+    let verificationStatus = vendorStatus === 'active' ? 'verified' : 'pending';
 
     // Map category to categories array
     const categories = data.category ? [data.category] : [];
@@ -1345,7 +1338,7 @@ export async function upsertVendorProfile(
       ownerUserId: userId,
       userId, // For shop display compatibility
       slug,
-      status,
+      status: statusValue,
       verificationStatus,
       ...data,
       // Map VendorProfile fields to Vendor fields for shop display compatibility
@@ -1365,7 +1358,6 @@ export async function upsertVendorProfile(
       websiteClicks: 0,
       favorites: 0,
       followers: 0,
-      approvalStatus,
       duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : null,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -1374,9 +1366,9 @@ export async function upsertVendorProfile(
 
   return {
     success: true,
-    approvalStatus,
+    status: vendorStatus,
     duplicateFlags: duplicateFlags.length > 0 ? duplicateFlags : undefined,
-    message: approvalStatus === 'pending_review'
+    message: vendorStatus === 'pending'
       ? 'Your vendor profile has been submitted for review due to potential duplicate detection.'
       : undefined,
   };
@@ -1417,12 +1409,12 @@ export async function updateVendorShopStatus(
     }
 
     // Check if profile was rejected - cannot publish
-    if (existingData.approvalStatus === 'rejected') {
+    if (existingData.status === 'suspended') {
       return { success: false, error: 'Your profile was not approved. Please contact support.' };
     }
 
     // Check if profile is pending review - cannot publish yet
-    if (existingData.approvalStatus === 'pending_review') {
+    if (existingData.status === 'pending') {
       return { success: false, error: 'Your profile is pending review and will be published once approved.' };
     }
   }
@@ -1439,12 +1431,12 @@ export async function updateVendorShopStatus(
 // Admin function to approve/reject vendor profiles
 export async function updateVendorApprovalStatus(
   vendorId: string,
-  status: VendorApprovalStatus
+  newStatus: VendorApprovalStatus
 ): Promise<void> {
   checkFirebase();
   const ref = doc(db!, vendorsCollection, vendorId);
   await updateDoc(ref, {
-    approvalStatus: status,
+    status: newStatus,
     updatedAt: serverTimestamp(),
   });
 }
@@ -1455,7 +1447,7 @@ export async function getVendorsPendingReview(): Promise<VendorProfile[]> {
   const vendorsRef = collection(db!, vendorsCollection);
   const q = query(
     vendorsRef,
-    where('approvalStatus', '==', 'pending_review'),
+    where('status', '==', 'pending'),
     orderBy('createdAt', 'desc')
   );
   const snap = await getDocs(q);
@@ -1469,14 +1461,11 @@ export async function listApprovedVendors(): Promise<VendorProfile[]> {
   // Get all vendors that are active
   const q = query(
     vendorsRef,
-    where('active', '==', true),
+    where('status', '==', 'active'),
     orderBy('createdAt', 'desc')
   );
   const snap = await getDocs(q);
-  // Filter client-side for approved or no approval status (legacy)
-  return snap.docs
-    .map((d) => ({ id: d.id, ...d.data() } as VendorProfile))
-    .filter((v) => !v.approvalStatus || v.approvalStatus === 'approved');
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as VendorProfile));
 }
 
 // ===============================================
