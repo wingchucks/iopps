@@ -2,33 +2,37 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, CalendarDaysIcon, MapPinIcon, TicketIcon } from "@heroicons/react/24/outline";
 import { listConferences } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import { SectionHeader } from "@/components/SectionHeader";
-import { FilterCard } from "@/components/FilterCard";
-import { useSearchParams } from "@/lib/useSearchParams";
 
-const timeframeFilters = ["All", "Next 30 days", "Next 90 days"] as const;
-const sortOptions = [
-  { value: "soonest", label: "Starting soon" },
-  { value: "recent", label: "Recently added" },
+const TIMEFRAME_OPTIONS = [
+  { label: "All Dates", value: "all" },
+  { label: "This Month", value: "month" },
+  { label: "Next 3 Months", value: "quarter" },
+  { label: "This Year", value: "year" },
 ] as const;
+
+const COST_OPTIONS = [
+  { label: "All", value: "all" },
+  { label: "Free", value: "free" },
+  { label: "Paid", value: "paid" },
+] as const;
+
+type TimeframeValue = typeof TIMEFRAME_OPTIONS[number]["value"];
+type CostValue = typeof COST_OPTIONS[number]["value"];
 
 type MaybeDate = string | Date | { toDate: () => Date } | null | undefined;
 
-const getTimeValue = (
-  value: MaybeDate,
-  fallback = Number.MAX_SAFE_INTEGER
-) => {
+const getTimeValue = (value: MaybeDate, fallback = Number.MAX_SAFE_INTEGER) => {
   if (!value) return fallback;
   if (typeof value === "string") {
     const ms = new Date(value).getTime();
     return Number.isNaN(ms) ? fallback : ms;
   }
-  if (value instanceof Date) {
-    return value.getTime();
-  }
+  if (value instanceof Date) return value.getTime();
   if (typeof value === "object" && "toDate" in value) {
     const date = value.toDate();
     return date instanceof Date ? date.getTime() : fallback;
@@ -36,19 +40,40 @@ const getTimeValue = (
   return fallback;
 };
 
+const formatDate = (value: MaybeDate): string | null => {
+  if (!value) return null;
+  try {
+    let date: Date;
+    if (typeof value === "string") {
+      date = new Date(value);
+    } else if (value instanceof Date) {
+      date = value;
+    } else if (typeof value === "object" && "toDate" in value) {
+      date = value.toDate();
+    } else {
+      return null;
+    }
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return typeof value === "string" ? value : null;
+  }
+};
+
 function ConferencesContent() {
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState(12);
 
-  // URL-synced filter parameters
-  const { params, updateParam, resetParams } = useSearchParams({
-    keyword: "",
-    locationFilter: "",
-    timeframeFilter: "All" as typeof timeframeFilters[number],
-    costFilter: "all" as "all" | "free" | "paid",
-    sortBy: "soonest" as typeof sortOptions[number]["value"],
-  });
+  // Filter state
+  const [search, setSearch] = useState("");
+  const [timeframe, setTimeframe] = useState<TimeframeValue>("all");
+  const [costFilter, setCostFilter] = useState<CostValue>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -59,7 +84,7 @@ function ConferencesContent() {
         setConferences(data);
       } catch (err) {
         console.error(err);
-        setError("We couldn't load conferences right now. Please try again soon.");
+        setError("Unable to load conferences right now.");
       } finally {
         setLoading(false);
       }
@@ -67,316 +92,435 @@ function ConferencesContent() {
     void load();
   }, []);
 
-  const filtered = useMemo(() => {
+  // Check if conference is within timeframe
+  const isWithinTimeframe = (startDate: MaybeDate, tf: TimeframeValue): boolean => {
+    if (tf === "all") return true;
+
+    const startTime = getTimeValue(startDate);
+    if (startTime === Number.MAX_SAFE_INTEGER) return true;
+
     const now = Date.now();
-    return conferences.filter((conf) => {
-      const text = `${conf.title} ${conf.employerName ?? ""} ${conf.description}`
-        .toLowerCase();
-      const matchesKeyword = params.keyword
-        ? text.includes(params.keyword.toLowerCase())
-        : true;
-      const matchesLocation = params.locationFilter
-        ? conf.location.toLowerCase().includes(params.locationFilter.toLowerCase())
-        : true;
-      const startTime = getTimeValue(conf.startDate ?? null);
-      const matchesTimeframe =
-        params.timeframeFilter === "All"
-          ? true
-          : params.timeframeFilter === "Next 30 days"
-            ? startTime < now + 30 * 24 * 60 * 60 * 1000
-            : startTime < now + 90 * 24 * 60 * 60 * 1000;
-      const matchesCost =
-        params.costFilter === "all"
-          ? true
-          : params.costFilter === "free"
-            ? !conf.cost ||
-            conf.cost.toLowerCase().includes("free") ||
-            conf.cost.toLowerCase().includes("no cost")
-            : Boolean(conf.cost && !conf.cost.toLowerCase().includes("free"));
-      return matchesKeyword && matchesLocation && matchesTimeframe && matchesCost;
-    });
-  }, [conferences, params.costFilter, params.keyword, params.locationFilter, params.timeframeFilter]);
+    const endOfMonth = new Date();
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1, 0);
+    const endOfQuarter = new Date();
+    endOfQuarter.setMonth(endOfQuarter.getMonth() + 3);
+    const endOfYear = new Date(new Date().getFullYear(), 11, 31);
 
-  const sortedConferences = useMemo(() => {
-    const copy = [...filtered];
-
-    // Sort by selected criteria
-    if (params.sortBy === "recent") {
-      copy.sort(
-        (a, b) =>
-          getTimeValue(b.createdAt ?? null, 0) -
-          getTimeValue(a.createdAt ?? null, 0)
-      );
-    } else {
-      copy.sort(
-        (a, b) => getTimeValue(a.startDate ?? null) - getTimeValue(b.startDate ?? null)
-      );
+    switch (tf) {
+      case "month":
+        return startTime <= endOfMonth.getTime() && startTime >= now;
+      case "quarter":
+        return startTime <= endOfQuarter.getTime() && startTime >= now;
+      case "year":
+        return startTime <= endOfYear.getTime() && startTime >= now;
+      default:
+        return true;
     }
+  };
 
-    // Then prioritize featured at the top
-    return copy.sort((a, b) => {
+  // Check cost filter
+  const matchesCost = (cost: string | undefined, filter: CostValue): boolean => {
+    if (filter === "all") return true;
+    const isFree = !cost || cost.toLowerCase().includes("free") || cost.toLowerCase().includes("no cost");
+    return filter === "free" ? isFree : !isFree;
+  };
+
+  // Filtered conferences
+  const filtered = useMemo(() => {
+    return conferences.filter((conf) => {
+      if (!conf.active) return false;
+
+      const matchesSearch = search
+        ? `${conf.title} ${conf.employerName ?? ""} ${conf.description ?? ""} ${conf.location ?? ""}`
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        : true;
+
+      const matchesTimeframe = isWithinTimeframe(conf.startDate, timeframe);
+      const matchesCostFilter = matchesCost(conf.cost, costFilter);
+
+      return matchesSearch && matchesTimeframe && matchesCostFilter;
+    });
+  }, [conferences, search, timeframe, costFilter]);
+
+  // Sort by start date (soonest first), featured at top
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      // Featured first
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
-      return 0;
+      // Then by start date
+      return getTimeValue(a.startDate) - getTimeValue(b.startDate);
     });
-  }, [filtered, params.sortBy]);
+  }, [filtered]);
+
+  // Get featured conferences
+  const featuredConferences = useMemo(() => {
+    return sorted.filter((conf) => conf.featured).slice(0, 3);
+  }, [sorted]);
+
+  const displayedConferences = useMemo(
+    () => sorted.slice(0, displayLimit),
+    [displayLimit, sorted]
+  );
+
+  const hasMore = displayLimit < sorted.length;
+  const hasFilters = search || timeframe !== "all" || costFilter !== "all";
+
+  const clearFilters = () => {
+    setSearch("");
+    setTimeframe("all");
+    setCostFilter("all");
+    setDisplayLimit(12);
+  };
 
   return (
     <PageShell>
-      <SectionHeader
-        eyebrow="Conferences & Gatherings"
-        title="Connect, learn, and celebrate Indigenous leadership"
-        subtitle="Explore conferences, summits, and gatherings from employers, Nations, and education partners."
-      />
-
-      <FilterCard className="mt-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Keyword
-            </label>
-            <input
-              type="text"
-              value={params.keyword}
-              onChange={(e) => updateParam("keyword", e.target.value)}
-              placeholder="Summit, health, education..."
-              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Location
-            </label>
-            <input
-              type="text"
-              value={params.locationFilter}
-              onChange={(e) => updateParam("locationFilter", e.target.value)}
-              placeholder="City / province"
-              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Timeframe
-            </label>
-            <select
-              value={params.timeframeFilter}
-              onChange={(e) =>
-                updateParam("timeframeFilter", e.target.value as (typeof timeframeFilters)[number])
-              }
-              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
-            >
-              {timeframeFilters.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Sort by
-            </label>
-            <select
-              value={params.sortBy}
-              onChange={(e) =>
-                updateParam("sortBy", e.target.value as (typeof sortOptions)[number]["value"])
-              }
-              className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-16 sm:px-12 sm:py-24 mb-12">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="conf-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="5" cy="5" r="1" fill="white" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#conf-grid)" />
+          </svg>
         </div>
-        <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-200">
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="radio"
-              name="cost-filter"
-              value="all"
-              checked={params.costFilter === "all"}
-              onChange={() => updateParam("costFilter", "all")}
-            />
-            All costs
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="radio"
-              name="cost-filter"
-              value="free"
-              checked={params.costFilter === "free"}
-              onChange={() => updateParam("costFilter", "free")}
-            />
-            Free / community sponsored
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="radio"
-              name="cost-filter"
-              value="paid"
-              checked={params.costFilter === "paid"}
-              onChange={() => updateParam("costFilter", "paid")}
-            />
-            Paid registration
-          </label>
-          <button
-            type="button"
-            onClick={resetParams}
-            className="text-xs font-semibold text-[#14B8A6] underline hover:text-[#14B8A6]/80"
-          >
-            Reset filters
-          </button>
-        </div>
-      </FilterCard>
 
-      <section className="mt-8 rounded-2xl border border-slate-800/80 bg-[#08090C] p-5 sm:p-6 text-sm text-slate-200 shadow-lg shadow-black/30">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              For employers & partners
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-50">
-              Promote your conference or learning series on IOPPS.
-            </h2>
-            <p className="text-slate-300">
-              Publish agendas, highlight TRC #92 commitments, and reach Indigenous
-              professionals across Canada.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 text-xs font-semibold sm:flex-row">
-            <Link
-              href="/employer#opportunities"
-              className="rounded-full bg-[#14B8A6] px-4 py-2 text-center text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
-            >
-              Go to employer portal
-            </Link>
-            <Link
-              href="/contact"
-              className="rounded-full border border-slate-700 px-4 py-2 text-center text-slate-100 hover:border-[#14B8A6] hover:text-[#14B8A6] transition-colors"
-            >
-              Talk to IOPPS
-            </Link>
-          </div>
-        </div>
-      </section>
+        {/* Decorative Elements */}
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-violet-400/20 blur-3xl" />
 
-      <section className="mt-8 space-y-4">
-        {error && (
-          <div className="rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            {error}
-          </div>
-        )}
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, index) => (
-              <div
-                key={index}
-                className="h-28 animate-pulse rounded-xl border border-slate-900 bg-slate-900/60"
+        <div className="relative mx-auto max-w-3xl text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Conferences & Summits
+          </h1>
+          <p className="mt-4 text-lg text-blue-100 sm:text-xl">
+            Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits,
+            and professional gatherings from organizations across Turtle Island.
+          </p>
+
+          {/* Search Bar */}
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="relative flex-1 max-w-md">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search conferences..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
               />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+            >
+              <FunnelIcon className="h-5 w-5" />
+              Filters
+              {hasFilters && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-600">
+                  !
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Filters</h3>
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                <XMarkIcon className="h-4 w-4" />
+                Clear all
+              </button>
+            )}
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Timeframe */}
+            <div>
+              <label className="text-sm font-medium text-slate-400 mb-2 block">When</label>
+              <div className="flex flex-wrap gap-2">
+                {TIMEFRAME_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTimeframe(option.value)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                      timeframe === option.value
+                        ? "bg-blue-500 text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cost */}
+            <div>
+              <label className="text-sm font-medium text-slate-400 mb-2 block">Cost</label>
+              <div className="flex flex-wrap gap-2">
+                {COST_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setCostFilter(option.value)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                      costFilter === option.value
+                        ? "bg-blue-500 text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Featured Conferences Section */}
+      {!hasFilters && featuredConferences.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
+              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Featured Conferences</h2>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredConferences.map((conf) => (
+              <ConferenceCard key={conf.id} conference={conf} featured />
             ))}
           </div>
-        ) : sortedConferences.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-6 text-center text-sm text-slate-300">
-            No conferences match your filters yet. Employers add new events every week
-            so check back soon.
+        </section>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      )}
+
+      {/* All Conferences */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">
+            {hasFilters ? "Search Results" : "All Conferences"}
+          </h2>
+          <span className="text-sm text-slate-400">
+            {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "conference" : "conferences"}`}
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-72" />
+            ))}
+          </div>
+        ) : conferences.length === 0 && !hasFilters ? (
+          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+              <CalendarDaysIcon className="h-8 w-8 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No conferences scheduled yet</h3>
+            <p className="text-slate-400">
+              Check back soon! Organizations are adding conferences and summits regularly.
+            </p>
+          </div>
+        ) : sorted.length === 0 ? (
+          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+              <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No conferences found</h3>
+            <p className="text-slate-400 mb-4">
+              Try adjusting your filters or search terms.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-2 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+            >
+              Clear filters
+            </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {sortedConferences.map((conf) => (
-              <article
-                key={conf.id}
-                className={`rounded-2xl border p-5 shadow-lg shadow-black/30 transition hover:-translate-y-1 ${conf.featured
-                  ? "border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-amber-600/5 hover:border-amber-500/70"
-                  : "border-slate-800/80 bg-[#08090C] hover:border-[#14B8A6]/70"
-                  }`}
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex-1">
-                    {conf.featured && (
-                      <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-400">
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        FEATURED
-                      </div>
-                    )}
-                    <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
-                      {conf.employerName || "Organizer"}
-                    </p>
-                    <Link
-                      href={`/conferences/${conf.id}`}
-                      className="mt-1 block text-xl font-semibold text-slate-50 hover:text-[#14B8A6]"
-                    >
-                      {conf.title}
-                    </Link>
-                    <p className="text-sm text-slate-300">{conf.location}</p>
-                    {conf.startDate && (
-                      <p className="text-xs text-slate-500">
-                        {typeof conf.startDate === "string"
-                          ? conf.startDate
-                          : conf.startDate?.toDate().toLocaleDateString()}
-                        {conf.endDate ? " - " : ""}
-                        {typeof conf.endDate === "string"
-                          ? conf.endDate
-                          : conf.endDate?.toDate().toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right text-xs text-slate-400">
-                    {conf.cost ? (
-                      <span className="rounded-full border border-slate-700 px-3 py-1">
-                        {conf.cost}
-                      </span>
-                    ) : (
-                      <span className="rounded-full border border-teal-500 px-3 py-1 text-teal-200">
-                        Free / Community
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-3 text-sm text-slate-200">
-                  {conf.description.slice(0, 220)}
-                  {conf.description.length > 220 ? "..." : ""}
-                </p>
-                {conf.registrationLink && (
-                  <Link
-                    href={conf.registrationLink}
-                    target="_blank"
-                    className="mt-3 inline-flex text-xs font-semibold text-teal-300 underline"
-                  >
-                    Register / View agenda
-                  </Link>
-                )}
-              </article>
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {displayedConferences.map((conf) => (
+                <ConferenceCard key={conf.id} conference={conf} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-10 flex justify-center">
+                <button
+                  onClick={() => setDisplayLimit((prev) => prev + 12)}
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-blue-500 hover:text-blue-400"
+                >
+                  Load more conferences
+                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
+      </section>
+
+      {/* CTA Section */}
+      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-white sm:text-3xl">
+          Hosting a Conference or Summit?
+        </h2>
+        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+          List your conference on IOPPS. Reach Indigenous professionals and community leaders across North America.
+        </p>
+        <a
+          href="/organization/conferences/new"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105"
+        >
+          Post a Conference
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </a>
       </section>
     </PageShell>
   );
 }
 
+// Conference Card Component
+function ConferenceCard({ conference, featured = false }: { conference: Conference; featured?: boolean }) {
+  const startDate = formatDate(conference.startDate);
+  const endDate = formatDate(conference.endDate);
+
+  const isFree = !conference.cost ||
+    conference.cost.toLowerCase().includes("free") ||
+    conference.cost.toLowerCase().includes("no cost");
+
+  return (
+    <Link
+      href={`/conferences/${conference.id}`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
+        featured
+          ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
+          : "border-slate-700 bg-slate-800/50 hover:border-blue-500/50"
+      }`}
+    >
+      {/* Header */}
+      <div className="relative bg-gradient-to-br from-blue-600/20 to-indigo-600/10 px-5 py-6">
+        {/* Featured Badge */}
+        {featured && (
+          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Featured
+          </div>
+        )}
+
+        {/* Date */}
+        {startDate && (
+          <div className="flex items-center gap-2 text-blue-300">
+            <CalendarDaysIcon className="h-5 w-5" />
+            <span className="text-sm font-medium">
+              {startDate}
+              {endDate && endDate !== startDate && ` - ${endDate}`}
+            </span>
+          </div>
+        )}
+
+        {/* Cost Badge */}
+        <div className="mt-3">
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+            isFree
+              ? "bg-emerald-500/20 text-emerald-300"
+              : "bg-blue-500/20 text-blue-300"
+          }`}>
+            <TicketIcon className="h-3 w-3" />
+            {isFree ? "Free" : conference.cost}
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-5">
+        {conference.employerName && (
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-1">
+            {conference.employerName}
+          </p>
+        )}
+
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-blue-300 transition-colors">
+          {conference.title}
+        </h3>
+
+        <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-400">
+          <MapPinIcon className="h-4 w-4 flex-shrink-0" />
+          <span className="line-clamp-1">{conference.location}</span>
+        </div>
+
+        <p className="mt-3 text-sm text-slate-300 line-clamp-2 flex-1">
+          {conference.description}
+        </p>
+
+        {/* Footer */}
+        <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
+          {conference.registrationLink ? (
+            <span className="text-xs font-medium text-emerald-400">
+              Registration Open
+            </span>
+          ) : (
+            <span className="text-xs text-slate-500">Details available</span>
+          )}
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-blue-400 group-hover:gap-2 transition-all">
+            View details
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function ConferencesPage() {
   return (
-    <Suspense fallback={
-      <PageShell>
-        <div className="mx-auto max-w-7xl">
-          <div className="h-32 w-full animate-pulse rounded-xl bg-slate-900/60 mb-8" />
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="h-48 animate-pulse rounded-2xl border border-slate-800/80 bg-[#08090C]"
-              />
-            ))}
+    <Suspense
+      fallback={
+        <PageShell>
+          <div className="mx-auto max-w-7xl">
+            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-72 animate-pulse rounded-2xl bg-slate-800/50"
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      </PageShell>
-    }>
+        </PageShell>
+      }
+    >
       <ConferencesContent />
     </Suspense>
   );
