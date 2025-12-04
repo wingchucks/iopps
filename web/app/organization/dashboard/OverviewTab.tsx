@@ -143,7 +143,7 @@ export default function OverviewTab() {
       {/* Quick Actions */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <h3 className="mb-6 text-xl font-semibold text-white">Quick Actions</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Link
             href="/organization/jobs/new"
             className="group rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20"
@@ -153,7 +153,7 @@ export default function OverviewTab() {
               Post a Job
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Share new opportunities with the community
+              Share new opportunities
             </p>
           </Link>
 
@@ -166,7 +166,20 @@ export default function OverviewTab() {
               Post Event
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              List pow wows, sports, and cultural gatherings
+              Pow wows & gatherings
+            </p>
+          </Link>
+
+          <Link
+            href="/organization/scholarships/new"
+            className="group rounded-xl border border-teal-500/30 bg-teal-500/10 p-6 transition-all hover:border-teal-500/50 hover:bg-teal-500/20"
+          >
+            <div className="mb-2 text-2xl">🎓</div>
+            <h4 className="font-semibold text-white group-hover:text-teal-400">
+              Post Scholarship
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              Scholarships & grants
             </p>
           </Link>
 
@@ -179,7 +192,7 @@ export default function OverviewTab() {
               Post Conference
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Announce upcoming conferences
+              Announce conferences
             </p>
           </Link>
 
@@ -192,7 +205,7 @@ export default function OverviewTab() {
               Update Profile
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Keep your organization info current
+              Organization settings
             </p>
           </Link>
         </div>
