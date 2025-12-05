@@ -41,13 +41,13 @@ export default {
       ],
     },
     plugins: [
-      // Sentry temporarily disabled for EAS build debugging
-      // [
-      //   "@sentry/react-native/expo",
-      //   {
-      //     uploadSourcemaps: false,
-      //   },
-      // ],
+      [
+        "@sentry/react-native/expo",
+        {
+          organization: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+        },
+      ],
       [
         "expo-notifications",
         {
