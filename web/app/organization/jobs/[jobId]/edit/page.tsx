@@ -193,7 +193,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         applicationLink,
         applicationEmail,
         active,
-        jobVideo: jobVideo || null, // Set to null to remove if cleared
+        jobVideo: jobVideo || undefined, // Set to undefined to remove if cleared
       });
       router.push("/employer");
     } catch (err) {
