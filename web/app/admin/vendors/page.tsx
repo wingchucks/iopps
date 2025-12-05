@@ -366,7 +366,10 @@ function AdminVendorsContent() {
                             {vendor.createdAt && (
                               <span>
                                 Listed:{" "}
-                                {vendor.createdAt && new Date(vendor.createdAt).toLocaleDateString()}
+                                {(vendor.createdAt as unknown as Date).toLocaleDateString?.() ??
+                                  (typeof vendor.createdAt === 'object' && 'toDate' in vendor.createdAt
+                                    ? (vendor.createdAt as any).toDate().toLocaleDateString()
+                                    : '')}
                               </span>
                             )}
                             {vendor.region && <span>Region: {vendor.region}</span>}
