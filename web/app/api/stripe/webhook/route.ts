@@ -114,66 +114,22 @@ export async function POST(request: NextRequest) {
                     const vendorRef = db.collection("vendors").doc(vendorId);
                     const vendorDoc = await vendorRef.get();
 
-                    // Create or update vendor document
-                    if (vendorDoc.exists) {
-                        await vendorRef.update({
-                            active: true,
-                            featured: featured === "true",
-                            subscription: {
-                                active: true,
-                                type: productType || "MONTHLY",
-                                purchasedAt: new Date(),
-                                expiresAt: expirationDate,
-                                paymentId: session.payment_intent as string,
-                                amountPaid: session.amount_total,
-                            },
-                        });
-                    } else {
-                        // Create new vendor document
-                        await vendorRef.set({
-                            id: vendorId,
-                            active: true,
-                            featured: featured === "true",
-                            createdAt: new Date(),
-                            subscription: {
-                                active: true,
-                                type: productType || "MONTHLY",
-                                purchasedAt: new Date(),
-                                expiresAt: expirationDate,
-                                paymentId: session.payment_intent as string,
-                                amountPaid: session.amount_total,
-                            },
-                        });
+                    if (!vendorDoc.exists) {
+                        console.error(`Vendor ${vendorId} not found for subscription activation`);
+                        break;
                     }
 
-                    // If upgrading from community to employer, update user role
-                    const { upgradeToEmployer } = metadata;
-                    const vendorUserId = metadata.userId;
-                    if (upgradeToEmployer === "true" && vendorUserId) {
-                        const userRef = db.collection("users").doc(vendorUserId);
-                        await userRef.update({
-                            role: "employer",
-                        });
+                    // Update vendor with subscription info (using new Vendor type fields)
+                    await vendorRef.update({
+                        status: "active",
+                        featured: featured === "true",
+                        subscriptionId: session.subscription as string || session.payment_intent as string,
+                        subscriptionStatus: "active",
+                        subscriptionEndsAt: expirationDate,
+                        updatedAt: new Date(),
+                    });
 
-                        // Also create employer document if it doesn't exist
-                        const employerRef = db.collection("employers").doc(vendorUserId);
-                        const employerDoc = await employerRef.get();
-                        if (!employerDoc.exists) {
-                            const userDoc = await userRef.get();
-                            const userData = userDoc.data();
-                            await employerRef.set({
-                                id: vendorUserId,
-                                name: userData?.displayName || "",
-                                email: userData?.email || "",
-                                createdAt: new Date(),
-                                subscription: null,
-                            });
-                        }
-
-                        console.log(`User ${vendorUserId} upgraded from community to employer`);
-                    }
-
-                    console.log(`Vendor ${vendorId} subscription activated`);
+                    console.log(`Vendor ${vendorId} subscription activated until ${expirationDate.toISOString()}`);
                     break;
                 }
 

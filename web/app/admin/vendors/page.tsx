@@ -15,7 +15,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { VendorProfile } from "@/lib/types";
+import type { Vendor } from "@/lib/types";
 
 import { Suspense } from "react";
 
@@ -26,7 +26,7 @@ function AdminVendorsContent() {
   const statusFilter = searchParams.get("status");
 
   const [loading, setLoading] = useState(true);
-  const [vendors, setVendors] = useState<VendorProfile[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [filter, setFilter] = useState<"all" | "active" | "inactive" | "featured">(
     statusFilter === "active"
       ? "active"
@@ -59,8 +59,8 @@ function AdminVendorsContent() {
         query(vendorsRef, orderBy("createdAt", "desc"))
       );
 
-      const vendorsList: VendorProfile[] = vendorsSnap.docs.map((doc) => {
-        const data = doc.data() as any;
+      const vendorsList: Vendor[] = vendorsSnap.docs.map((doc) => {
+        const data = doc.data() as Vendor;
         return {
           ...data,
           id: doc.id,
@@ -78,21 +78,22 @@ function AdminVendorsContent() {
     }
   }
 
-  async function toggleVendorStatus(vendorId: string, currentStatus: boolean) {
+  async function toggleVendorStatus(vendorId: string, isCurrentlyActive: boolean) {
     if (!user) return;
 
     try {
       setProcessing(vendorId);
       const vendorRef = doc(db!, "vendors", vendorId);
+      const newStatus = isCurrentlyActive ? "suspended" : "active";
       await updateDoc(vendorRef, {
-        active: !currentStatus,
+        status: newStatus,
         updatedAt: serverTimestamp(),
       });
 
       // Update local state
       setVendors((prev) =>
         prev.map((vendor) =>
-          vendor.id === vendorId ? { ...vendor, active: !currentStatus } : vendor
+          vendor.id === vendorId ? { ...vendor, status: newStatus as Vendor['status'] } : vendor
         )
       );
     } catch (error) {
@@ -170,14 +171,14 @@ function AdminVendorsContent() {
 
   const filteredVendors = vendors.filter((vendor) => {
     if (filter === "all") return true;
-    if (filter === "active") return vendor.active === true;
-    if (filter === "inactive") return vendor.active === false;
+    if (filter === "active") return vendor.status === "active";
+    if (filter === "inactive") return vendor.status !== "active";
     if (filter === "featured") return vendor.featured === true;
     return true;
   });
 
-  const activeCount = vendors.filter((v) => v.active === true).length;
-  const inactiveCount = vendors.filter((v) => v.active === false).length;
+  const activeCount = vendors.filter((v) => v.status === "active").length;
+  const inactiveCount = vendors.filter((v) => v.status !== "active").length;
   const featuredCount = vendors.filter((v) => v.featured === true).length;
 
   return (
@@ -255,7 +256,7 @@ function AdminVendorsContent() {
           ) : (
             filteredVendors.map((vendor) => {
               const isProcessing = processing === vendor.id;
-              const isActive = vendor.active === true;
+              const isActive = vendor.status === "active";
               const isFeatured = vendor.featured === true;
 
               return (
@@ -333,32 +334,32 @@ function AdminVendorsContent() {
                                 {vendor.category}
                               </span>
                             )}
-                            {vendor.isIndigenousOwned && (
+                            {vendor.nation && (
                               <span className="rounded-full bg-[#14B8A6]/10 px-2 py-0.5 text-xs text-[#14B8A6]">
-                                Indigenous Owned
+                                {vendor.nation}
                               </span>
                             )}
-                            {vendor.shipsCanadaWide && (
+                            {vendor.offersShipping && (
                               <span className="text-xs text-slate-500">
-                                Ships Canada-wide
+                                Offers Shipping
                               </span>
                             )}
                           </div>
 
-                          {vendor.about && (
+                          {vendor.description && (
                             <p className="mt-3 text-sm text-slate-300 line-clamp-2">
-                              {vendor.about}
+                              {vendor.description}
                             </p>
                           )}
 
-                          {vendor.websiteUrl && (
+                          {vendor.website && (
                             <a
-                              href={vendor.websiteUrl}
+                              href={vendor.website}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="mt-2 inline-block text-sm text-[#14B8A6] hover:underline"
                             >
-                              {vendor.websiteUrl}
+                              {vendor.website}
                             </a>
                           )}
 
@@ -378,7 +379,7 @@ function AdminVendorsContent() {
                     {/* Actions */}
                     <div className="flex gap-2 lg:flex-col">
                       <Link
-                        href={`/shop/${vendor.id}`}
+                        href={`/shop/${vendor.slug}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View Vendor

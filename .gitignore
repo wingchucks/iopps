@@ -70,6 +70,8 @@ node_modules/
 # Firebase service account keys
 service-account.json
 *-service-account.json
+*-key.json
+firebase-admin-key.json
 
 # Auth/test data
 auth_users.json

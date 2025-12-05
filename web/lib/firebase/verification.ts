@@ -19,7 +19,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getVendorById, type Vendor } from "./vendors";
+import { getVendor } from "./shop";
+import type { Vendor } from "@/lib/types";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -118,7 +119,7 @@ export async function submitVerificationRequest(
     const firestore = checkFirebase();
 
     // Get vendor details
-    const vendor = await getVendorById(vendorId);
+    const vendor = await getVendor(vendorId);
     if (!vendor) {
       throw new Error("Vendor not found");
     }

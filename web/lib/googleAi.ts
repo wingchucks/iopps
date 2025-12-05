@@ -18,13 +18,6 @@ export type JobDescriptionOutput = {
   qualifications: string[];
 };
 
-export type JobSearchInput = {
-  query: string;
-  location?: string;
-  employmentType?: string;
-  skills?: string[];
-};
-
 // Types for poster/flyer analysis
 export type PosterAnalysisType = "powwow" | "conference" | "scholarship";
 
@@ -164,52 +157,6 @@ Format your response as JSON with this structure:
     console.error("Error generating job description:", error);
     throw error;
   }
-}
-
-/**
- * Help with job search using Google AI
- * @param input Search query and filters
- * @returns AI-generated search suggestions
- */
-export async function helpJobSearch(
-  input: JobSearchInput
-): Promise<{ suggestions: string[]; matchingSkills: string[] }> {
-  // Stub: Return placeholder data
-  console.warn("Job search AI helper not yet implemented");
-  return {
-    suggestions: [
-      "Try searching for: " + input.query,
-      "Consider expanding your search to nearby locations",
-      "Look for similar job titles",
-    ],
-    matchingSkills: input.skills || [],
-  };
-}
-
-/**
- * Generate application assistance using Google AI
- * @param jobTitle The job title
- * @param userExperience Brief description of user's experience
- * @returns AI-generated cover letter tips
- */
-export async function generateApplicationTips(
-  jobTitle: string,
-  userExperience?: string
-): Promise<{ tips: string[]; suggestedHighlights: string[] }> {
-  // Stub: Return placeholder data
-  console.warn("Application tips AI helper not yet implemented");
-  return {
-    tips: [
-      "Tailor your application to highlight Indigenous community engagement",
-      "Emphasize relevant cultural competencies",
-      "Include specific examples of your experience",
-    ],
-    suggestedHighlights: [
-      "Community involvement",
-      "Cultural awareness",
-      "Relevant technical skills",
-    ],
-  };
 }
 
 /**
