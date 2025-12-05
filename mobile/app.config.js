@@ -62,6 +62,7 @@ export default {
           faceIDPermission: "Allow IOPPS to use Face ID for quick sign-in.",
         },
       ],
+      "expo-secure-store",
     ],
     web: {
       favicon: "./assets/favicon.png",
