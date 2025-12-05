@@ -15,6 +15,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { apiLogger } from "./logger";
 import type {
   JobPosting,
   SavedJob,
@@ -58,7 +59,7 @@ export async function listSavedJobs(memberId: string): Promise<SavedJob[]> {
         savedJob.job = { id: jobDoc.id, ...jobDoc.data() } as JobPosting;
       }
     } catch (err) {
-      console.error("Error fetching job for saved job:", err);
+      apiLogger.error("Error fetching job for saved job", err);
     }
 
     savedJobs.push(savedJob);
@@ -176,7 +177,7 @@ export async function getMemberApplications(
         application.jobLocation = jobData.location;
       }
     } catch (err) {
-      console.error("Error fetching job for application:", err);
+      apiLogger.error("Error fetching job for application", err);
     }
 
     applications.push(application);

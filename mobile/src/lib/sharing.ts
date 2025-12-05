@@ -2,6 +2,8 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import { Linking, Platform } from 'react-native';
 import { Job } from '@/types';
+import * as Sentry from '@sentry/react-native';
+import { logger } from './logger';
 
 export interface ShareableItem {
   id: string;
@@ -53,19 +55,29 @@ export function generateShareText(item: ShareableItem): string {
 }
 
 /**
- * Track share events (integrate with your analytics)
+ * Track share events using Sentry breadcrumbs and logger
  */
 export function trackShareEvent(
   itemId: string,
   itemType: ShareableItem['type'],
   platform: string
 ): void {
-  // TODO: Integrate with your analytics service (Firebase, Mixpanel, etc.)
-  console.log('Share event tracked:', {
+  const eventData = {
     itemId,
     itemType,
     platform,
     timestamp: new Date().toISOString(),
+  };
+
+  // Log in development
+  logger.track('share_event', eventData);
+
+  // Add Sentry breadcrumb for debugging share flows
+  Sentry.addBreadcrumb({
+    category: 'share',
+    message: `Shared ${itemType} via ${platform}`,
+    level: 'info',
+    data: eventData,
   });
 }
 

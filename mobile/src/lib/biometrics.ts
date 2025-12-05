@@ -1,5 +1,6 @@
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
+import { biometricsLogger } from "./logger";
 
 const BIOMETRIC_ENABLED_KEY = "biometric_enabled";
 const BIOMETRIC_USER_KEY = "biometric_user_id";
@@ -88,7 +89,7 @@ export async function authenticateWithBiometrics(
 
     return { success: false, error: result.error || "Authentication failed" };
   } catch (error) {
-    console.error("Biometric authentication error:", error);
+    biometricsLogger.error("Biometric authentication error", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -128,7 +129,7 @@ export async function enableBiometricLogin(userId: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error("Error enabling biometric login:", error);
+    biometricsLogger.error("Error enabling biometric login", error);
     return false;
   }
 }
@@ -141,7 +142,7 @@ export async function disableBiometricLogin(): Promise<void> {
     await SecureStore.deleteItemAsync(BIOMETRIC_USER_KEY);
     await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);
   } catch (error) {
-    console.error("Error disabling biometric login:", error);
+    biometricsLogger.error("Error disabling biometric login", error);
   }
 }
 
@@ -185,7 +186,7 @@ export async function biometricLogin(): Promise<{
 
     return { success: true, userId };
   } catch (error) {
-    console.error("Biometric login error:", error);
+    biometricsLogger.error("Biometric login error", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

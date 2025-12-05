@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getScholarship, formatTimestamp } from "../lib/firestore";
+import { logger } from "../lib/logger";
 import type { Scholarship } from "../types";
 
 export default function ScholarshipDetailScreen() {
@@ -27,7 +29,7 @@ export default function ScholarshipDetailScreen() {
         const data = await getScholarship(scholarshipId);
         setScholarship(data);
       } catch (error) {
-        console.error("Error loading scholarship:", error);
+        logger.error("Error loading scholarship", error);
       } finally {
         setLoading(false);
       }
@@ -35,7 +37,7 @@ export default function ScholarshipDetailScreen() {
     loadScholarship();
   }, [scholarshipId]);
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!user) {
       Alert.alert(
         "Sign In Required",
@@ -50,11 +52,26 @@ export default function ScholarshipDetailScreen() {
       );
       return;
     }
-    // TODO: Navigate to scholarship application form
-    Alert.alert(
-      "Coming Soon",
-      "Scholarship applications through the app are coming soon. Please visit the IOPPS website to apply."
-    );
+
+    // Open scholarship on IOPPS website for application
+    const scholarshipUrl = `https://iopps.ca/scholarships/${scholarshipId}`;
+    try {
+      const supported = await Linking.canOpenURL(scholarshipUrl);
+      if (supported) {
+        await Linking.openURL(scholarshipUrl);
+      } else {
+        Alert.alert(
+          "Unable to Open",
+          "Could not open the scholarship application page. Please visit iopps.ca directly."
+        );
+      }
+    } catch (error) {
+      logger.error("Error opening scholarship URL", error);
+      Alert.alert(
+        "Error",
+        "Something went wrong. Please try again or visit iopps.ca directly."
+      );
+    }
   };
 
   if (loading) {

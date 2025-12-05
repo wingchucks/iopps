@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import * as Notifications from "expo-notifications";
 import { parseNotificationData, NotificationNavigationData } from "../lib/notifications";
+import { notificationLogger } from "../lib/logger";
 
 interface NotificationContextType {
   notification: Notifications.Notification | null;
@@ -61,7 +62,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         navigation.navigate("Notifications");
       }
     } catch (error) {
-      console.error("Error navigating from notification:", error);
+      notificationLogger.error("Error navigating from notification", error);
     }
   }, []);
 
@@ -71,14 +72,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const notificationListener = Notifications.addNotificationReceivedListener(
       (notification) => {
         setNotification(notification);
-        console.log("Notification received:", notification.request.content.title);
+        notificationLogger.log("Notification received:", notification.request.content.title);
       }
     );
 
     // Listen for user interactions with notifications (taps)
     const responseListener = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        console.log("Notification tapped:", response.notification.request.content.title);
+        notificationLogger.log("Notification tapped:", response.notification.request.content.title);
         const data = parseNotificationData(response.notification);
         handleNotificationNavigation(data);
       }
@@ -87,7 +88,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Check for notification that launched the app
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) {
-        console.log("App launched from notification");
+        notificationLogger.log("App launched from notification");
         const data = parseNotificationData(response.notification);
         handleNotificationNavigation(data);
       }

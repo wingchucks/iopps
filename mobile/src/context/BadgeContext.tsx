@@ -8,6 +8,7 @@ import React, {
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "./AuthContext";
+import { logger } from "../lib/logger";
 
 interface BadgeCounts {
   messages: number;
@@ -62,7 +63,7 @@ export function BadgeProvider({ children }: { children: React.ReactNode }) {
         }));
       },
       (error) => {
-        console.error("Error listening to conversations:", error);
+        logger.error("Error listening to conversations", error);
       }
     );
 
@@ -84,7 +85,7 @@ export function BadgeProvider({ children }: { children: React.ReactNode }) {
         }));
       },
       (error) => {
-        console.error("Error listening to notifications:", error);
+        logger.error("Error listening to notifications", error);
       }
     );
 
