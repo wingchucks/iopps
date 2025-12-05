@@ -4,6 +4,14 @@ import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createJobApplication } from "@/lib/firestore";
 import type { JobPosting } from "@/lib/types";
+import FileUploader from "@/components/FileUploader";
+import {
+    PencilSquareIcon,
+    ArrowUpTrayIcon,
+    TrashIcon,
+    PlusCircleIcon,
+    DocumentIcon
+} from "@heroicons/react/24/outline";
 
 interface QuickApplyButtonProps {
     job: JobPosting;
@@ -14,12 +22,29 @@ interface QuickApplyButtonProps {
     };
 }
 
+type CoverLetterType = "text" | "file";
+
+interface UploadedFile {
+    name: string;
+    url: string;
+    path: string;
+    type: string;
+}
+
 export default function QuickApplyButton({ job, memberProfile }: QuickApplyButtonProps) {
     const { user } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [applying, setApplying] = useState(false);
-    const [coverLetter, setCoverLetter] = useState(memberProfile?.defaultCoverLetter || "");
     const [success, setSuccess] = useState(false);
+
+    // Cover Letter State
+    const [coverLetterType, setCoverLetterType] = useState<CoverLetterType>("text");
+    const [coverLetterText, setCoverLetterText] = useState(memberProfile?.defaultCoverLetter || "");
+    const [coverLetterFile, setCoverLetterFile] = useState<UploadedFile | null>(null);
+
+    // Additional Documents State
+    const [additionalDocs, setAdditionalDocs] = useState<UploadedFile[]>([]);
+    const [showAddDoc, setShowAddDoc] = useState(false);
 
     if (!user || !job.quickApplyEnabled) {
         return null;
@@ -32,20 +57,41 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
 
         setApplying(true);
 
+        // Validation: If uploading file, must have file.
+        if (coverLetterType === "file" && !coverLetterFile) {
+            alert("Please upload a cover letter file or switch to 'Write Manually'.");
+            setApplying(false);
+            return;
+        }
+
         try {
             await createJobApplication({
                 jobId: job.id,
                 memberId: user.uid,
                 employerId: job.employerId,
                 resumeUrl: memberProfile.resumeUrl,
-                coverLetter: coverLetter.trim() || undefined,
                 memberDisplayName: memberProfile.displayName || user.email || undefined,
+
+                // Old field compatibility
+                coverLetter: coverLetterType === 'text' ? coverLetterText : undefined,
+
+                // New Fields
+                coverLetterType,
+                coverLetterContent: coverLetterType === 'text' ? coverLetterText : undefined,
+                coverLetterUrl: coverLetterFile?.url,
+                coverLetterPath: coverLetterFile?.path,
+                additionalDocuments: additionalDocs,
             });
 
             setSuccess(true);
             setTimeout(() => {
                 setShowModal(false);
                 setSuccess(false);
+                // Reset form
+                setCoverLetterType('text');
+                setCoverLetterText(memberProfile?.defaultCoverLetter || "");
+                setCoverLetterFile(null);
+                setAdditionalDocs([]);
             }, 2000);
         } catch (error) {
             console.error("Quick apply error:", error);
@@ -65,10 +111,10 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
             </button>
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto">
+                    <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl my-8">
                         {success ? (
-                            <div className="text-center">
+                            <div className="text-center py-8">
                                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
                                     <svg
                                         className="h-8 w-8 text-green-400"
@@ -91,17 +137,33 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                             </div>
                         ) : (
                             <>
-                                <h2 className="text-2xl font-bold text-slate-50">Quick Apply</h2>
-                                <p className="mt-2 text-sm text-slate-400">
-                                    Apply to <span className="font-semibold text-slate-200">{job.title}</span> at {job.employerName}
-                                </p>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-slate-50">Quick Apply</h2>
+                                        <p className="mt-2 text-sm text-slate-400">
+                                            Apply to <span className="font-semibold text-slate-200">{job.title}</span> at {job.employerName}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="text-slate-500 hover:text-white"
+                                    >
+                                        <span className="sr-only">Close</span>
+                                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
 
-                                <div className="mt-6 space-y-4">
+                                <div className="mt-6 space-y-6">
                                     {/* Resume Section */}
-                                    <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+                                    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <h3 className="font-semibold text-slate-100">Resume</h3>
+                                                <h3 className="font-semibold text-slate-100 flex items-center gap-2">
+                                                    <DocumentIcon className="h-5 w-5 text-slate-400" />
+                                                    Resume
+                                                </h3>
                                                 {hasResume ? (
                                                     <p className="mt-1 text-sm text-slate-400">
                                                         ✓ Using your saved resume
@@ -117,7 +179,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     href={memberProfile.resumeUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-sm text-[#14B8A6] hover:underline"
+                                                    className="text-sm font-medium text-[#14B8A6] hover:underline"
                                                 >
                                                     View Resume
                                                 </a>
@@ -127,47 +189,167 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
 
                                     {/* Cover Letter Section */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-200">
-                                            Cover Letter (Optional)
-                                        </label>
-                                        <textarea
-                                            value={coverLetter}
-                                            onChange={(e) => setCoverLetter(e.target.value)}
-                                            rows={6}
-                                            placeholder="Introduce yourself and explain why you're a great fit for this role..."
-                                            className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/30"
-                                        />
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {coverLetter.length} characters
-                                        </p>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <label className="block text-sm font-medium text-slate-200">
+                                                Cover Letter (Optional)
+                                            </label>
+                                            <div className="flex bg-slate-800 rounded-lg p-1">
+                                                <button
+                                                    onClick={() => setCoverLetterType("text")}
+                                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${coverLetterType === "text"
+                                                            ? "bg-slate-700 text-white shadow-sm"
+                                                            : "text-slate-400 hover:text-slate-200"
+                                                        }`}
+                                                >
+                                                    <PencilSquareIcon className="h-3.5 w-3.5" />
+                                                    Write
+                                                </button>
+                                                <button
+                                                    onClick={() => setCoverLetterType("file")}
+                                                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${coverLetterType === "file"
+                                                            ? "bg-slate-700 text-white shadow-sm"
+                                                            : "text-slate-400 hover:text-slate-200"
+                                                        }`}
+                                                >
+                                                    <ArrowUpTrayIcon className="h-3.5 w-3.5" />
+                                                    Upload
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {coverLetterType === "text" ? (
+                                            <div>
+                                                <textarea
+                                                    value={coverLetterText}
+                                                    onChange={(e) => setCoverLetterText(e.target.value)}
+                                                    rows={6}
+                                                    placeholder="Introduce yourself and explain why you're a great fit for this role..."
+                                                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
+                                                />
+                                                <div className="flex justify-between mt-1">
+                                                    <p className="text-xs text-slate-500">
+                                                        {coverLetterText.length} characters
+                                                    </p>
+                                                    <a href="/member/tools/cover-letter-builder" target="_blank" className="text-xs text-[#14B8A6] hover:underline flex items-center gap-1">
+                                                        Need help? Use our Cover Letter Builder ↗
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {coverLetterFile ? (
+                                                    <div className="flex items-center justify-between p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                                                        <div className="flex items-center gap-2 overflow-hidden">
+                                                            <DocumentIcon className="h-5 w-5 text-[#14B8A6] flex-shrink-0" />
+                                                            <span className="text-sm text-slate-200 truncate">{coverLetterFile.name}</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setCoverLetterFile(null)}
+                                                            className="text-slate-400 hover:text-red-400 transition-colors"
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <FileUploader
+                                                        label="Upload Cover Letter (PDF or Word)"
+                                                        accept=".pdf,.doc,.docx"
+                                                        maxSizeMB={5}
+                                                        storagePath={`users/${user.uid}/applications`}
+                                                        onUploadComplete={(url, path, name) => {
+                                                            setCoverLetterFile({ name, url, path, type: 'document' });
+                                                        }}
+                                                        onError={(err) => alert(err)}
+                                                        className="border-slate-700"
+                                                    />
+                                                )}
+                                                <p className="text-xs text-slate-500">
+                                                    Don't have one? <a href="/member/tools/cover-letter-builder" target="_blank" className="text-[#14B8A6] hover:underline">Create one with our builder</a>.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Additional Documents Section */}
+                                    <div className="border-t border-slate-800 pt-6">
+                                        <h3 className="font-medium text-slate-200 mb-3 flex items-center justify-between">
+                                            <span>Additional Documents</span>
+                                            <span className="text-xs font-normal text-slate-500">Portfolio, Certifications, etc.</span>
+                                        </h3>
+
+                                        {additionalDocs.length > 0 && (
+                                            <div className="space-y-2 mb-3">
+                                                {additionalDocs.map((doc, idx) => (
+                                                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg border border-slate-700">
+                                                        <div className="flex items-center gap-2 overflow-hidden">
+                                                            <DocumentIcon className="h-4 w-4 text-slate-400" />
+                                                            <a href={doc.url} target="_blank" className="text-sm text-slate-300 hover:text-[#14B8A6] truncate">{doc.name}</a>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setAdditionalDocs(prev => prev.filter((_, i) => i !== idx))}
+                                                            className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {showAddDoc ? (
+                                            <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-700">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-xs font-semibold text-slate-400 uppercase">New Document</span>
+                                                    <button onClick={() => setShowAddDoc(false)} className="text-xs text-slate-500 hover:text-white">Cancel</button>
+                                                </div>
+                                                <FileUploader
+                                                    label="Select File"
+                                                    accept=".pdf,.doc,.docx,.jpg,.png"
+                                                    maxSizeMB={10}
+                                                    storagePath={`users/${user.uid}/applications`}
+                                                    onUploadComplete={(url, path, name) => {
+                                                        const type = name.endsWith('.pdf') || name.endsWith('.doc') || name.endsWith('.docx') ? 'document' : 'image';
+                                                        setAdditionalDocs(prev => [...prev, { name, url, path, type }]);
+                                                        setShowAddDoc(false);
+                                                    }}
+                                                    onError={(err) => alert(err)}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setShowAddDoc(true)}
+                                                className="flex items-center gap-2 text-sm text-[#14B8A6] hover:text-[#0F9488] transition-colors font-medium hover:bg-[#14B8A6]/5 px-3 py-2 rounded-lg -ml-3"
+                                            >
+                                                <PlusCircleIcon className="h-5 w-5" />
+                                                Add Another Document
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex gap-3 pt-4">
+                                    <div className="flex gap-3 pt-4 border-t border-slate-800">
                                         <button
                                             onClick={handleQuickApply}
                                             disabled={applying || !hasResume}
-                                            className="flex-1 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
+                                            className="flex-1 rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-[#14B8A6]/20 transition-all hover:shadow-[#14B8A6]/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {applying ? "Submitting..." : "Submit Application"}
+                                            {applying ? "Submitting Application..." : "Submit Application"}
                                         </button>
                                         <button
                                             onClick={() => setShowModal(false)}
                                             disabled={applying}
-                                            className="flex-1 rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition hover:border-slate-600 disabled:opacity-50"
+                                            className="px-6 py-3 font-semibold text-slate-400 hover:text-white transition-colors"
                                         >
                                             Cancel
                                         </button>
                                     </div>
 
                                     {!hasResume && (
-                                        <p className="text-center text-sm text-slate-400">
-                                            Go to your{" "}
-                                            <a href="/member/dashboard" className="text-[#14B8A6] hover:underline">
-                                                profile
-                                            </a>{" "}
-                                            to upload your resume
-                                        </p>
+                                        <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
+                                            <p className="text-sm text-red-200">
+                                                Please <a href="/member/dashboard" className="underline font-semibold hover:text-red-100">upload a resume</a> to your profile before applying.
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
                             </>

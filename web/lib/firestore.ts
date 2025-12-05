@@ -539,6 +539,20 @@ type ApplicationInput = {
   resumeUrl?: string;
   coverLetter?: string;
   note?: string;
+
+  // New Fields
+  coverLetterType?: 'text' | 'file';
+  coverLetterContent?: string;
+  coverLetterUrl?: string;
+  coverLetterPath?: string;
+  portfolioUrls?: string[];
+  certificationUrls?: string[];
+  additionalDocuments?: {
+    name: string;
+    url: string;
+    type: string;
+    path: string;
+  }[];
 };
 
 export async function checkExistingApplication(
