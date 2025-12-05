@@ -41,14 +41,13 @@ export default {
       ],
     },
     plugins: [
-      [
-        "@sentry/react-native/expo",
-        {
-          // Disable source map uploads until Sentry is properly configured
-          // Set SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT as EAS secrets to enable
-          uploadSourcemaps: false,
-        },
-      ],
+      // Sentry temporarily disabled for EAS build debugging
+      // [
+      //   "@sentry/react-native/expo",
+      //   {
+      //     uploadSourcemaps: false,
+      //   },
+      // ],
       [
         "expo-notifications",
         {
