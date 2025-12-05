@@ -145,18 +145,16 @@ export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[
 
   let q = query(
     collection(db, VENDORS_COLLECTION),
-    where('status', '==', 'active'),
-    orderBy('featured', 'desc'),
-    orderBy('createdAt', 'desc')
+    where('status', '==', 'active')
+    // orderBy('featured', 'desc'), // Removed to avoid index requirement
+    // orderBy('createdAt', 'desc') // Removed to avoid index requirement
   );
 
   if (filters?.category) {
     q = query(
       collection(db, VENDORS_COLLECTION),
       where('status', '==', 'active'),
-      where('category', '==', filters.category),
-      orderBy('featured', 'desc'),
-      orderBy('createdAt', 'desc')
+      where('category', '==', filters.category)
     );
   }
 
@@ -164,9 +162,7 @@ export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[
     q = query(
       collection(db, VENDORS_COLLECTION),
       where('status', '==', 'active'),
-      where('region', '==', filters.region),
-      orderBy('featured', 'desc'),
-      orderBy('createdAt', 'desc')
+      where('region', '==', filters.region)
     );
   }
 
