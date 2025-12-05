@@ -64,10 +64,9 @@ function AdminVendorsContent() {
         return {
           ...data,
           id: doc.id,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : null,
-          updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : null,
-          approvedAt: data.approvedAt?.toDate ? data.approvedAt.toDate() : null,
-        } as VendorProfile;
+          createdAt: data.createdAt?.toDate ? (data.createdAt as any).toDate() : null,
+          updatedAt: data.updatedAt?.toDate ? (data.updatedAt as any).toDate() : null,
+        } as Vendor;
       });
 
       setVendors(vendorsList);
