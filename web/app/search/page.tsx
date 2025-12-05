@@ -363,11 +363,11 @@ function GlobalSearchContent() {
                         </p>
                       </div>
                       <h3 className="mt-2 text-xl font-semibold text-white">
-                        {business.name}
+                        {business.businessName}
                       </h3>
-                      {business.owner && (
+                      {business.nation && (
                         <p className="mt-1 text-sm text-slate-400">
-                          by {business.owner}
+                          {business.nation}
                         </p>
                       )}
                       <p className="mt-3 text-sm text-slate-300">

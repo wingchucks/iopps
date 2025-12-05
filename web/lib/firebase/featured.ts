@@ -20,7 +20,8 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getVendorById, type Vendor } from "./vendors";
+import { getVendor } from "./shop";
+import type { Vendor } from "@/lib/types";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -105,7 +106,7 @@ export async function getTodaysFeaturedVendor(): Promise<FeaturedVendorWithDetai
     } as FeaturedSlot;
 
     // Get full vendor details
-    const vendor = await getVendorById(slot.vendorId);
+    const vendor = await getVendor(slot.vendorId);
 
     if (!vendor || vendor.status !== "active") {
       return null;
@@ -153,7 +154,7 @@ export async function getFeaturedVendorByDate(
       ...snap.docs[0].data(),
     } as FeaturedSlot;
 
-    const vendor = await getVendorById(slot.vendorId);
+    const vendor = await getVendor(slot.vendorId);
 
     if (!vendor) {
       return null;
@@ -285,7 +286,7 @@ export async function createFeaturedSlot(
     }
 
     // Get vendor details
-    const vendor = await getVendorById(vendorId);
+    const vendor = await getVendor(vendorId);
     if (!vendor) {
       throw new Error("Vendor not found");
     }
@@ -298,7 +299,7 @@ export async function createFeaturedSlot(
       vendorId,
       vendorSlug: vendor.slug,
       vendorName: vendor.businessName,
-      vendorImage: vendor.profileImage || null,
+      vendorImage: vendor.logoUrl || null,
       startDate: Timestamp.fromDate(startDate),
       endDate: Timestamp.fromDate(endDate),
       reason: options.reason || null,
