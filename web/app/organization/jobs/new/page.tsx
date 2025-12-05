@@ -38,6 +38,8 @@ function NewJobPageContent() {
   const [remoteFlag, setRemoteFlag] = useState(false);
   const [indigenousPreference, setIndigenousPreference] = useState(true);
   const [quickApplyEnabled, setQuickApplyEnabled] = useState(true);
+  const [cpicRequired, setCpicRequired] = useState(false);
+  const [willTrain, setWillTrain] = useState(false);
   const [salaryRange, setSalaryRange] = useState("");
   const [closingDate, setClosingDate] = useState("");
   const [description, setDescription] = useState("");
@@ -150,6 +152,8 @@ function NewJobPageContent() {
         remoteFlag,
         indigenousPreference,
         quickApplyEnabled,
+        cpicRequired,
+        willTrain,
         salaryRange,
         closingDate,
         description,
@@ -403,6 +407,37 @@ function NewJobPageContent() {
               Enable Quick Apply
               <span className="rounded-full bg-[#14B8A6]/20 px-2 py-0.5 text-xs font-semibold text-[#14B8A6]">
                 Recommended
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="inline-flex items-center gap-2 text-sm text-slate-200">
+            <input
+              id="cpicRequired"
+              type="checkbox"
+              checked={cpicRequired}
+              onChange={(e) => setCpicRequired(e.target.checked)}
+            />
+            <span className="flex items-center gap-2">
+              CPIC Required
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-400">
+                Background Check
+              </span>
+            </span>
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-200">
+            <input
+              id="willTrain"
+              type="checkbox"
+              checked={willTrain}
+              onChange={(e) => setWillTrain(e.target.checked)}
+            />
+            <span className="flex items-center gap-2">
+              Will Train
+              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                Training Provided
               </span>
             </span>
           </label>

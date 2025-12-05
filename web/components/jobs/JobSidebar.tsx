@@ -123,6 +123,36 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
                             <p className="text-sm font-semibold text-slate-200">{job.employmentType}</p>
                         </div>
                     </div>
+
+                    {/* CPIC Required */}
+                    {job.cpicRequired && (
+                        <div className="flex items-start gap-3">
+                            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-slate-400">Background Check</p>
+                                <p className="text-sm font-semibold text-amber-400">CPIC Required</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Will Train */}
+                    {job.willTrain && (
+                        <div className="flex items-start gap-3">
+                            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-slate-400">Training</p>
+                                <p className="text-sm font-semibold text-emerald-400">Will Train</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

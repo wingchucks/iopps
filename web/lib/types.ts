@@ -82,6 +82,9 @@ export interface JobPosting {
   // Quick Apply & Enhanced Features
   quickApplyEnabled?: boolean; // Allow applications through IOPPS
   companyLogoUrl?: string; // For enhanced job cards
+  // Job Requirements Flags
+  cpicRequired?: boolean; // Criminal record check required
+  willTrain?: boolean; // Employer will provide training
   // Payment fields
   paymentStatus?: "paid" | "pending" | "failed";
   paymentId?: string;
@@ -266,8 +269,24 @@ export interface JobApplication {
   memberDisplayName?: string;
   status: ApplicationStatus;
   resumeUrl?: string;
-  coverLetter?: string;
+  coverLetter?: string; // Legacy text field
   note?: string;
+
+  // Modern Cover Letter Handling
+  coverLetterType?: 'text' | 'file';
+  coverLetterContent?: string; // If text
+  coverLetterUrl?: string;     // If file
+  coverLetterPath?: string;    // Storage path for deletion
+
+  // Additional Documents
+  portfolioUrls?: string[];
+  certificationUrls?: string[];
+  additionalDocuments?: {
+    name: string;
+    url: string;
+    type: string;
+    path: string;
+  }[];
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -380,6 +399,25 @@ export interface ScholarshipApplication {
   status: ApplicationStatus;
   education?: string;
   essay?: string;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+export interface CoverLetterTemplate {
+  id: string;
+  userId: string;
+  name: string; // e.g., "Tech Job Template"
+  content: {
+    recipientName?: string;
+    recipientTitle?: string;
+    companyName?: string;
+    companyAddress?: string;
+    opening?: string;
+    body?: string;
+    closing?: string;
+    signOff?: string;
+  };
+  designId: 'minimal' | 'modern' | 'bold';
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }

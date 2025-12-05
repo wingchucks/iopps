@@ -25,6 +25,8 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
   const [employmentType, setEmploymentType] = useState("Full-time");
   const [remoteFlag, setRemoteFlag] = useState(false);
   const [indigenousPreference, setIndigenousPreference] = useState(true);
+  const [cpicRequired, setCpicRequired] = useState(false);
+  const [willTrain, setWillTrain] = useState(false);
   const [salaryRange, setSalaryRange] = useState("");
   const [closingDate, setClosingDate] = useState("");
   const [description, setDescription] = useState("");
@@ -60,6 +62,8 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         setEmploymentType(jobData.employmentType || "Full-time");
         setRemoteFlag(jobData.remoteFlag ?? false);
         setIndigenousPreference(jobData.indigenousPreference ?? true);
+        setCpicRequired(jobData.cpicRequired ?? false);
+        setWillTrain(jobData.willTrain ?? false);
         // Handle both string and object salary range formats
         if (typeof jobData.salaryRange === "string") {
           setSalaryRange(jobData.salaryRange);
@@ -135,6 +139,8 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         employmentType,
         remoteFlag,
         indigenousPreference,
+        cpicRequired,
+        willTrain,
         salaryRange,
         closingDate,
         description,
@@ -384,6 +390,35 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
               onChange={(e) => setIndigenousPreference(e.target.checked)}
             />
             Indigenous preference / targeted hiring
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="inline-flex items-center gap-2 text-sm text-slate-200">
+            <input
+              type="checkbox"
+              checked={cpicRequired}
+              onChange={(e) => setCpicRequired(e.target.checked)}
+            />
+            <span className="flex items-center gap-2">
+              CPIC Required
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-400">
+                Background Check
+              </span>
+            </span>
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-200">
+            <input
+              type="checkbox"
+              checked={willTrain}
+              onChange={(e) => setWillTrain(e.target.checked)}
+            />
+            <span className="flex items-center gap-2">
+              Will Train
+              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                Training Provided
+              </span>
+            </span>
           </label>
         </div>
 
