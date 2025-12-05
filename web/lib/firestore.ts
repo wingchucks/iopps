@@ -44,6 +44,7 @@ import type {
   Notification,
   NotificationType,
 } from "@/lib/types";
+import { MOCK_JOBS, MOCK_EMPLOYERS, MOCK_CONFERENCES, MOCK_SCHOLARSHIPS } from "./mockData";
 
 const employerCollection = "employers";
 const memberCollection = "memberProfiles";
@@ -68,18 +69,8 @@ const notificationsCollection = "notifications";
 // Helper to check if Firebase is available
 function checkFirebase() {
   if (!db) {
-    // During build time or if config is missing, this might be null.
-    // We throw here to ensure type safety for the return type (Firestore),
-    // but we need to handle this gracefully in the calling functions if possible,
-    // or ensure this is only called when Firebase is initialized.
-    // For static generation, we might want to return a mock or null and handle it.
-    // But to fix the immediate build error which is likely due to missing env vars:
-    if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
-      console.warn("Firebase not initialized during build.");
-      // We can't return null here because the return type is inferred as Firestore.
-      // We'll throw, but we should catch this in getStaticProps/generateStaticParams if used.
-    }
-    throw new Error("Firebase not initialized");
+    // Return null instead of throwing to allow fallback to mock data
+    return null;
   }
   return db;
 }
@@ -89,6 +80,9 @@ export async function getEmployerProfile(
 ): Promise<EmployerProfile | null> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_EMPLOYERS.find(e => e.userId === userId || e.id === userId) || MOCK_EMPLOYERS[0];
+    }
     const ref = doc(firestore, employerCollection, userId);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
@@ -158,6 +152,10 @@ export async function listEmployers(status?: EmployerStatus): Promise<EmployerPr
   console.log("[listEmployers] Called with status:", status);
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      console.log("[listEmployers] Using mock data");
+      return MOCK_EMPLOYERS;
+    }
     console.log("[listEmployers] Firestore initialized:", !!firestore);
     const ref = collection(firestore, employerCollection);
     let q;
@@ -391,6 +389,26 @@ export async function listJobPostings(
 ): Promise<JobPosting[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      console.log("[listJobPostings] Using mock data");
+      let jobs = [...MOCK_JOBS];
+
+      // Apply simple in-memory filtering for mock data
+      if (filters.activeOnly !== false) {
+        jobs = jobs.filter(j => j.active);
+      }
+      if (filters.employmentType) {
+        jobs = jobs.filter(j => j.employmentType === filters.employmentType);
+      }
+      if (filters.remoteOnly) {
+        jobs = jobs.filter(j => j.remoteFlag);
+      }
+      if (filters.indigenousOnly) {
+        jobs = jobs.filter(j => j.indigenousPreference);
+      }
+
+      return jobs;
+    }
     const ref = collection(firestore, jobsCollection);
     const constraints = [];
     if (filters.activeOnly !== false) {
@@ -425,6 +443,10 @@ export async function listJobPostings(
 }
 
 export async function getJobPosting(jobId: string): Promise<JobPosting | null> {
+  const firestore = checkFirebase();
+  if (!firestore) {
+    return MOCK_JOBS.find(j => j.id === jobId) || null;
+  }
   const ref = doc(db!, jobsCollection, jobId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
@@ -748,6 +770,9 @@ export async function createConference(input: ConferenceInput): Promise<string> 
 export async function listConferences(): Promise<Conference[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_CONFERENCES;
+    }
     const ref = collection(firestore, conferencesCollection);
     const q = query(ref, orderBy("startDate", "asc"));
     const snap = await getDocs(q);
@@ -771,7 +796,11 @@ export async function listEmployerConferences(
 }
 
 export async function getConference(id: string): Promise<Conference | null> {
-  const ref = doc(db!, conferencesCollection, id);
+  const firestore = checkFirebase();
+  if (!firestore) {
+    return MOCK_CONFERENCES.find(c => c.id === id) || null;
+  }
+  const ref = doc(firestore, conferencesCollection, id);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   return snap.data() as Conference;
@@ -818,6 +847,9 @@ export async function createScholarship(
 export async function listScholarships(): Promise<Scholarship[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_SCHOLARSHIPS;
+    }
     const ref = collection(firestore, scholarshipsCollection);
     const q = query(ref, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -838,6 +870,9 @@ export async function updateScholarship(
 export async function listEmployerScholarships(employerId: string): Promise<Scholarship[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return [];
+    }
     const ref = collection(firestore, scholarshipsCollection);
     const q = query(ref, where("employerId", "==", employerId), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -875,6 +910,9 @@ export async function createShopListing(
 export async function listShopListings(): Promise<ShopListing[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return []; // Return empty for now as we don't have mock shop data
+    }
     const ref = collection(firestore, shopCollection);
     const q = query(ref, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -915,6 +953,9 @@ export async function createPowwowEvent(
 export async function listPowwowEvents(): Promise<PowwowEvent[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return []; // Return empty for now
+    }
     const ref = collection(firestore, powwowsCollection);
     const q = query(ref, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -935,6 +976,7 @@ export async function updatePowwowEvent(
 export async function listEmployerPowwows(employerId: string): Promise<PowwowEvent[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) return [];
     const ref = collection(firestore, powwowsCollection);
     const q = query(ref, where("employerId", "==", employerId), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -972,6 +1014,9 @@ export async function createLiveStream(
 export async function listLiveStreams(): Promise<LiveStreamEvent[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) {
+      return []; // Return empty for now
+    }
     const ref = collection(firestore, liveStreamsCollection);
     const q = query(ref, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -1114,8 +1159,11 @@ export async function getVendorProfile(
   userId: string
 ): Promise<VendorProfile | null> {
   try {
-    checkFirebase();
-    const ref = doc(db!, vendorsCollection, userId);
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_EMPLOYERS.find(e => e.userId === userId || e.id === userId) as unknown as VendorProfile || null;
+    }
+    const ref = doc(firestore, vendorsCollection, userId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       const data = snap.data() as any;
@@ -1136,8 +1184,11 @@ export async function getVendorProfileById(
   vendorId: string
 ): Promise<VendorProfile | null> {
   try {
-    checkFirebase();
-    const ref = doc(db!, vendorsCollection, vendorId);
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return null; // No mock data for vendor by ID yet
+    }
+    const ref = doc(firestore, vendorsCollection, vendorId);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       const data = snap.data() as any;
@@ -1483,8 +1534,17 @@ export async function getVendorsPendingReview(): Promise<VendorProfile[]> {
 
 // List all approved and active vendors for public display
 export async function listApprovedVendors(): Promise<VendorProfile[]> {
-  checkFirebase();
-  const vendorsRef = collection(db!, vendorsCollection);
+  const firestore = checkFirebase();
+  if (!firestore) {
+    return MOCK_EMPLOYERS.map(e => ({
+      ...e,
+      ownerUserId: e.userId,
+      businessName: e.organizationName,
+      isIndigenousOwned: true,
+      approvalStatus: 'approved' as const,
+    } as unknown as VendorProfile));
+  }
+  const vendorsRef = collection(firestore, vendorsCollection);
   // Get all vendors that are active
   const q = query(
     vendorsRef,
@@ -1561,7 +1621,11 @@ export async function listScholarshipApplicantsForEmployer(
 
 export async function getScholarship(id: string): Promise<Scholarship | null> {
   try {
-    const ref = doc(db!, scholarshipsCollection, id);
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_SCHOLARSHIPS.find(s => s.id === id) || null;
+    }
+    const ref = doc(firestore, scholarshipsCollection, id);
     const snap = await getDoc(ref);
     if (!snap.exists()) return null;
     return snap.data() as Scholarship;
@@ -1595,7 +1659,11 @@ export async function withdrawScholarshipApplication(applicationId: string) {
 
 export async function getPowwowEvent(id: string): Promise<PowwowEvent | null> {
   try {
-    const ref = doc(db!, powwowsCollection, id);
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return null; // No mock data for powwows yet
+    }
+    const ref = doc(firestore, powwowsCollection, id);
     const snap = await getDoc(ref);
     if (!snap.exists()) return null;
     return snap.data() as PowwowEvent;
@@ -1701,6 +1769,7 @@ export async function listVendorShopListings(
 ): Promise<ProductServiceListing[]> {
   try {
     const firestore = checkFirebase();
+    if (!firestore) return [];
     const ref = collection(firestore, productServiceListingsCollection);
     const q = query(
       ref,

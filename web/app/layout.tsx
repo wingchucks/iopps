@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
@@ -7,6 +7,18 @@ import MainLayout from "@/components/MainLayout";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#14B8A6" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
+};
 
 export const metadata: Metadata = {
   title: {
@@ -44,17 +56,6 @@ export const metadata: Metadata = {
     telephone: true,
     email: true,
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: "cover",
-  },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#14B8A6" },
-    { media: "(prefers-color-scheme: dark)", color: "#020617" },
-  ],
   openGraph: {
     type: "website",
     locale: "en_CA",
@@ -129,6 +130,12 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-slate-950 text-slate-100`}>
         <AuthProvider>
+          {!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && (
+            <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-medium text-amber-500">
+              <span className="mr-2">⚠️</span>
+              <strong>Demo Mode:</strong> Running with mock data because Firebase is not configured.
+            </div>
+          )}
           <MainLayout>{children}</MainLayout>
         </AuthProvider>
         <PerformanceMonitor />

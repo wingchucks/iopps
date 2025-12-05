@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
+import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
   { href: "/jobs", label: "Jobs" },
@@ -18,11 +20,37 @@ const navLinks = [
 
 export default function SiteHeader() {
   const { user, role, loading, logout } = useAuth();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    async function fetchUnreadMessages() {
+      if (!user || !role) return;
+
+      try {
+        // Only fetch for community (member) or employer roles
+        if (role === "community" || role === "employer") {
+          const userType = role === "community" ? "member" : "employer";
+          const count = await getUnreadMessageCount(user.uid, userType);
+          setUnreadMessageCount(count);
+        }
+      } catch (error) {
+        console.error("Error fetching unread messages:", error);
+      }
+    }
+
+    fetchUnreadMessages();
+
+    // Set up an interval to poll for unread messages every minute
+    const intervalId = setInterval(fetchUnreadMessages, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [user, role]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -229,17 +257,108 @@ export default function SiteHeader() {
         {mobileNavOpen && (
           <div className="lg:hidden border-t border-slate-800/50 py-4">
             <nav className="flex flex-col gap-2">
+              {/* Authenticated User Links */}
+              {user && (
+                <>
+                  <div className="mb-2 flex flex-col gap-2 border-b border-slate-800/50 pb-2">
+                    <div className="px-4 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Account
+                      </p>
+                      <p className="truncate text-sm font-medium text-slate-200">
+                        {user.displayName ?? user.email}
+                      </p>
+                    </div>
+
+                    {role === "community" && (
+                      <>
+                        <Link
+                          href="/member/dashboard"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/member/dashboard" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                            }`}
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/member/messages"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`relative flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/member/messages" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                            }`}
+                        >
+                          <span>Messages</span>
+                          {unreadMessageCount > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-[10px] font-bold text-slate-900">
+                              {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                            </span>
+                          )}
+                        </Link>
+                      </>
+                    )}
+
+                    {role === "employer" && (
+                      <>
+                        <Link
+                          href="/organization/dashboard"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/organization/dashboard" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                            }`}
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/organization/messages"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`relative flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/organization/messages" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                            }`}
+                        >
+                          <span>Messages</span>
+                          {unreadMessageCount > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-[10px] font-bold text-slate-900">
+                              {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                            </span>
+                          )}
+                        </Link>
+                        <Link
+                          href="/organization/profile"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/organization/profile" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                            }`}
+                        >
+                          Manage Organization
+                        </Link>
+                      </>
+                    )}
+
+                    {(role === "admin" || role === "moderator") && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setMobileNavOpen(false)}
+                        className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/admin" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                          }`}
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Main Navigation Links */}
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileNavOpen(false)}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]"
+                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === link.href ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                    }`}
                 >
                   {link.label}
                 </Link>
               ))}
-              {!user && (
+
+              {/* Auth Buttons */}
+              {!user ? (
                 <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/50 pt-4">
                   <Link
                     href="/login"
@@ -255,6 +374,18 @@ export default function SiteHeader() {
                   >
                     Sign Up
                   </Link>
+                </div>
+              ) : (
+                <div className="mt-2 border-t border-slate-800/50 pt-4 px-4">
+                  <button
+                    onClick={() => {
+                      setMobileNavOpen(false);
+                      void logout();
+                    }}
+                    className="w-full rounded-lg bg-slate-800/40 border border-slate-700/50 px-4 py-2.5 text-center text-sm font-semibold text-slate-300 transition hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/50"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               )}
             </nav>
