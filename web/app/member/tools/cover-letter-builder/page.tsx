@@ -96,8 +96,8 @@ export default function CoverLetterBuilder() {
                                         key={t}
                                         onClick={() => setDesign(t)}
                                         className={`px-3 py-2 rounded-lg text-sm font-medium capitalize transition-all ${design === t
-                                                ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-[#14B8A6]/20"
-                                                : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                            ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-[#14B8A6]/20"
+                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                                             }`}
                                     >
                                         {t}
@@ -175,19 +175,19 @@ export default function CoverLetterBuilder() {
                             {/* DOCUMENT A4 PAGE */}
                             <div
                                 ref={letterRef}
-                                className={`bg-white text-slate-800 w-[210mm] min-h-[297mm] p-[25mm] shadow-xl mx-auto flex flex-col
+                                className={`w-[210mm] min-h-[297mm] p-[25mm] mx-auto flex flex-col
                   ${design === 'minimal' ? 'font-serif' : design === 'modern' ? 'font-sans' : 'font-sans'}
                 `}
                                 style={{
-                                    backgroundColor: 'white', // Ensure white bg for PDF capture
-                                    color: '#1e293b' // Slate-800 fallback
+                                    backgroundColor: '#ffffff', // Force HEX white
+                                    color: '#1e293b' // Force HEX slate-800
                                 }}
                             >
                                 {/* HEADER */}
                                 {design === 'bold' && (
-                                    <div className="mb-10 border-b-4 border-teal-600 pb-6">
-                                        <h1 className="text-4xl font-black text-teal-800 uppercase tracking-tight mb-2">{formData.fullName}</h1>
-                                        <div className="flex flex-wrap gap-4 text-sm font-medium text-slate-500">
+                                    <div className="mb-10 border-b-4 border-[#0d9488] pb-6" style={{ borderColor: '#0d9488', color: '#0d9488' }}>
+                                        <h1 className="text-4xl font-black text-[#115e59] uppercase tracking-tight mb-2" style={{ color: '#115e59' }}>{formData.fullName}</h1>
+                                        <div className="flex flex-wrap gap-4 text-sm font-medium text-[#64748b]" style={{ color: '#64748b' }}>
                                             {formData.email && <span>{formData.email}</span>}
                                             {formData.phone && <span>• {formData.phone}</span>}
                                             {formData.address && <span>• {formData.address}</span>}
@@ -196,12 +196,12 @@ export default function CoverLetterBuilder() {
                                 )}
 
                                 {design === 'modern' && (
-                                    <div className="mb-10 flex justify-between items-start border-b border-slate-200 pb-8">
+                                    <div className="mb-10 flex justify-between items-start border-b border-[#e2e8f0] pb-8" style={{ borderColor: '#e2e8f0' }}>
                                         <div>
-                                            <h1 className="text-3xl font-bold text-slate-900 mb-2">{formData.fullName}</h1>
-                                            <p className="text-teal-600 font-medium text-lg">Applicant</p>
+                                            <h1 className="text-3xl font-bold text-[#0f172a] mb-2" style={{ color: '#0f172a' }}>{formData.fullName}</h1>
+                                            <p className="font-medium text-lg text-[#0d9488]" style={{ color: '#0d9488' }}>Applicant</p>
                                         </div>
-                                        <div className="text-right text-sm text-slate-500 leading-relaxed">
+                                        <div className="text-right text-sm text-[#64748b] leading-relaxed" style={{ color: '#64748b' }}>
                                             <p>{formData.email}</p>
                                             <p>{formData.phone}</p>
                                             <p>{formData.address}</p>
@@ -211,36 +211,36 @@ export default function CoverLetterBuilder() {
 
                                 {design === 'minimal' && (
                                     <div className="mb-12 text-center">
-                                        <h1 className="text-2xl font-semibold text-slate-900 uppercase tracking-widest mb-3">{formData.fullName}</h1>
-                                        <div className="text-sm text-slate-500 flex justify-center gap-4">
+                                        <h1 className="text-2xl font-semibold text-[#0f172a] uppercase tracking-widest mb-3" style={{ color: '#0f172a' }}>{formData.fullName}</h1>
+                                        <div className="text-sm text-[#64748b] flex justify-center gap-4" style={{ color: '#64748b' }}>
                                             <span>{formData.email}</span>
                                             <span>{formData.phone}</span>
                                         </div>
-                                        <div className="text-sm text-slate-500 mt-1">{formData.address}</div>
-                                        <div className="w-12 h-0.5 bg-slate-300 mx-auto mt-6"></div>
+                                        <div className="text-sm text-[#64748b] mt-1" style={{ color: '#64748b' }}>{formData.address}</div>
+                                        <div className="w-12 h-0.5 bg-[#cbd5e1] mx-auto mt-6" style={{ backgroundColor: '#cbd5e1' }}></div>
                                     </div>
                                 )}
 
 
                                 {/* CONTENT */}
-                                <div className="flex-grow space-y-6 text-[11pt] leading-relaxed relative z-10">
+                                <div className="flex-grow space-y-6 text-[11pt] leading-relaxed relative z-10 text-[#334155]" style={{ color: '#334155' }}>
                                     <div className="flex justify-between items-end mb-8">
                                         {/* RECIPIENT */}
-                                        <div className="text-sm text-slate-600">
-                                            <p className="font-bold text-slate-900">{formData.recipientName}</p>
+                                        <div className="text-sm text-[#475569]" style={{ color: '#475569' }}>
+                                            <p className="font-bold text-[#0f172a]" style={{ color: '#0f172a' }}>{formData.recipientName}</p>
                                             <p>{formData.recipientTitle}</p>
                                             <p>{formData.companyName}</p>
                                             <p>{formData.companyAddress}</p>
                                         </div>
                                         {/* DATE */}
-                                        <div className="text-sm font-medium text-slate-500">
+                                        <div className="text-sm font-medium text-[#64748b]" style={{ color: '#64748b' }}>
                                             {formData.date}
                                         </div>
                                     </div>
 
                                     <p className="mb-6">{formData.opening}</p>
 
-                                    <div className="space-y-4 text-slate-700">
+                                    <div className="space-y-4 text-[#334155]" style={{ color: '#334155' }}>
                                         <p className="whitespace-pre-wrap">{formData.body1}</p>
                                         <p className="whitespace-pre-wrap">{formData.body2}</p>
                                         <p className="whitespace-pre-wrap">{formData.body3}</p>
@@ -254,7 +254,7 @@ export default function CoverLetterBuilder() {
 
                                 {/* FOOTER DECORATION - Modern Only */}
                                 {design === 'modern' && (
-                                    <div className="mt-auto pt-8 border-t border-slate-100 flex justify-between items-center text-xs text-slate-300">
+                                    <div className="mt-auto pt-8 border-t border-[#f1f5f9] flex justify-between items-center text-xs text-[#cbd5e1]" style={{ borderColor: '#f1f5f9', color: '#cbd5e1' }}>
                                         <span>Generated via IOPPS</span>
                                         <span>iopps.ca</span>
                                     </div>
