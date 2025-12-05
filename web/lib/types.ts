@@ -384,66 +384,190 @@ export interface ScholarshipApplication {
   updatedAt?: Timestamp | null;
 }
 
-export interface ShopListing {
-  id: string;
-  employerId: string;
-  vendorId?: string;
-  owner?: string;
-  name: string;
-  description: string;
-  category: string;
-  location: string;
-  shipsCanadaWide?: boolean;
-  onlineStore?: boolean;
-  tags?: string[];
-  website?: string;
-  createdAt?: Timestamp | null;
-  active: boolean;
-}
+// ============================================
+// SHOP INDIGENOUS - Vendor Types
+// ============================================
 
-export type VendorApprovalStatus = 'approved' | 'pending_review' | 'rejected';
+export type VendorStatus = 'draft' | 'pending' | 'active' | 'suspended';
 
-export interface VendorProfile {
+export const VENDOR_CATEGORIES = [
+  'Art & Crafts',
+  'Jewelry & Accessories',
+  'Clothing & Apparel',
+  'Food & Beverages',
+  'Health & Wellness',
+  'Home & Living',
+  'Books & Media',
+  'Services',
+  'Other',
+] as const;
+
+export type VendorCategory = typeof VENDOR_CATEGORIES[number];
+
+export const NORTH_AMERICAN_REGIONS = [
+  // Canada
+  'British Columbia',
+  'Alberta',
+  'Saskatchewan',
+  'Manitoba',
+  'Ontario',
+  'Quebec',
+  'New Brunswick',
+  'Nova Scotia',
+  'Prince Edward Island',
+  'Newfoundland and Labrador',
+  'Yukon',
+  'Northwest Territories',
+  'Nunavut',
+  // United States
+  'Alabama',
+  'Alaska',
+  'Arizona',
+  'Arkansas',
+  'California',
+  'Colorado',
+  'Connecticut',
+  'Delaware',
+  'Florida',
+  'Georgia',
+  'Hawaii',
+  'Idaho',
+  'Illinois',
+  'Indiana',
+  'Iowa',
+  'Kansas',
+  'Kentucky',
+  'Louisiana',
+  'Maine',
+  'Maryland',
+  'Massachusetts',
+  'Michigan',
+  'Minnesota',
+  'Mississippi',
+  'Missouri',
+  'Montana',
+  'Nebraska',
+  'Nevada',
+  'New Hampshire',
+  'New Jersey',
+  'New Mexico',
+  'New York',
+  'North Carolina',
+  'North Dakota',
+  'Ohio',
+  'Oklahoma',
+  'Oregon',
+  'Pennsylvania',
+  'Rhode Island',
+  'South Carolina',
+  'South Dakota',
+  'Tennessee',
+  'Texas',
+  'Utah',
+  'Vermont',
+  'Virginia',
+  'Washington',
+  'West Virginia',
+  'Wisconsin',
+  'Wyoming',
+  // Online
+  'National / Online Only',
+] as const;
+
+export type NorthAmericanRegion = typeof NORTH_AMERICAN_REGIONS[number];
+
+// Backwards compatibility aliases
+export const CANADIAN_REGIONS = NORTH_AMERICAN_REGIONS;
+export type CanadianRegion = NorthAmericanRegion;
+
+export interface Vendor {
   id: string;
-  ownerUserId: string;
+  userId: string; // Owner's user ID
+
+  // Business Info
   businessName: string;
+  slug: string; // URL-friendly identifier
   tagline?: string;
-  category?: string;
-  location?: string;
-  region?: string;
-  websiteUrl?: string;
-  shopUrl?: string;
-  isIndigenousOwned: boolean;
-  about?: string;
-  originStory?: string;
-  communityConnections?: string;
-  offerings?: string;
-  shipsCanadaWide?: boolean;
-  isOnlineOnly?: boolean;
-  hasInPersonLocation?: boolean;
-  contactEmail?: string;
-  contactPhone?: string;
+  description: string;
+  category: VendorCategory;
+
+  // Location
+  location?: string; // City/Town
+  region: NorthAmericanRegion;
+  offersShipping: boolean;
+  onlineOnly: boolean;
+
+  // Contact & Links
+  email?: string;
+  phone?: string;
+  website?: string;
   instagram?: string;
   facebook?: string;
   tiktok?: string;
-  otherLink?: string;
+
+  // Media
   logoUrl?: string;
-  heroImageUrl?: string;
-  galleryImageUrls?: string[];
-  active?: boolean;
-  featured?: boolean;
-  approvalStatus?: VendorApprovalStatus;
-  slug?: string; // URL-friendly identifier for vendor profile pages
-  status?: string; // 'active' | 'draft' | 'suspended' - for shop listing visibility
-  verificationStatus?: string; // 'verified' | 'pending' | 'rejected' - for shop listing
-  profileViews?: number; // Shop display metric
-  websiteClicks?: number; // Shop display metric
-  favorites?: number; // Shop display metric
-  followers?: number; // Shop display metric
-  duplicateFlags?: string[]; // Reasons why it was flagged (e.g., "similar_business_name", "same_website")
-  createdAt?: Date | null;
-  updatedAt?: Date | null;
+  coverImageUrl?: string;
+  galleryImages?: string[];
+
+  // Indigenous Identity
+  nation?: string; // First Nation, Métis, Inuit affiliation
+  communityStory?: string; // Their story and connection to community
+
+  // Status & Visibility
+  status: VendorStatus;
+  featured: boolean;
+  verified: boolean;
+
+  // Analytics
+  viewCount: number;
+
+  // Payment
+  subscriptionId?: string;
+  subscriptionStatus?: 'active' | 'cancelled' | 'past_due';
+  subscriptionEndsAt?: Timestamp | null;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
 }
+
+export interface VendorProduct {
+  id: string;
+  vendorId: string;
+
+  // Product Info
+  name: string;
+  description: string;
+  category: string;
+  price?: number; // In cents
+  priceDisplay?: string; // e.g., "From $50" or "Contact for pricing"
+
+  // Media
+  imageUrl?: string;
+  images?: string[];
+
+  // Availability
+  inStock: boolean;
+  madeToOrder: boolean;
+
+  // Display
+  featured: boolean;
+  sortOrder: number;
+  active: boolean;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Event type options for Pow Wows & Events
+export const POWWOW_EVENT_TYPES = [
+  'Pow Wow',
+  'Sports',
+  'Cultural Gathering',
+] as const;
+export type PowwowEventType = typeof POWWOW_EVENT_TYPES[number];
 
 export interface PowwowEvent {
   id: string;
@@ -451,6 +575,8 @@ export interface PowwowEvent {
   name: string;
   host?: string;
   location: string;
+  region?: NorthAmericanRegion;
+  eventType?: PowwowEventType;
   season?: string;
   startDate?: Timestamp | string | null;
   endDate?: Timestamp | string | null;
@@ -458,6 +584,8 @@ export interface PowwowEvent {
   description: string;
   registrationStatus?: string;
   livestream?: boolean;
+  imageUrl?: string;
+  featured?: boolean;
   createdAt?: Timestamp | null;
   active: boolean;
 }
@@ -486,19 +614,6 @@ export interface PowwowRegistration {
   numberOfAttendees: number;
   specialRequests?: string;
   createdAt?: Timestamp | null;
-}
-
-export interface ProductServiceListing {
-  id: string;
-  vendorId: string;
-  name: string;
-  description: string;
-  category: string;
-  price?: string;
-  tags?: string[];
-  imageUrl?: string;
-  createdAt?: Timestamp | null;
-  active: boolean;
 }
 
 export interface ContactSubmission {

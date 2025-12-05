@@ -1,14 +1,2 @@
-// Shop Indigenous Components
-export * from "./VendorCard";
-export * from "./FeaturedVendor";
-export * from "./CategoryCard";
-export * from "./SearchBar";
-export * from "./RegionChips";
-export * from "./VendorHero";
-export * from "./VendorStory";
-export * from "./VendorGallery";
-export * from "./VendorCTA";
-export * from "./CategoryFilter";
-export * from "./BusinessOfTheDay";
-export * from "./VendorBadges";
-export * from "./ShareButtons";
+export { VendorCard } from './VendorCard';
+export { CategoryFilter } from './CategoryFilter';

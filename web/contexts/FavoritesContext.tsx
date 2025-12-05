@@ -48,7 +48,7 @@ interface FavoritesContextValue {
     id: string;
     slug: string;
     businessName: string;
-    profileImage?: string;
+    logoUrl?: string;
   }) => Promise<boolean>;
   isFavorited: (vendorId: string) => boolean;
   refreshFavorites: () => Promise<void>;
@@ -185,7 +185,7 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
       id: string;
       slug: string;
       businessName: string;
-      profileImage?: string;
+      logoUrl?: string;
     }): Promise<boolean> => {
       const wasInFavorites = favoriteIds.has(vendor.id);
 
@@ -202,7 +202,7 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
           vendorId: vendor.id,
           vendorSlug: vendor.slug,
           vendorName: vendor.businessName,
-          vendorImage: vendor.profileImage,
+          vendorImage: vendor.logoUrl,
         };
         setFavorites((prev) => [newFav, ...prev]);
         setFavoriteIds((prev) => new Set(prev).add(vendor.id));

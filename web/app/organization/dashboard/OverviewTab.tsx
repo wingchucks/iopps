@@ -8,12 +8,14 @@ import {
   listEmployerJobs,
   listEmployerApplications,
   listEmployerConferences,
+  listEmployerPowwows,
 } from "@/lib/firestore";
 import type {
   EmployerProfile,
   JobPosting,
   JobApplication,
   Conference,
+  PowwowEvent,
 } from "@/lib/types";
 
 export default function OverviewTab() {
@@ -22,22 +24,25 @@ export default function OverviewTab() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [conferences, setConferences] = useState<Conference[]>([]);
+  const [events, setEvents] = useState<PowwowEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const [profileData, jobsData, appsData, confsData] = await Promise.all([
+        const [profileData, jobsData, appsData, confsData, eventsData] = await Promise.all([
           getEmployerProfile(user.uid),
           listEmployerJobs(user.uid),
           listEmployerApplications(user.uid),
           listEmployerConferences(user.uid),
+          listEmployerPowwows(user.uid),
         ]);
         setProfile(profileData);
         setJobs(jobsData);
         setApplications(appsData);
         setConferences(confsData);
+        setEvents(eventsData);
       } catch (err) {
         console.error("Error loading employer data:", err);
       } finally {
@@ -56,6 +61,7 @@ export default function OverviewTab() {
 
   const activeJobs = jobs.filter((j) => j.active !== false);
   const activeConferences = conferences.filter((c) => c.active !== false);
+  const activeEvents = events.filter((e) => e.active !== false);
   const pendingApplications = applications.filter(
     (a) => a.status === "submitted" || a.status === "reviewed"
   );
@@ -74,7 +80,7 @@ export default function OverviewTab() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-6 shadow-xl shadow-emerald-900/20">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
             Active Jobs
@@ -96,6 +102,18 @@ export default function OverviewTab() {
           </h3>
           <p className="mt-1 text-xs text-slate-400">
             {pendingApplications.length} pending review
+          </p>
+        </div>
+
+        <div className="rounded-3xl bg-gradient-to-br from-pink-500/10 via-rose-500/10 to-red-500/10 p-6 shadow-xl shadow-pink-900/20">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+            Pow Wows & Events
+          </p>
+          <h3 className="mt-2 text-3xl font-semibold text-white">
+            {activeEvents.length}
+          </h3>
+          <p className="mt-1 text-xs text-slate-400">
+            {events.length - activeEvents.length} inactive
           </p>
         </div>
 
@@ -125,7 +143,7 @@ export default function OverviewTab() {
       {/* Quick Actions */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <h3 className="mb-6 text-xl font-semibold text-white">Quick Actions</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Link
             href="/organization/jobs/new"
             className="group rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20"
@@ -135,7 +153,33 @@ export default function OverviewTab() {
               Post a Job
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Share new opportunities with the community
+              Share new opportunities
+            </p>
+          </Link>
+
+          <Link
+            href="/organization/events/new"
+            className="group rounded-xl border border-pink-500/30 bg-pink-500/10 p-6 transition-all hover:border-pink-500/50 hover:bg-pink-500/20"
+          >
+            <div className="mb-2 text-2xl">🎪</div>
+            <h4 className="font-semibold text-white group-hover:text-pink-400">
+              Post Event
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              Pow wows & gatherings
+            </p>
+          </Link>
+
+          <Link
+            href="/organization/scholarships/new"
+            className="group rounded-xl border border-teal-500/30 bg-teal-500/10 p-6 transition-all hover:border-teal-500/50 hover:bg-teal-500/20"
+          >
+            <div className="mb-2 text-2xl">🎓</div>
+            <h4 className="font-semibold text-white group-hover:text-teal-400">
+              Post Scholarship
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              Scholarships & grants
             </p>
           </Link>
 
@@ -148,7 +192,7 @@ export default function OverviewTab() {
               Post Conference
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Announce upcoming events and conferences
+              Announce conferences
             </p>
           </Link>
 
@@ -161,7 +205,7 @@ export default function OverviewTab() {
               Update Profile
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Keep your organization info current
+              Organization settings
             </p>
           </Link>
         </div>
