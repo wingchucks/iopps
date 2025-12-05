@@ -57,8 +57,8 @@ function LiveStreamsContent() {
     return streams.filter((stream) => {
       const matchesSearch = search
         ? `${stream.title} ${stream.host ?? ""} ${stream.description ?? ""}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
+          .toLowerCase()
+          .includes(search.toLowerCase())
         : true;
 
       const matchesStatus = statusFilter === "All" || stream.status === statusFilter;
@@ -116,273 +116,231 @@ function LiveStreamsContent() {
             IOPPS Live
           </h1>
           <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Cultural broadcasts and community media. Watch pow wows, tournaments, leadership summits,
-            and community storytelling live or catch the replays.
+            Cultural broadcasts and community media. Watch our official live streams, pow wows, and events directly from the source.
           </p>
+        </div>
+      </div>
 
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+      <YouTubeSection />
+
+      {/* Community Streams Section - Only show if there are streams */}
+      {(streams.length > 0 || loading) && (
+        <div className="mt-24 space-y-8">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-slate-800" />
+            <h2 className="text-xl font-semibold text-slate-400">Community Streams</h2>
+            <div className="h-px flex-1 bg-slate-800" />
+          </div>
+
+          {/* Search & Filters Toolbar */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search streams..."
+                placeholder="Search community streams..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full rounded-xl bg-slate-800/50 border border-slate-700 py-3 pl-12 pr-4 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+              className={`flex items-center justify-center gap-2 rounded-xl border px-6 py-3 transition-colors ${showFilters || hasFilters
+                  ? "bg-teal-500/10 border-teal-500/50 text-teal-400"
+                  : "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800"
+                }`}
             >
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
                   !
                 </span>
               )}
             </button>
           </div>
 
-          {/* Live Now Badge */}
-          {groupedStreams.liveNow.length > 0 && (
-            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white">
-              <span className="flex h-3 w-3 items-center justify-center">
-                <span className="absolute h-3 w-3 animate-ping rounded-full bg-red-400 opacity-75" />
-                <span className="relative h-2 w-2 rounded-full bg-red-300" />
-              </span>
-              {groupedStreams.liveNow.length} {groupedStreams.liveNow.length === 1 ? "stream" : "streams"} live now
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Filters</h3>
+                {hasFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                    Clear all
+                  </button>
+                )}
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Status */}
+                <div>
+                  <label className="text-sm font-medium text-slate-400 mb-2 block">Status</label>
+                  <div className="flex flex-wrap gap-2">
+                    {STATUS_OPTIONS.map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setStatusFilter(status)}
+                        className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${statusFilter === status
+                            ? status === "Live Now"
+                              ? "bg-red-500 text-white"
+                              : "bg-teal-500 text-white"
+                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                          }`}
+                      >
+                        {status === "Live Now" && (
+                          <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-white" />
+                        )}
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="text-sm font-medium text-slate-400 mb-2 block">Category</label>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORY_OPTIONS.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setCategoryFilter(category)}
+                        className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${categoryFilter === category
+                            ? "bg-teal-500 text-white"
+                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                          }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Filters</h3>
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                <XMarkIcon className="h-4 w-4" />
-                Clear all
-              </button>
-            )}
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Status */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Status</label>
-              <div className="flex flex-wrap gap-2">
-                {STATUS_OPTIONS.map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setStatusFilter(status)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      statusFilter === status
-                        ? status === "Live Now"
-                          ? "bg-red-500 text-white"
-                          : "bg-teal-500 text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {status === "Live Now" && (
-                      <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-white" />
-                    )}
-                    {status}
-                  </button>
+          {/* Live Now Section */}
+          {!hasFilters && groupedStreams.liveNow.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-rose-600">
+                  <span className="h-3 w-3 animate-pulse rounded-full bg-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">Live Now</h2>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {groupedStreams.liveNow.map((stream) => (
+                  <StreamCard key={stream.id} stream={stream} />
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {error}
+            </div>
+          )}
+
+          {/* All Streams */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">
+                {hasFilters ? "Search Results" : "All Streams"}
+              </h2>
+              <span className="text-sm text-slate-400">
+                {loading ? "Loading..." : `${filtered.length} ${filtered.length === 1 ? "stream" : "streams"}`}
+              </span>
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Category</label>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORY_OPTIONS.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setCategoryFilter(category)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      categoryFilter === category
-                        ? "bg-teal-500 text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {category}
-                  </button>
+            {loading ? (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-64" />
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Information Banner */}
-      <div className="mb-8 rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-500/10 to-emerald-500/5 p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-teal-500/20">
-            <VideoCameraIcon className="h-5 w-5 text-teal-400" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-teal-300">
-              Live streams will be announced here when scheduled
-            </h3>
-            <p className="mt-2 text-sm text-slate-300">
-              We're building partnerships with pow wow organizers, sports leagues, and cultural event hosts
-              across Turtle Island to bring you live coverage of important community gatherings.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <a
-                href="https://twitter.com/ioppsca"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
-                </svg>
-                @ioppsca
-              </a>
-              <a
-                href="https://facebook.com/ioppsca"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                /ioppsca
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <YouTubeSection />
-
-      {/* Live Now Section */}
-      {!hasFilters && groupedStreams.liveNow.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-rose-600">
-              <span className="h-3 w-3 animate-pulse rounded-full bg-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Live Now</h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {groupedStreams.liveNow.map((stream) => (
-              <StreamCard key={stream.id} stream={stream} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      {/* All Streams */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {hasFilters ? "Search Results" : "All Streams"}
-          </h2>
-          <span className="text-sm text-slate-400">
-            {loading ? "Loading..." : `${filtered.length} ${filtered.length === 1 ? "stream" : "streams"}`}
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-64" />
-            ))}
-          </div>
-        ) : streams.length === 0 && !hasFilters ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <VideoCameraIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No live streams scheduled</h3>
-            <p className="text-slate-400">
-              Stay tuned! Live streams of pow wows, tournaments, and community events will be added soon.
-            </p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No streams found</h3>
-            <p className="text-slate-400 mb-4">
-              Try adjusting your filters or search terms.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Upcoming Section */}
-            {groupedStreams.upcoming.length > 0 && (
-              <div className="mb-8">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-200 mb-4">
-                  <CalendarDaysIcon className="h-5 w-5 text-teal-400" />
-                  Upcoming
-                </h3>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {groupedStreams.upcoming.map((stream) => (
-                    <StreamCard key={stream.id} stream={stream} />
-                  ))}
+            ) : streams.length === 0 && !hasFilters ? (
+              <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+                <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+                  <VideoCameraIcon className="h-8 w-8 text-slate-500" />
                 </div>
+                <h3 className="text-lg font-semibold text-white mb-2">No community streams scheduled</h3>
+                <p className="text-slate-400">
+                  Check back later for more community events.
+                </p>
               </div>
-            )}
-
-            {/* Replays Section */}
-            {groupedStreams.replays.length > 0 && (
-              <div className="mb-8">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-200 mb-4">
-                  <PlayCircleIcon className="h-5 w-5 text-slate-400" />
-                  Replays
-                </h3>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {groupedStreams.replays.map((stream) => (
-                    <StreamCard key={stream.id} stream={stream} />
-                  ))}
+            ) : filtered.length === 0 ? (
+              <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+                <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+                  <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
                 </div>
-              </div>
-            )}
-
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
+                <h3 className="text-lg font-semibold text-white mb-2">No streams found</h3>
+                <p className="text-slate-400 mb-4">
+                  Try adjusting your filters or search terms.
+                </p>
                 <button
-                  onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
                 >
-                  Load more streams
-                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  Clear filters
                 </button>
               </div>
+            ) : (
+              <>
+                {/* Upcoming Section */}
+                {groupedStreams.upcoming.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-200 mb-4">
+                      <CalendarDaysIcon className="h-5 w-5 text-teal-400" />
+                      Upcoming
+                    </h3>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {groupedStreams.upcoming.map((stream) => (
+                        <StreamCard key={stream.id} stream={stream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Replays Section */}
+                {groupedStreams.replays.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-200 mb-4">
+                      <PlayCircleIcon className="h-5 w-5 text-slate-400" />
+                      Replays
+                    </h3>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {groupedStreams.replays.map((stream) => (
+                        <StreamCard key={stream.id} stream={stream} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {hasMore && (
+                  <div className="mt-10 flex justify-center">
+                    <button
+                      onClick={() => setDisplayLimit((prev) => prev + 12)}
+                      className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+                    >
+                      Load more streams
+                      <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </section>
+          </section>
+        </div>
+      )}
 
       {/* CTA Section */}
       <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
@@ -522,11 +480,10 @@ function StreamCard({ stream }: { stream: LiveStreamEvent }) {
         {/* Footer */}
         <div className="mt-4 pt-4 border-t border-slate-700/50">
           <button
-            className={`w-full rounded-full py-2.5 text-sm font-semibold transition-all ${
-              stream.status === "Live Now"
+            className={`w-full rounded-full py-2.5 text-sm font-semibold transition-all ${stream.status === "Live Now"
                 ? "bg-red-500 text-white hover:bg-red-600"
                 : "bg-slate-700 text-slate-200 hover:bg-slate-600"
-            }`}
+              }`}
           >
             {getButtonText(stream.status)}
           </button>

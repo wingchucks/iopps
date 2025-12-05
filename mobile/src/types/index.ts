@@ -32,6 +32,9 @@ export interface JobPosting {
   paymentStatus?: "paid" | "pending" | "failed";
   paymentId?: string;
   companyLogoUrl?: string;
+  // Job Requirements Flags
+  cpicRequired?: boolean; // Criminal record check required
+  willTrain?: boolean; // Employer will provide training
 }
 
 export interface EmployerProfile {

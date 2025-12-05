@@ -15,6 +15,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { grantVendorFreeListing, revokeVendorFreeListing } from "@/lib/firestore";
 import type { Vendor } from "@/lib/types";
 
 import { Suspense } from "react";
@@ -37,6 +38,8 @@ function AdminVendorsContent() {
           : "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
+  const [freeListingModalId, setFreeListingModalId] = useState<string | null>(null);
+  const [freeListingReason, setFreeListingReason] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
@@ -149,6 +152,62 @@ function AdminVendorsContent() {
     } catch (error) {
       console.error("Error deleting vendor:", error);
       alert("Failed to delete vendor. Please try again.");
+    } finally {
+      setProcessing(null);
+    }
+  }
+
+  async function handleToggleFreeListing(vendor: Vendor) {
+    if (!user) return;
+
+    if (vendor.freeListingEnabled) {
+      // Revoke free listing
+      const confirmed = confirm(
+        `Revoke free listing access for "${vendor.businessName}"?`
+      );
+      if (!confirmed) return;
+
+      try {
+        setProcessing(vendor.id);
+        await revokeVendorFreeListing(vendor.id);
+        setVendors((prev) =>
+          prev.map((v) =>
+            v.id === vendor.id
+              ? { ...v, freeListingEnabled: false, freeListingReason: undefined }
+              : v
+          )
+        );
+      } catch (error) {
+        console.error("Error revoking free listing:", error);
+        alert("Failed to revoke free listing. Please try again.");
+      } finally {
+        setProcessing(null);
+      }
+    } else {
+      // Open modal to grant free listing
+      setFreeListingModalId(vendor.id);
+      setFreeListingReason("");
+    }
+  }
+
+  async function confirmGrantFreeListing(vendorId: string) {
+    if (!user) return;
+
+    try {
+      setProcessing(vendorId);
+      await grantVendorFreeListing(vendorId, user.uid, freeListingReason || undefined);
+      setVendors((prev) =>
+        prev.map((v) =>
+          v.id === vendorId
+            ? { ...v, freeListingEnabled: true, freeListingReason: freeListingReason || "Admin granted" }
+            : v
+        )
+      );
+      setFreeListingModalId(null);
+      setFreeListingReason("");
+    } catch (error) {
+      console.error("Error granting free listing:", error);
+      alert("Failed to grant free listing. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -300,6 +359,11 @@ function AdminVendorsContent() {
                                   Featured
                                 </span>
                               )}
+                              {vendor.freeListingEnabled && (
+                                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+                                  Free Listing
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -418,6 +482,21 @@ function AdminVendorsContent() {
                       </button>
 
                       <button
+                        onClick={() => handleToggleFreeListing(vendor)}
+                        disabled={isProcessing}
+                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${vendor.freeListingEnabled
+                          ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                          : "border border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
+                          }`}
+                      >
+                        {isProcessing
+                          ? "Processing..."
+                          : vendor.freeListingEnabled
+                            ? "Revoke Free"
+                            : "Grant Free"}
+                      </button>
+
+                      <button
                         onClick={() => deleteVendor(vendor.id, vendor.businessName)}
                         disabled={isProcessing}
                         className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
@@ -432,6 +511,50 @@ function AdminVendorsContent() {
           )}
         </div>
       </div>
+
+      {/* Free Listing Modal */}
+      {freeListingModalId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
+                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-100">Grant Free Listing</h3>
+            </div>
+            <p className="mt-3 text-sm text-slate-400">
+              This vendor will have their shop listing active without requiring a subscription. Optionally add a reason for your records.
+            </p>
+            <input
+              type="text"
+              value={freeListingReason}
+              onChange={(e) => setFreeListingReason(e.target.value)}
+              placeholder="e.g., Partner, Promotion, Sponsorship (optional)"
+              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setFreeListingModalId(null);
+                  setFreeListingReason("");
+                }}
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => confirmGrantFreeListing(freeListingModalId)}
+                disabled={!!processing}
+                className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Grant Free Listing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -48,6 +48,11 @@ export interface EmployerProfile {
   approvedBy?: string;
   rejectionReason?: string;
   subscription?: EmployerSubscription;
+  // Admin Bypass - Free posting without payment
+  freePostingEnabled?: boolean;
+  freePostingReason?: string;
+  freePostingGrantedAt?: Timestamp | null;
+  freePostingGrantedBy?: string;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -564,6 +569,11 @@ export interface Vendor {
   subscriptionId?: string;
   subscriptionStatus?: 'active' | 'cancelled' | 'past_due';
   subscriptionEndsAt?: Timestamp | null;
+  // Admin Bypass - Free listing without subscription
+  freeListingEnabled?: boolean;
+  freeListingReason?: string;
+  freeListingGrantedAt?: Timestamp | null;
+  freeListingGrantedBy?: string;
 
   // Timestamps
   createdAt: Timestamp | null;

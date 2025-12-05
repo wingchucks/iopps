@@ -32,6 +32,7 @@ function NewJobPageContent() {
   const searchParams = useSearchParams();
   const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionInfo>(null);
+  const [freePostingEnabled, setFreePostingEnabled] = useState(false);
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [employmentType, setEmploymentType] = useState("Full-time");
@@ -108,6 +109,11 @@ function NewJobPageContent() {
       const profile = await getEmployerProfile(user.uid);
       if (profile) {
         setOrganizationName(profile.organizationName);
+        // Check for admin-granted free posting
+        if (profile.freePostingEnabled) {
+          setFreePostingEnabled(true);
+          setSelectedProduct("SUBSCRIPTION"); // Use subscription flow for free posting
+        }
         // Check for active subscription
         if (profile.subscription?.active && profile.subscription.expiresAt) {
           const rawExpires = profile.subscription.expiresAt;
@@ -168,6 +174,24 @@ function NewJobPageContent() {
         applicationLink,
         applicationEmail,
       };
+
+      // If using admin-granted free posting, post job for free
+      if (freePostingEnabled) {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 30);
+
+        const jobId = await createJobPosting({
+          ...jobData,
+          active: true,
+          paymentStatus: "paid",
+          productType: "FREE_POSTING",
+          expiresAt: expirationDate,
+        });
+
+        // Redirect to success page
+        router.push(`/organization/jobs/success?job_id=${jobId}&subscription=true`);
+        return;
+      }
 
       // If using subscription, post job for free
       if (selectedProduct === "SUBSCRIPTION" && subscription) {
@@ -577,8 +601,23 @@ function NewJobPageContent() {
             Choose the visibility and duration for your job posting
           </p>
 
+          {/* Admin Free Posting Banner */}
+          {freePostingEnabled && (
+            <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+              <div className="flex items-center gap-2">
+                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+                <span className="font-semibold text-emerald-300">Free Posting Access</span>
+              </div>
+              <p className="mt-1 text-sm text-slate-300">
+                Your account has free job posting access granted by IOPPS admin. Post unlimited jobs at no cost!
+              </p>
+            </div>
+          )}
+
           {/* Active Subscription Banner */}
-          {subscription && (
+          {subscription && !freePostingEnabled && (
             <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
               <div className="flex items-center gap-2">
                 <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -595,6 +634,8 @@ function NewJobPageContent() {
             </div>
           )}
 
+          {/* Hide pricing options when free posting is enabled */}
+          {!freePostingEnabled && (
           <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {/* Subscription Option (if active) */}
             {subscription && (
@@ -742,9 +783,10 @@ function NewJobPageContent() {
               </ul>
             </button>
           </div>
+          )}
 
           {/* Link to Subscription Plans */}
-          {!subscription && (
+          {!subscription && !freePostingEnabled && (
             <div className="mt-6 rounded-lg border border-slate-700 bg-slate-800/50 p-4">
               <p className="text-sm text-slate-300">
                 <span className="font-semibold text-[#14B8A6]">Save money with a subscription!</span>{" "}

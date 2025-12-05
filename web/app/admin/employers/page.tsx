@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { listEmployers, updateEmployerStatus } from "@/lib/firestore";
+import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting } from "@/lib/firestore";
 import { EmployerProfile, EmployerStatus } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -14,6 +14,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
   BuildingOfficeIcon,
+  GiftIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -29,6 +30,8 @@ export default function AdminEmployersPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rejectModalId, setRejectModalId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [freePostingModalId, setFreePostingModalId] = useState<string | null>(null);
+  const [freePostingReason, setFreePostingReason] = useState("");
   const [toastMessage, setToastMessage] = useState<{
     type: "success" | "error";
     message: string;
@@ -145,6 +148,47 @@ export default function AdminEmployersPage() {
     } catch (error) {
       console.error("Failed to reconsider:", error);
       showToast("error", "Failed to update status");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleToggleFreePosting = async (employer: EmployerProfile) => {
+    if (!user) return;
+
+    if (employer.freePostingEnabled) {
+      // Revoke free posting
+      if (!confirm(`Revoke free posting access for "${employer.organizationName}"?`)) return;
+      setProcessingId(employer.id);
+      try {
+        await revokeEmployerFreePosting(employer.id);
+        await fetchEmployers();
+        showToast("success", `Free posting revoked for ${employer.organizationName}`);
+      } catch (error) {
+        console.error("Failed to revoke free posting:", error);
+        showToast("error", "Failed to revoke free posting");
+      } finally {
+        setProcessingId(null);
+      }
+    } else {
+      // Open modal to grant free posting
+      setFreePostingModalId(employer.id);
+      setFreePostingReason("");
+    }
+  };
+
+  const confirmGrantFreePosting = async (employerId: string, employerName: string) => {
+    if (!user) return;
+    setProcessingId(employerId);
+    try {
+      await grantEmployerFreePosting(employerId, user.uid, freePostingReason || undefined);
+      await fetchEmployers();
+      showToast("success", `Free posting granted to ${employerName}`);
+      setFreePostingModalId(null);
+      setFreePostingReason("");
+    } catch (error) {
+      console.error("Failed to grant free posting:", error);
+      showToast("error", "Failed to grant free posting");
     } finally {
       setProcessingId(null);
     }
@@ -401,6 +445,12 @@ export default function AdminEmployersPage() {
                             {employer.organizationName || "Unnamed Organization"}
                           </h3>
                           {getStatusBadge(employer.status)}
+                          {employer.freePostingEnabled && (
+                            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                              <GiftIcon className="mr-1 h-3 w-3" />
+                              Free Posting
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
@@ -499,6 +549,22 @@ export default function AdminEmployersPage() {
                         </button>
                       )}
 
+                      {/* Free Posting Toggle - Only for approved employers */}
+                      {status === "approved" && (
+                        <button
+                          onClick={() => handleToggleFreePosting(employer)}
+                          disabled={!!processingId}
+                          className={`flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                            employer.freePostingEnabled
+                              ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                              : "bg-slate-700/50 text-slate-400 hover:bg-slate-700"
+                          }`}
+                        >
+                          <GiftIcon className="h-4 w-4" />
+                          {employer.freePostingEnabled ? "Revoke Free Posting" : "Grant Free Posting"}
+                        </button>
+                      )}
+
                       {employer.description && employer.description.length > 100 && (
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : employer.id)}
@@ -585,6 +651,53 @@ export default function AdminEmployersPage() {
                 className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Free Posting Modal */}
+      {freePostingModalId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
+                <GiftIcon className="h-5 w-5 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-100">Grant Free Posting</h3>
+            </div>
+            <p className="mt-3 text-sm text-slate-400">
+              This employer will be able to post jobs without payment. Optionally add a reason for your records.
+            </p>
+            <input
+              type="text"
+              value={freePostingReason}
+              onChange={(e) => setFreePostingReason(e.target.value)}
+              placeholder="e.g., Partner, Promotion, Sponsorship (optional)"
+              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setFreePostingModalId(null);
+                  setFreePostingReason("");
+                }}
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const employer = allEmployers.find((e) => e.id === freePostingModalId);
+                  if (employer) {
+                    confirmGrantFreePosting(freePostingModalId, employer.organizationName);
+                  }
+                }}
+                disabled={!!processingId}
+                className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Grant Free Posting
               </button>
             </div>
           </div>

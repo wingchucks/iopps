@@ -4,19 +4,26 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { JobPosting } from "@/lib/types";
+import { getEmployerProfile } from "@/lib/firestore";
+import type { JobPosting, EmployerProfile } from "@/lib/types";
 import Link from "next/link";
 
 export default function BillingTab() {
     const { user } = useAuth();
     const [paidJobs, setPaidJobs] = useState<JobPosting[]>([]);
     const [loading, setLoading] = useState(true);
+    const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
 
     useEffect(() => {
         if (!user) return;
 
-        const fetchPaidJobs = async () => {
+        const fetchData = async () => {
             try {
+                // Fetch employer profile
+                const profile = await getEmployerProfile(user.uid);
+                setEmployerProfile(profile);
+
+                // Fetch paid jobs
                 const jobsRef = collection(db!, "jobs");
                 const q = query(
                     jobsRef,
@@ -33,13 +40,13 @@ export default function BillingTab() {
 
                 setPaidJobs(jobs);
             } catch (error) {
-                console.error("Error fetching paid jobs:", error);
+                console.error("Error fetching data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchPaidJobs();
+        fetchData();
     }, [user]);
 
     const formatDate = (date: any) => {
@@ -121,6 +128,36 @@ export default function BillingTab() {
 
     return (
         <div className="space-y-6">
+            {/* Free Posting Status Banner */}
+            {employerProfile?.freePostingEnabled && (
+                <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 p-6">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
+                            <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-emerald-400">Free Posting Access Active</h3>
+                            <p className="mt-1 text-sm text-slate-300">
+                                Your account has been granted free job posting access by IOPPS admin.
+                                {employerProfile.freePostingReason && (
+                                    <span className="ml-1 text-slate-400">
+                                        Reason: {employerProfile.freePostingReason}
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        <Link
+                            href="/organization/jobs/new"
+                            className="flex-shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                        >
+                            Post Free Job
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {/* Summary Cards */}
             <div className="grid gap-6 md:grid-cols-3">
                 <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 p-6">
@@ -226,9 +263,14 @@ export default function BillingTab() {
                                             <p className="text-xs text-slate-500">{job.location}</p>
                                         </td>
                                         <td className="py-4">
-                                            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${job.productType === "FEATURED"
+                                            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+                                                job.productType === "FEATURED"
                                                     ? "bg-amber-500/10 text-amber-400"
-                                                    : "bg-slate-500/10 text-slate-400"
+                                                    : job.productType === "FREE_POSTING"
+                                                        ? "bg-emerald-500/10 text-emerald-400"
+                                                        : job.productType === "SUBSCRIPTION"
+                                                            ? "bg-blue-500/10 text-blue-400"
+                                                            : "bg-slate-500/10 text-slate-400"
                                                 }`}>
                                                 {job.productType === "FEATURED" ? (
                                                     <>
@@ -237,6 +279,15 @@ export default function BillingTab() {
                                                         </svg>
                                                         Featured
                                                     </>
+                                                ) : job.productType === "FREE_POSTING" ? (
+                                                    <>
+                                                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                                                        </svg>
+                                                        Free Post
+                                                    </>
+                                                ) : job.productType === "SUBSCRIPTION" ? (
+                                                    "Subscription"
                                                 ) : (
                                                     "Single Post"
                                                 )}

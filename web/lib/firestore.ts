@@ -240,6 +240,33 @@ export async function updateEmployerStatus(
   await updateDoc(ref, updates);
 }
 
+// Admin bypass functions for free posting
+export async function grantEmployerFreePosting(
+  userId: string,
+  adminId: string,
+  reason?: string
+) {
+  const ref = doc(db!, employerCollection, userId);
+  await updateDoc(ref, {
+    freePostingEnabled: true,
+    freePostingReason: reason || "Admin granted",
+    freePostingGrantedAt: serverTimestamp(),
+    freePostingGrantedBy: adminId,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function revokeEmployerFreePosting(userId: string) {
+  const ref = doc(db!, employerCollection, userId);
+  await updateDoc(ref, {
+    freePostingEnabled: false,
+    freePostingReason: null,
+    freePostingGrantedAt: null,
+    freePostingGrantedBy: null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function addEmployerInterview(
   userId: string,
   interview: Omit<Interview, "id" | "createdAt">
@@ -1549,6 +1576,35 @@ export async function updateVendorApprovalStatus(
   const ref = doc(db!, vendorsCollection, vendorId);
   await updateDoc(ref, {
     status: newStatus,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Admin bypass functions for free vendor listing
+export async function grantVendorFreeListing(
+  vendorId: string,
+  adminId: string,
+  reason?: string
+) {
+  checkFirebase();
+  const ref = doc(db!, vendorsCollection, vendorId);
+  await updateDoc(ref, {
+    freeListingEnabled: true,
+    freeListingReason: reason || "Admin granted",
+    freeListingGrantedAt: serverTimestamp(),
+    freeListingGrantedBy: adminId,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function revokeVendorFreeListing(vendorId: string) {
+  checkFirebase();
+  const ref = doc(db!, vendorsCollection, vendorId);
+  await updateDoc(ref, {
+    freeListingEnabled: false,
+    freeListingReason: null,
+    freeListingGrantedAt: null,
+    freeListingGrantedBy: null,
     updatedAt: serverTimestamp(),
   });
 }
