@@ -15,6 +15,19 @@ const employmentTypes = [
   "Internship",
 ];
 
+// Helper to detect video provider from URL
+function detectVideoProvider(url: string): { provider: "youtube" | "vimeo" | "custom"; videoId?: string } {
+  const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (youtubeMatch) {
+    return { provider: "youtube", videoId: youtubeMatch[1] };
+  }
+  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+  if (vimeoMatch) {
+    return { provider: "vimeo", videoId: vimeoMatch[1] };
+  }
+  return { provider: "custom" };
+}
+
 type SubscriptionInfo = {
   active: boolean;
   tier: string;
@@ -48,6 +61,10 @@ function NewJobPageContent() {
   const [qualifications, setQualifications] = useState("");
   const [applicationLink, setApplicationLink] = useState("");
   const [applicationEmail, setApplicationEmail] = useState("");
+  // Job video state
+  const [jobVideoUrl, setJobVideoUrl] = useState("");
+  const [jobVideoTitle, setJobVideoTitle] = useState("");
+  const [jobVideoDescription, setJobVideoDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatingAI, setGeneratingAI] = useState(false);
@@ -148,6 +165,19 @@ function NewJobPageContent() {
     setError(null);
 
     try {
+      // Prepare job video data if provided
+      let jobVideo = undefined;
+      if (jobVideoUrl.trim()) {
+        const { provider, videoId } = detectVideoProvider(jobVideoUrl);
+        jobVideo = {
+          videoUrl: jobVideoUrl,
+          videoProvider: provider,
+          videoId,
+          title: jobVideoTitle || undefined,
+          description: jobVideoDescription || undefined,
+        };
+      }
+
       // Prepare job data
       const jobData = {
         employerId: user.uid,
@@ -173,6 +203,7 @@ function NewJobPageContent() {
           .filter(Boolean),
         applicationLink,
         applicationEmail,
+        ...(jobVideo && { jobVideo }),
       };
 
       // If using admin-granted free posting, post job for free
@@ -592,6 +623,67 @@ function NewJobPageContent() {
           <p className="mt-1 text-xs text-slate-400">
             Provide at least one of link or email so community members can apply.
           </p>
+        </div>
+
+        {/* Job Video Section */}
+        <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <h3 className="text-sm font-semibold text-purple-300">Job Video (Optional)</h3>
+          </div>
+          <p className="text-xs text-slate-300 mb-4">
+            Add a video to showcase this specific role - can be an intro from the hiring manager, a day-in-the-life, or team introduction.
+          </p>
+
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="jobVideoUrl" className="block text-sm font-medium text-slate-200">
+                Video URL
+              </label>
+              <input
+                id="jobVideoUrl"
+                type="url"
+                value={jobVideoUrl}
+                onChange={(e) => setJobVideoUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+            </div>
+
+            {jobVideoUrl && (
+              <>
+                <div>
+                  <label htmlFor="jobVideoTitle" className="block text-sm font-medium text-slate-200">
+                    Video Title
+                  </label>
+                  <input
+                    id="jobVideoTitle"
+                    type="text"
+                    value={jobVideoTitle}
+                    onChange={(e) => setJobVideoTitle(e.target.value)}
+                    placeholder="e.g., Meet the Team"
+                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="jobVideoDescription" className="block text-sm font-medium text-slate-200">
+                    Video Description
+                  </label>
+                  <textarea
+                    id="jobVideoDescription"
+                    value={jobVideoDescription}
+                    onChange={(e) => setJobVideoDescription(e.target.value)}
+                    placeholder="Brief description of what candidates will see in the video"
+                    rows={2}
+                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Pricing Selection */}

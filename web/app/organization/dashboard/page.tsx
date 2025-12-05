@@ -8,8 +8,9 @@ import OpportunitiesTab from "./OpportunitiesTab";
 import ApplicationsTab from "./ApplicationsTab";
 import ProfileTab from "./ProfileTab";
 import BillingTab from "./BillingTab";
+import VideosTab from "./VideosTab";
 
-type TabType = "overview" | "opportunities" | "applications" | "billing" | "profile";
+type TabType = "overview" | "opportunities" | "applications" | "videos" | "billing" | "profile";
 
 export default function EmployerDashboard() {
   const { user, role, loading } = useAuth();
@@ -31,6 +32,7 @@ export default function EmployerDashboard() {
     { id: "overview" as TabType, label: "Overview", icon: "📊" },
     { id: "opportunities" as TabType, label: "Opportunities", icon: "💼" },
     { id: "applications" as TabType, label: "Applications", icon: "📝" },
+    { id: "videos" as TabType, label: "Videos", icon: "🎬" },
     { id: "billing" as TabType, label: "Billing & Payments", icon: "💳" },
     { id: "profile" as TabType, label: "Profile & Settings", icon: "⚙️" },
   ];
@@ -70,6 +72,7 @@ export default function EmployerDashboard() {
           {activeTab === "overview" && <OverviewTab />}
           {activeTab === "opportunities" && <OpportunitiesTab />}
           {activeTab === "applications" && <ApplicationsTab />}
+          {activeTab === "videos" && <VideosTab />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab />}
         </div>

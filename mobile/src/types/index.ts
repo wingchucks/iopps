@@ -1,5 +1,15 @@
 import type { Timestamp } from "firebase/firestore";
 
+// Job-specific video type
+export interface JobVideo {
+  videoUrl: string;
+  videoProvider?: "youtube" | "vimeo" | "custom";
+  videoId?: string;
+  title?: string;
+  description?: string;
+  isIOPPSInterview?: boolean;
+}
+
 export interface JobPosting {
   id: string;
   employerId: string;
@@ -35,6 +45,8 @@ export interface JobPosting {
   // Job Requirements Flags
   cpicRequired?: boolean; // Criminal record check required
   willTrain?: boolean; // Employer will provide training
+  // Job-specific video
+  jobVideo?: JobVideo;
 }
 
 export interface EmployerProfile {

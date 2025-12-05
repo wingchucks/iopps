@@ -42,6 +42,8 @@ import type {
   Message,
   Notification,
   NotificationType,
+  CompanyVideo,
+  JobVideo,
 } from "@/lib/types";
 import { MOCK_JOBS, MOCK_EMPLOYERS, MOCK_CONFERENCES, MOCK_SCHOLARSHIPS } from "./mockData";
 
@@ -364,6 +366,58 @@ export async function trackInterviewView(
     console.error("Failed to track interview view:", err);
     // Don't throw - analytics failures shouldn't break the app
   }
+}
+
+// Company Intro Video functions
+export async function setEmployerCompanyIntro(
+  employerId: string,
+  videoData: CompanyVideo
+) {
+  const ref = doc(db!, employerCollection, employerId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Employer profile not found");
+
+  await updateDoc(ref, {
+    companyIntroVideo: videoData,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function removeEmployerCompanyIntro(employerId: string) {
+  const ref = doc(db!, employerCollection, employerId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Employer profile not found");
+
+  await updateDoc(ref, {
+    companyIntroVideo: null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Job-specific Video functions
+export async function setJobVideo(
+  jobId: string,
+  videoData: JobVideo
+) {
+  const ref = doc(db!, jobsCollection, jobId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Job posting not found");
+
+  await updateDoc(ref, {
+    jobVideo: videoData,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function removeJobVideo(jobId: string) {
+  const ref = doc(db!, jobsCollection, jobId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Job posting not found");
+
+  await updateDoc(ref, {
+    jobVideo: null,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function getMemberProfile(

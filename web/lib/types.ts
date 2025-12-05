@@ -17,7 +17,28 @@ export interface Interview {
   viewsCount?: number;
   order?: number;
   active?: boolean;
+  isIOPPSInterview?: boolean; // true = conducted by IOPPS, false = employer's own promo video
+  addedBy?: string; // User ID of who added (admin or employer)
   createdAt?: Timestamp | null;
+}
+
+// Company intro/about video
+export interface CompanyVideo {
+  videoUrl: string;
+  videoProvider?: "youtube" | "vimeo" | "custom";
+  videoId?: string;
+  title?: string;
+  description?: string;
+}
+
+// Job-specific video (for a particular job posting)
+export interface JobVideo {
+  videoUrl: string;
+  videoProvider?: "youtube" | "vimeo" | "custom";
+  videoId?: string;
+  title?: string;
+  description?: string;
+  isIOPPSInterview?: boolean; // true if this is an IOPPS interview about the job
 }
 
 export interface EmployerSubscription {
@@ -42,7 +63,9 @@ export interface EmployerProfile {
   website?: string;
   location?: string;
   logoUrl?: string;
-  interviews?: Interview[];
+  // Video content
+  companyIntroVideo?: CompanyVideo; // "About Us" intro video
+  interviews?: Interview[]; // IOPPS interviews + employer promo videos (distinguished by isIOPPSInterview flag)
   status?: EmployerStatus;
   approvedAt?: Timestamp | null;
   approvedBy?: string;
@@ -90,6 +113,8 @@ export interface JobPosting {
   // Job Requirements Flags
   cpicRequired?: boolean; // Criminal record check required
   willTrain?: boolean; // Employer will provide training
+  // Job-specific video
+  jobVideo?: JobVideo; // Video specifically about this job posting
   // Payment fields
   paymentStatus?: "paid" | "pending" | "failed";
   paymentId?: string;

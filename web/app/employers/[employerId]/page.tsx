@@ -3,6 +3,8 @@ import Link from "next/link";
 import { db } from "@/lib/firebase-admin";
 import type { EmployerProfile, JobPosting } from "@/lib/types";
 import Image from "next/image";
+import CompanyIntroVideo from "@/components/employer/CompanyIntroVideo";
+import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
 
 type PageProps = {
   params: {
@@ -119,6 +121,23 @@ export default async function EmployerPublicProfilePage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      {/* Company Intro Video */}
+      {employer.companyIntroVideo && (
+        <div className="mb-8">
+          <CompanyIntroVideo
+            video={employer.companyIntroVideo}
+            organizationName={employer.organizationName}
+          />
+        </div>
+      )}
+
+      {/* Interviews & Videos */}
+      {employer.interviews && employer.interviews.length > 0 && (
+        <div className="mb-8">
+          <EmployerInterviewSection employer={employer} />
+        </div>
+      )}
 
       {/* Jobs Section */}
       <div>

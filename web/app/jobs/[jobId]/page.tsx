@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
+import JobVideoSection from "@/components/jobs/JobVideoSection";
 import ShareButtons from "@/components/ShareButtons";
 import { getJobPosting, createJobApplication, getMemberProfile, getEmployerProfile } from "@/lib/firestore";
 import type { JobPosting, MemberProfile, EmployerProfile } from "@/lib/types";
@@ -243,8 +244,15 @@ export default function JobDetailPage() {
               )}
             </div>
 
+            {/* Job-Specific Video */}
+            {job.jobVideo && (
+              <div className="mt-8">
+                <JobVideoSection video={job.jobVideo} jobTitle={job.title} />
+              </div>
+            )}
+
             {/* Employer Interview Section */}
-            {employerProfile && (
+            {employerProfile && employerProfile.interviews && employerProfile.interviews.length > 0 && (
               <div className="mt-8">
                 <EmployerInterviewSection employer={employerProfile} />
               </div>
