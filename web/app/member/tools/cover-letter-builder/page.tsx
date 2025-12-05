@@ -179,15 +179,15 @@ export default function CoverLetterBuilder() {
                   ${design === 'minimal' ? 'font-serif' : design === 'modern' ? 'font-sans' : 'font-sans'}
                 `}
                                 style={{
-                                    backgroundColor: '#ffffff', // Force HEX white
-                                    color: '#1e293b' // Force HEX slate-800
+                                    backgroundColor: '#ffffff',
+                                    color: '#1e293b'
                                 }}
                             >
                                 {/* HEADER */}
                                 {design === 'bold' && (
-                                    <div className="mb-10 border-b-4 border-[#0d9488] pb-6" style={{ borderColor: '#0d9488', color: '#0d9488' }}>
-                                        <h1 className="text-4xl font-black text-[#115e59] uppercase tracking-tight mb-2" style={{ color: '#115e59' }}>{formData.fullName}</h1>
-                                        <div className="flex flex-wrap gap-4 text-sm font-medium text-[#64748b]" style={{ color: '#64748b' }}>
+                                    <div className="mb-10 pb-6" style={{ borderBottom: '4px solid #0d9488', color: '#0d9488' }}>
+                                        <h1 className="text-4xl font-black uppercase tracking-tight mb-2" style={{ color: '#115e59' }}>{formData.fullName}</h1>
+                                        <div className="flex flex-wrap gap-4 text-sm font-medium" style={{ color: '#64748b' }}>
                                             {formData.email && <span>{formData.email}</span>}
                                             {formData.phone && <span>• {formData.phone}</span>}
                                             {formData.address && <span>• {formData.address}</span>}
@@ -196,12 +196,12 @@ export default function CoverLetterBuilder() {
                                 )}
 
                                 {design === 'modern' && (
-                                    <div className="mb-10 flex justify-between items-start border-b border-[#e2e8f0] pb-8" style={{ borderColor: '#e2e8f0' }}>
+                                    <div className="mb-10 flex justify-between items-start pb-8" style={{ borderBottom: '1px solid #e2e8f0' }}>
                                         <div>
-                                            <h1 className="text-3xl font-bold text-[#0f172a] mb-2" style={{ color: '#0f172a' }}>{formData.fullName}</h1>
-                                            <p className="font-medium text-lg text-[#0d9488]" style={{ color: '#0d9488' }}>Applicant</p>
+                                            <h1 className="text-3xl font-bold mb-2" style={{ color: '#0f172a' }}>{formData.fullName}</h1>
+                                            <p className="font-medium text-lg" style={{ color: '#0d9488' }}>Applicant</p>
                                         </div>
-                                        <div className="text-right text-sm text-[#64748b] leading-relaxed" style={{ color: '#64748b' }}>
+                                        <div className="text-right text-sm leading-relaxed" style={{ color: '#64748b' }}>
                                             <p>{formData.email}</p>
                                             <p>{formData.phone}</p>
                                             <p>{formData.address}</p>
@@ -211,36 +211,36 @@ export default function CoverLetterBuilder() {
 
                                 {design === 'minimal' && (
                                     <div className="mb-12 text-center">
-                                        <h1 className="text-2xl font-semibold text-[#0f172a] uppercase tracking-widest mb-3" style={{ color: '#0f172a' }}>{formData.fullName}</h1>
-                                        <div className="text-sm text-[#64748b] flex justify-center gap-4" style={{ color: '#64748b' }}>
+                                        <h1 className="text-2xl font-semibold uppercase tracking-widest mb-3" style={{ color: '#0f172a' }}>{formData.fullName}</h1>
+                                        <div className="text-sm flex justify-center gap-4" style={{ color: '#64748b' }}>
                                             <span>{formData.email}</span>
                                             <span>{formData.phone}</span>
                                         </div>
-                                        <div className="text-sm text-[#64748b] mt-1" style={{ color: '#64748b' }}>{formData.address}</div>
-                                        <div className="w-12 h-0.5 bg-[#cbd5e1] mx-auto mt-6" style={{ backgroundColor: '#cbd5e1' }}></div>
+                                        <div className="text-sm mt-1" style={{ color: '#64748b' }}>{formData.address}</div>
+                                        <div className="w-12 h-0.5 mx-auto mt-6" style={{ backgroundColor: '#cbd5e1' }}></div>
                                     </div>
                                 )}
 
 
                                 {/* CONTENT */}
-                                <div className="flex-grow space-y-6 text-[11pt] leading-relaxed relative z-10 text-[#334155]" style={{ color: '#334155' }}>
+                                <div className="flex-grow space-y-6 text-[11pt] leading-relaxed relative z-10" style={{ color: '#334155' }}>
                                     <div className="flex justify-between items-end mb-8">
                                         {/* RECIPIENT */}
-                                        <div className="text-sm text-[#475569]" style={{ color: '#475569' }}>
-                                            <p className="font-bold text-[#0f172a]" style={{ color: '#0f172a' }}>{formData.recipientName}</p>
+                                        <div className="text-sm" style={{ color: '#475569' }}>
+                                            <p className="font-bold" style={{ color: '#0f172a' }}>{formData.recipientName}</p>
                                             <p>{formData.recipientTitle}</p>
                                             <p>{formData.companyName}</p>
                                             <p>{formData.companyAddress}</p>
                                         </div>
                                         {/* DATE */}
-                                        <div className="text-sm font-medium text-[#64748b]" style={{ color: '#64748b' }}>
+                                        <div className="text-sm font-medium" style={{ color: '#64748b' }}>
                                             {formData.date}
                                         </div>
                                     </div>
 
                                     <p className="mb-6">{formData.opening}</p>
 
-                                    <div className="space-y-4 text-[#334155]" style={{ color: '#334155' }}>
+                                    <div className="space-y-4" style={{ color: '#334155' }}>
                                         <p className="whitespace-pre-wrap">{formData.body1}</p>
                                         <p className="whitespace-pre-wrap">{formData.body2}</p>
                                         <p className="whitespace-pre-wrap">{formData.body3}</p>
@@ -254,7 +254,7 @@ export default function CoverLetterBuilder() {
 
                                 {/* FOOTER DECORATION - Modern Only */}
                                 {design === 'modern' && (
-                                    <div className="mt-auto pt-8 border-t border-[#f1f5f9] flex justify-between items-center text-xs text-[#cbd5e1]" style={{ borderColor: '#f1f5f9', color: '#cbd5e1' }}>
+                                    <div className="mt-auto pt-8 flex justify-between items-center text-xs" style={{ borderTop: '1px solid #f1f5f9', color: '#cbd5e1' }}>
                                         <span>Generated via IOPPS</span>
                                         <span>iopps.ca</span>
                                     </div>
