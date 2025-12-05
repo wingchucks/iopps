@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { cacheLogger } from "./logger";
 
 // Cache configuration
 const CACHE_PREFIX = "@iopps:";
@@ -33,7 +34,7 @@ export async function getFromCache<T>(key: string): Promise<T | null> {
 
     return entry.data;
   } catch (error) {
-    console.error("Cache read error:", error);
+    cacheLogger.error("Cache read error", error);
     return null;
   }
 }
@@ -55,7 +56,7 @@ export async function saveToCache<T>(
     };
     await AsyncStorage.setItem(cacheKey, JSON.stringify(entry));
   } catch (error) {
-    console.error("Cache write error:", error);
+    cacheLogger.error("Cache write error", error);
   }
 }
 
@@ -67,7 +68,7 @@ export async function removeFromCache(key: string): Promise<void> {
     const cacheKey = CACHE_PREFIX + key;
     await AsyncStorage.removeItem(cacheKey);
   } catch (error) {
-    console.error("Cache remove error:", error);
+    cacheLogger.error("Cache remove error", error);
   }
 }
 
@@ -80,7 +81,7 @@ export async function clearCache(): Promise<void> {
     const cacheKeys = keys.filter((key) => key.startsWith(CACHE_PREFIX));
     await AsyncStorage.multiRemove(cacheKeys);
   } catch (error) {
-    console.error("Cache clear error:", error);
+    cacheLogger.error("Cache clear error", error);
   }
 }
 
@@ -108,7 +109,7 @@ export async function clearExpiredCache(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error("Clear expired cache error:", error);
+    cacheLogger.error("Clear expired cache error", error);
   }
 }
 
@@ -157,7 +158,7 @@ export async function fetchWithCache<T>(
     // Return cached data immediately, but also trigger background refresh
     fetcher().then((freshData) => {
       saveToCache(key, freshData, ttlMs);
-    }).catch(console.error);
+    }).catch((err) => cacheLogger.error("Background refresh error", err));
 
     return { data: cached, fromCache: true };
   }

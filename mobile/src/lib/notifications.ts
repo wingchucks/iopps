@@ -3,6 +3,7 @@ import * as Device from "expo-device";
 import { Platform } from "react-native";
 import { doc, setDoc, deleteField, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
+import { notificationLogger } from "./logger";
 
 // Configure how notifications should be handled when app is in foreground
 Notifications.setNotificationHandler({
@@ -28,7 +29,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   // Push notifications only work on physical devices
   if (!Device.isDevice) {
-    console.log("Push notifications require a physical device");
+    notificationLogger.log("Push notifications require a physical device");
     return null;
   }
 
@@ -43,7 +44,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 
   if (finalStatus !== "granted") {
-    console.log("Failed to get push token - permission not granted");
+    notificationLogger.log("Failed to get push token - permission not granted");
     return null;
   }
 
@@ -53,9 +54,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       projectId: "iopps-mobile",
     });
     token = pushTokenResponse.data;
-    console.log("Expo push token:", token);
+    notificationLogger.log("Expo push token:", token);
   } catch (error) {
-    console.error("Error getting push token:", error);
+    notificationLogger.error("Error getting push token", error);
     return null;
   }
 
@@ -111,9 +112,9 @@ export async function savePushToken(userId: string, token: string): Promise<void
       },
       { merge: true }
     );
-    console.log("Push token saved to Firestore");
+    notificationLogger.log("Push token saved to Firestore");
   } catch (error) {
-    console.error("Error saving push token:", error);
+    notificationLogger.error("Error saving push token", error);
     throw error;
   }
 }
@@ -132,9 +133,9 @@ export async function removePushToken(userId: string): Promise<void> {
       },
       { merge: true }
     );
-    console.log("Push token removed from Firestore");
+    notificationLogger.log("Push token removed from Firestore");
   } catch (error) {
-    console.error("Error removing push token:", error);
+    notificationLogger.error("Error removing push token", error);
   }
 }
 

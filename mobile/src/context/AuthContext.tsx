@@ -13,6 +13,7 @@ import {
   savePushToken,
   removePushToken,
 } from "../lib/notifications";
+import { authLogger } from "../lib/logger";
 
 interface AuthContextType {
   user: User | null;
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error("Error registering push notifications:", error);
+      authLogger.error("Error registering push notifications", error);
       return false;
     }
   };
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           await removePushToken(previousUserId.current);
         } catch (error) {
-          console.error("Error removing push token:", error);
+          authLogger.error("Error removing push token", error);
         }
         setExpoPushToken(null);
       }
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setRole("user");
           }
         } catch (error) {
-          console.error("Error fetching user role:", error);
+          authLogger.error("Error fetching user role", error);
           setRole("user");
         }
 
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await savePushToken(firebaseUser.uid, token);
           }
         } catch (error) {
-          console.error("Error registering push notifications:", error);
+          authLogger.error("Error registering push notifications", error);
         }
       } else {
         setRole(null);
@@ -127,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await removePushToken(user.uid);
       } catch (error) {
-        console.error("Error removing push token on sign out:", error);
+        authLogger.error("Error removing push token on sign out", error);
       }
     }
     await firebaseSignOut(auth);
