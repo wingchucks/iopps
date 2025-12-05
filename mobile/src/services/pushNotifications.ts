@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { doc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { notificationLogger } from '../lib/logger';
 
 // Types
 export interface NotificationData {
@@ -68,7 +69,7 @@ class PushNotificationService {
     // Request permissions
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
-      console.warn('Push notification permissions not granted');
+      notificationLogger.warn('Push notification permissions not granted');
       return;
     }
 
@@ -88,7 +89,7 @@ class PushNotificationService {
   public async requestPermissions(): Promise<boolean> {
     try {
       if (!Device.isDevice) {
-        console.warn('Push notifications only work on physical devices');
+        notificationLogger.warn('Push notifications only work on physical devices');
         return false;
       }
 
@@ -102,7 +103,7 @@ class PushNotificationService {
       }
 
       if (finalStatus !== 'granted') {
-        console.warn('Failed to get push notification permissions');
+        notificationLogger.warn('Failed to get push notification permissions');
         return false;
       }
 
@@ -148,14 +149,14 @@ class PushNotificationService {
           authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
         if (!enabled) {
-          console.warn('Firebase messaging permissions not granted');
+          notificationLogger.warn('Firebase messaging permissions not granted');
           return false;
         }
       }
 
       return true;
     } catch (error) {
-      console.error('Error requesting notification permissions:', error);
+      notificationLogger.error('Error requesting notification permissions:', error);
       return false;
     }
   }
@@ -178,7 +179,7 @@ class PushNotificationService {
   public async registerForPushNotifications(): Promise<string | null> {
     try {
       if (!Device.isDevice) {
-        console.warn('Push notifications only work on physical devices');
+        notificationLogger.warn('Push notifications only work on physical devices');
         return null;
       }
 
@@ -186,11 +187,11 @@ class PushNotificationService {
       const token = await messaging().getToken();
 
       if (!token) {
-        console.error('Failed to get FCM token');
+        notificationLogger.error('Failed to get FCM token');
         return null;
       }
 
-      console.log('FCM Token:', token);
+      notificationLogger.log('FCM Token:', token);
 
       // Store token in Firestore
       if (this.userId) {
@@ -199,7 +200,7 @@ class PushNotificationService {
 
       // Listen for token refresh
       messaging().onTokenRefresh(async (newToken) => {
-        console.log('FCM Token refreshed:', newToken);
+        notificationLogger.log('FCM Token refreshed:', newToken);
         if (this.userId) {
           await this.storeFCMToken(newToken);
         }
@@ -207,7 +208,7 @@ class PushNotificationService {
 
       return token;
     } catch (error) {
-      console.error('Error registering for push notifications:', error);
+      notificationLogger.error('Error registering for push notifications:', error);
       return null;
     }
   }
@@ -217,7 +218,7 @@ class PushNotificationService {
    */
   private async storeFCMToken(token: string): Promise<void> {
     if (!this.userId) {
-      console.warn('No user ID available to store FCM token');
+      notificationLogger.warn('No user ID available to store FCM token');
       return;
     }
 
@@ -238,9 +239,9 @@ class PushNotificationService {
         updatedAt: new Date(),
       });
 
-      console.log('FCM token stored successfully');
+      notificationLogger.log('FCM token stored successfully');
     } catch (error) {
-      console.error('Error storing FCM token:', error);
+      notificationLogger.error('Error storing FCM token:', error);
     }
   }
 
@@ -251,7 +252,7 @@ class PushNotificationService {
     // Handle notifications received while app is in foreground
     this.notificationListener = Notifications.addNotificationReceivedListener(
       (notification) => {
-        console.log('Notification received in foreground:', notification);
+        notificationLogger.log('Notification received in foreground:', notification);
         this.handleForegroundNotification(notification);
       }
     );
@@ -259,14 +260,14 @@ class PushNotificationService {
     // Handle notification taps/opens
     this.responseListener = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        console.log('Notification tapped:', response);
+        notificationLogger.log('Notification tapped:', response);
         this.handleNotificationResponse(response);
       }
     );
 
     // Firebase foreground handler
     this.foregroundListener = messaging().onMessage(async (remoteMessage) => {
-      console.log('FCM message received in foreground:', remoteMessage);
+      notificationLogger.log('FCM message received in foreground:', remoteMessage);
       await this.displayLocalNotification(remoteMessage);
     });
   }
@@ -278,7 +279,7 @@ class PushNotificationService {
     // Handle notifications when app is in background or quit state
     this.backgroundListener = messaging().setBackgroundMessageHandler(
       async (remoteMessage) => {
-        console.log('Message handled in background:', remoteMessage);
+        notificationLogger.log('Message handled in background:', remoteMessage);
         await this.handleBackgroundNotification(remoteMessage);
       }
     );
@@ -289,7 +290,7 @@ class PushNotificationService {
    */
   private handleForegroundNotification(notification: Notifications.Notification): void {
     const data = notification.request.content.data as NotificationData;
-    console.log('Foreground notification data:', data);
+    notificationLogger.log('Foreground notification data:', data);
 
     // You can add custom logic here based on notification type
     // For example, update UI, refresh data, etc.
@@ -301,7 +302,7 @@ class PushNotificationService {
   private async handleBackgroundNotification(
     remoteMessage: FirebaseMessagingTypes.RemoteMessage
   ): Promise<void> {
-    console.log('Background notification:', remoteMessage);
+    notificationLogger.log('Background notification:', remoteMessage);
 
     // You can add custom logic here
     // For example, update local database, sync data, etc.
@@ -312,18 +313,18 @@ class PushNotificationService {
    */
   private handleNotificationResponse(response: Notifications.NotificationResponse): void {
     const data = response.notification.request.content.data as NotificationData;
-    console.log('Notification response data:', data);
+    notificationLogger.log('Notification response data:', data);
 
     // Navigate based on notification type
     if (data.type === 'job_posted' && data.jobId) {
       // Navigate to job details
-      console.log('Navigate to job:', data.jobId);
+      notificationLogger.log('Navigate to job:', data.jobId);
     } else if (data.type === 'application_status' && data.applicationId) {
       // Navigate to application details
-      console.log('Navigate to application:', data.applicationId);
+      notificationLogger.log('Navigate to application:', data.applicationId);
     } else if (data.type === 'message' && data.employerId) {
       // Navigate to messages
-      console.log('Navigate to messages with employer:', data.employerId);
+      notificationLogger.log('Navigate to messages with employer:', data.employerId);
     }
 
     // You should integrate with your navigation system here
@@ -377,7 +378,7 @@ class PushNotificationService {
   public async subscribeToTopic(topic: string): Promise<void> {
     try {
       await messaging().subscribeToTopic(topic);
-      console.log(`Subscribed to topic: ${topic}`);
+      notificationLogger.log(`Subscribed to topic: ${topic}`);
 
       // Store subscription in Firestore
       if (this.userId) {
@@ -388,7 +389,7 @@ class PushNotificationService {
         });
       }
     } catch (error) {
-      console.error(`Error subscribing to topic ${topic}:`, error);
+      notificationLogger.error(`Error subscribing to topic ${topic}:`, error);
       throw error;
     }
   }
@@ -399,7 +400,7 @@ class PushNotificationService {
   public async unsubscribeFromTopic(topic: string): Promise<void> {
     try {
       await messaging().unsubscribeFromTopic(topic);
-      console.log(`Unsubscribed from topic: ${topic}`);
+      notificationLogger.log(`Unsubscribed from topic: ${topic}`);
 
       // Remove subscription from Firestore
       if (this.userId) {
@@ -410,7 +411,7 @@ class PushNotificationService {
         });
       }
     } catch (error) {
-      console.error(`Error unsubscribing from topic ${topic}:`, error);
+      notificationLogger.error(`Error unsubscribing from topic ${topic}:`, error);
       throw error;
     }
   }
@@ -466,7 +467,7 @@ class PushNotificationService {
 
       return null;
     } catch (error) {
-      console.error('Error getting initial notification:', error);
+      notificationLogger.error('Error getting initial notification:', error);
       return null;
     }
   }
@@ -477,9 +478,9 @@ class PushNotificationService {
   public async clearAllNotifications(): Promise<void> {
     try {
       await Notifications.dismissAllNotificationsAsync();
-      console.log('All notifications cleared');
+      notificationLogger.log('All notifications cleared');
     } catch (error) {
-      console.error('Error clearing notifications:', error);
+      notificationLogger.error('Error clearing notifications:', error);
     }
   }
 
@@ -490,7 +491,7 @@ class PushNotificationService {
     try {
       return await Notifications.getBadgeCountAsync();
     } catch (error) {
-      console.error('Error getting badge count:', error);
+      notificationLogger.error('Error getting badge count:', error);
       return 0;
     }
   }
@@ -502,7 +503,7 @@ class PushNotificationService {
     try {
       await Notifications.setBadgeCountAsync(count);
     } catch (error) {
-      console.error('Error setting badge count:', error);
+      notificationLogger.error('Error setting badge count:', error);
     }
   }
 
@@ -525,7 +526,7 @@ class PushNotificationService {
         trigger: null, // Show immediately
       });
     } catch (error) {
-      console.error('Error sending local notification:', error);
+      notificationLogger.error('Error sending local notification:', error);
     }
   }
 
@@ -552,7 +553,7 @@ class PushNotificationService {
       });
       return identifier;
     } catch (error) {
-      console.error('Error scheduling notification:', error);
+      notificationLogger.error('Error scheduling notification:', error);
       return null;
     }
   }
@@ -564,7 +565,7 @@ class PushNotificationService {
     try {
       await Notifications.cancelScheduledNotificationAsync(identifier);
     } catch (error) {
-      console.error('Error canceling scheduled notification:', error);
+      notificationLogger.error('Error canceling scheduled notification:', error);
     }
   }
 
@@ -575,7 +576,7 @@ class PushNotificationService {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
     } catch (error) {
-      console.error('Error getting scheduled notifications:', error);
+      notificationLogger.error('Error getting scheduled notifications:', error);
       return [];
     }
   }
@@ -595,7 +596,7 @@ class PushNotificationService {
     }
 
     this.userId = null;
-    console.log('Push notification service cleaned up');
+    notificationLogger.log('Push notification service cleaned up');
   }
 
   /**

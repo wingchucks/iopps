@@ -4,6 +4,7 @@
  */
 
 import { Platform } from 'react-native';
+import { performanceLogger } from './logger';
 
 export interface PerformanceMetric {
   name: string;
@@ -56,10 +57,10 @@ async function sendToAnalytics(metric: PerformanceMetric): Promise<void> {
     );
 
     if (!response.ok) {
-      console.error('Failed to send performance metric:', response.status);
+      performanceLogger.error('Failed to send performance metric:', response.status);
     }
   } catch (error) {
-    console.error('Failed to send performance metric:', error);
+    performanceLogger.error('Failed to send performance metric:', error);
   }
 }
 
@@ -78,7 +79,7 @@ export class AppStartupTracker {
     this.startTime = Date.now();
 
     if (__DEV__) {
-      console.log('[Performance] App startup marked');
+      performanceLogger.log('[Performance] App startup marked');
     }
   }
 
@@ -92,7 +93,7 @@ export class AppStartupTracker {
     this.initialized = true;
 
     if (__DEV__) {
-      console.log(`[Performance] App startup completed in ${startupTime}ms`);
+      performanceLogger.log(`[Performance] App startup completed in ${startupTime}ms`);
     }
 
     // Send to analytics
@@ -138,7 +139,7 @@ export class ScreenPerformanceTracker {
     this.screenTimes.set(screenName, Date.now());
 
     if (__DEV__) {
-      console.log(`[Performance] Screen render start: ${screenName}`);
+      performanceLogger.log(`[Performance] Screen render start: ${screenName}`);
     }
   }
 
@@ -166,7 +167,7 @@ export class ScreenPerformanceTracker {
     }
 
     if (__DEV__) {
-      console.log(`[Performance] Screen render complete: ${screenName} in ${renderTime}ms`);
+      performanceLogger.log(`[Performance] Screen render complete: ${screenName} in ${renderTime}ms`);
     }
 
     // Send to analytics for slow renders (>500ms)
@@ -247,7 +248,7 @@ export class ApiPerformanceTracker {
     }
 
     if (__DEV__) {
-      console.log(`[API Performance] ${method} ${endpoint}: ${duration}ms`, {
+      performanceLogger.log(`[API Performance] ${method} ${endpoint}: ${duration}ms`, {
         status,
       });
     }
@@ -312,7 +313,7 @@ export class MemoryMonitor {
     if (!__DEV__) return;
     if (this.intervalId !== null) return;
 
-    console.log('[Performance] Starting memory monitoring');
+    performanceLogger.log('[Performance] Starting memory monitoring');
 
     this.intervalId = setInterval(() => {
       this.captureMemoryUsage();
@@ -332,7 +333,7 @@ export class MemoryMonitor {
     this.intervalId = null;
 
     if (__DEV__) {
-      console.log('[Performance] Stopped memory monitoring');
+      performanceLogger.log('[Performance] Stopped memory monitoring');
     }
   }
 
@@ -363,7 +364,7 @@ export class MemoryMonitor {
 
     if (__DEV__ && this.metrics.length % 6 === 0) {
       // Log every ~30 seconds if interval is 5s
-      console.log('[Memory] Memory usage captured:', metric);
+      performanceLogger.log('[Memory] Memory usage captured:', metric);
     }
   }
 
@@ -402,7 +403,7 @@ export class PerformanceMarker {
     this.marks.set(name, Date.now());
 
     if (__DEV__) {
-      console.log(`[Performance Mark] ${name}`);
+      performanceLogger.log(`[Performance Mark] ${name}`);
     }
   }
 
@@ -414,14 +415,14 @@ export class PerformanceMarker {
     const startTime = this.marks.get(markName);
 
     if (!startTime) {
-      console.warn(`[Performance] No mark found for: ${markName}`);
+      performanceLogger.warn(`[Performance] No mark found for: ${markName}`);
       return null;
     }
 
     const duration = Date.now() - startTime;
 
     if (__DEV__) {
-      console.log(`[Performance Measure] ${name}: ${duration}ms`);
+      performanceLogger.log(`[Performance Measure] ${name}: ${duration}ms`);
     }
 
     // Send to analytics
@@ -503,7 +504,7 @@ export function initPerformanceMonitoring(): void {
   }
 
   if (__DEV__) {
-    console.log('[Performance] Mobile performance monitoring initialized');
+    performanceLogger.log('[Performance] Mobile performance monitoring initialized');
   }
 }
 
@@ -513,18 +514,18 @@ export function initPerformanceMonitoring(): void {
 export function logPerformanceSummary(): void {
   if (!__DEV__) return;
 
-  console.group('📱 Performance Summary');
+  performanceLogger.log('📱 Performance Summary');
 
   // App Startup
   const startupDuration = AppStartupTracker.getCurrentDuration();
   if (startupDuration !== null) {
-    console.log('App Startup:', `${startupDuration}ms`);
+    performanceLogger.log('App Startup:', `${startupDuration}ms`);
   }
 
   // Screen Metrics
   const screenMetrics = ScreenPerformanceTracker.getMetrics();
   if (screenMetrics.length > 0) {
-    console.log('Screen Renders:', {
+    performanceLogger.log('Screen Renders:', {
       count: screenMetrics.length,
       average: `${ScreenPerformanceTracker.getAverageRenderTime().toFixed(2)}ms`,
     });
@@ -533,7 +534,7 @@ export function logPerformanceSummary(): void {
   // API Metrics
   const apiMetrics = ApiPerformanceTracker.getMetrics();
   if (apiMetrics.length > 0) {
-    console.log('API Requests:', {
+    performanceLogger.log('API Requests:', {
       count: apiMetrics.length,
       average: `${ApiPerformanceTracker.getAverageResponseTime().toFixed(2)}ms`,
     });
@@ -542,10 +543,8 @@ export function logPerformanceSummary(): void {
   // Memory
   const memoryUsage = MemoryMonitor.getCurrentUsage();
   if (memoryUsage) {
-    console.log('Memory Usage:', memoryUsage);
+    performanceLogger.log('Memory Usage:', memoryUsage);
   }
-
-  console.groupEnd();
 }
 
 /**

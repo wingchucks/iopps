@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { listPowwows, formatTimestamp } from "../lib/firestore";
 import type { PowwowEvent } from "../types";
+import { logger } from "../lib/logger";
 
 export default function PowwowsScreen() {
   const navigation = useNavigation();
@@ -23,7 +24,7 @@ export default function PowwowsScreen() {
       const data = await listPowwows(50);
       setPowwows(data);
     } catch (error) {
-      console.error("Error loading powwows:", error);
+      logger.error("Error loading powwows:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

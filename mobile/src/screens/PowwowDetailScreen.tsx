@@ -12,6 +12,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getPowwow, formatTimestamp } from "../lib/firestore";
 import type { PowwowEvent } from "../types";
+import { logger } from "../lib/logger";
 
 export default function PowwowDetailScreen() {
   const route = useRoute();
@@ -27,7 +28,7 @@ export default function PowwowDetailScreen() {
         const data = await getPowwow(powwowId);
         setPowwow(data);
       } catch (error) {
-        console.error("Error loading powwow:", error);
+        logger.error("Error loading powwow:", error);
       } finally {
         setLoading(false);
       }

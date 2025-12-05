@@ -11,6 +11,7 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { getConference, formatTimestamp } from "../lib/firestore";
 import type { Conference } from "../types";
+import { logger } from "../lib/logger";
 
 export default function ConferenceDetailScreen() {
   const route = useRoute();
@@ -24,7 +25,7 @@ export default function ConferenceDetailScreen() {
         const data = await getConference(conferenceId);
         setConference(data);
       } catch (error) {
-        console.error("Error loading conference:", error);
+        logger.error("Error loading conference:", error);
       } finally {
         setLoading(false);
       }

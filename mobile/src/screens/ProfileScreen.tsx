@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile } from "../lib/firestore";
 import type { UserProfile } from "../types";
+import { logger } from "../lib/logger";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -33,7 +34,7 @@ export default function ProfileScreen() {
       const data = await getUserProfile(user.uid);
       setProfile(data);
     } catch (error) {
-      console.error("Error loading profile:", error);
+      logger.error("Error loading profile:", error);
     }
   };
 

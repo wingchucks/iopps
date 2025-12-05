@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../lib/logger';
 
 // Import translation files
 import en from './locales/en.json';
@@ -37,7 +38,7 @@ const getInitialLanguage = async (): Promise<string> => {
       return storedLanguage;
     }
   } catch (error) {
-    console.error('Error retrieving stored language:', error);
+    logger.error('Error retrieving stored language:', error);
   }
   return getDeviceLanguage();
 };
@@ -47,7 +48,7 @@ export const saveLanguagePreference = async (language: string): Promise<void> =>
   try {
     await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   } catch (error) {
-    console.error('Error saving language preference:', error);
+    logger.error('Error saving language preference:', error);
   }
 };
 
@@ -82,7 +83,7 @@ export const changeLanguage = async (language: string): Promise<void> => {
     await i18n.changeLanguage(language);
     await saveLanguagePreference(language);
   } else {
-    console.warn(`Language '${language}' is not supported. Falling back to English.`);
+    logger.warn(`Language '${language}' is not supported. Falling back to English.`);
     await i18n.changeLanguage('en');
     await saveLanguagePreference('en');
   }

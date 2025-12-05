@@ -12,6 +12,7 @@ import {
 import { useRoute } from "@react-navigation/native";
 import { getVendor } from "../lib/firestore";
 import type { VendorProfile } from "../types";
+import { logger } from "../lib/logger";
 
 export default function VendorDetailScreen() {
   const route = useRoute();
@@ -25,7 +26,7 @@ export default function VendorDetailScreen() {
         const data = await getVendor(vendorId);
         setVendor(data);
       } catch (error) {
-        console.error("Error loading vendor:", error);
+        logger.error("Error loading vendor:", error);
       } finally {
         setLoading(false);
       }

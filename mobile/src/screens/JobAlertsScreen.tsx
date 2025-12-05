@@ -21,6 +21,7 @@ import {
   deleteJobAlert,
 } from "../lib/firestore";
 import type { JobAlert, JobAlertFrequency } from "../types";
+import { logger } from "../lib/logger";
 
 export default function JobAlertsScreen() {
   const navigation = useNavigation();
@@ -45,7 +46,7 @@ export default function JobAlertsScreen() {
       const data = await getMemberJobAlerts(user.uid);
       setAlerts(data);
     } catch (error) {
-      console.error("Error loading job alerts:", error);
+      logger.error("Error loading job alerts:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -72,7 +73,7 @@ export default function JobAlertsScreen() {
         )
       );
     } catch (error) {
-      console.error("Error toggling alert:", error);
+      logger.error("Error toggling alert:", error);
       Alert.alert("Error", "Failed to update alert");
     }
   };
@@ -91,7 +92,7 @@ export default function JobAlertsScreen() {
               await deleteJobAlert(alert.id);
               setAlerts(alerts.filter((a) => a.id !== alert.id));
             } catch (error) {
-              console.error("Error deleting alert:", error);
+              logger.error("Error deleting alert:", error);
               Alert.alert("Error", "Failed to delete alert");
             }
           },
@@ -124,7 +125,7 @@ export default function JobAlertsScreen() {
       setModalVisible(false);
       resetForm();
     } catch (error) {
-      console.error("Error creating alert:", error);
+      logger.error("Error creating alert:", error);
       Alert.alert("Error", "Failed to create alert");
     } finally {
       setSaving(false);

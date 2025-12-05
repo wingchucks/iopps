@@ -19,6 +19,7 @@ import {
   formatDateTime,
 } from "../lib/firestore";
 import type { Message } from "../types";
+import { logger } from "../lib/logger";
 
 export default function ConversationScreen() {
   const route = useRoute();
@@ -43,7 +44,7 @@ export default function ConversationScreen() {
           await markConversationAsRead(conversationId, "member");
         }
       } catch (error) {
-        console.error("Error loading messages:", error);
+        logger.error("Error loading messages:", error);
       } finally {
         setLoading(false);
       }
@@ -77,7 +78,7 @@ export default function ConversationScreen() {
       const updatedMessages = await getConversationMessages(conversationId, 100);
       setMessages(updatedMessages);
     } catch (error) {
-      console.error("Error sending message:", error);
+      logger.error("Error sending message:", error);
     } finally {
       setSending(false);
     }

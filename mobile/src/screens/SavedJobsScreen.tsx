@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { listSavedJobs, formatTimestamp } from "../lib/firestore";
 import type { SavedJob } from "../types";
+import { logger } from "../lib/logger";
 
 export default function SavedJobsScreen() {
   const navigation = useNavigation();
@@ -26,7 +27,7 @@ export default function SavedJobsScreen() {
       const data = await listSavedJobs(user.uid);
       setSavedJobs(data);
     } catch (error) {
-      console.error("Error loading saved jobs:", error);
+      logger.error("Error loading saved jobs:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

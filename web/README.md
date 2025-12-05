@@ -2,6 +2,24 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment Setup
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env.local
+```
+
+2. Update `.env.local` with your actual API keys and configuration values:
+   - `GOOGLE_AI_API_KEY`: Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Configure other required environment variables as needed
+
+**IMPORTANT SECURITY NOTES:**
+- Never commit `.env.local` or any file containing real API keys to version control
+- The `.env.example` file should only contain placeholder values, never real keys
+- All `.env*` files are already ignored by `.gitignore` for your protection
+
+### Running the Development Server
+
 First, run the development server:
 
 ```bash

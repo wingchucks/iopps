@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { JobPosting } from '../types';
 import { useNetwork } from '../context/NetworkContext';
+import { logger } from '../lib/logger';
 
 const OFFLINE_JOBS_KEY = '@iopps:offline_jobs';
 const OFFLINE_JOBS_TIMESTAMP = '@iopps:offline_jobs_timestamp';
@@ -58,7 +59,7 @@ export function useOfflineJobs(): UseOfflineJobsResult {
         setLastSyncTime(new Date(parseInt(timestampStr[1], 10)));
       }
     } catch (error) {
-      console.error('Error loading offline jobs:', error);
+      logger.error('Error loading offline jobs:', error);
     }
   };
 
@@ -77,7 +78,7 @@ export function useOfflineJobs(): UseOfflineJobsResult {
       setLastSyncTime(new Date(parseInt(timestamp, 10)));
       setIsStale(false);
     } catch (error) {
-      console.error('Error saving offline jobs:', error);
+      logger.error('Error saving offline jobs:', error);
     }
   }, []);
 
@@ -92,7 +93,7 @@ export function useOfflineJobs(): UseOfflineJobsResult {
       setLastSyncTime(null);
       setIsStale(false);
     } catch (error) {
-      console.error('Error clearing offline jobs:', error);
+      logger.error('Error clearing offline jobs:', error);
     }
   }, []);
 
@@ -165,7 +166,7 @@ export function useOfflineSavedJobs() {
         setState(JSON.parse(savedState));
       }
     } catch (error) {
-      console.error('Error loading saved jobs state:', error);
+      logger.error('Error loading saved jobs state:', error);
     }
   };
 
@@ -174,7 +175,7 @@ export function useOfflineSavedJobs() {
       await AsyncStorage.setItem(OFFLINE_SAVED_JOBS_KEY, JSON.stringify(newState));
       setState(newState);
     } catch (error) {
-      console.error('Error saving saved jobs state:', error);
+      logger.error('Error saving saved jobs state:', error);
     }
   };
 
@@ -205,7 +206,7 @@ export function useOfflineSavedJobs() {
   const syncPendingChanges = useCallback(async () => {
     // This would sync with Firestore when back online
     // Implementation depends on your Firestore save/unsave functions
-    console.log('Syncing pending changes:', state.pendingSaves, state.pendingRemoves);
+    logger.log('Syncing pending changes:', state.pendingSaves, state.pendingRemoves);
 
     // Clear pending after sync
     const newState = {

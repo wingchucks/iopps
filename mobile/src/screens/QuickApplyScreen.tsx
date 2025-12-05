@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../lib/firebase";
+import { logger } from "../lib/logger";
 
 interface QuickApplyScreenProps {
   route: any;
@@ -109,7 +110,7 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
         ]
       );
     } catch (error) {
-      console.error("Error submitting application:", error);
+      logger.error("Error submitting application:", error);
       Alert.alert("Error", "Failed to submit application. Please try again.");
     } finally {
       setLoading(false);

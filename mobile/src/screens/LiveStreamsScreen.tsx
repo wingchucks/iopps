@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { listLiveStreams } from "../lib/firestore";
 import type { LiveStreamEvent } from "../types";
+import { logger } from "../lib/logger";
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string }> = {
   "Live Now": { color: "#EF4444", bg: "#EF444420" },
@@ -29,7 +30,7 @@ export default function LiveStreamsScreen() {
       const data = await listLiveStreams(50);
       setStreams(data);
     } catch (error) {
-      console.error("Error loading live streams:", error);
+      logger.error("Error loading live streams:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

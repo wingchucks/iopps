@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { listScholarships, formatTimestamp } from "../lib/firestore";
 import type { Scholarship } from "../types";
+import { logger } from "../lib/logger";
 
 export default function ScholarshipsScreen() {
   const navigation = useNavigation();
@@ -24,7 +25,7 @@ export default function ScholarshipsScreen() {
       const data = await listScholarships(50);
       setScholarships(data);
     } catch (error) {
-      console.error("Error loading scholarships:", error);
+      logger.error("Error loading scholarships:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

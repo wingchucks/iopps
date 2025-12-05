@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getMemberApplications, formatTimestamp } from "../lib/firestore";
 import type { JobApplication, ApplicationStatus } from "../types";
+import { logger } from "../lib/logger";
 
 const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; bg: string }> = {
   submitted: { label: "Submitted", color: "#3B82F6", bg: "#3B82F620" },
@@ -36,7 +37,7 @@ export default function ApplicationsScreen() {
       const data = await getMemberApplications(user.uid);
       setApplications(data);
     } catch (error) {
-      console.error("Error loading applications:", error);
+      logger.error("Error loading applications:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

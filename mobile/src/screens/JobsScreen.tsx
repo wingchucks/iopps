@@ -16,6 +16,7 @@ import { db } from "../lib/firebase";
 import { JobPosting } from "../types";
 import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
 import { JobListSkeleton } from "../components/Skeleton";
+import { logger } from "../lib/logger";
 
 interface JobsScreenProps {
   navigation: any;
@@ -91,11 +92,11 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
 
         // If from cache, data is being refreshed in background
         if (fromCache) {
-          console.log("Jobs loaded from cache, refreshing in background...");
+          logger.log("Jobs loaded from cache, refreshing in background...");
         }
       }
     } catch (error) {
-      console.error("Error fetching jobs:", error);
+      logger.error("Error fetching jobs:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

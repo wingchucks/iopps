@@ -5,6 +5,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import { storage } from "./firebase";
+import { storageLogger } from "./logger";
 
 export interface UploadProgress {
   bytesTransferred: number;
@@ -53,7 +54,7 @@ export async function uploadProfilePhoto(
         });
       },
       (error) => {
-        console.error("Upload error:", error);
+        storageLogger.error("Upload error:", error);
         reject(error);
       },
       async () => {
@@ -97,7 +98,7 @@ export async function uploadResume(
         });
       },
       (error) => {
-        console.error("Upload error:", error);
+        storageLogger.error("Upload error:", error);
         reject(error);
       },
       async () => {

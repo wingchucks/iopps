@@ -13,6 +13,7 @@ import { getMemberConversations, formatTimestamp } from "../lib/firestore";
 import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
 import { MessageListSkeleton } from "../components/Skeleton";
 import type { Conversation } from "../types";
+import { logger } from "../lib/logger";
 
 export default function MessagesScreen() {
   const navigation = useNavigation();
@@ -39,7 +40,7 @@ export default function MessagesScreen() {
         setConversations(data);
       }
     } catch (error) {
-      console.error("Error loading conversations:", error);
+      logger.error("Error loading conversations:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

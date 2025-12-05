@@ -19,6 +19,7 @@ import { useAuth } from "../context/AuthContext";
 import { getUserProfile, updateUserProfile } from "../lib/firestore";
 import { uploadProfilePhoto, uploadResume } from "../lib/storage";
 import type { UserProfile } from "../types";
+import { logger } from "../lib/logger";
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
@@ -63,7 +64,7 @@ export default function EditProfileScreen() {
         }
       }
     } catch (error) {
-      console.error("Error loading profile:", error);
+      logger.error("Error loading profile:", error);
       Alert.alert("Error", "Failed to load profile data");
     } finally {
       setLoading(false);
@@ -158,14 +159,14 @@ export default function EditProfileScreen() {
           setResumeName(file.name);
           Alert.alert("Success", "Resume uploaded successfully!");
         } catch (error) {
-          console.error("Error uploading resume:", error);
+          logger.error("Error uploading resume:", error);
           Alert.alert("Error", "Failed to upload resume. Please try again.");
         } finally {
           setUploadProgress(null);
         }
       }
     } catch (error) {
-      console.error("Error picking document:", error);
+      logger.error("Error picking document:", error);
     }
   };
 
@@ -205,7 +206,7 @@ export default function EditProfileScreen() {
           );
           photoURL = uploadResult.downloadURL;
         } catch (error) {
-          console.error("Error uploading photo:", error);
+          logger.error("Error uploading photo:", error);
           Alert.alert("Warning", "Failed to upload photo, but other changes will be saved.");
         }
         setUploadProgress(null);
@@ -230,7 +231,7 @@ export default function EditProfileScreen() {
         { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      console.error("Error saving profile:", error);
+      logger.error("Error saving profile:", error);
       Alert.alert("Error", "Failed to save profile. Please try again.");
     } finally {
       setSaving(false);

@@ -14,6 +14,7 @@ import { db } from "../lib/firebase";
 import { JobPosting } from "../types";
 import { useAuth } from "../context/AuthContext";
 import { isJobSaved, saveJob, unsaveJob } from "../lib/firestore";
+import { logger } from "../lib/logger";
 
 interface JobDetailScreenProps {
   route: any;
@@ -42,7 +43,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
           setIsSaved(saved);
         }
       } catch (error) {
-        console.error("Error fetching job:", error);
+        logger.error("Error fetching job:", error);
       } finally {
         setLoading(false);
       }
@@ -74,7 +75,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         setIsSaved(true);
       }
     } catch (error) {
-      console.error("Error toggling save:", error);
+      logger.error("Error toggling save:", error);
       Alert.alert("Error", "Failed to save job. Please try again.");
     } finally {
       setSavingJob(false);
@@ -105,7 +106,7 @@ export default function JobDetailScreen({ route, navigation }: JobDetailScreenPr
         Alert.alert("Apply", "No application method available for this job.");
       }
     } catch (error) {
-      console.error("Error opening application link:", error);
+      logger.error("Error opening application link:", error);
       Alert.alert(
         "Error",
         "Unable to open the application link. Please try again or contact the employer directly."

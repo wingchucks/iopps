@@ -12,6 +12,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { listVendors } from "../lib/firestore";
 import type { VendorProfile } from "../types";
+import { logger } from "../lib/logger";
 
 export default function ShopScreen() {
   const navigation = useNavigation();
@@ -25,7 +26,7 @@ export default function ShopScreen() {
       const data = await listVendors(50);
       setVendors(data);
     } catch (error) {
-      console.error("Error loading vendors:", error);
+      logger.error("Error loading vendors:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);

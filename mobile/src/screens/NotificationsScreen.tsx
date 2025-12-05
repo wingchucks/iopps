@@ -18,6 +18,7 @@ import {
 import { fetchWithCache, CACHE_KEYS, CACHE_TTL, saveToCache } from "../lib/cache";
 import { NotificationListSkeleton } from "../components/Skeleton";
 import type { Notification, NotificationType } from "../types";
+import { logger } from "../lib/logger";
 
 const NOTIFICATION_CONFIG: Record<
   NotificationType,
@@ -58,7 +59,7 @@ export default function NotificationsScreen() {
         setNotifications(data);
       }
     } catch (error) {
-      console.error("Error loading notifications:", error);
+      logger.error("Error loading notifications:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -87,7 +88,7 @@ export default function NotificationsScreen() {
           )
         );
       } catch (error) {
-        console.error("Error marking notification as read:", error);
+        logger.error("Error marking notification as read:", error);
       }
     }
 
@@ -109,7 +110,7 @@ export default function NotificationsScreen() {
       await markAllNotificationsAsRead(user.uid);
       setNotifications(notifications.map((n) => ({ ...n, read: true })));
     } catch (error) {
-      console.error("Error marking all as read:", error);
+      logger.error("Error marking all as read:", error);
     }
   };
 

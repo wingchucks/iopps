@@ -12,6 +12,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { listConferences, formatTimestamp } from "../lib/firestore";
 import type { Conference } from "../types";
+import { logger } from "../lib/logger";
 
 export default function ConferencesScreen() {
   const navigation = useNavigation();
@@ -24,7 +25,7 @@ export default function ConferencesScreen() {
       const data = await listConferences(50);
       setConferences(data);
     } catch (error) {
-      console.error("Error loading conferences:", error);
+      logger.error("Error loading conferences:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
