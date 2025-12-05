@@ -41,6 +41,7 @@ export default {
       ],
     },
     plugins: [
+      "@sentry/react-native/expo",
       [
         "expo-notifications",
         {
