@@ -15,6 +15,10 @@ import {
   ClockIcon,
   BuildingOfficeIcon,
   GiftIcon,
+  EyeIcon,
+  PlayCircleIcon,
+  VideoCameraIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -38,6 +42,7 @@ export default function AdminEmployersPage() {
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [previewModalId, setPreviewModalId] = useState<string | null>(null);
 
   // Check admin access
   if (!loading && role !== "admin" && role !== "moderator") {
@@ -506,6 +511,15 @@ export default function AdminEmployersPage() {
 
                     {/* Right: Actions */}
                     <div className="flex flex-col gap-2 lg:flex-shrink-0">
+                      {/* View Profile Button */}
+                      <button
+                        onClick={() => setPreviewModalId(employer.id)}
+                        className="flex items-center justify-center gap-2 rounded-md bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-400 transition-colors hover:bg-teal-500/20"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                        View Profile
+                      </button>
+
                       {status === "pending" && (
                         <>
                           <button
@@ -703,6 +717,183 @@ export default function AdminEmployersPage() {
           </div>
         </div>
       )}
+
+
+      {/* Profile Preview Modal */}
+      {previewModalId && (() => {
+        const employer = allEmployers.find((e) => e.id === previewModalId);
+        if (!employer) return null;
+        const status = employer.status || "pending";
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl">
+              {/* Header */}
+              <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-slate-700 bg-slate-900 p-6">
+                <div className="flex gap-4">
+                  {employer.logoUrl ? (
+                    <img
+                      src={employer.logoUrl}
+                      alt={`${employer.organizationName} logo`}
+                      className="h-16 w-16 flex-shrink-0 rounded-lg border border-slate-700 bg-white object-contain p-2"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xs text-slate-500">
+                      No Logo
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-100">
+                      {employer.organizationName || "Unnamed Organization"}
+                    </h3>
+                    <div className="mt-1">{getStatusBadge(employer.status)}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPreviewModalId(null)}
+                  className="rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                {/* Basic Info */}
+                <div className="space-y-3">
+                  {employer.location && (
+                    <div className="flex items-center gap-2 text-sm text-slate-300">
+                      <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span>{employer.location}</span>
+                    </div>
+                  )}
+                  {employer.website && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                      <a
+                        href={employer.website.startsWith("http") ? employer.website : `https://${employer.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-teal-400 hover:text-teal-300"
+                      >
+                        {employer.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                        <ArrowTopRightOnSquareIcon className="ml-1 inline h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <ClockIcon className="h-4 w-4 text-slate-500" />
+                    <span>Joined {formatDate(employer.createdAt)}</span>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {employer.description && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-200 mb-2">About</h4>
+                    <p className="text-sm text-slate-300 whitespace-pre-wrap">{employer.description}</p>
+                  </div>
+                )}
+
+                {/* Company Intro Video */}
+                {employer.companyIntroVideo && (
+                  <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <PlayCircleIcon className="h-5 w-5 text-purple-400" />
+                      <h4 className="text-sm font-semibold text-purple-300">Company Intro Video</h4>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      {employer.companyIntroVideo.title || "Video available"}
+                    </p>
+                    {employer.companyIntroVideo.videoUrl && (
+                      <a
+                        href={employer.companyIntroVideo.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300"
+                      >
+                        Watch video <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Interviews */}
+                {employer.interviews && employer.interviews.length > 0 && (
+                  <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <VideoCameraIcon className="h-5 w-5 text-teal-400" />
+                      <h4 className="text-sm font-semibold text-teal-300">
+                        Interviews & Videos ({employer.interviews.length})
+                      </h4>
+                    </div>
+                    <ul className="space-y-1">
+                      {employer.interviews.map((interview, idx) => (
+                        <li key={idx} className="text-sm text-slate-300 flex items-center gap-2">
+                          <span className="text-slate-500">•</span>
+                          {interview.title || `Video ${idx + 1}`}
+                          {interview.isIOPPSInterview && (
+                            <span className="rounded bg-teal-500/20 px-1.5 py-0.5 text-xs text-teal-400">IOPPS</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Rejection reason if rejected */}
+                {status === "rejected" && employer.rejectionReason && (
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                    <h4 className="text-sm font-semibold text-red-300 mb-2">Rejection Reason</h4>
+                    <p className="text-sm text-red-200">{employer.rejectionReason}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer with Actions */}
+              <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-700 bg-slate-900 p-6">
+                {status === "pending" && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setPreviewModalId(null);
+                        handleApprove(employer.id, employer.organizationName);
+                      }}
+                      disabled={!!processingId}
+                      className="flex items-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <CheckCircleIcon className="h-4 w-4" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPreviewModalId(null);
+                        handleReject(employer.id, employer.organizationName);
+                      }}
+                      disabled={!!processingId}
+                      className="flex items-center gap-2 rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <XCircleIcon className="h-4 w-4" />
+                      Reject
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setPreviewModalId(null)}
+                  className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Toast Notification */}
       {toastMessage && (
