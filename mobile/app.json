@@ -30,7 +30,11 @@
       "package": "ca.iopps.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "plugins": [
       [
@@ -53,8 +57,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "iopps-mobile"
+        "projectId": "eb1e721b-1215-4155-8f49-96f7e361953a"
       }
-    }
+    },
+    "owner": "wingchucks"
   }
 }
