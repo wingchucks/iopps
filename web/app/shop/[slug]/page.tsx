@@ -9,9 +9,12 @@ import {
   CheckBadgeIcon,
   ArrowLeftIcon,
   TruckIcon,
+  ExclamationTriangleIcon,
+  ClockIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
-import { getVendorBySlug, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
+import { getVendorBySlug, getVendorBySlugAnyStatus, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct } from '@/lib/types';
 
 // Social icons
@@ -41,24 +44,81 @@ function TikTokIcon({ className }: { className?: string }) {
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }
 
-async function VendorPage({ params }: Props) {
+// Status banner component for non-active vendors
+function StatusBanner({ status }: { status: string }) {
+  if (status === 'active') return null;
+
+  const statusConfig = {
+    draft: {
+      icon: EyeIcon,
+      bgColor: 'bg-amber-500/10 border-amber-500/30',
+      textColor: 'text-amber-400',
+      title: 'Preview Mode - Draft Listing',
+      message: 'This listing is not yet published. Only you can see this preview.',
+    },
+    pending: {
+      icon: ClockIcon,
+      bgColor: 'bg-blue-500/10 border-blue-500/30',
+      textColor: 'text-blue-400',
+      title: 'Preview Mode - Pending Approval',
+      message: 'This listing is awaiting admin approval before it becomes visible to the public.',
+    },
+    suspended: {
+      icon: ExclamationTriangleIcon,
+      bgColor: 'bg-red-500/10 border-red-500/30',
+      textColor: 'text-red-400',
+      title: 'Listing Suspended',
+      message: 'This listing has been suspended. Please contact support for more information.',
+    },
+  };
+
+  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
+  const Icon = config.icon;
+
+  return (
+    <div className={`mb-6 rounded-xl border ${config.bgColor} p-4`}>
+      <div className="flex items-start gap-3">
+        <Icon className={`h-6 w-6 flex-shrink-0 ${config.textColor}`} />
+        <div>
+          <h3 className={`font-semibold ${config.textColor}`}>{config.title}</h3>
+          <p className="mt-1 text-sm text-slate-400">{config.message}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function VendorPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const vendor = await getVendorBySlug(slug);
+  const { preview } = await searchParams;
+  const isPreviewMode = preview === 'true';
+
+  // If preview mode, get vendor regardless of status
+  // Otherwise, only get active vendors
+  const vendor = isPreviewMode
+    ? await getVendorBySlugAnyStatus(slug)
+    : await getVendorBySlug(slug);
 
   if (!vendor) {
     notFound();
   }
 
-  // Increment view count (fire and forget)
-  incrementVendorViews(vendor.id).catch(() => {});
+  // Only increment view count for active vendors (not previews)
+  if (vendor.status === 'active') {
+    incrementVendorViews(vendor.id).catch(() => {});
+  }
 
   // Get vendor products
   const products = await getVendorProducts(vendor.id);
 
   return (
     <PageShell className="pb-24">
+      {/* Status Banner for non-active vendors */}
+      <StatusBanner status={vendor.status} />
+
       {/* Back Link */}
       <Link
         href="/shop"

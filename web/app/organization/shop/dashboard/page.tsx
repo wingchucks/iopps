@@ -256,17 +256,19 @@ export default function VendorDashboard() {
                     Publish
                   </button>
                 )}
-                {vendor.status === 'active' && (
-                  <Link
-                    href={`/shop/${vendor.slug}`}
-                    target="_blank"
-                    className="flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600 transition-colors"
-                  >
-                    <EyeIcon className="h-4 w-4" />
-                    View Listing
-                    <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-                  </Link>
-                )}
+                {/* View/Preview Listing button - always available */}
+                <Link
+                  href={vendor.status === 'active'
+                    ? `/shop/${vendor.slug}`
+                    : `/shop/${vendor.slug}?preview=true`
+                  }
+                  target="_blank"
+                  className="flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600 transition-colors"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                  {vendor.status === 'active' ? 'View Listing' : 'Preview Listing'}
+                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                </Link>
               </div>
             </div>
           </div>

@@ -94,6 +94,26 @@ export async function getVendorBySlug(slug: string): Promise<Vendor | null> {
   return { id: doc.id, ...doc.data() } as Vendor;
 }
 
+/**
+ * Get vendor by slug regardless of status (for preview mode)
+ * Used when vendor owners want to preview their listing before it's active
+ */
+export async function getVendorBySlugAnyStatus(slug: string): Promise<Vendor | null> {
+  if (!db) return null;
+
+  const q = query(
+    collection(db, VENDORS_COLLECTION),
+    where('slug', '==', slug),
+    limit(1)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() } as Vendor;
+}
+
 export async function getVendorByUserId(userId: string): Promise<Vendor | null> {
   if (!db) return null;
 
