@@ -88,33 +88,19 @@ service firebase.storage {
     }
     
     // ===========================================================================
-    // VENDOR/SHOP IMAGES
+    // VENDOR/SHOP IMAGES (profile, cover, gallery, verification)
+    // Path: vendors/{imageType}/{vendorId}/{fileName}
     // ===========================================================================
-    match /vendors/{vendorId}/images/{fileName} {
+    match /vendors/{imageType}/{vendorId}/{fileName} {
       // Public read for shop images
       allow read: if true;
 
-      // Vendors can upload shop images
-      // Max 5MB per image, must be image
+      // Vendors can upload their own images
+      // Max 10MB per image, must be image
       allow write: if isSignedIn()
                    && request.auth.uid == vendorId
                    && isImage()
-                   && isValidSize(5);
-    }
-
-    // ===========================================================================
-    // VENDOR PRODUCT IMAGES
-    // ===========================================================================
-    match /vendors/{vendorId}/products/{fileName} {
-      // Public read for product images
-      allow read: if true;
-
-      // Vendors can upload product images
-      // Max 5MB per image, must be image
-      allow write: if isSignedIn()
-                   && request.auth.uid == vendorId
-                   && isImage()
-                   && isValidSize(5);
+                   && isValidSize(10);
     }
     
     // ===========================================================================
