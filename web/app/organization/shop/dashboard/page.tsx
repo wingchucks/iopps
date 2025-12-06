@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -1082,6 +1082,7 @@ function ProductModal({
   onSave: (data: Omit<VendorProduct, 'id' | 'vendorId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   onClose: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
@@ -1172,22 +1173,28 @@ function ProductModal({
                   <PhotoIcon className="h-8 w-8 text-slate-600" />
                 </div>
               )}
-              <label className="cursor-pointer">
+              <div>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
+                  className="sr-only"
                   onChange={handleImageUpload}
                   disabled={uploadingImage}
                 />
-                <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  uploadingImage
-                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                    : 'bg-slate-700 text-white hover:bg-slate-600'
-                }`}>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                    uploadingImage
+                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      : 'bg-slate-700 text-white hover:bg-slate-600'
+                  }`}
+                >
                   {uploadingImage ? 'Uploading...' : formData.imageUrl ? 'Change Image' : 'Upload Image'}
-                </span>
-              </label>
+                </button>
+              </div>
             </div>
           </div>
 
