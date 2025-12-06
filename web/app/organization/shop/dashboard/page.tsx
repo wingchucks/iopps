@@ -1178,13 +1178,15 @@ function ProductModal({
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  className="sr-only"
+                  style={{ display: 'none' }}
                   onChange={handleImageUpload}
-                  disabled={uploadingImage}
                 />
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    console.log('Upload button clicked, fileInputRef:', fileInputRef.current);
+                    fileInputRef.current?.click();
+                  }}
                   disabled={uploadingImage}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     uploadingImage
