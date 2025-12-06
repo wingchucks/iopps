@@ -1183,10 +1183,7 @@ function ProductModal({
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    console.log('Upload button clicked, fileInputRef:', fileInputRef.current);
-                    fileInputRef.current?.click();
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     uploadingImage
