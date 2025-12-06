@@ -67,6 +67,7 @@ export default function VendorDashboard() {
   // Product modal state
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<VendorProduct | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<VendorProduct | null>(null);
 
   const loadVendor = useCallback(async () => {
     if (!user) return;
@@ -282,30 +283,15 @@ export default function VendorDashboard() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {vendor.status === 'draft' && (
-                  <button
-                    onClick={handlePublish}
-                    disabled={saving}
-                    className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
-                  >
-                    Publish
-                  </button>
-                )}
-                {/* View/Preview Listing button - always available */}
-                <Link
-                  href={vendor.status === 'active'
-                    ? `/shop/${vendor.slug}`
-                    : `/shop/${vendor.slug}?preview=true`
-                  }
-                  target="_blank"
-                  className="flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600 transition-colors"
+              {vendor.status === 'draft' && (
+                <button
+                  onClick={handlePublish}
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
                 >
-                  <EyeIcon className="h-4 w-4" />
-                  {vendor.status === 'active' ? 'View Listing' : 'Preview Listing'}
-                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-                </Link>
-              </div>
+                  Publish
+                </button>
+              )}
             </div>
           </div>
 
@@ -825,9 +811,10 @@ export default function VendorDashboard() {
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group"
+                  onClick={() => setPreviewProduct(product)}
+                  className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group cursor-pointer hover:border-teal-500/50 transition-colors"
                 >
-                  {product.imageUrl && (
+                  {product.imageUrl ? (
                     <div className="relative h-40">
                       <Image
                         src={product.imageUrl}
@@ -836,13 +823,28 @@ export default function VendorDashboard() {
                         className="object-cover"
                       />
                     </div>
+                  ) : (
+                    <div className="h-40 bg-slate-700/50 flex items-center justify-center">
+                      <PhotoIcon className="h-12 w-12 text-slate-600" />
+                    </div>
                   )}
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <h4 className="font-semibold text-white">{product.name}</h4>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewProduct(product);
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-teal-500/20 text-slate-300 hover:text-teal-400 transition-colors"
+                          title="Preview product"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditingProduct(product);
                             setShowProductModal(true);
                           }}
@@ -852,7 +854,10 @@ export default function VendorDashboard() {
                           <PencilSquareIcon className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteProduct(product.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProduct(product.id);
+                          }}
                           className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
                           title="Delete product"
                         >
@@ -864,6 +869,7 @@ export default function VendorDashboard() {
                     {product.priceDisplay && (
                       <p className="mt-2 text-teal-400 font-semibold">{product.priceDisplay}</p>
                     )}
+                    <p className="mt-2 text-xs text-slate-500">Click to preview</p>
                   </div>
                 </div>
               ))}
@@ -886,6 +892,20 @@ export default function VendorDashboard() {
           onClose={() => {
             setShowProductModal(false);
             setEditingProduct(null);
+          }}
+        />
+      )}
+
+      {/* Product Preview Modal */}
+      {previewProduct && vendor && (
+        <ProductPreviewModal
+          product={previewProduct}
+          vendor={vendor}
+          onClose={() => setPreviewProduct(null)}
+          onEdit={() => {
+            setEditingProduct(previewProduct);
+            setPreviewProduct(null);
+            setShowProductModal(true);
           }}
         />
       )}
@@ -1305,6 +1325,150 @@ function ProductModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Product Preview Modal - Shows how product looks to customers
+function ProductPreviewModal({
+  product,
+  vendor,
+  onClose,
+  onEdit,
+}: {
+  product: VendorProduct;
+  vendor: Vendor;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 shadow-xl my-8 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
+          <div className="flex items-center gap-2">
+            <EyeIcon className="h-5 w-5 text-teal-400" />
+            <span className="text-sm font-medium text-slate-300">Customer View Preview</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Product Preview - Customer View */}
+        <div className="bg-gradient-to-b from-slate-800 to-slate-900">
+          {/* Product Image */}
+          {product.imageUrl ? (
+            <div className="relative w-full aspect-square max-h-80">
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                className="object-contain bg-slate-950"
+              />
+            </div>
+          ) : (
+            <div className="w-full aspect-video max-h-60 bg-slate-800 flex items-center justify-center">
+              <PhotoIcon className="h-20 w-20 text-slate-600" />
+            </div>
+          )}
+
+          {/* Product Details */}
+          <div className="p-6 space-y-4">
+            {/* Title & Price */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">{product.name}</h2>
+                {product.category && (
+                  <span className="inline-block mt-2 text-sm text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full">
+                    {product.category}
+                  </span>
+                )}
+              </div>
+              {product.priceDisplay && (
+                <p className="text-2xl font-bold text-teal-400">{product.priceDisplay}</p>
+              )}
+            </div>
+
+            {/* Description */}
+            <p className="text-slate-300 leading-relaxed">{product.description}</p>
+
+            {/* Status Badges */}
+            <div className="flex flex-wrap gap-2">
+              {product.inStock && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                  <CheckCircleIcon className="h-3.5 w-3.5" />
+                  In Stock
+                </span>
+              )}
+              {product.madeToOrder && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full">
+                  <ClockIcon className="h-3.5 w-3.5" />
+                  Made to Order
+                </span>
+              )}
+              {product.featured && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-full">
+                  <SparklesIcon className="h-3.5 w-3.5" />
+                  Featured
+                </span>
+              )}
+            </div>
+
+            {/* Seller Info */}
+            <div className="pt-4 border-t border-slate-700">
+              <div className="flex items-center gap-3">
+                {vendor.logoUrl ? (
+                  <Image
+                    src={vendor.logoUrl}
+                    alt={vendor.businessName}
+                    width={40}
+                    height={40}
+                    className="rounded-lg"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 text-lg font-bold text-white">
+                    {vendor.businessName.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-white">{vendor.businessName}</p>
+                  <p className="text-sm text-slate-400">
+                    {typeof vendor.location === 'string' && vendor.location}
+                    {typeof vendor.location === 'string' && typeof vendor.region === 'string' && ', '}
+                    {typeof vendor.region === 'string' && vendor.region}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-between gap-4 p-4 border-t border-slate-700 bg-slate-800/50">
+          <p className="text-xs text-slate-500 self-center">
+            This is how customers will see your product
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-slate-300 hover:text-white transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-500 text-white font-medium hover:bg-teal-600 transition-colors"
+            >
+              <PencilSquareIcon className="h-4 w-4" />
+              Edit Product
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
