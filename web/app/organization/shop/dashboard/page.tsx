@@ -360,6 +360,130 @@ export default function VendorDashboard() {
               </div>
             </div>
           )}
+
+          {/* Listing Preview */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Your Listing Preview</h3>
+              <span className="text-xs text-slate-500">This is how customers see your shop</span>
+            </div>
+            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 overflow-hidden">
+              {/* Cover/Header area */}
+              <div className="h-32 bg-gradient-to-br from-teal-600/30 to-emerald-600/30 relative">
+                {vendor.logoUrl && (
+                  <div className="absolute -bottom-8 left-6">
+                    <Image
+                      src={vendor.logoUrl}
+                      alt={vendor.businessName}
+                      width={80}
+                      height={80}
+                      className="rounded-xl border-4 border-slate-800 object-cover"
+                    />
+                  </div>
+                )}
+                {!vendor.logoUrl && (
+                  <div className="absolute -bottom-8 left-6 flex h-20 w-20 items-center justify-center rounded-xl border-4 border-slate-800 bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
+                    {vendor.businessName.charAt(0)}
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="pt-12 px-6 pb-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="text-xl font-bold text-white">{vendor.businessName}</h4>
+                    {vendor.tagline && (
+                      <p className="text-slate-400 mt-1">{vendor.tagline}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-3 py-1 text-teal-400">
+                        {vendor.category}
+                      </span>
+                      {vendor.location && (
+                        <span>📍 {vendor.location}, {vendor.region}</span>
+                      )}
+                      {!vendor.location && vendor.region && (
+                        <span>📍 {vendor.region}</span>
+                      )}
+                      {vendor.nation && (
+                        <span>🪶 {vendor.nation}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                  >
+                    <PencilSquareIcon className="h-4 w-4" />
+                    Edit
+                  </button>
+                </div>
+
+                {/* Description preview */}
+                {vendor.description && (
+                  <div className="mt-4 pt-4 border-t border-slate-700">
+                    <p className="text-slate-300 text-sm line-clamp-3">{vendor.description}</p>
+                  </div>
+                )}
+
+                {/* Products preview */}
+                {products.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-slate-400">Products ({products.length})</span>
+                      <button
+                        onClick={() => setActiveTab('products')}
+                        className="text-xs text-teal-400 hover:text-teal-300"
+                      >
+                        Manage →
+                      </button>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {products.slice(0, 4).map((product) => (
+                        <div key={product.id} className="flex-shrink-0 w-20">
+                          {product.imageUrl ? (
+                            <Image
+                              src={product.imageUrl}
+                              alt={product.name}
+                              width={80}
+                              height={80}
+                              className="rounded-lg object-cover w-20 h-20"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 rounded-lg bg-slate-700 flex items-center justify-center">
+                              <PhotoIcon className="h-6 w-6 text-slate-500" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {products.length > 4 && (
+                        <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-700/50 flex items-center justify-center text-slate-400 text-sm">
+                          +{products.length - 4}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact preview */}
+                <div className="mt-4 pt-4 border-t border-slate-700 flex flex-wrap gap-3">
+                  {vendor.email && (
+                    <span className="text-xs text-slate-500">✉️ {vendor.email}</span>
+                  )}
+                  {vendor.phone && (
+                    <span className="text-xs text-slate-500">📞 {vendor.phone}</span>
+                  )}
+                  {vendor.website && (
+                    <span className="text-xs text-slate-500">🌐 Website</span>
+                  )}
+                  {(vendor.instagram || vendor.facebook || vendor.tiktok) && (
+                    <span className="text-xs text-slate-500">📱 Social</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
