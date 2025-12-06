@@ -17,13 +17,15 @@ import {
   ClockIcon,
   CreditCardIcon,
   SparklesIcon,
+  TrashIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { VENDOR_PRODUCTS, type VendorProductType } from '@/lib/stripe';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
-import { getVendorByUserId, createVendor, updateVendor, getVendorProducts } from '@/lib/firebase/shop';
-import { uploadProfileImage } from '@/lib/firebase/storage';
+import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
+import { uploadProfileImage, uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
@@ -61,6 +63,10 @@ export default function VendorDashboard() {
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Product modal state
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<VendorProduct | null>(null);
 
   const loadVendor = useCallback(async () => {
     if (!user) return;
@@ -151,6 +157,36 @@ export default function VendorDashboard() {
       console.error('Error publishing:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveProduct = async (productData: Omit<VendorProduct, 'id' | 'vendorId' | 'createdAt' | 'updatedAt'>) => {
+    if (!vendor) return;
+
+    try {
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, productData);
+      } else {
+        await createProduct(vendor.id, productData);
+      }
+      await loadVendor();
+      setShowProductModal(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Failed to save product. Please try again.');
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      await deleteProduct(productId);
+      await loadVendor();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Failed to delete product. Please try again.');
     }
   };
 
@@ -640,7 +676,13 @@ export default function VendorDashboard() {
               <h3 className="text-lg font-semibold text-white">Products & Services</h3>
               <p className="text-sm text-slate-400">Add products or services to showcase on your profile.</p>
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors">
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setShowProductModal(true);
+              }}
+              className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+            >
               <PlusIcon className="h-4 w-4" />
               Add Product
             </button>
@@ -659,7 +701,7 @@ export default function VendorDashboard() {
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden"
+                  className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group"
                 >
                   {product.imageUrl && (
                     <div className="relative h-40">
@@ -672,7 +714,28 @@ export default function VendorDashboard() {
                     </div>
                   )}
                   <div className="p-4">
-                    <h4 className="font-semibold text-white">{product.name}</h4>
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="font-semibold text-white">{product.name}</h4>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setShowProductModal(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                          title="Edit product"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
+                          title="Delete product"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
                     <p className="text-sm text-slate-400 mt-1 line-clamp-2">{product.description}</p>
                     {product.priceDisplay && (
                       <p className="mt-2 text-teal-400 font-semibold">{product.priceDisplay}</p>
@@ -688,6 +751,19 @@ export default function VendorDashboard() {
       {/* Subscription Tab */}
       {activeTab === 'subscription' && vendor && (
         <SubscriptionTab vendor={vendor} onRefresh={loadVendor} />
+      )}
+
+      {/* Product Modal */}
+      {showProductModal && vendor && (
+        <ProductModal
+          vendorId={vendor.id}
+          product={editingProduct}
+          onSave={handleSaveProduct}
+          onClose={() => {
+            setShowProductModal(false);
+            setEditingProduct(null);
+          }}
+        />
       )}
     </PageShell>
   );
@@ -865,6 +941,240 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
       {/* Payment Security */}
       <div className="text-center text-sm text-slate-500">
         <p>Secure payments powered by Stripe. Cancel anytime.</p>
+      </div>
+    </div>
+  );
+}
+
+// Product Modal Component
+function ProductModal({
+  vendorId,
+  product,
+  onSave,
+  onClose,
+}: {
+  vendorId: string;
+  product: VendorProduct | null;
+  onSave: (data: Omit<VendorProduct, 'id' | 'vendorId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [formData, setFormData] = useState({
+    name: product?.name || '',
+    description: product?.description || '',
+    category: product?.category || '',
+    priceDisplay: product?.priceDisplay || '',
+    imageUrl: product?.imageUrl || '',
+    inStock: product?.inStock ?? true,
+    madeToOrder: product?.madeToOrder ?? false,
+    featured: product?.featured ?? false,
+    sortOrder: product?.sortOrder ?? 0,
+    active: product?.active ?? true,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.description) {
+      alert('Please fill in the required fields.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const result = await uploadGalleryImage(file, vendorId);
+      setFormData({ ...formData, imageUrl: result.url });
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl my-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-white">
+            {product ? 'Edit Product' : 'Add Product'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Product Image
+            </label>
+            <div className="flex items-center gap-4">
+              {formData.imageUrl ? (
+                <div className="relative">
+                  <Image
+                    src={formData.imageUrl}
+                    alt="Product"
+                    width={100}
+                    height={100}
+                    className="rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                    className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                  >
+                    <span className="text-xs">×</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-slate-800 border border-slate-700">
+                  <PhotoIcon className="h-8 w-8 text-slate-600" />
+                </div>
+              )}
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                />
+                <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  uploadingImage
+                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    : 'bg-slate-700 text-white hover:bg-slate-600'
+                }`}>
+                  {uploadingImage ? 'Uploading...' : formData.imageUrl ? 'Change Image' : 'Upload Image'}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Product Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+              placeholder="e.g., Handcrafted Beaded Earrings"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Description *
+            </label>
+            <textarea
+              required
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+              placeholder="Describe your product..."
+            />
+          </div>
+
+          {/* Category & Price */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Category
+              </label>
+              <input
+                type="text"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                placeholder="e.g., Jewelry, Art, Clothing"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Price Display
+              </label>
+              <input
+                type="text"
+                value={formData.priceDisplay}
+                onChange={(e) => setFormData({ ...formData, priceDisplay: e.target.value })}
+                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                placeholder="e.g., $50, From $25, Contact for pricing"
+              />
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className="flex flex-wrap gap-6">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.inStock}
+                onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
+                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+              />
+              <span className="text-slate-300">In Stock</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.madeToOrder}
+                onChange={(e) => setFormData({ ...formData, madeToOrder: e.target.checked })}
+                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+              />
+              <span className="text-slate-300">Made to Order</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.featured}
+                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+              />
+              <span className="text-slate-300">Featured</span>
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-4 pt-4 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-6 py-3 rounded-lg text-slate-300 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || uploadingImage}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-semibold shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : product ? 'Save Changes' : 'Add Product'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
