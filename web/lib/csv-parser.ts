@@ -62,7 +62,7 @@ export function parseJobCSV(csvContent: string): ParsedJob[] {
         if (!job.description) errors.push("Missing Description");
 
         // Metadata
-        job.parsedErrors = errors;
+        job.errors = errors;
 
         return job;
     }).filter(x => x !== null) as ParsedJob[];
