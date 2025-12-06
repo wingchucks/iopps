@@ -278,7 +278,7 @@ export default function VendorDashboard() {
                       <StatusIcon className="h-3.5 w-3.5" />
                       {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
                     </span>
-                    <span className="text-sm text-slate-500">{vendor.category}</span>
+                    <span className="text-sm text-slate-500">{typeof vendor.category === 'string' ? vendor.category : ''}</span>
                   </div>
                 </div>
               </div>
@@ -393,20 +393,20 @@ export default function VendorDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h4 className="text-xl font-bold text-white">{vendor.businessName}</h4>
-                    {vendor.tagline && (
+                    {vendor.tagline && typeof vendor.tagline === 'string' && (
                       <p className="text-slate-400 mt-1">{vendor.tagline}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-400">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-3 py-1 text-teal-400">
-                        {vendor.category}
+                        {typeof vendor.category === 'string' ? vendor.category : 'Uncategorized'}
                       </span>
-                      {vendor.location && (
+                      {vendor.location && typeof vendor.location === 'string' && (
                         <span>📍 {vendor.location}{typeof vendor.region === 'string' ? `, ${vendor.region}` : ''}</span>
                       )}
                       {!vendor.location && vendor.region && typeof vendor.region === 'string' && (
                         <span>📍 {vendor.region}</span>
                       )}
-                      {vendor.nation && (
+                      {vendor.nation && typeof vendor.nation === 'string' && (
                         <span>🪶 {vendor.nation}</span>
                       )}
                     </div>
@@ -421,7 +421,7 @@ export default function VendorDashboard() {
                 </div>
 
                 {/* Description preview */}
-                {vendor.description && (
+                {vendor.description && typeof vendor.description === 'string' && (
                   <div className="mt-4 pt-4 border-t border-slate-700">
                     <p className="text-slate-300 text-sm line-clamp-3">{vendor.description}</p>
                   </div>
@@ -468,13 +468,13 @@ export default function VendorDashboard() {
 
                 {/* Contact preview */}
                 <div className="mt-4 pt-4 border-t border-slate-700 flex flex-wrap gap-3">
-                  {vendor.email && (
+                  {vendor.email && typeof vendor.email === 'string' && (
                     <span className="text-xs text-slate-500">✉️ {vendor.email}</span>
                   )}
-                  {vendor.phone && (
+                  {vendor.phone && typeof vendor.phone === 'string' && (
                     <span className="text-xs text-slate-500">📞 {vendor.phone}</span>
                   )}
-                  {vendor.website && (
+                  {vendor.website && typeof vendor.website === 'string' && (
                     <span className="text-xs text-slate-500">🌐 Website</span>
                   )}
                   {(vendor.instagram || vendor.facebook || vendor.tiktok) && (
