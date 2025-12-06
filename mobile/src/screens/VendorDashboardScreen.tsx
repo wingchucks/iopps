@@ -12,7 +12,7 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import {
   getVendorByUserId,
@@ -27,6 +27,7 @@ const WEB_DASHBOARD_URL = "https://iopps.ca/organization/shop/dashboard";
 type TabType = "overview" | "profile";
 
 export default function VendorDashboardScreen() {
+  const navigation = useNavigation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -316,7 +317,7 @@ export default function VendorDashboardScreen() {
               <TouchableOpacity
                 style={styles.actionCard}
                 onPress={() =>
-                  Linking.openURL(`https://iopps.ca/shop/${vendor.id}`)
+                  (navigation as any).navigate("VendorDetail", { vendorId: vendor.id })
                 }
               >
                 <Text style={styles.actionIcon}>👁️</Text>

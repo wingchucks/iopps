@@ -8,7 +8,7 @@ import { PageShell } from "@/components/PageShell";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
 import JobVideoSection from "@/components/jobs/JobVideoSection";
 import ShareButtons from "@/components/ShareButtons";
-import { getJobPosting, createJobApplication, getMemberProfile, getEmployerProfile } from "@/lib/firestore";
+import { getJobPosting, createJobApplication, getMemberProfile, getEmployerProfile, incrementJobViews } from "@/lib/firestore";
 import type { JobPosting, MemberProfile, EmployerProfile } from "@/lib/types";
 import QuickApplyButton from "@/components/QuickApplyButton";
 import JobHeader from "@/components/jobs/JobHeader";
@@ -77,6 +77,15 @@ export default function JobDetailPage() {
       }
     };
     loadJob();
+  }, [jobId]);
+
+  // Track View (Once per mount)
+  useEffect(() => {
+    if (jobId) {
+      // Simple distinct view check using session storage could be added here
+      // For now, just increment on load
+      incrementJobViews(jobId).catch(err => console.error("Failed to track view", err));
+    }
   }, [jobId]);
 
   // Load member profile for community members

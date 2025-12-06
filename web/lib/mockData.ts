@@ -119,3 +119,43 @@ export const MOCK_SCHOLARSHIPS: Scholarship[] = [
         createdAt: createTimestamp(now),
     }
 ];
+export const MOCK_MEMBERS: MemberProfile[] = [
+    {
+        id: "mock-member-1",
+        userId: "member-1",
+        displayName: "Jordan Smith",
+        email: "jordan.smith@example.com",
+        location: "Toronto, ON",
+        skills: ["React", "TypeScript", "Node.js", "Project Management"],
+        availableForInterviews: true,
+        resumeUrl: "https://example.com/resume.pdf",
+        createdAt: createTimestamp(new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000)),
+        updatedAt: createTimestamp(now),
+        role: "community"
+    },
+    {
+        id: "mock-member-2",
+        userId: "member-2",
+        displayName: "Sarah Johnson",
+        email: "sarah.j@example.com",
+        location: "Vancouver, BC",
+        skills: ["Graphic Design", "UI/UX", "Figma", "Branding"],
+        availableForInterviews: true,
+        resumeUrl: "https://example.com/portfolio",
+        createdAt: createTimestamp(new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000)),
+        updatedAt: createTimestamp(now),
+        role: "community"
+    },
+    {
+        id: "mock-member-3",
+        userId: "member-3",
+        displayName: "Mike Wilson",
+        email: "mike.w@example.com",
+        location: "Calgary, AB",
+        skills: ["Welding", "Construction Safety", "Team Leadership"],
+        availableForInterviews: false,
+        createdAt: createTimestamp(new Date(now.getTime() - 200 * 24 * 60 * 60 * 1000)),
+        updatedAt: createTimestamp(now),
+        role: "community"
+    }
+];

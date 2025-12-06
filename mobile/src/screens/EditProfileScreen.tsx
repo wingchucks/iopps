@@ -13,11 +13,11 @@ import {
   Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as DocumentPicker from "expo-document-picker";
+import DocumentUploader from "../components/documents/DocumentUploader";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile, updateUserProfile } from "../lib/firestore";
-import { uploadProfilePhoto, uploadResume } from "../lib/storage";
+import { uploadProfilePhoto } from "../lib/storage";
 import type { UserProfile } from "../types";
 import { logger } from "../lib/logger";
 
@@ -122,71 +122,21 @@ export default function EditProfileScreen() {
       { text: "Choose from Library", onPress: pickImage },
       ...(selectedImage
         ? [
-            {
-              text: "Remove Photo",
-              style: "destructive" as const,
-              onPress: () => {
-                setSelectedImage(null);
-                setImageChanged(true);
-              },
+          {
+            text: "Remove Photo",
+            style: "destructive" as const,
+            onPress: () => {
+              setSelectedImage(null);
+              setImageChanged(true);
             },
-          ]
+          },
+        ]
         : []),
       { text: "Cancel", style: "cancel" as const },
     ]);
   };
 
-  const pickResume = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-        copyToCacheDirectory: true,
-      });
 
-      if (!result.canceled && result.assets[0]) {
-        const file = result.assets[0];
-        if (!user) return;
-
-        setUploadProgress(0);
-        try {
-          const uploadResult = await uploadResume(
-            user.uid,
-            file.uri,
-            file.name,
-            (progress) => setUploadProgress(progress.progress)
-          );
-          setResumeUrl(uploadResult.downloadURL);
-          setResumeName(file.name);
-          Alert.alert("Success", "Resume uploaded successfully!");
-        } catch (error) {
-          logger.error("Error uploading resume:", error);
-          Alert.alert("Error", "Failed to upload resume. Please try again.");
-        } finally {
-          setUploadProgress(null);
-        }
-      }
-    } catch (error) {
-      logger.error("Error picking document:", error);
-    }
-  };
-
-  const removeResume = () => {
-    Alert.alert(
-      "Remove Resume",
-      "Are you sure you want to remove your resume?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => {
-            setResumeUrl(null);
-            setResumeName(null);
-          },
-        },
-      ]
-    );
-  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -362,24 +312,20 @@ export default function EditProfileScreen() {
         {/* Resume Upload */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Resume</Text>
-          {resumeUrl ? (
-            <View style={styles.resumeContainer}>
-              <View style={styles.resumeInfo}>
-                <Text style={styles.resumeIcon}>📄</Text>
-                <Text style={styles.resumeName} numberOfLines={1}>
-                  {resumeName || "Resume"}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.resumeRemove} onPress={removeResume}>
-                <Text style={styles.resumeRemoveText}>Remove</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.uploadButton} onPress={pickResume}>
-              <Text style={styles.uploadIcon}>📎</Text>
-              <Text style={styles.uploadText}>Upload Resume (PDF, DOC)</Text>
-            </TouchableOpacity>
-          )}
+          <DocumentUploader
+            userId={user.uid}
+            currentDocumentUrl={resumeUrl}
+            currentDocumentName={resumeName}
+            onUploadComplete={(url, name) => {
+              setResumeUrl(url);
+              setResumeName(name);
+            }}
+            onRemove={() => {
+              setResumeUrl(null);
+              setResumeName(null);
+            }}
+            label="Resume"
+          />
           <Text style={styles.fieldHint}>Your resume will be used for Quick Apply</Text>
         </View>
 
@@ -586,59 +532,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Resume
-  resumeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#1E293B",
-    borderWidth: 1,
-    borderColor: "#14B8A6",
-    borderRadius: 12,
-    padding: 14,
-  },
-  resumeInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  resumeIcon: {
-    fontSize: 20,
-    marginRight: 10,
-  },
-  resumeName: {
-    color: "#F8FAFC",
-    fontSize: 14,
-    flex: 1,
-  },
-  resumeRemove: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  resumeRemoveText: {
-    color: "#EF4444",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  uploadButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1E293B",
-    borderWidth: 1,
-    borderColor: "#334155",
-    borderRadius: 12,
-    padding: 14,
-    borderStyle: "dashed",
-  },
-  uploadIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  uploadText: {
-    color: "#94A3B8",
-    fontSize: 14,
-  },
+
+
 
   // Buttons
   buttonContainer: {

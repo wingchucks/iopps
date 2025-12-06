@@ -45,7 +45,7 @@ import type {
   CompanyVideo,
   JobVideo,
 } from "@/lib/types";
-import { MOCK_JOBS, MOCK_EMPLOYERS, MOCK_CONFERENCES, MOCK_SCHOLARSHIPS } from "./mockData";
+import { MOCK_JOBS, MOCK_EMPLOYERS, MOCK_CONFERENCES, MOCK_SCHOLARSHIPS, MOCK_MEMBERS } from "./mockData";
 
 // Type aliases for backwards compatibility with legacy code
 type VendorProfile = Vendor;
@@ -2684,3 +2684,44 @@ export async function deleteAllUserNotifications(
   await Promise.all(deletePromises);
 }
 
+
+export async function searchMembers(
+  filters: {
+    skills?: string[];
+    availableOnly?: boolean;
+    limit?: number;
+  } = {}
+): Promise<MemberProfile[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return MOCK_MEMBERS; // Return Mock Data
+
+    const ref = collection(firestore, memberCollection);
+    const constraints = [];
+
+    if (filters.availableOnly) {
+      constraints.push(where("availableForInterviews", "==", true));
+    }
+
+    // Firestore array-contains-any is useful for skills
+    if (filters.skills && filters.skills.length > 0) {
+      // Note: Firestore limits array-contains-any to 10 values
+      constraints.push(where("skills", "array-contains-any", filters.skills.slice(0, 10)));
+    }
+
+    // Default limit
+    constraints.push(limit(filters.limit || 20));
+
+    const q = query(ref, ...constraints);
+    const snap = await getDocs(q);
+
+    return snap.docs.map(doc => ({
+      ...doc.data(),
+      id: doc.id
+    } as MemberProfile));
+
+  } catch (error) {
+    console.error("Error searching members:", error);
+    return [];
+  }
+}
