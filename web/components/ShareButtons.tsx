@@ -49,13 +49,8 @@ export function generateOpenGraphMeta(meta: OpenGraphMeta): Record<string, strin
 /**
  * Track share events
  */
-function trackShareEvent(itemId: string, platform: string): void {
-  // TODO: Integrate with your analytics service
-  console.log('Share event tracked:', {
-    itemId,
-    platform,
-    timestamp: new Date().toISOString(),
-  });
+function trackShareEvent(_itemId: string, _platform: string): void {
+  // TODO: Integrate with analytics service (e.g., Google Analytics, Mixpanel)
 }
 
 /**

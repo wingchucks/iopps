@@ -5,8 +5,11 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  GoogleAuthProvider,
+  signInWithCredential,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { auth, db } from "../lib/firebase";
 import {
   registerForPushNotificationsAsync,
@@ -14,6 +17,10 @@ import {
   removePushToken,
 } from "../lib/notifications";
 import { authLogger } from "../lib/logger";
+import * as WebBrowser from "expo-web-browser";
+
+// Required for web browser auth sessions to complete properly
+WebBrowser.maybeCompleteAuthSession();
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +29,7 @@ interface AuthContextType {
   expoPushToken: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (idToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   registerPushNotifications: () => Promise<boolean>;
 }
@@ -33,6 +41,7 @@ const AuthContext = createContext<AuthContextType>({
   expoPushToken: null,
   signIn: async () => {},
   signUp: async () => {},
+  signInWithGoogle: async () => {},
   signOut: async () => {},
   registerPushNotifications: async () => false,
 });
@@ -122,6 +131,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await createUserWithEmailAndPassword(auth, email, password);
   };
 
+  const signInWithGoogle = async (idToken: string) => {
+    const credential = GoogleAuthProvider.credential(idToken);
+    await signInWithCredential(auth, credential);
+  };
+
   const signOut = async () => {
     // Remove push token before signing out
     if (user) {
@@ -130,6 +144,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         authLogger.error("Error removing push token on sign out", error);
       }
+    }
+    // Sign out from Google to allow choosing a different account next time
+    try {
+      await GoogleSignin.signOut();
+    } catch (error) {
+      // Ignore errors - user may not have signed in with Google
+      authLogger.debug("Google sign out skipped (not signed in via Google)");
     }
     await firebaseSignOut(auth);
   };
@@ -143,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         expoPushToken,
         signIn,
         signUp,
+        signInWithGoogle,
         signOut,
         registerPushNotifications,
       }}

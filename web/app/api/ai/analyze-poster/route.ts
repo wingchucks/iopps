@@ -82,10 +82,11 @@ export async function POST(request: NextRequest) {
       success: true,
       result,
     });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to analyze poster";
     console.error("Poster analysis error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to analyze poster" },
+      { error: message },
       { status: 500 }
     );
   }

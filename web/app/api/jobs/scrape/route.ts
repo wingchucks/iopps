@@ -140,9 +140,10 @@ export async function POST(request: NextRequest) {
                 await jobRef.update({ id: jobRef.id });
 
                 newJobs.push({ id: jobRef.id, title: jobData.title });
-            } catch (itemError: any) {
+            } catch (itemError) {
                 const jobTitle = jobXML.title?.[0] || "Unknown";
-                errors.push(`Error processing "${jobTitle}": ${itemError.message}`);
+                const itemErrorMessage = itemError instanceof Error ? itemError.message : String(itemError);
+                errors.push(`Error processing "${jobTitle}": ${itemErrorMessage}`);
             }
         }
 
@@ -164,10 +165,11 @@ export async function POST(request: NextRequest) {
             errors: errors,
             importedJobs: newJobs,
         });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to scrape feed";
         console.error("Error scraping feed:", error);
         return NextResponse.json(
-            { error: error.message || "Failed to scrape feed" },
+            { error: message },
             { status: 500 }
         );
     }

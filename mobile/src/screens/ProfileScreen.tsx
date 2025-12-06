@@ -7,12 +7,16 @@ import {
   ScrollView,
   Alert,
   Image,
+  Linking,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile } from "../lib/firestore";
 import type { UserProfile } from "../types";
 import { logger } from "../lib/logger";
+
+const PRIVACY_POLICY_URL = "https://iopps.ca/privacy";
+const HELP_SUPPORT_URL = "https://iopps.ca/contact";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -108,6 +112,45 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Role-based Dashboard Access */}
+      {(role === "employer" || role === "admin") && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Employer Dashboard</Text>
+          <TouchableOpacity
+            style={styles.dashboardCard}
+            onPress={() => (navigation as any).navigate("EmployerDashboard")}
+          >
+            <View style={styles.dashboardCardContent}>
+              <Text style={styles.dashboardIcon}>🏢</Text>
+              <View style={styles.dashboardTextContainer}>
+                <Text style={styles.dashboardTitle}>Employer Dashboard</Text>
+                <Text style={styles.dashboardSubtitle}>Manage jobs, applications & more</Text>
+              </View>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {(role === "vendor" || role === "admin") && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Vendor Dashboard</Text>
+          <TouchableOpacity
+            style={styles.dashboardCard}
+            onPress={() => (navigation as any).navigate("VendorDashboard")}
+          >
+            <View style={styles.dashboardCardContent}>
+              <Text style={styles.dashboardIcon}>🛍️</Text>
+              <View style={styles.dashboardTextContainer}>
+                <Text style={styles.dashboardTitle}>Vendor Dashboard</Text>
+                <Text style={styles.dashboardSubtitle}>Manage your shop profile</Text>
+              </View>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
 
@@ -160,13 +203,19 @@ export default function ProfileScreen() {
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+        >
           <Text style={styles.menuItemIcon}>🔒</Text>
-          <Text style={styles.menuItemText}>Privacy</Text>
+          <Text style={styles.menuItemText}>Privacy Policy</Text>
           <Text style={styles.menuArrow}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => Linking.openURL(HELP_SUPPORT_URL)}
+        >
           <Text style={styles.menuItemIcon}>❓</Text>
           <Text style={styles.menuItemText}>Help & Support</Text>
           <Text style={styles.menuArrow}>›</Text>
@@ -332,6 +381,37 @@ const styles = StyleSheet.create({
   menuArrow: {
     fontSize: 20,
     color: "#64748B",
+  },
+  dashboardCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#14B8A620",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#14B8A640",
+  },
+  dashboardCardContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dashboardIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  dashboardTextContainer: {
+    flex: 1,
+  },
+  dashboardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#F8FAFC",
+    marginBottom: 2,
+  },
+  dashboardSubtitle: {
+    fontSize: 13,
+    color: "#94A3B8",
   },
   signOutButton: {
     backgroundColor: "#EF4444",

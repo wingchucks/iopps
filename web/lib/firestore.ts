@@ -92,6 +92,7 @@ const memberCollection = "memberProfiles";
 const jobsCollection = "jobs";
 const applicationsCollection = "applications";
 const savedJobsCollection = "savedJobs";
+const savedConferencesCollection = "savedConferences";
 const jobAlertsCollection = "jobAlerts";
 const conferencesCollection = "conferences";
 const scholarshipsCollection = "scholarships";
@@ -193,10 +194,8 @@ export async function listEmployers(status?: EmployerStatus): Promise<EmployerPr
   try {
     const firestore = checkFirebase();
     if (!firestore) {
-      console.log("[listEmployers] Using mock data");
       return MOCK_EMPLOYERS;
     }
-    console.log("[listEmployers] Firestore initialized:", !!firestore);
     const ref = collection(firestore, employerCollection);
     let q;
 
@@ -499,7 +498,6 @@ export async function listJobPostings(
   try {
     const firestore = checkFirebase();
     if (!firestore) {
-      console.log("[listJobPostings] Using mock data");
       let jobs = [...MOCK_JOBS];
 
       // Apply simple in-memory filtering for mock data
@@ -869,6 +867,78 @@ export async function listSavedJobIds(memberId: string): Promise<string[]> {
   return snap.docs.map((docSnap) => {
     const data = docSnap.data() as SavedJob;
     return data.jobId;
+  });
+}
+
+// ===============================================
+// Saved Conferences functions
+// ===============================================
+
+export type SavedConference = {
+  id?: string;
+  memberId: string;
+  conferenceId: string;
+  createdAt?: any;
+  conference?: Conference | null;
+};
+
+export async function toggleSavedConference(
+  memberId: string,
+  conferenceId: string,
+  shouldSave: boolean
+) {
+  const snapshot = await getDocs(
+    query(
+      collection(db!, savedConferencesCollection),
+      where("memberId", "==", memberId),
+      where("conferenceId", "==", conferenceId)
+    )
+  );
+
+  if (shouldSave) {
+    if (snapshot.empty) {
+      await addDoc(collection(db!, savedConferencesCollection), {
+        memberId,
+        conferenceId,
+        createdAt: serverTimestamp(),
+      });
+    }
+  } else {
+    await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+  }
+}
+
+export async function listSavedConferences(
+  memberId: string
+): Promise<SavedConference[]> {
+  const ref = collection(db!, savedConferencesCollection);
+  const q = query(
+    ref,
+    where("memberId", "==", memberId),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+
+  const results: SavedConference[] = [];
+  for (const docSnap of snap.docs) {
+    const data = docSnap.data() as SavedConference;
+    const conference = await getConference(data.conferenceId);
+    results.push({
+      ...data,
+      id: docSnap.id,
+      conference,
+    });
+  }
+  return results;
+}
+
+export async function listSavedConferenceIds(memberId: string): Promise<string[]> {
+  const ref = collection(db!, savedConferencesCollection);
+  const q = query(ref, where("memberId", "==", memberId));
+  const snap = await getDocs(q);
+  return snap.docs.map((docSnap) => {
+    const data = docSnap.data() as SavedConference;
+    return data.conferenceId;
   });
 }
 

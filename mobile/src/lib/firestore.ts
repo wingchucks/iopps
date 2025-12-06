@@ -471,3 +471,189 @@ export async function createUserProfile(
     updatedAt: serverTimestamp(),
   });
 }
+
+// ============ EMPLOYER DASHBOARD ============
+
+export async function getEmployerProfile(employerId: string): Promise<any | null> {
+  const docSnap = await getDoc(doc(db, "employers", employerId));
+  if (!docSnap.exists()) return null;
+  return { id: docSnap.id, ...docSnap.data() };
+}
+
+export async function getEmployerJobs(employerId: string): Promise<JobPosting[]> {
+  const q = query(
+    collection(db, "jobs"),
+    where("employerId", "==", employerId),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as JobPosting[];
+}
+
+export async function getEmployerApplications(employerId: string): Promise<JobApplication[]> {
+  const q = query(
+    collection(db, "applications"),
+    where("employerId", "==", employerId),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  const applications: JobApplication[] = [];
+
+  for (const docSnap of snapshot.docs) {
+    const data = docSnap.data();
+    const application: JobApplication = {
+      id: docSnap.id,
+      jobId: data.jobId,
+      employerId: data.employerId,
+      memberId: data.memberId,
+      memberEmail: data.memberEmail,
+      memberDisplayName: data.memberDisplayName,
+      status: data.status,
+      resumeUrl: data.resumeUrl,
+      coverLetter: data.coverLetter,
+      note: data.note,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    };
+
+    // Fetch job details for display
+    try {
+      const jobDoc = await getDoc(doc(db, "jobs", data.jobId));
+      if (jobDoc.exists()) {
+        const jobData = jobDoc.data();
+        application.jobTitle = jobData.title;
+        application.jobEmployerName = jobData.employerName;
+        application.jobLocation = jobData.location;
+      }
+    } catch (err) {
+      apiLogger.error("Error fetching job for employer application", err);
+    }
+
+    applications.push(application);
+  }
+
+  return applications;
+}
+
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: JobApplication["status"],
+  note?: string
+): Promise<void> {
+  const updates: any = {
+    status,
+    updatedAt: serverTimestamp(),
+  };
+  if (note !== undefined) {
+    updates.note = note;
+  }
+  await updateDoc(doc(db, "applications", applicationId), updates);
+}
+
+export async function getEmployerConversations(
+  employerId: string
+): Promise<Conversation[]> {
+  const q = query(
+    collection(db, "conversations"),
+    where("employerId", "==", employerId),
+    where("status", "==", "active"),
+    orderBy("lastMessageAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as Conversation[];
+}
+
+export async function getEmployerStats(employerId: string): Promise<{
+  totalJobs: number;
+  activeJobs: number;
+  totalApplications: number;
+  pendingApplications: number;
+  unreadMessages: number;
+}> {
+  // Get jobs count
+  const jobsQuery = query(
+    collection(db, "jobs"),
+    where("employerId", "==", employerId)
+  );
+  const jobsSnapshot = await getDocs(jobsQuery);
+  const totalJobs = jobsSnapshot.size;
+  const activeJobs = jobsSnapshot.docs.filter(d => d.data().active === true).length;
+
+  // Get applications count
+  const appsQuery = query(
+    collection(db, "applications"),
+    where("employerId", "==", employerId)
+  );
+  const appsSnapshot = await getDocs(appsQuery);
+  const totalApplications = appsSnapshot.size;
+  const pendingApplications = appsSnapshot.docs.filter(
+    d => d.data().status === "submitted" || d.data().status === "reviewed"
+  ).length;
+
+  // Get unread messages
+  const convQuery = query(
+    collection(db, "conversations"),
+    where("employerId", "==", employerId),
+    where("status", "==", "active")
+  );
+  const convSnapshot = await getDocs(convQuery);
+  const unreadMessages = convSnapshot.docs.reduce(
+    (sum, d) => sum + (d.data().employerUnreadCount || 0),
+    0
+  );
+
+  return {
+    totalJobs,
+    activeJobs,
+    totalApplications,
+    pendingApplications,
+    unreadMessages,
+  };
+}
+
+// ============ VENDOR DASHBOARD ============
+
+export async function getVendorByUserId(userId: string): Promise<VendorProfile | null> {
+  const q = query(
+    collection(db, "vendors"),
+    where("ownerUserId", "==", userId),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as VendorProfile;
+}
+
+export async function updateVendorProfile(
+  vendorId: string,
+  updates: Partial<Omit<VendorProfile, "id" | "ownerUserId" | "createdAt">>
+): Promise<void> {
+  await updateDoc(doc(db, "vendors", vendorId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function getVendorStats(vendorId: string): Promise<{
+  viewCount: number;
+  productsCount: number;
+}> {
+  const vendorDoc = await getDoc(doc(db, "vendors", vendorId));
+  const viewCount = vendorDoc.exists() ? (vendorDoc.data().viewCount || 0) : 0;
+
+  // Count products
+  const productsQuery = query(
+    collection(db, "vendors", vendorId, "products")
+  );
+  const productsSnapshot = await getDocs(productsQuery);
+  const productsCount = productsSnapshot.size;
+
+  return { viewCount, productsCount };
+}

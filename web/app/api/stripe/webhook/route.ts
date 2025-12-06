@@ -37,10 +37,11 @@ export async function POST(request: NextRequest) {
         }
 
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (error: any) {
-        console.error("Webhook signature verification failed:", error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Webhook signature verification failed:", message);
         return NextResponse.json(
-            { error: `Webhook Error: ${error.message}` },
+            { error: `Webhook Error: ${message}` },
             { status: 400 }
         );
     }
@@ -197,7 +198,9 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ received: true });
-    } catch (err: any) {
+    } catch (err) {
+        const errMessage = err instanceof Error ? err.message : "Unknown error";
+        const errStack = err instanceof Error ? err.stack : null;
         console.error("Webhook error:", err);
 
         // Emergency logging to Firestore
@@ -208,8 +211,8 @@ export async function POST(request: NextRequest) {
             const db = getFirestore();
             await db.collection("system_logs").add({
                 event: "stripe_webhook_error",
-                error: err.message || "Unknown error",
-                stack: err.stack || null,
+                error: errMessage,
+                stack: errStack,
                 timestamp: new Date(),
             });
         } catch (logErr) {
@@ -217,7 +220,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: `Webhook Error: ${err.message}` },
+            { error: `Webhook Error: ${errMessage}` },
             { status: 400 }
         );
     }

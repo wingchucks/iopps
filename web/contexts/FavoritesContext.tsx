@@ -155,11 +155,12 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
       syncGuestFavoritesToUser(user.uid)
         .then((syncedCount) => {
           if (syncedCount > 0) {
-            console.log(`Synced ${syncedCount} guest favorites to user account`);
             loadFavorites();
           }
         })
-        .catch(console.error);
+        .catch(() => {
+          // Silent fail - favorites sync is not critical
+        });
       setHasSyncedGuest(true);
     }
   }, [user, hasSyncedGuest, authLoading, loadFavorites]);

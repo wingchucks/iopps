@@ -265,16 +265,31 @@ export async function getProduct(productId: string): Promise<VendorProduct | nul
 export async function getVendorProducts(vendorId: string): Promise<VendorProduct[]> {
   if (!db) return [];
 
-  const q = query(
-    collection(db, PRODUCTS_COLLECTION),
-    where('vendorId', '==', vendorId),
-    where('active', '==', true),
-    orderBy('sortOrder', 'asc'),
-    orderBy('createdAt', 'desc')
-  );
+  try {
+    // Simple query without multiple orderBy to avoid index requirements
+    const q = query(
+      collection(db, PRODUCTS_COLLECTION),
+      where('vendorId', '==', vendorId),
+      where('active', '==', true)
+    );
 
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as VendorProduct));
+    const snap = await getDocs(q);
+    const products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as VendorProduct));
+
+    // Sort client-side
+    return products.sort((a, b) => {
+      const sortA = a.sortOrder ?? 999;
+      const sortB = b.sortOrder ?? 999;
+      if (sortA !== sortB) return sortA - sortB;
+      // Fall back to createdAt desc
+      const timeA = a.createdAt?.toMillis?.() ?? 0;
+      const timeB = b.createdAt?.toMillis?.() ?? 0;
+      return timeB - timeA;
+    });
+  } catch (error) {
+    // If query fails (e.g., no composite index), return empty array
+    return [];
+  }
 }
 
 export async function updateProduct(

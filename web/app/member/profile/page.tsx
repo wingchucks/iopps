@@ -137,8 +137,8 @@ export default function MemberProfilePage() {
         try {
           const oldResumeRef = ref(storage!, `resumes/${user.uid}`);
           await deleteObject(oldResumeRef);
-        } catch (error) {
-          console.log("No old resume to delete");
+        } catch {
+          // Old resume doesn't exist or already deleted - continue with upload
         }
       }
 

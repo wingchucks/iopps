@@ -31,7 +31,7 @@ export default {
         backgroundColor: "#0F172A",
       },
       package: "ca.iopps.app",
-      edgeToEdgeEnabled: true,
+      edgeToEdgeEnabled: false,
       predictiveBackGestureEnabled: false,
       googleServicesFile:
         process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
@@ -62,6 +62,7 @@ export default {
         },
       ],
       "expo-secure-store",
+      "@react-native-google-signin/google-signin",
     ],
     web: {
       favicon: "./assets/favicon.png",

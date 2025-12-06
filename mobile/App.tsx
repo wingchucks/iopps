@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { NavigationContainer, NavigationContainerRef, LinkingOptions } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Linking from "expo-linking";
 
 import { AuthProvider } from "./src/context/AuthContext";
@@ -46,6 +46,12 @@ import ConversationScreen from "./src/screens/ConversationScreen";
 
 // Notifications
 import NotificationsScreen from "./src/screens/NotificationsScreen";
+
+// Employer/Vendor Dashboard screens
+import EmployerDashboardScreen from "./src/screens/EmployerDashboardScreen";
+import EmployerApplicationsScreen from "./src/screens/EmployerApplicationsScreen";
+import EmployerJobsScreen from "./src/screens/EmployerJobsScreen";
+import VendorDashboardScreen from "./src/screens/VendorDashboardScreen";
 
 // Tab icon components with badge support
 function JobsIcon({ focused }: { focused: boolean }) {
@@ -143,6 +149,8 @@ const linking: LinkingOptions<any> = {
 
 // Bottom tab navigator for main app screens
 function MainTabs() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -152,8 +160,8 @@ function MainTabs() {
           borderTopColor: "#334155",
           borderTopWidth: 1,
           paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          paddingBottom: 8 + insets.bottom,
+          height: 60 + insets.bottom,
         },
         tabBarActiveTintColor: "#14B8A6",
         tabBarInactiveTintColor: "#64748B",
@@ -370,6 +378,42 @@ function RootNavigator() {
         options={{
           title: "Create Account",
           presentation: "modal",
+        }}
+      />
+
+      {/* Employer Dashboard Screens */}
+      <Stack.Screen
+        name="EmployerDashboard"
+        component={EmployerDashboardScreen}
+        options={{
+          title: "Employer Dashboard",
+          headerBackTitle: "Profile",
+        }}
+      />
+      <Stack.Screen
+        name="EmployerApplications"
+        component={EmployerApplicationsScreen}
+        options={{
+          title: "Applications",
+          headerBackTitle: "Dashboard",
+        }}
+      />
+      <Stack.Screen
+        name="EmployerJobs"
+        component={EmployerJobsScreen}
+        options={{
+          title: "My Job Postings",
+          headerBackTitle: "Dashboard",
+        }}
+      />
+
+      {/* Vendor Dashboard Screen */}
+      <Stack.Screen
+        name="VendorDashboard"
+        component={VendorDashboardScreen}
+        options={{
+          title: "Vendor Dashboard",
+          headerBackTitle: "Profile",
         }}
       />
     </Stack.Navigator>

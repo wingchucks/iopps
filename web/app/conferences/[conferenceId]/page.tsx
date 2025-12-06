@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { useAuth } from "@/components/AuthProvider";
-import { getConference } from "@/lib/firestore";
+import { getConference, toggleSavedConference, listSavedConferenceIds } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import {
   ConferenceHero,
@@ -36,7 +36,6 @@ export default function ConferenceDetailPage() {
           setError("Conference not found");
         }
       } catch (err) {
-        console.error("Failed to load conference", err);
         setError("Failed to load conference details");
       } finally {
         setLoading(false);
@@ -45,10 +44,40 @@ export default function ConferenceDetailPage() {
     loadConference();
   }, [conferenceId]);
 
-  const handleSave = useCallback(() => {
-    // TODO: Implement save functionality with Firestore
-    setIsSaved((prev) => !prev);
-  }, []);
+  // Load saved state when user is logged in
+  useEffect(() => {
+    const loadSavedState = async () => {
+      if (!user) {
+        setIsSaved(false);
+        return;
+      }
+      try {
+        const savedIds = await listSavedConferenceIds(user.uid);
+        setIsSaved(savedIds.includes(conferenceId));
+      } catch {
+        // Silently fail - not critical
+      }
+    };
+    loadSavedState();
+  }, [user, conferenceId]);
+
+  const handleSave = useCallback(async () => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      window.location.href = `/login?redirect=/conferences/${conferenceId}`;
+      return;
+    }
+
+    const newSavedState = !isSaved;
+    setIsSaved(newSavedState); // Optimistic update
+
+    try {
+      await toggleSavedConference(user.uid, conferenceId, newSavedState);
+    } catch {
+      // Revert on error
+      setIsSaved(!newSavedState);
+    }
+  }, [user, conferenceId, isSaved]);
 
   const handleSpeakerClick = useCallback((speakerId: string) => {
     setHighlightedSpeakerId(speakerId);

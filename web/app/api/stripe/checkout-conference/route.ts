@@ -93,10 +93,11 @@ export async function POST(request: NextRequest) {
         });
 
         return NextResponse.json({ sessionId: session.id, url: session.url });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to create checkout session";
         console.error("Conference checkout error:", error);
         return NextResponse.json(
-            { error: error.message || "Failed to create checkout session" },
+            { error: message },
             { status: 500 }
         );
     }

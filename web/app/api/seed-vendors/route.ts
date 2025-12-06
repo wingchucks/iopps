@@ -205,10 +205,11 @@ export async function POST() {
             message: `Successfully seeded ${createdVendors.length} vendors`,
             vendors: createdVendors,
         });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to seed vendors";
         console.error("Error seeding vendors:", error);
         return NextResponse.json(
-            { error: error.message || "Failed to seed vendors" },
+            { error: message },
             { status: 500 }
         );
     }
