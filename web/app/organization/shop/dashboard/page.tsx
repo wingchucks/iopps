@@ -339,7 +339,7 @@ export default function VendorDashboard() {
                   <ChartBarIcon className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">{vendor.region}</p>
+                  <p className="text-2xl font-bold text-white">{typeof vendor.region === 'string' ? vendor.region : 'N/A'}</p>
                   <p className="text-sm text-slate-400">Region</p>
                 </div>
               </div>
@@ -401,9 +401,9 @@ export default function VendorDashboard() {
                         {vendor.category}
                       </span>
                       {vendor.location && (
-                        <span>📍 {vendor.location}, {vendor.region}</span>
+                        <span>📍 {vendor.location}{typeof vendor.region === 'string' ? `, ${vendor.region}` : ''}</span>
                       )}
-                      {!vendor.location && vendor.region && (
+                      {!vendor.location && vendor.region && typeof vendor.region === 'string' && (
                         <span>📍 {vendor.region}</span>
                       )}
                       {vendor.nation && (
