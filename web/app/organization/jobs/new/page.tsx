@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
-import { JOB_POSTING_PRODUCTS } from "@/lib/stripe";
+import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -383,6 +383,9 @@ export default function NewJobPage() {
                   </>
                 ) : (
                   <div className="space-y-3">
+                    {/* Per-Post Options Header */}
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Pay Per Post</div>
+
                     {/* Standard Post Option */}
                     <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
                       <div className="flex justify-between items-start mb-2">
@@ -401,7 +404,7 @@ export default function NewJobPage() {
                     {/* Featured Post Option */}
                     <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
                       <div className="absolute -top-2 right-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Recommended</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Popular</span>
                       </div>
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -414,6 +417,66 @@ export default function NewJobPage() {
                       <button onClick={() => handlePostJob("FEATURED")} disabled={submitting} className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
                         {submitting ? "Processing..." : "Pay & Post Featured"}
                       </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative py-3">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-700"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-[#08090C] px-3 text-xs text-slate-500">or save with a subscription</span>
+                      </div>
+                    </div>
+
+                    {/* Annual Subscriptions Header */}
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Annual Plans</div>
+
+                    {/* Tier 1 Subscription */}
+                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-teal-500/50 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-teal-400 font-semibold">{SUBSCRIPTION_PRODUCTS.TIER1.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">12 months</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-white">${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}</div>
+                          <div className="text-[10px] text-slate-500">/year</div>
+                        </div>
+                      </div>
+                      <ul className="text-xs text-slate-400 mb-3 space-y-1">
+                        <li>• 15 job postings per year</li>
+                        <li>• 15 featured listings included</li>
+                        <li>• Organization profile page</li>
+                      </ul>
+                      <Link href="/organization/subscription?plan=TIER1" className="block w-full rounded-lg bg-teal-500/20 border border-teal-500/30 py-2.5 text-sm font-semibold text-teal-400 hover:bg-teal-500/30 transition-colors text-center">
+                        Subscribe & Save
+                      </Link>
+                    </div>
+
+                    {/* Tier 2 Subscription */}
+                    <div className="rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-4 border border-purple-500/30 relative">
+                      <div className="absolute -top-2 right-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full">Best Value</span>
+                      </div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-purple-400 font-semibold">{SUBSCRIPTION_PRODUCTS.TIER2.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">12 months</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-white">${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}</div>
+                          <div className="text-[10px] text-slate-500">/year</div>
+                        </div>
+                      </div>
+                      <ul className="text-xs text-slate-400 mb-3 space-y-1">
+                        <li>• Unlimited job postings</li>
+                        <li>• Rotating featured listings</li>
+                        <li>• Shop Indigenous listing included</li>
+                      </ul>
+                      <Link href="/organization/subscription?plan=TIER2" className="block w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-sm font-semibold text-white hover:from-purple-600 hover:to-pink-600 transition-colors text-center">
+                        Subscribe & Save
+                      </Link>
                     </div>
                   </div>
                 )}
