@@ -197,13 +197,6 @@ export default function SiteHeader() {
                             >
                               <span className="font-semibold">Messages</span>
                             </Link>
-                            <Link
-                              href="/organization/shop/dashboard"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">Shop Indigenous</span>
-                            </Link>
                           </>
                         )}
                         {(role === "admin" || role === "moderator") && (

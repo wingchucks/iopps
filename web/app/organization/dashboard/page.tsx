@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { redirect } from "next/navigation";
+import { useState, useEffect } from "react";
+import { redirect, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import OverviewTab from "./OverviewTab";
 import OpportunitiesTab from "./OpportunitiesTab";
@@ -9,12 +9,22 @@ import ApplicationsTab from "./ApplicationsTab";
 import ProfileTab from "./ProfileTab";
 import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
+import ShopTab from "./ShopTab";
 
-type TabType = "overview" | "opportunities" | "applications" | "videos" | "billing" | "profile";
+type TabType = "overview" | "opportunities" | "applications" | "videos" | "shop" | "billing" | "profile";
 
 export default function EmployerDashboard() {
   const { user, role, loading } = useAuth();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
+
+  // Handle URL tab parameter for deep linking
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as TabType;
+    if (tabParam && ["overview", "opportunities", "applications", "videos", "shop", "billing", "profile"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   if (loading) {
     return (
@@ -33,6 +43,7 @@ export default function EmployerDashboard() {
     { id: "opportunities" as TabType, label: "Opportunities", icon: "💼" },
     { id: "applications" as TabType, label: "Applications", icon: "📝" },
     { id: "videos" as TabType, label: "Videos", icon: "🎬" },
+    { id: "shop" as TabType, label: "Shop", icon: "🏪" },
     { id: "billing" as TabType, label: "Billing & Payments", icon: "💳" },
     { id: "profile" as TabType, label: "Profile & Settings", icon: "⚙️" },
   ];
@@ -73,6 +84,7 @@ export default function EmployerDashboard() {
           {activeTab === "opportunities" && <OpportunitiesTab />}
           {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "videos" && <VideosTab />}
+          {activeTab === "shop" && <ShopTab />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab />}
         </div>

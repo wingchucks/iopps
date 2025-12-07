@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRouter, redirect } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import {
   BuildingStorefrontIcon,
@@ -11,7 +9,6 @@ import {
   ChartBarIcon,
   PhotoIcon,
   PlusIcon,
-  ArrowTopRightOnSquareIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -23,29 +20,20 @@ import {
 import { VENDOR_PRODUCTS, type VendorProductType } from '@/lib/stripe';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/components/AuthProvider';
-import { PageShell } from '@/components/PageShell';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
 import { uploadProfileImage, uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
-type Tab = 'overview' | 'profile' | 'products' | 'subscription';
+type SubTab = 'overview' | 'profile' | 'products' | 'subscription';
 
-export default function VendorDashboard() {
-  const { user, role, loading: authLoading } = useAuth();
-  const router = useRouter();
-
-  // Redirect employers to the unified dashboard
-  useEffect(() => {
-    if (!authLoading && role === 'employer') {
-      router.replace('/organization/dashboard?tab=shop');
-    }
-  }, [authLoading, role, router]);
+export default function ShopTab() {
+  const { user } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<VendorProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>('overview');
   const [isNewVendor, setIsNewVendor] = useState(false);
 
   // Form state
@@ -108,7 +96,7 @@ export default function VendorDashboard() {
         setProducts(vendorProducts);
       } else {
         setIsNewVendor(true);
-        setActiveTab('profile');
+        setActiveSubTab('profile');
       }
     } catch (error) {
       console.error('Error loading vendor:', error);
@@ -118,15 +106,10 @@ export default function VendorDashboard() {
   }, [user]);
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      router.push('/login?redirect=/organization/shop/dashboard');
-      return;
+    if (user) {
+      loadVendor();
     }
-
-    loadVendor();
-  }, [user, authLoading, router, loadVendor]);
+  }, [user, loadVendor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,16 +118,15 @@ export default function VendorDashboard() {
     setSaving(true);
     try {
       if (isNewVendor) {
-        const vendorId = await createVendor(user.uid, formData);
-        const newVendor = await getVendorByUserId(user.uid);
-        setVendor(newVendor);
+        await createVendor(user.uid, formData);
+        await loadVendor();
         setIsNewVendor(false);
-        setActiveTab('overview');
-        alert('Profile created successfully!');
+        setActiveSubTab('overview');
+        alert('Shop profile created successfully!');
       } else if (vendor) {
         await updateVendor(vendor.id, formData);
         await loadVendor();
-        alert('Profile saved successfully!');
+        alert('Shop profile saved successfully!');
       }
     } catch (error: any) {
       console.error('Error saving vendor:', error);
@@ -198,10 +180,9 @@ export default function VendorDashboard() {
     }
   };
 
-  // Show loading state while auth is loading, data is loading, or employer is being redirected
-  if (authLoading || loading || role === 'employer') {
+  if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
       </div>
     );
@@ -217,27 +198,27 @@ export default function VendorDashboard() {
   const StatusIcon = vendor?.status === 'active' ? CheckCircleIcon : vendor?.status === 'pending' ? ClockIcon : ExclamationTriangleIcon;
 
   return (
-    <PageShell>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500">
-            <BuildingStorefrontIcon className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">
-            {isNewVendor ? 'List Your Business' : 'Shop Dashboard'}
-          </h1>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500">
+          <BuildingStorefrontIcon className="h-5 w-5 text-white" />
         </div>
-        <p className="text-slate-400">
-          {isNewVendor
-            ? 'Create your business profile to start connecting with customers across North America.'
-            : 'Manage your Shop Indigenous business listing.'}
-        </p>
+        <div>
+          <h2 className="text-xl font-bold text-white">
+            {isNewVendor ? 'List Your Business' : 'Shop Indigenous'}
+          </h2>
+          <p className="text-sm text-slate-400">
+            {isNewVendor
+              ? 'Create your business profile to start connecting with customers.'
+              : 'Manage your Shop Indigenous business listing.'}
+          </p>
+        </div>
       </div>
 
-      {/* Tabs */}
+      {/* Sub-tabs */}
       {!isNewVendor && (
-        <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl mb-8 w-fit">
+        <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl w-fit">
           {[
             { id: 'overview', label: 'Overview', icon: ChartBarIcon },
             { id: 'profile', label: 'Edit Profile', icon: PencilSquareIcon },
@@ -246,9 +227,9 @@ export default function VendorDashboard() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as Tab)}
+              onClick={() => setActiveSubTab(tab.id as SubTab)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.id
+                activeSubTab === tab.id
                   ? 'bg-teal-500 text-white'
                   : 'text-slate-400 hover:text-white hover:bg-slate-700'
               }`}
@@ -260,8 +241,8 @@ export default function VendorDashboard() {
         </div>
       )}
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && vendor && (
+      {/* Overview Sub-tab */}
+      {activeSubTab === 'overview' && vendor && (
         <div className="space-y-6">
           {/* Status Card */}
           <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
@@ -281,7 +262,7 @@ export default function VendorDashboard() {
                   </div>
                 )}
                 <div>
-                  <h2 className="text-xl font-bold text-white">{vendor.businessName}</h2>
+                  <h3 className="text-xl font-bold text-white">{vendor.businessName}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${statusColors[vendor.status]}`}>
                       <StatusIcon className="h-3.5 w-3.5" />
@@ -340,7 +321,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Draft Warning */}
           {vendor.status === 'draft' && (
             <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-6">
               <div className="flex items-start gap-3">
@@ -362,7 +343,6 @@ export default function VendorDashboard() {
               <span className="text-xs text-slate-500">This is how customers see your shop</span>
             </div>
             <div className="rounded-2xl bg-slate-800/50 border border-slate-700 overflow-hidden">
-              {/* Cover/Header area */}
               <div className="h-32 bg-gradient-to-br from-teal-600/30 to-emerald-600/30 relative">
                 {vendor.logoUrl && (
                   <div className="absolute -bottom-8 left-6">
@@ -382,7 +362,6 @@ export default function VendorDashboard() {
                 )}
               </div>
 
-              {/* Content */}
               <div className="pt-12 px-6 pb-6">
                 <div className="flex items-start justify-between">
                   <div>
@@ -395,18 +374,18 @@ export default function VendorDashboard() {
                         {typeof vendor.category === 'string' ? vendor.category : 'Uncategorized'}
                       </span>
                       {vendor.location && typeof vendor.location === 'string' && (
-                        <span>📍 {vendor.location}{typeof vendor.region === 'string' ? `, ${vendor.region}` : ''}</span>
+                        <span>{vendor.location}{typeof vendor.region === 'string' ? `, ${vendor.region}` : ''}</span>
                       )}
                       {!vendor.location && vendor.region && typeof vendor.region === 'string' && (
-                        <span>📍 {vendor.region}</span>
+                        <span>{vendor.region}</span>
                       )}
                       {vendor.nation && typeof vendor.nation === 'string' && (
-                        <span>🪶 {vendor.nation}</span>
+                        <span>{vendor.nation}</span>
                       )}
                     </div>
                   </div>
                   <button
-                    onClick={() => setActiveTab('profile')}
+                    onClick={() => setActiveSubTab('profile')}
                     className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
                   >
                     <PencilSquareIcon className="h-4 w-4" />
@@ -414,23 +393,21 @@ export default function VendorDashboard() {
                   </button>
                 </div>
 
-                {/* Description preview */}
                 {vendor.description && typeof vendor.description === 'string' && (
                   <div className="mt-4 pt-4 border-t border-slate-700">
                     <p className="text-slate-300 text-sm line-clamp-3">{vendor.description}</p>
                   </div>
                 )}
 
-                {/* Products preview */}
                 {products.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-slate-700">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-slate-400">Products ({products.length})</span>
                       <button
-                        onClick={() => setActiveTab('products')}
+                        onClick={() => setActiveSubTab('products')}
                         className="text-xs text-teal-400 hover:text-teal-300"
                       >
-                        Manage →
+                        Manage
                       </button>
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-2">
@@ -459,30 +436,14 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                 )}
-
-                {/* Contact preview */}
-                <div className="mt-4 pt-4 border-t border-slate-700 flex flex-wrap gap-3">
-                  {vendor.email && typeof vendor.email === 'string' && (
-                    <span className="text-xs text-slate-500">✉️ {vendor.email}</span>
-                  )}
-                  {vendor.phone && typeof vendor.phone === 'string' && (
-                    <span className="text-xs text-slate-500">📞 {vendor.phone}</span>
-                  )}
-                  {vendor.website && typeof vendor.website === 'string' && (
-                    <span className="text-xs text-slate-500">🌐 Website</span>
-                  )}
-                  {(vendor.instagram || vendor.facebook || vendor.tiktok) && (
-                    <span className="text-xs text-slate-500">📱 Social</span>
-                  )}
-                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Profile Tab / New Vendor Form */}
-      {(activeTab === 'profile' || isNewVendor) && (
+      {/* Profile Sub-tab / New Vendor Form */}
+      {(activeSubTab === 'profile' || isNewVendor) && (
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Business Info */}
           <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
@@ -494,7 +455,6 @@ export default function VendorDashboard() {
                   Business Logo
                 </label>
                 <div className="flex items-center gap-6">
-                  {/* Logo Preview */}
                   <div className="flex-shrink-0">
                     {formData.logoUrl ? (
                       <div className="relative">
@@ -510,7 +470,7 @@ export default function VendorDashboard() {
                           onClick={() => setFormData({ ...formData, logoUrl: '' })}
                           className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                         >
-                          <span className="text-xs">×</span>
+                          <span className="text-xs">x</span>
                         </button>
                       </div>
                     ) : (
@@ -519,7 +479,6 @@ export default function VendorDashboard() {
                       </div>
                     )}
                   </div>
-                  {/* Upload Button */}
                   <div className="flex-1">
                     <label className="relative cursor-pointer">
                       <input
@@ -616,7 +575,7 @@ export default function VendorDashboard() {
                   value={formData.nation}
                   onChange={(e) => setFormData({ ...formData, nation: e.target.value })}
                   className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
-                  placeholder="e.g., Cree, Métis, Inuit"
+                  placeholder="e.g., Cree, Metis, Inuit"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -769,7 +728,7 @@ export default function VendorDashboard() {
             {!isNewVendor && (
               <button
                 type="button"
-                onClick={() => setActiveTab('overview')}
+                onClick={() => setActiveSubTab('overview')}
                 className="px-6 py-3 rounded-lg text-slate-300 hover:text-white transition-colors"
               >
                 Cancel
@@ -786,8 +745,8 @@ export default function VendorDashboard() {
         </form>
       )}
 
-      {/* Products Tab */}
-      {activeTab === 'products' && vendor && (
+      {/* Products Sub-tab */}
+      {activeSubTab === 'products' && vendor && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -886,9 +845,9 @@ export default function VendorDashboard() {
         </div>
       )}
 
-      {/* Subscription Tab */}
-      {activeTab === 'subscription' && vendor && (
-        <SubscriptionTab vendor={vendor} onRefresh={loadVendor} />
+      {/* Subscription Sub-tab */}
+      {activeSubTab === 'subscription' && vendor && (
+        <SubscriptionSection vendor={vendor} onRefresh={loadVendor} />
       )}
 
       {/* Product Modal */}
@@ -917,12 +876,12 @@ export default function VendorDashboard() {
           }}
         />
       )}
-    </PageShell>
+    </div>
   );
 }
 
-// Subscription Tab Component
-function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () => Promise<void> }) {
+// Subscription Section Component
+function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () => Promise<void> }) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<VendorProductType | null>(null);
 
@@ -961,7 +920,6 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
       }
@@ -1090,7 +1048,6 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
         </div>
       </div>
 
-      {/* Payment Security */}
       <div className="text-center text-sm text-slate-500">
         <p>Secure payments powered by Stripe. Cancel anytime.</p>
       </div>
@@ -1193,7 +1150,7 @@ function ProductModal({
                     onClick={() => setFormData({ ...formData, imageUrl: '' })}
                     className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                   >
-                    <span className="text-xs">×</span>
+                    <span className="text-xs">x</span>
                   </button>
                 </div>
               ) : (
@@ -1338,7 +1295,7 @@ function ProductModal({
   );
 }
 
-// Product Preview Modal - Shows how product looks to customers
+// Product Preview Modal
 function ProductPreviewModal({
   product,
   vendor,
@@ -1367,9 +1324,8 @@ function ProductPreviewModal({
           </button>
         </div>
 
-        {/* Product Preview - Customer View */}
+        {/* Product Preview */}
         <div className="bg-gradient-to-b from-slate-800 to-slate-900">
-          {/* Product Image */}
           {product.imageUrl ? (
             <div className="relative w-full aspect-square max-h-80">
               <Image
@@ -1385,9 +1341,7 @@ function ProductPreviewModal({
             </div>
           )}
 
-          {/* Product Details */}
           <div className="p-6 space-y-4">
-            {/* Title & Price */}
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold text-white">{product.name}</h2>
@@ -1402,10 +1356,8 @@ function ProductPreviewModal({
               )}
             </div>
 
-            {/* Description */}
             <p className="text-slate-300 leading-relaxed">{product.description}</p>
 
-            {/* Status Badges */}
             <div className="flex flex-wrap gap-2">
               {product.inStock && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
@@ -1427,7 +1379,6 @@ function ProductPreviewModal({
               )}
             </div>
 
-            {/* Seller Info */}
             <div className="pt-4 border-t border-slate-700">
               <div className="flex items-center gap-3">
                 {vendor.logoUrl ? (
