@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { PageShell } from "@/components/PageShell";
 import ShareButtons from "@/components/ShareButtons";
 import { useAuth } from "@/components/AuthProvider";
@@ -231,6 +232,41 @@ export default function PowwowDetailPage() {
             />
           </div>
         </div>
+
+        {/* Event Poster */}
+        {powwow.imageUrl && (
+          <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-200">Event Poster</h2>
+              <a
+                href={powwow.imageUrl}
+                download={`${powwow.name.replace(/[^a-zA-Z0-9]/g, '_')}_poster`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Poster
+              </a>
+            </div>
+            <div className="relative w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900/50">
+              <div className="relative aspect-[3/4] w-full max-w-2xl mx-auto">
+                <Image
+                  src={powwow.imageUrl}
+                  alt={`${powwow.name} event poster`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 672px"
+                />
+              </div>
+            </div>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              Click the download button to save the full poster image
+            </p>
+          </div>
+        )}
 
         {/* Description */}
         <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
