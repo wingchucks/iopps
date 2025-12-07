@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
 import MainLayout from "@/components/MainLayout";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -138,6 +139,13 @@ export default function RootLayout({
           )}
           <MainLayout>{children}</MainLayout>
         </AuthProvider>
+        <Toaster position="bottom-right" toastOptions={{
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            border: '1px solid #334155',
+          },
+        }} />
         <PerformanceMonitor />
       </body>
     </html>
