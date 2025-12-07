@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { redirect, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import OverviewTab from "./OverviewTab";
@@ -13,7 +13,7 @@ import ShopTab from "./ShopTab";
 
 type TabType = "overview" | "opportunities" | "applications" | "videos" | "shop" | "billing" | "profile";
 
-export default function EmployerDashboard() {
+function EmployerDashboardContent() {
   const { user, role, loading } = useAuth();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -90,5 +90,19 @@ export default function EmployerDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmployerDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
+          <p className="text-slate-400">Loading your dashboard...</p>
+        </div>
+      }
+    >
+      <EmployerDashboardContent />
+    </Suspense>
   );
 }
