@@ -262,14 +262,14 @@ function AdminPowwowsContent() {
     try {
       const powwowRef = doc(db!, "powwows", editingPowwow.id);
       await updateDoc(powwowRef, {
-        name: editForm.name,
-        host: editForm.host || null,
-        location: editForm.location,
-        description: editForm.description,
-        dateRange: editForm.dateRange || null,
-        registrationStatus: editForm.registrationStatus || null,
-        livestream: editForm.livestream,
-        imageUrl: editForm.imageUrl || null,
+        name: editForm.name || "",
+        host: editForm.host ?? null,
+        location: editForm.location || "",
+        description: editForm.description ?? null,
+        dateRange: editForm.dateRange ?? null,
+        registrationStatus: editForm.registrationStatus ?? null,
+        livestream: editForm.livestream ?? false,
+        imageUrl: editForm.imageUrl ?? null,
         updatedAt: serverTimestamp(),
       });
 
