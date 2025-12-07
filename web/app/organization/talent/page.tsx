@@ -1,30 +1,53 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import TalentCard from "@/components/organization/TalentCard";
-import { searchMembers } from "@/lib/firestore";
-import { MemberProfile } from "@/lib/types";
+import {
+    searchMembers,
+    getEmployerProfile,
+    getOrCreateConversation,
+    sendMessage,
+} from "@/lib/firestore";
+import { MemberProfile, EmployerProfile } from "@/lib/types";
 
 export default function TalentSearchPage() {
     const { user, role, loading: authLoading } = useAuth();
+    const router = useRouter();
     const [members, setMembers] = useState<MemberProfile[]>([]);
+    const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+
+    // Modal state
+    const [showInviteModal, setShowInviteModal] = useState(false);
+    const [selectedMember, setSelectedMember] = useState<MemberProfile | null>(null);
+    const [inviteMessage, setInviteMessage] = useState("");
+    const [sending, setSending] = useState(false);
 
     // Initial load
     useEffect(() => {
         if (user && role === "employer") {
             fetchTalent();
+            fetchEmployerProfile();
         }
     }, [user, role]);
+
+    const fetchEmployerProfile = async () => {
+        if (!user) return;
+        try {
+            const profile = await getEmployerProfile(user.uid);
+            setEmployerProfile(profile);
+        } catch (err) {
+            console.error("Failed to load employer profile", err);
+        }
+    };
 
     const fetchTalent = async () => {
         setLoading(true);
         try {
-            // In a real app, we'd pass searchTerm to the backend index search
-            // For now, we fetch a batch and filter client-side or assume firestore.ts handles basic filtering
             const results = await searchMembers({ availableOnly: true, limit: 20 });
             setMembers(results);
         } catch (err) {
@@ -41,6 +64,60 @@ export default function TalentSearchPage() {
         const name = m.displayName?.toLowerCase() || "";
         return name.includes(term) || skills.includes(term);
     });
+
+    const handleInviteClick = (memberId: string) => {
+        const member = members.find((m) => m.id === memberId);
+        if (member) {
+            setSelectedMember(member);
+            setInviteMessage(
+                `Hi ${member.displayName || "there"},\n\nI came across your profile on IOPPS and was impressed by your background. I'd love to connect and discuss potential opportunities with ${employerProfile?.organizationName || "our organization"}.\n\nWould you be interested in having a conversation?\n\nBest regards`
+            );
+            setShowInviteModal(true);
+        }
+    };
+
+    const handleSendInvite = async () => {
+        if (!user || !selectedMember || !inviteMessage.trim()) return;
+
+        setSending(true);
+        try {
+            // Create or get existing conversation
+            const conversation = await getOrCreateConversation({
+                employerId: user.uid,
+                memberId: selectedMember.id,
+                employerName: employerProfile?.organizationName,
+                memberName: selectedMember.displayName,
+                memberEmail: selectedMember.email,
+            });
+
+            // Send the message
+            await sendMessage({
+                conversationId: conversation.id,
+                senderId: user.uid,
+                senderType: "employer",
+                content: inviteMessage.trim(),
+            });
+
+            // Close modal and redirect to messages
+            setShowInviteModal(false);
+            setSelectedMember(null);
+            setInviteMessage("");
+
+            // Redirect to the conversation
+            router.push(`/organization/messages?id=${conversation.id}`);
+        } catch (err) {
+            console.error("Failed to send invite:", err);
+            alert("Failed to send message. Please try again.");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const closeModal = () => {
+        setShowInviteModal(false);
+        setSelectedMember(null);
+        setInviteMessage("");
+    };
 
     if (authLoading) return null;
 
@@ -100,12 +177,104 @@ export default function TalentSearchPage() {
                             <TalentCard
                                 key={member.id}
                                 member={member}
-                                onInvite={(id) => console.log('Invite', id)}
+                                onInvite={handleInviteClick}
                             />
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Invite Modal */}
+            {showInviteModal && selectedMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+                    <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 p-8 shadow-2xl">
+                        <div className="mb-6 flex items-start justify-between">
+                            <div>
+                                <h3 className="text-2xl font-bold text-white">
+                                    Contact {selectedMember.displayName || "Candidate"}
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-400">
+                                    Send a personalized message to introduce yourself
+                                </p>
+                            </div>
+                            <button
+                                onClick={closeModal}
+                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-700 hover:text-white"
+                            >
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Candidate Preview */}
+                        <div className="mb-6 rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800 text-lg font-bold text-[#14B8A6]">
+                                    {(selectedMember.displayName || "?")
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")
+                                        .toUpperCase()
+                                        .substring(0, 2)}
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-white">{selectedMember.displayName}</p>
+                                    <p className="text-sm text-slate-400">{selectedMember.location || "Location not specified"}</p>
+                                </div>
+                                {selectedMember.availableForInterviews && (
+                                    <span className="ml-auto rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                                        Available
+                                    </span>
+                                )}
+                            </div>
+                            {selectedMember.skills && selectedMember.skills.length > 0 && (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {selectedMember.skills.slice(0, 5).map((skill) => (
+                                        <span
+                                            key={skill}
+                                            className="rounded-md border border-slate-700 bg-slate-800/50 px-2 py-1 text-xs text-slate-300"
+                                        >
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Message Input */}
+                        <div className="mb-6">
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                                Your Message
+                            </label>
+                            <textarea
+                                value={inviteMessage}
+                                onChange={(e) => setInviteMessage(e.target.value)}
+                                rows={8}
+                                placeholder="Write a personalized message..."
+                                className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            />
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleSendInvite}
+                                disabled={!inviteMessage.trim() || sending}
+                                className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50"
+                            >
+                                {sending ? "Sending..." : "Send Message"}
+                            </button>
+                            <button
+                                onClick={closeModal}
+                                className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

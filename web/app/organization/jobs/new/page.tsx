@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
@@ -17,6 +17,8 @@ type SubscriptionInfo = {
 export default function NewJobPage() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDuplicate = searchParams?.get("duplicate") === "true";
 
   // State
   const [organizationName, setOrganizationName] = useState("");
@@ -47,6 +49,44 @@ export default function NewJobPage() {
     quickApplyEnabled: true,
     jobVideoUrl: "",
   });
+
+  // Load duplicate data from sessionStorage if duplicating
+  useEffect(() => {
+    if (isDuplicate) {
+      const duplicateDataStr = sessionStorage.getItem("duplicateJobData");
+      if (duplicateDataStr) {
+        try {
+          const duplicateData = JSON.parse(duplicateDataStr);
+          setFormData(prev => ({
+            ...prev,
+            title: duplicateData.title || prev.title,
+            location: duplicateData.location || prev.location,
+            employmentType: duplicateData.employmentType || prev.employmentType,
+            remoteFlag: duplicateData.remoteFlag ?? prev.remoteFlag,
+            description: duplicateData.description || prev.description,
+            responsibilities: Array.isArray(duplicateData.responsibilities)
+              ? duplicateData.responsibilities.join("\n")
+              : prev.responsibilities,
+            qualifications: Array.isArray(duplicateData.qualifications)
+              ? duplicateData.qualifications.join("\n")
+              : prev.qualifications,
+            salaryRange: duplicateData.salaryRange || prev.salaryRange,
+            indigenousPreference: duplicateData.indigenousPreference ?? prev.indigenousPreference,
+            cpicRequired: duplicateData.cpicRequired ?? prev.cpicRequired,
+            willTrain: duplicateData.willTrain ?? prev.willTrain,
+            driversLicense: duplicateData.driversLicenseRequired ?? prev.driversLicense,
+            applicationLink: duplicateData.applicationLink || prev.applicationLink,
+            applicationEmail: duplicateData.applicationEmail || prev.applicationEmail,
+            quickApplyEnabled: duplicateData.quickApplyEnabled ?? prev.quickApplyEnabled,
+          }));
+          // Clean up sessionStorage
+          sessionStorage.removeItem("duplicateJobData");
+        } catch (e) {
+          console.error("Failed to parse duplicate job data:", e);
+        }
+      }
+    }
+  }, [isDuplicate]);
 
   // Load Employer Data
   useEffect(() => {
@@ -216,8 +256,14 @@ export default function NewJobPage() {
       <div className="border-b border-slate-800 bg-[#08090C] py-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-50">Post a Job</h1>
-            <p className="text-slate-400 text-sm mt-1">Create a new opportunity for the community.</p>
+            <h1 className="text-2xl font-bold text-slate-50">
+              {isDuplicate ? "Duplicate Job" : "Post a Job"}
+            </h1>
+            <p className="text-slate-400 text-sm mt-1">
+              {isDuplicate
+                ? "Review and modify the duplicated job details, then publish."
+                : "Create a new opportunity for the community."}
+            </p>
           </div>
           <Link
             href="/organization/jobs/import"
