@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -14,7 +14,7 @@ type SubscriptionInfo = {
   unlimitedPosts: boolean;
 } | null;
 
-export default function NewJobPage() {
+function NewJobPageContent() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -451,5 +451,13 @@ export default function NewJobPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewJobPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-slate-500">Loading...</div>}>
+      <NewJobPageContent />
+    </Suspense>
   );
 }
