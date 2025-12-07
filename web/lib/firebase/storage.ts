@@ -18,7 +18,7 @@ import { storage } from "@/lib/firebase";
 // TYPE DEFINITIONS
 // ============================================================================
 
-export type ImageType = "profile" | "cover" | "gallery" | "verification" | "event";
+export type ImageType = "profile" | "cover" | "gallery" | "verification" | "powwow" | "conference";
 
 export interface UploadProgress {
   progress: number;
@@ -52,7 +52,8 @@ const IMAGE_PATHS: Record<ImageType, string> = {
   cover: "vendors/cover",
   gallery: "vendors/gallery",
   verification: "vendors/verification",
-  event: "events/posters",
+  powwow: "powwows",
+  conference: "conferences",
 };
 
 // ============================================================================
@@ -119,7 +120,15 @@ export async function uploadImage(
   const storageInstance = checkStorage();
 
   const filename = generateFilename(vendorId, file.name);
-  const path = `${IMAGE_PATHS[imageType]}/${vendorId}/${filename}`;
+  // Build path based on image type - powwow and conference have different structures
+  let path: string;
+  if (imageType === "powwow") {
+    path = `${IMAGE_PATHS[imageType]}/${vendorId}/posters/${filename}`;
+  } else if (imageType === "conference") {
+    path = `${IMAGE_PATHS[imageType]}/${vendorId}/images/${filename}`;
+  } else {
+    path = `${IMAGE_PATHS[imageType]}/${vendorId}/${filename}`;
+  }
   const storageRef = ref(storageInstance, path);
 
   // Create upload task

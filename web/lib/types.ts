@@ -222,6 +222,7 @@ export interface Conference {
   viewsCount?: number;
 
   // Rich Media
+  imageUrl?: string;
   bannerImageUrl?: string;
   galleryImageUrls?: string[];
   promoVideoUrl?: string;
