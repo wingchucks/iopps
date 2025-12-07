@@ -101,7 +101,7 @@ export default function AdminEditPowwowPage() {
       setUploading(true);
       setUploadProgress(0);
 
-      const result = await uploadImage(file, powwowId, "event", (progress) => {
+      const result = await uploadImage(file, powwowId, "powwow", (progress) => {
         setUploadProgress(progress.progress);
       });
 

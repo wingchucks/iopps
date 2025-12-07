@@ -118,6 +118,21 @@ service firebase.storage {
     }
 
     // ===========================================================================
+    // POW WOW POSTERS
+    // Path: powwows/{powwowId}/posters/{fileName}
+    // ===========================================================================
+    match /powwows/{powwowId}/posters/{fileName} {
+      // Public read for pow wow posters
+      allow read: if true;
+
+      // Authenticated users can upload pow wow posters
+      // Max 10MB, must be image
+      allow write: if isSignedIn()
+                   && isImage()
+                   && isValidSize(10);
+    }
+
+    // ===========================================================================
     // EVENT IMAGES (Cultural Gatherings, etc.)
     // Path: events/{userId}/{fileName}
     // ===========================================================================

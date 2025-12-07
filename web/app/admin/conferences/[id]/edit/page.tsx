@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
 import { getConference, updateConference } from "@/lib/firestore";
+import { uploadImage } from "@/lib/firebase/storage";
 import type { Conference } from "@/lib/types";
 
 export default function AdminEditConferencePage() {
@@ -12,6 +14,7 @@ export default function AdminEditConferencePage() {
   const router = useRouter();
   const conferenceId = params.id as string;
   const { user, role, loading: authLoading } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [conference, setConference] = useState<Conference | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,6 +31,11 @@ export default function AdminEditConferencePage() {
   const [registrationLink, setRegistrationLink] = useState("");
   const [cost, setCost] = useState("");
   const [active, setActive] = useState(true);
+  const [imageUrl, setImageUrl] = useState("");
+
+  // Image upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -53,6 +61,7 @@ export default function AdminEditConferencePage() {
         setRegistrationLink(data.registrationLink || "");
         setCost(data.cost || "");
         setActive(data.active !== false);
+        setImageUrl(data.imageUrl || "");
 
         // Handle date fields
         if (data.startDate) {
@@ -78,6 +87,32 @@ export default function AdminEditConferencePage() {
     }
   }
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      const result = await uploadImage(file, conferenceId, "conference", (progress) => {
+        setUploadProgress(progress.progress);
+      });
+
+      setImageUrl(result.url);
+      setUploadProgress(100);
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      setError("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemoveImage() {
+    setImageUrl("");
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!user || !conference) return;
@@ -96,6 +131,7 @@ export default function AdminEditConferencePage() {
         registrationLink: registrationLink || undefined,
         cost: cost || undefined,
         active,
+        imageUrl: imageUrl || undefined,
       });
 
       setSuccess(true);
@@ -172,6 +208,93 @@ export default function AdminEditConferencePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Poster Image Section */}
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+            <h2 className="text-lg font-semibold text-white">Conference Poster</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Upload a poster image for this conference
+            </p>
+
+            <div className="mt-4">
+              {imageUrl ? (
+                <div className="space-y-4">
+                  <div className="relative aspect-[3/4] w-full max-w-xs overflow-hidden rounded-lg border border-slate-700">
+                    <Image
+                      src={imageUrl}
+                      alt="Conference poster"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                    >
+                      Replace Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="rounded-lg border border-red-500/50 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+                    >
+                      Remove Image
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-700 p-8 transition hover:border-[#14B8A6]"
+                >
+                  <svg
+                    className="h-12 w-12 text-slate-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Click to upload poster image
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    PNG, JPG, WEBP up to 10MB
+                  </p>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+
+              {uploading && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-sm text-slate-400">
+                    <span>Uploading...</span>
+                    <span>{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full bg-[#14B8A6] transition-all"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Conference Details Section */}
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
             <h2 className="text-lg font-semibold text-white">Conference Details</h2>
@@ -292,7 +415,7 @@ export default function AdminEditConferencePage() {
             </Link>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || uploading}
               className="rounded-lg bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
