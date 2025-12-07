@@ -135,7 +135,7 @@ Format your response as JSON with this structure:
 }`;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
@@ -272,7 +272,7 @@ Return ONLY a valid JSON object with this structure:
   };
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     const result = await model.generateContent([
       prompts[eventType],
