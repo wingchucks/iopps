@@ -87,7 +87,6 @@ export default function TalentSearchPage() {
                 memberId: selectedMember.id,
                 employerName: employerProfile?.organizationName,
                 memberName: selectedMember.displayName,
-                memberEmail: selectedMember.email,
             });
 
             // Send the message
