@@ -92,7 +92,7 @@ export default function EditConferencePage() {
         endDate,
         registrationLink,
         cost,
-        bannerImageUrl: bannerImageUrl || null,
+        bannerImageUrl: bannerImageUrl || undefined,
       });
       router.push("/organization/dashboard");
     } catch (err) {
