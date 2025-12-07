@@ -109,16 +109,16 @@ export default function ImportJobsPage() {
 
                         <div className="space-y-4">
                             {jobs.map((job, idx) => (
-                                <div key={idx} className={`p-4 rounded-xl border ${job.parsedErrors && job.parsedErrors.length > 0 ? 'border-red-500/30 bg-red-500/5' : 'border-slate-800 bg-slate-900'}`}>
+                                <div key={idx} className={`p-4 rounded-xl border ${job.errors && job.errors.length > 0 ? 'border-red-500/30 bg-red-500/5' : 'border-slate-800 bg-slate-900'}`}>
                                     <h4 className="font-bold text-slate-100">{job.title || "Untitled Job"}</h4>
                                     <div className="text-sm text-slate-400 mt-1 flex gap-4">
                                         <span>{job.location || "No Location"}</span>
                                         <span>•</span>
                                         <span>{job.employmentType}</span>
                                     </div>
-                                    {job.parsedErrors && job.parsedErrors.length > 0 && (
+                                    {job.errors && job.errors.length > 0 && (
                                         <div className="mt-2 text-xs text-red-400">
-                                            Missing: {job.parsedErrors.join(", ")}
+                                            Missing: {job.errors.join(", ")}
                                         </div>
                                     )}
                                 </div>
