@@ -4,10 +4,12 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createConference, getEmployerProfile } from "@/lib/firestore";
+import { createConference, getEmployerProfile, updateConference } from "@/lib/firestore";
 import ConferencePricingSelector from "@/components/ConferencePricingSelector";
 import { PosterUploader } from "@/components/PosterUploader";
 import type { ConferenceExtractedData } from "@/lib/googleAi";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 
 export default function NewConferencePage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function NewConferencePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
 
   // Step management
   const [step, setStep] = useState<"form" | "pricing">("form");
@@ -38,6 +41,10 @@ export default function NewConferencePage() {
     if (data.registrationUrl) setRegistrationLink(data.registrationUrl);
     if (data.cost) setCost(data.cost);
     if (data.organizerName) setOrgName(data.organizerName);
+  };
+
+  const handlePosterSelect = (file: File) => {
+    setPosterFile(file);
   };
 
   if (loading) {
@@ -99,6 +106,7 @@ export default function NewConferencePage() {
         setOrgName(organizerName);
       }
 
+      // 1. Create conference to get ID
       const newConferenceId = await createConference({
         employerId: user.uid,
         employerName: organizerName,
@@ -111,6 +119,27 @@ export default function NewConferencePage() {
         cost,
         active: false, // Start inactive until pricing selected
       });
+
+      // 2. Upload poster if exists
+      if (posterFile && storage) {
+        try {
+          // Secure Path: conferences/{employerId}/{conferenceId}/images/{fileName}
+          const storagePath = `conferences/${user.uid}/${newConferenceId}/images/${posterFile.name}`;
+          const storageRef = ref(storage, storagePath);
+          await uploadBytes(storageRef, posterFile);
+          const downloadURL = await getDownloadURL(storageRef);
+
+          // Update conference with image URL
+          await updateConference(newConferenceId, {
+            bannerImageUrl: downloadURL,
+            galleryImageUrls: [downloadURL]
+          });
+        } catch (uploadError) {
+          console.error("Failed to upload poster:", uploadError);
+          // Don't fail the creation, just log it. User can re-upload later if needed.
+          // Or maybe show a warning.
+        }
+      }
 
       setConferenceId(newConferenceId);
       setStep("pricing");
@@ -168,6 +197,7 @@ export default function NewConferencePage() {
           <PosterUploader
             eventType="conference"
             onDataExtracted={handlePosterDataExtracted as any}
+            onFileSelect={handlePosterSelect}
           />
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-slate-800" />

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const idToken = authHeader.split("Bearer ")[1];
-    await auth.verifyIdToken(idToken);
+    const decodedToken = await auth.verifyIdToken(idToken);
     // Note: We verify the caller is authenticated but don't restrict which user
     // they can create notifications for, as notifications are often created for other users
     // (e.g., employer gets notified when member applies to job)
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     // Create the notification
     const notificationData = {
       userId: body.userId,
+      senderId: decodedToken.uid, // Track who sent it for security
       type: body.type,
       title: body.title,
       message: body.message,

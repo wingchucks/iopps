@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
+import { getAuth } from "firebase/auth";
 import type {
   PosterAnalysisType,
   PosterAnalysisResult,
@@ -14,12 +15,14 @@ interface PosterUploaderProps {
   eventType: PosterAnalysisType;
   onDataExtracted: (data: PowwowExtractedData | ConferenceExtractedData | ScholarshipExtractedData) => void;
   onImageUploaded?: (imageUrl: string) => void;
+  onFileSelect?: (file: File) => void;
 }
 
 export function PosterUploader({
   eventType,
   onDataExtracted,
   onImageUploaded,
+  onFileSelect,
 }: PosterUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -75,6 +78,11 @@ export function PosterUploader({
       return;
     }
 
+    // Call onFileSelect if provided
+    if (onFileSelect) {
+      onFileSelect(file);
+    }
+
     setError(null);
     setAnalysisResult(null);
 
@@ -89,16 +97,30 @@ export function PosterUploader({
     setIsAnalyzing(true);
 
     try {
+      // Get auth token
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        throw new Error("You must be signed in to use this feature.");
+      }
+
+      const token = await user.getIdToken();
+
       const formData = new FormData();
       formData.append("image", file);
       formData.append("eventType", eventType);
 
       const response = await fetch("/api/ai/analyze-poster", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
         body: formData,
       });
 
       const data = await response.json();
+
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to analyze poster");
@@ -209,11 +231,10 @@ export function PosterUploader({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
-          isDragging
-            ? "border-emerald-500 bg-emerald-500/10"
-            : "border-slate-700 bg-slate-900/50 hover:border-emerald-500/50 hover:bg-slate-900/70"
-        }`}
+        className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${isDragging
+          ? "border-emerald-500 bg-emerald-500/10"
+          : "border-slate-700 bg-slate-900/50 hover:border-emerald-500/50 hover:bg-slate-900/70"
+          }`}
       >
         <input
           ref={fileInputRef}
@@ -348,9 +369,8 @@ function DataField({
         {label}
       </p>
       <p
-        className={`mt-1 text-sm text-slate-200 ${
-          multiline ? "whitespace-pre-wrap" : ""
-        }`}
+        className={`mt-1 text-sm text-slate-200 ${multiline ? "whitespace-pre-wrap" : ""
+          }`}
       >
         {value}
       </p>

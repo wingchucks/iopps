@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzePosterImage, PosterAnalysisType } from "@/lib/googleAi";
+import { auth } from "@/lib/firebase-admin";
 
 // Rate limiting: Simple in-memory store (for production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -25,7 +26,27 @@ function checkRateLimit(ip: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting
+    // 1. Verify Authentication
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Unauthorized. Missing or invalid Authorization header." },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split("Bearer ")[1];
+    try {
+      await auth.verifyIdToken(token);
+    } catch (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json(
+        { error: "Unauthorized. Invalid token." },
+        { status: 401 }
+      );
+    }
+
+    // 2. Rate limiting
     const ip = request.headers.get("x-forwarded-for") || "unknown";
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
@@ -34,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse form data
+    // 3. Parse form data
     const formData = await request.formData();
     const image = formData.get("image") as File | null;
     const eventType = formData.get("eventType") as PosterAnalysisType | null;

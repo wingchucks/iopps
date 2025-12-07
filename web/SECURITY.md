@@ -87,6 +87,27 @@ Key findings:
 - .gitignore properly configured to exclude .env files
 - .env.example contains only placeholder values
 
+### Security Rules Verification
+
+We maintain a rigorous automated test suite for Firestore and Storage security rules to prevent data leaks.
+
+**Running Verification Tests:**
+To verify that all security rules are working as expected (e.g., users can only edit their own profiles, non-employers cannot post jobs), run:
+
+```bash
+# 1. Start the Firebase Emulators (in a separate terminal)
+npm run emulators
+
+# 2. Run the verification script
+npx tsx scripts/verify-rules.ts
+```
+
+**What is tested?**
+- **Public Access**: Ensures public data (Jobs, Shop listings) is readable.
+- **Role-Based Access**: Verifies only Employers can create jobs.
+- **Owner-Only Access**: Ensures users can only edit their own profiles and upload their own resumes.
+- **Negative Tests**: Explicitly attempts unauthorized actions (e.g., "Bob" trying to overwrite "Alice's" profile) to ensure they fail.
+
 ## Reporting Security Issues
 
 If you discover a security vulnerability, please email security@iopps.ca instead of using the public issue tracker.

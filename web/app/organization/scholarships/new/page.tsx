@@ -4,9 +4,11 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createScholarship, getEmployerProfile } from "@/lib/firestore";
+import { createScholarship, getEmployerProfile, updateScholarship } from "@/lib/firestore";
 import { PosterUploader } from "@/components/PosterUploader";
 import type { ScholarshipExtractedData } from "@/lib/googleAi";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 
 export default function NewScholarshipPage() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function NewScholarshipPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
 
   // Handle data extracted from poster
   const handlePosterDataExtracted = (data: ScholarshipExtractedData) => {
@@ -33,6 +36,10 @@ export default function NewScholarshipPage() {
     if (data.level) setLevel(data.level);
     if (data.region) setRegion(data.region);
     if (data.type) setType(data.type);
+  };
+
+  const handlePosterSelect = (file: File) => {
+    setPosterFile(file);
   };
 
   if (loading) {
@@ -94,7 +101,7 @@ export default function NewScholarshipPage() {
         setProvider(providerName);
       }
 
-      await createScholarship({
+      const newScholarshipId = await createScholarship({
         employerId: user.uid,
         employerName: providerName,
         title,
@@ -106,6 +113,25 @@ export default function NewScholarshipPage() {
         region: region || undefined,
         type,
       });
+
+      // Upload poster if exists
+      if (posterFile && storage) {
+        try {
+          // Secure Path: scholarships/{employerId}/{scholarshipId}/documents/{fileName}
+          const storagePath = `scholarships/${user.uid}/${newScholarshipId}/documents/${posterFile.name}`;
+          const storageRef = ref(storage, storagePath);
+          await uploadBytes(storageRef, posterFile);
+          const downloadURL = await getDownloadURL(storageRef);
+
+          // Update scholarship with image URL
+          await updateScholarship(newScholarshipId, {
+            imageUrl: downloadURL,
+            imagePath: storagePath
+          });
+        } catch (uploadError) {
+          console.error("Failed to upload poster:", uploadError);
+        }
+      }
 
       router.push("/organization/scholarships");
     } catch (err) {
@@ -161,6 +187,7 @@ export default function NewScholarshipPage() {
           <PosterUploader
             eventType="scholarship"
             onDataExtracted={handlePosterDataExtracted as any}
+            onFileSelect={handlePosterSelect}
           />
           <div className="my-6 flex items-center gap-4">
             <div className="h-px flex-1 bg-slate-800" />

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
 import {
   collection,
@@ -15,6 +16,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { uploadEventImage } from "@/lib/firebase/storage";
 import type { PowwowEvent } from "@/lib/types";
 
 interface PowwowWithEmployer extends PowwowEvent {
@@ -36,6 +38,23 @@ function AdminPowwowsContent() {
     statusFilter === "active" ? "active" : statusFilter === "inactive" ? "inactive" : "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
+
+  // Edit modal state
+  const [editingPowwow, setEditingPowwow] = useState<PowwowWithEmployer | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    host: "",
+    location: "",
+    description: "",
+    dateRange: "",
+    registrationStatus: "",
+    livestream: false,
+    imageUrl: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -135,6 +154,92 @@ function AdminPowwowsContent() {
       alert("Failed to delete pow wow. Please try again.");
     } finally {
       setProcessing(null);
+    }
+  }
+
+  function openEditModal(powwow: PowwowWithEmployer) {
+    setEditingPowwow(powwow);
+    setEditForm({
+      name: powwow.name || "",
+      host: powwow.host || "",
+      location: powwow.location || "",
+      description: powwow.description || "",
+      dateRange: powwow.dateRange || "",
+      registrationStatus: powwow.registrationStatus || "",
+      livestream: powwow.livestream || false,
+      imageUrl: powwow.imageUrl || "",
+    });
+  }
+
+  function closeEditModal() {
+    setEditingPowwow(null);
+    setEditForm({
+      name: "",
+      host: "",
+      location: "",
+      description: "",
+      dateRange: "",
+      registrationStatus: "",
+      livestream: false,
+      imageUrl: "",
+    });
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !editingPowwow) return;
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const result = await uploadEventImage(file, editingPowwow.id, (progress) => {
+        setUploadProgress(progress.progress);
+      });
+      setEditForm((prev) => ({ ...prev, imageUrl: result.url }));
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }
+
+  async function saveEditedPowwow() {
+    if (!editingPowwow || !user) return;
+
+    setSaving(true);
+    try {
+      const powwowRef = doc(db!, "powwows", editingPowwow.id);
+      await updateDoc(powwowRef, {
+        name: editForm.name,
+        host: editForm.host || null,
+        location: editForm.location,
+        description: editForm.description,
+        dateRange: editForm.dateRange || null,
+        registrationStatus: editForm.registrationStatus || null,
+        livestream: editForm.livestream,
+        imageUrl: editForm.imageUrl || null,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update local state
+      setPowwows((prev) =>
+        prev.map((p) =>
+          p.id === editingPowwow.id
+            ? { ...p, ...editForm }
+            : p
+        )
+      );
+
+      closeEditModal();
+      alert("Pow wow updated successfully!");
+    } catch (error) {
+      console.error("Error saving pow wow:", error);
+      alert("Failed to save changes. Please try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -373,6 +478,13 @@ function AdminPowwowsContent() {
                       </Link>
 
                       <button
+                        onClick={() => openEditModal(powwow)}
+                        className="rounded-md border border-[#14B8A6] px-4 py-2 text-sm font-semibold text-[#14B8A6] transition hover:bg-[#14B8A6]/10"
+                      >
+                        Edit
+                      </button>
+
+                      <button
                         onClick={() => togglePowwowStatus(powwow.id, isActive)}
                         disabled={isProcessing}
                         className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
@@ -402,6 +514,185 @@ function AdminPowwowsContent() {
           )}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingPowwow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl my-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Edit Pow Wow</h3>
+              <button
+                onClick={closeEditModal}
+                className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+              {/* Poster Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Event Poster
+                </label>
+                <div className="flex items-start gap-4">
+                  {editForm.imageUrl ? (
+                    <div className="relative w-32 h-40 rounded-lg overflow-hidden border border-slate-700">
+                      <Image
+                        src={editForm.imageUrl}
+                        alt="Event poster"
+                        fill
+                        className="object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditForm((prev) => ({ ...prev, imageUrl: "" }))}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-40 rounded-lg border-2 border-dashed border-slate-700 flex items-center justify-center">
+                      <svg className="h-8 w-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 transition-colors disabled:opacity-50"
+                    >
+                      {uploading ? `Uploading ${Math.round(uploadProgress)}%` : editForm.imageUrl ? "Change Poster" : "Upload Poster"}
+                    </button>
+                    <p className="mt-2 text-xs text-slate-500">JPEG, PNG, WebP or GIF (max 10MB)</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Event Name *</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                  required
+                />
+              </div>
+
+              {/* Host */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Host / Organizer</label>
+                <input
+                  type="text"
+                  value={editForm.host}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, host: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Location *</label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                  required
+                />
+              </div>
+
+              {/* Date Range */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Date Range</label>
+                <input
+                  type="text"
+                  value={editForm.dateRange}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, dateRange: e.target.value }))}
+                  placeholder="e.g., June 15-17, 2025"
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Registration Status */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Registration Status</label>
+                <select
+                  value={editForm.registrationStatus}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, registrationStatus: e.target.value }))}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white focus:border-[#14B8A6] focus:outline-none"
+                >
+                  <option value="">Not specified</option>
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                  <option value="coming_soon">Coming Soon</option>
+                </select>
+              </div>
+
+              {/* Livestream */}
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editForm.livestream}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, livestream: e.target.checked }))}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
+                  <span className="text-slate-300">This event will be livestreamed</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4 mt-6 pt-4 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                disabled={saving}
+                className="px-6 py-3 rounded-lg text-slate-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveEditedPowwow}
+                disabled={saving || uploading || !editForm.name || !editForm.location}
+                className="px-6 py-3 rounded-lg bg-[#14B8A6] text-slate-900 font-semibold hover:bg-[#16cdb8] transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

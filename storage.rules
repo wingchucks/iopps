@@ -106,13 +106,17 @@ service firebase.storage {
     // ===========================================================================
     // CONFERENCE IMAGES
     // ===========================================================================
-    match /conferences/{conferenceId}/images/{fileName} {
+    // ===========================================================================
+    // CONFERENCE IMAGES
+    // Path: conferences/{employerId}/{conferenceId}/images/{fileName}
+    // ===========================================================================
+    match /conferences/{employerId}/{conferenceId}/images/{fileName} {
       // Public read
       allow read: if true;
 
-      // Authenticated users can upload conference images
-      // Max 5MB, must be image
+      // Only the employer owner can upload
       allow write: if isSignedIn()
+                   && request.auth.uid == employerId
                    && isImage()
                    && isValidSize(5);
     }
@@ -133,33 +137,33 @@ service firebase.storage {
     }
 
     // ===========================================================================
-    // EVENT IMAGES (Cultural Gatherings, etc.)
-    // Path: events/{userId}/{fileName}
+    // EVENT IMAGES (Pow Wows, Conferences, Cultural Gatherings, etc.)
+    // Path: events/posters/{eventId}/{fileName}
     // ===========================================================================
-    match /events/{userId}/{fileName} {
+    match /events/posters/{eventId}/{fileName} {
       // Public read for event images
       allow read: if true;
 
-      // Authenticated users can upload their own event images
+      // Authenticated users can upload event images
       // Max 10MB, must be image
       allow write: if isSignedIn()
-                   && request.auth.uid == userId
                    && isImage()
                    && isValidSize(10);
     }
-    
+
+    // Legacy support (read-only) for old path structure if needed, or just remove it.
+    // match /conferences/{conferenceId}/images/{fileName} { allow read: if true; }
+
     // ===========================================================================
     // SCHOLARSHIP DOCUMENTS
+    // Path: scholarships/{employerId}/{scholarshipId}/documents/{fileName}
     // ===========================================================================
-    match /scholarships/{scholarshipId}/documents/{fileName} {
-      // Public read for scholarship guidelines, etc.
-      allow read: if true;
-      
-      // Authenticated users can upload scholarship documents
-      // Max 10MB, PDF or images
-      allow write: if isSignedIn() 
-                   && (isDocument() || isImage()) 
-                   && isValidSize(10);
+    match /scholarships/{employerId}/{scholarshipId}/documents/{fileName} {
+       allow read: if true;
+       allow write: if isSignedIn() 
+                    && request.auth.uid == employerId
+                    && (isDocument() || isImage()) 
+                    && isValidSize(10);
     }
     
     // ===========================================================================

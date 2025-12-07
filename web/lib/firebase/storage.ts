@@ -228,6 +228,17 @@ export async function uploadVerificationDocument(
 }
 
 /**
+ * Upload an event poster image (for pow wows, conferences, etc.)
+ */
+export async function uploadEventImage(
+  file: File,
+  eventId: string,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<UploadResult> {
+  return uploadImage(file, eventId, "event", onProgress);
+}
+
+/**
  * Upload multiple gallery images
  */
 export async function uploadGalleryImages(

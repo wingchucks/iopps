@@ -416,6 +416,8 @@ export interface Scholarship {
   level: string;
   region?: string;
   type: string;
+  imageUrl?: string;
+  imagePath?: string;
   createdAt?: Timestamp | null;
   active: boolean;
 }
