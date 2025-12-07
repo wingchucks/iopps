@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
 import { getPowwowEvent, updatePowwowEvent } from "@/lib/firestore";
-import { uploadImage } from "@/lib/firebase/storage";
+import { uploadPowwowImage } from "@/lib/firebase/storage";
 import type { PowwowEvent } from "@/lib/types";
 
 export default function AdminEditPowwowPage() {
@@ -39,6 +39,8 @@ export default function AdminEditPowwowPage() {
   // Image upload state
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -95,18 +97,60 @@ export default function AdminEditPowwowPage() {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     try {
       setUploading(true);
       setUploadProgress(0);
+      setAnalyzeError(null);
 
-      const result = await uploadImage(file, powwowId, "powwow", (progress) => {
+      // Upload the image
+      const result = await uploadPowwowImage(file, powwowId, (progress) => {
         setUploadProgress(progress.progress);
       });
 
       setImageUrl(result.url);
       setUploadProgress(100);
+
+      // Analyze the poster with AI to auto-fill fields
+      setAnalyzing(true);
+      try {
+        const token = await user.getIdToken();
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("eventType", "powwow");
+
+        const response = await fetch("/api/ai/analyze-poster", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.result?.data) {
+            const extracted = data.result.data;
+            // Auto-fill the form with extracted data
+            if (extracted.name) setName(extracted.name);
+            if (extracted.host) setHost(extracted.host);
+            if (extracted.location) setLocation(extracted.location);
+            if (extracted.description) setDescription(extracted.description);
+            if (extracted.dateRange) setDateRange(extracted.dateRange);
+            if (extracted.registrationStatus) setRegistrationStatus(extracted.registrationStatus);
+            if (extracted.livestream !== undefined) setLivestream(extracted.livestream);
+          }
+        } else {
+          const errorData = await response.json();
+          setAnalyzeError(errorData.error || "Failed to analyze poster");
+        }
+      } catch (analyzeErr) {
+        console.error("Error analyzing poster:", analyzeErr);
+        setAnalyzeError("Could not analyze poster. You can still fill in the details manually.");
+      } finally {
+        setAnalyzing(false);
+      }
     } catch (err) {
       console.error("Error uploading image:", err);
       setError("Failed to upload image. Please try again.");
@@ -124,20 +168,25 @@ export default function AdminEditPowwowPage() {
     setSuccess(false);
 
     try {
-      await updatePowwowEvent(powwowId, {
-        name,
-        host: host || undefined,
-        description,
-        location,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        dateRange: dateRange || undefined,
-        season: season || undefined,
-        registrationStatus: registrationStatus || undefined,
-        livestream,
-        active,
-        imageUrl: imageUrl || undefined,
-      });
+      // Build update object, converting empty strings to null (Firestore doesn't accept undefined)
+      const updateData: Record<string, unknown> = {
+        name: name || "",
+        description: description || "",
+        location: location || "",
+        livestream: livestream ?? false,
+        active: active ?? true,
+      };
+
+      // Only include optional fields if they have values, otherwise set to null
+      updateData.host = host || null;
+      updateData.startDate = startDate || null;
+      updateData.endDate = endDate || null;
+      updateData.dateRange = dateRange || null;
+      updateData.season = season || null;
+      updateData.registrationStatus = registrationStatus || null;
+      updateData.imageUrl = imageUrl || null;
+
+      await updatePowwowEvent(powwowId, updateData);
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -300,6 +349,20 @@ export default function AdminEditPowwowPage() {
                     />
                   </div>
                 </div>
+              )}
+
+              {analyzing && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-[#14B8A6]">
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>AI is reading the poster to auto-fill the form...</span>
+                </div>
+              )}
+
+              {analyzeError && (
+                <p className="mt-2 text-sm text-amber-400">{analyzeError}</p>
               )}
             </div>
           </div>
@@ -470,7 +533,7 @@ export default function AdminEditPowwowPage() {
             </Link>
             <button
               type="submit"
-              disabled={saving || uploading}
+              disabled={saving || uploading || analyzing}
               className="rounded-lg bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
