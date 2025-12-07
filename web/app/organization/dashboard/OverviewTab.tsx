@@ -9,6 +9,7 @@ import {
   listEmployerApplications,
   listEmployerConferences,
   listEmployerPowwows,
+  getUnreadMessageCount,
 } from "@/lib/firestore";
 import type {
   EmployerProfile,
@@ -25,24 +26,27 @@ export default function OverviewTab() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [events, setEvents] = useState<PowwowEvent[]>([]);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const [profileData, jobsData, appsData, confsData, eventsData] = await Promise.all([
+        const [profileData, jobsData, appsData, confsData, eventsData, unreadCount] = await Promise.all([
           getEmployerProfile(user.uid),
           listEmployerJobs(user.uid),
           listEmployerApplications(user.uid),
           listEmployerConferences(user.uid),
           listEmployerPowwows(user.uid),
+          getUnreadMessageCount(user.uid, "employer"),
         ]);
         setProfile(profileData);
         setJobs(jobsData);
         setApplications(appsData);
         setConferences(confsData);
         setEvents(eventsData);
+        setUnreadMessages(unreadCount);
       } catch (err) {
         console.error("Error loading employer data:", err);
       } finally {
@@ -143,7 +147,7 @@ export default function OverviewTab() {
       {/* Quick Actions */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <h3 className="mb-6 text-xl font-semibold text-white">Quick Actions</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/organization/jobs/new"
             className="group rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20"
@@ -157,6 +161,53 @@ export default function OverviewTab() {
             </p>
           </Link>
 
+          <Link
+            href="/organization/talent"
+            className="group rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-6 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/20"
+          >
+            <div className="mb-2 text-2xl">🔍</div>
+            <h4 className="font-semibold text-white group-hover:text-cyan-400">
+              Search Talent
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              Find qualified candidates
+            </p>
+          </Link>
+
+          <Link
+            href="/organization/messages"
+            className="group relative rounded-xl border border-blue-500/30 bg-blue-500/10 p-6 transition-all hover:border-blue-500/50 hover:bg-blue-500/20"
+          >
+            {unreadMessages > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                {unreadMessages > 9 ? "9+" : unreadMessages}
+              </span>
+            )}
+            <div className="mb-2 text-2xl">💬</div>
+            <h4 className="font-semibold text-white group-hover:text-blue-400">
+              Messages
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              {unreadMessages > 0 ? `${unreadMessages} unread` : "Chat with candidates"}
+            </p>
+          </Link>
+
+          <Link
+            href="/organization/analytics"
+            className="group rounded-xl border border-purple-500/30 bg-purple-500/10 p-6 transition-all hover:border-purple-500/50 hover:bg-purple-500/20"
+          >
+            <div className="mb-2 text-2xl">📊</div>
+            <h4 className="font-semibold text-white group-hover:text-purple-400">
+              Analytics
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              View performance metrics
+            </p>
+          </Link>
+        </div>
+
+        {/* Secondary Actions */}
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/organization/events/new"
             className="group rounded-xl border border-pink-500/30 bg-pink-500/10 p-6 transition-all hover:border-pink-500/50 hover:bg-pink-500/20"
@@ -185,10 +236,10 @@ export default function OverviewTab() {
 
           <Link
             href="/organization/conferences/new"
-            className="group rounded-xl border border-blue-500/30 bg-blue-500/10 p-6 transition-all hover:border-blue-500/50 hover:bg-blue-500/20"
+            className="group rounded-xl border border-amber-500/30 bg-amber-500/10 p-6 transition-all hover:border-amber-500/50 hover:bg-amber-500/20"
           >
             <div className="mb-2 text-2xl">📅</div>
-            <h4 className="font-semibold text-white group-hover:text-blue-400">
+            <h4 className="font-semibold text-white group-hover:text-amber-400">
               Post Conference
             </h4>
             <p className="mt-1 text-sm text-slate-400">
@@ -198,10 +249,10 @@ export default function OverviewTab() {
 
           <Link
             href="/organization/setup"
-            className="group rounded-xl border border-purple-500/30 bg-purple-500/10 p-6 transition-all hover:border-purple-500/50 hover:bg-purple-500/20"
+            className="group rounded-xl border border-slate-500/30 bg-slate-500/10 p-6 transition-all hover:border-slate-500/50 hover:bg-slate-500/20"
           >
             <div className="mb-2 text-2xl">⚙️</div>
-            <h4 className="font-semibold text-white group-hover:text-purple-400">
+            <h4 className="font-semibold text-white group-hover:text-slate-300">
               Update Profile
             </h4>
             <p className="mt-1 text-sm text-slate-400">

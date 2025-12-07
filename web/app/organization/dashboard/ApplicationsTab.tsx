@@ -72,11 +72,13 @@ export default function ApplicationsTab() {
 
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
-    if (s === "hired" || s === "hired")
+    if (s === "hired")
       return "bg-green-500/20 text-green-300 border-green-500/40";
+    if (s === "shortlisted")
+      return "bg-yellow-500/20 text-yellow-300 border-yellow-500/40";
     if (s === "reviewed" || s === "reviewing")
       return "bg-blue-500/20 text-blue-300 border-blue-500/40";
-    if (s === "rejected" || s === "rejected")
+    if (s === "rejected")
       return "bg-slate-500/20 text-slate-400 border-slate-500/40";
     if (s === "withdrawn")
       return "bg-orange-500/20 text-orange-300 border-orange-500/40";
@@ -88,6 +90,7 @@ export default function ApplicationsTab() {
       total: applications.length,
       submitted: applications.filter((a) => a.status === "submitted").length,
       inReview: applications.filter((a) => a.status === "reviewed").length,
+      shortlisted: applications.filter((a) => a.status === "shortlisted").length,
       hired: applications.filter((a) => a.status === "hired").length,
       rejected: applications.filter((a) => a.status === "rejected").length,
     };
@@ -104,7 +107,7 @@ export default function ApplicationsTab() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
         <div className="rounded-3xl bg-gradient-to-br from-slate-500/10 to-slate-600/10 p-6 shadow-xl shadow-slate-900/20">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Total</p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
@@ -127,6 +130,15 @@ export default function ApplicationsTab() {
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {statusCounts.inReview}
+          </h3>
+        </div>
+
+        <div className="rounded-3xl bg-gradient-to-br from-yellow-500/10 to-amber-500/10 p-6 shadow-xl shadow-yellow-900/20">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+            Shortlisted
+          </p>
+          <h3 className="mt-2 text-3xl font-semibold text-white">
+            {statusCounts.shortlisted}
           </h3>
         </div>
 
@@ -190,6 +202,7 @@ export default function ApplicationsTab() {
             <option value="all">All statuses</option>
             <option value="submitted">Submitted</option>
             <option value="reviewed">In review</option>
+            <option value="shortlisted">Shortlisted</option>
             <option value="hired">Hired</option>
             <option value="rejected">Not selected</option>
             <option value="withdrawn">Withdrawn</option>
@@ -286,6 +299,7 @@ export default function ApplicationsTab() {
                       >
                         <option value="submitted">Submitted</option>
                         <option value="reviewed">In review</option>
+                        <option value="shortlisted">Shortlisted</option>
                         <option value="hired">Hired</option>
                         <option value="rejected">Not selected</option>
                       </select>

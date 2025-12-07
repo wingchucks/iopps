@@ -116,6 +116,28 @@ export default function OpportunitiesTab() {
     }
   };
 
+  const handleDuplicateJob = (job: JobPosting) => {
+    // Store job data in sessionStorage for the new job form to pick up
+    const duplicateData = {
+      title: `${job.title} (Copy)`,
+      location: job.location,
+      employmentType: job.employmentType,
+      remoteFlag: job.remoteFlag,
+      indigenousPreference: job.indigenousPreference,
+      description: job.description,
+      responsibilities: job.responsibilities,
+      qualifications: job.qualifications,
+      salaryRange: job.salaryRange,
+      applicationLink: job.applicationLink,
+      applicationEmail: job.applicationEmail,
+      cpicRequired: job.cpicRequired,
+      willTrain: job.willTrain,
+      quickApplyEnabled: job.quickApplyEnabled,
+    };
+    sessionStorage.setItem("duplicateJobData", JSON.stringify(duplicateData));
+    router.push("/organization/jobs/new?duplicate=true");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -271,6 +293,12 @@ export default function OpportunitiesTab() {
                     >
                       View applications
                     </Link>
+                    <button
+                      onClick={() => handleDuplicateJob(job)}
+                      className="rounded-lg bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+                    >
+                      Duplicate
+                    </button>
                     <button
                       onClick={() => handleToggleJobStatus(job.id, job.active !== false)}
                       className="rounded-lg bg-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-300 transition-all hover:bg-slate-700"
