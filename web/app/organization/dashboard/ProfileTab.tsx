@@ -319,10 +319,16 @@ export default function ProfileTab() {
               Website
             </label>
             <input
-              type="url"
+              type="text"
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://example.com"
+              onBlur={(e) => {
+                const val = e.target.value.trim();
+                if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+                  setWebsite('https://' + val);
+                }
+              }}
+              placeholder="example.com"
               className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>

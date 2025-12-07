@@ -683,11 +683,17 @@ export default function ShopTab() {
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Website</label>
                 <input
-                  type="url"
+                  type="text"
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  onBlur={(e) => {
+                    const val = e.target.value.trim();
+                    if (val && !val.startsWith('http://') && !val.startsWith('https://')) {
+                      setFormData({ ...formData, website: 'https://' + val });
+                    }
+                  }}
                   className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
-                  placeholder="https://yourbusiness.com"
+                  placeholder="yourbusiness.com"
                 />
               </div>
               <div>
