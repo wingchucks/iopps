@@ -37,6 +37,12 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.split("Bearer ")[1];
     try {
+      if (!auth) {
+        return NextResponse.json(
+          { error: "Server configuration error. Auth not initialized." },
+          { status: 500 }
+        );
+      }
       await auth.verifyIdToken(token);
     } catch (authError) {
       console.error("Auth error:", authError);
