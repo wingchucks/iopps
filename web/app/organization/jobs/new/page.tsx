@@ -74,7 +74,6 @@ export default function NewJobPage() {
             indigenousPreference: duplicateData.indigenousPreference ?? prev.indigenousPreference,
             cpicRequired: duplicateData.cpicRequired ?? prev.cpicRequired,
             willTrain: duplicateData.willTrain ?? prev.willTrain,
-            driversLicense: duplicateData.driversLicenseRequired ?? prev.driversLicense,
             applicationLink: duplicateData.applicationLink || prev.applicationLink,
             applicationEmail: duplicateData.applicationEmail || prev.applicationEmail,
             quickApplyEnabled: duplicateData.quickApplyEnabled ?? prev.quickApplyEnabled,

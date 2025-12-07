@@ -132,7 +132,6 @@ export default function OpportunitiesTab() {
       applicationEmail: job.applicationEmail,
       cpicRequired: job.cpicRequired,
       willTrain: job.willTrain,
-      driversLicenseRequired: job.driversLicenseRequired,
       quickApplyEnabled: job.quickApplyEnabled,
     };
     sessionStorage.setItem("duplicateJobData", JSON.stringify(duplicateData));
