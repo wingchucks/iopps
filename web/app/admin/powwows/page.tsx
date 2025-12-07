@@ -182,6 +182,12 @@ function AdminPowwowsContent() {
                 {filteredPowwows.length} event{filteredPowwows.length !== 1 ? "s" : ""}
               </p>
             </div>
+            <Link
+              href="/organization/powwows/new"
+              className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+            >
+              + Create New
+            </Link>
           </div>
         </div>
       </div>
@@ -356,7 +362,14 @@ function AdminPowwowsContent() {
                         href={`/powwows/${powwow.id}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
-                        View Pow Wow
+                        View
+                      </Link>
+
+                      <Link
+                        href={`/admin/powwows/${powwow.id}/edit`}
+                        className="rounded-md border border-blue-500 px-4 py-2 text-sm font-semibold text-blue-400 transition hover:bg-blue-500/10 text-center"
+                      >
+                        Edit
                       </Link>
 
                       <button
