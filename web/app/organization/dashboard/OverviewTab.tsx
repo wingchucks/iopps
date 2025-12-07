@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -28,6 +28,19 @@ export default function OverviewTab() {
   const [events, setEvents] = useState<PowwowEvent[]>([]);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
+        setShowCreateMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -147,19 +160,80 @@ export default function OverviewTab() {
       {/* Quick Actions */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <h3 className="mb-6 text-xl font-semibold text-white">Quick Actions</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/organization/jobs/new"
-            className="group rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20"
-          >
-            <div className="mb-2 text-2xl">💼</div>
-            <h4 className="font-semibold text-white group-hover:text-emerald-400">
-              Post a Job
-            </h4>
-            <p className="mt-1 text-sm text-slate-400">
-              Share new opportunities
-            </p>
-          </Link>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Create New Dropdown */}
+          <div className="relative" ref={createMenuRef}>
+            <button
+              onClick={() => setShowCreateMenu(!showCreateMenu)}
+              className="group w-full rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 p-6 text-left transition-all hover:border-emerald-500/50 hover:from-emerald-500/30 hover:to-teal-500/20"
+            >
+              <div className="mb-2 text-2xl">➕</div>
+              <h4 className="flex items-center gap-2 font-semibold text-white group-hover:text-emerald-400">
+                Create New
+                <svg
+                  className={`h-4 w-4 transition-transform ${showCreateMenu ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </h4>
+              <p className="mt-1 text-sm text-slate-400">
+                Post opportunity
+              </p>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showCreateMenu && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl">
+                <Link
+                  href="/organization/jobs/new"
+                  onClick={() => setShowCreateMenu(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-300"
+                >
+                  <span className="text-xl">💼</span>
+                  <div>
+                    <p className="font-medium">Job Posting</p>
+                    <p className="text-xs text-slate-400">Share job opportunities</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/organization/powwows/new"
+                  onClick={() => setShowCreateMenu(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-pink-500/20 hover:text-pink-300"
+                >
+                  <span className="text-xl">🎪</span>
+                  <div>
+                    <p className="font-medium">Pow Wow / Event</p>
+                    <p className="text-xs text-slate-400">Cultural gatherings</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/organization/scholarships/new"
+                  onClick={() => setShowCreateMenu(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-teal-500/20 hover:text-teal-300"
+                >
+                  <span className="text-xl">🎓</span>
+                  <div>
+                    <p className="font-medium">Scholarship</p>
+                    <p className="text-xs text-slate-400">Scholarships & grants</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/organization/conferences/new"
+                  onClick={() => setShowCreateMenu(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-amber-500/20 hover:text-amber-300"
+                >
+                  <span className="text-xl">📅</span>
+                  <div>
+                    <p className="font-medium">Conference</p>
+                    <p className="text-xs text-slate-400">Announce conferences</p>
+                  </div>
+                </Link>
+              </div>
+            )}
+          </div>
 
           <Link
             href="/organization/talent"
@@ -204,48 +278,6 @@ export default function OverviewTab() {
               View performance metrics
             </p>
           </Link>
-        </div>
-
-        {/* Secondary Actions */}
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/organization/events/new"
-            className="group rounded-xl border border-pink-500/30 bg-pink-500/10 p-6 transition-all hover:border-pink-500/50 hover:bg-pink-500/20"
-          >
-            <div className="mb-2 text-2xl">🎪</div>
-            <h4 className="font-semibold text-white group-hover:text-pink-400">
-              Post Event
-            </h4>
-            <p className="mt-1 text-sm text-slate-400">
-              Pow wows & gatherings
-            </p>
-          </Link>
-
-          <Link
-            href="/organization/scholarships/new"
-            className="group rounded-xl border border-teal-500/30 bg-teal-500/10 p-6 transition-all hover:border-teal-500/50 hover:bg-teal-500/20"
-          >
-            <div className="mb-2 text-2xl">🎓</div>
-            <h4 className="font-semibold text-white group-hover:text-teal-400">
-              Post Scholarship
-            </h4>
-            <p className="mt-1 text-sm text-slate-400">
-              Scholarships & grants
-            </p>
-          </Link>
-
-          <Link
-            href="/organization/conferences/new"
-            className="group rounded-xl border border-amber-500/30 bg-amber-500/10 p-6 transition-all hover:border-amber-500/50 hover:bg-amber-500/20"
-          >
-            <div className="mb-2 text-2xl">📅</div>
-            <h4 className="font-semibold text-white group-hover:text-amber-400">
-              Post Conference
-            </h4>
-            <p className="mt-1 text-sm text-slate-400">
-              Announce conferences
-            </p>
-          </Link>
 
           <Link
             href="/organization/setup"
@@ -253,10 +285,10 @@ export default function OverviewTab() {
           >
             <div className="mb-2 text-2xl">⚙️</div>
             <h4 className="font-semibold text-white group-hover:text-slate-300">
-              Update Profile
+              Settings
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Organization settings
+              Organization profile
             </p>
           </Link>
         </div>

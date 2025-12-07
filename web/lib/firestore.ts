@@ -33,6 +33,7 @@ import type {
   VendorStatus,
   VendorProduct,
   PowwowRegistration,
+  ConferenceRegistration,
   ContactSubmission,
   PlatformSettings,
   RSSFeed,
@@ -102,6 +103,7 @@ const powwowsCollection = "powwows";
 const liveStreamsCollection = "liveStreams";
 const vendorsCollection = "vendors";
 const powwowRegistrationsCollection = "powwowRegistrations";
+const conferenceRegistrationsCollection = "conferenceRegistrations";
 const productServiceListingsCollection = "productServiceListings";
 const contactSubmissionsCollection = "contactSubmissions";
 const conversationsCollection = "conversations";
@@ -1934,6 +1936,29 @@ export async function listPowwowRegistrants(
     const data = docSnapshot.data() as PowwowRegistration;
     return { ...data, id: docSnapshot.id };
   });
+}
+
+// ===============================================
+// Conference Registration functions
+// ===============================================
+
+type ConferenceRegistrationInput = Omit<
+  ConferenceRegistration,
+  "id" | "createdAt"
+>;
+
+export async function createConferenceRegistration(
+  input: ConferenceRegistrationInput
+): Promise<string> {
+  const ref = collection(db!, conferenceRegistrationsCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db!, conferenceRegistrationsCollection, docRef.id), {
+    id: docRef.id,
+  });
+  return docRef.id;
 }
 
 // ===============================================

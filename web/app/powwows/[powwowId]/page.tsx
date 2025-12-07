@@ -1,31 +1,21 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { PageShell } from "@/components/PageShell";
 import ShareButtons from "@/components/ShareButtons";
-import { useAuth } from "@/components/AuthProvider";
-import { getPowwowEvent, createPowwowRegistration } from "@/lib/firestore";
+import { getPowwowEvent } from "@/lib/firestore";
 import type { PowwowEvent } from "@/lib/types";
 
 export default function PowwowDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const powwowId = params.powwowId as string;
-  const { user } = useAuth();
 
   const [powwow, setPowwow] = useState<PowwowEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Registration form state
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [numberOfAttendees, setNumberOfAttendees] = useState(1);
-  const [specialRequests, setSpecialRequests] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     const loadPowwow = async () => {
@@ -45,50 +35,6 @@ export default function PowwowDetailPage() {
     };
     loadPowwow();
   }, [powwowId]);
-
-  // Auto-populate user info if logged in
-  useEffect(() => {
-    if (user) {
-      setName(user.displayName || "");
-      setEmail(user.email || "");
-    }
-  }, [user]);
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!powwow) return;
-
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      await createPowwowRegistration({
-        powwowId: powwow.id,
-        employerId: powwow.employerId,
-        name,
-        email,
-        numberOfAttendees,
-        specialRequests,
-      });
-      setSuccess(true);
-      setTimeout(() => {
-        if (user) {
-          router.push("/member/dashboard");
-        } else {
-          setSuccess(false);
-          setName("");
-          setEmail("");
-          setNumberOfAttendees(1);
-          setSpecialRequests("");
-        }
-      }, 3000);
-    } catch (err) {
-      console.error("Failed to submit registration", err);
-      setError("Failed to submit registration. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -232,6 +178,41 @@ export default function PowwowDetailPage() {
           </div>
         </div>
 
+        {/* Event Poster */}
+        {powwow.imageUrl && (
+          <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-200">Event Poster</h2>
+              <a
+                href={powwow.imageUrl}
+                download={`${powwow.name.replace(/[^a-zA-Z0-9]/g, '_')}_poster`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Poster
+              </a>
+            </div>
+            <div className="relative w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900/50">
+              <div className="relative aspect-[3/4] w-full max-w-2xl mx-auto">
+                <Image
+                  src={powwow.imageUrl}
+                  alt={`${powwow.name} event poster`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 672px"
+                />
+              </div>
+            </div>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              Click the download button to save the full poster image
+            </p>
+          </div>
+        )}
+
         {/* Description */}
         <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
           <h2 className="text-xl font-bold text-slate-200">About This Event</h2>
@@ -242,108 +223,6 @@ export default function PowwowDetailPage() {
               </p>
             ))}
           </div>
-        </div>
-
-        {/* Registration Section */}
-        <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
-          <h2 className="text-xl font-bold text-slate-200">
-            Register to Attend
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">
-            Pre-register for this event to help organizers plan for attendance.
-          </p>
-
-          {success ? (
-            <div className="mt-6 rounded-lg border border-green-500/40 bg-green-500/10 p-6 text-center">
-              <p className="text-lg font-semibold text-green-400">
-                ✓ Registration submitted successfully!
-              </p>
-              <p className="mt-2 text-sm text-slate-300">
-                We look forward to seeing you at the event!
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-slate-200">
-                    Name <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your full name"
-                    className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-200">
-                    Email <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-200">
-                  Number of Attendees <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  max="50"
-                  value={numberOfAttendees}
-                  onChange={(e) => setNumberOfAttendees(parseInt(e.target.value) || 1)}
-                  className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-                />
-                <p className="mt-1 text-xs text-slate-400">
-                  How many people will be attending with you? (Including yourself)
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-200">
-                  Special Requests or Questions (Optional)
-                </label>
-                <textarea
-                  value={specialRequests}
-                  onChange={(e) => setSpecialRequests(e.target.value)}
-                  rows={4}
-                  placeholder="Any accessibility needs, dietary requirements, or questions for the organizers..."
-                  className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-                />
-              </div>
-
-              {error && (
-                <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {submitting ? "Registering..." : "Register for Event"}
-              </button>
-
-              <p className="text-xs text-slate-400">
-                Registration is free and helps organizers plan. You can update or cancel your registration by contacting the organizers.
-              </p>
-            </form>
-          )}
         </div>
       </div>
     </PageShell>

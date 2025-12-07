@@ -18,7 +18,7 @@ import { storage } from "@/lib/firebase";
 // TYPE DEFINITIONS
 // ============================================================================
 
-export type ImageType = "profile" | "cover" | "gallery" | "verification";
+export type ImageType = "profile" | "cover" | "gallery" | "verification" | "event";
 
 export interface UploadProgress {
   progress: number;
@@ -52,6 +52,7 @@ const IMAGE_PATHS: Record<ImageType, string> = {
   cover: "vendors/cover",
   gallery: "vendors/gallery",
   verification: "vendors/verification",
+  event: "events/posters",
 };
 
 // ============================================================================
