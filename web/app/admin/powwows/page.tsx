@@ -247,7 +247,8 @@ function AdminPowwowsContent() {
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Failed to upload image. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to upload image: ${errorMessage}`);
     } finally {
       setUploading(false);
       setUploadProgress(0);
