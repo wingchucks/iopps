@@ -231,7 +231,7 @@ export async function uploadVerificationDocument(
 }
 
 /**
- * Upload an event poster image (for pow wows, conferences, etc.)
+ * Upload an event poster image (for general events)
  */
 export async function uploadEventImage(
   file: File,
@@ -239,6 +239,18 @@ export async function uploadEventImage(
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> {
   return uploadImage(file, eventId, "event", onProgress);
+}
+
+/**
+ * Upload a pow wow poster image
+ * Uses the powwow-specific path: powwows/{powwowId}/posters/{filename}
+ */
+export async function uploadPowwowImage(
+  file: File,
+  powwowId: string,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<UploadResult> {
+  return uploadImage(file, powwowId, "powwow", onProgress);
 }
 
 /**

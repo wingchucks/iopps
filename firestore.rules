@@ -54,6 +54,18 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // USERS COLLECTION
+    // ===========================================================================
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdminOrModerator());
+      // For now, allow users to create/update their own profile
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      // Allow admins to manage users
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
     // JOBS COLLECTION
     // ===========================================================================
     match /jobs/{jobId} {

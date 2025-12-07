@@ -16,7 +16,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { uploadEventImage } from "@/lib/firebase/storage";
+import { uploadPowwowImage } from "@/lib/firebase/storage";
 import type { PowwowEvent } from "@/lib/types";
 
 interface PowwowWithEmployer extends PowwowEvent {
@@ -54,6 +54,8 @@ function AdminPowwowsContent() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -183,20 +185,66 @@ function AdminPowwowsContent() {
       livestream: false,
       imageUrl: "",
     });
+    setAnalyzeError(null);
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !editingPowwow) return;
+    if (!file || !editingPowwow || !user) return;
 
     setUploading(true);
     setUploadProgress(0);
+    setAnalyzeError(null);
 
     try {
-      const result = await uploadEventImage(file, editingPowwow.id, (progress) => {
+      // Upload the image to Firebase Storage
+      const result = await uploadPowwowImage(file, editingPowwow.id, (progress) => {
         setUploadProgress(progress.progress);
       });
       setEditForm((prev) => ({ ...prev, imageUrl: result.url }));
+
+      // Now analyze the poster with AI to auto-fill fields
+      setAnalyzing(true);
+      try {
+        const token = await user.getIdToken();
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("eventType", "powwow");
+
+        const response = await fetch("/api/ai/analyze-poster", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.result?.data) {
+            const extracted = data.result.data;
+            // Auto-fill the form with extracted data (only fill empty or update existing)
+            setEditForm((prev) => ({
+              ...prev,
+              name: extracted.name || prev.name,
+              host: extracted.host || prev.host,
+              location: extracted.location || prev.location,
+              description: extracted.description || prev.description,
+              dateRange: extracted.dateRange || prev.dateRange,
+              registrationStatus: extracted.registrationStatus || prev.registrationStatus,
+              livestream: extracted.livestream ?? prev.livestream,
+            }));
+          }
+        } else {
+          const errorData = await response.json();
+          setAnalyzeError(errorData.error || "Failed to analyze poster");
+        }
+      } catch (analyzeErr) {
+        console.error("Error analyzing poster:", analyzeErr);
+        setAnalyzeError("Could not analyze poster. You can still fill in the details manually.");
+      } finally {
+        setAnalyzing(false);
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("Failed to upload image. Please try again.");
@@ -574,12 +622,28 @@ function AdminPowwowsContent() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
+                      disabled={uploading || analyzing}
                       className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 transition-colors disabled:opacity-50"
                     >
-                      {uploading ? `Uploading ${Math.round(uploadProgress)}%` : editForm.imageUrl ? "Change Poster" : "Upload Poster"}
+                      {uploading
+                        ? `Uploading ${Math.round(uploadProgress)}%`
+                        : analyzing
+                        ? "Analyzing with AI..."
+                        : editForm.imageUrl
+                        ? "Change Poster"
+                        : "Upload Poster"}
                     </button>
                     <p className="mt-2 text-xs text-slate-500">JPEG, PNG, WebP or GIF (max 10MB)</p>
+                    {analyzing && (
+                      <p className="mt-1 text-xs text-[#14B8A6]">
+                        AI is reading the poster to auto-fill the form...
+                      </p>
+                    )}
+                    {analyzeError && (
+                      <p className="mt-1 text-xs text-amber-400">
+                        {analyzeError}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -684,7 +748,7 @@ function AdminPowwowsContent() {
               <button
                 type="button"
                 onClick={saveEditedPowwow}
-                disabled={saving || uploading || !editForm.name || !editForm.location}
+                disabled={saving || uploading || analyzing || !editForm.name || !editForm.location}
                 className="px-6 py-3 rounded-lg bg-[#14B8A6] text-slate-900 font-semibold hover:bg-[#16cdb8] transition-colors disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}
