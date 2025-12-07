@@ -12,6 +12,8 @@ import {
     ArrowLeftOnRectangleIcon,
     ArrowDownTrayIcon,
     VideoCameraIcon,
+    SparklesIcon,
+    BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminLayout({
@@ -48,6 +50,8 @@ export default function AdminLayout({
     const navigation = [
         { name: "Dashboard", href: "/admin", icon: ChartBarIcon },
         { name: "Employers", href: "/admin/employers", icon: BriefcaseIcon },
+        { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
+        { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
         { name: "Videos", href: "/admin/videos", icon: VideoCameraIcon },
         { name: "Users", href: "/admin/users", icon: UsersIcon },
         { name: "Job Auto Import", href: "/admin/feeds", icon: ArrowDownTrayIcon },
