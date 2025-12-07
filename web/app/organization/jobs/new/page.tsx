@@ -124,7 +124,7 @@ export default function NewJobPage() {
     }
   };
 
-  const handlePostJob = async (productType: "SINGLE" | "SUBSCRIPTION" | "FREE_POSTING") => {
+  const handlePostJob = async (productType: "SINGLE" | "FEATURED" | "SUBSCRIPTION" | "FREE_POSTING") => {
     if (!user) return;
     setSubmitting(true);
     setError(null);
@@ -367,38 +367,56 @@ export default function NewJobPage() {
             <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sticky top-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Publish</h2>
               <div className="space-y-4">
-                {/* Summary of Cost */}
-                {!freePostingEnabled && (
-                  <div className="rounded-lg bg-slate-900 p-4 border border-slate-800">
-                    {subscription && subscription.remainingCredits > 0 ? (
-                      <>
-                        <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
-                        <div className="text-xs text-slate-400">1 Credit will be deducted</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm text-slate-300 font-medium mb-1">Standard Post</div>
-                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-3">
-                  {freePostingEnabled ? (
-                    <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
-                      {submitting ? "Posting..." : "Post Free (Admin)"}
-                    </button>
-                  ) : subscription && subscription.remainingCredits > 0 ? (
+                {freePostingEnabled ? (
+                  <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
+                    {submitting ? "Posting..." : "Post Free (Admin)"}
+                  </button>
+                ) : subscription && subscription.remainingCredits > 0 ? (
+                  <>
+                    <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
+                      <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
+                      <div className="text-xs text-slate-400">1 Credit will be deducted</div>
+                    </div>
                     <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
                       {submitting ? "Posting..." : "Post using Credit"}
                     </button>
-                  ) : (
-                    <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
-                      {submitting ? "Processing..." : "Pay & Post"}
-                    </button>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Standard Post Option */}
+                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-slate-300 font-semibold">{JOB_POSTING_PRODUCTS.SINGLE.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.SINGLE.duration} days</div>
+                        </div>
+                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</div>
+                      </div>
+                      <p className="text-xs text-slate-400 mb-3">{JOB_POSTING_PRODUCTS.SINGLE.description}</p>
+                      <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-slate-700 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 transition-colors">
+                        {submitting ? "Processing..." : "Pay & Post"}
+                      </button>
+                    </div>
+
+                    {/* Featured Post Option */}
+                    <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
+                      <div className="absolute -top-2 right-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Recommended</span>
+                      </div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-amber-400 font-semibold">{JOB_POSTING_PRODUCTS.FEATURED.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.FEATURED.duration} days</div>
+                        </div>
+                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</div>
+                      </div>
+                      <p className="text-xs text-slate-400 mb-3">{JOB_POSTING_PRODUCTS.FEATURED.description}</p>
+                      <button onClick={() => handlePostJob("FEATURED")} disabled={submitting} className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
+                        {submitting ? "Processing..." : "Pay & Post Featured"}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <p className="text-center text-xs text-slate-500 mt-2">By posting, you agree to our Terms.</p>
               </div>
             </section>
