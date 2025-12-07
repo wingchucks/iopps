@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, FormEvent } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { useAuth } from "@/components/AuthProvider";
-import { getConference, toggleSavedConference, listSavedConferenceIds } from "@/lib/firestore";
+import { getConference, toggleSavedConference, listSavedConferenceIds, createConferenceRegistration } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import {
   ConferenceHero,
@@ -17,6 +17,7 @@ import {
 
 export default function ConferenceDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const conferenceId = params.conferenceId as string;
   const { user, role } = useAuth();
 
@@ -25,6 +26,15 @@ export default function ConferenceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [highlightedSpeakerId, setHighlightedSpeakerId] = useState<string | null>(null);
+
+  // Registration form state
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regAttendees, setRegAttendees] = useState(1);
+  const [regRequests, setRegRequests] = useState("");
+  const [regSubmitting, setRegSubmitting] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(false);
+  const [regError, setRegError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadConference = async () => {
@@ -87,6 +97,50 @@ export default function ConferenceDetailPage() {
       speakersSection.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
+
+  // Auto-populate registration form if user is logged in
+  useEffect(() => {
+    if (user) {
+      setRegName(user.displayName || "");
+      setRegEmail(user.email || "");
+    }
+  }, [user]);
+
+  const handleRegistration = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!conference) return;
+
+    setRegSubmitting(true);
+    setRegError(null);
+
+    try {
+      await createConferenceRegistration({
+        conferenceId: conference.id,
+        employerId: conference.employerId,
+        name: regName,
+        email: regEmail,
+        numberOfAttendees: regAttendees,
+        specialRequests: regRequests,
+      });
+      setRegSuccess(true);
+      setTimeout(() => {
+        if (user) {
+          router.push("/member/dashboard");
+        } else {
+          setRegSuccess(false);
+          setRegName("");
+          setRegEmail("");
+          setRegAttendees(1);
+          setRegRequests("");
+        }
+      }, 3000);
+    } catch (err) {
+      console.error("Failed to submit registration", err);
+      setRegError("Failed to submit registration. Please try again.");
+    } finally {
+      setRegSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -493,6 +547,108 @@ export default function ConferenceDetailPage() {
                 </div>
               </section>
             )}
+
+            {/* Registration Section */}
+            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+              <h2 className="text-xl font-bold text-slate-200">
+                Register to Attend
+              </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Pre-register for this conference to help organizers plan for attendance.
+              </p>
+
+              {regSuccess ? (
+                <div className="mt-6 rounded-lg border border-green-500/40 bg-green-500/10 p-6 text-center">
+                  <p className="text-lg font-semibold text-green-400">
+                    ✓ Registration submitted successfully!
+                  </p>
+                  <p className="mt-2 text-sm text-slate-300">
+                    We look forward to seeing you at the conference!
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleRegistration} className="mt-6 space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-200">
+                        Name <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={regName}
+                        onChange={(e) => setRegName(e.target.value)}
+                        placeholder="Your full name"
+                        className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-200">
+                        Email <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200">
+                      Number of Attendees <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="50"
+                      value={regAttendees}
+                      onChange={(e) => setRegAttendees(parseInt(e.target.value) || 1)}
+                      className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                    />
+                    <p className="mt-1 text-xs text-slate-400">
+                      How many people will be attending with you? (Including yourself)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200">
+                      Special Requests or Questions (Optional)
+                    </label>
+                    <textarea
+                      value={regRequests}
+                      onChange={(e) => setRegRequests(e.target.value)}
+                      rows={4}
+                      placeholder="Any accessibility needs, dietary requirements, or questions for the organizers..."
+                      className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                    />
+                  </div>
+
+                  {regError && (
+                    <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      {regError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={regSubmitting}
+                    className="w-full rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {regSubmitting ? "Registering..." : "Register for Conference"}
+                  </button>
+
+                  <p className="text-xs text-slate-400">
+                    Registration is free and helps organizers plan. You can update or cancel your registration by contacting the organizers.
+                  </p>
+                </form>
+              )}
+            </section>
 
             {/* Sign-up CTA for non-logged users */}
             {!user && (

@@ -689,6 +689,17 @@ export interface PowwowRegistration {
   createdAt?: Timestamp | null;
 }
 
+export interface ConferenceRegistration {
+  id: string;
+  conferenceId: string;
+  employerId: string;
+  name: string;
+  email: string;
+  numberOfAttendees: number;
+  specialRequests?: string;
+  createdAt?: Timestamp | null;
+}
+
 export interface ContactSubmission {
   id: string;
   name: string;
