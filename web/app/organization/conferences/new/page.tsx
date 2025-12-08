@@ -158,9 +158,8 @@ export default function NewConferencePage() {
         setConferenceId(newConferenceId);
         setStep("pricing");
       } else {
-        // Free posting - activate and redirect to success
-        await updateConference(newConferenceId, { active: true });
-        toast.success("Conference created successfully!");
+        // Free posting - stays inactive pending admin approval
+        toast.success("Conference submitted for review!");
         router.push(`/organization/conferences/${newConferenceId}/edit`);
       }
     } catch (err) {
