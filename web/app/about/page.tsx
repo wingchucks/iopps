@@ -203,37 +203,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Platform Values */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-slate-50">Our Values & Principles</h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <div>
-            <h3 className="font-semibold text-[#14B8A6]">Community First</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Every decision prioritizes the needs and well-being of Indigenous communities.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-[#14B8A6]">Cultural Respect</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              We honor Indigenous knowledge, traditions, and protocols in all aspects.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-[#14B8A6]">Meaningful Partnership</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              We connect employers genuinely committed to reconciliation and Indigenous success.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-[#14B8A6]">Accessibility & Inclusion</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              IOPPS is free for community members and designed to be accessible to all.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* For Different Users */}
       <section className="grid gap-4 lg:grid-cols-2">
         <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
