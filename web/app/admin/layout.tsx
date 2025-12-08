@@ -14,6 +14,7 @@ import {
     VideoCameraIcon,
     SparklesIcon,
     BuildingOfficeIcon,
+    Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminLayout({
@@ -55,6 +56,7 @@ export default function AdminLayout({
         { name: "Videos", href: "/admin/videos", icon: VideoCameraIcon },
         { name: "Users", href: "/admin/users", icon: UsersIcon },
         { name: "Job Auto Import", href: "/admin/feeds", icon: ArrowDownTrayIcon },
+        { name: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
     ];
 
     return (
@@ -76,8 +78,8 @@ export default function AdminLayout({
                                     key={item.name}
                                     href={item.href}
                                     className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium ${isActive
-                                            ? "bg-slate-800 text-teal-400"
-                                            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                        ? "bg-slate-800 text-teal-400"
+                                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
                                         }`}
                                 >
                                     <item.icon

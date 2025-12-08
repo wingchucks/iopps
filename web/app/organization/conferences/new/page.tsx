@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -10,6 +10,8 @@ import { PosterUploader } from "@/components/PosterUploader";
 import type { ConferenceExtractedData } from "@/lib/googleAi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import { isPillarPaymentRequired } from "@/lib/platformSettings";
+import { toast } from "react-hot-toast";
 
 export default function NewConferencePage() {
   const router = useRouter();
@@ -30,6 +32,16 @@ export default function NewConferencePage() {
   // Step management
   const [step, setStep] = useState<"form" | "pricing">("form");
   const [conferenceId, setConferenceId] = useState<string | null>(null);
+  const [paymentRequired, setPaymentRequired] = useState(true);
+
+  // Check if payment is required for conferences
+  useEffect(() => {
+    async function checkPayment() {
+      const required = await isPillarPaymentRequired("conferences");
+      setPaymentRequired(required);
+    }
+    checkPayment();
+  }, []);
 
   // Handle data extracted from poster
   const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
@@ -141,8 +153,16 @@ export default function NewConferencePage() {
         }
       }
 
-      setConferenceId(newConferenceId);
-      setStep("pricing");
+      // If payment is required, go to pricing step
+      if (paymentRequired) {
+        setConferenceId(newConferenceId);
+        setStep("pricing");
+      } else {
+        // Free posting - activate and redirect to success
+        await updateConference(newConferenceId, { active: true });
+        toast.success("Conference created successfully!");
+        router.push(`/organization/conferences/${newConferenceId}/edit`);
+      }
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not create conference.");
