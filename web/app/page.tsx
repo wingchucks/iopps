@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { StatsCounter } from "@/components/StatsCounter";
 
 const pillars = [
   {
@@ -100,6 +101,15 @@ export default function Home() {
                 </span>
               </div>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Counter */}
+      <section className="relative px-4 pb-16">
+        <div className="mx-auto max-w-4xl">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 px-6 py-8 backdrop-blur-sm">
+            <StatsCounter />
           </div>
         </div>
       </section>
