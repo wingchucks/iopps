@@ -15,6 +15,7 @@ import {
     SparklesIcon,
     BuildingOfficeIcon,
     Cog6ToothIcon,
+    DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminLayout({
@@ -50,6 +51,7 @@ export default function AdminLayout({
 
     const navigation = [
         { name: "Dashboard", href: "/admin", icon: ChartBarIcon },
+        { name: "Jobs", href: "/admin/jobs", icon: DocumentTextIcon },
         { name: "Employers", href: "/admin/employers", icon: BriefcaseIcon },
         { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
         { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },

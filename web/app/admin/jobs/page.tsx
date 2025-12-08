@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -13,30 +13,31 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  limit,
+  startAfter,
+  where,
+  QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { JobPosting } from "@/lib/types";
+import {
+  MagnifyingGlassIcon,
+  EyeIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  MapPinIcon,
+  BuildingOfficeIcon,
+  CalendarDaysIcon,
+  BriefcaseIcon,
+} from "@heroicons/react/24/outline";
 
 interface JobWithEmployer extends JobPosting {
-  employerName?: string;
   employerLogoUrl?: string;
 }
 
-function formatSalaryRange(salaryRange: JobPosting["salaryRange"]): string {
-  if (!salaryRange) return "";
-  if (typeof salaryRange === "string") return salaryRange;
-  if (!salaryRange.disclosed) return "";
-
-  const { min, max, currency = "CAD" } = salaryRange;
-  if (min && max) {
-    return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
-  }
-  if (min) return `$${min.toLocaleString()}+ ${currency}`;
-  if (max) return `Up to $${max.toLocaleString()} ${currency}`;
-  return "";
-}
-
-import { Suspense } from "react";
+const JOBS_PER_PAGE = 20;
 
 function AdminJobsContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -49,7 +50,11 @@ function AdminJobsContent() {
   const [filter, setFilter] = useState<"all" | "active" | "inactive">(
     statusFilter === "active" ? "active" : statusFilter === "inactive" ? "inactive" : "all"
   );
+  const [searchQuery, setSearchQuery] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalJobs, setTotalJobs] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -62,13 +67,22 @@ function AdminJobsContent() {
     loadJobs();
   }, [user, role, authLoading, router]);
 
-  async function loadJobs() {
+  async function loadJobs(loadMore = false) {
     try {
-      setLoading(true);
+      if (!loadMore) {
+        setLoading(true);
+        setJobs([]);
+      }
 
-      // Get all jobs
+      // Build query
       const jobsRef = collection(db!, "jobs");
-      const jobsSnap = await getDocs(query(jobsRef, orderBy("createdAt", "desc")));
+      let q = query(jobsRef, orderBy("createdAt", "desc"), limit(JOBS_PER_PAGE));
+
+      if (loadMore && lastDoc) {
+        q = query(jobsRef, orderBy("createdAt", "desc"), startAfter(lastDoc), limit(JOBS_PER_PAGE));
+      }
+
+      const jobsSnap = await getDocs(q);
 
       // Get employer info
       const employersRef = collection(db!, "employers");
@@ -82,7 +96,7 @@ function AdminJobsContent() {
         });
       });
 
-      const jobsList: JobWithEmployer[] = jobsSnap.docs.map((doc) => {
+      const newJobs: JobWithEmployer[] = jobsSnap.docs.map((doc) => {
         const data = doc.data() as JobPosting;
         const employer = employerMap.get(data.employerId);
         return {
@@ -93,7 +107,17 @@ function AdminJobsContent() {
         };
       });
 
-      setJobs(jobsList);
+      if (loadMore) {
+        setJobs((prev) => [...prev, ...newJobs]);
+      } else {
+        setJobs(newJobs);
+        // Get total count
+        const allJobsSnap = await getDocs(collection(db!, "jobs"));
+        setTotalJobs(allJobsSnap.size);
+      }
+
+      setLastDoc(jobsSnap.docs[jobsSnap.docs.length - 1] || null);
+      setHasMore(jobsSnap.docs.length === JOBS_PER_PAGE);
     } catch (error) {
       console.error("Error loading jobs:", error);
     } finally {
@@ -112,7 +136,6 @@ function AdminJobsContent() {
         updatedAt: serverTimestamp(),
       });
 
-      // Update local state
       setJobs((prev) =>
         prev.map((job) =>
           job.id === jobId ? { ...job, active: !currentStatus } : job
@@ -130,7 +153,7 @@ function AdminJobsContent() {
     if (!user) return;
 
     const confirmed = confirm(
-      `Are you sure you want to delete the job "${jobTitle}"? This action cannot be undone.`
+      `Are you sure you want to delete "${jobTitle}"? This action cannot be undone.`
     );
 
     if (!confirmed) return;
@@ -140,8 +163,8 @@ function AdminJobsContent() {
       const jobRef = doc(db!, "jobs", jobId);
       await deleteDoc(jobRef);
 
-      // Update local state
       setJobs((prev) => prev.filter((job) => job.id !== jobId));
+      setTotalJobs((prev) => prev - 1);
     } catch (error) {
       console.error("Error deleting job:", error);
       alert("Failed to delete job. Please try again.");
@@ -152,10 +175,9 @@ function AdminJobsContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading jobs...</p>
-        </div>
+      <div className="space-y-4">
+        <div className="h-8 w-48 animate-pulse rounded bg-slate-800" />
+        <div className="h-64 animate-pulse rounded-xl bg-slate-800" />
       </div>
     );
   }
@@ -164,49 +186,53 @@ function AdminJobsContent() {
     return null;
   }
 
-  const filteredJobs = jobs.filter((job) => {
-    if (filter === "all") return true;
+  // Filter and search
+  let filteredJobs = jobs.filter((job) => {
     if (filter === "active") return job.active === true;
     if (filter === "inactive") return job.active === false;
     return true;
   });
 
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filteredJobs = filteredJobs.filter(
+      (job) =>
+        job.title?.toLowerCase().includes(query) ||
+        job.employerName?.toLowerCase().includes(query) ||
+        job.location?.toLowerCase().includes(query)
+    );
+  }
+
   const activeCount = jobs.filter((j) => j.active === true).length;
   const inactiveCount = jobs.filter((j) => j.active === false).length;
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
-        <div className="mx-auto max-w-7xl px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link
-                href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
-              >
-                ← Admin Dashboard
-              </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
-                Jobs Moderation
-              </h1>
-              <p className="mt-1 text-sm text-slate-400">
-                {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Jobs Management</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            {totalJobs} total jobs • {activeCount} active • {inactiveCount} inactive
+          </p>
         </div>
+        <Link
+          href="/organization/jobs/new"
+          className="flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+        >
+          <BriefcaseIcon className="h-4 w-4" />
+          Post New Job
+        </Link>
       </div>
 
-      {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-3">
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex gap-2">
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+              ? "bg-[#14B8A6] text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
               }`}
           >
             All ({jobs.length})
@@ -214,8 +240,8 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-                ? "bg-green-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-green-500"
+              ? "bg-green-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-green-500"
               }`}
           >
             Active ({activeCount})
@@ -223,180 +249,188 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-                ? "bg-slate-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-slate-500"
+              ? "bg-slate-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-slate-500"
               }`}
           >
             Inactive ({inactiveCount})
           </button>
         </div>
 
-        {/* Jobs List */}
-        <div className="space-y-4">
-          {filteredJobs.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-              <p className="text-slate-400">No jobs found for this filter.</p>
-            </div>
-          ) : (
-            filteredJobs.map((job) => {
-              const isProcessing = processing === job.id;
-              const isActive = job.active === true;
-
-              return (
-                <div
-                  key={job.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
-                >
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                    {/* Job Info */}
-                    <div className="flex-1">
-                      <div className="flex items-start gap-4">
-                        {job.employerLogoUrl && (
-                          <img
-                            src={job.employerLogoUrl}
-                            alt={job.employerName}
-                            className="h-16 w-16 rounded-lg border border-slate-700 object-cover"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <h3 className="text-xl font-semibold text-slate-50">
-                                {job.title}
-                              </h3>
-                              <p className="mt-1 text-sm text-slate-400">
-                                {job.employerName}
-                              </p>
-                            </div>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-slate-500/10 text-slate-400"
-                                }`}
-                            >
-                              {isActive ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-
-                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
-                            <span className="flex items-center gap-1">
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                              </svg>
-                              {job.location}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                              {job.employmentType}
-                            </span>
-                            {job.remoteFlag && (
-                              <span className="rounded-full bg-[#14B8A6]/10 px-2 py-0.5 text-xs text-[#14B8A6]">
-                                Remote
-                              </span>
-                            )}
-                            {job.indigenousPreference && (
-                              <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-400">
-                                Indigenous Preference
-                              </span>
-                            )}
-                          </div>
-
-                          {job.salaryRange && formatSalaryRange(job.salaryRange) && (
-                            <p className="mt-2 text-sm font-medium text-green-400">
-                              {formatSalaryRange(job.salaryRange)}
-                            </p>
-                          )}
-
-                          {job.description && (
-                            <p className="mt-3 text-sm text-slate-300 line-clamp-2">
-                              {job.description}
-                            </p>
-                          )}
-
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
-                            <span>
-                              Posted:{" "}
-                              {job.createdAt
-                                ? new Date(
-                                  job.createdAt.seconds * 1000
-                                ).toLocaleDateString()
-                                : "Unknown"}
-                            </span>
-                            {job.closingDate && (
-                              <span>
-                                Closes:{" "}
-                                {typeof job.closingDate === "string"
-                                  ? job.closingDate
-                                  : new Date(
-                                    job.closingDate.seconds * 1000
-                                  ).toLocaleDateString()}
-                              </span>
-                            )}
-                            {job.applicationsCount !== undefined && (
-                              <span className="text-[#14B8A6]">
-                                {job.applicationsCount} application{job.applicationsCount !== 1 ? "s" : ""}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col">
-                      <Link
-                        href={`/jobs/${job.id}`}
-                        className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
-                      >
-                        View Job
-                      </Link>
-
-                      <button
-                        onClick={() => toggleJobStatus(job.id, isActive)}
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                            ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                            : "bg-green-600 text-white hover:bg-green-500"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : isActive
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
-
-                      <button
-                        onClick={() => deleteJob(job.id, job.title)}
-                        disabled={isProcessing}
-                        className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search jobs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+          />
         </div>
       </div>
+
+      {/* Jobs Table */}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+        {filteredJobs.length === 0 ? (
+          <div className="p-12 text-center">
+            <BriefcaseIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <p className="mt-4 text-slate-400">
+              {searchQuery ? "No jobs match your search." : "No jobs found."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-800 text-left text-sm text-slate-400">
+                  <th className="px-6 py-4 font-medium">Job</th>
+                  <th className="px-6 py-4 font-medium">Employer</th>
+                  <th className="px-6 py-4 font-medium">Location</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
+                  <th className="px-6 py-4 font-medium">Stats</th>
+                  <th className="px-6 py-4 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {filteredJobs.map((job) => {
+                  const isProcessing = processing === job.id;
+                  const isActive = job.active === true;
+
+                  return (
+                    <tr key={job.id} className="text-sm hover:bg-slate-800/50">
+                      <td className="px-6 py-4">
+                        <div className="max-w-xs">
+                          <p className="font-medium text-slate-100 truncate">
+                            {job.title}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {job.employmentType || "Full-time"}
+                            {job.remoteFlag && " • Remote"}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {job.employerLogoUrl ? (
+                            <img
+                              src={job.employerLogoUrl}
+                              alt=""
+                              className="h-8 w-8 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-700">
+                              <BuildingOfficeIcon className="h-4 w-4 text-slate-400" />
+                            </div>
+                          )}
+                          <span className="text-slate-300 truncate max-w-[150px]">
+                            {job.employerName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <MapPinIcon className="h-3.5 w-3.5" />
+                          <span className="truncate max-w-[150px]">
+                            {job.location || "Not specified"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${isActive
+                            ? "bg-green-500/10 text-green-400"
+                            : "bg-slate-500/10 text-slate-400"
+                            }`}
+                        >
+                          {isActive ? (
+                            <CheckCircleIcon className="h-3.5 w-3.5" />
+                          ) : (
+                            <XCircleIcon className="h-3.5 w-3.5" />
+                          )}
+                          {isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs text-slate-400">
+                          <p>{job.viewsCount || 0} views</p>
+                          <p>{job.applicationsCount || 0} applies</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/jobs/${job.id}`}
+                            className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                            title="View"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </Link>
+                          <Link
+                            href={`/admin/jobs/${job.id}/edit`}
+                            className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                            title="Edit"
+                          >
+                            <PencilSquareIcon className="h-4 w-4" />
+                          </Link>
+                          <button
+                            onClick={() => toggleJobStatus(job.id, isActive)}
+                            disabled={isProcessing}
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${isActive
+                              ? "border border-slate-600 text-slate-400 hover:bg-slate-700"
+                              : "bg-green-600 text-white hover:bg-green-500"
+                              }`}
+                          >
+                            {isProcessing
+                              ? "..."
+                              : isActive
+                                ? "Deactivate"
+                                : "Activate"}
+                          </button>
+                          <button
+                            onClick={() => deleteJob(job.id, job.title)}
+                            disabled={isProcessing}
+                            className="rounded-md p-2 text-slate-400 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                            title="Delete"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Load More */}
+      {hasMore && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => loadJobs(true)}
+            className="rounded-lg border border-slate-700 px-6 py-2 text-sm text-slate-300 transition hover:border-[#14B8A6] hover:text-white"
+          >
+            Load More
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function AdminJobsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading jobs...</p>
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          <div className="h-8 w-48 animate-pulse rounded bg-slate-800" />
+          <div className="h-64 animate-pulse rounded-xl bg-slate-800" />
         </div>
-      </div>
-    }>
+      }
+    >
       <AdminJobsContent />
     </Suspense>
   );
