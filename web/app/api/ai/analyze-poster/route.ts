@@ -112,6 +112,18 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to analyze poster";
     console.error("Poster analysis error:", error);
+
+    // Check for Google AI quota/rate limit errors
+    if (message.includes("429") || message.includes("quota") || message.includes("Too Many Requests")) {
+      return NextResponse.json(
+        {
+          error: "AI service is temporarily unavailable due to high usage. Please try again in a few minutes, or fill in the form manually.",
+          isQuotaError: true
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: message },
       { status: 500 }
