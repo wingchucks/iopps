@@ -240,7 +240,7 @@ export default function JobDetailPage() {
                   </div>
                 ) : (
                   <div className="flex justify-center">
-                    <QuickApplyButton job={job} memberProfile={memberProfile} />
+                    <QuickApplyButton job={job} memberProfile={memberProfile ?? undefined} />
                   </div>
                 )}
               </div>
