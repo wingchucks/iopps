@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createJobApplication } from "@/lib/firestore";
 import type { JobPosting } from "@/lib/types";
@@ -37,6 +37,10 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
     const [applying, setApplying] = useState(false);
     const [success, setSuccess] = useState(false);
 
+    // Resume State
+    const [resumeSource, setResumeSource] = useState<"saved" | "upload">("saved");
+    const [uploadedResume, setUploadedResume] = useState<UploadedFile | null>(null);
+
     // Cover Letter State
     const [coverLetterType, setCoverLetterType] = useState<CoverLetterType>("text");
     const [coverLetterText, setCoverLetterText] = useState(memberProfile?.defaultCoverLetter || "");
@@ -46,6 +50,13 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
     const [additionalDocs, setAdditionalDocs] = useState<UploadedFile[]>([]);
     const [showAddDoc, setShowAddDoc] = useState(false);
 
+    // Auto-switch to upload mode if no saved resume
+    useEffect(() => {
+        if (!memberProfile?.resumeUrl) {
+            setResumeSource("upload");
+        }
+    }, [memberProfile]);
+
     if (!user || !job.quickApplyEnabled) {
         return null;
     }
@@ -53,11 +64,24 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
     const hasResume = !!memberProfile?.resumeUrl;
 
     async function handleQuickApply() {
-        if (!user || !memberProfile) return;
+        if (!user) return;
 
         setApplying(true);
 
-        // Validation: If uploading file, must have file.
+        // Determine which resume to use
+        const resumeToUse =
+            resumeSource === "upload" && uploadedResume
+                ? uploadedResume.url
+                : memberProfile?.resumeUrl;
+
+        // Validation: Must have a resume
+        if (!resumeToUse) {
+            alert("Please upload a resume or use your saved resume");
+            setApplying(false);
+            return;
+        }
+
+        // Validation: If uploading cover letter file, must have file
         if (coverLetterType === "file" && !coverLetterFile) {
             alert("Please upload a cover letter file or switch to 'Write Manually'.");
             setApplying(false);
@@ -69,8 +93,8 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                 jobId: job.id,
                 memberId: user.uid,
                 employerId: job.employerId,
-                resumeUrl: memberProfile.resumeUrl,
-                memberDisplayName: memberProfile.displayName || user.email || undefined,
+                resumeUrl: resumeToUse,
+                memberDisplayName: memberProfile?.displayName || user.email || undefined,
 
                 // Old field compatibility
                 coverLetter: coverLetterType === 'text' ? coverLetterText : undefined,
@@ -88,6 +112,8 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                 setShowModal(false);
                 setSuccess(false);
                 // Reset form
+                setResumeSource("saved");
+                setUploadedResume(null);
                 setCoverLetterType('text');
                 setCoverLetterText(memberProfile?.defaultCoverLetter || "");
                 setCoverLetterFile(null);
@@ -158,33 +184,103 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                 <div className="mt-6 space-y-6">
                                     {/* Resume Section */}
                                     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h3 className="font-semibold text-slate-100 flex items-center gap-2">
-                                                    <DocumentIcon className="h-5 w-5 text-slate-400" />
-                                                    Resume
-                                                </h3>
-                                                {hasResume ? (
-                                                    <p className="mt-1 text-sm text-slate-400">
-                                                        ✓ Using your saved resume
-                                                    </p>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="font-semibold text-slate-100 flex items-center gap-2">
+                                                <DocumentIcon className="h-5 w-5 text-slate-400" />
+                                                Resume <span className="text-red-400">*</span>
+                                            </h3>
+                                        </div>
+
+                                        {/* Toggle between saved resume and upload */}
+                                        {hasResume && (
+                                            <div className="flex bg-slate-800 rounded-lg p-1 mb-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setResumeSource("saved")}
+                                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${resumeSource === "saved"
+                                                            ? "bg-slate-700 text-white shadow-sm"
+                                                            : "text-slate-400 hover:text-slate-200"
+                                                        }`}
+                                                >
+                                                    Use Saved Resume
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setResumeSource("upload")}
+                                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${resumeSource === "upload"
+                                                            ? "bg-slate-700 text-white shadow-sm"
+                                                            : "text-slate-400 hover:text-slate-200"
+                                                        }`}
+                                                >
+                                                    Upload New Resume
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Saved Resume Display */}
+                                        {resumeSource === "saved" && memberProfile?.resumeUrl ? (
+                                            <div className="p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <DocumentIcon className="h-5 w-5 text-[#14B8A6]" />
+                                                        <span className="text-sm text-slate-200">Using your saved resume</span>
+                                                    </div>
+                                                    <a
+                                                        href={memberProfile.resumeUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-sm text-[#14B8A6] hover:underline"
+                                                    >
+                                                        View
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ) : resumeSource === "saved" ? (
+                                            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                                                <p className="text-sm text-red-200">
+                                                    ⚠ No resume saved. Please upload one below or add one to your{" "}
+                                                    <a href="/member/dashboard" className="underline font-semibold">
+                                                        profile
+                                                    </a>
+                                                    .
+                                                </p>
+                                            </div>
+                                        ) : null}
+
+                                        {/* Resume Upload */}
+                                        {resumeSource === "upload" || !memberProfile?.resumeUrl ? (
+                                            <div className="space-y-3">
+                                                {uploadedResume ? (
+                                                    <div className="flex items-center justify-between p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                                                        <div className="flex items-center gap-2 overflow-hidden">
+                                                            <DocumentIcon className="h-5 w-5 text-[#14B8A6] flex-shrink-0" />
+                                                            <span className="text-sm text-slate-200 truncate">
+                                                                {uploadedResume.name}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setUploadedResume(null)}
+                                                            className="text-slate-400 hover:text-red-400 transition-colors"
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
                                                 ) : (
-                                                    <p className="mt-1 text-sm text-red-400">
-                                                        ⚠ No resume uploaded. Please add one to your profile first.
-                                                    </p>
+                                                    <FileUploader
+                                                        label="Upload Resume (PDF or Word)"
+                                                        accept=".pdf,.doc,.docx"
+                                                        maxSizeMB={10}
+                                                        storagePath={`users/${user.uid}/resumes`}
+                                                        onUploadComplete={(url, path, name) => {
+                                                            setUploadedResume({ name, url, path, type: "document" });
+                                                        }}
+                                                        onError={(err) => alert(err)}
+                                                        className="border-slate-700"
+                                                    />
                                                 )}
                                             </div>
-                                            {hasResume && (
-                                                <a
-                                                    href={memberProfile.resumeUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-sm font-medium text-[#14B8A6] hover:underline"
-                                                >
-                                                    View Resume
-                                                </a>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
 
                                     {/* Cover Letter Section */}
@@ -330,7 +426,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                     <div className="flex gap-3 pt-4 border-t border-slate-800">
                                         <button
                                             onClick={handleQuickApply}
-                                            disabled={applying || !hasResume}
+                                            disabled={applying || !((resumeSource === "saved" && hasResume) || (resumeSource === "upload" && uploadedResume))}
                                             className="flex-1 rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-[#14B8A6]/20 transition-all hover:shadow-[#14B8A6]/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {applying ? "Submitting Application..." : "Submit Application"}
@@ -343,14 +439,6 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                             Cancel
                                         </button>
                                     </div>
-
-                                    {!hasResume && (
-                                        <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center">
-                                            <p className="text-sm text-red-200">
-                                                Please <a href="/member/dashboard" className="underline font-semibold hover:text-red-100">upload a resume</a> to your profile before applying.
-                                            </p>
-                                        </div>
-                                    )}
                                 </div>
                             </>
                         )}
