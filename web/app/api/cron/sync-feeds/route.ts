@@ -77,12 +77,11 @@ export async function GET(request: NextRequest) {
     // Query active feeds with matching sync frequency
     let query = db.collection("rssFeeds").where("active", "==", true);
 
-    if (frequency && frequency !== "manual") {
+    if (frequency) {
+      // If frequency is specified, only get feeds with that exact frequency
       query = query.where("syncFrequency", "==", frequency);
-    } else if (!frequency) {
-      // If no frequency specified, sync hourly, daily, and weekly (but not manual)
-      // Note: Firestore doesn't support OR queries easily, so we'll filter in memory
     }
+    // If no frequency specified, get all active feeds and filter out manual ones below
 
     const feedsSnapshot = await query.get();
 
