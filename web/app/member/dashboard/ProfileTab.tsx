@@ -129,7 +129,7 @@ export default function ProfileTab() {
       // Delete old resume if exists
       if (resumeUrl) {
         try {
-          const oldResumeRef = ref(storage!, `resumes/${user.uid}`);
+          const oldResumeRef = ref(storage!, `users/${user.uid}/resumes/${file.name}`);
           await deleteObject(oldResumeRef);
         } catch (error) {
           console.log("No old resume to delete");
@@ -137,7 +137,7 @@ export default function ProfileTab() {
       }
 
       // Upload new resume
-      const resumeRef = ref(storage!, `resumes/${user.uid}/${file.name}`);
+      const resumeRef = ref(storage!, `users/${user.uid}/resumes/${file.name}`);
       await uploadBytes(resumeRef, file);
       const url = await getDownloadURL(resumeRef);
       setResumeUrl(url);
@@ -161,8 +161,17 @@ export default function ProfileTab() {
     if (!user || !resumeUrl || !confirm("Are you sure you want to delete your resume?")) return;
 
     try {
-      const resumeRef = ref(storage!, `resumes/${user.uid}`);
+      // Extract filename from URL for proper path
+      const urlParts = resumeUrl.split('/');
+      const fileName = decodeURIComponent(urlParts[urlParts.length - 1].split('?')[0]);
+      const resumeRef = ref(storage!, `users/${user.uid}/resumes/${fileName}`);
       await deleteObject(resumeRef);
+
+      // Also update profile to remove resume URL
+      await upsertMemberProfile(user.uid, {
+        resumeUrl: "",
+      });
+
       setResumeUrl("");
       alert("Resume deleted successfully!");
     } catch (error) {
