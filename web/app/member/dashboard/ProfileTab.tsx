@@ -142,7 +142,12 @@ export default function ProfileTab() {
       const url = await getDownloadURL(resumeRef);
       setResumeUrl(url);
 
-      alert("Resume uploaded successfully!");
+      // Auto-save resume URL to profile
+      await upsertMemberProfile(user.uid, {
+        resumeUrl: url,
+      });
+
+      alert("Resume uploaded and saved successfully!");
     } catch (error) {
       console.error("Error uploading resume:", error);
       alert("Error uploading resume. Please try again.");
