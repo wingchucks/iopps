@@ -24,6 +24,7 @@ import { VENDOR_PRODUCTS, type VendorProductType } from '@/lib/stripe';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
+import UpgradeToEmployerCard from '@/components/UpgradeToEmployerCard';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
 import { uploadProfileImage, uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
@@ -204,6 +205,17 @@ export default function VendorDashboard() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
       </div>
+    );
+  }
+
+  // Community members need to upgrade to employer account
+  if (role === 'community') {
+    return (
+      <PageShell>
+        <div className="py-12">
+          <UpgradeToEmployerCard />
+        </div>
+      </PageShell>
     );
   }
 
