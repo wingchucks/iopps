@@ -121,7 +121,7 @@ export default function AdminFeedsPage() {
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
-                    daysAfterImport: jobExpirationType === "days" ? jobExpirationDays : undefined,
+                    ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
                 utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
@@ -153,7 +153,7 @@ export default function AdminFeedsPage() {
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
-                    daysAfterImport: jobExpirationType === "days" ? jobExpirationDays : undefined,
+                    ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
                 utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
