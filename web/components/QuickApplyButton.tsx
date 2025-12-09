@@ -248,7 +248,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         ) : null}
 
                                         {/* Resume Upload */}
-                                        {resumeSource === "upload" || !memberProfile?.resumeUrl ? (
+                                        {(resumeSource === "upload" || !memberProfile?.resumeUrl) && (
                                             <div className="space-y-3">
                                                 {uploadedResume ? (
                                                     <div className="flex items-center justify-between p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
