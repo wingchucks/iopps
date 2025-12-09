@@ -23,6 +23,23 @@ export async function POST(request: NextRequest) {
         const decodedToken = await auth.verifyIdToken(idToken);
         const userId = decodedToken.uid;
 
+        // Verify user is an employer
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (!userDoc.exists) {
+            return NextResponse.json(
+                { error: "User not found" },
+                { status: 404 }
+            );
+        }
+
+        const userData = userDoc.data();
+        if (userData?.role !== "employer") {
+            return NextResponse.json(
+                { error: "Subscriptions are only available to employers. Please create an employer account to post jobs." },
+                { status: 403 }
+            );
+        }
+
         const body = await request.json();
         const { productType } = body as {
             productType: SubscriptionProductType;

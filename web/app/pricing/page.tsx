@@ -25,6 +25,8 @@ type PricingCardProps = {
   buttonHref?: string;
   loading?: boolean;
   requiresAuth?: boolean;
+  disabled?: boolean;
+  helperText?: string;
 };
 
 function PricingCard({
@@ -39,10 +41,13 @@ function PricingCard({
   buttonHref,
   loading = false,
   requiresAuth = false,
+  disabled = false,
+  helperText,
 }: PricingCardProps) {
   const { user } = useAuth();
 
   const handleClick = () => {
+    if (disabled) return;
     if (requiresAuth && !user) {
       window.location.href = "/register?redirect=" + encodeURIComponent(window.location.pathname);
       return;
@@ -105,8 +110,12 @@ function PricingCard({
         ) : (
           <button
             onClick={handleClick}
-            disabled={loading}
-            className={`block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-all disabled:opacity-50 ${
+            disabled={loading || disabled}
+            className={`block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-all ${
+              loading || disabled
+                ? "cursor-not-allowed opacity-50"
+                : ""
+            } ${
               highlighted
                 ? "bg-[#14B8A6] text-slate-900 hover:bg-[#16cdb8]"
                 : "border border-slate-700 bg-slate-800/60 text-slate-100 hover:border-[#14B8A6] hover:bg-slate-800"
@@ -114,6 +123,11 @@ function PricingCard({
           >
             {loading ? "Processing..." : buttonText}
           </button>
+        )}
+        {helperText && (
+          <p className="mt-2 text-center text-xs text-slate-400">
+            {helperText}
+          </p>
         )}
       </div>
     </article>
@@ -132,6 +146,12 @@ export default function PricingPage() {
   const handleSubscriptionCheckout = async (tier: "TIER1" | "TIER2") => {
     if (!user) {
       router.push("/register?redirect=/pricing&role=employer");
+      return;
+    }
+
+    // Block community members (fallback protection)
+    if (role === "community") {
+      setError("Subscriptions are for employers only. Please create an employer account to post jobs and hire.");
       return;
     }
 
@@ -258,10 +278,22 @@ export default function PricingPage() {
             price={`$${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}`}
             period="/ year"
             features={SUBSCRIPTION_PRODUCTS.TIER1.features}
-            buttonText={loadingTier === "TIER1" ? "Processing..." : "Subscribe Now"}
-            buttonAction={() => handleSubscriptionCheckout("TIER1")}
+            buttonText={
+              role === "community"
+                ? "Employer Account Required"
+                : loadingTier === "TIER1"
+                ? "Processing..."
+                : "Subscribe Now"
+            }
+            buttonAction={role === "community" ? undefined : () => handleSubscriptionCheckout("TIER1")}
             loading={loadingTier === "TIER1"}
             requiresAuth
+            disabled={role === "community"}
+            helperText={
+              role === "community"
+                ? "Need to hire? Create an employer account to subscribe."
+                : undefined
+            }
           />
           <PricingCard
             title={SUBSCRIPTION_PRODUCTS.TIER2.name}
@@ -270,10 +302,22 @@ export default function PricingPage() {
             badge="Best Value"
             highlighted={true}
             features={SUBSCRIPTION_PRODUCTS.TIER2.features}
-            buttonText={loadingTier === "TIER2" ? "Processing..." : "Subscribe Now"}
-            buttonAction={() => handleSubscriptionCheckout("TIER2")}
+            buttonText={
+              role === "community"
+                ? "Employer Account Required"
+                : loadingTier === "TIER2"
+                ? "Processing..."
+                : "Subscribe Now"
+            }
+            buttonAction={role === "community" ? undefined : () => handleSubscriptionCheckout("TIER2")}
             loading={loadingTier === "TIER2"}
             requiresAuth
+            disabled={role === "community"}
+            helperText={
+              role === "community"
+                ? "Need to hire? Create an employer account to subscribe."
+                : undefined
+            }
           />
         </div>
       </section>
