@@ -164,21 +164,6 @@ export default function SiteHeader() {
                             >
                               <span className="font-semibold">My Dashboard</span>
                             </Link>
-                            <Link
-                              href="/member/messages"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">Messages</span>
-                            </Link>
-                            <Link
-                              href="/organization/shop/setup"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">Become a Vendor</span>
-                              <span className="ml-1.5 rounded bg-[#14B8A6]/20 px-1.5 py-0.5 text-[0.6rem] font-medium text-[#14B8A6]">NEW</span>
-                            </Link>
                           </>
                         )}
                         {role === "employer" && (
@@ -189,13 +174,6 @@ export default function SiteHeader() {
                               onClick={closeMenu}
                             >
                               <span className="font-semibold">Organization Dashboard</span>
-                            </Link>
-                            <Link
-                              href="/organization/messages"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">Messages</span>
                             </Link>
                           </>
                         )}
@@ -273,19 +251,6 @@ export default function SiteHeader() {
                         >
                           Dashboard
                         </Link>
-                        <Link
-                          href="/member/messages"
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`relative flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/member/messages" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
-                            }`}
-                        >
-                          <span>Messages</span>
-                          {unreadMessageCount > 0 && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-[10px] font-bold text-slate-900">
-                              {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
-                            </span>
-                          )}
-                        </Link>
                       </>
                     )}
 
@@ -298,19 +263,6 @@ export default function SiteHeader() {
                             }`}
                         >
                           Dashboard
-                        </Link>
-                        <Link
-                          href="/organization/messages"
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`relative flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/organization/messages" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
-                            }`}
-                        >
-                          <span>Messages</span>
-                          {unreadMessageCount > 0 && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-[10px] font-bold text-slate-900">
-                              {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
-                            </span>
-                          )}
                         </Link>
                         <Link
                           href="/organization/profile"

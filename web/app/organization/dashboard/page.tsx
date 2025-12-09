@@ -10,8 +10,9 @@ import ProfileTab from "./ProfileTab";
 import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
+import MessagesTab from "./MessagesTab";
 
-type TabType = "overview" | "opportunities" | "applications" | "videos" | "shop" | "billing" | "profile";
+type TabType = "overview" | "opportunities" | "applications" | "messages" | "videos" | "shop" | "billing" | "profile";
 
 function EmployerDashboardContent() {
   const { user, role, loading } = useAuth();
@@ -21,7 +22,7 @@ function EmployerDashboardContent() {
   // Handle URL tab parameter for deep linking
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabType;
-    if (tabParam && ["overview", "opportunities", "applications", "videos", "shop", "billing", "profile"].includes(tabParam)) {
+    if (tabParam && ["overview", "opportunities", "applications", "messages", "videos", "shop", "billing", "profile"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -42,6 +43,7 @@ function EmployerDashboardContent() {
     { id: "overview" as TabType, label: "Overview", icon: "📊" },
     { id: "opportunities" as TabType, label: "Opportunities", icon: "💼" },
     { id: "applications" as TabType, label: "Applications", icon: "📝" },
+    { id: "messages" as TabType, label: "Messages", icon: "💬" },
     { id: "videos" as TabType, label: "Videos", icon: "🎬" },
     { id: "shop" as TabType, label: "Shop", icon: "🏪" },
     { id: "billing" as TabType, label: "Billing & Payments", icon: "💳" },
@@ -83,6 +85,7 @@ function EmployerDashboardContent() {
           {activeTab === "overview" && <OverviewTab />}
           {activeTab === "opportunities" && <OpportunitiesTab />}
           {activeTab === "applications" && <ApplicationsTab />}
+          {activeTab === "messages" && <MessagesTab />}
           {activeTab === "videos" && <VideosTab />}
           {activeTab === "shop" && <ShopTab />}
           {activeTab === "billing" && <BillingTab />}

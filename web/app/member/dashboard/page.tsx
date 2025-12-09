@@ -8,7 +8,8 @@ import {
   listMemberApplications,
   getJobPosting,
   listMemberScholarshipApplications,
-  getScholarship
+  getScholarship,
+  getUnreadMessageCount
 } from "@/lib/firestore";
 import type {
   MemberProfile,
@@ -23,8 +24,9 @@ import ProfileTab from "./ProfileTab";
 import ApplicationsTab from "./ApplicationsTab";
 import SavedItemsTab from "./SavedItemsTab";
 import JobAlertsTab from "./JobAlertsTab";
+import MessagesTab from "./MessagesTab";
 
-type TabType = "overview" | "profile" | "applications" | "saved" | "alerts";
+type TabType = "overview" | "profile" | "applications" | "saved" | "alerts" | "messages";
 
 export default function MemberDashboard() {
   const { user, role, loading } = useAuth();
@@ -33,6 +35,7 @@ export default function MemberDashboard() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [scholarshipApplications, setScholarshipApplications] = useState<ScholarshipApplication[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   // Load all data
   useEffect(() => {
@@ -40,15 +43,17 @@ export default function MemberDashboard() {
 
     const loadData = async () => {
       try {
-        const [profileData, apps, scholarshipApps] = await Promise.all([
+        const [profileData, apps, scholarshipApps, unreadCount] = await Promise.all([
           getMemberProfile(user.uid),
           listMemberApplications(user.uid),
           listMemberScholarshipApplications(user.uid),
+          getUnreadMessageCount(user.uid, "member"),
         ]);
 
         setProfile(profileData);
         setApplications(apps);
         setScholarshipApplications(scholarshipApps);
+        setUnreadMessageCount(unreadCount);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -176,6 +181,20 @@ export default function MemberDashboard() {
           >
             Job Alerts
           </button>
+          <button
+            onClick={() => setActiveTab("messages")}
+            className={`relative whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "messages"
+              ? "border-b-2 border-emerald-500 text-emerald-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
+          >
+            Messages
+            {unreadMessageCount > 0 && (
+              <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400">
+                {unreadMessageCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -196,7 +215,11 @@ export default function MemberDashboard() {
 
           {activeTab === "alerts" && (
             <JobAlertsTab />
-          )}</div>
+          )}
+          {activeTab === "messages" && (
+            <MessagesTab />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -380,6 +403,28 @@ function OverviewTab({
               <div>
                 <p className="font-semibold text-white">Find Scholarships</p>
                 <p className="text-sm text-slate-400">Education funding</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/organization/shop/setup"
+            className="group rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4 transition-all hover:border-emerald-500/50 hover:bg-slate-900/70"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-400 transition-transform group-hover:scale-110">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-white">Become a Vendor</p>
+                  <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[0.6rem] font-medium text-emerald-400">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-sm text-slate-400">Start selling your products</p>
               </div>
             </div>
           </Link>
