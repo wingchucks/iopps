@@ -44,9 +44,6 @@ function NewJobPageContent() {
     willTrain: false,
     driversLicense: false,
     closingDate: "",
-    applicationLink: "",
-    applicationEmail: "",
-    quickApplyEnabled: true,
     jobVideoUrl: "",
   });
 
@@ -74,9 +71,6 @@ function NewJobPageContent() {
             indigenousPreference: duplicateData.indigenousPreference ?? prev.indigenousPreference,
             cpicRequired: duplicateData.cpicRequired ?? prev.cpicRequired,
             willTrain: duplicateData.willTrain ?? prev.willTrain,
-            applicationLink: duplicateData.applicationLink || prev.applicationLink,
-            applicationEmail: duplicateData.applicationEmail || prev.applicationEmail,
-            quickApplyEnabled: duplicateData.quickApplyEnabled ?? prev.quickApplyEnabled,
           }));
           // Clean up sessionStorage
           sessionStorage.removeItem("duplicateJobData");
@@ -203,9 +197,7 @@ function NewJobPageContent() {
         qualifications: formData.qualifications.split('\n'),
         salaryRange: formData.salaryRange,
         closingDate: formData.closingDate,
-        applicationLink: formData.applicationLink,
-        applicationEmail: formData.applicationEmail,
-        quickApplyEnabled: formData.quickApplyEnabled,
+        quickApplyEnabled: true, // Always enable Quick Apply as the only application method
         ...(jobVideo && { jobVideo }),
       };
 
@@ -338,24 +330,28 @@ function NewJobPageContent() {
               </div>
             </section>
 
-            {/* Application Method */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <h2 className="text-lg font-bold text-slate-100 mb-4">How to Apply</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Application Link (External)</label>
-                    <input type="url" name="applicationLink" value={formData.applicationLink} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="https://..." />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Application Email</label>
-                    <input type="email" name="applicationEmail" value={formData.applicationEmail} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="careers@..." />
-                  </div>
-                </div>
+            {/* Application Method - Quick Apply Only */}
+            <section className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Video Component (Optional)</label>
-                  <input type="url" name="jobVideoUrl" value={formData.jobVideoUrl} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="YouTube or Vimeo URL" />
+                  <h2 className="text-lg font-bold text-slate-100 mb-1">Application Method</h2>
+                  <p className="text-sm text-slate-300">
+                    All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
+                    You'll be able to view and manage all applications in your{" "}
+                    <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline font-semibold">
+                      employer dashboard
+                    </Link>.
+                  </p>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-slate-300 mb-1">Job Video (Optional)</label>
+                <input type="url" name="jobVideoUrl" value={formData.jobVideoUrl} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="YouTube or Vimeo URL - Showcase your workplace" />
+                <p className="text-xs text-slate-500 mt-1.5">Add a video to give applicants a better sense of your organization</p>
               </div>
             </section>
 
@@ -395,15 +391,6 @@ function NewJobPageContent() {
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input type="checkbox" name="driversLicense" checked={formData.driversLicense} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
                   <span className="text-sm text-slate-300">Driver's License Required</span>
-                </label>
-
-                <div className="h-px bg-slate-800 my-2" />
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="quickApplyEnabled" checked={formData.quickApplyEnabled} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
-                  <div>
-                    <span className="block text-sm font-medium text-slate-300">Enable Quick Apply</span>
-                    <span className="block text-xs text-slate-500">Allow 1-click apply via IOPPS</span>
-                  </div>
                 </label>
               </div>
             </section>

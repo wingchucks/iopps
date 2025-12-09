@@ -15,6 +15,23 @@ interface JobXML {
     expirationdate: string[];
     category: string[];
     url: string[];
+    date: string[];
+}
+
+interface RSSFeedConfig {
+    employerId: string;
+    employerName?: string;
+    feedUrl: string;
+    feedName: string;
+    active: boolean;
+    totalJobsImported?: number;
+    jobExpiration?: {
+        type: "days" | "feed" | "never";
+        daysAfterImport?: number;
+    };
+    utmTrackingTag?: string;
+    noIndexByGoogle?: boolean;
+    updateExistingJobs?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -44,7 +61,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Feed not found" }, { status: 404 });
         }
 
-        const feed = feedDoc.data();
+        const feed = feedDoc.data() as RSSFeedConfig;
         if (!feed) {
             return NextResponse.json({ error: "Invalid feed data" }, { status: 400 });
         }
@@ -62,8 +79,12 @@ export async function POST(request: NextRequest) {
         const jobs = parsed.source?.job || [];
 
         const newJobs: any[] = [];
+        const updatedJobs: any[] = [];
         const errors: string[] = [];
         let skipped = 0;
+
+        // Track all current feed URLs for "feed" expiration type
+        const currentFeedUrls = new Set<string>();
 
         for (const jobXML of jobs) {
             try {
@@ -78,15 +99,66 @@ export async function POST(request: NextRequest) {
                     continue;
                 }
 
-                // Check if job already exists by applyurl
+                // Track this URL for feed-based expiration
+                currentFeedUrls.add(applyUrl);
+
+                // Apply UTM tracking tag if configured
+                let finalApplyUrl = applyUrl;
+                if (feed.utmTrackingTag) {
+                    const separator = applyUrl.includes("?") ? "&" : "?";
+                    finalApplyUrl = `${applyUrl}${separator}${feed.utmTrackingTag}`;
+                }
+
+                // Check if job already exists by originalApplicationLink
                 const existing = await db!
                     .collection("jobs")
-                    .where("applicationLink", "==", applyUrl)
+                    .where("originalApplicationLink", "==", applyUrl)
                     .limit(1)
                     .get();
 
-                if (!existing.empty) {
-                    skipped++;
+                // Also check with UTM tag version
+                let existingWithUtm = { empty: true, docs: [] as any[] };
+                if (feed.utmTrackingTag && applyUrl !== finalApplyUrl) {
+                    existingWithUtm = await db!
+                        .collection("jobs")
+                        .where("originalApplicationLink", "==", finalApplyUrl)
+                        .limit(1)
+                        .get();
+                }
+
+                const existingDoc = !existing.empty ? existing.docs[0] : (!existingWithUtm.empty ? existingWithUtm.docs[0] : null);
+
+                if (existingDoc) {
+                    if (feed.updateExistingJobs) {
+                        // Update existing job
+                        const updateData: any = {
+                            title: title,
+                            description: decode(job.description?.[0] || ""),
+                            updatedAt: new Date(),
+                            importedFrom: feedId,
+                        };
+
+                        // Update location
+                        const city = job.city?.[0] || "";
+                        const state = job.state?.[0] || "";
+                        let location = city;
+                        if (state) {
+                            location = location ? `${location}, ${state}` : state;
+                        }
+                        if (location) updateData.location = location;
+
+                        // Update expiration if set
+                        if (feed.jobExpiration?.type === "days" && feed.jobExpiration.daysAfterImport) {
+                            const expirationDate = new Date();
+                            expirationDate.setDate(expirationDate.getDate() + feed.jobExpiration.daysAfterImport);
+                            updateData.closingDate = expirationDate.toISOString();
+                        }
+
+                        await existingDoc.ref.update(updateData);
+                        updatedJobs.push({ id: existingDoc.id, title });
+                    } else {
+                        skipped++;
+                    }
                     continue;
                 }
 
@@ -105,9 +177,13 @@ export async function POST(request: NextRequest) {
                 // Decode HTML in description
                 const description = decode(job.description?.[0] || "");
 
-                // Parse expiration date
+                // Parse expiration date - use feed config or XML data
                 let closingDate = null;
-                if (job.expirationdate?.[0]) {
+                if (feed.jobExpiration?.type === "days" && feed.jobExpiration.daysAfterImport) {
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + feed.jobExpiration.daysAfterImport);
+                    closingDate = expirationDate.toISOString();
+                } else if (job.expirationdate?.[0]) {
                     try {
                         closingDate = new Date(job.expirationdate[0]).toISOString();
                     } catch {
@@ -116,7 +192,7 @@ export async function POST(request: NextRequest) {
                 }
 
                 // Create job document
-                const jobData = {
+                const jobData: any = {
                     employerId: feed.employerId,
                     employerName: job.company?.[0] || feed.employerName,
                     title: title,
@@ -124,7 +200,8 @@ export async function POST(request: NextRequest) {
                     location: location,
                     employmentType: "Full-time", // Default, could be enhanced
                     remoteFlag: remoteFlag,
-                    applicationLink: applyUrl,
+                    quickApplyEnabled: true, // All imported jobs use Quick Apply
+                    originalApplicationLink: applyUrl, // Store original for reference and deduplication
                     closingDate: closingDate,
                     active: true,
                     createdAt: new Date(),
@@ -133,6 +210,8 @@ export async function POST(request: NextRequest) {
                     // Track that this came from RSS
                     importedFrom: feedId,
                     originalUrl: job.url?.[0] || applyUrl,
+                    // SmartJobBoard features
+                    noIndex: feed.noIndexByGoogle || false,
                 };
 
                 // Create job in Firestore
@@ -144,6 +223,31 @@ export async function POST(request: NextRequest) {
                 const jobTitle = jobXML.title?.[0] || "Unknown";
                 const itemErrorMessage = itemError instanceof Error ? itemError.message : String(itemError);
                 errors.push(`Error processing "${jobTitle}": ${itemErrorMessage}`);
+            }
+        }
+
+        // Handle "feed" expiration type - expire jobs that are no longer in the feed
+        let expiredJobs = 0;
+        if (feed.jobExpiration?.type === "feed") {
+            const existingFeedJobs = await db!
+                .collection("jobs")
+                .where("importedFrom", "==", feedId)
+                .where("active", "==", true)
+                .get();
+
+            for (const doc of existingFeedJobs.docs) {
+                const jobData = doc.data();
+                const originalLink = jobData.originalApplicationLink || jobData.applicationLink;
+
+                // Check if this job's URL is still in the feed
+                if (!currentFeedUrls.has(originalLink)) {
+                    await doc.ref.update({
+                        active: false,
+                        expiredAt: new Date(),
+                        expirationReason: "Removed from feed",
+                    });
+                    expiredJobs++;
+                }
             }
         }
 
@@ -160,10 +264,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             jobsImported: newJobs.length,
+            jobsUpdated: updatedJobs.length,
+            jobsExpired: expiredJobs,
             jobsSkipped: skipped,
             totalJobsInFeed: jobs.length,
             errors: errors,
             importedJobs: newJobs,
+            updatedJobs: updatedJobs,
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to scrape feed";

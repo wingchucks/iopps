@@ -36,7 +36,6 @@ export default function AdminJobEditPage() {
         location: "",
         employmentType: "Full-time",
         salaryRange: "",
-        applicationLink: "",
         remoteFlag: false,
         active: true,
     });
@@ -72,7 +71,6 @@ export default function AdminJobEditPage() {
                 location: data.location || "",
                 employmentType: data.employmentType || "Full-time",
                 salaryRange: typeof data.salaryRange === "string" ? data.salaryRange : "",
-                applicationLink: data.applicationLink || "",
                 remoteFlag: data.remoteFlag || false,
                 active: data.active ?? true,
             });
@@ -93,6 +91,7 @@ export default function AdminJobEditPage() {
             const jobRef = doc(db!, "jobs", jobId);
             await updateDoc(jobRef, {
                 ...formData,
+                quickApplyEnabled: true, // Always enable Quick Apply as the only application method
                 updatedAt: serverTimestamp(),
             });
 
@@ -207,35 +206,35 @@ export default function AdminJobEditPage() {
                         </div>
                     </div>
 
-                    {/* Salary & Application Link */}
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-200">
-                                Salary Range
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.salaryRange}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, salaryRange: e.target.value })
-                                }
-                                placeholder="e.g., $50,000 - $70,000"
-                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-200">
-                                Application Link
-                            </label>
-                            <input
-                                type="url"
-                                value={formData.applicationLink}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, applicationLink: e.target.value })
-                                }
-                                placeholder="https://..."
-                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-                            />
+                    {/* Salary Range */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-200">
+                            Salary Range
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.salaryRange}
+                            onChange={(e) =>
+                                setFormData({ ...formData, salaryRange: e.target.value })
+                            }
+                            placeholder="e.g., $50,000 - $70,000"
+                            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                        />
+                    </div>
+
+                    {/* Application Method - Quick Apply Only */}
+                    <div className="rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-4">
+                        <div className="flex items-start gap-3">
+                            <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-100 mb-1">Application Method</h3>
+                                <p className="text-xs text-slate-300">
+                                    All applications are received through IOPPS using the <strong>Quick Apply</strong> button.
+                                    Employers can view and manage applications in their dashboard.
+                                </p>
+                            </div>
                         </div>
                     </div>
 

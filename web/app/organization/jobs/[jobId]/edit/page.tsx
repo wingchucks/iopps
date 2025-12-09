@@ -45,8 +45,6 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
   const [description, setDescription] = useState("");
   const [responsibilities, setResponsibilities] = useState("");
   const [qualifications, setQualifications] = useState("");
-  const [applicationLink, setApplicationLink] = useState("");
-  const [applicationEmail, setApplicationEmail] = useState("");
   // Job video state
   const [jobVideoUrl, setJobVideoUrl] = useState("");
   const [jobVideoTitle, setJobVideoTitle] = useState("");
@@ -123,9 +121,6 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
             : ""
         );
 
-        setApplicationLink(jobData.applicationLink || "");
-        setApplicationEmail(jobData.applicationEmail || "");
-
         // Load job video if exists
         if (jobData.jobVideo) {
           setJobVideoUrl(jobData.jobVideo.videoUrl || "");
@@ -190,8 +185,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
           .split("\n")
           .map((line) => line.trim())
           .filter(Boolean),
-        applicationLink,
-        applicationEmail,
+        quickApplyEnabled: true, // Always enable Quick Apply as the only application method
         active,
         jobVideo: jobVideo || undefined, // Set to undefined to remove if cleared
       });
@@ -511,32 +505,23 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Application link (URL)
-          </label>
-          <input
-            type="url"
-            value={applicationLink}
-            onChange={(e) => setApplicationLink(e.target.value)}
-            placeholder="https://example.com/apply"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Application email (optional)
-          </label>
-          <input
-            type="email"
-            value={applicationEmail}
-            onChange={(e) => setApplicationEmail(e.target.value)}
-            placeholder="talent@organization.ca"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-          <p className="mt-1 text-xs text-slate-400">
-            Provide at least one of link or email so community members can apply.
-          </p>
+        {/* Application Method - Quick Apply Only */}
+        <div className="rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-100 mb-1">Application Method</h3>
+              <p className="text-xs text-slate-300">
+                All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
+                You can view and manage all applications in your{" "}
+                <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline font-semibold">
+                  employer dashboard
+                </Link>.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Job Video Section */}

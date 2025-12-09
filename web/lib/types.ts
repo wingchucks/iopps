@@ -121,6 +121,13 @@ export interface JobPosting {
   productType?: string;
   amountPaid?: number;
   expiresAt?: Timestamp | Date | string | null;
+  // RSS Import fields
+  importedFrom?: string; // RSS feed ID this job came from
+  originalUrl?: string; // Original job listing URL
+  originalApplicationLink?: string; // Original application URL (without UTM)
+  noIndex?: boolean; // If true, tell search engines not to index
+  expiredAt?: Timestamp | Date | null; // When job was auto-expired
+  expirationReason?: string; // Why job was expired (e.g., "Removed from feed")
 }
 
 // Conference sub-types
@@ -743,6 +750,14 @@ export interface RSSFeed {
   totalJobsImported?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+  // SmartJobBoard-like features
+  jobExpiration?: {
+    type: "days" | "feed" | "never"; // days = expire after X days, feed = expire when removed from feed, never = don't auto-expire
+    daysAfterImport?: number; // Only used when type is "days"
+  };
+  utmTrackingTag?: string; // Append to application URLs for analytics (e.g., utm_source=siga&utm_medium=jobboard)
+  noIndexByGoogle?: boolean; // If true, mark imported jobs with noindex meta tag
+  updateExistingJobs?: boolean; // If true, update existing jobs on import instead of skipping
 }
 
 // Messaging Types
