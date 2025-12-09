@@ -57,7 +57,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
         }
     }, [memberProfile]);
 
-    if (!user || !job.quickApplyEnabled) {
+    if (!user) {
         return null;
     }
 
