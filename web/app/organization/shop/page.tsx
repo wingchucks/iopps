@@ -22,13 +22,8 @@ export default function ShopRedirect() {
 
       try {
         const vendor = await getVendorByUserId(user.uid);
-        if (vendor) {
-          // Existing vendor - go to dashboard
-          router.push('/organization/shop/dashboard');
-        } else {
-          // New vendor - go to onboarding/registration
-          router.push('/organization/shop/register');
-        }
+        // Dashboard handles both existing vendors and new vendor registration
+        router.push('/organization/shop/dashboard');
       } catch {
         // On error, go to dashboard which will handle auth/redirect
         router.push('/organization/shop/dashboard');

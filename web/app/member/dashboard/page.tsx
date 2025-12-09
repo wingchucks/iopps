@@ -408,7 +408,7 @@ function OverviewTab({
           </Link>
 
           <Link
-            href="/organization/shop/setup"
+            href="/organization/shop/dashboard"
             className="group rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4 transition-all hover:border-emerald-500/50 hover:bg-slate-900/70"
           >
             <div className="flex items-center gap-4">
