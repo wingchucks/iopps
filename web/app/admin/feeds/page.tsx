@@ -239,7 +239,8 @@ export default function AdminFeedsPage() {
         return null;
     }
 
-    const FeedFormFields = () => (
+    // Form fields JSX - defined as a variable to avoid re-creating on each render
+    const feedFormFields = (
         <>
             {/* Feed URL - Highlighted like SmartJobBoard */}
             <div className="rounded-lg bg-teal-900/30 border border-teal-700/50 p-3 mb-4">
@@ -550,7 +551,7 @@ export default function AdminFeedsPage() {
                         <h2 className="text-xl font-bold text-slate-50">Add New Auto Import</h2>
                         <p className="mt-1 text-sm text-slate-400">Connect an XML/JSON job feed to automatically import jobs.</p>
                         <form onSubmit={handleAddFeed} className="mt-6">
-                            <FeedFormFields />
+                            {feedFormFields}
                             <div className="flex gap-3 pt-6 border-t border-slate-800 mt-6">
                                 <button
                                     type="button"
@@ -578,7 +579,7 @@ export default function AdminFeedsPage() {
                         <h2 className="text-xl font-bold text-slate-50">Edit Auto Import</h2>
                         <p className="mt-1 text-sm text-slate-400">Update the feed configuration for &ldquo;{editingFeed.feedName}&rdquo;</p>
                         <form onSubmit={handleUpdateFeed} className="mt-6">
-                            <FeedFormFields />
+                            {feedFormFields}
                             <div className="flex gap-3 pt-6 border-t border-slate-800 mt-6">
                                 <button
                                     type="button"
