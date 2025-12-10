@@ -758,6 +758,30 @@ export interface RSSFeed {
   utmTrackingTag?: string; // Append to application URLs for analytics (e.g., utm_source=siga&utm_medium=jobboard)
   noIndexByGoogle?: boolean; // If true, mark imported jobs with noindex meta tag
   updateExistingJobs?: boolean; // If true, update existing jobs on import instead of skipping
+  // Field mappings - maps job fields to XML element names
+  fieldMappings?: {
+    jobIdOrUrl?: string; // XML field for job ID or URL (used for deduplication)
+    title?: string; // XML field for job title
+    description?: string; // XML field for job description
+    jobType?: string; // XML field for employment type (Full-time, Part-time, etc.)
+    category?: string; // XML field for job category
+    experience?: string; // XML field for experience requirements
+    applyUrl?: string; // XML field for application URL
+    expirationDate?: string; // XML field for job expiration date
+    featured?: string; // XML field for featured flag
+    // Location fields
+    location?: string; // XML field for combined location (city or full location string)
+    city?: string; // XML field for city
+    state?: string; // XML field for state/province
+    country?: string; // XML field for country
+    zipCode?: string; // XML field for zip/postal code
+    remote?: string; // XML field for remote work flag
+    // Salary fields
+    salaryString?: string; // XML field for combined salary string
+    salaryFrom?: string; // XML field for minimum salary
+    salaryTo?: string; // XML field for maximum salary
+    salaryPeriod?: string; // XML field for salary period (hourly, yearly, etc.)
+  };
 }
 
 // Messaging Types

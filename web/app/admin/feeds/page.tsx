@@ -13,6 +13,28 @@ import {
 import type { RSSFeed, EmployerProfile } from "@/lib/types";
 import FeedForm from "./FeedForm";
 
+interface FieldMappings {
+    jobIdOrUrl?: string;
+    title?: string;
+    description?: string;
+    jobType?: string;
+    category?: string;
+    experience?: string;
+    applyUrl?: string;
+    expirationDate?: string;
+    featured?: string;
+    location?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    zipCode?: string;
+    remote?: string;
+    salaryString?: string;
+    salaryFrom?: string;
+    salaryTo?: string;
+    salaryPeriod?: string;
+}
+
 export default function AdminFeedsPage() {
     const { user, role, loading: authLoading } = useAuth();
     const router = useRouter();
@@ -36,6 +58,11 @@ export default function AdminFeedsPage() {
     const [noIndexByGoogle, setNoIndexByGoogle] = useState(false);
     const [updateExistingJobs, setUpdateExistingJobs] = useState(false);
     const [jobExpirationType, setJobExpirationType] = useState<"days" | "feed" | "never">("feed");
+
+    // Field mapping state
+    const [fieldMappings, setFieldMappings] = useState<FieldMappings>({});
+    const [availableFields, setAvailableFields] = useState<string[]>([]);
+    const [detectingFields, setDetectingFields] = useState(false);
 
     useEffect(() => {
         if (authLoading) return;
@@ -75,6 +102,8 @@ export default function AdminFeedsPage() {
         setUtmTrackingTag("");
         setNoIndexByGoogle(false);
         setUpdateExistingJobs(false);
+        setFieldMappings({});
+        setAvailableFields([]);
     }
 
     function openAddModal() {
@@ -94,7 +123,14 @@ export default function AdminFeedsPage() {
         setUtmTrackingTag(feed.utmTrackingTag || "");
         setNoIndexByGoogle(feed.noIndexByGoogle || false);
         setUpdateExistingJobs(feed.updateExistingJobs || false);
+        setFieldMappings(feed.fieldMappings || {});
+        // Will need to detect fields to populate the dropdown
+        setAvailableFields([]);
         setShowEditModal(true);
+        // Auto-detect fields when editing
+        if (feed.feedUrl) {
+            detectFieldsFromUrl(feed.feedUrl);
+        }
     }
 
     function handleEmployerSelect(id: string) {
@@ -103,6 +139,76 @@ export default function AdminFeedsPage() {
         if (employer) {
             setEmployerName(employer.organizationName);
         }
+    }
+
+    async function detectFieldsFromUrl(url: string) {
+        if (!user || !url) return;
+
+        setDetectingFields(true);
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch("/api/feeds/detect-fields", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ feedUrl: url }),
+            });
+
+            const result = await response.json();
+            if (response.ok && result.fields) {
+                setAvailableFields(result.fields);
+                // Auto-suggest mappings based on common field names
+                autoSuggestMappings(result.fields);
+            } else {
+                alert(`Error detecting fields: ${result.error}`);
+            }
+        } catch (error) {
+            console.error("Error detecting fields:", error);
+            alert("Failed to detect fields from feed");
+        } finally {
+            setDetectingFields(false);
+        }
+    }
+
+    function autoSuggestMappings(fields: string[]) {
+        const suggestions: FieldMappings = { ...fieldMappings };
+        const lowerFields = fields.map(f => f.toLowerCase());
+
+        // Map common field names
+        const mappingRules: { field: keyof FieldMappings; patterns: string[] }[] = [
+            { field: "title", patterns: ["title", "jobtitle", "job_title", "position", "positiontitle"] },
+            { field: "description", patterns: ["description", "jobdescription", "job_description", "content", "body", "details"] },
+            { field: "applyUrl", patterns: ["applyurl", "apply_url", "applicationurl", "application_url", "url", "link", "joburl"] },
+            { field: "jobIdOrUrl", patterns: ["id", "jobid", "job_id", "requisitionid", "requisition_id", "url", "link"] },
+            { field: "location", patterns: ["location", "city", "joblocation", "job_location", "place"] },
+            { field: "city", patterns: ["city", "locality"] },
+            { field: "state", patterns: ["state", "province", "region"] },
+            { field: "country", patterns: ["country", "nation"] },
+            { field: "remote", patterns: ["remote", "remotework", "remote_work", "isremote", "is_remote"] },
+            { field: "jobType", patterns: ["jobtype", "job_type", "employmenttype", "employment_type", "type", "worktype"] },
+            { field: "category", patterns: ["category", "categories", "department", "industry", "jobcategory"] },
+            { field: "expirationDate", patterns: ["expirationdate", "expiration_date", "expires", "expiry", "closingdate", "closing_date", "enddate"] },
+            { field: "salaryString", patterns: ["salary", "compensation", "pay", "wage"] },
+            { field: "salaryFrom", patterns: ["salaryfrom", "salary_from", "salarymin", "salary_min", "minsalary", "min_salary"] },
+            { field: "salaryTo", patterns: ["salaryto", "salary_to", "salarymax", "salary_max", "maxsalary", "max_salary"] },
+        ];
+
+        for (const rule of mappingRules) {
+            // Skip if already mapped
+            if (suggestions[rule.field]) continue;
+
+            for (const pattern of rule.patterns) {
+                const matchIndex = lowerFields.findIndex(f => f === pattern || f.endsWith(`.${pattern}`));
+                if (matchIndex !== -1) {
+                    suggestions[rule.field] = fields[matchIndex];
+                    break;
+                }
+            }
+        }
+
+        setFieldMappings(suggestions);
     }
 
     async function handleAddFeed(e: React.FormEvent) {
@@ -127,6 +233,7 @@ export default function AdminFeedsPage() {
                 utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
+                fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
             });
 
             resetForm();
@@ -159,6 +266,7 @@ export default function AdminFeedsPage() {
                 utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
+                fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
             });
 
             resetForm();
@@ -312,6 +420,11 @@ export default function AdminFeedsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex flex-wrap gap-1">
+                                            {feed.fieldMappings && Object.keys(feed.fieldMappings).length > 0 && (
+                                                <span className="inline-flex items-center rounded bg-green-500/20 px-1.5 py-0.5 text-xs text-green-400">
+                                                    Mapped
+                                                </span>
+                                            )}
                                             {feed.updateExistingJobs && (
                                                 <span className="inline-flex items-center rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-400">
                                                     Updates
@@ -421,6 +534,11 @@ export default function AdminFeedsPage() {
                                 setNoIndexByGoogle={setNoIndexByGoogle}
                                 updateExistingJobs={updateExistingJobs}
                                 setUpdateExistingJobs={setUpdateExistingJobs}
+                                fieldMappings={fieldMappings}
+                                setFieldMappings={setFieldMappings}
+                                availableFields={availableFields}
+                                onDetectFields={() => detectFieldsFromUrl(feedUrl)}
+                                detectingFields={detectingFields}
                             />
                             <div className="flex gap-3 pt-6 border-t border-slate-800 mt-6">
                                 <button
@@ -471,6 +589,11 @@ export default function AdminFeedsPage() {
                                 setNoIndexByGoogle={setNoIndexByGoogle}
                                 updateExistingJobs={updateExistingJobs}
                                 setUpdateExistingJobs={setUpdateExistingJobs}
+                                fieldMappings={fieldMappings}
+                                setFieldMappings={setFieldMappings}
+                                availableFields={availableFields}
+                                onDetectFields={() => detectFieldsFromUrl(feedUrl)}
+                                detectingFields={detectingFields}
                             />
                             <div className="flex gap-3 pt-6 border-t border-slate-800 mt-6">
                                 <button
