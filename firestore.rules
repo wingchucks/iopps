@@ -353,8 +353,12 @@ service cloud.firestore {
     // MESSAGES
     // ===========================================================================
     match /messages/{messageId} {
-      // Participants of the conversation can read messages
-      allow read: if isSignedIn();
+      // Only participants of the conversation can read their own messages
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid ||
+        isAdminOrModerator()
+      );
 
       // Authenticated users can create messages in their conversations (must be sender)
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;

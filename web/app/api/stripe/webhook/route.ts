@@ -2,15 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
 
+// Mark this route as dynamic to prevent static analysis
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 30; // 30 second timeout
+
 //  Lazy-load firebase-admin to prevent build-time initialization errors
 function getFirebaseAdmin() {
     const { db } = require("@/lib/firebase-admin");
     return db;
 }
 
-// Mark this route as dynamic to prevent static analysis
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+// Check if event has already been processed (idempotency)
+async function isEventProcessed(db: FirebaseFirestore.Firestore, eventId: string): Promise<boolean> {
+    const eventRef = db.collection("stripe_events").doc(eventId);
+    const eventDoc = await eventRef.get();
+    return eventDoc.exists;
+}
+
+// Mark event as processed
+async function markEventProcessed(db: FirebaseFirestore.Firestore, eventId: string, eventType: string): Promise<void> {
+    const eventRef = db.collection("stripe_events").doc(eventId);
+    await eventRef.set({
+        eventId,
+        eventType,
+        processedAt: new Date(),
+    });
+}
 
 export async function POST(request: NextRequest) {
     const body = await request.text();
@@ -46,6 +64,26 @@ export async function POST(request: NextRequest) {
         );
     }
 
+    // Get Firebase admin
+    const db = getFirebaseAdmin();
+    if (!db) {
+        console.error("Firebase Admin not initialized");
+        return NextResponse.json(
+            { error: "Server configuration error" },
+            { status: 500 }
+        );
+    }
+
+    // Idempotency check - skip if already processed
+    try {
+        if (await isEventProcessed(db, event.id)) {
+            console.log(`Event ${event.id} already processed, skipping`);
+            return NextResponse.json({ received: true, skipped: true });
+        }
+    } catch (error) {
+        console.warn("Could not check event idempotency, proceeding:", error);
+    }
+
     // Handle the event
     try {
         switch (event.type) {
@@ -62,15 +100,6 @@ export async function POST(request: NextRequest) {
                     return NextResponse.json(
                         { error: "Invalid payment session: missing type" },
                         { status: 400 }
-                    );
-                }
-
-                const db = getFirebaseAdmin();
-                if (!db) {
-                    console.error("Firebase Admin not initialized");
-                    return NextResponse.json(
-                        { error: "Server configuration error" },
-                        { status: 500 }
                     );
                 }
 
@@ -187,14 +216,122 @@ export async function POST(request: NextRequest) {
             }
 
             case "payment_intent.payment_failed": {
-                const paymentIntent = event.data.object;
+                const paymentIntent = event.data.object as Stripe.PaymentIntent;
                 console.error("Payment failed:", paymentIntent.id);
-                // Handle payment failure (could send notification email)
+
+                // Try to find and update the related job/conference to failed status
+                const failedMetadata = paymentIntent.metadata || {};
+                if (failedMetadata.jobId) {
+                    try {
+                        await db.collection("jobs").doc(failedMetadata.jobId).update({
+                            paymentStatus: "failed",
+                        });
+                        console.log(`Job ${failedMetadata.jobId} marked as payment failed`);
+                    } catch (updateErr) {
+                        console.error("Failed to update job payment status:", updateErr);
+                    }
+                }
+                if (failedMetadata.conferenceId) {
+                    try {
+                        await db.collection("conferences").doc(failedMetadata.conferenceId).update({
+                            paymentStatus: "failed",
+                        });
+                        console.log(`Conference ${failedMetadata.conferenceId} marked as payment failed`);
+                    } catch (updateErr) {
+                        console.error("Failed to update conference payment status:", updateErr);
+                    }
+                }
+                break;
+            }
+
+            case "charge.refunded": {
+                const charge = event.data.object as Stripe.Charge;
+                console.log("Charge refunded:", charge.id);
+
+                // Find the payment intent to get metadata
+                if (charge.payment_intent) {
+                    try {
+                        const paymentIntent = await stripe.paymentIntents.retrieve(charge.payment_intent as string);
+                        const refundMetadata = paymentIntent.metadata || {};
+
+                        // Deactivate the job/conference if refunded
+                        if (refundMetadata.jobId) {
+                            await db.collection("jobs").doc(refundMetadata.jobId).update({
+                                active: false,
+                                paymentStatus: "refunded",
+                            });
+                            console.log(`Job ${refundMetadata.jobId} deactivated due to refund`);
+                        }
+                        if (refundMetadata.conferenceId) {
+                            await db.collection("conferences").doc(refundMetadata.conferenceId).update({
+                                active: false,
+                                paymentStatus: "refunded",
+                            });
+                            console.log(`Conference ${refundMetadata.conferenceId} deactivated due to refund`);
+                        }
+                    } catch (refundErr) {
+                        console.error("Failed to process refund:", refundErr);
+                    }
+                }
+                break;
+            }
+
+            case "customer.subscription.deleted": {
+                const subscription = event.data.object as Stripe.Subscription;
+                console.log("Subscription cancelled:", subscription.id);
+
+                // Find and deactivate the vendor subscription
+                try {
+                    const vendorsSnapshot = await db.collection("vendors")
+                        .where("subscriptionId", "==", subscription.id)
+                        .get();
+
+                    for (const vendorDoc of vendorsSnapshot.docs) {
+                        await vendorDoc.ref.update({
+                            subscriptionStatus: "cancelled",
+                            status: "inactive",
+                        });
+                        console.log(`Vendor ${vendorDoc.id} subscription cancelled`);
+                    }
+                } catch (subErr) {
+                    console.error("Failed to process subscription cancellation:", subErr);
+                }
+                break;
+            }
+
+            case "invoice.payment_failed": {
+                const invoice = event.data.object as Stripe.Invoice;
+                console.error("Invoice payment failed:", invoice.id);
+
+                // Handle recurring payment failure for vendor subscriptions
+                if (invoice.subscription) {
+                    try {
+                        const vendorsSnapshot = await db.collection("vendors")
+                            .where("subscriptionId", "==", invoice.subscription)
+                            .get();
+
+                        for (const vendorDoc of vendorsSnapshot.docs) {
+                            await vendorDoc.ref.update({
+                                subscriptionStatus: "past_due",
+                            });
+                            console.log(`Vendor ${vendorDoc.id} marked as past due`);
+                        }
+                    } catch (invoiceErr) {
+                        console.error("Failed to process invoice failure:", invoiceErr);
+                    }
+                }
                 break;
             }
 
             default:
                 console.log(`Unhandled event type: ${event.type}`);
+        }
+
+        // Mark event as processed for idempotency
+        try {
+            await markEventProcessed(db, event.id, event.type);
+        } catch (markErr) {
+            console.warn("Could not mark event as processed:", markErr);
         }
 
         return NextResponse.json({ received: true });

@@ -134,10 +134,11 @@ export interface JobPosting {
   // Job Requirements Flags
   cpicRequired?: boolean; // Criminal record check required
   willTrain?: boolean; // Employer will provide training
+  driversLicense?: boolean; // Driver's license required
   // Job-specific video
   jobVideo?: JobVideo; // Video specifically about this job posting
   // Payment fields
-  paymentStatus?: "paid" | "pending" | "failed";
+  paymentStatus?: "paid" | "pending" | "failed" | "refunded";
   paymentId?: string;
   productType?: string;
   amountPaid?: number;
@@ -242,7 +243,7 @@ export interface Conference {
 
   // Payment fields
   featured?: boolean;
-  paymentStatus?: "paid" | "pending" | "failed";
+  paymentStatus?: "paid" | "pending" | "failed" | "refunded";
   paymentId?: string;
   productType?: string;
   amountPaid?: number;
