@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/emails/send-job-alerts/instant",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/emails/send-job-alerts/daily",
       "schedule": "0 9 * * *"
     },
