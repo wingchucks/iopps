@@ -46,6 +46,13 @@ interface FeedFormProps {
     setNoIndexByGoogle: (value: boolean) => void;
     updateExistingJobs: boolean;
     setUpdateExistingJobs: (value: boolean) => void;
+    // Keyword filtering
+    keywordFilterEnabled: boolean;
+    setKeywordFilterEnabled: (value: boolean) => void;
+    keywordFilterKeywords: string;
+    setKeywordFilterKeywords: (value: string) => void;
+    keywordFilterMatchIn: ("title" | "description")[];
+    setKeywordFilterMatchIn: (value: ("title" | "description")[]) => void;
     // Field mappings
     fieldMappings: FieldMappings;
     setFieldMappings: (value: FieldMappings) => void;
@@ -76,6 +83,12 @@ export default function FeedForm({
     setNoIndexByGoogle,
     updateExistingJobs,
     setUpdateExistingJobs,
+    keywordFilterEnabled,
+    setKeywordFilterEnabled,
+    keywordFilterKeywords,
+    setKeywordFilterKeywords,
+    keywordFilterMatchIn,
+    setKeywordFilterMatchIn,
     fieldMappings,
     setFieldMappings,
     availableFields,
@@ -276,6 +289,85 @@ export default function FeedForm({
                     <span className="text-sm text-slate-200">Update imported jobs on the next import</span>
                     <span className="text-xs text-slate-500">(refresh job data instead of skipping duplicates)</span>
                 </label>
+            </div>
+
+            {/* Keyword Filtering Section */}
+            <div className="mt-6 pt-6 border-t border-slate-800">
+                <h3 className="text-lg font-semibold text-slate-100 mb-4">Keyword Filtering</h3>
+                <p className="text-sm text-slate-400 mb-4">
+                    Filter jobs to only import those matching specific keywords. Useful for large feeds like Government of Canada.
+                </p>
+
+                <label className="flex items-center gap-3 cursor-pointer mb-4">
+                    <input
+                        type="checkbox"
+                        checked={keywordFilterEnabled}
+                        onChange={(e) => setKeywordFilterEnabled(e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                    />
+                    <span className="text-sm text-slate-200">Enable keyword filtering</span>
+                </label>
+
+                {keywordFilterEnabled && (
+                    <div className="space-y-4 pl-7">
+                        {/* Match In */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200 mb-2">
+                                Search for keywords in:
+                            </label>
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={keywordFilterMatchIn.includes("title")}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setKeywordFilterMatchIn([...keywordFilterMatchIn, "title"]);
+                                            } else {
+                                                setKeywordFilterMatchIn(keywordFilterMatchIn.filter(m => m !== "title"));
+                                            }
+                                        }}
+                                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                                    />
+                                    <span className="text-sm text-slate-300">Job Title</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={keywordFilterMatchIn.includes("description")}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setKeywordFilterMatchIn([...keywordFilterMatchIn, "description"]);
+                                            } else {
+                                                setKeywordFilterMatchIn(keywordFilterMatchIn.filter(m => m !== "description"));
+                                            }
+                                        }}
+                                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                                    />
+                                    <span className="text-sm text-slate-300">Job Description</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Custom Keywords */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200 mb-1">
+                                Custom Keywords
+                                <span className="ml-2 text-slate-500 font-normal">(optional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={keywordFilterKeywords}
+                                onChange={(e) => setKeywordFilterKeywords(e.target.value)}
+                                placeholder="indigenous, first nations, métis, inuit"
+                                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            />
+                            <p className="mt-1 text-xs text-slate-500">
+                                Comma-separated. Leave empty to use default Indigenous keywords: indigenous, first nation, first nations, métis, metis, inuit, aboriginal, native, fnmi, reconciliation
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Field Mappings Section */}

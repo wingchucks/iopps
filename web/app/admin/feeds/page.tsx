@@ -65,6 +65,11 @@ export default function AdminFeedsPage() {
     const [detectingFields, setDetectingFields] = useState(false);
     const [feedType, setFeedType] = useState<"xml" | "html" | undefined>(undefined);
 
+    // Keyword filter state
+    const [keywordFilterEnabled, setKeywordFilterEnabled] = useState(false);
+    const [keywordFilterKeywords, setKeywordFilterKeywords] = useState("");
+    const [keywordFilterMatchIn, setKeywordFilterMatchIn] = useState<("title" | "description")[]>(["title", "description"]);
+
     useEffect(() => {
         if (authLoading) return;
 
@@ -106,6 +111,9 @@ export default function AdminFeedsPage() {
         setFieldMappings({});
         setAvailableFields([]);
         setFeedType(undefined);
+        setKeywordFilterEnabled(false);
+        setKeywordFilterKeywords("");
+        setKeywordFilterMatchIn(["title", "description"]);
     }
 
     function openAddModal() {
@@ -127,6 +135,10 @@ export default function AdminFeedsPage() {
         setUpdateExistingJobs(feed.updateExistingJobs || false);
         setFieldMappings(feed.fieldMappings || {});
         setFeedType(feed.feedType);
+        // Keyword filter state
+        setKeywordFilterEnabled(feed.keywordFilter?.enabled || false);
+        setKeywordFilterKeywords(feed.keywordFilter?.keywords?.join(", ") || "");
+        setKeywordFilterMatchIn(feed.keywordFilter?.matchIn || ["title", "description"]);
         // Will need to detect fields to populate the dropdown
         setAvailableFields([]);
         setShowEditModal(true);
@@ -233,6 +245,12 @@ export default function AdminFeedsPage() {
             return;
         }
 
+        // Parse keywords from comma-separated string
+        const keywordsArray = keywordFilterKeywords
+            .split(",")
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
+
         try {
             await createRSSFeed({
                 feedName,
@@ -250,6 +268,11 @@ export default function AdminFeedsPage() {
                 updateExistingJobs,
                 fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
                 feedType: feedType || undefined,
+                keywordFilter: keywordFilterEnabled ? {
+                    enabled: true,
+                    keywords: keywordsArray,
+                    matchIn: keywordFilterMatchIn,
+                } : undefined,
             });
 
             resetForm();
@@ -268,6 +291,12 @@ export default function AdminFeedsPage() {
             return;
         }
 
+        // Parse keywords from comma-separated string
+        const keywordsArray = keywordFilterKeywords
+            .split(",")
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
+
         try {
             await updateRSSFeed(editingFeed.id, {
                 feedName,
@@ -284,6 +313,11 @@ export default function AdminFeedsPage() {
                 updateExistingJobs,
                 fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
                 feedType: feedType || undefined,
+                keywordFilter: keywordFilterEnabled ? {
+                    enabled: true,
+                    keywords: keywordsArray,
+                    matchIn: keywordFilterMatchIn,
+                } : undefined,
             });
 
             resetForm();
@@ -551,6 +585,12 @@ export default function AdminFeedsPage() {
                                 setNoIndexByGoogle={setNoIndexByGoogle}
                                 updateExistingJobs={updateExistingJobs}
                                 setUpdateExistingJobs={setUpdateExistingJobs}
+                                keywordFilterEnabled={keywordFilterEnabled}
+                                setKeywordFilterEnabled={setKeywordFilterEnabled}
+                                keywordFilterKeywords={keywordFilterKeywords}
+                                setKeywordFilterKeywords={setKeywordFilterKeywords}
+                                keywordFilterMatchIn={keywordFilterMatchIn}
+                                setKeywordFilterMatchIn={setKeywordFilterMatchIn}
                                 fieldMappings={fieldMappings}
                                 setFieldMappings={setFieldMappings}
                                 availableFields={availableFields}
@@ -606,6 +646,12 @@ export default function AdminFeedsPage() {
                                 setNoIndexByGoogle={setNoIndexByGoogle}
                                 updateExistingJobs={updateExistingJobs}
                                 setUpdateExistingJobs={setUpdateExistingJobs}
+                                keywordFilterEnabled={keywordFilterEnabled}
+                                setKeywordFilterEnabled={setKeywordFilterEnabled}
+                                keywordFilterKeywords={keywordFilterKeywords}
+                                setKeywordFilterKeywords={setKeywordFilterKeywords}
+                                keywordFilterMatchIn={keywordFilterMatchIn}
+                                setKeywordFilterMatchIn={setKeywordFilterMatchIn}
                                 fieldMappings={fieldMappings}
                                 setFieldMappings={setFieldMappings}
                                 availableFields={availableFields}
