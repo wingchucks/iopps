@@ -322,27 +322,74 @@ function resolveUrl(url: string, baseUrl: string): string {
 }
 
 /**
- * Check if content is HTML
+ * Check if content is HTML (including XHTML pages that start with <?xml)
  */
 export function isHtmlContent(content: string, contentType: string): boolean {
     const trimmed = content.trim().toLowerCase();
-    return (
-        trimmed.startsWith('<!doctype html') ||
-        trimmed.startsWith('<html') ||
-        contentType.includes('text/html')
-    );
+
+    // Check content-type header first
+    if (contentType.includes('text/html')) {
+        return true;
+    }
+
+    // Check for HTML doctype or html tag
+    if (trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')) {
+        return true;
+    }
+
+    // Check if it's XHTML (starts with <?xml but contains <html>)
+    // This handles pages that have XML declaration but are actually HTML
+    if (trimmed.startsWith('<?xml')) {
+        // Look for HTML indicators in the first 2000 chars
+        const preview = trimmed.substring(0, 2000);
+        if (preview.includes('<html') ||
+            preview.includes('<!doctype html') ||
+            preview.includes('<head') ||
+            preview.includes('<body')) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
- * Check if content is XML
+ * Check if content is XML feed (RSS, Atom, or job feed XML)
+ * This returns true only for actual feed XML, not XHTML pages
  */
 export function isXmlContent(content: string, contentType: string): boolean {
+    // First check if it's HTML (XHTML pages should be treated as HTML)
+    if (isHtmlContent(content, contentType)) {
+        return false;
+    }
+
     const trimmed = content.trim().toLowerCase();
-    return (
-        trimmed.startsWith('<?xml') ||
-        contentType.includes('application/xml') ||
+
+    // Check for XML feed content types
+    if (contentType.includes('application/xml') ||
         contentType.includes('text/xml') ||
         contentType.includes('application/rss+xml') ||
-        contentType.includes('application/atom+xml')
-    );
+        contentType.includes('application/atom+xml')) {
+        return true;
+    }
+
+    // Check for XML declaration and feed-specific root elements
+    if (trimmed.startsWith('<?xml')) {
+        const preview = trimmed.substring(0, 2000);
+        // Look for feed-specific root elements
+        if (preview.includes('<rss') ||
+            preview.includes('<feed') ||
+            preview.includes('<source') ||
+            preview.includes('<jobs') ||
+            preview.includes('<jobpositionpostings')) {
+            return true;
+        }
+        // If it starts with <?xml but doesn't have feed elements or HTML,
+        // treat as XML and let the parser try
+        if (!preview.includes('<html') && !preview.includes('<head') && !preview.includes('<body')) {
+            return true;
+        }
+    }
+
+    return false;
 }
