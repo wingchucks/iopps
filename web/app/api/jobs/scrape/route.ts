@@ -70,34 +70,54 @@ function getOracleApiUrl(careerSiteUrl: string): string {
 
 // Parse Oracle HCM API response
 async function parseOracleHcmJobs(apiUrl: string, careerSiteUrl: string): Promise<NormalizedJob[]> {
-    const response = await fetch(apiUrl, {
-        headers: {
-            "Accept": "application/json",
-        },
-    });
+    const url = new URL(careerSiteUrl);
+    const baseUrl = `${url.protocol}//${url.host}`;
+    const siteMatch = careerSiteUrl.match(/\/sites\/([^\/\?]+)/i);
+    const siteName = siteMatch ? siteMatch[1] : "CX_1";
 
-    if (!response.ok) {
-        // Try alternate API format
-        const url = new URL(careerSiteUrl);
-        const baseUrl = `${url.protocol}//${url.host}`;
-        const siteMatch = careerSiteUrl.match(/\/sites\/([^\/\?]+)/i);
-        const siteName = siteMatch ? siteMatch[1] : "CX_1";
+    // Try multiple Oracle API endpoint formats
+    const apiEndpoints = [
+        // Format 1: Standard recruiting API with site number
+        `${baseUrl}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,requisitionList.workLocation,requisitionList.requisitionDescriptions&finder=findReqs;siteNumber=${siteName}&limit=500`,
+        // Format 2: Simpler query
+        `${baseUrl}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=${siteName}&limit=500`,
+        // Format 3: Using site name as-is (some Oracle setups use different patterns)
+        `${baseUrl}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;SiteNumber=${siteName}&limit=500`,
+        // Format 4: Try with CX_ prefix
+        `${baseUrl}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX_${siteName}&limit=500`,
+    ];
 
-        const altApiUrl = `${baseUrl}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=${siteName}&limit=500`;
-        const altResponse = await fetch(altApiUrl, {
-            headers: { "Accept": "application/json" },
-        });
+    let lastError = "";
+    for (const endpoint of apiEndpoints) {
+        try {
+            console.log(`Trying Oracle API endpoint: ${endpoint}`);
+            const response = await fetch(endpoint, {
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+            });
 
-        if (!altResponse.ok) {
-            throw new Error(`Oracle HCM API returned ${response.status}: ${response.statusText}`);
+            if (response.ok) {
+                const data = await response.json();
+                const jobs = normalizeOracleJobs(data, careerSiteUrl);
+                if (jobs.length > 0) {
+                    console.log(`Successfully fetched ${jobs.length} jobs from Oracle HCM`);
+                    return jobs;
+                }
+            } else {
+                const errorText = await response.text();
+                lastError = `${response.status}: ${errorText.substring(0, 200)}`;
+                console.log(`Oracle API returned ${response.status} for endpoint`);
+            }
+        } catch (err) {
+            lastError = err instanceof Error ? err.message : String(err);
+            console.log(`Error fetching from Oracle API: ${lastError}`);
         }
-
-        const altData = await altResponse.json();
-        return normalizeOracleJobs(altData, careerSiteUrl);
     }
 
-    const data = await response.json();
-    return normalizeOracleJobs(data, careerSiteUrl);
+    // If all API attempts fail, throw with details
+    throw new Error(`Oracle HCM API not accessible. The site "${siteName}" may require authentication or use a different API format. Last error: ${lastError}`);
 }
 
 function normalizeOracleJobs(data: any, careerSiteUrl: string): NormalizedJob[] {
