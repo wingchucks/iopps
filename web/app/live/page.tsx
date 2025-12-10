@@ -351,22 +351,46 @@ function LiveStreamsContent() {
           Reach Indigenous communities across Canada with professional livestream coverage for pow wows,
           tournaments, conferences, and cultural events.
         </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-          <a
-            href="mailto:nathan.arias@iopps.ca"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Email About Streaming
-          </a>
-          <Link
-            href="/contact"
-            className="inline-flex items-center justify-center rounded-full border border-slate-600 px-8 py-3 text-lg font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
-          >
-            Contact Form
-          </Link>
+        <div className="mt-6 flex flex-col gap-4">
+          {/* Email display */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <span className="text-slate-300 font-medium">Email us at:</span>
+            <code className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-teal-400 font-mono text-lg">
+              nathan.arias@iopps.ca
+            </code>
+          </div>
+          {/* Action buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText("nathan.arias@iopps.ca");
+                alert("Email copied to clipboard!");
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy Email
+            </button>
+            <a
+              href="https://mail.google.com/mail/?view=cm&to=nathan.arias@iopps.ca&su=IOPPS%20Live%20Streaming%20Inquiry"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-600 px-8 py-3 text-lg font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+              </svg>
+              Open in Gmail
+            </a>
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center rounded-full border border-slate-600 px-8 py-3 text-lg font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+            >
+              Contact Form
+            </Link>
+          </div>
         </div>
       </section>
     </PageShell>
