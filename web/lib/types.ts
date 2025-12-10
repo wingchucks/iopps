@@ -55,6 +55,25 @@ export interface EmployerSubscription {
   unlimitedPosts: boolean;
 }
 
+// Grant types for free posting packages
+export type GrantType = "single" | "featured" | "tier1" | "tier2";
+
+export interface FreePostingGrant {
+  enabled: boolean;
+  grantType: GrantType;
+  reason?: string;
+  // Credits granted
+  jobCredits: number;
+  jobCreditsUsed: number;
+  featuredCredits: number;
+  featuredCreditsUsed: number;
+  unlimitedPosts: boolean;
+  // Duration
+  grantedAt: Timestamp | null;
+  expiresAt: Timestamp | null;
+  grantedBy: string;
+}
+
 export interface EmployerProfile {
   id: string;
   userId: string;
@@ -71,11 +90,13 @@ export interface EmployerProfile {
   approvedBy?: string;
   rejectionReason?: string;
   subscription?: EmployerSubscription;
-  // Admin Bypass - Free posting without payment
+  // Admin Bypass - Free posting without payment (legacy fields for backward compatibility)
   freePostingEnabled?: boolean;
   freePostingReason?: string;
   freePostingGrantedAt?: Timestamp | null;
   freePostingGrantedBy?: string;
+  // Enhanced free posting grant
+  freePostingGrant?: FreePostingGrant;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }

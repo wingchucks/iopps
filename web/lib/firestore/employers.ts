@@ -15,7 +15,7 @@ import {
   employerCollection,
   checkFirebase,
 } from "./shared";
-import type { EmployerProfile, Interview, EmployerStatus, CompanyVideo } from "@/lib/types";
+import type { EmployerProfile, Interview, EmployerStatus, CompanyVideo, GrantType, FreePostingGrant } from "@/lib/types";
 import { MOCK_EMPLOYERS } from "../mockData";
 
 export async function getEmployerProfile(
@@ -142,17 +142,101 @@ export async function updateEmployerStatus(
   await updateDoc(ref, updates);
 }
 
-export async function grantEmployerFreePosting(
-  userId: string,
-  adminId: string,
-  reason?: string
-) {
+export interface GrantFreePostingParams {
+  userId: string;
+  adminId: string;
+  grantType: GrantType;
+  reason?: string;
+  quantity?: number; // For single/featured: number of credits
+  durationDays?: number; // For tier1/tier2: duration in days (default 365)
+}
+
+// Grant configurations based on type
+const GRANT_CONFIGS: Record<GrantType, {
+  jobCredits: number;
+  featuredCredits: number;
+  unlimitedPosts: boolean;
+  defaultDuration: number;
+  label: string;
+}> = {
+  single: {
+    jobCredits: 1, // Will be multiplied by quantity
+    featuredCredits: 0,
+    unlimitedPosts: false,
+    defaultDuration: 365,
+    label: "Single Job Post",
+  },
+  featured: {
+    jobCredits: 0,
+    featuredCredits: 1, // Will be multiplied by quantity
+    unlimitedPosts: false,
+    defaultDuration: 365,
+    label: "Featured Job Ad",
+  },
+  tier1: {
+    jobCredits: 15,
+    featuredCredits: 15,
+    unlimitedPosts: false,
+    defaultDuration: 365,
+    label: "Tier 1 – Basic Visibility",
+  },
+  tier2: {
+    jobCredits: -1, // Unlimited
+    featuredCredits: 5,
+    unlimitedPosts: true,
+    defaultDuration: 365,
+    label: "Tier 2 – Unlimited + Shop",
+  },
+};
+
+export function getGrantConfig(grantType: GrantType) {
+  return GRANT_CONFIGS[grantType];
+}
+
+export async function grantEmployerFreePosting(params: GrantFreePostingParams) {
+  const { userId, adminId, grantType, reason, quantity = 1, durationDays } = params;
+  const config = GRANT_CONFIGS[grantType];
+
+  // Calculate credits based on grant type
+  let jobCredits = config.jobCredits;
+  let featuredCredits = config.featuredCredits;
+
+  // For single/featured, multiply by quantity
+  if (grantType === "single") {
+    jobCredits = quantity;
+  } else if (grantType === "featured") {
+    featuredCredits = quantity;
+  }
+
+  // Calculate expiration date
+  const duration = durationDays || config.defaultDuration;
+  const expiresAt = Timestamp.fromDate(
+    new Date(Date.now() + duration * 24 * 60 * 60 * 1000)
+  );
+
+  const freePostingGrant: Omit<FreePostingGrant, "grantedAt"> & { grantedAt: ReturnType<typeof serverTimestamp> } = {
+    enabled: true,
+    grantType,
+    reason: reason || `Admin granted ${config.label}`,
+    jobCredits,
+    jobCreditsUsed: 0,
+    featuredCredits,
+    featuredCreditsUsed: 0,
+    unlimitedPosts: config.unlimitedPosts,
+    grantedAt: serverTimestamp() as ReturnType<typeof serverTimestamp>,
+    expiresAt,
+    grantedBy: adminId,
+  };
+
   const ref = doc(db!, employerCollection, userId);
   await updateDoc(ref, {
+    // Keep legacy fields for backward compatibility
     freePostingEnabled: true,
-    freePostingReason: reason || "Admin granted",
+    freePostingReason: reason || `Admin granted ${config.label}`,
     freePostingGrantedAt: serverTimestamp(),
     freePostingGrantedBy: adminId,
+    // New enhanced grant data
+    freePostingGrant,
     updatedAt: serverTimestamp(),
   });
 }
@@ -160,12 +244,44 @@ export async function grantEmployerFreePosting(
 export async function revokeEmployerFreePosting(userId: string) {
   const ref = doc(db!, employerCollection, userId);
   await updateDoc(ref, {
+    // Clear legacy fields
     freePostingEnabled: false,
     freePostingReason: null,
     freePostingGrantedAt: null,
     freePostingGrantedBy: null,
+    // Clear enhanced grant
+    freePostingGrant: null,
     updatedAt: serverTimestamp(),
   });
+}
+
+// Helper to check if a grant is still valid
+export function isGrantValid(grant: FreePostingGrant | undefined): boolean {
+  if (!grant || !grant.enabled) return false;
+  if (!grant.expiresAt) return true;
+
+  const expiresAt = grant.expiresAt instanceof Timestamp
+    ? grant.expiresAt.toDate()
+    : new Date(grant.expiresAt as unknown as string);
+
+  return expiresAt > new Date();
+}
+
+// Helper to check remaining credits
+export function getGrantRemainingCredits(grant: FreePostingGrant | undefined): {
+  jobCredits: number;
+  featuredCredits: number;
+  unlimitedPosts: boolean;
+} {
+  if (!grant || !isGrantValid(grant)) {
+    return { jobCredits: 0, featuredCredits: 0, unlimitedPosts: false };
+  }
+
+  return {
+    jobCredits: grant.unlimitedPosts ? -1 : Math.max(0, grant.jobCredits - grant.jobCreditsUsed),
+    featuredCredits: Math.max(0, grant.featuredCredits - grant.featuredCreditsUsed),
+    unlimitedPosts: grant.unlimitedPosts,
+  };
 }
 
 export async function addEmployerInterview(
