@@ -758,6 +758,7 @@ export interface RSSFeed {
   utmTrackingTag?: string; // Append to application URLs for analytics (e.g., utm_source=siga&utm_medium=jobboard)
   noIndexByGoogle?: boolean; // If true, mark imported jobs with noindex meta tag
   updateExistingJobs?: boolean; // If true, update existing jobs on import instead of skipping
+  feedType?: "xml" | "html"; // Type of feed - XML/RSS or HTML scraping
   // Field mappings - maps job fields to XML element names
   fieldMappings?: {
     jobIdOrUrl?: string; // XML field for job ID or URL (used for deduplication)

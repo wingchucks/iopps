@@ -63,6 +63,7 @@ export default function AdminFeedsPage() {
     const [fieldMappings, setFieldMappings] = useState<FieldMappings>({});
     const [availableFields, setAvailableFields] = useState<string[]>([]);
     const [detectingFields, setDetectingFields] = useState(false);
+    const [feedType, setFeedType] = useState<"xml" | "html" | undefined>(undefined);
 
     useEffect(() => {
         if (authLoading) return;
@@ -104,6 +105,7 @@ export default function AdminFeedsPage() {
         setUpdateExistingJobs(false);
         setFieldMappings({});
         setAvailableFields([]);
+        setFeedType(undefined);
     }
 
     function openAddModal() {
@@ -124,6 +126,7 @@ export default function AdminFeedsPage() {
         setNoIndexByGoogle(feed.noIndexByGoogle || false);
         setUpdateExistingJobs(feed.updateExistingJobs || false);
         setFieldMappings(feed.fieldMappings || {});
+        setFeedType(feed.feedType);
         // Will need to detect fields to populate the dropdown
         setAvailableFields([]);
         setShowEditModal(true);
@@ -161,8 +164,12 @@ export default function AdminFeedsPage() {
                 setAvailableFields(result.fields);
                 // Auto-suggest mappings based on common field names
                 autoSuggestMappings(result.fields);
+                // Set feed type based on detection
+                if (result.feedType) {
+                    setFeedType(result.feedType);
+                }
                 if (result.feedStructure) {
-                    console.log(`Feed structure detected: ${result.feedStructure}`);
+                    console.log(`Feed structure detected: ${result.feedStructure} (${result.feedType})`);
                 }
             } else {
                 // Show detailed error with hint if available
@@ -242,6 +249,7 @@ export default function AdminFeedsPage() {
                 noIndexByGoogle,
                 updateExistingJobs,
                 fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
+                feedType: feedType || undefined,
             });
 
             resetForm();
@@ -275,6 +283,7 @@ export default function AdminFeedsPage() {
                 noIndexByGoogle,
                 updateExistingJobs,
                 fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
+                feedType: feedType || undefined,
             });
 
             resetForm();
