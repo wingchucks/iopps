@@ -45,6 +45,44 @@ interface RSSFeedConfig {
   updateExistingJobs?: boolean;
   fieldMappings?: FieldMappings;
   feedType?: "xml" | "html";
+  keywordFilter?: {
+    enabled: boolean;
+    keywords: string[];
+    matchIn: ("title" | "description")[];
+  };
+}
+
+// Indigenous keywords for filtering
+const INDIGENOUS_KEYWORDS = [
+  "indigenous",
+  "first nation",
+  "first nations",
+  "métis",
+  "metis",
+  "inuit",
+  "aboriginal",
+  "native",
+  "fnmi",
+  "reconciliation",
+];
+
+function matchesKeywordFilter(
+  title: string,
+  description: string,
+  filter?: RSSFeedConfig["keywordFilter"]
+): boolean {
+  if (!filter?.enabled) return true;
+
+  const keywords = filter.keywords.length > 0 ? filter.keywords : INDIGENOUS_KEYWORDS;
+  const searchIn = filter.matchIn.length > 0 ? filter.matchIn : ["title", "description"];
+
+  const textToSearch: string[] = [];
+  if (searchIn.includes("title")) textToSearch.push(title.toLowerCase());
+  if (searchIn.includes("description")) textToSearch.push(description.toLowerCase());
+
+  const combinedText = textToSearch.join(" ");
+
+  return keywords.some(keyword => combinedText.includes(keyword.toLowerCase()));
 }
 
 export async function GET(request: NextRequest) {
@@ -186,6 +224,12 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
       const jobType = getMappedValue(scrapedJob, mappings.jobType, "jobType") || "";
       const category = getMappedValue(scrapedJob, mappings.category, "department") || "";
       const salaryStr = getMappedValue(scrapedJob, mappings.salaryString, "salary") || "";
+
+      // Apply keyword filter if enabled
+      if (!matchesKeywordFilter(title, description, feed.keywordFilter)) {
+        skipped++;
+        continue;
+      }
 
       const dedupeUrl = applyUrl || jobIdOrUrl || title;
 
@@ -338,6 +382,12 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
       const category = getXmlFieldValue(job, mappings.category, ["category", "department"]);
       const expirationDate = getXmlFieldValue(job, mappings.expirationDate, ["expirationdate", "closingdate"]);
       const salaryString = getXmlFieldValue(job, mappings.salaryString, ["salary"]);
+
+      // Apply keyword filter if enabled
+      if (!matchesKeywordFilter(title, description, feed.keywordFilter)) {
+        skipped++;
+        continue;
+      }
 
       const dedupeUrl = applyUrl || jobIdOrUrl;
       if (!dedupeUrl) continue;
