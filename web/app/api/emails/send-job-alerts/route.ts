@@ -360,7 +360,7 @@ function getJobAlertEmailHTML(
         <tr>
           <td style="padding: 20px; border-bottom: 1px solid #2d2d35;">
             <h3 style="margin: 0 0 8px; font-size: 18px; color: #f1f5f9;">
-              <a href="https://iopps.com/jobs/${job.id}" style="color: #14B8A6; text-decoration: none;">${safeTitle}</a>
+              <a href="https://iopps.ca/jobs/${job.id}" style="color: #14B8A6; text-decoration: none;">${safeTitle}</a>
             </h3>
             <p style="margin: 0 0 8px; font-size: 14px; color: #94a3b8;">${safeEmployer}</p>
             <div style="display: flex; gap: 16px; font-size: 13px; color: #64748b;">
@@ -370,7 +370,7 @@ function getJobAlertEmailHTML(
               ${job.remoteFlag ? '<span style="color: #14B8A6;">🏠 Remote</span>' : ""}
             </div>
             <div style="margin-top: 16px;">
-              <a href="https://iopps.com/jobs/${job.id}" style="display: inline-block; padding: 10px 20px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">View Job</a>
+              <a href="https://iopps.ca/jobs/${job.id}" style="display: inline-block; padding: 10px 20px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">View Job</a>
             </div>
           </td>
         </tr>
@@ -380,7 +380,7 @@ function getJobAlertEmailHTML(
 
   const moreJobsText =
     jobs.length > 10
-      ? `<tr><td style="padding: 20px; text-align: center; color: #94a3b8;">... and ${jobs.length - 10} more jobs. <a href="https://iopps.com/jobs" style="color: #14B8A6;">View all jobs</a></td></tr>`
+      ? `<tr><td style="padding: 20px; text-align: center; color: #94a3b8;">... and ${jobs.length - 10} more jobs. <a href="https://iopps.ca/jobs" style="color: #14B8A6;">View all jobs</a></td></tr>`
       : "";
 
   const alertNames = alerts
@@ -416,15 +416,15 @@ function getJobAlertEmailHTML(
           </tr>
           <tr>
             <td style="padding: 24px; text-align: center;">
-              <a href="https://iopps.com/jobs" style="display: inline-block; padding: 14px 32px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 8px; font-weight: 600;">Browse All Jobs</a>
+              <a href="https://iopps.ca/jobs" style="display: inline-block; padding: 14px 32px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 8px; font-weight: 600;">Browse All Jobs</a>
             </td>
           </tr>
           <tr>
             <td style="background: #16161b; padding: 24px; text-align: center; border-top: 1px solid #2d2d35;">
               <p style="margin: 0 0 12px; font-size: 14px; color: #64748b;">Indigenous Opportunities Platform (IOPPS)</p>
               <p style="margin: 0; font-size: 12px; color: #475569;">
-                <a href="https://iopps.com/member/alerts" style="color: #14B8A6;">Manage your alerts</a> ·
-                <a href="https://iopps.com/unsubscribe" style="color: #14B8A6;">Unsubscribe</a>
+                <a href="https://iopps.ca/member/alerts" style="color: #14B8A6;">Manage your alerts</a> ·
+                <a href="https://iopps.ca/unsubscribe" style="color: #14B8A6;">Unsubscribe</a>
               </p>
             </td>
           </tr>
@@ -452,7 +452,7 @@ function getJobAlertEmailText(jobs: JobPosting[], frequency: JobAlertFrequency):
 ${job.title}
 ${job.employerName || ""}
 Location: ${job.location} | Type: ${job.employmentType}${salaryText ? ` | Salary: ${salaryText}` : ""}${job.remoteFlag ? " | Remote" : ""}
-View: https://iopps.com/jobs/${job.id}
+View: https://iopps.ca/jobs/${job.id}
 `;
     })
     .join("\n---\n");
@@ -462,8 +462,8 @@ View: https://iopps.com/jobs/${job.id}
 ${jobList}
 
 ${jobs.length > 10 ? `... and ${jobs.length - 10} more jobs.\n\n` : ""}
-Browse all jobs: https://iopps.com/jobs
-Manage your alerts: https://iopps.com/member/alerts
+Browse all jobs: https://iopps.ca/jobs
+Manage your alerts: https://iopps.ca/member/alerts
 
 ---
 Indigenous Opportunities Platform (IOPPS)`;
