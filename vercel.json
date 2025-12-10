@@ -9,6 +9,10 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/emails/send-job-alerts/weekly",
+      "schedule": "0 9 * * 1"
+    },
+    {
       "path": "/api/cron/expire-jobs",
       "schedule": "0 0 * * *"
     },
