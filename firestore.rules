@@ -49,19 +49,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdminOrModerator());
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId;
-      allow delete: if isAdmin();
-    }
-
-    // ===========================================================================
-    // USERS COLLECTION
-    // ===========================================================================
-    match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdminOrModerator());
-      // For now, allow users to create/update their own profile
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId;
-      // Allow admins to manage users
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdminOrModerator());
       allow delete: if isAdmin();
     }
 
@@ -86,18 +74,23 @@ service cloud.firestore {
     // ===========================================================================
     match /applications/{applicationId} {
         allow read: if isSignedIn() && (
-            resource.data.userId == request.auth.uid || 
-            // Employer of the job being applied to needs access. 
-            // This requires a complex query or just relying on "isOwner" of the job?
-            // Usually we store employerId on application too for easy security.
-            resource.data.employerId == request.auth.uid
+            resource.data.userId == request.auth.uid ||
+            resource.data.employerId == request.auth.uid ||
+            isAdminOrModerator()
         );
-        allow create: if isSignedIn();
-        allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.employerId == request.auth.uid);
+        // Users can only create applications for themselves
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.employerId == request.auth.uid || isAdminOrModerator());
+        allow delete: if isAdmin();
     }
 
     match /savedJobs/{savedId} {
-        allow read, write: if isSignedIn() && resource.data.userId == request.auth.uid;
+        // Users can only read their own saved jobs
+        allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+        // Users can only create saved jobs for themselves
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // Users can only update/delete their own saved jobs
+        allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // ===========================================================================
@@ -138,9 +131,9 @@ service cloud.firestore {
       // Public read
       allow read: if true;
 
-      // Vendors can create listings
-      allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
+      // Vendors can only create listings for themselves (vendorId must match their userId)
+      allow create: if isSignedIn() && request.resource.data.vendorId == request.auth.uid;
+      allow update: if isOwner(resource.data.vendorId) || isAdminOrModerator();
       allow delete: if isAdminOrModerator();
     }
 
@@ -151,8 +144,8 @@ service cloud.firestore {
       // Public read for product listings
       allow read: if true;
 
-      // Vendors can create their own product listings
-      allow create: if isSignedIn();
+      // Vendors can only create their own product listings (vendorId must match their userId)
+      allow create: if isSignedIn() && request.resource.data.vendorId == request.auth.uid;
 
       // Vendors can update/delete their own listings, admins can manage any
       allow update: if isOwner(resource.data.vendorId) || isAdminOrModerator();
@@ -278,9 +271,9 @@ service cloud.firestore {
     match /liveStreams/{streamId} {
       // Public read
       allow read: if true;
-      
-      // Admins and employers can manage
-      allow create: if isSignedIn();
+
+      // Only employers can create live streams (must be owner)
+      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
       allow delete: if isAdminOrModerator();
     }
@@ -363,11 +356,14 @@ service cloud.firestore {
       // Participants of the conversation can read messages
       allow read: if isSignedIn();
 
-      // Authenticated users can create messages in their conversations
+      // Authenticated users can create messages in their conversations (must be sender)
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
 
-      // Messages can be updated (for marking read)
-      allow update: if isSignedIn();
+      // Only the recipient can mark as read, or conversation participants can update
+      allow update: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid
+      );
 
       // Only admins can delete
       allow delete: if isAdmin();
@@ -377,11 +373,12 @@ service cloud.firestore {
     // POW WOW REGISTRATIONS
     // ===========================================================================
     match /powwowRegistrations/{registrationId} {
-      // Anyone can create (register for event)
-      allow create: if true;
+      // Signed-in users can create registrations (must include their email/userId for verification)
+      allow create: if isSignedIn();
 
-      // Admins and event owners can read
+      // Users can read their own registrations, admins and event owners can read all
       allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.userId ||
         request.auth.uid == resource.data.employerId ||
         isAdminOrModerator()
       );

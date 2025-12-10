@@ -56,24 +56,57 @@ export default function FileUploader({
             return false;
         }
 
-        // Check type (basic validation based on extension for user feedback)
-        const fileExtension = "." + file.name.split('.').pop()?.toLowerCase();
+        // Check type (validation based on extension and MIME type)
+        const fileNameParts = file.name.split('.');
+        const fileExtension = fileNameParts.length > 1
+            ? "." + fileNameParts.pop()?.toLowerCase()
+            : "";
         const acceptedTypes = accept.split(',').map(t => t.trim().toLowerCase());
 
-        if (!acceptedTypes.some(type => type === fileExtension || file.type.match(timeToRegex(type)))) {
-            // This is a loose check, relying mainly on the input 'accept' attribute
-            // but good for drag/drop validation
+        // Check if file matches any accepted type
+        const isValidType = acceptedTypes.some(type => {
+            // Check extension match
+            if (type.startsWith('.') && type === fileExtension) {
+                return true;
+            }
+            // Check MIME type match
+            const mimePattern = extensionToMimeType(type);
+            if (mimePattern && file.type === mimePattern) {
+                return true;
+            }
+            // Check wildcard MIME types (e.g., image/*)
+            if (type.includes('*')) {
+                const [category] = type.split('/');
+                return file.type.startsWith(category + '/');
+            }
+            return false;
+        });
+
+        if (!isValidType) {
+            onError(`Invalid file type. Accepted types: ${accept}`);
+            return false;
         }
 
         return true;
     };
 
-    const timeToRegex = (t: string) => {
-        if (t === '.pdf') return 'application/pdf';
-        if (t === '.doc') return 'application/msword';
-        if (t === '.docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        if (t.startsWith('image/')) return t;
-        return '';
+    const extensionToMimeType = (ext: string): string | null => {
+        const mimeTypes: Record<string, string> = {
+            '.pdf': 'application/pdf',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.webp': 'image/webp',
+            '.svg': 'image/svg+xml',
+            '.txt': 'text/plain',
+            '.csv': 'text/csv',
+            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            '.xls': 'application/vnd.ms-excel',
+        };
+        return mimeTypes[ext] || null;
     }
 
     const uploadFile = (file: File) => {

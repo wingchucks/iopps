@@ -5,10 +5,12 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   orderBy,
   query,
   updateDoc,
   where,
+  writeBatch,
   db,
   auth,
   notificationsCollection,
@@ -60,19 +62,21 @@ export async function getUserNotifications(
 ): Promise<Notification[]> {
   checkFirebase();
 
+  // Use Firestore limit() instead of fetching all and slicing
   const q = query(
     collection(db!, notificationsCollection),
     where("userId", "==", userId),
-    orderBy("createdAt", "desc")
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
   );
 
   const snapshot = await getDocs(q);
-  const notifications = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
+  const notifications = snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
   })) as Notification[];
 
-  return notifications.slice(0, limitCount);
+  return notifications;
 }
 
 export async function markNotificationAsRead(
@@ -94,16 +98,21 @@ export async function markAllNotificationsAsRead(
   const q = query(
     collection(db!, notificationsCollection),
     where("userId", "==", userId),
-    where("read", "==", false)
+    where("read", "==", false),
+    limit(500) // Limit to prevent massive operations
   );
 
   const snapshot = await getDocs(q);
 
-  const updatePromises = snapshot.docs.map((docSnap) =>
-    updateDoc(doc(db!, notificationsCollection, docSnap.id), { read: true })
-  );
+  if (snapshot.empty) return;
 
-  await Promise.all(updatePromises);
+  // Use batch writes for better performance (max 500 writes per batch)
+  const batch = writeBatch(db!);
+  snapshot.docs.forEach((docSnap) => {
+    batch.update(doc(db!, notificationsCollection, docSnap.id), { read: true });
+  });
+
+  await batch.commit();
 }
 
 export async function getUnreadNotificationCount(

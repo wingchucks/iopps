@@ -97,12 +97,22 @@ export default function NotificationBell() {
     }
   }
 
-  function formatTimeAgo(timestamp: any): string {
+  function formatTimeAgo(timestamp: { toDate?: () => Date; seconds?: number } | Date | string | null | undefined): string {
     if (!timestamp) return "";
-    const date =
-      timestamp.toDate?.() instanceof Date
-        ? timestamp.toDate()
-        : new Date(timestamp.seconds * 1000);
+
+    let date: Date;
+    if (timestamp instanceof Date) {
+      date = timestamp;
+    } else if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } else if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof timestamp.toDate === 'function') {
+      date = timestamp.toDate();
+    } else if (typeof timestamp === 'object' && 'seconds' in timestamp && typeof timestamp.seconds === 'number') {
+      date = new Date(timestamp.seconds * 1000);
+    } else {
+      return "";
+    }
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);

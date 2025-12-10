@@ -315,7 +315,7 @@ function AdminJobsContent() {
                           {job.employerLogoUrl ? (
                             <img
                               src={job.employerLogoUrl}
-                              alt=""
+                              alt={`${job.employerName} logo`}
                               className="h-8 w-8 rounded-lg object-cover"
                             />
                           ) : (

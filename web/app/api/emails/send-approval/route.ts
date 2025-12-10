@@ -1,9 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { auth, db } from "@/lib/firebase-admin";
+import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
 
-
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const rateLimitResult = rateLimiters.strict(request);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: rateLimitResult.retryAfter },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
+  // Check if Firebase Admin is initialized
+  if (!auth || !db) {
+    console.error("Firebase Admin not initialized");
+    return NextResponse.json(
+      { error: "Server configuration error" },
+      { status: 503 }
+    );
+  }
+
+  // Verify authentication - only admins/moderators can send approval emails
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const idToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+
+    // Check if the user is an admin or moderator
+    const userDoc = await db.collection("users").doc(decodedToken.uid).get();
+    const userData = userDoc.data();
+
+    if (!userData || (userData.role !== "admin" && userData.role !== "moderator")) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+  } catch (authError) {
+    console.error("Auth verification error:", authError);
+    return NextResponse.json({ error: "Invalid authentication token" }, { status: 401 });
+  }
+
   const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const body = await request.json();

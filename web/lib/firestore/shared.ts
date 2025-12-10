@@ -4,6 +4,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getDoc,
   getDocs,
   increment,
@@ -12,9 +13,13 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
+  type QueryDocumentSnapshot,
+  type DocumentData,
 } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 
@@ -24,6 +29,7 @@ export {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getDoc,
   getDocs,
   increment,
@@ -32,12 +38,16 @@ export {
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
   db,
   auth,
 };
+
+export type { QueryDocumentSnapshot, DocumentData };
 
 // Collection names
 export const employerCollection = "employers";
