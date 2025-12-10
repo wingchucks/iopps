@@ -74,8 +74,17 @@ export async function POST(request: NextRequest) {
 
         const xmlText = await response.text();
 
-        // Parse XML
-        const parsed = await parseStringPromise(xmlText);
+        // Pre-process XML to fix common issues with unescaped ampersands in URLs
+        // This regex finds & that are not followed by amp;, lt;, gt;, quot;, apos;, or #
+        const fixedXml = xmlText.replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, '&amp;');
+
+        // Parse XML with lenient options
+        const parsed = await parseStringPromise(fixedXml, {
+            strict: false,
+            explicitArray: true,
+            normalize: true,
+            normalizeTags: true,
+        });
         const jobs = parsed.source?.job || [];
 
         const newJobs: any[] = [];
