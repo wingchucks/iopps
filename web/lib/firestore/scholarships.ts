@@ -1,0 +1,175 @@
+// Scholarship-related Firestore operations
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  db,
+  scholarshipsCollection,
+  scholarshipApplicationsCollection,
+  checkFirebase,
+} from "./shared";
+import type { Scholarship, ScholarshipApplication, ApplicationStatus } from "@/lib/types";
+import { MOCK_SCHOLARSHIPS } from "../mockData";
+
+type ScholarshipInput = Omit<
+  Scholarship,
+  "id" | "createdAt" | "active"
+> & { active?: boolean };
+
+export async function createScholarship(
+  input: ScholarshipInput
+): Promise<string> {
+  const ref = collection(db!, scholarshipsCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    active: input.active ?? true,
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db!, scholarshipsCollection, docRef.id), {
+    id: docRef.id,
+  });
+  return docRef.id;
+}
+
+export async function listScholarships(): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_SCHOLARSHIPS;
+    }
+    const ref = collection(firestore, scholarshipsCollection);
+    const q = query(ref, orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => docSnap.data() as Scholarship);
+  } catch {
+    return [];
+  }
+}
+
+export async function updateScholarship(
+  id: string,
+  data: Partial<Scholarship>
+) {
+  const ref = doc(db!, scholarshipsCollection, id);
+  await updateDoc(ref, data);
+}
+
+export async function listEmployerScholarships(employerId: string): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return [];
+    }
+    const ref = collection(firestore, scholarshipsCollection);
+    const q = query(ref, where("employerId", "==", employerId), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Scholarship));
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteScholarship(id: string): Promise<void> {
+  const ref = doc(db!, scholarshipsCollection, id);
+  await deleteDoc(ref);
+}
+
+export async function getScholarship(id: string): Promise<Scholarship | null> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) {
+      return MOCK_SCHOLARSHIPS.find(s => s.id === id) || null;
+    }
+    const ref = doc(firestore, scholarshipsCollection, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as Scholarship;
+  } catch {
+    return null;
+  }
+}
+
+// Scholarship Applications
+type ScholarshipApplicationInput = {
+  scholarshipId: string;
+  employerId: string;
+  memberId: string;
+  memberEmail?: string;
+  memberDisplayName?: string;
+  education?: string;
+  essay?: string;
+};
+
+export async function createScholarshipApplication(
+  input: ScholarshipApplicationInput
+): Promise<string> {
+  const ref = collection(db!, scholarshipApplicationsCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    status: "submitted" as ApplicationStatus,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function listMemberScholarshipApplications(
+  memberId: string
+): Promise<ScholarshipApplication[]> {
+  const ref = collection(db!, scholarshipApplicationsCollection);
+  const q = query(
+    ref,
+    where("memberId", "==", memberId),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((docSnapshot) => {
+    const data = docSnapshot.data() as ScholarshipApplication;
+    return { ...data, id: docSnapshot.id };
+  });
+}
+
+export async function listScholarshipApplicantsForEmployer(
+  employerId: string,
+  scholarshipId?: string
+): Promise<ScholarshipApplication[]> {
+  const ref = collection(db!, scholarshipApplicationsCollection);
+  const constraints: any[] = [where("employerId", "==", employerId)];
+  if (scholarshipId) {
+    constraints.push(where("scholarshipId", "==", scholarshipId));
+  }
+  constraints.push(orderBy("createdAt", "desc"));
+  const q = query(ref, ...constraints);
+  const snap = await getDocs(q);
+  return snap.docs.map((docSnapshot) => {
+    const data = docSnapshot.data() as ScholarshipApplication;
+    return { ...data, id: docSnapshot.id };
+  });
+}
+
+export async function updateScholarshipApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus
+) {
+  const ref = doc(db!, scholarshipApplicationsCollection, applicationId);
+  await updateDoc(ref, {
+    status,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function withdrawScholarshipApplication(applicationId: string) {
+  const ref = doc(db!, scholarshipApplicationsCollection, applicationId);
+  await updateDoc(ref, {
+    status: "withdrawn" as ApplicationStatus,
+    updatedAt: serverTimestamp(),
+  });
+}
