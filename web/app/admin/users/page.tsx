@@ -10,6 +10,8 @@ import {
   getDocs,
   doc,
   updateDoc,
+  getDoc,
+  setDoc,
   serverTimestamp,
   orderBy,
 } from "firebase/firestore";
@@ -78,6 +80,33 @@ function AdminUsersContent() {
     try {
       setProcessing(userId);
       const userRef = doc(db!, "users", userId);
+
+      // If changing TO employer, create pending EmployerProfile
+      if (newRole === "employer") {
+        const employerRef = doc(db!, "employers", userId);
+        const employerSnap = await getDoc(employerRef);
+
+        if (!employerSnap.exists()) {
+          // Get user info for the employer profile
+          const targetUser = users.find(u => u.id === userId);
+
+          // Create pending employer profile
+          await setDoc(employerRef, {
+            id: userId,
+            userId: userId,
+            organizationName: targetUser?.displayName || "",
+            description: "",
+            website: "",
+            location: "",
+            logoUrl: "",
+            status: "pending",  // KEY: Start as pending for admin approval
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+      }
+
+      // Update user role
       await updateDoc(userRef, {
         role: newRole,
         updatedAt: serverTimestamp(),
