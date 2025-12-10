@@ -47,7 +47,6 @@ export default function PerformanceMonitor({
     trackWebVitals(onMetric);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[PerformanceMonitor] Web vitals tracking initialized');
     }
   }, [enabled, onMetric]);
 
