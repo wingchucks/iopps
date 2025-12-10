@@ -304,10 +304,11 @@ export async function POST(request: NextRequest) {
                 console.error("Invoice payment failed:", invoice.id);
 
                 // Handle recurring payment failure for vendor subscriptions
-                // subscription can be string | Stripe.Subscription | null
-                const subscriptionId = typeof invoice.subscription === 'string'
-                    ? invoice.subscription
-                    : invoice.subscription?.id;
+                // Access subscription via any cast since Stripe types vary by version
+                const invoiceSubscription = (invoice as any).subscription;
+                const subscriptionId = typeof invoiceSubscription === 'string'
+                    ? invoiceSubscription
+                    : invoiceSubscription?.id;
 
                 if (subscriptionId) {
                     try {
