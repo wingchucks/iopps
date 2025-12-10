@@ -161,8 +161,16 @@ export default function AdminFeedsPage() {
                 setAvailableFields(result.fields);
                 // Auto-suggest mappings based on common field names
                 autoSuggestMappings(result.fields);
+                if (result.feedStructure) {
+                    console.log(`Feed structure detected: ${result.feedStructure}`);
+                }
             } else {
-                alert(`Error detecting fields: ${result.error}`);
+                // Show detailed error with hint if available
+                let errorMessage = `Error detecting fields: ${result.error}`;
+                if (result.hint) {
+                    errorMessage += `\n\nHint: ${result.hint}`;
+                }
+                alert(errorMessage);
             }
         } catch (error) {
             console.error("Error detecting fields:", error);
