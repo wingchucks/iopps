@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -10,18 +10,16 @@ import {
   getDocs,
   orderBy,
   doc,
-  updateDoc,
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { JobApplication, ApplicationStatus } from "@/lib/types";
+import { AdminLoadingState, AdminEmptyState } from "@/components/admin";
 
 interface ApplicationWithDetails extends JobApplication {
   jobTitle?: string;
   employerName?: string;
 }
-
-import { Suspense } from "react";
 
 function AdminApplicationsContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -115,13 +113,7 @@ function AdminApplicationsContent() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading applications...</p>
-        </div>
-      </div>
-    );
+    return <AdminLoadingState message="Loading applications..." />;
   }
 
   if (!user || (role !== "admin" && role !== "moderator")) {
@@ -258,11 +250,10 @@ function AdminApplicationsContent() {
         {/* Applications List */}
         <div className="space-y-4">
           {filteredApplications.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-              <p className="text-slate-400">
-                No applications found for this filter.
-              </p>
-            </div>
+            <AdminEmptyState
+              title="No applications found"
+              message="No applications match the current filter."
+            />
           ) : (
             filteredApplications.map((application) => {
               const isProcessing = processing === application.id;
@@ -394,13 +385,7 @@ function AdminApplicationsContent() {
 
 export default function AdminApplicationsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading applications...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<AdminLoadingState message="Loading applications..." />}>
       <AdminApplicationsContent />
     </Suspense>
   );

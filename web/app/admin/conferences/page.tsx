@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -16,12 +16,11 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Conference } from "@/lib/types";
+import { AdminLoadingState, AdminEmptyState, StatusBadge } from "@/components/admin";
 
 interface ConferenceWithEmployer extends Conference {
   employerLogoUrl?: string;
 }
-
-import { Suspense } from "react";
 
 function AdminConferencesContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -140,13 +139,7 @@ function AdminConferencesContent() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading conferences...</p>
-        </div>
-      </div>
-    );
+    return <AdminLoadingState message="Loading conferences..." />;
   }
 
   if (!user || (role !== "admin" && role !== "moderator")) {
@@ -230,11 +223,10 @@ function AdminConferencesContent() {
         {/* Conferences List */}
         <div className="space-y-4">
           {filteredConferences.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-              <p className="text-slate-400">
-                No conferences found for this filter.
-              </p>
-            </div>
+            <AdminEmptyState
+              title="No conferences found"
+              message="No conferences match the current filter."
+            />
           ) : (
             filteredConferences.map((conference) => {
               const isProcessing = processing === conference.id;
@@ -266,14 +258,7 @@ function AdminConferencesContent() {
                                 {conference.employerName}
                               </p>
                             </div>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-slate-500/10 text-slate-400"
-                                }`}
-                            >
-                              {isActive ? "Active" : "Inactive"}
-                            </span>
+                            <StatusBadge status={isActive ? "active" : "inactive"} />
                           </div>
 
                           <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
@@ -395,13 +380,7 @@ function AdminConferencesContent() {
 
 export default function AdminConferencesPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading conferences...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<AdminLoadingState message="Loading conferences..." />}>
       <AdminConferencesContent />
     </Suspense>
   );

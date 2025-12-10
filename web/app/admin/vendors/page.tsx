@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -17,8 +17,7 @@ import {
 import { db } from "@/lib/firebase";
 import { grantVendorFreeListing, revokeVendorFreeListing } from "@/lib/firestore";
 import type { Vendor } from "@/lib/types";
-
-import { Suspense } from "react";
+import { AdminLoadingState, AdminEmptyState, StatusBadge } from "@/components/admin";
 
 function AdminVendorsContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -214,13 +213,7 @@ function AdminVendorsContent() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading vendors...</p>
-        </div>
-      </div>
-    );
+    return <AdminLoadingState message="Loading vendors..." />;
   }
 
   if (!user || (role !== "admin" && role !== "moderator")) {
@@ -308,9 +301,10 @@ function AdminVendorsContent() {
         {/* Vendors List */}
         <div className="space-y-4">
           {filteredVendors.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-              <p className="text-slate-400">No vendors found for this filter.</p>
-            </div>
+            <AdminEmptyState
+              title="No vendors found"
+              message="No vendors match the current filter."
+            />
           ) : (
             filteredVendors.map((vendor) => {
               const isProcessing = processing === vendor.id;
@@ -346,14 +340,7 @@ function AdminVendorsContent() {
                               )}
                             </div>
                             <div className="flex gap-2">
-                              <span
-                                className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
-                                  ? "bg-green-500/10 text-green-400"
-                                  : "bg-slate-500/10 text-slate-400"
-                                  }`}
-                              >
-                                {isActive ? "Active" : "Inactive"}
-                              </span>
+                              <StatusBadge status={isActive ? "active" : "inactive"} />
                               {isFeatured && (
                                 <span className="rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400">
                                   Featured
@@ -561,13 +548,7 @@ function AdminVendorsContent() {
 
 export default function AdminVendorsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading vendors...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<AdminLoadingState message="Loading vendors..." />}>
       <AdminVendorsContent />
     </Suspense>
   );
