@@ -110,9 +110,9 @@ function processHtmlPage(html: string, feedUrl: string) {
 }
 
 /**
- * Process XML feed
+ * Process XML feed - falls back to HTML scraping if XML parsing fails
  */
-async function processXmlFeed(xmlText: string, feedUrl: string) {
+async function processXmlFeed(xmlText: string, feedUrl: string): Promise<NextResponse> {
     // Parse XML with lenient options
     let parsed;
     try {
@@ -127,9 +127,26 @@ async function processXmlFeed(xmlText: string, feedUrl: string) {
     } catch (parseError) {
         const parseErrorMsg = parseError instanceof Error ? parseError.message : String(parseError);
 
+        // If XML parsing fails, try HTML scraping as a fallback
+        // This handles cases where content was incorrectly identified as XML
+        console.log(`XML parsing failed: ${parseErrorMsg}. Trying HTML scraping as fallback.`);
+
+        try {
+            const htmlResult = processHtmlPage(xmlText, feedUrl);
+            // Check if HTML scraping found jobs
+            const htmlJson = await htmlResult.json();
+            if (htmlJson.success && htmlJson.totalJobs > 0) {
+                console.log(`HTML fallback successful: found ${htmlJson.totalJobs} jobs`);
+                return NextResponse.json(htmlJson);
+            }
+        } catch (htmlError) {
+            console.log("HTML fallback also failed:", htmlError);
+        }
+
+        // If HTML fallback didn't work, return the original XML error
         let hint = "The XML content has syntax errors.";
         if (parseErrorMsg.includes("Invalid character")) {
-            hint = "The XML contains invalid characters. This might be an encoding issue.";
+            hint = "The XML contains invalid characters. This might be an encoding issue or the content is actually HTML.";
         } else if (parseErrorMsg.includes("entity")) {
             hint = "The XML contains undefined entities (like &nbsp;). The feed may not be valid XML.";
         }
