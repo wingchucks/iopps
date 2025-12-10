@@ -10,6 +10,9 @@ export {
   updateEmployerStatus,
   grantEmployerFreePosting,
   revokeEmployerFreePosting,
+  getGrantConfig,
+  isGrantValid,
+  getGrantRemainingCredits,
   addEmployerInterview,
   updateEmployerInterview,
   deleteEmployerInterview,
@@ -17,6 +20,7 @@ export {
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
 } from "./employers";
+export type { GrantFreePostingParams } from "./employers";
 
 // Jobs
 export {

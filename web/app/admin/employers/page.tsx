@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting } from "@/lib/firestore";
-import { EmployerProfile, EmployerStatus } from "@/lib/types";
+import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid } from "@/lib/firestore";
+import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import {
   CheckCircleIcon,
@@ -36,6 +36,9 @@ export default function AdminEmployersPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [freePostingModalId, setFreePostingModalId] = useState<string | null>(null);
   const [freePostingReason, setFreePostingReason] = useState("");
+  const [grantType, setGrantType] = useState<GrantType>("single");
+  const [grantQuantity, setGrantQuantity] = useState(1);
+  const [grantDuration, setGrantDuration] = useState(365);
   const [toastMessage, setToastMessage] = useState<{
     type: "success" | "error";
     message: string;
@@ -179,6 +182,9 @@ export default function AdminEmployersPage() {
       // Open modal to grant free posting
       setFreePostingModalId(employer.id);
       setFreePostingReason("");
+      setGrantType("single");
+      setGrantQuantity(1);
+      setGrantDuration(365);
     }
   };
 
@@ -186,9 +192,17 @@ export default function AdminEmployersPage() {
     if (!user) return;
     setProcessingId(employerId);
     try {
-      await grantEmployerFreePosting(employerId, user.uid, freePostingReason || undefined);
+      await grantEmployerFreePosting({
+        userId: employerId,
+        adminId: user.uid,
+        grantType,
+        reason: freePostingReason || undefined,
+        quantity: grantQuantity,
+        durationDays: grantDuration,
+      });
       await fetchEmployers();
-      showToast("success", `Free posting granted to ${employerName}`);
+      const config = getGrantConfig(grantType);
+      showToast("success", `${config.label} granted to ${employerName}`);
       setFreePostingModalId(null);
       setFreePostingReason("");
     } catch (error) {
@@ -197,6 +211,80 @@ export default function AdminEmployersPage() {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  // Get estimated value for display
+  const getGrantValue = () => {
+    switch (grantType) {
+      case "single":
+        return `$${(125 * grantQuantity).toLocaleString()} value`;
+      case "featured":
+        return `$${(300 * grantQuantity).toLocaleString()} value`;
+      case "tier1":
+        return "$1,250 value";
+      case "tier2":
+        return "$2,500 value";
+      default:
+        return "";
+    }
+  };
+
+  // Get grant badge label
+  const getGrantLabel = (grant: FreePostingGrant | undefined): string => {
+    if (!grant) return "Free Posting";
+
+    const remaining = getGrantRemainingCredits(grant);
+
+    if (grant.unlimitedPosts) {
+      return "Unlimited Posts";
+    }
+
+    switch (grant.grantType) {
+      case "single":
+        return `${remaining.jobCredits} Free Post${remaining.jobCredits !== 1 ? "s" : ""}`;
+      case "featured":
+        return `${remaining.featuredCredits} Featured`;
+      case "tier1":
+        return "Tier 1 Plan";
+      case "tier2":
+        return "Tier 2 Plan";
+      default:
+        return "Free Posting";
+    }
+  };
+
+  // Get grant tooltip with details
+  const getGrantTooltip = (grant: FreePostingGrant | undefined): string => {
+    if (!grant) return "Legacy free posting enabled";
+
+    const remaining = getGrantRemainingCredits(grant);
+    const lines: string[] = [];
+
+    const config = getGrantConfig(grant.grantType);
+    lines.push(`Package: ${config.label}`);
+
+    if (grant.unlimitedPosts) {
+      lines.push("Unlimited job posts");
+    } else if (remaining.jobCredits > 0) {
+      lines.push(`Job posts remaining: ${remaining.jobCredits}`);
+    }
+
+    if (remaining.featuredCredits > 0) {
+      lines.push(`Featured ads remaining: ${remaining.featuredCredits}`);
+    }
+
+    if (grant.expiresAt) {
+      const expiresDate = grant.expiresAt instanceof Date
+        ? grant.expiresAt
+        : (grant.expiresAt as any).toDate?.() || new Date(grant.expiresAt as unknown as string);
+      lines.push(`Expires: ${expiresDate.toLocaleDateString()}`);
+    }
+
+    if (grant.reason) {
+      lines.push(`Reason: ${grant.reason}`);
+    }
+
+    return lines.join("\n");
   };
 
   // Filter and search employers
@@ -451,9 +539,9 @@ export default function AdminEmployersPage() {
                           </h3>
                           {getStatusBadge(employer.status)}
                           {employer.freePostingEnabled && (
-                            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400" title={getGrantTooltip(employer.freePostingGrant)}>
                               <GiftIcon className="mr-1 h-3 w-3" />
-                              Free Posting
+                              {getGrantLabel(employer.freePostingGrant)}
                             </span>
                           )}
                         </div>
@@ -674,23 +762,129 @@ export default function AdminEmployersPage() {
       {/* Free Posting Modal */}
       {freePostingModalId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
                 <GiftIcon className="h-5 w-5 text-emerald-400" />
               </div>
-              <h3 className="text-xl font-bold text-slate-100">Grant Free Posting</h3>
+              <div>
+                <h3 className="text-xl font-bold text-slate-100">Grant Free Posting</h3>
+                <p className="text-sm text-emerald-400">{getGrantValue()}</p>
+              </div>
             </div>
-            <p className="mt-3 text-sm text-slate-400">
-              This employer will be able to post jobs without payment. Optionally add a reason for your records.
-            </p>
-            <input
-              type="text"
-              value={freePostingReason}
-              onChange={(e) => setFreePostingReason(e.target.value)}
-              placeholder="e.g., Partner, Promotion, Sponsorship (optional)"
-              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
+
+            {/* Package Selection */}
+            <div className="mt-5">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Select Package
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: "single", label: "Single Job Post", price: "$125" },
+                  { value: "featured", label: "Featured Job Ad", price: "$300" },
+                  { value: "tier1", label: "Tier 1 – Basic", price: "$1,250/yr" },
+                  { value: "tier2", label: "Tier 2 – Unlimited", price: "$2,500/yr" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setGrantType(option.value as GrantType)}
+                    className={`flex flex-col items-start rounded-lg border p-3 text-left transition-colors ${
+                      grantType === option.value
+                        ? "border-emerald-500 bg-emerald-500/10"
+                        : "border-slate-700 bg-slate-800 hover:border-slate-600"
+                    }`}
+                  >
+                    <span className={`text-sm font-medium ${grantType === option.value ? "text-emerald-400" : "text-slate-200"}`}>
+                      {option.label}
+                    </span>
+                    <span className="text-xs text-slate-500">{option.price}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quantity (for single/featured) */}
+            {(grantType === "single" || grantType === "featured") && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Quantity
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGrantQuantity(Math.max(1, grantQuantity - 1))}
+                    className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-slate-300 hover:bg-slate-700"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={grantQuantity}
+                    onChange={(e) => setGrantQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-20 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-center text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setGrantQuantity(grantQuantity + 1)}
+                    className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-slate-300 hover:bg-slate-700"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm text-slate-400">
+                    {grantType === "single" ? "job posts" : "featured ads"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Duration */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Duration (days)
+              </label>
+              <div className="flex items-center gap-2">
+                <select
+                  value={grantDuration}
+                  onChange={(e) => setGrantDuration(parseInt(e.target.value))}
+                  className="flex-1 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                >
+                  <option value={30}>30 days</option>
+                  <option value={90}>90 days</option>
+                  <option value={180}>6 months</option>
+                  <option value={365}>1 year</option>
+                  <option value={730}>2 years</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Reason */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Reason (optional)
+              </label>
+              <input
+                type="text"
+                value={freePostingReason}
+                onChange={(e) => setFreePostingReason(e.target.value)}
+                placeholder="e.g., Partner, Promotion, Sponsorship"
+                className="w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+
+            {/* Summary */}
+            <div className="mt-4 rounded-md border border-slate-700 bg-slate-800/50 p-3">
+              <p className="text-sm text-slate-400">
+                <span className="text-slate-200 font-medium">Granting: </span>
+                {grantType === "single" && `${grantQuantity} job post${grantQuantity > 1 ? "s" : ""}`}
+                {grantType === "featured" && `${grantQuantity} featured ad${grantQuantity > 1 ? "s" : ""}`}
+                {grantType === "tier1" && "Tier 1 (15 jobs + 15 featured)"}
+                {grantType === "tier2" && "Tier 2 (unlimited posts + 5 featured)"}
+                {" "}for {grantDuration} days
+              </p>
+            </div>
+
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => {
@@ -711,7 +905,7 @@ export default function AdminEmployersPage() {
                 disabled={!!processingId}
                 className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Grant Free Posting
+                {processingId ? "Granting..." : "Grant Package"}
               </button>
             </div>
           </div>
