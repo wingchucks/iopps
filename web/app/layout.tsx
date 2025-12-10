@@ -23,25 +23,27 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "IOPPS - Indigenous Opportunities & Partnerships Platform",
-    template: "%s | IOPPS",
+    default: "IOPPS.ca | Indigenous Jobs, Events, Scholarships & Business Directory",
+    template: "%s | IOPPS.ca",
   },
   description:
-    "Empowering Indigenous success across Canada through jobs, conferences, scholarships, pow wows, Indigenous-owned businesses, and live streams. Join thousands of Indigenous community members and employers committed to economic reconciliation.",
+    "Canada's Indigenous opportunity hub. Find Indigenous jobs, pow wows, conferences, scholarships, and Indigenous-owned businesses. Connect with employers committed to reconciliation and Indigenous economic empowerment.",
   keywords: [
-    "Indigenous jobs",
+    "Indigenous jobs Canada",
     "Indigenous employment",
     "Indigenous scholarships",
     "Indigenous conferences",
-    "pow wows",
-    "Indigenous businesses",
+    "pow wows Canada",
+    "Indigenous business directory",
     "Indigenous entrepreneurs",
     "economic reconciliation",
     "TRC Call to Action 92",
-    "Indigenous opportunities Canada",
     "First Nations jobs",
     "Métis employment",
     "Inuit careers",
+    "Indigenous events",
+    "Indigenous community",
+    "Native jobs Canada",
   ],
   authors: [{ name: "IOPPS Team" }],
   creator: "IOPPS",
@@ -61,17 +63,26 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_CA",
     url: "/",
-    title: "IOPPS - Indigenous Opportunities & Partnerships Platform",
+    title: "IOPPS.ca | Indigenous Jobs, Events, Scholarships & Business Directory",
     description:
-      "Empowering Indigenous success across Canada through jobs, conferences, scholarships, and more.",
-    siteName: "IOPPS",
+      "Canada's Indigenous opportunity hub. Find jobs, pow wows, conferences, scholarships, and Indigenous-owned businesses. Empowering Indigenous success.",
+    siteName: "IOPPS.ca",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "IOPPS.ca - Empowering Indigenous Success",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "IOPPS - Indigenous Opportunities & Partnerships Platform",
+    title: "IOPPS.ca | Indigenous Jobs, Events, Scholarships & Business Directory",
     description:
-      "Empowering Indigenous success across Canada through jobs, conferences, scholarships, and more.",
+      "Canada's Indigenous opportunity hub. Find jobs, pow wows, conferences, scholarships, and Indigenous-owned businesses.",
     creator: "@ioppsca",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
