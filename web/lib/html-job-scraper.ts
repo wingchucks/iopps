@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { Cheerio, AnyNode } from "cheerio";
 
 export interface ScrapedJob {
     title?: string;
@@ -150,7 +151,7 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
     const allFields = new Set<string>();
 
     // Try to find job elements using various selectors
-    let jobElements: cheerio.Cheerio<cheerio.Element> | null = null;
+    let jobElements: Cheerio<AnyNode> | null = null;
 
     for (const selector of JOB_LIST_SELECTORS) {
         const elements = $(selector);
@@ -234,7 +235,7 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
  */
 function extractFieldsFromElement(
     $: cheerio.CheerioAPI,
-    $el: cheerio.Cheerio<cheerio.Element>,
+    $el: Cheerio<AnyNode>,
     job: ScrapedJob,
     allFields: Set<string>
 ): void {
