@@ -2,6 +2,28 @@
 
 import type { EmployerProfile } from "@/lib/types";
 
+interface FieldMappings {
+    jobIdOrUrl?: string;
+    title?: string;
+    description?: string;
+    jobType?: string;
+    category?: string;
+    experience?: string;
+    applyUrl?: string;
+    expirationDate?: string;
+    featured?: string;
+    location?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    zipCode?: string;
+    remote?: string;
+    salaryString?: string;
+    salaryFrom?: string;
+    salaryTo?: string;
+    salaryPeriod?: string;
+}
+
 interface FeedFormProps {
     feedUrl: string;
     setFeedUrl: (value: string) => void;
@@ -24,6 +46,12 @@ interface FeedFormProps {
     setNoIndexByGoogle: (value: boolean) => void;
     updateExistingJobs: boolean;
     setUpdateExistingJobs: (value: boolean) => void;
+    // Field mappings
+    fieldMappings: FieldMappings;
+    setFieldMappings: (value: FieldMappings) => void;
+    availableFields: string[];
+    onDetectFields: () => void;
+    detectingFields: boolean;
 }
 
 export default function FeedForm({
@@ -48,19 +76,70 @@ export default function FeedForm({
     setNoIndexByGoogle,
     updateExistingJobs,
     setUpdateExistingJobs,
+    fieldMappings,
+    setFieldMappings,
+    availableFields,
+    onDetectFields,
+    detectingFields,
 }: FeedFormProps) {
+
+    const updateMapping = (field: keyof FieldMappings, value: string) => {
+        setFieldMappings({
+            ...fieldMappings,
+            [field]: value || undefined,
+        });
+    };
+
+    const FieldMappingSelect = ({
+        label,
+        field,
+        required = false
+    }: {
+        label: string;
+        field: keyof FieldMappings;
+        required?: boolean;
+    }) => (
+        <div>
+            <label className="block text-sm font-medium text-slate-200">
+                {label} {required && <span className="text-red-400">*</span>}
+            </label>
+            <select
+                value={fieldMappings[field] || ""}
+                onChange={(e) => updateMapping(field, e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+                <option value="">Select field</option>
+                {availableFields.map((f) => (
+                    <option key={f} value={f}>
+                        {f}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+
     return (
         <>
             {/* Feed URL - Highlighted like SmartJobBoard */}
             <div className="rounded-lg bg-teal-900/30 border border-teal-700/50 p-3 mb-4">
-                <input
-                    type="url"
-                    value={feedUrl}
-                    onChange={(e) => setFeedUrl(e.target.value)}
-                    placeholder="https://example.com/feed/jobs.xml"
-                    required
-                    className="w-full bg-transparent text-teal-200 placeholder-teal-400/60 focus:outline-none text-sm"
-                />
+                <div className="flex gap-2">
+                    <input
+                        type="url"
+                        value={feedUrl}
+                        onChange={(e) => setFeedUrl(e.target.value)}
+                        placeholder="https://example.com/feed/jobs.xml"
+                        required
+                        className="flex-1 bg-transparent text-teal-200 placeholder-teal-400/60 focus:outline-none text-sm"
+                    />
+                    <button
+                        type="button"
+                        onClick={onDetectFields}
+                        disabled={!feedUrl || detectingFields}
+                        className="rounded-md bg-teal-600 px-3 py-1 text-xs font-medium text-white hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {detectingFields ? "Detecting..." : "Detect Fields"}
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -197,6 +276,63 @@ export default function FeedForm({
                     <span className="text-sm text-slate-200">Update imported jobs on the next import</span>
                     <span className="text-xs text-slate-500">(refresh job data instead of skipping duplicates)</span>
                 </label>
+            </div>
+
+            {/* Field Mappings Section */}
+            <div className="mt-8 pt-6 border-t border-slate-800">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-slate-100">Match XML fields from your feed to job fields</h3>
+                    {availableFields.length > 0 && (
+                        <span className="text-xs text-teal-400 bg-teal-900/30 px-2 py-1 rounded">
+                            {availableFields.length} fields detected
+                        </span>
+                    )}
+                </div>
+
+                {availableFields.length === 0 ? (
+                    <div className="rounded-lg bg-slate-800/50 border border-slate-700 p-4 text-center">
+                        <p className="text-sm text-slate-400">
+                            Enter the feed URL above and click &quot;Detect Fields&quot; to discover available XML fields.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        {/* Core Job Fields */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <FieldMappingSelect label="Job Id or URL" field="jobIdOrUrl" required />
+                            <FieldMappingSelect label="Job Title" field="title" required />
+                            <FieldMappingSelect label="Job Description" field="description" />
+                            <FieldMappingSelect label="Job Type" field="jobType" />
+                            <FieldMappingSelect label="Categories" field="category" />
+                            <FieldMappingSelect label="Experience" field="experience" />
+                            <FieldMappingSelect label="Apply URL" field="applyUrl" />
+                            <FieldMappingSelect label="Expiration Date" field="expirationDate" />
+                            <FieldMappingSelect label="Featured" field="featured" />
+                        </div>
+
+                        {/* Location Fields */}
+                        <h4 className="text-sm font-medium text-slate-300 mb-3">Location Fields</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <FieldMappingSelect label="City or Location" field="location" />
+                            <FieldMappingSelect label="State" field="state" />
+                            <FieldMappingSelect label="Country" field="country" />
+                            <FieldMappingSelect label="Zip Code" field="zipCode" />
+                            <FieldMappingSelect label="Remote" field="remote" />
+                        </div>
+
+                        {/* Salary Fields */}
+                        <h4 className="text-sm font-medium text-slate-300 mb-3">Salary Fields</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FieldMappingSelect label="Salary string" field="salaryString" />
+                            <div className="md:col-span-2 flex items-center">
+                                <span className="text-slate-500 text-sm">OR</span>
+                            </div>
+                            <FieldMappingSelect label="Salary From" field="salaryFrom" />
+                            <FieldMappingSelect label="Salary To" field="salaryTo" />
+                            <FieldMappingSelect label="Salary Period" field="salaryPeriod" />
+                        </div>
+                    </>
+                )}
             </div>
         </>
     );
