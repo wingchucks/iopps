@@ -4,19 +4,24 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getDoc,
   getDocs,
   increment,
+  limit,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   updateDoc,
   where,
   db,
   jobsCollection,
   savedJobsCollection,
   checkFirebase,
+  type QueryDocumentSnapshot,
+  type DocumentData,
 } from "./shared";
 import type { JobPosting, SavedJob, JobVideo } from "@/lib/types";
 import { MOCK_JOBS } from "../mockData";
@@ -48,13 +53,30 @@ type JobFilters = {
   indigenousOnly?: boolean;
   activeOnly?: boolean;
   status?: "active" | "paused" | "all";
+  pageSize?: number;
+  startAfterDoc?: QueryDocumentSnapshot<DocumentData>;
 };
+
+export interface PaginatedJobsResult {
+  jobs: JobPosting[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+  hasMore: boolean;
+}
 
 export async function listJobPostings(
   filters: JobFilters = {}
 ): Promise<JobPosting[]> {
+  const result = await listJobPostingsPaginated(filters);
+  return result.jobs;
+}
+
+export async function listJobPostingsPaginated(
+  filters: JobFilters = {}
+): Promise<PaginatedJobsResult> {
   try {
     const firestore = checkFirebase();
+    const pageSize = filters.pageSize || 50; // Default page size
+
     if (!firestore) {
       let jobs = [...MOCK_JOBS];
 
@@ -71,7 +93,7 @@ export async function listJobPostings(
         jobs = jobs.filter(j => j.indigenousPreference);
       }
 
-      return jobs;
+      return { jobs: jobs.slice(0, pageSize), lastDoc: null, hasMore: jobs.length > pageSize };
     }
     const ref = collection(firestore, jobsCollection);
     const constraints = [];
@@ -92,17 +114,30 @@ export async function listJobPostings(
       constraints.push(where("active", "==", value));
     }
     constraints.push(orderBy("createdAt", "desc"));
+    constraints.push(limit(pageSize + 1)); // Fetch one extra to check if there's more
+
+    if (filters.startAfterDoc) {
+      constraints.push(startAfter(filters.startAfterDoc));
+    }
+
     const q = query(ref, ...constraints);
     const snap = await getDocs(q);
-    return snap.docs.map((docSnapshot) => {
+
+    const hasMore = snap.docs.length > pageSize;
+    const docs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
+    const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
+
+    const jobs = docs.map((docSnapshot) => {
       const data = docSnapshot.data() as JobPosting;
       return {
         ...data,
         id: docSnapshot.id,
       };
     });
+
+    return { jobs, lastDoc, hasMore };
   } catch {
-    return [];
+    return { jobs: [], lastDoc: null, hasMore: false };
   }
 }
 
@@ -231,20 +266,45 @@ export async function listSavedJobs(
   const q = query(
     ref,
     where("memberId", "==", memberId),
-    orderBy("createdAt", "desc")
+    orderBy("createdAt", "desc"),
+    limit(100) // Limit saved jobs to prevent large queries
   );
   const snap = await getDocs(q);
 
-  const results: SavedJob[] = [];
-  for (const docSnap of snap.docs) {
+  if (snap.empty) {
+    return [];
+  }
+
+  // Collect all job IDs
+  const jobIds = snap.docs.map((docSnap) => (docSnap.data() as SavedJob).jobId);
+
+  // Batch fetch jobs to avoid N+1 queries
+  // Firestore 'in' query supports max 30 items, so we batch
+  const jobsMap = new Map<string, JobPosting>();
+  const batchSize = 30;
+
+  for (let i = 0; i < jobIds.length; i += batchSize) {
+    const batchIds = jobIds.slice(i, i + batchSize);
+    if (batchIds.length > 0) {
+      const jobsRef = collection(db!, jobsCollection);
+      const jobsQuery = query(jobsRef, where(documentId(), "in", batchIds));
+      const jobsSnap = await getDocs(jobsQuery);
+      jobsSnap.docs.forEach((jobDoc) => {
+        jobsMap.set(jobDoc.id, { ...jobDoc.data() as JobPosting, id: jobDoc.id });
+      });
+    }
+  }
+
+  // Build results with fetched jobs
+  const results: SavedJob[] = snap.docs.map((docSnap) => {
     const data = docSnap.data() as SavedJob;
-    const job = await getJobPosting(data.jobId);
-    results.push({
+    return {
       ...data,
       id: docSnap.id,
-      job,
-    });
-  }
+      job: jobsMap.get(data.jobId) || null,
+    };
+  });
+
   return results;
 }
 

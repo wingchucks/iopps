@@ -99,9 +99,20 @@ export default function AdminDashboard() {
       </div>
 
       <div className="rounded-lg border border-slate-800 bg-[#08090C] p-6">
-        <h2 className="text-lg font-medium text-slate-100">Recent Activity</h2>
-        <div className="mt-4 text-sm text-slate-400">
-          Activity log coming soon...
+        <h2 className="text-lg font-medium text-slate-100">Quick Actions</h2>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <a href="/admin/users" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Manage Users
+          </a>
+          <a href="/admin/jobs" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Manage Jobs
+          </a>
+          <a href="/admin/employers" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Employer Approvals
+          </a>
+          <a href="/admin/content" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Content Moderation
+          </a>
         </div>
       </div>
     </div>

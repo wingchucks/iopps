@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, JOB_POSTING_PRODUCTS, JobPostingProductType } from "@/lib/stripe";
 import { auth, db } from "@/lib/firebase-admin";
+import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+    // Rate limiting
+    const rateLimitResult = rateLimiters.standard(request);
+    if (!rateLimitResult.success) {
+        return NextResponse.json(
+            { error: "Too many requests", retryAfter: rateLimitResult.retryAfter },
+            { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+        );
+    }
+
     try {
         // Check if Firebase Admin is initialized
         if (!auth || !db) {

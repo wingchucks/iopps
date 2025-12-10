@@ -7,12 +7,16 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET for security
+  // Verify CRON_SECRET for security - REQUIRED in all environments
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  // Allow if no CRON_SECRET configured (development) or if it matches
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    console.error("CRON_SECRET environment variable is not configured");
+    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
     console.warn("Unauthorized cron request - invalid or missing CRON_SECRET");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

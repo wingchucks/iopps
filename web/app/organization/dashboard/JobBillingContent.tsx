@@ -49,12 +49,17 @@ export default function BillingTab() {
         fetchData();
     }, [user]);
 
-    const formatDate = (date: any) => {
+    const formatDate = (date: { toDate?: () => Date; seconds?: number } | Date | string | null | undefined): string => {
         if (!date) return "N/A";
         if (typeof date === 'string') return new Date(date).toLocaleDateString();
         if (date instanceof Date) return date.toLocaleDateString();
-        if ('toDate' in date) return date.toDate().toLocaleDateString();
-        return new Date(date).toLocaleDateString();
+        if (typeof date === 'object' && 'toDate' in date && typeof date.toDate === 'function') {
+            return date.toDate().toLocaleDateString();
+        }
+        if (typeof date === 'object' && 'seconds' in date && typeof date.seconds === 'number') {
+            return new Date(date.seconds * 1000).toLocaleDateString();
+        }
+        return "N/A";
     };
 
     const getStatusBadge = (job: JobPosting) => {

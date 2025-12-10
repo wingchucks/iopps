@@ -47,10 +47,25 @@ export function generateOpenGraphMeta(meta: OpenGraphMeta): Record<string, strin
 }
 
 /**
- * Track share events
+ * Track share events via analytics
  */
-function trackShareEvent(_itemId: string, _platform: string): void {
-  // TODO: Integrate with analytics service (e.g., Google Analytics, Mixpanel)
+function trackShareEvent(itemId: string, platform: string): void {
+  // Track via Google Analytics if available
+  if (typeof window !== 'undefined') {
+    // Google Analytics 4
+    if (typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', 'share', {
+        method: platform,
+        content_type: 'item',
+        item_id: itemId,
+      });
+    }
+
+    // Also log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Analytics] Share event: ${platform} for item ${itemId}`);
+    }
+  }
 }
 
 /**

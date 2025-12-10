@@ -429,7 +429,7 @@ export default function AdminVideosPage() {
                     {employer.logoUrl ? (
                       <img
                         src={employer.logoUrl}
-                        alt=""
+                        alt={`${employer.organizationName} logo`}
                         className="h-10 w-10 rounded-lg border border-slate-700 bg-white object-contain p-1"
                       />
                     ) : (
@@ -478,7 +478,7 @@ export default function AdminVideosPage() {
                   {selectedEmployer.logoUrl ? (
                     <img
                       src={selectedEmployer.logoUrl}
-                      alt=""
+                      alt={`${selectedEmployer.organizationName} logo`}
                       className="h-14 w-14 rounded-lg border border-slate-700 bg-white object-contain p-1"
                     />
                   ) : (
