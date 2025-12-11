@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid } from "@/lib/firestore";
 import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
@@ -25,11 +26,15 @@ type SortOption = "newest" | "oldest" | "name";
 
 export default function AdminEmployersPage() {
   const { user, role } = useAuth();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+
   const [allEmployers, setAllEmployers] = useState<EmployerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<EmployerStatus | "all">("pending");
-  const [searchQuery, setSearchQuery] = useState("");
+  // Default to "all" if coming from search, otherwise "pending"
+  const [filter, setFilter] = useState<EmployerStatus | "all">(initialSearch ? "all" : "pending");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rejectModalId, setRejectModalId] = useState<string | null>(null);
@@ -332,6 +337,7 @@ export default function AdminEmployersPage() {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (emp) =>
+          emp.id?.toLowerCase().includes(query) ||
           emp.organizationName?.toLowerCase().includes(query) ||
           emp.location?.toLowerCase().includes(query) ||
           emp.website?.toLowerCase().includes(query) ||
@@ -532,7 +538,7 @@ export default function AdminEmployersPage() {
           <h3 className="mt-4 text-lg font-medium text-slate-300">No employers found</h3>
           <p className="mt-2 text-sm text-slate-500">
             {searchQuery
-              ? "Try adjusting your search query"
+              ? "No employer profiles match your search. The user may not have completed their employer profile setup yet."
               : `No ${filter !== "all" ? filter : ""} employers at this time`}
           </p>
         </div>

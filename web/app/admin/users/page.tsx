@@ -12,6 +12,7 @@ import {
   updateDoc,
   getDoc,
   setDoc,
+  deleteDoc,
   serverTimestamp,
   orderBy,
 } from "firebase/firestore";
@@ -354,7 +355,7 @@ function AdminUsersContent() {
                               {isProcessing ? "..." : userData.disabled ? "Enable" : "Disable"}
                             </button>
                             {userData.role === "employer" && (
-                              <Link href={`/employers/${userData.id}`} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]">View Profile</Link>
+                              <Link href={`/admin/employers?search=${encodeURIComponent(userData.displayName || userData.email || userData.id)}`} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]">View Profile</Link>
                             )}
                             {role === "admin" && !isCurrentUser && userData.role !== "admin" && (
                               <button
