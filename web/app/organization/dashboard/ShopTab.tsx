@@ -216,6 +216,32 @@ export default function ShopTab() {
         </div>
       </div>
 
+      {/* Complete Profile Banner for auto-created vendors */}
+      {vendor && (!vendor.businessName || !vendor.description) && !isNewVendor && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20 flex-shrink-0">
+              <ExclamationTriangleIcon className="h-6 w-6 text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-300">
+                Complete Your Business Profile
+              </h3>
+              <p className="mt-2 text-sm text-slate-300">
+                Your business profile was automatically created. Please complete your
+                details to appear in Shop Indigenous and connect with customers.
+              </p>
+              <button
+                onClick={() => setActiveSubTab('profile')}
+                className="mt-4 inline-flex rounded-xl bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/30"
+              >
+                Complete profile now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sub-tabs */}
       {!isNewVendor && (
         <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl w-fit">

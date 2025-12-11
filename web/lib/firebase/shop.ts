@@ -346,3 +346,48 @@ export async function setVendorFeatured(vendorId: string, featured: boolean): Pr
 export async function setVendorVerified(vendorId: string, verified: boolean): Promise<void> {
   await updateVendor(vendorId, { verified });
 }
+
+// ============================================
+// Auto-Create Vendor for Employer Registration
+// ============================================
+
+/**
+ * Creates a minimal draft vendor profile for a new employer.
+ * Called automatically during employer registration.
+ */
+export async function createDraftVendorForEmployer(
+  userId: string,
+  displayName: string,
+  email: string
+): Promise<string> {
+  if (!db) throw new Error('Firebase not initialized');
+
+  // Check if vendor already exists for this user
+  const existingVendor = await getVendorByUserId(userId);
+  if (existingVendor) {
+    return existingVendor.id; // Return existing ID, don't create duplicate
+  }
+
+  const slug = generateSlug(displayName || 'business');
+
+  const vendor: Omit<Vendor, 'id'> = {
+    userId,
+    businessName: displayName || '',
+    slug,
+    description: '',
+    category: 'Other' as VendorCategory,
+    region: 'Ontario' as NorthAmericanRegion,
+    offersShipping: false,
+    onlineOnly: false,
+    email: email || '',
+    status: 'draft',
+    featured: false,
+    verified: false,
+    viewCount: 0,
+    createdAt: serverTimestamp() as Timestamp,
+    updatedAt: serverTimestamp() as Timestamp,
+  };
+
+  const docRef = await addDoc(collection(db, VENDORS_COLLECTION), vendor);
+  return docRef.id;
+}
