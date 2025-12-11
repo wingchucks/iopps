@@ -34,6 +34,58 @@ interface User {
   createdAt?: { seconds: number };
   displayName?: string;
   disabled?: boolean;
+  deletedAt?: { seconds: number };
+}
+
+interface DeleteModalProps {
+  user: User;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isDeleting: boolean;
+}
+
+function DeleteUserModal({ user, onConfirm, onCancel, isDeleting }: DeleteModalProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+          <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-semibold text-slate-100">Delete User</h3>
+        <p className="mt-2 text-slate-400">
+          Are you sure you want to delete <span className="font-medium text-slate-200">{user.displayName || user.email}</span>?
+        </p>
+        <div className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+          <strong>Warning:</strong> This will soft-delete the user and all their related data including:
+          <ul className="mt-2 list-inside list-disc space-y-1">
+            <li>Member profile</li>
+            <li>Saved jobs & job alerts</li>
+            <li>Job applications</li>
+            <li>Reviews & follows</li>
+          </ul>
+          <p className="mt-2">The user will be disabled and unable to log in.</p>
+        </div>
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:opacity-50"
+          >
+            {isDeleting ? "Deleting..." : "Delete User"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function AdminUsersContent() {
@@ -47,6 +99,8 @@ function AdminUsersContent() {
   const [filter, setFilter] = useState<UserRole | "all">(roleFilter || "all");
   const [searchTerm, setSearchTerm] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -155,42 +209,32 @@ function AdminUsersContent() {
     }
   }
 
-  async function deleteUser(userId: string, userEmail: string) {
-    if (!user) return;
-    if (!confirm(`Are you sure you want to delete user "${userEmail}"?\n\nThis will delete:\n- User account\n- Employer profile (if exists)\n\nThis action cannot be undone.`)) return;
+  async function deleteUser() {
+    if (!user || !userToDelete) return;
 
     try {
-      setProcessing(userId);
+      setIsDeleting(true);
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ userId: userToDelete.id }),
+      });
 
-      // Delete employer profile if exists
-      try {
-        const employerRef = doc(db!, "employers", userId);
-        const employerSnap = await getDoc(employerRef);
-        if (employerSnap.exists()) {
-          await deleteDoc(employerRef);
-          // Small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      } catch (e) {
-        console.warn("No employer profile to delete or error:", e);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete user");
       }
 
-      // Delete user document
-      const userRef = doc(db!, "users", userId);
-      await deleteDoc(userRef);
-
-      // Remove from local state
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      alert(`User "${userEmail}" has been deleted.`);
-    } catch (error: any) {
+      // Remove user from local state
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      setUserToDelete(null);
+      alert("User deleted successfully");
+    } catch (error) {
       console.error("Error deleting user:", error);
-      if (error?.code === "resource-exhausted" || error?.message?.includes("Too many requests")) {
-        alert("Too many requests. Please wait a moment and try again.");
-      } else {
-        alert("Failed to delete user. Please try again.");
-      }
+      alert(error instanceof Error ? error.message : "Failed to delete user. Please try again.");
     } finally {
-      setProcessing(null);
+      setIsDeleting(false);
     }
   }
 
@@ -203,6 +247,8 @@ function AdminUsersContent() {
   }
 
   const filteredUsers = users.filter((u) => {
+    // Filter out soft-deleted users
+    if (u.deletedAt) return false;
     if (filter !== "all" && u.role !== filter) return false;
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
@@ -224,6 +270,16 @@ function AdminUsersContent() {
 
   return (
     <div className="min-h-screen bg-[#020306]">
+      {/* Delete Confirmation Modal */}
+      {userToDelete && (
+        <DeleteUserModal
+          user={userToDelete}
+          onConfirm={deleteUser}
+          onCancel={() => setUserToDelete(null)}
+          isDeleting={isDeleting}
+        />
+      )}
+
       <div className="border-b border-slate-800 bg-[#08090C]">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
@@ -301,13 +357,16 @@ function AdminUsersContent() {
                             {userData.role === "employer" && (
                               <Link href={`/admin/employers?search=${encodeURIComponent(userData.displayName || userData.email || userData.id)}`} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]">View Profile</Link>
                             )}
-                            <button
-                              onClick={() => deleteUser(userData.id, userData.email)}
-                              disabled={isProcessing || isCurrentUser}
-                              className="rounded-md border border-red-800 bg-red-900/20 px-3 py-1 text-xs text-red-400 transition hover:bg-red-900/40 disabled:opacity-50"
-                            >
-                              {isProcessing ? "..." : "Delete"}
-                            </button>
+                            {role === "admin" && !isCurrentUser && userData.role !== "admin" && (
+                              <button
+                                onClick={() => setUserToDelete(userData)}
+                                disabled={isProcessing}
+                                className="rounded-md border border-red-800 px-3 py-1 text-xs text-red-400 transition hover:border-red-500 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+                                title="Delete user"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

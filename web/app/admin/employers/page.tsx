@@ -51,6 +51,8 @@ export default function AdminEmployersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [previewModalId, setPreviewModalId] = useState<string | null>(null);
+  const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check admin access
   if (!loading && role !== "admin" && role !== "moderator") {
@@ -215,6 +217,35 @@ export default function AdminEmployersPage() {
       showToast("error", "Failed to grant free posting");
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleDeleteEmployer = async (employerId: string) => {
+    if (!user) return;
+
+    try {
+      setIsDeleting(true);
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/delete-employer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ employerId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete employer");
+      }
+
+      // Remove employer from local state
+      setAllEmployers((prev) => prev.filter((e) => e.id !== employerId));
+      setDeleteModalId(null);
+      showToast("success", "Employer and associated user deleted successfully");
+    } catch (error) {
+      console.error("Error deleting employer:", error);
+      showToast("error", error instanceof Error ? error.message : "Failed to delete employer");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -691,6 +722,18 @@ export default function AdminEmployersPage() {
                           )}
                         </button>
                       )}
+
+                      {/* Delete Employer - Admin only */}
+                      {role === "admin" && (
+                        <button
+                          onClick={() => setDeleteModalId(employer.id)}
+                          disabled={!!processingId}
+                          className="flex items-center justify-center gap-2 rounded-md border border-red-800 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:border-red-500 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <XCircleIcon className="h-4 w-4" />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1088,6 +1131,53 @@ export default function AdminEmployersPage() {
                   className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalId && (() => {
+        const employer = allEmployers.find((e) => e.id === deleteModalId);
+        if (!employer) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-100">Delete Employer</h3>
+              <p className="mt-2 text-slate-400">
+                Are you sure you want to delete <span className="font-medium text-slate-200">{employer.organizationName}</span>?
+              </p>
+              <div className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+                <strong>Warning:</strong> This will permanently delete:
+                <ul className="mt-2 list-inside list-disc space-y-1">
+                  <li>Employer profile</li>
+                  <li>All job postings by this employer</li>
+                  <li>All conferences by this employer</li>
+                  <li>All scholarships by this employer</li>
+                  <li>The associated user account</li>
+                </ul>
+                <p className="mt-2 font-medium">This action cannot be undone easily.</p>
+              </div>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setDeleteModalId(null)}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteEmployer(deleteModalId)}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete Employer"}
                 </button>
               </div>
             </div>
