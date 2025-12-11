@@ -189,7 +189,7 @@ export default function EventsTab() {
                     {(event.dateRange || event.startDate) && (
                       <span className="flex items-center gap-1.5">
                         <CalendarDaysIcon className="h-4 w-4" />
-                        {event.dateRange || event.startDate}
+                        {event.dateRange || (event.startDate ? new Date(event.startDate as any).toLocaleDateString() : '')}
                       </span>
                     )}
                     {event.host && (
