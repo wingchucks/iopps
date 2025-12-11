@@ -266,28 +266,36 @@ export default function AdminFeedsPage() {
             // Clean fieldMappings to remove any undefined values
             const cleanedMappings = cleanUndefinedValues(fieldMappings);
 
-            await createRSSFeed({
+            // Build feed data object, only including fields with values
+            // Firebase doesn't accept undefined values
+            const feedData: any = {
                 feedName,
                 feedUrl,
                 employerId,
-                employerName: employerName || undefined,
                 active: true,
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
                     ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
-                utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
-                fieldMappings: Object.keys(cleanedMappings).length > 0 ? cleanedMappings : undefined,
-                feedType: feedType || undefined,
-                keywordFilter: keywordFilterEnabled ? {
+            };
+
+            // Only add optional fields if they have values
+            if (employerName) feedData.employerName = employerName;
+            if (utmTrackingTag) feedData.utmTrackingTag = utmTrackingTag;
+            if (Object.keys(cleanedMappings).length > 0) feedData.fieldMappings = cleanedMappings;
+            if (feedType) feedData.feedType = feedType;
+            if (keywordFilterEnabled) {
+                feedData.keywordFilter = {
                     enabled: true,
                     keywords: keywordsArray,
                     matchIn: keywordFilterMatchIn,
-                } : undefined,
-            });
+                };
+            }
+
+            await createRSSFeed(feedData);
 
             resetForm();
             setShowAddModal(false);
@@ -315,27 +323,35 @@ export default function AdminFeedsPage() {
             // Clean fieldMappings to remove any undefined values
             const cleanedMappings = cleanUndefinedValues(fieldMappings);
 
-            await updateRSSFeed(editingFeed.id, {
+            // Build update data object, only including fields with values
+            // Firebase doesn't accept undefined values
+            const updateData: any = {
                 feedName,
                 feedUrl,
                 employerId,
-                employerName: employerName || undefined,
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
                     ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
-                utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
-                fieldMappings: Object.keys(cleanedMappings).length > 0 ? cleanedMappings : undefined,
-                feedType: feedType || undefined,
-                keywordFilter: keywordFilterEnabled ? {
+            };
+
+            // Only add optional fields if they have values
+            if (employerName) updateData.employerName = employerName;
+            if (utmTrackingTag) updateData.utmTrackingTag = utmTrackingTag;
+            if (Object.keys(cleanedMappings).length > 0) updateData.fieldMappings = cleanedMappings;
+            if (feedType) updateData.feedType = feedType;
+            if (keywordFilterEnabled) {
+                updateData.keywordFilter = {
                     enabled: true,
                     keywords: keywordsArray,
                     matchIn: keywordFilterMatchIn,
-                } : undefined,
-            });
+                };
+            }
+
+            await updateRSSFeed(editingFeed.id, updateData);
 
             resetForm();
             setEditingFeed(null);
