@@ -161,7 +161,10 @@ export interface VendorFilters {
 }
 
 export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[]> {
-  if (!db) return [];
+  if (!db) {
+    console.log('[getActiveVendors] Firebase db not initialized');
+    return [];
+  }
 
   let q = query(
     collection(db, VENDORS_COLLECTION),
@@ -187,6 +190,7 @@ export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[
   }
 
   const snap = await getDocs(q);
+  console.log('[getActiveVendors] Query returned', snap.docs.length, 'vendors');
   let vendors = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vendor));
 
   // Client-side search filter (Firestore doesn't support full-text search)
@@ -345,6 +349,72 @@ export async function setVendorFeatured(vendorId: string, featured: boolean): Pr
 
 export async function setVendorVerified(vendorId: string, verified: boolean): Promise<void> {
   await updateVendor(vendorId, { verified });
+}
+
+// ============================================
+// Publish Validation
+// ============================================
+
+export interface PublishValidation {
+  canPublish: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Validates a vendor profile before publishing.
+ * Returns errors (blocking) and warnings (non-blocking).
+ */
+export function validateVendorForPublish(vendor: Vendor): PublishValidation {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Required: Business name
+  if (!vendor.businessName || vendor.businessName.trim().length === 0) {
+    errors.push('Business name is required');
+  }
+
+  // Required: Description (minimum 50 characters)
+  if (!vendor.description || vendor.description.trim().length === 0) {
+    errors.push('Business description is required');
+  } else if (vendor.description.trim().length < 50) {
+    errors.push('Business description must be at least 50 characters');
+  }
+
+  // Required: Category must be set
+  if (!vendor.category) {
+    errors.push('Business category is required');
+  }
+
+  // Required: Region must be set
+  if (!vendor.region) {
+    errors.push('Province/State is required');
+  }
+
+  // Required: At least one contact method
+  const hasEmail = vendor.email && vendor.email.trim().length > 0;
+  const hasPhone = vendor.phone && vendor.phone.trim().length > 0;
+  const hasWebsite = vendor.website && vendor.website.trim().length > 0;
+
+  if (!hasEmail && !hasPhone && !hasWebsite) {
+    errors.push('At least one contact method is required (email, phone, or website)');
+  }
+
+  // Warning: Logo recommended
+  if (!vendor.logoUrl) {
+    warnings.push('Adding a logo helps your business stand out');
+  }
+
+  // Warning: City/town recommended for non-online-only businesses
+  if (!vendor.onlineOnly && !vendor.location) {
+    warnings.push('Adding your city/town helps local customers find you');
+  }
+
+  return {
+    canPublish: errors.length === 0,
+    errors,
+    warnings,
+  };
 }
 
 // ============================================
