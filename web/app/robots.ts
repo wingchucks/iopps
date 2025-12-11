@@ -5,6 +5,32 @@ export default function robots(): MetadataRoute.Robots {
 
     return {
         rules: [
+            // Explicitly allow social media crawlers full access for Open Graph scraping
+            {
+                userAgent: "facebookexternalhit",
+                allow: "/",
+            },
+            {
+                userAgent: "Facebot",
+                allow: "/",
+            },
+            {
+                userAgent: "Twitterbot",
+                allow: "/",
+            },
+            {
+                userAgent: "LinkedInBot",
+                allow: "/",
+            },
+            {
+                userAgent: "Pinterest",
+                allow: "/",
+            },
+            {
+                userAgent: "Slackbot",
+                allow: "/",
+            },
+            // General rules for all other crawlers
             {
                 userAgent: "*",
                 allow: "/",
