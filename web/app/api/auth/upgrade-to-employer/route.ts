@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { notifyAdmin } from "@/lib/admin-notifications";
 
 export async function POST(request: NextRequest) {
     try {
@@ -74,6 +75,13 @@ export async function POST(request: NextRequest) {
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
+
+        // Send admin notification (fire and forget)
+        notifyAdmin({
+            type: "new_employer",
+            organizationName: organizationName.trim(),
+            employerEmail: userEmail || "Unknown",
+        }).catch(console.error);
 
         return NextResponse.json({
             success: true,
