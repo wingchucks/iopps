@@ -24,9 +24,10 @@ export async function generateStaticParams() {
 async function getEmployerData(employerId: string): Promise<{
   employer: EmployerProfile | null;
   jobs: JobPosting[];
+  status: "not_found" | "pending" | "rejected" | "approved";
 }> {
   if (!db) {
-    return { employer: null, jobs: [] };
+    return { employer: null, jobs: [], status: "not_found" };
   }
 
   try {
@@ -34,14 +35,18 @@ async function getEmployerData(employerId: string): Promise<{
     const employerDoc = await db.collection("employers").doc(employerId).get();
 
     if (!employerDoc.exists) {
-      return { employer: null, jobs: [] };
+      return { employer: null, jobs: [], status: "not_found" };
     }
 
     const employerData = employerDoc.data() as EmployerProfile;
 
-    // Only show approved employers on public profile
+    // Return status for non-approved employers (show different message)
     if (employerData.status !== "approved") {
-      return { employer: null, jobs: [] };
+      return {
+        employer: null,
+        jobs: [],
+        status: (employerData.status as "pending" | "rejected") || "pending"
+      };
     }
 
     const employer = {
@@ -63,16 +68,58 @@ async function getEmployerData(employerId: string): Promise<{
       id: doc.id,
     })) as JobPosting[];
 
-    return { employer, jobs };
+    return { employer, jobs, status: "approved" };
   } catch (error) {
     console.error("Error fetching employer data:", error);
-    return { employer: null, jobs: [] };
+    return { employer: null, jobs: [], status: "not_found" };
   }
 }
 
 export default async function EmployerPublicProfilePage({ params }: PageProps) {
   const { employerId } = params;
-  const { employer, jobs } = await getEmployerData(employerId);
+  const { employer, jobs, status } = await getEmployerData(employerId);
+
+  // Show 404 only if employer doesn't exist
+  if (status === "not_found") {
+    notFound();
+  }
+
+  // Show pending/rejected message
+  if (status === "pending" || status === "rejected") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10">
+            <svg className="h-10 w-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100">
+            {status === "pending" ? "Profile Under Review" : "Profile Unavailable"}
+          </h1>
+          <p className="mt-4 text-slate-400">
+            {status === "pending"
+              ? "This employer's profile is currently being reviewed and will be available once approved."
+              : "This employer's profile is not currently available."}
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <Link
+              href="/jobs"
+              className="rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#14B8A6]/90"
+            >
+              Browse Jobs
+            </Link>
+            <Link
+              href="/"
+              className="rounded-lg border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800"
+            >
+              Go Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!employer) {
     notFound();
