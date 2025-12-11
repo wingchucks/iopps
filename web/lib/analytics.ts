@@ -174,10 +174,13 @@ export async function getUserStats(
 
     const usersRef = collection(db, "users");
     const snapshot = await getDocs(usersRef);
-    const users = snapshot.docs.map((doc) => ({
+    const allUsers = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as any[];
+
+    // Filter out soft-deleted users
+    const users = allUsers.filter((u) => !u.deletedAt);
 
     const stats: UserStats = {
       total: users.length,

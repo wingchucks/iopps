@@ -91,7 +91,7 @@ export async function upsertEmployerProfile(
   }
 }
 
-export async function listEmployers(status?: EmployerStatus): Promise<EmployerProfile[]> {
+export async function listEmployers(status?: EmployerStatus, includeDeleted = false): Promise<EmployerProfile[]> {
   try {
     const firestore = checkFirebase();
     if (!firestore) {
@@ -107,10 +107,16 @@ export async function listEmployers(status?: EmployerStatus): Promise<EmployerPr
     }
 
     const snap = await getDocs(q);
-    const results = snap.docs.map((docSnapshot) => ({
+    let results = snap.docs.map((docSnapshot) => ({
       id: docSnapshot.id,
       ...docSnapshot.data()
     } as EmployerProfile));
+
+    // Filter out soft-deleted employers unless explicitly requested
+    if (!includeDeleted) {
+      results = results.filter((employer) => !(employer as any).deletedAt);
+    }
+
     return results;
   } catch (error) {
     console.error("[listEmployers] Error:", error);
