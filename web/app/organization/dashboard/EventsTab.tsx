@@ -6,7 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import {
   listEmployerPowwows,
   createPowwowEvent,
-  updatePowwow,
+  updatePowwowEvent,
   deletePowwow,
 } from "@/lib/firestore";
 import { PosterUploader } from "@/components/PosterUploader";
@@ -69,7 +69,7 @@ export default function EventsTab() {
 
   const handleToggleStatus = async (eventId: string, currentStatus: boolean) => {
     try {
-      await updatePowwow(eventId, { active: !currentStatus });
+      await updatePowwowEvent(eventId, { active: !currentStatus });
       await loadData();
     } catch (err) {
       console.error("Error toggling event status:", err);
