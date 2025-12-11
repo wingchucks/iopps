@@ -65,20 +65,31 @@ export default function ProfileTab() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
+
+    // Validate required fields
+    if (!organizationName.trim()) {
+      alert("Organization name is required.");
+      return;
+    }
+
     setSaving(true);
     try {
       await upsertEmployerProfile(user.uid, {
-        organizationName,
-        description,
-        website,
-        location,
+        organizationName: organizationName.trim(),
+        description: description.trim(),
+        website: website.trim(),
+        location: location.trim(),
         logoUrl,
       });
       alert("Profile updated successfully!");
       await loadProfile();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving profile:", err);
-      alert("Failed to save profile");
+      let errorMessage = "Failed to save profile";
+      if (err?.message) {
+        errorMessage += `: ${err.message}`;
+      }
+      alert(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -88,17 +99,50 @@ export default function ProfileTab() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert(`Invalid file type: ${file.type}\n\nPlease upload a PNG, JPG, GIF, or WebP image.`);
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB\n\nPlease upload an image smaller than 5MB.`);
+      return;
+    }
+
+    // Check if storage is initialized
+    if (!storage) {
+      alert("Storage service is not available. Please try again later or contact support.");
+      console.error("Firebase Storage not initialized");
+      return;
+    }
+
     setUploadingLogo(true);
     try {
-      const storageRef = ref(storage!, `employers/${user.uid}/logo/logo_${Date.now()}.${file.name.split('.').pop()}`);
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const storageRef = ref(storage, `employers/${user.uid}/logo/logo_${Date.now()}.${fileExtension}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       setLogoUrl(url);
       await updateEmployerLogo(user.uid, url);
       alert("Logo uploaded successfully!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error uploading logo:", err);
-      alert("Failed to upload logo");
+      // Provide more helpful error message
+      let errorMessage = "Failed to upload logo";
+      if (err?.code === 'storage/unauthorized') {
+        errorMessage = "You don't have permission to upload files. Please contact support.";
+      } else if (err?.code === 'storage/canceled') {
+        errorMessage = "Upload was canceled.";
+      } else if (err?.code === 'storage/unknown') {
+        errorMessage = "An unknown error occurred. Please try again.";
+      } else if (err?.message) {
+        errorMessage = `Upload failed: ${err.message}`;
+      }
+      alert(errorMessage);
     } finally {
       setUploadingLogo(false);
     }
