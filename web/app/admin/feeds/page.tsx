@@ -199,6 +199,17 @@ export default function AdminFeedsPage() {
         }
     }
 
+    // Helper to clean undefined values from an object (Firebase doesn't accept undefined)
+    function cleanUndefinedValues<T extends Record<string, any>>(obj: T): T {
+        const cleaned = {} as T;
+        for (const key of Object.keys(obj)) {
+            if (obj[key] !== undefined && obj[key] !== null && obj[key] !== "") {
+                cleaned[key as keyof T] = obj[key];
+            }
+        }
+        return cleaned;
+    }
+
     function autoSuggestMappings(fields: string[]) {
         const suggestions: FieldMappings = { ...fieldMappings };
         const lowerFields = fields.map(f => f.toLowerCase());
@@ -252,6 +263,9 @@ export default function AdminFeedsPage() {
             .filter(k => k.length > 0);
 
         try {
+            // Clean fieldMappings to remove any undefined values
+            const cleanedMappings = cleanUndefinedValues(fieldMappings);
+
             await createRSSFeed({
                 feedName,
                 feedUrl,
@@ -266,7 +280,7 @@ export default function AdminFeedsPage() {
                 utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
-                fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
+                fieldMappings: Object.keys(cleanedMappings).length > 0 ? cleanedMappings : undefined,
                 feedType: feedType || undefined,
                 keywordFilter: keywordFilterEnabled ? {
                     enabled: true,
@@ -298,6 +312,9 @@ export default function AdminFeedsPage() {
             .filter(k => k.length > 0);
 
         try {
+            // Clean fieldMappings to remove any undefined values
+            const cleanedMappings = cleanUndefinedValues(fieldMappings);
+
             await updateRSSFeed(editingFeed.id, {
                 feedName,
                 feedUrl,
@@ -311,7 +328,7 @@ export default function AdminFeedsPage() {
                 utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
-                fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
+                fieldMappings: Object.keys(cleanedMappings).length > 0 ? cleanedMappings : undefined,
                 feedType: feedType || undefined,
                 keywordFilter: keywordFilterEnabled ? {
                     enabled: true,

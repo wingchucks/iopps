@@ -25,12 +25,15 @@ export interface ScrapeResult {
     feedType: "html";
     totalJobs: number;
     nextPageUrl?: string;
+    isSpa?: boolean;
+    spaPlatform?: string;
 }
 
 // Common selectors for job listings on career portals
 const JOB_LIST_SELECTORS = [
-    // Oracle Taleo / Oracle Recruiting Cloud
+    // Oracle Taleo / Oracle Recruiting Cloud / Oracle HCM
     '[data-automation-id="jobItem"]',
+    '[data-automation-id="requisitionTitle"]',
     '.job-item',
     '.job-listing',
     '.job-card',
@@ -39,23 +42,38 @@ const JOB_LIST_SELECTORS = [
     '.requisition',
     '.job-result',
     '.job-row',
+    // Oracle Fusion specific
+    '.oj-listview-item',
+    '[role="listitem"]',
+    '.REQ_TITLE',
+    '.job-req-card',
+    '.careers-job-card',
+    // Workday
+    '[data-automation-id="jobTitle"]',
+    '.css-19uc56f', // Workday job cards
     // Common patterns
     '[class*="job-"]',
     '[class*="position-"]',
     '[class*="career-"]',
     '[class*="vacancy"]',
     '[class*="opening"]',
+    '[class*="requisition"]',
     // Table rows
     'table.jobs tbody tr',
     'table.positions tbody tr',
+    'table tbody tr[data-job]',
+    'table tbody tr[onclick]',
     // List items
     'ul.jobs li',
     'ul.job-list li',
     '.job-listings li',
+    '.careers-list li',
     // Generic article/div patterns
     'article[class*="job"]',
     'div[class*="job"][class*="item"]',
     'div[class*="job"][class*="card"]',
+    // JSON-LD fallback check markers
+    'script[type="application/ld+json"]',
 ];
 
 // Selectors for individual job fields
@@ -145,6 +163,110 @@ const FIELD_SELECTORS = {
 };
 
 /**
+ * Try to extract jobs from JSON-LD structured data
+ */
+function extractJobsFromJsonLd($: cheerio.CheerioAPI, baseUrl: string): ScrapedJob[] {
+    const jobs: ScrapedJob[] = [];
+
+    $('script[type="application/ld+json"]').each((_, el) => {
+        try {
+            const jsonText = $(el).html();
+            if (!jsonText) return;
+
+            const data = JSON.parse(jsonText);
+            const items = Array.isArray(data) ? data : [data];
+
+            for (const item of items) {
+                // Handle JobPosting schema
+                if (item["@type"] === "JobPosting") {
+                    jobs.push({
+                        title: item.title || item.name,
+                        description: item.description,
+                        location: item.jobLocation?.address?.addressLocality ||
+                            item.jobLocation?.name ||
+                            (typeof item.jobLocation === "string" ? item.jobLocation : undefined),
+                        company: item.hiringOrganization?.name,
+                        salary: item.baseSalary?.value?.value ||
+                            item.baseSalary?.value ||
+                            (typeof item.baseSalary === "string" ? item.baseSalary : undefined),
+                        jobType: item.employmentType,
+                        url: item.url || baseUrl,
+                        applyUrl: item.url || baseUrl,
+                        postedDate: item.datePosted,
+                        closingDate: item.validThrough,
+                    });
+                }
+
+                // Handle ItemList containing JobPostings
+                if (item["@type"] === "ItemList" && item.itemListElement) {
+                    for (const listItem of item.itemListElement) {
+                        if (listItem.item?.["@type"] === "JobPosting" || listItem["@type"] === "JobPosting") {
+                            const job = listItem.item || listItem;
+                            jobs.push({
+                                title: job.title || job.name,
+                                description: job.description,
+                                location: job.jobLocation?.address?.addressLocality ||
+                                    job.jobLocation?.name,
+                                company: job.hiringOrganization?.name,
+                                url: job.url,
+                                applyUrl: job.url,
+                            });
+                        }
+                    }
+                }
+            }
+        } catch {
+            // Invalid JSON-LD, skip
+        }
+    });
+
+    return jobs;
+}
+
+/**
+ * Detect if the page appears to be a JavaScript-rendered SPA
+ */
+function detectSpaIndicators($: cheerio.CheerioAPI, html: string): { isSpa: boolean; platform?: string } {
+    const lowerHtml = html.toLowerCase();
+
+    // Oracle Recruiting Cloud / HCM indicators
+    if (lowerHtml.includes('oracle') && (
+        lowerHtml.includes('recruiting') ||
+        lowerHtml.includes('hcm') ||
+        lowerHtml.includes('fa.ocs.oraclecloud') ||
+        lowerHtml.includes('oraclecloud.com')
+    )) {
+        return { isSpa: true, platform: "Oracle Recruiting Cloud" };
+    }
+
+    // Workday indicators
+    if (lowerHtml.includes('workday') || lowerHtml.includes('myworkday')) {
+        return { isSpa: true, platform: "Workday" };
+    }
+
+    // Greenhouse indicators
+    if (lowerHtml.includes('greenhouse.io') || lowerHtml.includes('boards.greenhouse')) {
+        return { isSpa: false, platform: "Greenhouse" }; // Greenhouse often has good HTML
+    }
+
+    // Lever indicators
+    if (lowerHtml.includes('lever.co') || lowerHtml.includes('jobs.lever')) {
+        return { isSpa: false, platform: "Lever" };
+    }
+
+    // Generic SPA indicators
+    const hasReactRoot = $('#root, #app, [data-reactroot], #__next').length > 0;
+    const hasMinimalContent = $('body').text().trim().length < 500;
+    const hasJsFramework = lowerHtml.includes('react') || lowerHtml.includes('angular') || lowerHtml.includes('vue');
+
+    if (hasReactRoot && hasMinimalContent) {
+        return { isSpa: true, platform: undefined };
+    }
+
+    return { isSpa: false };
+}
+
+/**
  * Scrape jobs from an HTML page
  */
 export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult {
@@ -152,10 +274,30 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
     const jobs: ScrapedJob[] = [];
     const allFields = new Set<string>();
 
+    // First, try to extract jobs from JSON-LD structured data (most reliable)
+    const jsonLdJobs = extractJobsFromJsonLd($, baseUrl);
+    if (jsonLdJobs.length > 0) {
+        console.log(`Found ${jsonLdJobs.length} jobs from JSON-LD structured data`);
+        jsonLdJobs.forEach(job => {
+            jobs.push(job);
+            Object.keys(job).forEach(k => {
+                if (job[k]) allFields.add(k);
+            });
+        });
+
+        return {
+            jobs,
+            fields: Array.from(allFields).sort(),
+            feedType: "html",
+            totalJobs: jobs.length,
+        };
+    }
+
     // Try to find job elements using various selectors
     let jobElements: CheerioSelection | null = null;
 
     for (const selector of JOB_LIST_SELECTORS) {
+        if (selector === 'script[type="application/ld+json"]') continue; // Already handled above
         const elements = $(selector);
         if (elements.length > 0) {
             // Verify these look like job listings (have title-like content)
@@ -223,12 +365,17 @@ export function scrapeJobsFromHtml(html: string, baseUrl: string): ScrapeResult 
     // Look for pagination
     const nextPageUrl = findNextPageUrl($, baseUrl);
 
+    // If no jobs found, check if this might be a JavaScript-rendered SPA
+    const spaInfo = jobs.length === 0 ? detectSpaIndicators($, html) : { isSpa: false };
+
     return {
         jobs,
         fields: Array.from(allFields).sort(),
         feedType: "html",
         totalJobs: jobs.length,
         nextPageUrl,
+        isSpa: spaInfo.isSpa,
+        spaPlatform: spaInfo.platform,
     };
 }
 

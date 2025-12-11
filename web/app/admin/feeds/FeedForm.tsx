@@ -97,10 +97,18 @@ export default function FeedForm({
 }: FeedFormProps) {
 
     const updateMapping = (field: keyof FieldMappings, value: string) => {
-        setFieldMappings({
-            ...fieldMappings,
-            [field]: value || undefined,
-        });
+        if (value) {
+            // Set the value if not empty
+            setFieldMappings({
+                ...fieldMappings,
+                [field]: value,
+            });
+        } else {
+            // Remove the key entirely if empty (don't set to undefined)
+            const newMappings = { ...fieldMappings };
+            delete newMappings[field];
+            setFieldMappings(newMappings);
+        }
     };
 
     const FieldMappingSelect = ({

@@ -38,10 +38,42 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
     const formatDate = (timestamp: any) => {
         if (!timestamp) return null;
         try {
-            const date =
-                timestamp.toDate?.() instanceof Date
-                    ? timestamp.toDate()
-                    : new Date(timestamp);
+            let date: Date;
+
+            // Handle Firestore Timestamp objects
+            if (timestamp.toDate && typeof timestamp.toDate === "function") {
+                date = timestamp.toDate();
+            }
+            // Handle serialized Firestore timestamps (from server components)
+            else if (timestamp._seconds !== undefined) {
+                date = new Date(timestamp._seconds * 1000);
+            }
+            // Handle seconds timestamp (number)
+            else if (typeof timestamp === "number" && timestamp > 1000000000 && timestamp < 10000000000) {
+                date = new Date(timestamp * 1000);
+            }
+            // Handle milliseconds timestamp
+            else if (typeof timestamp === "number") {
+                date = new Date(timestamp);
+            }
+            // Handle ISO string or other string formats
+            else if (typeof timestamp === "string") {
+                date = new Date(timestamp);
+            }
+            // Handle Date object
+            else if (timestamp instanceof Date) {
+                date = timestamp;
+            }
+            // Fallback
+            else {
+                date = new Date(timestamp);
+            }
+
+            // Validate the date
+            if (isNaN(date.getTime())) {
+                return null;
+            }
+
             return date.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
