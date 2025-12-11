@@ -62,7 +62,24 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
       allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
-    
+
+    // ===========================================================================
+    // EMPLOYERS COLLECTION
+    // ===========================================================================
+    match /employers/{employerId} {
+      // Public read for approved employers, admins can read all
+      allow read: if resource.data.status == 'approved' || isAdminOrModerator();
+
+      // Employers can create their own profile
+      allow create: if isSignedIn() && request.auth.uid == employerId;
+
+      // Employers can update their own profile, admins can update any
+      allow update: if isOwner(employerId) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
     // ... (Applications/SavedJobs unchanged) ...
     // Note: I need to duplicate the rest of the file content here because write_to_file overwrites.
     // Since I don't have the "..." content in my clipboard from previous steps fully expanded (Step 6/171 showed strict lines but 346 lines total).
