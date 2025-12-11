@@ -12,6 +12,7 @@ import {
   updateDoc,
   getDoc,
   setDoc,
+  deleteDoc,
   serverTimestamp,
   orderBy,
 } from "firebase/firestore";
@@ -154,6 +155,45 @@ function AdminUsersContent() {
     }
   }
 
+  async function deleteUser(userId: string, userEmail: string) {
+    if (!user) return;
+    if (!confirm(`Are you sure you want to delete user "${userEmail}"?\n\nThis will delete:\n- User account\n- Employer profile (if exists)\n\nThis action cannot be undone.`)) return;
+
+    try {
+      setProcessing(userId);
+
+      // Delete employer profile if exists
+      try {
+        const employerRef = doc(db!, "employers", userId);
+        const employerSnap = await getDoc(employerRef);
+        if (employerSnap.exists()) {
+          await deleteDoc(employerRef);
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      } catch (e) {
+        console.warn("No employer profile to delete or error:", e);
+      }
+
+      // Delete user document
+      const userRef = doc(db!, "users", userId);
+      await deleteDoc(userRef);
+
+      // Remove from local state
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      alert(`User "${userEmail}" has been deleted.`);
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      if (error?.code === "resource-exhausted" || error?.message?.includes("Too many requests")) {
+        alert("Too many requests. Please wait a moment and try again.");
+      } else {
+        alert("Failed to delete user. Please try again.");
+      }
+    } finally {
+      setProcessing(null);
+    }
+  }
+
   if (authLoading || loading) {
     return <AdminLoadingState message="Loading users..." />;
   }
@@ -261,6 +301,13 @@ function AdminUsersContent() {
                             {userData.role === "employer" && (
                               <Link href={`/admin/employers?search=${encodeURIComponent(userData.displayName || userData.email || userData.id)}`} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]">View Profile</Link>
                             )}
+                            <button
+                              onClick={() => deleteUser(userData.id, userData.email)}
+                              disabled={isProcessing || isCurrentUser}
+                              className="rounded-md border border-red-800 bg-red-900/20 px-3 py-1 text-xs text-red-400 transition hover:bg-red-900/40 disabled:opacity-50"
+                            >
+                              {isProcessing ? "..." : "Delete"}
+                            </button>
                           </div>
                         </td>
                       </tr>
