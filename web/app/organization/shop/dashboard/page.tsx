@@ -26,7 +26,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
 import UpgradeToEmployerCard from '@/components/UpgradeToEmployerCard';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
-import { uploadProfileImage, uploadGalleryImage } from '@/lib/firebase/storage';
+import { uploadProfileImage, uploadCoverImage, uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
@@ -68,9 +68,12 @@ export default function VendorDashboard() {
     nation: '',
     communityStory: '',
     logoUrl: '',
+    coverImageUrl: '',
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverUploadProgress, setCoverUploadProgress] = useState(0);
 
   // Product modal state
   const [showProductModal, setShowProductModal] = useState(false);
@@ -102,6 +105,7 @@ export default function VendorDashboard() {
           nation: existingVendor.nation || '',
           communityStory: existingVendor.communityStory || '',
           logoUrl: existingVendor.logoUrl || '',
+          coverImageUrl: existingVendor.coverImageUrl || '',
         });
 
         // Load products
@@ -580,6 +584,91 @@ export default function VendorDashboard() {
                       {!vendor ? 'Save your profile first to upload a logo' : 'JPEG, PNG or WebP, max 10MB'}
                     </p>
                   </div>
+                </div>
+              </div>
+
+              {/* Cover Image Upload */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Cover Image
+                </label>
+                <p className="text-xs text-slate-500 mb-3">
+                  This image appears as the banner on your business card. Recommended size: 1200x400px
+                </p>
+                <div className="space-y-3">
+                  {/* Cover Preview */}
+                  {formData.coverImageUrl ? (
+                    <div className="relative rounded-xl overflow-hidden">
+                      <Image
+                        src={formData.coverImageUrl}
+                        alt="Cover image"
+                        width={600}
+                        height={200}
+                        className="w-full h-40 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, coverImageUrl: '' })}
+                        className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500/90 text-white hover:bg-red-600 backdrop-blur-sm"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 border-dashed">
+                      <div className="text-center">
+                        <PhotoIcon className="mx-auto h-10 w-10 text-slate-500" />
+                        <p className="mt-2 text-sm text-slate-500">No cover image</p>
+                      </div>
+                    </div>
+                  )}
+                  {/* Upload Button */}
+                  <label className="relative cursor-pointer inline-block">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !vendor) return;
+
+                        setUploadingCover(true);
+                        setCoverUploadProgress(0);
+                        try {
+                          const url = await uploadCoverImage(file, vendor.id, (progress) => {
+                            setCoverUploadProgress(progress.progress);
+                          });
+                          setFormData({ ...formData, coverImageUrl: url });
+                        } catch (error) {
+                          console.error('Failed to upload cover image:', error);
+                          alert('Failed to upload cover image. Please try again.');
+                        } finally {
+                          setUploadingCover(false);
+                        }
+                      }}
+                      disabled={uploadingCover || !vendor}
+                    />
+                    <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                      uploadingCover || !vendor
+                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-700 text-white hover:bg-slate-600'
+                    }`}>
+                      {uploadingCover ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                          Uploading {Math.round(coverUploadProgress)}%
+                        </>
+                      ) : (
+                        <>
+                          <PhotoIcon className="h-4 w-4" />
+                          {formData.coverImageUrl ? 'Change Cover Image' : 'Upload Cover Image'}
+                        </>
+                      )}
+                    </span>
+                  </label>
+                  {!vendor && (
+                    <p className="text-xs text-slate-500">Save your profile first to upload a cover image</p>
+                  )}
                 </div>
               </div>
 

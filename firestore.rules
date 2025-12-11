@@ -54,6 +54,21 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // EMPLOYERS COLLECTION
+    // ===========================================================================
+    match /employers/{employerId} {
+      // Anyone can read employer profiles (for job listings, etc.)
+      allow read: if true;
+
+      // Employers can create/update their own profile
+      allow create: if isSignedIn() && request.auth.uid == employerId;
+      allow update: if isSignedIn() && (request.auth.uid == employerId || isAdminOrModerator());
+
+      // Only admins can delete employer profiles
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
     // JOBS COLLECTION
     // ===========================================================================
     match /jobs/{jobId} {
@@ -177,10 +192,18 @@ service cloud.firestore {
       allow read: if true;
 
       // Vendors can create their own profile (vendorId should match userId)
-      allow create: if isOwner(vendorId);
+      // featured defaults to false on creation
+      allow create: if isOwner(vendorId) && request.resource.data.featured == false;
 
-      // Vendors can update their own profile, admins can update any
-      allow update: if isOwner(vendorId) || isAdminOrModerator();
+      // Vendors can update their own profile, BUT cannot change protected fields:
+      // - featured (requires paid Annual subscription, set via server webhook)
+      // - verified (admin only)
+      // Admins/moderators can update any field
+      // Note: Use get() with default to handle fields that may not exist yet
+      allow update: if (isOwner(vendorId) &&
+        request.resource.data.get('featured', false) == resource.data.get('featured', false) &&
+        request.resource.data.get('verified', false) == resource.data.get('verified', false)
+      ) || isAdminOrModerator();
 
       // Only admins can delete vendor profiles
       allow delete: if isAdmin();

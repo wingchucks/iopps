@@ -77,6 +77,17 @@ export default function RegisterPage() {
         createdAt: serverTimestamp(),
       });
 
+      // Notify admin of new user signup
+      fetch("/api/admin/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "new_user",
+          userEmail: cred.user.email,
+          userName: displayName.trim(),
+        }),
+      }).catch(() => {});
+
       // Auto-create vendor profile for employers
       if (role === "employer") {
         try {
@@ -91,6 +102,7 @@ export default function RegisterPage() {
         }
       }
 
+      // Send email verification
       try {
         await sendEmailVerification(cred.user);
         setSuccess(true);
@@ -163,6 +175,17 @@ export default function RegisterPage() {
         { role: selectedRole },
         { merge: true }
       );
+
+      // Notify admin of new user signup (Google)
+      fetch("/api/admin/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "new_user",
+          userEmail: auth.currentUser.email,
+          userName: auth.currentUser.displayName || "Google User",
+        }),
+      }).catch(() => {});
 
       // Auto-create vendor profile for employers
       if (selectedRole === "employer") {
