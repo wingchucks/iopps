@@ -68,6 +68,17 @@ export default function RegisterPage() {
         createdAt: serverTimestamp(),
       });
 
+      // Notify admin of new user signup
+      fetch("/api/admin/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "new_user",
+          userEmail: cred.user.email,
+          userName: displayName.trim(),
+        }),
+      }).catch(() => {});
+
       // Send email verification
       try {
         await sendEmailVerification(cred.user);
@@ -148,6 +159,17 @@ export default function RegisterPage() {
         { role: selectedRole },
         { merge: true }
       );
+
+      // Notify admin of new user signup (Google)
+      fetch("/api/admin/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "new_user",
+          userEmail: auth.currentUser.email,
+          userName: auth.currentUser.displayName || "Google User",
+        }),
+      }).catch(() => {});
 
       router.push("/jobs");
     } catch (err) {
