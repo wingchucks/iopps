@@ -78,7 +78,9 @@ export default function EditConferencePage() {
     );
   }
 
-  if (!user || !conference || role !== 'employer') {
+  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
+
+  if (!user || !conference || (role !== 'employer' && !isSuperAdmin)) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center">
         <p className="text-slate-400">Access denied or conference not found.</p>

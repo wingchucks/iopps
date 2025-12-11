@@ -38,7 +38,9 @@ function EmployerDashboardContent() {
     );
   }
 
-  if (!user || role !== "employer") {
+  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
+
+  if (!user || (role !== "employer" && !isSuperAdmin)) {
     redirect("/login");
   }
 

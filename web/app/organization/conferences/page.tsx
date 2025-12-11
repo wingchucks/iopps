@@ -15,8 +15,10 @@ export default function EmployerConferencesPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
+
   useEffect(() => {
-    if (!user || role !== "employer") return;
+    if (!user || (role !== "employer" && !isSuperAdmin)) return;
     (async () => {
       try {
         const data = await listEmployerConferences(user.uid);
@@ -73,7 +75,7 @@ export default function EmployerConferencesPage() {
     );
   }
 
-  if (role !== "employer") {
+  if (role !== "employer" && !isSuperAdmin) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">

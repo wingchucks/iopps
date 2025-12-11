@@ -81,10 +81,12 @@ function NewJobPageContent() {
     }
   }, [isDuplicate]);
 
+  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
+
   // Load Employer Data
   useEffect(() => {
-    if (!user || role !== "employer") {
-      if (!authLoading && role !== "employer") setLoading(false);
+    if (!user || (role !== "employer" && !isSuperAdmin)) {
+      if (!authLoading && role !== "employer" && !isSuperAdmin) setLoading(false);
       return;
     }
 
@@ -248,7 +250,7 @@ function NewJobPageContent() {
   };
 
   if (authLoading || loading) return <div className="p-12 text-center text-slate-500">Loading...</div>;
-  if (!user || role !== "employer") return <div className="p-12 text-center text-slate-300">Access Restricted</div>;
+  if (!user || (role !== "employer" && !isSuperAdmin)) return <div className="p-12 text-center text-slate-300">Access Restricted</div>;
 
   return (
     <div className="min-h-screen bg-[#020306] pb-20">
