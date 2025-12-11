@@ -45,8 +45,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (job.location) {
     jobInfo += job.location;
   }
-  if (job.jobType) {
-    jobInfo += jobInfo ? ` | ${job.jobType}` : job.jobType;
+  if (job.employmentType) {
+    jobInfo += jobInfo ? ` | ${job.employmentType}` : job.employmentType;
   }
 
   const fullDescription = jobInfo
@@ -62,10 +62,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url,
       siteName: "IOPPS - Indigenous Opportunities",
       type: "website",
-      images: job.employerLogo
+      images: job.companyLogoUrl
         ? [
             {
-              url: job.employerLogo,
+              url: job.companyLogoUrl,
               width: 1200,
               height: 630,
               alt: `${job.employerName || "Company"} logo`,
@@ -84,7 +84,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       card: "summary_large_image",
       title: `${job.title} at ${job.employerName || "Company"}`,
       description: fullDescription,
-      images: job.employerLogo ? [job.employerLogo] : ["https://iopps.ca/og-image.png"],
+      images: job.companyLogoUrl ? [job.companyLogoUrl] : ["https://iopps.ca/og-image.png"],
     },
   };
 }
