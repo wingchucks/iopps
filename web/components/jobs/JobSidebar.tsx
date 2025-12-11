@@ -21,6 +21,19 @@ function formatSalaryRange(salaryRange: JobPosting["salaryRange"]): string {
     return "";
 }
 
+// Get salary display, checking both structured and legacy formats
+function getSalaryDisplay(job: JobPosting): string {
+    // Check structured salaryRange first
+    const structured = formatSalaryRange(job.salaryRange);
+    if (structured) return structured;
+
+    // Fallback to legacy salary.display field (from RSS imports)
+    const legacySalary = (job as any).salary;
+    if (legacySalary?.display) return legacySalary.display;
+
+    return "";
+}
+
 export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
     const formatDate = (timestamp: any) => {
         if (!timestamp) return null;
@@ -97,7 +110,7 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
                     </div>
 
                     {/* Salary */}
-                    {job.salaryRange && formatSalaryRange(job.salaryRange) && (
+                    {getSalaryDisplay(job) && (
                         <div className="flex items-start gap-3">
                             <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/50 text-slate-400">
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,7 +119,7 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-slate-400">Salary</p>
-                                <p className="text-sm font-semibold text-slate-200">{formatSalaryRange(job.salaryRange)}</p>
+                                <p className="text-sm font-semibold text-slate-200">{getSalaryDisplay(job)}</p>
                             </div>
                         </div>
                     )}
