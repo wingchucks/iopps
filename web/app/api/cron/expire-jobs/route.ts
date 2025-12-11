@@ -100,11 +100,49 @@ export async function GET(request: NextRequest) {
       `Job expiration cron completed. Total jobs expired: ${expiredCount}`
     );
 
+    // =========================================================================
+    // VENDOR FEATURED EXPIRATION
+    // Remove featured status from vendors whose subscription has expired
+    // =========================================================================
+    let vendorFeaturedRemoved = 0;
+
+    console.log("Querying vendors with expired subscriptions...");
+    const expiredVendorsSnapshot = await db
+      .collection("vendors")
+      .where("featured", "==", true)
+      .where("subscriptionEndsAt", "<=", now)
+      .get();
+
+    if (!expiredVendorsSnapshot.empty) {
+      console.log(
+        `Found ${expiredVendorsSnapshot.size} vendors with expired featured subscriptions`
+      );
+
+      for (const vendorDoc of expiredVendorsSnapshot.docs) {
+        try {
+          await db.collection("vendors").doc(vendorDoc.id).update({
+            featured: false,
+            subscriptionStatus: "expired",
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          vendorFeaturedRemoved++;
+          console.log(`Removed featured status from vendor: ${vendorDoc.id}`);
+        } catch (error) {
+          console.error(`Error updating vendor ${vendorDoc.id}:`, error);
+        }
+      }
+    }
+
+    console.log(
+      `Vendor featured expiration completed. Total vendors unfeatured: ${vendorFeaturedRemoved}`
+    );
+
     return NextResponse.json({
       success: true,
       jobsExpired: expiredCount,
+      vendorFeaturedRemoved,
       timestamp: now.toISOString(),
-      message: `Successfully expired ${expiredCount} job(s)`,
+      message: `Successfully expired ${expiredCount} job(s) and removed featured from ${vendorFeaturedRemoved} vendor(s)`,
     });
   } catch (error) {
     console.error("Job expiration cron error:", error);
