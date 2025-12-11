@@ -32,6 +32,13 @@ export default function ContactPage() {
         message,
       });
 
+      // Notify admin of new contact form submission
+      fetch("/api/admin/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "new_contact", contactName: name, contactEmail: email, subject, message }),
+      }).catch(() => {});
+
       setSuccess(true);
       setName("");
       setEmail("");

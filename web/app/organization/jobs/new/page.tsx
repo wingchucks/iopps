@@ -205,6 +205,12 @@ function NewJobPageContent() {
         }
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
         const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
+        // Notify admin of new job posting
+        fetch("/api/admin/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+        }).catch(() => {});
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
         return;
       }
@@ -212,6 +218,12 @@ function NewJobPageContent() {
       if (productType === "FREE_POSTING") {
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
         const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
+        // Notify admin of new job posting
+        fetch("/api/admin/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+        }).catch(() => {});
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
         return;
       }

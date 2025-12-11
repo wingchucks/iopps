@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import Stripe from "stripe";
+import { notifyAdmin } from "@/lib/admin-notifications";
 
 // Mark this route as dynamic to prevent static analysis
 export const dynamic = 'force-dynamic';
@@ -172,6 +173,10 @@ export async function POST(request: NextRequest) {
 
                     const jobRef = db.collection("jobs").doc(jobId);
 
+                    // Get job details for notification before updating
+                    const jobDoc = await jobRef.get();
+                    const jobData = jobDoc.exists ? jobDoc.data() : null;
+
                     await jobRef.update({
                         active: true,
                         featured: featured === "true",
@@ -182,6 +187,16 @@ export async function POST(request: NextRequest) {
                         productType: productType || "SINGLE",
                         amountPaid: session.amount_total,
                     });
+
+                    // Send admin notification for new paid job
+                    if (jobData) {
+                        notifyAdmin({
+                            type: "new_job",
+                            jobTitle: jobData.title || "Unknown",
+                            employerName: jobData.employerName || "Unknown",
+                            location: jobData.location || "Not specified",
+                        }).catch(console.error);
+                    }
 
                     console.log(`Job ${jobId} activated successfully`);
                     break;
