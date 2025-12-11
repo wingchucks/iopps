@@ -107,11 +107,6 @@ export default async function JobDetailPage({ params }: PageProps) {
             ? { _seconds: (job.closingDate as any)._seconds }
             : job.closingDate
           : undefined,
-        updatedAt: job.updatedAt
-          ? typeof job.updatedAt === "object" && "_seconds" in job.updatedAt
-            ? { _seconds: (job.updatedAt as any)._seconds }
-            : job.updatedAt
-          : undefined,
       }
     : null;
 
