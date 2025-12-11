@@ -502,14 +502,19 @@ function JobCard({
   const deadline = formatDate(job.closingDate ?? null);
 
   const getSalaryDisplay = () => {
-    if (!job.salaryRange) return null;
-    if (typeof job.salaryRange === "string") return job.salaryRange;
-    if (job.salaryRange.disclosed === false) return "Competitive";
-    if (job.salaryRange.min && job.salaryRange.max) {
-      return `$${job.salaryRange.min.toLocaleString()} - $${job.salaryRange.max.toLocaleString()}`;
+    // Check for structured salaryRange first
+    if (job.salaryRange) {
+      if (typeof job.salaryRange === "string") return job.salaryRange;
+      if (job.salaryRange.disclosed === false) return "Competitive";
+      if (job.salaryRange.min && job.salaryRange.max) {
+        return `$${job.salaryRange.min.toLocaleString()} - $${job.salaryRange.max.toLocaleString()}`;
+      }
+      if (job.salaryRange.min) return `From $${job.salaryRange.min.toLocaleString()}`;
+      if (job.salaryRange.max) return `Up to $${job.salaryRange.max.toLocaleString()}`;
     }
-    if (job.salaryRange.min) return `From $${job.salaryRange.min.toLocaleString()}`;
-    if (job.salaryRange.max) return `Up to $${job.salaryRange.max.toLocaleString()}`;
+    // Fallback to legacy salary.display field (used by RSS imports)
+    const legacySalary = (job as any).salary;
+    if (legacySalary?.display) return legacySalary.display;
     return null;
   };
 

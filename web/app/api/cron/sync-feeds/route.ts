@@ -3,6 +3,12 @@ import { db } from "@/lib/firebase-admin";
 import { parseStringPromise } from "xml2js";
 import { decode } from "he";
 import { scrapeJobsFromHtml, isHtmlContent, ScrapedJob } from "@/lib/html-job-scraper";
+import {
+  parseJobDescription,
+  parseSalary,
+  extractLocationFromDescription,
+  cleanText,
+} from "@/lib/job-description-parser";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,6 +31,9 @@ interface FieldMappings {
   salaryFrom?: string;
   salaryTo?: string;
   salaryPeriod?: string;
+  logoUrl?: string;
+  requirements?: string;
+  benefits?: string;
 }
 
 interface RSSFeedConfig {
@@ -212,24 +221,38 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
   let skipped = 0;
   const currentFeedUrls = new Set<string>();
 
+  // Check if keyword filtering is enabled for this feed
+  const keywordFilterEnabled = feed.keywordFilter?.enabled;
+
   for (const scrapedJob of scrapeResult.jobs) {
     try {
       const title = getMappedValue(scrapedJob, mappings.title, "title") || "Untitled Position";
-      const description = getMappedValue(scrapedJob, mappings.description, "description") || "";
+      const rawDescription = getMappedValue(scrapedJob, mappings.description, "description") || "";
       const applyUrl = getMappedValue(scrapedJob, mappings.applyUrl, "applyUrl") ||
         getMappedValue(scrapedJob, mappings.applyUrl, "url") || "";
       const jobIdOrUrl = getMappedValue(scrapedJob, mappings.jobIdOrUrl, "jobId") ||
         getMappedValue(scrapedJob, mappings.jobIdOrUrl, "url") || applyUrl;
-      const locationStr = getMappedValue(scrapedJob, mappings.location, "location") || "";
+      let locationStr = getMappedValue(scrapedJob, mappings.location, "location") || "";
       const jobType = getMappedValue(scrapedJob, mappings.jobType, "jobType") || "";
       const category = getMappedValue(scrapedJob, mappings.category, "department") || "";
       const salaryStr = getMappedValue(scrapedJob, mappings.salaryString, "salary") || "";
+      const logoUrl = getMappedValue(scrapedJob, mappings.logoUrl, "logo") || "";
 
-      // Apply keyword filter if enabled
-      if (!matchesKeywordFilter(title, description, feed.keywordFilter)) {
+      // Decode and parse description for structured fields
+      const decodedDescription = decode(rawDescription);
+      const parsedDescription = parseJobDescription(decodedDescription);
+
+      // Check if job passes keyword filter - if it does, mark as indigenous preference
+      const passedKeywordFilter = matchesKeywordFilter(title, decodedDescription, feed.keywordFilter);
+
+      // If keyword filter is enabled and job doesn't pass, skip it
+      if (keywordFilterEnabled && !passedKeywordFilter) {
         skipped++;
         continue;
       }
+
+      // Jobs that pass the indigenous keyword filter get the preference flag
+      const indigenousPreference = keywordFilterEnabled && passedKeywordFilter;
 
       const dedupeUrl = applyUrl || jobIdOrUrl || title;
 
@@ -243,6 +266,24 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
         finalApplyUrl = `${finalApplyUrl}${separator}${feed.utmTrackingTag}`;
       }
 
+      // Try to extract location from description if not provided
+      if (!locationStr) {
+        locationStr = extractLocationFromDescription(decodedDescription) || "";
+      }
+
+      // Determine final location with better fallback
+      const finalLocation = locationStr || "Canada"; // Better than "Location not specified"
+
+      // Parse salary into structured format
+      const parsedSalary = parseSalary(salaryStr);
+
+      // Check for remote work indicators
+      const remoteFlag =
+        locationStr.toLowerCase().includes("remote") ||
+        decodedDescription.toLowerCase().includes("work from home") ||
+        decodedDescription.toLowerCase().includes("remote position") ||
+        decodedDescription.toLowerCase().includes("fully remote");
+
       const existingQuery = await db!
         .collection("jobs")
         .where("originalApplicationLink", "==", dedupeUrl)
@@ -255,14 +296,28 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
         if (feed.updateExistingJobs) {
           const updateData: any = {
             title,
-            description: decode(description),
+            description: parsedDescription.description,
             updatedAt: new Date(),
             importedFrom: feed.id,
           };
 
-          if (locationStr) updateData.location = locationStr;
+          if (finalLocation) updateData.location = finalLocation;
           if (jobType) updateData.employmentType = normalizeJobType(jobType);
           if (category) updateData.category = category;
+          if (parsedDescription.requirements) updateData.requirements = parsedDescription.requirements;
+          if (parsedDescription.benefits) updateData.benefits = parsedDescription.benefits;
+          if (parsedDescription.qualifications) updateData.qualifications = parsedDescription.qualifications;
+          if (parsedDescription.responsibilities) updateData.responsibilities = parsedDescription.responsibilities;
+          if (indigenousPreference) updateData.indigenousPreference = true;
+          if (parsedSalary) {
+            updateData.salary = { display: parsedSalary.display };
+            updateData.salaryRange = {
+              min: parsedSalary.min,
+              max: parsedSalary.max,
+              currency: parsedSalary.currency || "CAD",
+              disclosed: true,
+            };
+          }
 
           await existingDoc.ref.update(updateData);
           updatedJobs.push({ id: existingDoc.id, title });
@@ -283,10 +338,10 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
         employerId: feed.employerId,
         employerName: feed.employerName,
         title,
-        description: decode(description),
-        location: locationStr || "Location not specified",
+        description: parsedDescription.description,
+        location: finalLocation,
         employmentType: normalizeJobType(jobType) || "Full-time",
-        remoteFlag: false,
+        remoteFlag,
         applicationLink: finalApplyUrl || dedupeUrl,
         originalApplicationLink: dedupeUrl,
         closingDate,
@@ -297,10 +352,34 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
         importedFrom: feed.id,
         originalUrl: applyUrl || dedupeUrl,
         noIndex: feed.noIndexByGoogle || false,
+        source: "rss-import",
       };
 
+      // Add structured fields if extracted
+      if (parsedDescription.requirements) jobData.requirements = parsedDescription.requirements;
+      if (parsedDescription.benefits) jobData.benefits = parsedDescription.benefits;
+      if (parsedDescription.qualifications) jobData.qualifications = parsedDescription.qualifications;
+      if (parsedDescription.responsibilities) jobData.responsibilities = parsedDescription.responsibilities;
+
+      // Add indigenous preference flag
+      if (indigenousPreference) jobData.indigenousPreference = true;
+
+      // Add category if available
       if (category) jobData.category = category;
-      if (salaryStr) jobData.salary = { display: salaryStr };
+
+      // Add logo URL if available
+      if (logoUrl) jobData.companyLogoUrl = logoUrl;
+
+      // Add salary in both old and new format for compatibility
+      if (parsedSalary) {
+        jobData.salary = { display: parsedSalary.display };
+        jobData.salaryRange = {
+          min: parsedSalary.min,
+          max: parsedSalary.max,
+          currency: parsedSalary.currency || "CAD",
+          disclosed: true,
+        };
+      }
 
       const jobRef = await db!.collection("jobs").add(jobData);
       await jobRef.update({ id: jobRef.id });
@@ -367,10 +446,13 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
   let skipped = 0;
   const currentFeedUrls = new Set<string>();
 
+  // Check if keyword filtering is enabled for this feed
+  const keywordFilterEnabled = feed.keywordFilter?.enabled;
+
   for (const job of jobs) {
     try {
       const title = getXmlFieldValue(job, mappings.title, ["title", "jobtitle", "position"]);
-      const description = getXmlFieldValue(job, mappings.description, ["description", "jobdescription", "content"]);
+      const rawDescription = getXmlFieldValue(job, mappings.description, ["description", "jobdescription", "content"]);
       const applyUrl = getXmlFieldValue(job, mappings.applyUrl, ["applyurl", "applicationurl", "url", "link"]);
       const jobIdOrUrl = getXmlFieldValue(job, mappings.jobIdOrUrl, ["id", "jobid", "url"]);
       const locationString = getXmlFieldValue(job, mappings.location, ["location", "joblocation"]);
@@ -382,12 +464,25 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
       const category = getXmlFieldValue(job, mappings.category, ["category", "department"]);
       const expirationDate = getXmlFieldValue(job, mappings.expirationDate, ["expirationdate", "closingdate"]);
       const salaryString = getXmlFieldValue(job, mappings.salaryString, ["salary"]);
+      const logoUrl = getXmlFieldValue(job, mappings.logoUrl, ["logo", "logourl", "companylogo", "image"]);
+      const xmlRequirements = getXmlFieldValue(job, mappings.requirements, ["requirements", "qualifications"]);
+      const xmlBenefits = getXmlFieldValue(job, mappings.benefits, ["benefits", "perks"]);
 
-      // Apply keyword filter if enabled
-      if (!matchesKeywordFilter(title, description, feed.keywordFilter)) {
+      // Decode and parse description for structured fields
+      const decodedDescription = decode(rawDescription || "");
+      const parsedDescription = parseJobDescription(decodedDescription);
+
+      // Check if job passes keyword filter - if it does, mark as indigenous preference
+      const passedKeywordFilter = matchesKeywordFilter(title, decodedDescription, feed.keywordFilter);
+
+      // If keyword filter is enabled and job doesn't pass, skip it
+      if (keywordFilterEnabled && !passedKeywordFilter) {
         skipped++;
         continue;
       }
+
+      // Jobs that pass the indigenous keyword filter get the preference flag
+      const indigenousPreference = keywordFilterEnabled && passedKeywordFilter;
 
       const dedupeUrl = applyUrl || jobIdOrUrl;
       if (!dedupeUrl) continue;
@@ -399,6 +494,35 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         const separator = finalApplyUrl.includes("?") ? "&" : "?";
         finalApplyUrl = `${finalApplyUrl}${separator}${feed.utmTrackingTag}`;
       }
+
+      // Build location from available fields
+      let location = locationString || city;
+      if (state) location = location ? `${location}, ${state}` : state;
+      if (country && !location) location = country;
+
+      // Try to extract location from description if not found
+      if (!location) {
+        location = extractLocationFromDescription(decodedDescription) || "";
+      }
+
+      // Better fallback than "Location not specified"
+      if (!location) location = "Canada";
+
+      // Parse salary into structured format
+      const parsedSalary = parseSalary(salaryString);
+
+      // Determine remote flag from multiple sources
+      const remoteFlag =
+        remote?.toLowerCase() === "yes" ||
+        remote?.toLowerCase() === "true" ||
+        location.toLowerCase().includes("remote") ||
+        decodedDescription.toLowerCase().includes("work from home") ||
+        decodedDescription.toLowerCase().includes("remote position") ||
+        decodedDescription.toLowerCase().includes("fully remote");
+
+      // Use XML-provided requirements/benefits if available, otherwise use parsed ones
+      const finalRequirements = xmlRequirements ? decode(xmlRequirements) : parsedDescription.requirements;
+      const finalBenefits = xmlBenefits ? decode(xmlBenefits) : parsedDescription.benefits;
 
       const existing = await db!
         .collection("jobs")
@@ -412,16 +536,30 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         if (feed.updateExistingJobs) {
           const updateData: any = {
             title: title || existingDoc.data().title,
-            description: decode(description || ""),
+            description: parsedDescription.description,
             updatedAt: new Date(),
             importedFrom: feed.id,
           };
 
-          let location = locationString || city;
-          if (state) location = location ? `${location}, ${state}` : state;
           if (location) updateData.location = location;
           if (jobType) updateData.employmentType = normalizeJobType(jobType);
           if (category) updateData.category = category;
+          if (finalRequirements) updateData.requirements = finalRequirements;
+          if (finalBenefits) updateData.benefits = finalBenefits;
+          if (parsedDescription.qualifications) updateData.qualifications = parsedDescription.qualifications;
+          if (parsedDescription.responsibilities) updateData.responsibilities = parsedDescription.responsibilities;
+          if (indigenousPreference) updateData.indigenousPreference = true;
+          if (remoteFlag) updateData.remoteFlag = true;
+          if (logoUrl) updateData.companyLogoUrl = logoUrl;
+          if (parsedSalary) {
+            updateData.salary = { display: parsedSalary.display };
+            updateData.salaryRange = {
+              min: parsedSalary.min,
+              max: parsedSalary.max,
+              currency: parsedSalary.currency || "CAD",
+              disclosed: true,
+            };
+          }
 
           await existingDoc.ref.update(updateData);
           updatedJobs.push({ id: existingDoc.id, title });
@@ -430,13 +568,6 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         }
         continue;
       }
-
-      let location = locationString || city;
-      if (state) location = location ? `${location}, ${state}` : state;
-      if (country && !location) location = country;
-      if (!location) location = "Location not specified";
-
-      const remoteFlag = remote?.toLowerCase() === "yes" || remote?.toLowerCase() === "true";
 
       let closingDate = null;
       if (feed.jobExpiration?.type === "days" && feed.jobExpiration.daysAfterImport) {
@@ -451,7 +582,7 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         employerId: feed.employerId,
         employerName: feed.employerName,
         title: title || "Untitled Position",
-        description: decode(description || ""),
+        description: parsedDescription.description,
         location,
         employmentType: normalizeJobType(jobType) || "Full-time",
         remoteFlag,
@@ -465,10 +596,34 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         importedFrom: feed.id,
         originalUrl: dedupeUrl,
         noIndex: feed.noIndexByGoogle || false,
+        source: "rss-import",
       };
 
+      // Add structured fields if available
+      if (finalRequirements) jobData.requirements = finalRequirements;
+      if (finalBenefits) jobData.benefits = finalBenefits;
+      if (parsedDescription.qualifications) jobData.qualifications = parsedDescription.qualifications;
+      if (parsedDescription.responsibilities) jobData.responsibilities = parsedDescription.responsibilities;
+
+      // Add indigenous preference flag
+      if (indigenousPreference) jobData.indigenousPreference = true;
+
+      // Add category if available
       if (category) jobData.category = category;
-      if (salaryString) jobData.salary = { display: salaryString };
+
+      // Add logo URL if available
+      if (logoUrl) jobData.companyLogoUrl = logoUrl;
+
+      // Add salary in both old and new format for compatibility
+      if (parsedSalary) {
+        jobData.salary = { display: parsedSalary.display };
+        jobData.salaryRange = {
+          min: parsedSalary.min,
+          max: parsedSalary.max,
+          currency: parsedSalary.currency || "CAD",
+          disclosed: true,
+        };
+      }
 
       const jobRef = await db!.collection("jobs").add(jobData);
       await jobRef.update({ id: jobRef.id });
