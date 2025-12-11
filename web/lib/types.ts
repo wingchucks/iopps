@@ -74,6 +74,31 @@ export interface FreePostingGrant {
   grantedBy: string;
 }
 
+export type CompanySize = '1-10' | '11-50' | '51-200' | '201-500' | '500+';
+
+export type IndustryType =
+  | 'government'
+  | 'healthcare'
+  | 'education'
+  | 'construction'
+  | 'natural-resources'
+  | 'environmental'
+  | 'technology'
+  | 'arts-culture'
+  | 'finance'
+  | 'legal'
+  | 'nonprofit'
+  | 'retail'
+  | 'transportation'
+  | 'other';
+
+export interface SocialLinks {
+  linkedin?: string;
+  twitter?: string;
+  facebook?: string;
+  instagram?: string;
+}
+
 export interface EmployerProfile {
   id: string;
   userId: string;
@@ -82,6 +107,14 @@ export interface EmployerProfile {
   website?: string;
   location?: string;
   logoUrl?: string;
+  // Enhanced profile fields
+  bannerUrl?: string;
+  socialLinks?: SocialLinks;
+  industry?: IndustryType;
+  companySize?: CompanySize;
+  foundedYear?: number;
+  contactEmail?: string;
+  contactPhone?: string;
   // Video content
   companyIntroVideo?: CompanyVideo; // "About Us" intro video
   interviews?: Interview[]; // IOPPS interviews + employer promo videos (distinguished by isIOPPSInterview flag)

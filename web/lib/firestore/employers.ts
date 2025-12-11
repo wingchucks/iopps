@@ -65,13 +65,22 @@ export async function upsertEmployerProfile(
   data: Omit<EmployerProfile, "id" | "userId" | "createdAt" | "updatedAt">
 ) {
   const ref = doc(db!, employerCollection, userId);
-  const base = {
+  const base: Record<string, any> = {
     organizationName: data.organizationName,
     description: data.description ?? "",
     website: data.website ?? "",
     location: data.location ?? "",
     logoUrl: data.logoUrl ?? "",
   };
+
+  // Add enhanced profile fields if provided
+  if (data.bannerUrl !== undefined) base.bannerUrl = data.bannerUrl;
+  if (data.socialLinks !== undefined) base.socialLinks = data.socialLinks;
+  if (data.industry !== undefined) base.industry = data.industry;
+  if (data.companySize !== undefined) base.companySize = data.companySize;
+  if (data.foundedYear !== undefined) base.foundedYear = data.foundedYear;
+  if (data.contactEmail !== undefined) base.contactEmail = data.contactEmail;
+  if (data.contactPhone !== undefined) base.contactPhone = data.contactPhone;
 
   const snap = await getDoc(ref);
   if (snap.exists()) {

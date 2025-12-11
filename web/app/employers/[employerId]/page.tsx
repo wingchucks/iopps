@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/firebase-admin";
-import type { EmployerProfile, JobPosting } from "@/lib/types";
+import type { EmployerProfile, JobPosting, IndustryType } from "@/lib/types";
 import Image from "next/image";
 import CompanyIntroVideo from "@/components/employer/CompanyIntroVideo";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
@@ -21,6 +21,33 @@ export async function generateStaticParams() {
   return [];
 }
 
+// Industry labels for display
+const INDUSTRY_LABELS: Record<IndustryType, string> = {
+  'government': 'Government / First Nations Administration',
+  'healthcare': 'Healthcare / Social Services',
+  'education': 'Education / Training',
+  'construction': 'Construction / Trades',
+  'natural-resources': 'Natural Resources / Mining',
+  'environmental': 'Environmental / Conservation',
+  'technology': 'Technology / IT',
+  'arts-culture': 'Arts / Culture / Tourism',
+  'finance': 'Finance / Banking',
+  'legal': 'Legal / Consulting',
+  'nonprofit': 'Non-Profit / Community Services',
+  'retail': 'Retail / Hospitality',
+  'transportation': 'Transportation / Logistics',
+  'other': 'Other',
+};
+
+// Company size labels
+const SIZE_LABELS: Record<string, string> = {
+  '1-10': '1-10 employees',
+  '11-50': '11-50 employees',
+  '51-200': '51-200 employees',
+  '201-500': '201-500 employees',
+  '500+': '500+ employees',
+};
+
 async function getEmployerData(employerId: string): Promise<{
   employer: EmployerProfile | null;
   jobs: JobPosting[];
@@ -39,6 +66,11 @@ async function getEmployerData(employerId: string): Promise<{
     }
 
     const employerData = employerDoc.data() as EmployerProfile;
+
+    // Filter out soft-deleted employers (show as not found)
+    if ((employerData as any).deletedAt) {
+      return { employer: null, jobs: [], status: "not_found" };
+    }
 
     // Return status for non-approved employers (show different message)
     if (employerData.status !== "approved") {
@@ -73,6 +105,30 @@ async function getEmployerData(employerId: string): Promise<{
     console.error("Error fetching employer data:", error);
     return { employer: null, jobs: [], status: "not_found" };
   }
+}
+
+// Social media icon component
+function SocialIcon({ platform, url }: { platform: string; url: string }) {
+  const icons: Record<string, { icon: string; label: string; color: string }> = {
+    linkedin: { icon: 'in', label: 'LinkedIn', color: 'hover:bg-[#0077B5]' },
+    twitter: { icon: 'X', label: 'Twitter/X', color: 'hover:bg-black' },
+    facebook: { icon: 'f', label: 'Facebook', color: 'hover:bg-[#1877F2]' },
+    instagram: { icon: 'ig', label: 'Instagram', color: 'hover:bg-[#E4405F]' },
+  };
+
+  const { icon, label, color } = icons[platform] || { icon: '?', label: platform, color: 'hover:bg-slate-600' };
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={label}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white transition-colors ${color}`}
+    >
+      {icon}
+    </a>
+  );
 }
 
 export default async function EmployerPublicProfilePage({ params }: PageProps) {
@@ -125,46 +181,141 @@ export default async function EmployerPublicProfilePage({ params }: PageProps) {
     notFound();
   }
 
+  const hasSocialLinks = employer.socialLinks && (
+    employer.socialLinks.linkedin ||
+    employer.socialLinks.twitter ||
+    employer.socialLinks.facebook ||
+    employer.socialLinks.instagram
+  );
+
+  const hasCompanyInfo = employer.industry || employer.companySize || employer.foundedYear;
+  const hasContactInfo = employer.contactEmail || employer.contactPhone;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
+      {/* Banner Image */}
+      {employer.bannerUrl && (
+        <div className="relative w-full h-48 md:h-64 rounded-t-lg overflow-hidden mb-0">
+          <Image
+            src={employer.bannerUrl}
+            alt={`${employer.organizationName} banner`}
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+      )}
+
       {/* Employer Header */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-6 mb-8">
-        <div className="flex items-start gap-6">
-          {employer.logoUrl && (
-            <div className="relative h-24 w-24 flex-shrink-0 rounded-lg overflow-hidden bg-white">
-              <Image
-                src={employer.logoUrl}
-                alt={`${employer.organizationName} logo`}
-                fill
-                className="object-contain"
-              />
+      <div className={`rounded-lg border border-slate-700 bg-slate-800/50 p-6 mb-8 ${employer.bannerUrl ? 'rounded-t-none -mt-1' : ''}`}>
+        <div className="flex flex-col md:flex-row md:items-start gap-6">
+          {/* Logo and Basic Info */}
+          <div className="flex items-start gap-4 flex-1">
+            {employer.logoUrl && (
+              <div className={`relative h-24 w-24 flex-shrink-0 rounded-lg overflow-hidden bg-white ${employer.bannerUrl ? '-mt-16 ring-4 ring-slate-800' : ''}`}>
+                <Image
+                  src={employer.logoUrl}
+                  alt={`${employer.organizationName} logo`}
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-50">
+                {employer.organizationName}
+              </h1>
+
+              {/* Industry Badge */}
+              {employer.industry && (
+                <span className="mt-2 inline-flex items-center rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
+                  {INDUSTRY_LABELS[employer.industry] || employer.industry}
+                </span>
+              )}
+
+              {employer.location && (
+                <p className="mt-2 text-sm text-slate-400">
+                  📍 {employer.location}
+                </p>
+              )}
+
+              {employer.website && (
+                <a
+                  href={employer.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center text-sm text-[#14B8A6] hover:text-[#14B8A6]/80"
+                >
+                  🌐 Visit Website
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Social Links */}
+          {hasSocialLinks && (
+            <div className="flex gap-2 flex-shrink-0">
+              {employer.socialLinks?.linkedin && (
+                <SocialIcon platform="linkedin" url={employer.socialLinks.linkedin} />
+              )}
+              {employer.socialLinks?.twitter && (
+                <SocialIcon platform="twitter" url={employer.socialLinks.twitter} />
+              )}
+              {employer.socialLinks?.facebook && (
+                <SocialIcon platform="facebook" url={employer.socialLinks.facebook} />
+              )}
+              {employer.socialLinks?.instagram && (
+                <SocialIcon platform="instagram" url={employer.socialLinks.instagram} />
+              )}
             </div>
           )}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-50">
-              {employer.organizationName}
-            </h1>
-            {employer.location && (
-              <p className="mt-1 text-sm text-slate-400">
-                📍 {employer.location}
-              </p>
-            )}
-            {employer.website && (
-              <a
-                href={employer.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center text-sm text-[#14B8A6] hover:text-[#14B8A6]/80"
-              >
-                🌐 Visit Website
-              </a>
-            )}
-          </div>
         </div>
 
         {employer.description && (
           <div className="mt-6 prose prose-invert max-w-none">
-            <p className="text-slate-300">{employer.description}</p>
+            <p className="text-slate-300 whitespace-pre-wrap">{employer.description}</p>
+          </div>
+        )}
+
+        {/* Company Info & Contact Section */}
+        {(hasCompanyInfo || hasContactInfo) && (
+          <div className="mt-6 pt-6 border-t border-slate-700">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {employer.companySize && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">👥</span>
+                  <span className="text-slate-300">{SIZE_LABELS[employer.companySize] || employer.companySize}</span>
+                </div>
+              )}
+              {employer.foundedYear && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">📅</span>
+                  <span className="text-slate-300">Founded {employer.foundedYear}</span>
+                </div>
+              )}
+              {employer.contactEmail && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">✉️</span>
+                  <a
+                    href={`mailto:${employer.contactEmail}`}
+                    className="text-[#14B8A6] hover:text-[#14B8A6]/80 truncate"
+                  >
+                    {employer.contactEmail}
+                  </a>
+                </div>
+              )}
+              {employer.contactPhone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-400">📞</span>
+                  <a
+                    href={`tel:${employer.contactPhone}`}
+                    className="text-[#14B8A6] hover:text-[#14B8A6]/80"
+                  >
+                    {employer.contactPhone}
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
