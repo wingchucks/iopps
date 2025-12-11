@@ -80,11 +80,30 @@ function processHtmlPage(html: string, feedUrl: string) {
         const result = scrapeJobsFromHtml(html, feedUrl);
 
         if (result.jobs.length === 0) {
+            // Check if this is a JavaScript-rendered SPA
+            let hint = "The HTML page was loaded but no job listings were detected.";
+
+            if (result.isSpa && result.spaPlatform) {
+                hint = `This appears to be a ${result.spaPlatform} careers page which uses JavaScript to load job listings. ` +
+                    `These pages cannot be scraped directly. Try one of these alternatives:\n\n` +
+                    `1. Check if the employer has an RSS/XML job feed available\n` +
+                    `2. Contact the employer for a direct API or feed URL\n` +
+                    `3. For Oracle Recruiting Cloud, look for a feed URL like: /hcmRestApi/resources/latest/recruitingCEJobRequisitions`;
+            } else if (result.isSpa) {
+                hint = "This page appears to use JavaScript to render content dynamically (Single Page Application). " +
+                    "Job listings are loaded after the initial page load and cannot be scraped directly. " +
+                    "Try to find an XML/RSS feed or API endpoint from the employer.";
+            } else {
+                hint += " The page structure might not be supported, or there may be no jobs currently listed.";
+            }
+
             return NextResponse.json({
                 error: "No jobs found on the page",
-                hint: "The HTML page was loaded but no job listings were detected. The page structure might not be supported, or there may be no jobs currently listed.",
+                hint,
                 feedType: "html",
                 fields: [],
+                isSpa: result.isSpa,
+                spaPlatform: result.spaPlatform,
             }, { status: 400 });
         }
 

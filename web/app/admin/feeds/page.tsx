@@ -199,6 +199,17 @@ export default function AdminFeedsPage() {
         }
     }
 
+    // Helper to clean undefined values from an object (Firebase doesn't accept undefined)
+    function cleanUndefinedValues<T extends Record<string, any>>(obj: T): T {
+        const cleaned = {} as T;
+        for (const key of Object.keys(obj)) {
+            if (obj[key] !== undefined && obj[key] !== null && obj[key] !== "") {
+                cleaned[key as keyof T] = obj[key];
+            }
+        }
+        return cleaned;
+    }
+
     function autoSuggestMappings(fields: string[]) {
         const suggestions: FieldMappings = { ...fieldMappings };
         const lowerFields = fields.map(f => f.toLowerCase());
@@ -252,28 +263,39 @@ export default function AdminFeedsPage() {
             .filter(k => k.length > 0);
 
         try {
-            await createRSSFeed({
+            // Clean fieldMappings to remove any undefined values
+            const cleanedMappings = cleanUndefinedValues(fieldMappings);
+
+            // Build feed data object, only including fields with values
+            // Firebase doesn't accept undefined values
+            const feedData: any = {
                 feedName,
                 feedUrl,
                 employerId,
-                employerName: employerName || undefined,
                 active: true,
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
                     ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
-                utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
-                fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
-                feedType: feedType || undefined,
-                keywordFilter: keywordFilterEnabled ? {
+            };
+
+            // Only add optional fields if they have values
+            if (employerName) feedData.employerName = employerName;
+            if (utmTrackingTag) feedData.utmTrackingTag = utmTrackingTag;
+            if (Object.keys(cleanedMappings).length > 0) feedData.fieldMappings = cleanedMappings;
+            if (feedType) feedData.feedType = feedType;
+            if (keywordFilterEnabled) {
+                feedData.keywordFilter = {
                     enabled: true,
                     keywords: keywordsArray,
                     matchIn: keywordFilterMatchIn,
-                } : undefined,
-            });
+                };
+            }
+
+            await createRSSFeed(feedData);
 
             resetForm();
             setShowAddModal(false);
@@ -298,27 +320,38 @@ export default function AdminFeedsPage() {
             .filter(k => k.length > 0);
 
         try {
-            await updateRSSFeed(editingFeed.id, {
+            // Clean fieldMappings to remove any undefined values
+            const cleanedMappings = cleanUndefinedValues(fieldMappings);
+
+            // Build update data object, only including fields with values
+            // Firebase doesn't accept undefined values
+            const updateData: any = {
                 feedName,
                 feedUrl,
                 employerId,
-                employerName: employerName || undefined,
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
                     ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
-                utmTrackingTag: utmTrackingTag || undefined,
                 noIndexByGoogle,
                 updateExistingJobs,
-                fieldMappings: Object.keys(fieldMappings).length > 0 ? fieldMappings : undefined,
-                feedType: feedType || undefined,
-                keywordFilter: keywordFilterEnabled ? {
+            };
+
+            // Only add optional fields if they have values
+            if (employerName) updateData.employerName = employerName;
+            if (utmTrackingTag) updateData.utmTrackingTag = utmTrackingTag;
+            if (Object.keys(cleanedMappings).length > 0) updateData.fieldMappings = cleanedMappings;
+            if (feedType) updateData.feedType = feedType;
+            if (keywordFilterEnabled) {
+                updateData.keywordFilter = {
                     enabled: true,
                     keywords: keywordsArray,
                     matchIn: keywordFilterMatchIn,
-                } : undefined,
-            });
+                };
+            }
+
+            await updateRSSFeed(editingFeed.id, updateData);
 
             resetForm();
             setEditingFeed(null);
