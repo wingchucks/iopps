@@ -54,6 +54,21 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // EMPLOYERS COLLECTION
+    // ===========================================================================
+    match /employers/{employerId} {
+      // Anyone can read employer profiles (for job listings, etc.)
+      allow read: if true;
+
+      // Employers can create/update their own profile
+      allow create: if isSignedIn() && request.auth.uid == employerId;
+      allow update: if isSignedIn() && (request.auth.uid == employerId || isAdminOrModerator());
+
+      // Only admins can delete employer profiles
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
     // JOBS COLLECTION
     // ===========================================================================
     match /jobs/{jobId} {
