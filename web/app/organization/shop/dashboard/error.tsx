@@ -46,7 +46,7 @@ export default function Error({
                             Try again
                         </button>
                         <button
-                            onClick={() => window.location.href = "/organization"}
+                            onClick={() => window.location.href = "/organization/dashboard"}
                             className="rounded-full border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                         >
                             Go back
