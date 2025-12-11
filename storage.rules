@@ -78,13 +78,13 @@ service firebase.storage {
     match /employers/{employerId}/logo/{fileName} {
       // Public read for logos (displayed on job listings)
       allow read: if true;
-      
+
       // Employers can upload their own logo
-      // Max 2MB, must be image
-      allow write: if isSignedIn() 
-                   && request.auth.uid == employerId 
-                   && isImage() 
-                   && isValidSize(2);
+      // Max 5MB, must be image
+      allow write: if isSignedIn()
+                   && request.auth.uid == employerId
+                   && isImage()
+                   && isValidSize(5);
     }
     
     // ===========================================================================
