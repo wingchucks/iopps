@@ -42,6 +42,44 @@ interface RSSFeedConfig {
     updateExistingJobs?: boolean;
     fieldMappings?: FieldMappings;
     feedType?: "xml" | "html";
+    keywordFilter?: {
+        enabled: boolean;
+        keywords: string[];
+        matchIn: ("title" | "description")[];
+    };
+}
+
+// Indigenous keywords for filtering
+const INDIGENOUS_KEYWORDS = [
+    "indigenous",
+    "first nation",
+    "first nations",
+    "métis",
+    "metis",
+    "inuit",
+    "aboriginal",
+    "native",
+    "fnmi",
+    "reconciliation",
+];
+
+function matchesKeywordFilter(
+    title: string,
+    description: string,
+    filter?: RSSFeedConfig["keywordFilter"]
+): boolean {
+    if (!filter?.enabled) return true;
+
+    const keywords = filter.keywords.length > 0 ? filter.keywords : INDIGENOUS_KEYWORDS;
+    const searchIn = filter.matchIn.length > 0 ? filter.matchIn : ["title", "description"];
+
+    const textToSearch: string[] = [];
+    if (searchIn.includes("title")) textToSearch.push(title.toLowerCase());
+    if (searchIn.includes("description")) textToSearch.push(description.toLowerCase());
+
+    const combinedText = textToSearch.join(" ");
+
+    return keywords.some(keyword => combinedText.includes(keyword.toLowerCase()));
 }
 
 interface NormalizedJob {
@@ -364,6 +402,12 @@ async function processHtmlFeed(feed: RSSFeedConfig, feedId: string, html: string
             const category = getMappedValue(scrapedJob, mappings.category, "department") || "";
             const salaryStr = getMappedValue(scrapedJob, mappings.salaryString, "salary") || "";
             const postedDate = getMappedValue(scrapedJob, undefined, "postedDate") || "";
+
+            // Apply keyword filter
+            if (!matchesKeywordFilter(title, description, feed.keywordFilter)) {
+                skipped++;
+                continue;
+            }
 
             // Use jobIdOrUrl for deduplication
             const dedupeUrl = applyUrl || jobIdOrUrl || title; // Use title as last resort
@@ -707,6 +751,12 @@ async function processXmlFeed(feed: RSSFeedConfig, feedId: string, xmlText: stri
             const salaryFrom = getXmlFieldValue(job, mappings.salaryFrom, ["salaryfrom", "salarymin", "minsalary"]);
             const salaryTo = getXmlFieldValue(job, mappings.salaryTo, ["salaryto", "salarymax", "maxsalary"]);
             const salaryPeriod = getXmlFieldValue(job, mappings.salaryPeriod, ["salaryperiod", "payperiod"]);
+
+            // Apply keyword filter
+            if (!matchesKeywordFilter(title || "", description || "", feed.keywordFilter)) {
+                skipped++;
+                continue;
+            }
 
             const dedupeUrl = applyUrl || jobIdOrUrl;
 

@@ -27,14 +27,16 @@ function AdminVendorsContent() {
 
   const [loading, setLoading] = useState(true);
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive" | "featured">(
-    statusFilter === "active"
-      ? "active"
-      : statusFilter === "inactive"
-        ? "inactive"
-        : statusFilter === "featured"
-          ? "featured"
-          : "all"
+  const [filter, setFilter] = useState<"all" | "pending" | "active" | "inactive" | "featured">(
+    statusFilter === "pending"
+      ? "pending"
+      : statusFilter === "active"
+        ? "active"
+        : statusFilter === "inactive"
+          ? "inactive"
+          : statusFilter === "featured"
+            ? "featured"
+            : "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
   const [freeListingModalId, setFreeListingModalId] = useState<string | null>(null);
@@ -100,6 +102,62 @@ function AdminVendorsContent() {
     } catch (error) {
       console.error("Error toggling vendor status:", error);
       alert("Failed to update vendor status. Please try again.");
+    } finally {
+      setProcessing(null);
+    }
+  }
+
+  async function approveVendor(vendorId: string) {
+    if (!user) return;
+
+    try {
+      setProcessing(vendorId);
+      const vendorRef = doc(db!, "vendors", vendorId);
+      await updateDoc(vendorRef, {
+        status: "active",
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update local state
+      setVendors((prev) =>
+        prev.map((vendor) =>
+          vendor.id === vendorId ? { ...vendor, status: "active" as Vendor['status'] } : vendor
+        )
+      );
+    } catch (error) {
+      console.error("Error approving vendor:", error);
+      alert("Failed to approve vendor. Please try again.");
+    } finally {
+      setProcessing(null);
+    }
+  }
+
+  async function rejectVendor(vendorId: string, vendorName: string) {
+    if (!user) return;
+
+    const confirmed = confirm(
+      `Reject "${vendorName}"? This will return the listing to draft status.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setProcessing(vendorId);
+      const vendorRef = doc(db!, "vendors", vendorId);
+      await updateDoc(vendorRef, {
+        status: "draft",
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update local state
+      setVendors((prev) =>
+        prev.map((vendor) =>
+          vendor.id === vendorId ? { ...vendor, status: "draft" as Vendor['status'] } : vendor
+        )
+      );
+    } catch (error) {
+      console.error("Error rejecting vendor:", error);
+      alert("Failed to reject vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -222,14 +280,16 @@ function AdminVendorsContent() {
 
   const filteredVendors = vendors.filter((vendor) => {
     if (filter === "all") return true;
+    if (filter === "pending") return vendor.status === "pending";
     if (filter === "active") return vendor.status === "active";
-    if (filter === "inactive") return vendor.status !== "active";
+    if (filter === "inactive") return vendor.status === "draft" || vendor.status === "suspended";
     if (filter === "featured") return vendor.featured === true;
     return true;
   });
 
+  const pendingCount = vendors.filter((v) => v.status === "pending").length;
   const activeCount = vendors.filter((v) => v.status === "active").length;
-  const inactiveCount = vendors.filter((v) => v.status !== "active").length;
+  const inactiveCount = vendors.filter((v) => v.status === "draft" || v.status === "suspended").length;
   const featuredCount = vendors.filter((v) => v.featured === true).length;
 
   return (
@@ -268,6 +328,15 @@ function AdminVendorsContent() {
               }`}
           >
             All ({vendors.length})
+          </button>
+          <button
+            onClick={() => setFilter("pending")}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "pending"
+              ? "bg-amber-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-amber-500"
+              } ${pendingCount > 0 ? "animate-pulse" : ""}`}
+          >
+            Pending Review ({pendingCount})
           </button>
           <button
             onClick={() => setFilter("active")}
@@ -340,7 +409,12 @@ function AdminVendorsContent() {
                               )}
                             </div>
                             <div className="flex gap-2">
-                              <StatusBadge status={isActive ? "active" : "inactive"} />
+                              <StatusBadge status={vendor.status === "pending" ? "pending" : isActive ? "active" : "inactive"} />
+                              {vendor.status === "pending" && (
+                                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
+                                  Needs Review
+                                </span>
+                              )}
                               {isFeatured && (
                                 <span className="rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400">
                                   Featured
@@ -438,20 +512,43 @@ function AdminVendorsContent() {
                         View Vendor
                       </Link>
 
-                      <button
-                        onClick={() => toggleVendorStatus(vendor.id, isActive)}
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                          ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                          : "bg-green-600 text-white hover:bg-green-500"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : isActive
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
+                      {/* Approve/Reject for pending vendors */}
+                      {vendor.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => approveVendor(vendor.id)}
+                            disabled={isProcessing}
+                            className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
+                          >
+                            {isProcessing ? "Processing..." : "Approve"}
+                          </button>
+                          <button
+                            onClick={() => rejectVendor(vendor.id, vendor.businessName)}
+                            disabled={isProcessing}
+                            className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+                          >
+                            {isProcessing ? "Processing..." : "Reject"}
+                          </button>
+                        </>
+                      )}
+
+                      {/* Activate/Deactivate for non-pending vendors */}
+                      {vendor.status !== "pending" && (
+                        <button
+                          onClick={() => toggleVendorStatus(vendor.id, isActive)}
+                          disabled={isProcessing}
+                          className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
+                            ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
+                            : "bg-green-600 text-white hover:bg-green-500"
+                            }`}
+                        >
+                          {isProcessing
+                            ? "Processing..."
+                            : isActive
+                              ? "Deactivate"
+                              : "Activate"}
+                        </button>
+                      )}
 
                       <button
                         onClick={() => toggleFeaturedStatus(vendor.id, isFeatured)}

@@ -134,10 +134,11 @@ export interface JobPosting {
   // Job Requirements Flags
   cpicRequired?: boolean; // Criminal record check required
   willTrain?: boolean; // Employer will provide training
+  driversLicense?: boolean; // Driver's license required
   // Job-specific video
   jobVideo?: JobVideo; // Video specifically about this job posting
   // Payment fields
-  paymentStatus?: "paid" | "pending" | "failed";
+  paymentStatus?: "paid" | "pending" | "failed" | "refunded";
   paymentId?: string;
   productType?: string;
   amountPaid?: number;
@@ -242,7 +243,7 @@ export interface Conference {
 
   // Payment fields
   featured?: boolean;
-  paymentStatus?: "paid" | "pending" | "failed";
+  paymentStatus?: "paid" | "pending" | "failed" | "refunded";
   paymentId?: string;
   productType?: string;
   amountPaid?: number;
@@ -780,6 +781,12 @@ export interface RSSFeed {
   noIndexByGoogle?: boolean; // If true, mark imported jobs with noindex meta tag
   updateExistingJobs?: boolean; // If true, update existing jobs on import instead of skipping
   feedType?: "xml" | "html"; // Type of feed - XML/RSS or HTML scraping
+  // Keyword filtering - filter jobs based on keywords in title/description
+  keywordFilter?: {
+    enabled: boolean;
+    keywords: string[]; // Custom keywords (empty = use default Indigenous keywords)
+    matchIn: ("title" | "description")[]; // Where to search for keywords
+  };
   // Field mappings - maps job fields to XML element names
   fieldMappings?: {
     jobIdOrUrl?: string; // XML field for job ID or URL (used for deduplication)

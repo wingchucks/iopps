@@ -188,10 +188,7 @@ function NewJobPageContent() {
         indigenousPreference: formData.indigenousPreference,
         cpicRequired: formData.cpicRequired,
         willTrain: formData.willTrain,
-        // driverLicense not in core type yet, can add to description or tags if needed? 
-        // For now, let's assume it's just meta or part of requirements text if not in schema.
-        // Actually user asked for checkbox. I'll stick to schema fields I added.
-
+        driversLicense: formData.driversLicense,
         description: formData.description,
         responsibilities: formData.responsibilities.split('\n'),
         qualifications: formData.qualifications.split('\n'),

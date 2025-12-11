@@ -20,7 +20,7 @@ import {
 import { VENDOR_PRODUCTS, type VendorProductType } from '@/lib/stripe';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/components/AuthProvider';
-import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
+import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct, validateVendorForPublish, type PublishValidation } from '@/lib/firebase/shop';
 import { uploadProfileImage, uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
@@ -64,6 +64,10 @@ export default function ShopTab() {
   const [editingProduct, setEditingProduct] = useState<VendorProduct | null>(null);
   const [previewProduct, setPreviewProduct] = useState<VendorProduct | null>(null);
 
+  // Publish validation state
+  const [publishValidation, setPublishValidation] = useState<PublishValidation | null>(null);
+  const [showPublishErrors, setShowPublishErrors] = useState(false);
+
   const loadVendor = useCallback(async () => {
     if (!user) return;
 
@@ -94,6 +98,9 @@ export default function ShopTab() {
         // Load products
         const vendorProducts = await getVendorProducts(existingVendor.id);
         setProducts(vendorProducts);
+
+        // Calculate publish validation
+        setPublishValidation(validateVendorForPublish(existingVendor));
       } else {
         setIsNewVendor(true);
         setActiveSubTab('profile');
@@ -136,15 +143,34 @@ export default function ShopTab() {
     }
   };
 
-  const handlePublish = async () => {
+  const handleSubmitForReview = async () => {
     if (!vendor) return;
+
+    // Validate before submitting
+    const validation = validateVendorForPublish(vendor);
+    setPublishValidation(validation);
+
+    if (!validation.canPublish) {
+      setShowPublishErrors(true);
+      return;
+    }
+
+    // Show warning confirmation if there are warnings
+    if (validation.warnings.length > 0) {
+      const proceed = confirm(
+        `Your profile is ready to submit, but consider these recommendations:\n\n${validation.warnings.map(w => `• ${w}`).join('\n')}\n\nSubmit anyway?`
+      );
+      if (!proceed) return;
+    }
 
     setSaving(true);
     try {
-      await updateVendor(vendor.id, { status: 'active' });
+      await updateVendor(vendor.id, { status: 'pending' });
       await loadVendor();
+      setShowPublishErrors(false);
+      alert('Your listing has been submitted for review! We\'ll notify you once it\'s approved.');
     } catch (error) {
-      console.error('Error publishing:', error);
+      console.error('Error submitting for review:', error);
     } finally {
       setSaving(false);
     }
@@ -216,6 +242,36 @@ export default function ShopTab() {
         </div>
       </div>
 
+      {/* Complete Profile Banner for auto-created vendors */}
+      {vendor && publishValidation && !publishValidation.canPublish && !isNewVendor && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20 flex-shrink-0">
+              <ExclamationTriangleIcon className="h-6 w-6 text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-300">
+                Complete Your Business Profile
+              </h3>
+              <p className="mt-2 text-sm text-slate-300">
+                Complete these items to submit your listing for review:
+              </p>
+              <ul className="mt-2 text-sm text-slate-400 space-y-1">
+                {publishValidation.errors.map((error, i) => (
+                  <li key={i}>• {error}</li>
+                ))}
+              </ul>
+              <button
+                onClick={() => setActiveSubTab('profile')}
+                className="mt-4 inline-flex rounded-xl bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/30"
+              >
+                Complete profile now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sub-tabs */}
       {!isNewVendor && (
         <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl w-fit">
@@ -274,11 +330,11 @@ export default function ShopTab() {
               </div>
               {vendor.status === 'draft' && (
                 <button
-                  onClick={handlePublish}
+                  onClick={handleSubmitForReview}
                   disabled={saving}
                   className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
                 >
-                  Publish
+                  Submit for Review
                 </button>
               )}
             </div>
@@ -321,16 +377,101 @@ export default function ShopTab() {
             </div>
           </div>
 
-          {/* Draft Warning */}
-          {vendor.status === 'draft' && (
+          {/* Pending Review Notice */}
+          {vendor.status === 'pending' && (
             <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-6">
               <div className="flex items-start gap-3">
-                <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                <ClockIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-amber-500">Your listing is in draft mode</h3>
+                  <h3 className="font-semibold text-amber-500">Awaiting Approval</h3>
                   <p className="mt-1 text-sm text-slate-400">
-                    Complete your profile and click &quot;Publish&quot; to make your business visible to customers.
+                    Your listing is being reviewed by our team. We&apos;ll notify you once it&apos;s approved and visible to customers.
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Requirements Checklist */}
+          {vendor.status === 'draft' && publishValidation && (
+            <div className={`rounded-2xl border p-6 ${
+              publishValidation.canPublish
+                ? 'bg-emerald-500/10 border-emerald-500/20'
+                : 'bg-amber-500/10 border-amber-500/20'
+            }`}>
+              <div className="flex items-start gap-3">
+                {publishValidation.canPublish ? (
+                  <CheckCircleIcon className="h-6 w-6 text-emerald-500 flex-shrink-0" />
+                ) : (
+                  <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                )}
+                <div className="flex-1">
+                  <h3 className={`font-semibold ${publishValidation.canPublish ? 'text-emerald-500' : 'text-amber-500'}`}>
+                    {publishValidation.canPublish
+                      ? 'Ready to submit for review!'
+                      : 'Complete these requirements to submit'}
+                  </h3>
+
+                  {/* Requirements checklist */}
+                  <div className="mt-4 space-y-2">
+                    {/* Business name */}
+                    <ChecklistItem
+                      label="Business name"
+                      complete={!!vendor.businessName?.trim()}
+                    />
+                    {/* Description */}
+                    <ChecklistItem
+                      label="Business description (50+ characters)"
+                      complete={!!vendor.description && vendor.description.trim().length >= 50}
+                    />
+                    {/* Category */}
+                    <ChecklistItem
+                      label="Business category"
+                      complete={!!vendor.category}
+                    />
+                    {/* Region */}
+                    <ChecklistItem
+                      label="Province/State"
+                      complete={!!vendor.region}
+                    />
+                    {/* Contact method */}
+                    <ChecklistItem
+                      label="Contact method (email, phone, or website)"
+                      complete={!!(vendor.email?.trim() || vendor.phone?.trim() || vendor.website?.trim())}
+                    />
+
+                    {/* Warnings (optional) */}
+                    {publishValidation.warnings.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-700">
+                        <p className="text-xs text-slate-400 mb-2">Recommended (optional):</p>
+                        {!vendor.logoUrl && (
+                          <ChecklistItem label="Add a logo" complete={false} isWarning />
+                        )}
+                        {!vendor.onlineOnly && !vendor.location && (
+                          <ChecklistItem label="Add your city/town" complete={false} isWarning />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error messages when trying to publish */}
+                  {showPublishErrors && publishValidation.errors.length > 0 && (
+                    <div className="mt-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+                      <p className="text-sm font-medium text-red-400 mb-2">Please fix these issues:</p>
+                      <ul className="text-sm text-red-300 space-y-1">
+                        {publishValidation.errors.map((error, i) => (
+                          <li key={i}>• {error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setActiveSubTab('profile')}
+                    className="mt-4 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                  >
+                    Edit profile to complete requirements →
+                  </button>
                 </div>
               </div>
             </div>
@@ -1435,6 +1576,30 @@ function ProductPreviewModal({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Checklist item component for publish requirements
+function ChecklistItem({ label, complete, isWarning = false }: { label: string; complete: boolean; isWarning?: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      {complete ? (
+        <CheckCircleIcon className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+      ) : isWarning ? (
+        <div className="h-4 w-4 rounded-full border-2 border-amber-400 flex-shrink-0" />
+      ) : (
+        <div className="h-4 w-4 rounded-full border-2 border-slate-500 flex-shrink-0" />
+      )}
+      <span className={`text-sm ${
+        complete
+          ? 'text-emerald-400'
+          : isWarning
+            ? 'text-amber-400'
+            : 'text-slate-400'
+      }`}>
+        {label}
+      </span>
     </div>
   );
 }
