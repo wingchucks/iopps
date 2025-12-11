@@ -21,12 +21,12 @@ function EmployerDashboardContent() {
 
   // Handle URL tab parameter for deep linking
   useEffect(() => {
-    const tabParam = searchParams.get('tab') as TabType;
+    const tabParam = searchParams.get('tab');
     // Redirect legacy "events" tab to "opportunities" (pow wows are now in opportunities)
     if (tabParam === "events") {
       setActiveTab("opportunities");
     } else if (tabParam && ["overview", "opportunities", "applications", "messages", "videos", "shop", "billing", "profile"].includes(tabParam)) {
-      setActiveTab(tabParam);
+      setActiveTab(tabParam as TabType);
     }
   }, [searchParams]);
 
