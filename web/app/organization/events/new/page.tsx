@@ -114,7 +114,7 @@ export default function NewEventPage() {
       // Upload image if provided
       if (imageFile && storage) {
         setUploadingImage(true);
-        const filename = `events/${user.uid}/${Date.now()}-${imageFile.name}`;
+        const filename = `events/posters/${user.uid}/${Date.now()}-${imageFile.name}`;
         const storageRef = ref(storage, filename);
         await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(storageRef);
