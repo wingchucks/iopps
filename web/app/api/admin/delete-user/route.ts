@@ -124,12 +124,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Cannot delete other admin accounts" }, { status: 400 });
         }
 
-        // 1. Disable user in Firebase Auth (soft delete - prevents login)
+        // 1. Delete user from Firebase Auth (allows re-registration with same email)
         try {
-            await auth.updateUser(userId, { disabled: true });
-        } catch (authError) {
-            console.error("Error disabling user in Auth:", authError);
-            // Continue anyway - user may not exist in Auth
+            await auth.deleteUser(userId);
+        } catch (authError: any) {
+            // If user doesn't exist in Auth, continue
+            if (authError.code !== "auth/user-not-found") {
+                console.error("Error deleting user from Auth:", authError);
+            }
         }
 
         // 2. Soft delete user document
