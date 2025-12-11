@@ -11,9 +11,8 @@ import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
 import MessagesTab from "./MessagesTab";
-import EventsTab from "./EventsTab";
 
-type TabType = "overview" | "opportunities" | "applications" | "messages" | "videos" | "events" | "shop" | "billing" | "profile";
+type TabType = "overview" | "opportunities" | "applications" | "messages" | "videos" | "shop" | "billing" | "profile";
 
 function EmployerDashboardContent() {
   const { user, role, loading } = useAuth();
@@ -22,9 +21,12 @@ function EmployerDashboardContent() {
 
   // Handle URL tab parameter for deep linking
   useEffect(() => {
-    const tabParam = searchParams.get('tab') as TabType;
-    if (tabParam && ["overview", "opportunities", "applications", "messages", "videos", "events", "shop", "billing", "profile"].includes(tabParam)) {
-      setActiveTab(tabParam);
+    const tabParam = searchParams.get('tab');
+    // Redirect legacy "events" tab to "opportunities" (pow wows are now in opportunities)
+    if (tabParam === "events") {
+      setActiveTab("opportunities");
+    } else if (tabParam && ["overview", "opportunities", "applications", "messages", "videos", "shop", "billing", "profile"].includes(tabParam)) {
+      setActiveTab(tabParam as TabType);
     }
   }, [searchParams]);
 
@@ -46,7 +48,6 @@ function EmployerDashboardContent() {
     { id: "applications" as TabType, label: "Applications", icon: "📝" },
     { id: "messages" as TabType, label: "Messages", icon: "💬" },
     { id: "videos" as TabType, label: "Videos", icon: "🎬" },
-    { id: "events" as TabType, label: "Events", icon: "🪶" },
     { id: "shop" as TabType, label: "Shop", icon: "🏪" },
     { id: "billing" as TabType, label: "Billing & Payments", icon: "💳" },
     { id: "profile" as TabType, label: "Profile & Settings", icon: "⚙️" },
@@ -89,7 +90,6 @@ function EmployerDashboardContent() {
           {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "messages" && <MessagesTab />}
           {activeTab === "videos" && <VideosTab />}
-          {activeTab === "events" && <EventsTab />}
           {activeTab === "shop" && <ShopTab />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab />}
