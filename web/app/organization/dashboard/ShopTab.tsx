@@ -143,10 +143,10 @@ export default function ShopTab() {
     }
   };
 
-  const handlePublish = async () => {
+  const handleSubmitForReview = async () => {
     if (!vendor) return;
 
-    // Validate before publishing
+    // Validate before submitting
     const validation = validateVendorForPublish(vendor);
     setPublishValidation(validation);
 
@@ -158,18 +158,19 @@ export default function ShopTab() {
     // Show warning confirmation if there are warnings
     if (validation.warnings.length > 0) {
       const proceed = confirm(
-        `Your profile is ready to publish, but consider these recommendations:\n\n${validation.warnings.map(w => `• ${w}`).join('\n')}\n\nPublish anyway?`
+        `Your profile is ready to submit, but consider these recommendations:\n\n${validation.warnings.map(w => `• ${w}`).join('\n')}\n\nSubmit anyway?`
       );
       if (!proceed) return;
     }
 
     setSaving(true);
     try {
-      await updateVendor(vendor.id, { status: 'active' });
+      await updateVendor(vendor.id, { status: 'pending' });
       await loadVendor();
       setShowPublishErrors(false);
+      alert('Your listing has been submitted for review! We\'ll notify you once it\'s approved.');
     } catch (error) {
-      console.error('Error publishing:', error);
+      console.error('Error submitting for review:', error);
     } finally {
       setSaving(false);
     }
@@ -253,7 +254,7 @@ export default function ShopTab() {
                 Complete Your Business Profile
               </h3>
               <p className="mt-2 text-sm text-slate-300">
-                Complete these items to publish your listing:
+                Complete these items to submit your listing for review:
               </p>
               <ul className="mt-2 text-sm text-slate-400 space-y-1">
                 {publishValidation.errors.map((error, i) => (
@@ -329,11 +330,11 @@ export default function ShopTab() {
               </div>
               {vendor.status === 'draft' && (
                 <button
-                  onClick={handlePublish}
+                  onClick={handleSubmitForReview}
                   disabled={saving}
                   className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
                 >
-                  Publish
+                  Submit for Review
                 </button>
               )}
             </div>
@@ -376,7 +377,22 @@ export default function ShopTab() {
             </div>
           </div>
 
-          {/* Publish Requirements Checklist */}
+          {/* Pending Review Notice */}
+          {vendor.status === 'pending' && (
+            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-6">
+              <div className="flex items-start gap-3">
+                <ClockIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-amber-500">Awaiting Approval</h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Your listing is being reviewed by our team. We&apos;ll notify you once it&apos;s approved and visible to customers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Requirements Checklist */}
           {vendor.status === 'draft' && publishValidation && (
             <div className={`rounded-2xl border p-6 ${
               publishValidation.canPublish
@@ -392,8 +408,8 @@ export default function ShopTab() {
                 <div className="flex-1">
                   <h3 className={`font-semibold ${publishValidation.canPublish ? 'text-emerald-500' : 'text-amber-500'}`}>
                     {publishValidation.canPublish
-                      ? 'Ready to publish!'
-                      : 'Complete these requirements to publish'}
+                      ? 'Ready to submit for review!'
+                      : 'Complete these requirements to submit'}
                   </h3>
 
                   {/* Requirements checklist */}
