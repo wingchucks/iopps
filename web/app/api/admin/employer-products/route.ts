@@ -48,7 +48,7 @@ async function verifyAdmin(req: NextRequest): Promise<{
 
 // GET - List products for an employer
 export async function GET(req: NextRequest) {
-  const rateLimitResult = rateLimiters.api(req);
+  const rateLimitResult = rateLimiters.admin(req);
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: "Too many requests" },
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
 
 // POST - Add a product to an employer
 export async function POST(req: NextRequest) {
-  const rateLimitResult = rateLimiters.api(req);
+  const rateLimitResult = rateLimiters.admin(req);
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: "Too many requests" },
@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
 
 // PUT - Update a product (extend, update status, etc.)
 export async function PUT(req: NextRequest) {
-  const rateLimitResult = rateLimiters.api(req);
+  const rateLimitResult = rateLimiters.admin(req);
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: "Too many requests" },
@@ -350,7 +350,7 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Cancel a product
 export async function DELETE(req: NextRequest) {
-  const rateLimitResult = rateLimiters.api(req);
+  const rateLimitResult = rateLimiters.admin(req);
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: "Too many requests" },
