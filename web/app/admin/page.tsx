@@ -155,15 +155,21 @@ export default function AdminDashboard() {
 
       <div className="rounded-lg border border-slate-800 bg-[#08090C] p-6">
         <h2 className="text-lg font-medium text-slate-100">Quick Actions</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <a href="/admin/users" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
             Manage Users
           </a>
-          <a href="/admin/jobs" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Manage Jobs
+          <a href="/admin/members" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Members (Job Seekers)
           </a>
           <a href="/admin/employers" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Employer Approvals
+            Employers
+          </a>
+          <a href="/admin/jobs" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Jobs
+          </a>
+          <a href="/admin/conferences" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
+            Conferences
           </a>
           <a href="/admin/vendors" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
             Shop Vendors

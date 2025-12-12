@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import {
     ShieldCheckIcon,
     UsersIcon,
+    UserGroupIcon,
     BriefcaseIcon,
     ChartBarIcon,
     ArrowLeftOnRectangleIcon,
@@ -14,6 +15,7 @@ import {
     VideoCameraIcon,
     SparklesIcon,
     BuildingOfficeIcon,
+    BuildingStorefrontIcon,
     Cog6ToothIcon,
     DocumentTextIcon,
 } from "@heroicons/react/24/outline";
@@ -51,12 +53,14 @@ export default function AdminLayout({
 
     const navigation = [
         { name: "Dashboard", href: "/admin", icon: ChartBarIcon },
-        { name: "Jobs", href: "/admin/jobs", icon: DocumentTextIcon },
-        { name: "Employers", href: "/admin/employers", icon: BriefcaseIcon },
-        { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
-        { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
-        { name: "Videos", href: "/admin/videos", icon: VideoCameraIcon },
         { name: "Users", href: "/admin/users", icon: UsersIcon },
+        { name: "Members", href: "/admin/members", icon: UserGroupIcon },
+        { name: "Employers", href: "/admin/employers", icon: BriefcaseIcon },
+        { name: "Jobs", href: "/admin/jobs", icon: DocumentTextIcon },
+        { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
+        { name: "Vendors", href: "/admin/vendors", icon: BuildingStorefrontIcon },
+        { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
+        { name: "Videos", href: "/admin/videos", icon: VideoCameraIcon },
         { name: "Job Auto Import", href: "/admin/feeds", icon: ArrowDownTrayIcon },
         { name: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
     ];
