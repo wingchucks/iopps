@@ -296,12 +296,24 @@ Explore: ${SITE_URL}
 Manage preferences: ${SITE_URL}/member/email-preferences`;
 
         // Send email
+        const subject = `Your Weekly IOPPS Digest - ${totalContent} New Opportunities`;
         const { error } = await resend.emails.send({
           from: "IOPPS <digest@iopps.ca>",
           to: [email],
-          subject: `Your Weekly IOPPS Digest - ${totalContent} New Opportunities`,
+          subject,
           html: htmlContent,
           text: textContent,
+        });
+
+        // Log the email
+        await db.collection("emailLogs").add({
+          userId,
+          userEmail: email,
+          campaignType: "weekly-digest",
+          subject,
+          status: error ? "failed" : "sent",
+          error: error?.message || null,
+          sentAt: new Date(),
         });
 
         if (error) {
