@@ -149,10 +149,10 @@ export async function POST(request: NextRequest) {
           .map((c) =>
             conferenceCardHtml({
               id: c.id,
-              name: c.name,
+              name: c.title,
               organizerName: c.organizerName,
               location: c.location,
-              startDate: c.startDate?.toDate?.() || null,
+              startDate: c.startDate && typeof c.startDate === 'object' && 'toDate' in c.startDate ? c.startDate.toDate() : null,
               description: c.description,
             })
           )
@@ -180,9 +180,9 @@ export async function POST(request: NextRequest) {
         const textContent = conferenceAlertText(
           filteredConferences.map((c) => ({
             id: c.id,
-            name: c.name,
+            name: c.title,
             location: c.location,
-            startDate: c.startDate?.toDate?.() || null,
+            startDate: c.startDate && typeof c.startDate === 'object' && 'toDate' in c.startDate ? c.startDate.toDate() : null,
           }))
         );
 
