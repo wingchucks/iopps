@@ -582,14 +582,21 @@ async function importCandidates(filePath: string, altFilePath?: string): Promise
       }
 
       // Create/update user document
-      await db.collection("users").doc(userId).set({
-        email,
-        displayName: name || email.split("@")[0],
-        role: "member",
-        createdAt: FieldValue.serverTimestamp(),
-        // Store original SmartJobBoard ID for reference
-        smartJobBoardId: originalId || null,
-      }, { merge: true });
+      if (isNewUser) {
+        // New user - set all fields including role
+        await db.collection("users").doc(userId).set({
+          email,
+          displayName: name || email.split("@")[0],
+          role: "member", // Default to community member
+          createdAt: FieldValue.serverTimestamp(),
+          smartJobBoardId: originalId || null,
+        }, { merge: true });
+      } else {
+        // Existing user - only add smartJobBoardId, preserve their existing role
+        await db.collection("users").doc(userId).update({
+          smartJobBoardId: originalId || null,
+        });
+      }
 
       // Create/update member profile
       const skills = getColumnValue(row, COLUMN_MAPPINGS.candidate.skills);
