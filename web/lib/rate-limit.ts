@@ -133,6 +133,9 @@ export const rateLimiters = {
   // Auth rate limit: 5 attempts per 15 minutes
   auth: createRateLimiter({ windowMs: 900000, maxRequests: 5 }),
 
+  // Admin operations: 100 requests per minute
+  admin: createRateLimiter({ windowMs: 60000, maxRequests: 100 }),
+
   // Generous rate limit for read operations: 200 requests per minute
   generous: createRateLimiter({ windowMs: 60000, maxRequests: 200 }),
 

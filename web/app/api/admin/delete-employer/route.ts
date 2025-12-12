@@ -85,7 +85,7 @@ async function softDeleteUserRelatedData(
 
 export async function POST(req: NextRequest) {
     // Rate limiting
-    const rateLimitResult = rateLimiters.auth(req);
+    const rateLimitResult = rateLimiters.admin(req);
     if (!rateLimitResult.success) {
         return NextResponse.json(
             { error: "Too many requests", retryAfter: rateLimitResult.retryAfter },
