@@ -434,8 +434,8 @@ service cloud.firestore {
     // EMAIL PREFERENCES
     // ===========================================================================
     match /emailPreferences/{userId} {
-      // Users can read/write their own email preferences
-      allow read: if isSignedIn() && request.auth.uid == userId;
+      // Users can read their own, admins can read all (for stats)
+      allow read: if (isSignedIn() && request.auth.uid == userId) || isAdminOrModerator();
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isSignedIn() && request.auth.uid == userId;
       allow delete: if isSignedIn() && request.auth.uid == userId;
