@@ -134,15 +134,9 @@ export async function POST(request: NextRequest) {
 
     for (const [userId, email] of Object.entries(userEmails)) {
       try {
-        const prefs = prefsSnap.docs.find((d) => d.id === userId)?.data() as EmailPreferences | undefined;
-
-        // Filter conferences by user's category preferences
-        let filteredConferences = conferences;
-        if (prefs?.conferenceCategories && prefs.conferenceCategories.length > 0) {
-          filteredConferences = conferences.filter((c) =>
-            prefs.conferenceCategories.includes(c.category || "")
-          );
-        }
+        // Filter conferences by user's format preferences (if they have any)
+        // For now, send all conferences since Conference type doesn't have category
+        const filteredConferences = conferences;
 
         if (filteredConferences.length === 0) continue;
 
