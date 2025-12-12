@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid } from "@/lib/firestore";
 import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
@@ -20,6 +21,8 @@ import {
   PlayCircleIcon,
   VideoCameraIcon,
   XMarkIcon,
+  PencilSquareIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -644,6 +647,24 @@ export default function AdminEmployersPage() {
                         <EyeIcon className="h-4 w-4" />
                         View Profile
                       </button>
+
+                      {/* Edit & Products Buttons */}
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/admin/employers/${employer.id}/edit`}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-teal-500 hover:text-teal-400"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                          Edit
+                        </Link>
+                        <Link
+                          href={`/admin/employers/${employer.id}/products`}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-400"
+                        >
+                          <CurrencyDollarIcon className="h-4 w-4" />
+                          Products
+                        </Link>
+                      </div>
 
                       {status === "pending" && (
                         <>
