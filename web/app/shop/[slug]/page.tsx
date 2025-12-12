@@ -108,7 +108,7 @@ async function VendorPage({ params, searchParams }: Props) {
 
   // Only increment view count for active vendors (not previews)
   if (vendor.status === 'active') {
-    incrementVendorViews(vendor.id).catch(() => {});
+    incrementVendorViews(vendor.id).catch(() => { });
   }
 
   // Get vendor products
@@ -141,7 +141,12 @@ async function VendorPage({ params, searchParams }: Props) {
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800" />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(135deg, ${vendor.themeColor || '#0d9488'}40, ${vendor.themeColor || '#0d9488'}80)`
+              }}
+            />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
 
@@ -178,7 +183,10 @@ async function VendorPage({ params, searchParams }: Props) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
+                <div
+                  className="flex h-full w-full items-center justify-center text-3xl font-bold text-white"
+                  style={{ backgroundColor: vendor.themeColor || '#0d9488' }}
+                >
                   {vendor.businessName.charAt(0)}
                 </div>
               )}
@@ -194,7 +202,10 @@ async function VendorPage({ params, searchParams }: Props) {
                   <p className="mt-1 text-lg text-slate-400">{vendor.tagline}</p>
                 )}
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center rounded-full bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-400">
+                  <span
+                    className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                    style={{ backgroundColor: `${vendor.themeColor || '#14b8a6'}33`, color: vendor.themeColor || '#2dd4bf' }}
+                  >
                     {vendor.category}
                   </span>
                   {vendor.nation && (
@@ -274,7 +285,7 @@ async function VendorPage({ params, searchParams }: Props) {
               <h2 className="text-xl font-bold text-white mb-6">Products & Services</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={product.id} product={product} themeColor={vendor.themeColor} />
                 ))}
               </div>
             </section>
@@ -341,7 +352,8 @@ async function VendorPage({ params, searchParams }: Props) {
                 href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 py-3 font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:opacity-90"
+                style={{ backgroundColor: vendor.themeColor || '#14b8a6', boxShadow: `0 10px 15px -3px ${vendor.themeColor || '#14b8a6'}40` }}
               >
                 <GlobeAltIcon className="h-5 w-5" />
                 Visit Website
@@ -354,7 +366,7 @@ async function VendorPage({ params, searchParams }: Props) {
             <h3 className="text-lg font-bold text-white mb-4">Shipping & Location</h3>
             <div className="space-y-3">
               {vendor.offersShipping && (
-                <div className="flex items-center gap-3 text-teal-400">
+                <div className="flex items-center gap-3" style={{ color: vendor.themeColor || '#2dd4bf' }}>
                   <TruckIcon className="h-5 w-5" />
                   <span>Offers Shipping</span>
                 </div>
@@ -378,9 +390,13 @@ async function VendorPage({ params, searchParams }: Props) {
   );
 }
 
-function ProductCard({ product }: { product: VendorProduct }) {
+function ProductCard({ product, themeColor }: { product: VendorProduct; themeColor?: string }) {
+  const color = themeColor || '#2dd4bf'; // Default teal-400
   return (
-    <div className="group overflow-hidden rounded-xl bg-slate-700/50 border border-slate-600 transition-all hover:border-teal-500/50">
+    <div
+      className="group overflow-hidden rounded-xl bg-slate-700/50 border border-slate-600 transition-all hover:border-opacity-100"
+      style={{ borderColor: 'rgba(71, 85, 105, 1)' }} // Default border
+    >
       {product.imageUrl && (
         <div className="relative h-40 overflow-hidden">
           <Image
@@ -392,10 +408,12 @@ function ProductCard({ product }: { product: VendorProduct }) {
         </div>
       )}
       <div className="p-4">
-        <h4 className="font-semibold text-white">{product.name}</h4>
+        <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors" style={{ color: undefined }} /* We want hover effect */>
+          {product.name}
+        </h4>
         <p className="mt-1 text-sm text-slate-400 line-clamp-2">{product.description}</p>
         {(product.priceDisplay || product.price) && (
-          <p className="mt-2 font-semibold text-teal-400">
+          <p className="mt-2 font-semibold" style={{ color }}>
             {product.priceDisplay || `$${(product.price! / 100).toFixed(2)}`}
           </p>
         )}

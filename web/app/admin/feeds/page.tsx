@@ -272,12 +272,14 @@ export default function AdminFeedsPage() {
                 feedName,
                 feedUrl,
                 employerId,
+                ...(employerName && { employerName }),
                 active: true,
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
                     ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
+                ...(utmTrackingTag && { utmTrackingTag }),
                 noIndexByGoogle,
                 updateExistingJobs,
             };
@@ -329,11 +331,13 @@ export default function AdminFeedsPage() {
                 feedName,
                 feedUrl,
                 employerId,
+                ...(employerName && { employerName }),
                 syncFrequency,
                 jobExpiration: {
                     type: jobExpirationType,
                     ...(jobExpirationType === "days" && { daysAfterImport: jobExpirationDays }),
                 },
+                ...(utmTrackingTag && { utmTrackingTag }),
                 noIndexByGoogle,
                 updateExistingJobs,
             };

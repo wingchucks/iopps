@@ -9,7 +9,8 @@ import {
   getJobPosting,
   listMemberScholarshipApplications,
   getScholarship,
-  getUnreadMessageCount
+  getUnreadMessageCount,
+  upsertMemberProfile
 } from "@/lib/firestore";
 import type {
   MemberProfile,
@@ -25,6 +26,7 @@ import ApplicationsTab from "./ApplicationsTab";
 import SavedItemsTab from "./SavedItemsTab";
 import JobAlertsTab from "./JobAlertsTab";
 import MessagesTab from "./MessagesTab";
+import ProfileWizard from "@/components/member/ProfileWizard";
 
 type TabType = "overview" | "profile" | "applications" | "saved" | "alerts" | "messages";
 
@@ -36,6 +38,7 @@ export default function MemberDashboard() {
   const [scholarshipApplications, setScholarshipApplications] = useState<ScholarshipApplication[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [showWizard, setShowWizard] = useState(false);
 
   // Load all data
   useEffect(() => {
@@ -62,7 +65,29 @@ export default function MemberDashboard() {
     };
 
     loadData();
+    loadData();
   }, [user, role]);
+
+  // Handle Wizard Dismissal
+  const handleWizardDismiss = async () => {
+    setShowWizard(false);
+    if (user) {
+      // Persist dismissal
+      await upsertMemberProfile(user.uid, { wizardDismissed: true });
+      // Update local profile state to reflect change
+      setProfile(prev => prev ? { ...prev, wizardDismissed: true } : null);
+    }
+  };
+
+  const handleWizardComplete = () => {
+    setShowWizard(false);
+    // Refresh data logic could go here, or just let the user navigate
+    // For now, we'll just close it. Profile update inside wizard should have saved data.
+    if (user) {
+      // Reload profile to reflect changes
+      getMemberProfile(user.uid).then(setProfile);
+    }
+  };
 
   // Calculate profile completeness
   const profileCompletion = useMemo(() => {
@@ -81,6 +106,16 @@ export default function MemberDashboard() {
     const filled = fields.filter((field) => field && field.toString().trim().length > 0).length;
     return Math.round((filled / fields.length) * 100) || 0;
   }, [profile]);
+
+  // Show Wizard Logic
+  useEffect(() => {
+    if (!profile || dataLoading) return;
+
+    // Show wizard if completion < 40% and NOT dismissed
+    if (profileCompletion < 40 && !profile.wizardDismissed) {
+      setShowWizard(true);
+    }
+  }, [profile, profileCompletion, dataLoading]);
 
   // Recent activity stats
   const recentStats = useMemo(() => {
@@ -221,6 +256,11 @@ export default function MemberDashboard() {
           )}
         </div>
       </div>
+      <ProfileWizard
+        isOpen={showWizard}
+        onClose={handleWizardDismiss}
+        onComplete={handleWizardComplete}
+      />
     </div>
   );
 }

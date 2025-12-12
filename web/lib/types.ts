@@ -434,6 +434,7 @@ export interface MemberProfile {
   // Quick Apply Settings
   quickApplyEnabled?: boolean; // Allow using saved resume for quick applications
   defaultCoverLetter?: string; // Pre-filled cover letter for quick applies
+  wizardDismissed?: boolean;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -642,6 +643,7 @@ export interface Vendor {
   logoUrl?: string;
   coverImageUrl?: string;
   galleryImages?: string[];
+  themeColor?: string; // Hex color code for branding
 
   // Indigenous Identity
   nation?: string; // First Nation, Métis, Inuit affiliation

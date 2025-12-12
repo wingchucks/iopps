@@ -26,7 +26,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
 import UpgradeToEmployerCard from '@/components/UpgradeToEmployerCard';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
-import { uploadProfileImage, uploadCoverImage, uploadGalleryImage } from '@/lib/firebase/storage';
+import { uploadProfileImage, uploadCoverImage, uploadGalleryImage, uploadGalleryImages } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
@@ -69,11 +69,15 @@ export default function VendorDashboard() {
     communityStory: '',
     logoUrl: '',
     coverImageUrl: '',
+    galleryImages: [] as string[],
+    themeColor: '#14b8a6', // Default teal-500
   });
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [coverUploadProgress, setCoverUploadProgress] = useState(0);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [galleryUploadProgress, setGalleryUploadProgress] = useState(0);
 
   // Product modal state
   const [showProductModal, setShowProductModal] = useState(false);
@@ -106,6 +110,8 @@ export default function VendorDashboard() {
           communityStory: existingVendor.communityStory || '',
           logoUrl: existingVendor.logoUrl || '',
           coverImageUrl: existingVendor.coverImageUrl || '',
+          galleryImages: existingVendor.galleryImages || [],
+          themeColor: existingVendor.themeColor || '#14b8a6',
         });
 
         // Load products
@@ -263,11 +269,10 @@ export default function VendorDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as Tab)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? 'bg-teal-500 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700'
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
+                ? 'bg-teal-500 text-white'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                }`}
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
@@ -378,8 +383,13 @@ export default function VendorDashboard() {
               <span className="text-xs text-slate-500">This is how customers see your shop</span>
             </div>
             <div className="rounded-2xl bg-slate-800/50 border border-slate-700 overflow-hidden">
-              {/* Cover/Header area */}
-              <div className="h-32 bg-gradient-to-br from-teal-600/30 to-emerald-600/30 relative">
+              {/* Cover/Header area with dynamic theme color */}
+              <div
+                className="h-32 relative"
+                style={{
+                  background: `linear-gradient(135deg, ${formData.themeColor}4D, ${formData.themeColor}80)`
+                }}
+              >
                 {vendor.logoUrl && (
                   <div className="absolute -bottom-8 left-6">
                     <Image
@@ -407,7 +417,10 @@ export default function VendorDashboard() {
                       <p className="text-slate-400 mt-1">{vendor.tagline}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-400">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-3 py-1 text-teal-400">
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-white"
+                        style={{ backgroundColor: `${formData.themeColor}33`, color: formData.themeColor }} // 33 is ~20% opacity
+                      >
                         {typeof vendor.category === 'string' ? vendor.category : 'Uncategorized'}
                       </span>
                       {vendor.location && typeof vendor.location === 'string' && (
@@ -423,7 +436,8 @@ export default function VendorDashboard() {
                   </div>
                   <button
                     onClick={() => setActiveTab('profile')}
-                    className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                    className="flex items-center gap-1.5 text-sm hover:opacity-80 transition-opacity"
+                    style={{ color: formData.themeColor }}
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                     Edit
@@ -470,6 +484,25 @@ export default function VendorDashboard() {
                       {products.length > 4 && (
                         <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-700/50 flex items-center justify-center text-slate-400 text-sm">
                           +{products.length - 4}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gallery preview */}
+                {vendor.galleryImages && vendor.galleryImages.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-700">
+                    <p className="text-sm font-medium text-slate-400 mb-2">Gallery ({vendor.galleryImages.length})</p>
+                    <div className="flex gap-2">
+                      {vendor.galleryImages.slice(0, 4).map((img, i) => (
+                        <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-700">
+                          <Image src={img} alt="" fill className="object-cover" />
+                        </div>
+                      ))}
+                      {vendor.galleryImages.length > 4 && (
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400">
+                          +{vendor.galleryImages.length - 4}
                         </div>
                       )}
                     </div>
@@ -562,11 +595,10 @@ export default function VendorDashboard() {
                         }}
                         disabled={uploadingLogo || !vendor}
                       />
-                      <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                        uploadingLogo || !vendor
-                          ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                          : 'bg-slate-700 text-white hover:bg-slate-600'
-                      }`}>
+                      <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${uploadingLogo || !vendor
+                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-700 text-white hover:bg-slate-600'
+                        }`}>
                         {uploadingLogo ? (
                           <>
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
@@ -648,11 +680,10 @@ export default function VendorDashboard() {
                       }}
                       disabled={uploadingCover || !vendor}
                     />
-                    <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                      uploadingCover || !vendor
-                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                        : 'bg-slate-700 text-white hover:bg-slate-600'
-                    }`}>
+                    <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${uploadingCover || !vendor
+                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      : 'bg-slate-700 text-white hover:bg-slate-600'
+                      }`}>
                       {uploadingCover ? (
                         <>
                           <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
@@ -668,6 +699,94 @@ export default function VendorDashboard() {
                   </label>
                   {!vendor && (
                     <p className="text-xs text-slate-500">Save your profile first to upload a cover image</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Gallery Images Upload */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Gallery Images
+                </label>
+                <p className="text-xs text-slate-500 mb-3">
+                  Showcase your work, shop, or products. Max 6 images.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mb-4">
+                  {formData.galleryImages.map((url, index) => (
+                    <div key={index} className="relative group aspect-square rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
+                      <Image
+                        src={url}
+                        alt={`Gallery image ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newImages = [...formData.galleryImages];
+                          newImages.splice(index, 1);
+                          setFormData({ ...formData, galleryImages: newImages });
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Upload Button Block */}
+                  {formData.galleryImages.length < 6 && (
+                    <label className={`relative flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/50 transition-colors ${uploadingGallery || !vendor
+                      ? 'cursor-not-allowed opacity-50'
+                      : 'cursor-pointer hover:border-teal-500/50 hover:bg-slate-800'
+                      }`}>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        className="hidden"
+                        onChange={async (e) => {
+                          const files = Array.from(e.target.files || []);
+                          if (files.length === 0 || !vendor) return;
+
+                          // Limit total images
+                          const remainingSlots = 6 - formData.galleryImages.length;
+                          const filesToUpload = files.slice(0, remainingSlots);
+
+                          setUploadingGallery(true);
+                          setGalleryUploadProgress(0);
+                          try {
+                            const results = await uploadGalleryImages(filesToUpload, vendor.id, (index, progress) => {
+                              // Simplified progress tracking
+                              setGalleryUploadProgress(progress.progress);
+                            });
+                            const newUrls = results.map(r => r.url);
+                            setFormData({
+                              ...formData,
+                              galleryImages: [...formData.galleryImages, ...newUrls]
+                            });
+                          } catch (error) {
+                            console.error('Failed to upload gallery images:', error);
+                            alert('Failed to upload some images. Please try again.');
+                          } finally {
+                            setUploadingGallery(false);
+                          }
+                        }}
+                        disabled={uploadingGallery || !vendor}
+                      />
+                      {uploadingGallery ? (
+                        <>
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent mb-2" />
+                          <span className="text-xs text-slate-500">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <PlusIcon className="h-8 w-8 text-slate-500 mb-2" />
+                          <span className="text-sm font-medium text-slate-400">Add Images</span>
+                        </>
+                      )}
+                    </label>
                   )}
                 </div>
               </div>
@@ -708,6 +827,24 @@ export default function VendorDashboard() {
                   ))}
                 </select>
               </div>
+
+
+              {/* Theme Color */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Brand Color
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={formData.themeColor}
+                    onChange={(e) => setFormData({ ...formData, themeColor: e.target.value })}
+                    className="h-10 w-20 cursor-pointer rounded-lg border border-slate-600 bg-slate-700 p-1"
+                  />
+                  <span className="text-sm text-slate-400">{formData.themeColor}</span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Nation / Affiliation
@@ -884,141 +1021,150 @@ export default function VendorDashboard() {
               {saving ? 'Saving...' : isNewVendor ? 'Create Listing' : 'Save Changes'}
             </button>
           </div>
-        </form>
-      )}
+        </form >
+      )
+      }
 
       {/* Products Tab */}
-      {activeTab === 'products' && vendor && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white">Products & Services</h3>
-              <p className="text-sm text-slate-400">Add products or services to showcase on your profile.</p>
+      {
+        activeTab === 'products' && vendor && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white">Products & Services</h3>
+                <p className="text-sm text-slate-400">Add products or services to showcase on your profile.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setShowProductModal(true);
+                }}
+                className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Add Product
+              </button>
             </div>
-            <button
-              onClick={() => {
-                setEditingProduct(null);
-                setShowProductModal(true);
-              }}
-              className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Add Product
-            </button>
-          </div>
 
-          {products.length === 0 ? (
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-              <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
-              <p className="mt-2 text-slate-400">
-                Add products or services to help customers discover what you offer.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() => setPreviewProduct(product)}
-                  className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group cursor-pointer hover:border-teal-500/50 transition-colors"
-                >
-                  {product.imageUrl ? (
-                    <div className="relative h-40">
-                      <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-40 bg-slate-700/50 flex items-center justify-center">
-                      <PhotoIcon className="h-12 w-12 text-slate-600" />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-semibold text-white">{product.name}</h4>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewProduct(product);
-                          }}
-                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-teal-500/20 text-slate-300 hover:text-teal-400 transition-colors"
-                          title="Preview product"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingProduct(product);
-                            setShowProductModal(true);
-                          }}
-                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
-                          title="Edit product"
-                        >
-                          <PencilSquareIcon className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProduct(product.id);
-                          }}
-                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
-                          title="Delete product"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
+            {products.length === 0 ? (
+              <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+                <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
+                <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
+                <p className="mt-2 text-slate-400">
+                  Add products or services to help customers discover what you offer.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map((product) => (
+                  <div
+                    key={product.id}
+                    onClick={() => setPreviewProduct(product)}
+                    className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group cursor-pointer hover:border-teal-500/50 transition-colors"
+                  >
+                    {product.imageUrl ? (
+                      <div className="relative h-40">
+                        <Image
+                          src={product.imageUrl}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
-                    </div>
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">{product.description}</p>
-                    {product.priceDisplay && (
-                      <p className="mt-2 text-teal-400 font-semibold">{product.priceDisplay}</p>
+                    ) : (
+                      <div className="h-40 bg-slate-700/50 flex items-center justify-center">
+                        <PhotoIcon className="h-12 w-12 text-slate-600" />
+                      </div>
                     )}
-                    <p className="mt-2 text-xs text-slate-500">Click to preview</p>
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-semibold text-white">{product.name}</h4>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewProduct(product);
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-teal-500/20 text-slate-300 hover:text-teal-400 transition-colors"
+                            title="Preview product"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingProduct(product);
+                              setShowProductModal(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                            title="Edit product"
+                          >
+                            <PencilSquareIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteProduct(product.id);
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
+                            title="Delete product"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-400 mt-1 line-clamp-2">{product.description}</p>
+                      {product.priceDisplay && (
+                        <p className="mt-2 text-teal-400 font-semibold">{product.priceDisplay}</p>
+                      )}
+                      <p className="mt-2 text-xs text-slate-500">Click to preview</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      }
 
       {/* Subscription Tab */}
-      {activeTab === 'subscription' && vendor && (
-        <SubscriptionTab vendor={vendor} onRefresh={loadVendor} />
-      )}
+      {
+        activeTab === 'subscription' && vendor && (
+          <SubscriptionTab vendor={vendor} onRefresh={loadVendor} />
+        )
+      }
 
       {/* Product Modal */}
-      {showProductModal && vendor && (
-        <ProductModal
-          vendorId={vendor.id}
-          product={editingProduct}
-          onSave={handleSaveProduct}
-          onClose={() => {
-            setShowProductModal(false);
-            setEditingProduct(null);
-          }}
-        />
-      )}
+      {
+        showProductModal && vendor && (
+          <ProductModal
+            vendorId={vendor.id}
+            product={editingProduct}
+            onSave={handleSaveProduct}
+            onClose={() => {
+              setShowProductModal(false);
+              setEditingProduct(null);
+            }}
+          />
+        )
+      }
 
       {/* Product Preview Modal */}
-      {previewProduct && vendor && (
-        <ProductPreviewModal
-          product={previewProduct}
-          vendor={vendor}
-          onClose={() => setPreviewProduct(null)}
-          onEdit={() => {
-            setEditingProduct(previewProduct);
-            setPreviewProduct(null);
-            setShowProductModal(true);
-          }}
-        />
-      )}
-    </PageShell>
+      {
+        previewProduct && vendor && (
+          <ProductPreviewModal
+            product={previewProduct}
+            vendor={vendor}
+            onClose={() => setPreviewProduct(null)}
+            onEdit={() => {
+              setEditingProduct(previewProduct);
+              setPreviewProduct(null);
+              setShowProductModal(true);
+            }}
+          />
+        )
+      }
+    </PageShell >
   );
 }
 
@@ -1314,11 +1460,10 @@ function ProductModal({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    uploadingImage
-                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                      : 'bg-slate-700 text-white hover:bg-slate-600'
-                  }`}
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${uploadingImage
+                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    : 'bg-slate-700 text-white hover:bg-slate-600'
+                    }`}
                 >
                   {uploadingImage ? 'Uploading...' : formData.imageUrl ? 'Change Image' : 'Upload Image'}
                 </button>
