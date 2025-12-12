@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { db } from "@/lib/firebase-admin";
-import type { EmailPreferences, Powwow } from "@/lib/types";
+import type { EmailPreferences, PowwowEvent } from "@/lib/types";
 import {
   wrapEmail,
   emailHeader,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const powwows = powwowsSnap.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Powwow[];
+    })) as PowwowEvent[];
 
     console.log(`Found ${powwows.length} new pow wows/events`);
 
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
               id: p.id,
               name: p.name,
               location: p.location,
-              startDate: p.startDate?.toDate?.() || null,
+              startDate: p.startDate && typeof p.startDate === 'object' && 'toDate' in p.startDate ? p.startDate.toDate() : null,
               eventType: p.eventType,
             })
           )
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
             id: p.id,
             name: p.name,
             location: p.location,
-            startDate: p.startDate?.toDate?.() || null,
+            startDate: p.startDate && typeof p.startDate === 'object' && 'toDate' in p.startDate ? p.startDate.toDate() : null,
           }))
         );
 

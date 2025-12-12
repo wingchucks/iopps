@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { db } from "@/lib/firebase-admin";
-import type { JobPosting, Conference, Powwow, Vendor } from "@/lib/types";
+import type { JobPosting, Conference, PowwowEvent, Vendor } from "@/lib/types";
 import {
   wrapEmail,
   emailHeader,
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const powwows = powwowsSnap.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
-    })) as Powwow[];
+    })) as PowwowEvent[];
 
     // Fetch new vendors
     const vendorsSnap = await db
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
           const confList = conferences.slice(0, 3).map((conf) => `
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #2d2d35;">
-                <a href="${SITE_URL}/conferences/${conf.id}" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 600;">${escapeHtml(conf.name)}</a>
+                <a href="${SITE_URL}/conferences/${conf.id}" style="color: ${BRAND_COLOR}; text-decoration: none; font-weight: 600;">${escapeHtml(conf.title)}</a>
                 <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">
                   ${escapeHtml(conf.location || "")}
                 </div>
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
         const textContent = `Your Weekly IOPPS Digest
 
 ${jobs.length > 0 ? `NEW JOBS (${jobs.length})\n${jobs.slice(0, 5).map((j) => `- ${j.title} at ${j.employerName}`).join("\n")}\n\n` : ""}
-${conferences.length > 0 ? `CONFERENCES (${conferences.length})\n${conferences.slice(0, 3).map((c) => `- ${c.name}`).join("\n")}\n\n` : ""}
+${conferences.length > 0 ? `CONFERENCES (${conferences.length})\n${conferences.slice(0, 3).map((c) => `- ${c.title}`).join("\n")}\n\n` : ""}
 ${powwows.length > 0 ? `POW WOWS & EVENTS (${powwows.length})\n${powwows.slice(0, 3).map((p) => `- ${p.name}`).join("\n")}\n\n` : ""}
 ${vendors.length > 0 ? `SHOP INDIGENOUS (${vendors.length})\n${vendors.slice(0, 3).map((v) => `- ${v.businessName}`).join("\n")}\n\n` : ""}
 ---
