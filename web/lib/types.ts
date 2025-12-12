@@ -913,6 +913,118 @@ export interface Notification {
 export type ShopListing = Vendor;
 
 // ============================================
+// EMAIL PREFERENCES
+// ============================================
+
+export type EmailDigestFrequency = "instant" | "daily" | "weekly" | "never";
+
+export interface EmailPreferences {
+  id: string;
+  userId: string;
+
+  // Global controls
+  unsubscribedAll: boolean;
+
+  // Job Alerts (existing system - controlled separately via jobAlerts collection)
+  jobAlertsEnabled: boolean;
+
+  // Conference Updates
+  conferenceUpdates: boolean;
+  conferenceFrequency: EmailDigestFrequency;
+  conferenceCategories: string[]; // empty = all categories
+
+  // Pow Wows & Events
+  powwowUpdates: boolean;
+  powwowFrequency: EmailDigestFrequency;
+  powwowRegions: string[]; // empty = all regions
+
+  // Shop Indigenous
+  shopUpdates: boolean;
+  shopFrequency: EmailDigestFrequency;
+  shopCategories: string[]; // empty = all categories
+
+  // Platform Newsletter
+  weeklyDigest: boolean;
+
+  // Account Notifications (always on by default, can't fully disable)
+  applicationUpdates: boolean; // job application status changes
+  messageNotifications: boolean; // new messages
+
+  // Metadata
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Email Campaign for admin-sent emails
+export type EmailCampaignStatus = "draft" | "scheduled" | "sending" | "sent" | "failed";
+export type EmailCampaignType = "announcement" | "newsletter" | "promotion" | "system";
+
+export interface EmailCampaign {
+  id: string;
+
+  // Content
+  name: string;
+  subject: string;
+  previewText?: string;
+  htmlContent: string;
+  textContent: string;
+
+  // Targeting
+  audienceType: "all" | "job_seekers" | "employers" | "vendors" | "custom";
+  audienceFilters?: {
+    roles?: string[];
+    regions?: string[];
+    registeredAfter?: Timestamp | null;
+    registeredBefore?: Timestamp | null;
+    hasApplied?: boolean;
+    isActive?: boolean;
+  };
+  recipientCount?: number;
+
+  // Schedule
+  status: EmailCampaignStatus;
+  scheduledAt?: Timestamp | null;
+  sentAt?: Timestamp | null;
+
+  // Stats
+  stats?: {
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    bounced: number;
+    unsubscribed: number;
+  };
+
+  // Metadata
+  createdBy: string;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Email log for tracking individual sends
+export interface EmailLog {
+  id: string;
+  userId: string;
+  email: string;
+
+  // Email details
+  type: "job_alert" | "conference_alert" | "powwow_alert" | "shop_alert" | "digest" | "campaign" | "transactional";
+  subject: string;
+  campaignId?: string;
+
+  // Status
+  status: "queued" | "sent" | "delivered" | "opened" | "clicked" | "bounced" | "failed";
+
+  // Tracking
+  openedAt?: Timestamp | null;
+  clickedAt?: Timestamp | null;
+
+  // Metadata
+  createdAt: Timestamp | null;
+}
+
+// ============================================
 // ADMIN PRODUCT MANAGEMENT
 // ============================================
 
