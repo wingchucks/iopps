@@ -911,3 +911,88 @@ export interface Notification {
 
 
 export type ShopListing = Vendor;
+
+// ============================================
+// ADMIN PRODUCT MANAGEMENT
+// ============================================
+
+export type ProductCategory = "job" | "subscription" | "conference" | "vendor" | "custom";
+
+export type ProductType =
+  // Job products
+  | "SINGLE"
+  | "FEATURED"
+  // Subscription products
+  | "TIER1"
+  | "TIER2"
+  // Conference products
+  | "CONFERENCE_STANDARD"
+  | "CONFERENCE_FEATURED"
+  // Vendor products
+  | "VENDOR_MONTHLY"
+  | "VENDOR_ANNUAL"
+  // Custom
+  | "CUSTOM";
+
+export type ProductStatus = "active" | "expired" | "cancelled" | "pending";
+export type PaymentMethod = "stripe" | "manual" | "free_grant";
+
+export interface EmployerProduct {
+  id: string;
+  employerId: string;
+
+  // Product classification
+  category: ProductCategory;
+  productType: ProductType;
+  productName: string;
+
+  // Financials
+  price: number; // cents - retail price
+  paidAmount: number; // cents - what they actually paid
+  paymentMethod: PaymentMethod;
+  stripePaymentId?: string;
+  invoiceNumber?: string; // for manual payments
+
+  // Timeline
+  activatedAt: Timestamp | null;
+  expiresAt: Timestamp | null;
+  status: ProductStatus;
+
+  // Admin tracking
+  grantedBy: string; // admin user ID who added it
+  grantedByEmail?: string;
+  grantReason?: string; // "Partner", "Sponsorship", "Promotion", etc.
+  notes?: string;
+
+  // Usage stats (varies by product type)
+  stats: {
+    // Job products
+    jobsPosted?: number;
+    jobsRemaining?: number | "unlimited";
+    featuredJobsUsed?: number;
+    featuredJobsRemaining?: number;
+
+    // Conference products
+    conferencesPosted?: number;
+    conferencesRemaining?: number;
+
+    // Vendor products
+    vendorListingActive?: boolean;
+  };
+
+  // Metadata
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Product configuration for adding new products
+export interface ProductConfig {
+  category: ProductCategory;
+  productType: ProductType;
+  name: string;
+  price: number; // cents
+  duration: number; // days
+  features: string[];
+  // Default stats when product is granted
+  defaultStats: EmployerProduct["stats"];
+}
