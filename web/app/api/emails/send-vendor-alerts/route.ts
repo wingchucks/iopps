@@ -200,6 +200,17 @@ export async function POST(request: NextRequest) {
           text: textContent,
         });
 
+        // Log the email
+        await db.collection("emailLogs").add({
+          userId,
+          userEmail: email,
+          campaignType: "vendor-alerts",
+          subject,
+          status: error ? "failed" : "sent",
+          error: error?.message || null,
+          sentAt: new Date(),
+        });
+
         if (error) {
           console.error(`Error sending to ${email}:`, error);
           continue;
