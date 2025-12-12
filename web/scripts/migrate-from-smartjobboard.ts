@@ -21,6 +21,78 @@ import { getAuth } from "firebase-admin/auth";
 import * as fs from "fs";
 import * as path from "path";
 
+// Helper to parse the private key from various formats
+function parsePrivateKey(key: string | undefined): string | null {
+  if (!key) return null;
+
+  let parsedKey = key.trim();
+
+  // Remove surrounding quotes if present
+  if ((parsedKey.startsWith('"') && parsedKey.endsWith('"')) ||
+      (parsedKey.startsWith("'") && parsedKey.endsWith("'")) ||
+      (parsedKey.startsWith('`') && parsedKey.endsWith('`'))) {
+    parsedKey = parsedKey.slice(1, -1);
+  }
+
+  // Handle double-escaped newlines
+  parsedKey = parsedKey.replace(/\\\\n/g, "\\n");
+  parsedKey = parsedKey.replace(/\\n/g, "\n");
+  parsedKey = parsedKey.replace(/\r\n/g, "\n");
+
+  // Try base64 decode if not PEM
+  if (!parsedKey.includes("-----BEGIN")) {
+    try {
+      const decoded = Buffer.from(parsedKey, "base64").toString("utf-8");
+      if (decoded.includes("-----BEGIN")) {
+        parsedKey = decoded;
+      }
+    } catch {}
+  }
+
+  if (!parsedKey.includes("-----BEGIN PRIVATE KEY-----")) {
+    return null;
+  }
+
+  return parsedKey;
+}
+
+// Try to parse service account from JSON string or base64
+function tryParseServiceAccountJson(): { projectId?: string; clientEmail?: string; privateKey?: string } | null {
+  // Try base64-encoded version first
+  const base64Str = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+  if (base64Str) {
+    try {
+      const jsonStr = Buffer.from(base64Str, "base64").toString("utf-8");
+      const parsed = JSON.parse(jsonStr);
+      console.log("✅ Parsed Firebase credentials from base64");
+      return {
+        projectId: parsed.project_id,
+        clientEmail: parsed.client_email,
+        privateKey: parsed.private_key,
+      };
+    } catch (e) {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64:", e);
+    }
+  }
+
+  // Fall back to raw JSON
+  const jsonStr = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (jsonStr) {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      return {
+        projectId: parsed.project_id,
+        clientEmail: parsed.client_email,
+        privateKey: parsed.private_key,
+      };
+    } catch {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON");
+    }
+  }
+
+  return null;
+}
+
 // Initialize Firebase Admin
 if (!getApps().length) {
   // Check if running against emulator
@@ -30,7 +102,7 @@ if (!getApps().length) {
     });
     console.log("🔥 Initialized with Emulator config");
   } else {
-    // Try service-account.json first (for scripts), then env vars
+    // Try service-account.json first
     const serviceAccountPath = path.join(__dirname, '../../service-account.json');
 
     if (fs.existsSync(serviceAccountPath)) {
@@ -40,14 +112,19 @@ if (!getApps().length) {
       });
       console.log("🔥 Initialized with service-account.json");
     } else {
-      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      // Try JSON service account from env vars
+      const serviceAccount = tryParseServiceAccountJson();
+
+      const projectId = serviceAccount?.projectId || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      const clientEmail = serviceAccount?.clientEmail || process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = serviceAccount?.privateKey || parsePrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
       if (!projectId || !clientEmail || !privateKey) {
         console.error("❌ Missing Firebase credentials.");
-        console.error("   Either place service-account.json in project root,");
-        console.error("   or set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in .env.local");
+        console.error("   Options:");
+        console.error("   1. Place service-account.json in project root");
+        console.error("   2. Set FIREBASE_SERVICE_ACCOUNT_BASE64 in .env.local");
+        console.error("   3. Set FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in .env.local");
         process.exit(1);
       }
 
@@ -55,9 +132,10 @@ if (!getApps().length) {
         credential: cert({
           projectId,
           clientEmail,
-          privateKey: privateKey.replace(/\\n/g, "\n"),
+          privateKey,
         }),
       });
+      console.log("🔥 Initialized with environment credentials");
     }
   }
 }
@@ -230,10 +308,15 @@ const COLUMN_MAPPINGS = {
     applyUrl: ["apply_url", "ApplyURL", "application_url", "ApplicationURL"],
     applyEmail: ["apply_email", "ApplyEmail", "application_email"],
   },
-  // Candidate columns
+  // Candidate/Jobseeker columns - SmartJobBoard export format
   candidate: {
-    email: ["email", "Email"],
-    name: ["name", "Name", "full_name", "FullName"],
+    id: ["Job Seeker Id", "job_seeker_id", "JobSeekerId", "id"],
+    email: ["Email", "email"],
+    name: ["Full Name", "full_name", "FullName", "name", "Name"],
+    hasResume: ["Has Resume", "has_resume", "HasResume"],
+    registrationDate: ["Registration Date", "registration_date", "RegistrationDate", "created_at"],
+    status: ["Status", "status"],
+    newsletterConsent: ["Newsletter Consent", "newsletter_consent", "NewsletterConsent"],
     location: ["location", "Location", "city"],
     skills: ["skills", "Skills"],
     resume: ["resume", "Resume", "resume_url", "ResumeURL"],
@@ -436,23 +519,35 @@ async function importJobs(filePath: string): Promise<void> {
   }
 }
 
-async function importCandidates(filePath: string): Promise<void> {
-  console.log("\n👤 Importing Candidates...\n");
+async function importCandidates(filePath: string, altFilePath?: string): Promise<void> {
+  console.log("\n👤 Importing Job Seekers/Candidates...\n");
 
+  // Try primary path first, then alternate
+  let actualPath = filePath;
   if (!fs.existsSync(filePath)) {
-    console.log("   ⚠️  No candidates.csv found, skipping...");
-    return;
+    if (altFilePath && fs.existsSync(altFilePath)) {
+      actualPath = altFilePath;
+      console.log(`   Using ${path.basename(altFilePath)} instead of candidates.csv`);
+    } else {
+      console.log("   ⚠️  No candidates.csv or jobseekers.csv found, skipping...");
+      return;
+    }
   }
 
-  const content = fs.readFileSync(filePath, "utf-8");
+  const content = fs.readFileSync(actualPath, "utf-8");
   const rows = parseCSV(content);
   stats.candidates.total = rows.length;
 
-  console.log(`   Found ${rows.length} candidates to import\n`);
+  console.log(`   Found ${rows.length} job seekers to import\n`);
+
+  let skippedInactive = 0;
 
   for (const row of rows) {
     const email = getColumnValue(row, COLUMN_MAPPINGS.candidate.email);
     const name = getColumnValue(row, COLUMN_MAPPINGS.candidate.name);
+    const originalId = getColumnValue(row, COLUMN_MAPPINGS.candidate.id);
+    const status = getColumnValue(row, COLUMN_MAPPINGS.candidate.status);
+    const hasResume = getColumnValue(row, COLUMN_MAPPINGS.candidate.hasResume);
 
     if (!email) {
       console.log(`   ⚠️  Skipping candidate with no email`);
@@ -460,13 +555,20 @@ async function importCandidates(filePath: string): Promise<void> {
       continue;
     }
 
+    // Skip inactive users
+    if (status.toLowerCase() === "not active") {
+      skippedInactive++;
+      continue;
+    }
+
     try {
       // Check if user already exists
       let userId: string;
+      let isNewUser = false;
       try {
         const existingUser = await auth.getUserByEmail(email);
         userId = existingUser.uid;
-        console.log(`   ✓ Candidate exists: ${name || email}`);
+        console.log(`   ✓ User exists: ${name || email}`);
       } catch {
         // Create new user
         const newUser = await auth.createUser({
@@ -475,15 +577,18 @@ async function importCandidates(filePath: string): Promise<void> {
           password: generateTempPassword(),
         });
         userId = newUser.uid;
-        console.log(`   + Created candidate: ${name || email}`);
+        isNewUser = true;
+        console.log(`   + Created: ${name || email}`);
       }
 
       // Create/update user document
       await db.collection("users").doc(userId).set({
         email,
         displayName: name || email.split("@")[0],
-        role: "community",
+        role: "member",
         createdAt: FieldValue.serverTimestamp(),
+        // Store original SmartJobBoard ID for reference
+        smartJobBoardId: originalId || null,
       }, { merge: true });
 
       // Create/update member profile
@@ -494,6 +599,9 @@ async function importCandidates(filePath: string): Promise<void> {
         location: getColumnValue(row, COLUMN_MAPPINGS.candidate.location) || null,
         skills: skills ? skills.split(",").map(s => s.trim()) : [],
         resumeUrl: getColumnValue(row, COLUMN_MAPPINGS.candidate.resume) || null,
+        // Note if they had a resume in the old system
+        hadResumeInSmartJobBoard: hasResume.toLowerCase() === "yes",
+        smartJobBoardId: originalId || null,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
@@ -503,6 +611,10 @@ async function importCandidates(filePath: string): Promise<void> {
       console.log(`   ❌ Failed: ${email} - ${error.message}`);
       stats.candidates.failed++;
     }
+  }
+
+  if (skippedInactive > 0) {
+    console.log(`\n   ℹ️  Skipped ${skippedInactive} inactive users`);
   }
 }
 
@@ -555,22 +667,24 @@ async function main() {
   const employersFile = path.join(dataDir, "employers.csv");
   const jobsFile = path.join(dataDir, "jobs.csv");
   const candidatesFile = path.join(dataDir, "candidates.csv");
+  const jobseekersFile = path.join(dataDir, "jobseekers.csv");
 
-  const hasFiles = fs.existsSync(employersFile) || fs.existsSync(jobsFile) || fs.existsSync(candidatesFile);
+  const hasFiles = fs.existsSync(employersFile) || fs.existsSync(jobsFile) ||
+                   fs.existsSync(candidatesFile) || fs.existsSync(jobseekersFile);
 
   if (!hasFiles) {
     console.log("❌ No CSV files found in migration-data folder.\n");
-    console.log("Export from MySmartJobBoard admin panel and add:");
+    console.log("Export from SmartJobBoard admin panel and add:");
     console.log(`   ${employersFile}`);
     console.log(`   ${jobsFile}`);
-    console.log(`   ${candidatesFile} (optional)\n`);
+    console.log(`   ${jobseekersFile} (or candidates.csv)\n`);
     process.exit(1);
   }
 
   // Run imports in order
   await importEmployers(employersFile);
   await importJobs(jobsFile);
-  await importCandidates(candidatesFile);
+  await importCandidates(candidatesFile, jobseekersFile);
 
   // Print summary
   console.log("\n========================================");
@@ -587,7 +701,7 @@ async function main() {
   console.log(`    Success: ${stats.jobs.success}`);
   console.log(`    Failed:  ${stats.jobs.failed}`);
 
-  console.log("\n  Candidates:");
+  console.log("\n  Job Seekers:");
   console.log(`    Total:   ${stats.candidates.total}`);
   console.log(`    Success: ${stats.candidates.success}`);
   console.log(`    Failed:  ${stats.candidates.failed}`);
