@@ -5,19 +5,8 @@ import * as crypto from "crypto";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// Generate a secure unsubscribe token for a user
-// This can be included in email links for one-click unsubscribe
-export function generateUnsubscribeToken(userId: string, email: string): string {
-  const secret = process.env.UNSUBSCRIBE_SECRET || process.env.CRON_SECRET || "fallback-secret";
-  const data = `${userId}:${email}:${Math.floor(Date.now() / (1000 * 60 * 60 * 24))}`; // Valid for ~24 hours based on day
-  const hmac = crypto.createHmac("sha256", secret);
-  hmac.update(data);
-  const signature = hmac.digest("hex").substring(0, 16);
-  return Buffer.from(`${userId}:${signature}`).toString("base64url");
-}
-
 // Verify an unsubscribe token
-export function verifyUnsubscribeToken(token: string, email: string): string | null {
+function verifyUnsubscribeToken(token: string, email: string): string | null {
   try {
     const decoded = Buffer.from(token, "base64url").toString();
     const [userId, signature] = decoded.split(":");

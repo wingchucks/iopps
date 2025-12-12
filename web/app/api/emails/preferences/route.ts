@@ -26,6 +26,11 @@ const DEFAULT_PREFERENCES: Omit<EmailPreferences, "id" | "userId" | "createdAt" 
 // GET - Retrieve user's email preferences
 export async function GET(request: NextRequest) {
   try {
+    // Check Firebase Admin is initialized
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server not configured" }, { status: 503 });
+    }
+
     // Verify authentication
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -35,10 +40,6 @@ export async function GET(request: NextRequest) {
     const token = authHeader.split("Bearer ")[1];
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
-
-    if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
-    }
 
     // Get or create preferences
     const prefsDoc = await db.collection("emailPreferences").doc(userId).get();
@@ -80,6 +81,11 @@ export async function GET(request: NextRequest) {
 // PUT - Update user's email preferences
 export async function PUT(request: NextRequest) {
   try {
+    // Check Firebase Admin is initialized
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server not configured" }, { status: 503 });
+    }
+
     // Verify authentication
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -89,10 +95,6 @@ export async function PUT(request: NextRequest) {
     const token = authHeader.split("Bearer ")[1];
     const decodedToken = await auth.verifyIdToken(token);
     const userId = decodedToken.uid;
-
-    if (!db) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 503 });
-    }
 
     const body = await request.json();
 
