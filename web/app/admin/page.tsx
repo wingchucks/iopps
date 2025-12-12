@@ -233,7 +233,7 @@ export default function AdminDashboard() {
 
   const totalPending = stats.pendingEmployers.count + stats.pendingVendors.count;
 
-  const primaryStats = [
+  const primaryStats: Array<{ name: string; stat: StatValue; icon: typeof ClockIcon; color: string; bg: string; href?: string; pulse?: boolean }> = [
     { name: "Pending Review", stat: { count: totalPending }, icon: ClockIcon, color: "text-amber-500", bg: "bg-amber-500/10", href: totalPending > 0 ? (stats.pendingEmployers.count > 0 ? "/admin/employers?status=pending" : "/admin/vendors?status=pending") : undefined, pulse: totalPending > 0 },
     { name: "Active Jobs", stat: stats.activeJobs, icon: CheckBadgeIcon, color: "text-green-500", bg: "bg-green-500/10", href: "/admin/jobs" },
     { name: "Total Members", stat: stats.totalMembers, icon: UserGroupIcon, color: "text-blue-500", bg: "bg-blue-500/10", href: "/admin/members" },
