@@ -17,6 +17,11 @@ import {
 import { db } from "@/lib/firebase";
 import type { Conference } from "@/lib/types";
 import { AdminLoadingState, AdminEmptyState, StatusBadge } from "@/components/admin";
+import {
+  CurrencyDollarIcon,
+  StarIcon,
+  EyeIcon,
+} from "@heroicons/react/24/outline";
 
 interface ConferenceWithEmployer extends Conference {
   employerLogoUrl?: string;
@@ -30,8 +35,11 @@ function AdminConferencesContent() {
 
   const [loading, setLoading] = useState(true);
   const [conferences, setConferences] = useState<ConferenceWithEmployer[]>([]);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">(
-    statusFilter === "active" ? "active" : statusFilter === "inactive" ? "inactive" : "all"
+  const [filter, setFilter] = useState<"all" | "active" | "inactive" | "featured" | "paid">(
+    statusFilter === "active" ? "active" :
+    statusFilter === "inactive" ? "inactive" :
+    statusFilter === "featured" ? "featured" :
+    statusFilter === "paid" ? "paid" : "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
 
@@ -150,11 +158,38 @@ function AdminConferencesContent() {
     if (filter === "all") return true;
     if (filter === "active") return conf.active === true;
     if (filter === "inactive") return conf.active === false;
+    if (filter === "featured") return conf.featured === true;
+    if (filter === "paid") return conf.paymentStatus === "paid";
     return true;
   });
 
   const activeCount = conferences.filter((c) => c.active === true).length;
   const inactiveCount = conferences.filter((c) => c.active === false).length;
+  const featuredCount = conferences.filter((c) => c.featured === true).length;
+  const paidCount = conferences.filter((c) => c.paymentStatus === "paid").length;
+
+  function getPaymentBadge(conference: ConferenceWithEmployer) {
+    if (conference.paymentStatus === "paid") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
+          <CurrencyDollarIcon className="h-3 w-3" />
+          Paid
+        </span>
+      );
+    }
+    if (conference.paymentStatus === "pending") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-400">
+          Pending
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400">
+        Free/Grant
+      </span>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#020306]">
@@ -189,6 +224,26 @@ function AdminConferencesContent() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-8">
+        {/* Stats */}
+        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Total</p>
+            <p className="mt-1 text-2xl font-bold text-slate-100">{conferences.length}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Active</p>
+            <p className="mt-1 text-2xl font-bold text-green-400">{activeCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Featured</p>
+            <p className="mt-1 text-2xl font-bold text-amber-400">{featuredCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Paid</p>
+            <p className="mt-1 text-2xl font-bold text-teal-400">{paidCount}</p>
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="mb-6 flex flex-wrap gap-3">
           <button
@@ -217,6 +272,24 @@ function AdminConferencesContent() {
               }`}
           >
             Inactive ({inactiveCount})
+          </button>
+          <button
+            onClick={() => setFilter("featured")}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "featured"
+                ? "bg-amber-500 text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-amber-500"
+              }`}
+          >
+            Featured ({featuredCount})
+          </button>
+          <button
+            onClick={() => setFilter("paid")}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "paid"
+                ? "bg-teal-500 text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-teal-500"
+              }`}
+          >
+            Paid ({paidCount})
           </button>
         </div>
 
@@ -251,14 +324,25 @@ function AdminConferencesContent() {
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <h3 className="text-xl font-semibold text-slate-50">
-                                {conference.title}
-                              </h3>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-xl font-semibold text-slate-50">
+                                  {conference.title}
+                                </h3>
+                                {conference.featured && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                                    <StarIcon className="h-3 w-3" />
+                                    Featured
+                                  </span>
+                                )}
+                              </div>
                               <p className="mt-1 text-sm text-slate-400">
                                 {conference.employerName}
                               </p>
                             </div>
-                            <StatusBadge status={isActive ? "active" : "inactive"} />
+                            <div className="flex flex-col items-end gap-1">
+                              <StatusBadge status={isActive ? "active" : "inactive"} />
+                              {getPaymentBadge(conference)}
+                            </div>
                           </div>
 
                           <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
@@ -298,7 +382,7 @@ function AdminConferencesContent() {
                             </p>
                           )}
 
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
                             {conference.startDate && (
                               <span>
                                 Start:{" "}
@@ -317,6 +401,12 @@ function AdminConferencesContent() {
                                   : new Date(
                                     conference.endDate.seconds * 1000
                                   ).toLocaleDateString()}
+                              </span>
+                            )}
+                            {typeof conference.viewsCount === "number" && (
+                              <span className="flex items-center gap-1">
+                                <EyeIcon className="h-3 w-3" />
+                                {conference.viewsCount} views
                               </span>
                             )}
                           </div>
@@ -338,6 +428,14 @@ function AdminConferencesContent() {
                         className="rounded-md border border-blue-500 px-4 py-2 text-sm font-semibold text-blue-400 transition hover:bg-blue-500/10 text-center"
                       >
                         Edit
+                      </Link>
+
+                      <Link
+                        href={`/admin/employers/${conference.employerId}/products`}
+                        className="rounded-md border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500/10 text-center flex items-center justify-center gap-1"
+                      >
+                        <CurrencyDollarIcon className="h-4 w-4" />
+                        Products
                       </Link>
 
                       <button

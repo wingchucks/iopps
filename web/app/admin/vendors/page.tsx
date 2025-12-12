@@ -18,6 +18,13 @@ import { db } from "@/lib/firebase";
 import { grantVendorFreeListing, revokeVendorFreeListing } from "@/lib/firestore";
 import type { Vendor } from "@/lib/types";
 import { AdminLoadingState, AdminEmptyState, StatusBadge } from "@/components/admin";
+import {
+  CurrencyDollarIcon,
+  StarIcon,
+  EyeIcon,
+  GiftIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 
 function AdminVendorsContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -291,6 +298,39 @@ function AdminVendorsContent() {
   const activeCount = vendors.filter((v) => v.status === "active").length;
   const inactiveCount = vendors.filter((v) => v.status === "draft" || v.status === "suspended").length;
   const featuredCount = vendors.filter((v) => v.featured === true).length;
+  const paidCount = vendors.filter((v) => v.subscriptionStatus === "active").length;
+  const freeCount = vendors.filter((v) => v.freeListingEnabled === true).length;
+
+  function getSubscriptionBadge(vendor: Vendor) {
+    if (vendor.freeListingEnabled) {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2 py-0.5 text-xs font-medium text-purple-400">
+          <GiftIcon className="h-3 w-3" />
+          Free Grant
+        </span>
+      );
+    }
+    if (vendor.subscriptionStatus === "active") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
+          <CurrencyDollarIcon className="h-3 w-3" />
+          Subscribed
+        </span>
+      );
+    }
+    if (vendor.subscriptionStatus === "past_due") {
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
+          Past Due
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400">
+        No Subscription
+      </span>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#020306]">
@@ -306,7 +346,7 @@ function AdminVendorsContent() {
                 ← Admin Dashboard
               </Link>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
-                Vendors Moderation
+                Shop Indigenous - Vendors
               </h1>
               <p className="mt-1 text-sm text-slate-400">
                 {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""}
@@ -318,6 +358,34 @@ function AdminVendorsContent() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-8">
+        {/* Stats */}
+        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Total</p>
+            <p className="mt-1 text-2xl font-bold text-slate-100">{vendors.length}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Pending</p>
+            <p className="mt-1 text-2xl font-bold text-amber-400">{pendingCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Active</p>
+            <p className="mt-1 text-2xl font-bold text-green-400">{activeCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Featured</p>
+            <p className="mt-1 text-2xl font-bold text-yellow-400">{featuredCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Paid Subs</p>
+            <p className="mt-1 text-2xl font-bold text-teal-400">{paidCount}</p>
+          </div>
+          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+            <p className="text-sm font-medium text-slate-400">Free Grants</p>
+            <p className="mt-1 text-2xl font-bold text-purple-400">{freeCount}</p>
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="mb-6 flex flex-wrap gap-3">
           <button
@@ -408,23 +476,22 @@ function AdminVendorsContent() {
                                 </p>
                               )}
                             </div>
-                            <div className="flex gap-2">
-                              <StatusBadge status={vendor.status === "pending" ? "pending" : isActive ? "active" : "inactive"} />
-                              {vendor.status === "pending" && (
-                                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
-                                  Needs Review
-                                </span>
-                              )}
-                              {isFeatured && (
-                                <span className="rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400">
-                                  Featured
-                                </span>
-                              )}
-                              {vendor.freeListingEnabled && (
-                                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-                                  Free Listing
-                                </span>
-                              )}
+                            <div className="flex flex-col items-end gap-1">
+                              <div className="flex gap-2">
+                                <StatusBadge status={vendor.status === "pending" ? "pending" : isActive ? "active" : "inactive"} />
+                                {vendor.status === "pending" && (
+                                  <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
+                                    Needs Review
+                                  </span>
+                                )}
+                                {isFeatured && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-400">
+                                    <StarIcon className="h-3 w-3" />
+                                    Featured
+                                  </span>
+                                )}
+                              </div>
+                              {getSubscriptionBadge(vendor)}
                             </div>
                           </div>
 
@@ -487,9 +554,16 @@ function AdminVendorsContent() {
                             </a>
                           )}
 
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                            {typeof vendor.viewCount === 'number' && (
+                              <span className="flex items-center gap-1">
+                                <EyeIcon className="h-3.5 w-3.5" />
+                                {vendor.viewCount.toLocaleString()} views
+                              </span>
+                            )}
                             {vendor.createdAt && (
-                              <span>
+                              <span className="flex items-center gap-1">
+                                <CalendarIcon className="h-3.5 w-3.5" />
                                 Listed:{" "}
                                 {(vendor.createdAt as unknown as Date).toLocaleDateString?.() ??
                                   (typeof vendor.createdAt === 'object' && 'toDate' in vendor.createdAt
@@ -498,6 +572,14 @@ function AdminVendorsContent() {
                               </span>
                             )}
                             {vendor.region && <span>Region: {vendor.region}</span>}
+                            {vendor.subscriptionEndsAt && (
+                              <span className="text-teal-400">
+                                Subscription expires:{" "}
+                                {typeof vendor.subscriptionEndsAt === 'object' && 'toDate' in vendor.subscriptionEndsAt
+                                  ? (vendor.subscriptionEndsAt as any).toDate().toLocaleDateString()
+                                  : ''}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
