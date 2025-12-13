@@ -1110,3 +1110,84 @@ export interface ProductConfig {
   // Default stats when product is granted
   defaultStats: EmployerProduct["stats"];
 }
+
+// ============================================
+// TRAINING PROGRAMS
+// ============================================
+
+export type TrainingProgramStatus = "pending" | "approved" | "rejected";
+export type TrainingFormat = "in-person" | "online" | "hybrid";
+export type TrainingDuration = "hours" | "days" | "weeks" | "months" | "self-paced";
+
+export interface TrainingProgram {
+  id: string;
+
+  // Organization/Provider
+  organizationId: string; // References employers collection
+  organizationName?: string; // Denormalized for display
+
+  // Program Details
+  title: string;
+  description: string;
+  shortDescription?: string; // For cards/previews
+
+  // External Enrollment (external redirect only)
+  enrollmentUrl: string; // Required - external provider URL
+  providerName: string; // Name of training institution
+  providerWebsite?: string;
+
+  // Format & Duration
+  format: TrainingFormat;
+  duration?: string; // e.g., "6 weeks", "40 hours"
+  durationType?: TrainingDuration;
+  startDate?: Timestamp | string | null;
+  endDate?: Timestamp | string | null;
+  ongoing?: boolean; // If true, continuous enrollment
+
+  // Location (for in-person/hybrid)
+  location?: string;
+  region?: NorthAmericanRegion;
+
+  // Categorization
+  category?: string; // e.g., "Technology", "Trades", "Healthcare"
+  skills?: string[]; // Skills taught
+  certificationOffered?: string;
+
+  // Indigenous Focus
+  indigenousFocused?: boolean;
+  targetCommunities?: string[]; // Specific nations/communities
+
+  // Cost & Funding
+  cost?: string; // Display string, e.g., "Free", "$500", "Contact provider"
+  fundingAvailable?: boolean;
+  scholarshipInfo?: string;
+
+  // Media
+  imageUrl?: string;
+
+  // Status & Approval (hybrid workflow)
+  status: TrainingProgramStatus;
+  featured: boolean; // Paid featuring
+  active: boolean;
+
+  // Analytics
+  viewCount?: number;
+  clickCount?: number; // Clicks to enrollment URL
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+  approvedAt?: Timestamp | null;
+  approvedBy?: string;
+}
+
+// For tracking user interest/clicks (analytics)
+export interface MemberTrainingInterest {
+  id: string;
+  userId: string;
+  programId: string;
+  programTitle?: string; // Denormalized
+  organizationName?: string; // Denormalized
+  clickedAt: Timestamp | null;
+  enrollmentClicked: boolean; // Did they click through to provider?
+}
