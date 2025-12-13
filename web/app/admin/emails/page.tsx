@@ -144,12 +144,25 @@ export default function AdminEmailsPage() {
     setTriggerResult(null);
 
     try {
-      const response = await fetch(`/api/emails/send-${campaignType}`, {
+      // Get user's auth token
+      if (!user) {
+        setTriggerResult({
+          type: campaignType,
+          success: false,
+          message: "Not authenticated",
+        });
+        return;
+      }
+
+      const idToken = await user.getIdToken();
+
+      const response = await fetch("/api/admin/trigger-email-campaign", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || ""}`,
+          Authorization: `Bearer ${idToken}`,
         },
+        body: JSON.stringify({ campaignType }),
       });
 
       const data = await response.json();

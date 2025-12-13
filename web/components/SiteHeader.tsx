@@ -9,10 +9,10 @@ import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
-  { href: "/jobs", label: "Jobs" },
+  { href: "/jobs-training", label: "Jobs & Training" },
   { href: "/conferences", label: "Conferences" },
   { href: "/scholarships", label: "Scholarships & Grants" },
-  { href: "/shop", label: "Shop Indigenous" },
+  { href: "/marketplace", label: "Indigenous Marketplace" },
   { href: "/powwows", label: "Pow Wows & Events" },
   { href: "/live", label: "Live Streams" },
   { href: "/pricing", label: "Pricing" },

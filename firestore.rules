@@ -125,6 +125,53 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // TRAINING PROGRAMS
+    // ===========================================================================
+    match /training_programs/{programId} {
+      // Public read for approved/active programs
+      allow read: if resource.data.status == 'approved' && resource.data.active == true;
+
+      // Organization owner can read their own (any status)
+      allow read: if isSignedIn() && resource.data.organizationId == request.auth.uid;
+
+      // Admins/moderators can read all
+      allow read: if isAdminOrModerator();
+
+      // Employers can create programs for their organization
+      allow create: if isEmployer() && request.resource.data.organizationId == request.auth.uid;
+
+      // Owners can update their own programs, but cannot change status/featured
+      allow update: if (
+        isOwner(resource.data.organizationId) &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.featured == resource.data.featured
+      ) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdminOrModerator();
+    }
+
+    // ===========================================================================
+    // MEMBER TRAINING INTERESTS (Analytics)
+    // ===========================================================================
+    match /member_learning/{interestId} {
+      // Users can read their own
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Admins can read all (for analytics)
+      allow read: if isAdminOrModerator();
+
+      // Users can create for themselves
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Users can delete their own
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // ===========================================================================
     // POW WOWS
     // ===========================================================================
     match /powwows/{powwowId} {

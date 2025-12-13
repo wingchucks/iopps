@@ -66,7 +66,7 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  /* Redirects for backwards compatibility (employer/vendor -> organization) */
+  /* Redirects for backwards compatibility */
   async redirects() {
     return [
       // Employer to Organization redirects
@@ -79,6 +79,28 @@ const nextConfig: NextConfig = {
       {
         source: "/vendor/:path*",
         destination: "/organization/shop/:path*",
+        permanent: true,
+      },
+      // Jobs to Jobs & Training redirects
+      {
+        source: "/jobs",
+        destination: "/jobs-training",
+        permanent: true,
+      },
+      {
+        source: "/jobs/:path*",
+        destination: "/jobs-training/:path*",
+        permanent: true,
+      },
+      // Shop to Marketplace redirects
+      {
+        source: "/shop",
+        destination: "/marketplace",
+        permanent: true,
+      },
+      {
+        source: "/shop/:path*",
+        destination: "/marketplace/:path*",
         permanent: true,
       },
     ];

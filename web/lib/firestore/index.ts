@@ -173,3 +173,20 @@ export {
   updateJobAlert,
 } from "./misc";
 export type { GlobalSearchResults, ContactSubmissionInput } from "./misc";
+
+// Training Programs
+export {
+  listTrainingPrograms,
+  getTrainingProgram,
+  createTrainingProgram,
+  updateTrainingProgram,
+  updateTrainingProgramStatus,
+  setTrainingProgramFeatured,
+  deleteTrainingProgram,
+  incrementTrainingProgramViews,
+  trackEnrollmentClick,
+  getMemberTrainingInterests,
+  listOrganizationTrainingPrograms,
+  getTrainingProgramsPendingReview,
+} from "./training";
+export type { ListTrainingProgramsOptions } from "./training";
