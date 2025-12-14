@@ -43,7 +43,10 @@ export default function MemberDashboard() {
 
   // Load all data
   useEffect(() => {
-    if (!user || role !== "community") return;
+    if (!user || role !== "community") {
+      setDataLoading(false);
+      return;
+    }
 
     const loadData = async () => {
       try {
@@ -65,7 +68,6 @@ export default function MemberDashboard() {
       }
     };
 
-    loadData();
     loadData();
   }, [user, role]);
 
