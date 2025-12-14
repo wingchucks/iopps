@@ -132,3 +132,23 @@ export const VENDOR_PRODUCTS = {
 
 export type VendorProductType = keyof typeof VENDOR_PRODUCTS;
 
+// Training Program product configurations
+export const TRAINING_PRODUCTS = {
+    FEATURED: {
+        name: "Featured Training Program",
+        price: 15000, // $150.00 CAD
+        duration: 60, // days
+        featured: true,
+        description: "Premium spotlight placement with featured badge and top positioning for 60 days",
+    },
+    FEATURED_90: {
+        name: "Featured Training Program (90 Days)",
+        price: 22500, // $225.00 CAD
+        duration: 90, // days
+        featured: true,
+        description: "Extended premium spotlight placement for 90 days - Save 25%",
+    },
+} as const;
+
+export type TrainingProductType = keyof typeof TRAINING_PRODUCTS;
+

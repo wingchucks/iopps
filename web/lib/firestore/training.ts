@@ -16,11 +16,13 @@ import {
   checkFirebase,
   trainingProgramsCollection,
   memberLearningCollection,
+  savedTrainingCollection,
 } from "./shared";
 import type {
   TrainingProgram,
   TrainingProgramStatus,
   MemberTrainingInterest,
+  SavedTraining,
 } from "@/lib/types";
 
 // ============================================
@@ -316,4 +318,116 @@ export async function getTrainingProgramsPendingReview(): Promise<
     status: "pending",
     activeOnly: false,
   });
+}
+
+// ============================================
+// SAVED TRAINING PROGRAMS (Member bookmarks)
+// ============================================
+
+/**
+ * Save a training program for a member
+ */
+export async function saveTrainingProgram(
+  memberId: string,
+  programId: string
+): Promise<string> {
+  const fbApp = checkFirebase();
+  if (!fbApp) throw new Error("Firebase not initialized");
+
+  // Check if already saved
+  const existing = await getSavedTraining(memberId, programId);
+  if (existing) return existing.id;
+
+  const colRef = collection(db!, savedTrainingCollection);
+  const docRef = await addDoc(colRef, {
+    memberId,
+    programId,
+    createdAt: serverTimestamp(),
+  });
+
+  return docRef.id;
+}
+
+/**
+ * Remove a saved training program
+ */
+export async function unsaveTrainingProgram(
+  memberId: string,
+  programId: string
+): Promise<void> {
+  const fbApp = checkFirebase();
+  if (!fbApp) return;
+
+  const existing = await getSavedTraining(memberId, programId);
+  if (existing) {
+    const docRef = doc(db!, savedTrainingCollection, existing.id);
+    await deleteDoc(docRef);
+  }
+}
+
+/**
+ * Check if a training program is saved
+ */
+export async function getSavedTraining(
+  memberId: string,
+  programId: string
+): Promise<SavedTraining | null> {
+  const fbApp = checkFirebase();
+  if (!fbApp) return null;
+
+  const colRef = collection(db!, savedTrainingCollection);
+  const q = query(
+    colRef,
+    where("memberId", "==", memberId),
+    where("programId", "==", programId),
+    limit(1)
+  );
+
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as SavedTraining;
+}
+
+/**
+ * Check if a training program is saved (boolean)
+ */
+export async function isTrainingSaved(
+  memberId: string,
+  programId: string
+): Promise<boolean> {
+  const saved = await getSavedTraining(memberId, programId);
+  return saved !== null;
+}
+
+/**
+ * List all saved training programs for a member
+ */
+export async function listSavedTraining(
+  memberId: string
+): Promise<SavedTraining[]> {
+  const fbApp = checkFirebase();
+  if (!fbApp) return [];
+
+  const colRef = collection(db!, savedTrainingCollection);
+  const q = query(
+    colRef,
+    where("memberId", "==", memberId),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  const savedItems = snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as SavedTraining[];
+
+  // Fetch training program details
+  const programPromises = savedItems.map(async (item) => {
+    const program = await getTrainingProgram(item.programId);
+    return { ...item, program };
+  });
+
+  return Promise.all(programPromises);
 }

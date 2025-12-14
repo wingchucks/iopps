@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
                 // Extract and validate metadata
                 const metadata = session.metadata || {};
-                const { type, productType, userId, jobId, conferenceId, vendorId, duration, featured, jobCredits, featuredJobCredits, unlimitedPosts } = metadata;
+                const { type, productType, userId, jobId, conferenceId, vendorId, programId, duration, featured, jobCredits, featuredJobCredits, unlimitedPosts } = metadata;
 
                 // Validate required metadata
                 if (!type) {
@@ -223,6 +223,29 @@ export async function POST(request: NextRequest) {
                     });
 
                     console.log(`Conference ${conferenceId} activated successfully`);
+                    break;
+                }
+
+                // Handle training program featured payment
+                if (type === "training_featured" && programId) {
+                    const durationDays = duration ? parseInt(duration, 10) : 60;
+                    // Calculate expiration date for featured status
+                    const featuredExpiresAt = new Date();
+                    featuredExpiresAt.setDate(featuredExpiresAt.getDate() + durationDays);
+
+                    const programRef = db.collection("training_programs").doc(programId);
+
+                    await programRef.update({
+                        featured: true,
+                        featuredAt: new Date(),
+                        featuredExpiresAt: featuredExpiresAt,
+                        featuredPaymentId: session.payment_intent as string,
+                        featuredProductType: productType || "FEATURED",
+                        featuredAmountPaid: session.amount_total,
+                        updatedAt: new Date(),
+                    });
+
+                    console.log(`Training program ${programId} featured successfully until ${featuredExpiresAt.toISOString()}`);
                     break;
                 }
 

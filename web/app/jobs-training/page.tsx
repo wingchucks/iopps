@@ -344,6 +344,43 @@ function JobsContent() {
         </div>
       )}
 
+      {/* Training Programs Banner */}
+      {!hasFilters && (
+        <section className="mb-12">
+          <Link
+            href="/jobs-training/programs"
+            className="group relative block overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/30 via-indigo-900/20 to-violet-900/30 p-6 sm:p-8 transition-all hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-indigo-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 shadow-lg shadow-purple-500/25">
+                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">
+                    Looking to Build Your Skills?
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-300">
+                    Explore training programs, certifications, and professional development opportunities.
+                  </p>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-colors group-hover:bg-purple-500/30">
+                Browse Training Programs
+                <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+        </section>
+      )}
+
       {/* Featured Jobs Section */}
       {!hasFilters && featuredJobs.length > 0 && (
         <section className="mb-12">
