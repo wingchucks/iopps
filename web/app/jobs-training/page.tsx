@@ -122,7 +122,7 @@ function JobsTrainingContent() {
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Find Jobs</h2>
           <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Browse {jobs.length || "100"}+ job opportunities from employers committed to Indigenous hiring.
+            Browse job opportunities from employers committed to Indigenous hiring.
           </p>
           <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
             Browse Jobs →
@@ -162,32 +162,6 @@ function JobsTrainingContent() {
             View Dashboard →
           </span>
         </Link>
-      </div>
-
-      {/* Stats Banner - Ocean Wave Style */}
-      <div className="rounded-2xl overflow-hidden mb-12">
-        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
-          <div className="bg-gradient-to-b from-white/5 to-transparent p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">250+</div>
-                <div className="text-sm text-white/80">Active Jobs</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">85+</div>
-                <div className="text-sm text-white/80">Training Programs</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">120+</div>
-                <div className="text-sm text-white/80">Employers</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">45+</div>
-                <div className="text-sm text-white/80">Training Providers</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Featured Jobs Section */}
