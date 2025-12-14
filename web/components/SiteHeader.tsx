@@ -11,10 +11,10 @@ import { getUnreadMessageCount } from "@/lib/firestore";
 const navLinks = [
   { href: "/jobs-training", label: "Jobs & Training" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/scholarships", label: "Scholarships & Grants" },
-  { href: "/marketplace", label: "Indigenous Marketplace" },
-  { href: "/powwows", label: "Pow Wows & Events" },
-  { href: "/live", label: "Live Streams" },
+  { href: "/scholarships", label: "Scholarships" },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/powwows", label: "Events" },
+  { href: "/live", label: "Live" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -72,11 +72,11 @@ export default function SiteHeader() {
       <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
         {/* Subtle white overlay */}
         <div className="bg-gradient-to-b from-white/5 to-transparent">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mx-auto w-full px-4 lg:px-6">
             {/* Single row with logo, navigation, and account */}
-            <div className="flex items-center justify-between py-4">
+            <div className="flex items-center justify-between gap-4 py-3">
               {/* Branding */}
-              <Link href="/" className="group mr-6 flex shrink-0 items-center gap-3">
+              <Link href="/" className="group flex shrink-0 items-center gap-2">
                 <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/30 bg-white/20 shadow-lg backdrop-blur">
                   <Image
                     src="/logo.png"
@@ -93,20 +93,22 @@ export default function SiteHeader() {
               </Link>
 
               {/* Navigation bar - Pill container */}
-              <nav className="hidden lg:flex items-center rounded-full border border-white/20 bg-white/10 px-2 py-1 backdrop-blur">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                      pathname === link.href
-                        ? "bg-white/20 font-semibold text-white"
-                        : "text-white/80 hover:text-white"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              <nav className="hidden lg:flex flex-1 items-center justify-center">
+                <div className="flex items-center rounded-full border border-white/20 bg-white/10 px-1.5 py-1 backdrop-blur">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                        pathname === link.href
+                          ? "bg-white/20 font-semibold text-white"
+                          : "text-white/80 hover:text-white"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
               </nav>
 
               {/* Mobile menu button */}
@@ -125,7 +127,7 @@ export default function SiteHeader() {
               </button>
 
               {/* Account section */}
-              <div className="hidden lg:flex items-center gap-3">
+              <div className="hidden lg:flex shrink-0 items-center gap-2">
                 {loading ? (
                   <div className="text-xs text-white/60">Loading...</div>
                 ) : user ? (
