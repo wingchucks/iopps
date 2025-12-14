@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/firebase-admin";
 import type { EmployerProfile, JobPosting, IndustryType } from "@/lib/types";
@@ -11,6 +12,61 @@ type PageProps = {
     employerId: string;
   };
 };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { employerId } = params;
+
+  if (!db) {
+    return { title: 'Employer Profile' };
+  }
+
+  try {
+    const employerDoc = await db.collection("employers").doc(employerId).get();
+
+    if (!employerDoc.exists) {
+      return { title: 'Employer Not Found' };
+    }
+
+    const employer = employerDoc.data() as EmployerProfile;
+
+    if (employer.status !== "approved" || (employer as any).deletedAt) {
+      return { title: 'Employer Profile' };
+    }
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://iopps.ca';
+    const industry = employer.industry ? INDUSTRY_LABELS[employer.industry] : '';
+    const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(employer.organizationName)}&type=employer&subtitle=${encodeURIComponent(industry || employer.location || 'Indigenous Employer')}${employer.logoUrl ? `&image=${encodeURIComponent(employer.logoUrl)}` : ''}`;
+
+    const description = employer.description?.substring(0, 160) || `View jobs and learn more about ${employer.organizationName}`;
+
+    return {
+      title: `${employer.organizationName} | Jobs & Company Info`,
+      description,
+      openGraph: {
+        title: employer.organizationName,
+        description,
+        type: 'website',
+        url: `${siteUrl}/employers/${employerId}`,
+        images: [
+          {
+            url: employer.bannerUrl || employer.logoUrl || ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: employer.organizationName,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: employer.organizationName,
+        description,
+        images: [employer.bannerUrl || employer.logoUrl || ogImageUrl],
+      },
+    };
+  } catch (error) {
+    return { title: 'Employer Profile' };
+  }
+}
 
 // Force dynamic rendering
 export const dynamicParams = true;
