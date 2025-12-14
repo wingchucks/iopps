@@ -76,7 +76,7 @@ export default function SiteHeader() {
             {/* Single row with logo, navigation, and account */}
             <div className="flex items-center justify-between py-4">
               {/* Branding */}
-              <Link href="/" className="group flex items-center gap-3">
+              <Link href="/" className="group mr-6 flex shrink-0 items-center gap-3">
                 <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/30 bg-white/20 shadow-lg backdrop-blur">
                   <Image
                     src="/logo.png"
