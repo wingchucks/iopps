@@ -67,7 +67,7 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 overflow-hidden">
+    <header className="sticky top-0 z-50">
       {/* Ocean Wave gradient background */}
       <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
         {/* Subtle white overlay */}
