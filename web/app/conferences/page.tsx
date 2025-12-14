@@ -7,6 +7,7 @@ import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, CalendarDaysIcon, MapPinIco
 import { listConferences } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
 
 const TIMEFRAME_OPTIONS = [
   { label: "All Dates", value: "all" },
@@ -175,61 +176,42 @@ function ConferencesContent() {
   };
 
   return (
-    <PageShell>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="conf-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="5" cy="5" r="1" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#conf-grid)" />
-          </svg>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Conferences & Summits
-          </h1>
-          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits,
-            and professional gatherings from organizations across Turtle Island.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search conferences..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-            >
-              <FunnelIcon className="h-5 w-5" />
-              Filters
-              {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
-                  !
-                </span>
-              )}
-            </button>
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Conferences & Summits"
+        title="Connect & Learn"
+        subtitle="Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits, and professional gatherings from organizations across Turtle Island."
+        size="md"
+      >
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+            <input
+              type="text"
+              placeholder="Search conferences..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+            />
           </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+          >
+            <FunnelIcon className="h-5 w-5" />
+            Filters
+            {hasFilters && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
+                !
+              </span>
+            )}
+          </button>
         </div>
-      </div>
+      </OceanWaveHero>
+
+      <PageShell>
 
       {/* Filters Panel */}
       {showFilters && (
@@ -258,7 +240,7 @@ function ConferencesContent() {
                     onClick={() => setTimeframe(option.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       timeframe === option.value
-                        ? "bg-teal-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -278,7 +260,7 @@ function ConferencesContent() {
                     onClick={() => setCostFilter(option.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       costFilter === option.value
-                        ? "bg-teal-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -355,7 +337,7 @@ function ConferencesContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d9488] transition-colors"
             >
               Clear filters
             </button>
@@ -371,7 +353,7 @@ function ConferencesContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                 >
                   Load more conferences
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -384,25 +366,33 @@ function ConferencesContent() {
         )}
       </section>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Hosting a Conference or Summit?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          List your conference on IOPPS. Reach Indigenous professionals and community leaders across North America.
-        </p>
-        <a
-          href="/organization/conferences/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-        >
-          Post a Conference
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </a>
+      </PageShell>
+
+      {/* CTA Section - Ocean Wave Style */}
+      <section className="relative overflow-hidden">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent">
+            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                Hosting a Conference or Summit?
+              </h2>
+              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                List your conference on IOPPS. Reach Indigenous professionals and community leaders across North America.
+              </p>
+              <Link
+                href="/organization/conferences/new"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-lg font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Post a Conference
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
-    </PageShell>
+    </div>
   );
 }
 
@@ -421,11 +411,11 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
       }`}
     >
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-teal-600/20 to-emerald-600/10 px-5 py-6">
+      <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-6">
         {/* Featured Badge */}
         {featured && (
           <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
@@ -438,7 +428,7 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
 
         {/* Date */}
         {startDate && (
-          <div className="flex items-center gap-2 text-teal-300">
+          <div className="flex items-center gap-2 text-[#14B8A6]">
             <CalendarDaysIcon className="h-5 w-5" />
             <span className="text-sm font-medium">
               {startDate}
@@ -451,8 +441,8 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
         <div className="mt-3">
           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
             isFree
-              ? "bg-emerald-500/20 text-emerald-300"
-              : "bg-teal-500/20 text-teal-300"
+              ? "bg-[#14B8A6]/20 text-[#14B8A6]"
+              : "bg-[#14B8A6]/20 text-[#14B8A6]"
           }`}>
             <TicketIcon className="h-3 w-3" />
             {isFree ? "Free" : conference.cost}
@@ -463,12 +453,12 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
         {conference.employerName && (
-          <p className="text-xs font-semibold uppercase tracking-wider text-teal-400 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[#14B8A6] mb-1">
             {conference.employerName}
           </p>
         )}
 
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors">
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
           {conference.title}
         </h3>
 
@@ -484,13 +474,13 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
         {/* Footer */}
         <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
           {conference.registrationLink ? (
-            <span className="text-xs font-medium text-emerald-400">
+            <span className="text-xs font-medium text-[#14B8A6]">
               Registration Open
             </span>
           ) : (
             <span className="text-xs text-slate-500">Details available</span>
           )}
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 group-hover:gap-2 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#14B8A6] group-hover:gap-2 transition-all">
             View details
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -506,9 +496,14 @@ export default function ConferencesPage() {
   return (
     <Suspense
       fallback={
-        <PageShell>
-          <div className="mx-auto max-w-7xl">
-            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
+        <div className="min-h-screen text-slate-100">
+          <OceanWaveHero
+            eyebrow="Conferences & Summits"
+            title="Connect & Learn"
+            subtitle="Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits, and professional gatherings from organizations across Turtle Island."
+            size="md"
+          />
+          <PageShell>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
                 <div
@@ -517,8 +512,8 @@ export default function ConferencesPage() {
                 />
               ))}
             </div>
-          </div>
-        </PageShell>
+          </PageShell>
+        </div>
       }
     >
       <ConferencesContent />

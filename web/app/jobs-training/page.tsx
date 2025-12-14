@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { listJobPostings, listTrainingPrograms } from "@/lib/firestore";
 import type { JobPosting, TrainingProgram } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
 
 function JobsTrainingContent() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
@@ -77,47 +78,53 @@ function JobsTrainingContent() {
   };
 
   return (
-    <PageShell>
-      {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
-          Home
-        </Link>
-        <span className="mx-2">→</span>
-        <span className="text-white">Jobs & Training</span>
-      </nav>
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Jobs & Training"
+        title={
+          <>
+            Find Your Path.
+            <br />
+            Build Your Future.
+          </>
+        }
+        subtitle="Discover career opportunities with employers committed to Indigenous hiring, and training programs to build your skills."
+        size="md"
+      >
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link
+            href="/jobs-training/jobs"
+            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            Browse Jobs
+          </Link>
+          <Link
+            href="/jobs-training/programs"
+            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+          >
+            View Training
+          </Link>
+        </div>
+      </OceanWaveHero>
 
-      {/* Hero Section */}
-      <div className="relative text-center mb-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
-          Jobs & Training
-        </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl lg:text-6xl">
-          Find Your Path.
-          <br />
-          Build Your Future.
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          Discover career opportunities with employers committed to Indigenous hiring,
-          and training programs to build your skills.
-        </p>
-      </div>
+      <PageShell>
 
       {/* Three Cards Section */}
       <div className="grid gap-6 md:grid-cols-3 mb-12">
         {/* Find Jobs Card */}
         <Link
           href="/jobs-training/jobs"
-          className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-left transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
+          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
             <span className="text-2xl">💼</span>
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Find Jobs</h2>
           <p className="text-sm text-slate-400 leading-relaxed mb-4">
             Browse {jobs.length || "100"}+ job opportunities from employers committed to Indigenous hiring.
           </p>
-          <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 inline-block transition-transform">
+          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
             Browse Jobs →
           </span>
         </Link>
@@ -125,16 +132,16 @@ function JobsTrainingContent() {
         {/* Build Skills Card */}
         <Link
           href="/jobs-training/programs"
-          className="group rounded-2xl border border-sky-500/30 bg-slate-900/50 p-8 text-left transition-all hover:border-sky-500/50 hover:-translate-y-1"
+          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-500/40">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
             <span className="text-2xl">📚</span>
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Build Skills</h2>
           <p className="text-sm text-slate-400 leading-relaxed mb-4">
             Access training from Indigenous institutions — professional, trades, and cultural.
           </p>
-          <span className="text-sm font-semibold text-sky-400 group-hover:translate-x-1 inline-block transition-transform">
+          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
             Browse Training →
           </span>
         </Link>
@@ -142,39 +149,43 @@ function JobsTrainingContent() {
         {/* My Dashboard Card */}
         <Link
           href="/member/dashboard"
-          className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-left transition-all hover:border-amber-500/50 hover:-translate-y-1"
+          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-500/40">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
             <span className="text-2xl">📊</span>
           </div>
           <h2 className="text-xl font-bold text-white mb-2">My Dashboard</h2>
           <p className="text-sm text-slate-400 leading-relaxed mb-4">
             Track applications, continue learning, and manage your certificates.
           </p>
-          <span className="text-sm font-semibold text-amber-400 group-hover:translate-x-1 inline-block transition-transform">
+          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
             View Dashboard →
           </span>
         </Link>
       </div>
 
-      {/* Stats Banner */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 mb-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <div className="text-3xl font-bold text-[#14B8A6] mb-1">250+</div>
-            <div className="text-sm text-slate-400">Active Jobs</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-[#14B8A6] mb-1">85+</div>
-            <div className="text-sm text-slate-400">Training Programs</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-[#14B8A6] mb-1">120+</div>
-            <div className="text-sm text-slate-400">Employers</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-[#14B8A6] mb-1">45+</div>
-            <div className="text-sm text-slate-400">Training Providers</div>
+      {/* Stats Banner - Ocean Wave Style */}
+      <div className="rounded-2xl overflow-hidden mb-12">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent p-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">250+</div>
+                <div className="text-sm text-white/80">Active Jobs</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">85+</div>
+                <div className="text-sm text-white/80">Training Programs</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">120+</div>
+                <div className="text-sm text-white/80">Employers</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-white drop-shadow-lg mb-1">45+</div>
+                <div className="text-sm text-white/80">Training Providers</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -330,30 +341,38 @@ function JobsTrainingContent() {
         )}
       </section>
 
-      {/* CTA Section */}
-      <section className="rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Are you an employer or training provider?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Post your opportunities on IOPPS and connect with Indigenous talent across North America.
-        </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/organization/jobs/new"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-all hover:bg-[#0d9488]"
-          >
-            Post a Job
-          </Link>
-          <Link
-            href="/organization/training/new"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-600 px-6 py-3 font-semibold text-white transition-all hover:border-slate-500 hover:bg-slate-800"
-          >
-            Submit Training Program
-          </Link>
+      </PageShell>
+
+      {/* CTA Section - Ocean Wave Style */}
+      <section className="relative overflow-hidden">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent">
+            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                Are you an employer or training provider?
+              </h2>
+              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                Post your opportunities on IOPPS and connect with Indigenous talent across North America.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/organization/jobs/new"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  Post a Job
+                </Link>
+                <Link
+                  href="/organization/training/new"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  Submit Training Program
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-    </PageShell>
+    </div>
   );
 }
 
@@ -361,18 +380,21 @@ export default function JobsTrainingPage() {
   return (
     <Suspense
       fallback={
-        <PageShell>
-          <div className="text-center mb-16">
-            <div className="h-6 w-32 mx-auto bg-slate-800 rounded animate-pulse mb-4" />
-            <div className="h-16 w-96 mx-auto bg-slate-800 rounded animate-pulse mb-6" />
-            <div className="h-6 w-64 mx-auto bg-slate-800 rounded animate-pulse" />
-          </div>
-          <div className="grid gap-6 md:grid-cols-3 mb-12">
-            <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
-            <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
-            <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
-          </div>
-        </PageShell>
+        <div className="min-h-screen text-slate-100">
+          <OceanWaveHero
+            eyebrow="Jobs & Training"
+            title="Find Your Path. Build Your Future."
+            subtitle="Discover career opportunities with employers committed to Indigenous hiring, and training programs to build your skills."
+            size="md"
+          />
+          <PageShell>
+            <div className="grid gap-6 md:grid-cols-3 mb-12">
+              <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
+              <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
+              <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
+            </div>
+          </PageShell>
+        </div>
       }
     >
       <JobsTrainingContent />
