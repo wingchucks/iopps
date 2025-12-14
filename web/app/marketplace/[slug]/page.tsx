@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -45,6 +46,47 @@ function TikTokIcon({ className }: { className?: string }) {
 interface Props {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ preview?: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const vendor = await getVendorBySlug(slug);
+
+  if (!vendor) {
+    return {
+      title: 'Business Not Found',
+    };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://iopps.ca';
+  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(vendor.businessName)}&type=business&subtitle=${encodeURIComponent(vendor.tagline || vendor.category)}${vendor.logoUrl ? `&image=${encodeURIComponent(vendor.logoUrl)}` : ''}`;
+
+  const description = vendor.tagline || vendor.description?.substring(0, 160) || `Shop ${vendor.category} from ${vendor.businessName} - an Indigenous-owned business`;
+
+  return {
+    title: vendor.businessName,
+    description,
+    openGraph: {
+      title: vendor.businessName,
+      description,
+      type: 'website',
+      url: `${siteUrl}/marketplace/${slug}`,
+      images: [
+        {
+          url: vendor.coverImageUrl || ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: vendor.businessName,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: vendor.businessName,
+      description,
+      images: [vendor.coverImageUrl || ogImageUrl],
+    },
+  };
 }
 
 // Status banner component for non-active vendors
