@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/PageShell";
 import { listAllProducts, getVendor } from "@/lib/firebase/shop";
+import { useAuth } from "@/components/AuthProvider";
 import type { VendorProduct, Vendor } from "@/lib/types";
 
 const CATEGORIES = [
@@ -20,11 +21,15 @@ const CATEGORIES = [
 ];
 
 export default function ProductsPage() {
+  const { role } = useAuth();
   const [products, setProducts] = useState<VendorProduct[]>([]);
   const [vendors, setVendors] = useState<Record<string, Vendor>>({});
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Only show selling CTA to employers/admins
+  const canSell = role === "employer" || role === "admin";
 
   useEffect(() => {
     loadProducts();
@@ -231,21 +236,23 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Sell Your Products on IOPPS
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Join our marketplace and reach customers across North America who want to support Indigenous businesses.
-        </p>
-        <Link
-          href="/organization/shop"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
-        >
-          Start Selling
-        </Link>
-      </section>
+      {/* CTA Section - Only for employers/admins */}
+      {canSell && (
+        <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+            Sell Your Products on IOPPS
+          </h2>
+          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+            Join our marketplace and reach customers across North America who want to support Indigenous businesses.
+          </p>
+          <Link
+            href="/organization/shop"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          >
+            Start Selling
+          </Link>
+        </section>
+      )}
     </PageShell>
   );
 }
