@@ -447,6 +447,14 @@ export interface SavedJob {
   job?: JobPosting | null;
 }
 
+export interface SavedTraining {
+  id: string;
+  programId: string;
+  memberId: string;
+  createdAt?: Timestamp | null;
+  program?: TrainingProgram | null;
+}
+
 export type JobAlertFrequency = "instant" | "daily" | "weekly";
 
 export interface JobAlert {
@@ -945,6 +953,12 @@ export interface EmailPreferences {
   shopFrequency: EmailDigestFrequency;
   shopCategories: string[]; // empty = all categories
 
+  // Training Programs
+  trainingUpdates: boolean;
+  trainingFrequency: EmailDigestFrequency;
+  trainingCategories: string[]; // empty = all categories
+  trainingFormats: TrainingFormat[]; // empty = all formats
+
   // Platform Newsletter
   weeklyDigest: boolean;
 
@@ -1190,4 +1204,89 @@ export interface MemberTrainingInterest {
   organizationName?: string; // Denormalized
   clickedAt: Timestamp | null;
   enrollmentClicked: boolean; // Did they click through to provider?
+}
+
+// ============================================
+// INDIGENOUS MARKETPLACE - SERVICES
+// ============================================
+
+export const SERVICE_CATEGORIES = [
+  'Consulting',
+  'Legal Services',
+  'Accounting & Finance',
+  'Marketing & Communications',
+  'IT & Technology',
+  'Design & Creative',
+  'Construction & Trades',
+  'Health & Wellness',
+  'Education & Training',
+  'Environmental Services',
+  'Cultural Services',
+  'Translation & Language',
+  'Event Services',
+  'Other Professional Services',
+] as const;
+
+export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
+
+export type ServiceStatus = 'draft' | 'pending' | 'active' | 'suspended';
+
+export interface Service {
+  id: string;
+  vendorId: string; // Can be linked to a vendor or standalone
+  userId: string; // Owner's user ID
+
+  // Business Info
+  businessName: string;
+  slug: string; // URL-friendly identifier
+  title: string; // Service title (e.g., "Indigenous Business Consulting")
+  tagline?: string;
+  description: string;
+  category: ServiceCategory;
+
+  // Location & Availability
+  location?: string;
+  region: NorthAmericanRegion;
+  servesRemote: boolean; // Can serve clients remotely
+  serviceAreas?: string[]; // Specific areas served
+
+  // Contact & Links
+  email?: string;
+  phone?: string;
+  website?: string;
+  linkedin?: string;
+  bookingUrl?: string; // External booking/contact link
+
+  // Media
+  logoUrl?: string;
+  coverImageUrl?: string;
+  portfolioImages?: string[];
+
+  // Indigenous Identity
+  nation?: string;
+  indigenousOwned: boolean;
+  communityStory?: string;
+
+  // Service Details
+  services?: string[]; // List of specific services offered
+  industries?: string[]; // Industries served
+  certifications?: string[];
+  yearsExperience?: number;
+
+  // Pricing
+  priceRange?: string; // e.g., "$100-$200/hr", "Contact for quote"
+  freeConsultation?: boolean;
+
+  // Status & Visibility
+  status: ServiceStatus;
+  featured: boolean;
+  verified: boolean;
+
+  // Analytics
+  viewCount: number;
+  contactClicks: number;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
 }

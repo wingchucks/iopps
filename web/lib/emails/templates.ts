@@ -226,3 +226,72 @@ export function vendorAlertText(vendors: Array<{ slug: string; businessName: str
 
   return `New on Shop Indigenous\n\n${items}\n\n---\nBrowse all: ${SITE_URL}/shop\nManage preferences: ${SITE_URL}/member/email-preferences`;
 }
+
+// Training program card for email
+export function trainingCardHtml(program: {
+  id: string;
+  title: string;
+  providerName?: string;
+  format?: string;
+  duration?: string;
+  location?: string;
+  cost?: string;
+  fundingAvailable?: boolean;
+  certificationOffered?: string;
+}): string {
+  const safeTitle = escapeHtml(program.title);
+  const safeProvider = escapeHtml(program.providerName || "");
+  const safeFormat = escapeHtml(program.format || "");
+  const safeDuration = escapeHtml(program.duration || "");
+  const safeLocation = escapeHtml(program.location || "");
+  const safeCost = escapeHtml(program.cost || "");
+  const safeCert = escapeHtml(program.certificationOffered || "");
+
+  const formatBadgeColor = program.format === "online" ? "#22c55e" : program.format === "hybrid" ? "#f59e0b" : "#6366f1";
+
+  return `
+    <tr>
+      <td style="padding: 20px; border-bottom: 1px solid #2d2d35;">
+        <div style="margin-bottom: 12px;">
+          ${safeFormat ? `<span style="display: inline-block; padding: 4px 10px; background: ${formatBadgeColor}20; border-radius: 4px; font-size: 11px; color: ${formatBadgeColor}; text-transform: uppercase; margin-right: 8px;">${safeFormat}</span>` : ""}
+          ${program.fundingAvailable ? `<span style="display: inline-block; padding: 4px 10px; background: #10b98120; border-radius: 4px; font-size: 11px; color: #10b981;">💰 Funding Available</span>` : ""}
+        </div>
+        <h3 style="margin: 0 0 8px; font-size: 18px; color: #f1f5f9;">
+          <a href="${SITE_URL}/jobs-training/programs/${program.id}" style="color: #a855f7; text-decoration: none;">${safeTitle}</a>
+        </h3>
+        ${safeProvider ? `<p style="margin: 0 0 10px; font-size: 14px; color: #94a3b8;">by ${safeProvider}</p>` : ""}
+        <div style="font-size: 13px; color: #64748b;">
+          ${safeDuration ? `<span style="margin-right: 16px;">⏱️ ${safeDuration}</span>` : ""}
+          ${safeLocation ? `<span style="margin-right: 16px;">📍 ${safeLocation}</span>` : ""}
+          ${safeCost ? `<span style="margin-right: 16px;">💵 ${safeCost}</span>` : ""}
+        </div>
+        ${safeCert ? `<p style="margin: 10px 0 0; font-size: 13px; color: #94a3b8;">🎓 ${safeCert}</p>` : ""}
+        <div style="margin-top: 16px;">
+          <a href="${SITE_URL}/jobs-training/programs/${program.id}" style="display: inline-block; padding: 10px 20px; background: #a855f7; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">View Program</a>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+// Plain text email generator for training programs
+export function trainingAlertText(programs: Array<{
+  id: string;
+  title: string;
+  providerName?: string;
+  format?: string;
+  duration?: string;
+  location?: string;
+}>): string {
+  const items = programs.map((p) => {
+    const details = [
+      p.providerName ? `Provider: ${p.providerName}` : "",
+      p.format ? `Format: ${p.format}` : "",
+      p.duration ? `Duration: ${p.duration}` : "",
+      p.location ? `Location: ${p.location}` : "",
+    ].filter(Boolean).join(" | ");
+    return `${p.title}\n${details}\nView: ${SITE_URL}/jobs-training/programs/${p.id}`;
+  }).join("\n\n---\n\n");
+
+  return `New Training Programs on IOPPS\n\n${items}\n\n---\nBrowse all: ${SITE_URL}/jobs-training/programs\nManage preferences: ${SITE_URL}/member/email-preferences`;
+}

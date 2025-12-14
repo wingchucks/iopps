@@ -73,6 +73,8 @@ export const messagesCollection = "messages";
 export const notificationsCollection = "notifications";
 export const trainingProgramsCollection = "training_programs";
 export const memberLearningCollection = "member_learning";
+export const savedTrainingCollection = "savedTraining";
+export const servicesCollection = "services";
 
 // Helper to check if Firebase is available
 export function checkFirebase() {

@@ -8,16 +8,18 @@ import {
   listEmployerJobs,
   listEmployerConferences,
   listEmployerPowwows,
+  listOrganizationTrainingPrograms,
   updateJobStatus,
   deleteJobPosting,
   deleteConference,
   updatePowwowEvent,
   deletePowwow,
+  deleteTrainingProgram,
 } from "@/lib/firestore";
-import type { JobPosting, Conference, PowwowEvent } from "@/lib/types";
-import { VideoCameraIcon } from "@heroicons/react/24/outline";
+import type { JobPosting, Conference, PowwowEvent, TrainingProgram } from "@/lib/types";
+import { VideoCameraIcon, AcademicCapIcon } from "@heroicons/react/24/outline";
 
-type OpportunityType = "jobs" | "conferences" | "powwows";
+type OpportunityType = "jobs" | "conferences" | "powwows" | "training";
 type StatusFilter = "all" | "active" | "paused";
 
 export default function OpportunitiesTab() {
@@ -27,6 +29,7 @@ export default function OpportunitiesTab() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [powwows, setPowwows] = useState<PowwowEvent[]>([]);
+  const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
@@ -40,14 +43,16 @@ export default function OpportunitiesTab() {
     if (!user) return;
     setLoading(true);
     try {
-      const [jobsData, conferencesData, powwowsData] = await Promise.all([
+      const [jobsData, conferencesData, powwowsData, trainingData] = await Promise.all([
         listEmployerJobs(user.uid),
         listEmployerConferences(user.uid),
         listEmployerPowwows(user.uid),
+        listOrganizationTrainingPrograms(user.uid),
       ]);
       setJobs(jobsData);
       setConferences(conferencesData);
       setPowwows(powwowsData);
+      setTrainingPrograms(trainingData);
     } catch (err) {
       console.error("Error loading opportunities:", err);
     } finally {
@@ -102,6 +107,22 @@ export default function OpportunitiesTab() {
       return true;
     });
   }, [powwows, keyword, statusFilter]);
+
+  const filteredTrainingPrograms = useMemo(() => {
+    return trainingPrograms.filter((program) => {
+      if (statusFilter === "active" && program.active === false) return false;
+      if (statusFilter === "paused" && program.active !== false) return false;
+      if (
+        keyword &&
+        !`${program.title} ${program.description} ${program.providerName}`
+          .toLowerCase()
+          .includes(keyword.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [trainingPrograms, keyword, statusFilter]);
 
   const handleToggleJobStatus = async (jobId: string, currentStatus: boolean) => {
     try {
@@ -184,6 +205,19 @@ export default function OpportunitiesTab() {
     }
   };
 
+  const handleDeleteTrainingProgram = async (programId: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await deleteTrainingProgram(programId);
+      await loadData();
+    } catch (err) {
+      console.error("Error deleting training program:", err);
+      alert("Failed to delete training program");
+    }
+  };
+
   // Helper to get the "New" button link based on opportunity type
   const getNewButtonConfig = () => {
     switch (opportunityType) {
@@ -193,6 +227,8 @@ export default function OpportunitiesTab() {
         return { href: "/organization/conferences/new", label: "Conference" };
       case "powwows":
         return { href: "/organization/events/new", label: "Pow Wow" };
+      case "training":
+        return { href: "/organization/training/new", label: "Training Program" };
     }
   };
 
@@ -239,6 +275,16 @@ export default function OpportunitiesTab() {
           }`}
         >
           Pow Wows ({powwows.length})
+        </button>
+        <button
+          onClick={() => setOpportunityType("training")}
+          className={`rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
+            opportunityType === "training"
+              ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
+              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+          }`}
+        >
+          Training ({trainingPrograms.length})
         </button>
       </div>
 
@@ -592,6 +638,146 @@ export default function OpportunitiesTab() {
                     </button>
                     <button
                       onClick={() => handleDeletePowwow(powwow.id, powwow.name)}
+                      className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-300 transition-all hover:bg-red-500/30"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Training Programs List */}
+      {opportunityType === "training" && (
+        <div className="rounded-3xl bg-gradient-to-br from-purple-500/10 via-indigo-500/10 to-violet-500/10 p-8 shadow-xl shadow-purple-900/20">
+          {loading ? (
+            <p className="text-center text-slate-400">Loading training programs...</p>
+          ) : filteredTrainingPrograms.length === 0 ? (
+            <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+                <AcademicCapIcon className="h-8 w-8 text-slate-500" />
+              </div>
+              <p className="text-slate-300">
+                {trainingPrograms.length === 0
+                  ? "No training programs posted yet. Share your training opportunities with Indigenous learners."
+                  : "No training programs match your filters."}
+              </p>
+              {trainingPrograms.length === 0 && (
+                <Link
+                  href="/organization/training/new"
+                  className="mt-4 inline-block rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 transition-all hover:shadow-xl hover:shadow-purple-500/50"
+                >
+                  Post your first training program
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredTrainingPrograms.map((program) => (
+                <article
+                  key={program.id}
+                  className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-lg font-semibold text-white">
+                              {program.title}
+                            </h3>
+                            {program.featured && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2 py-0.5 text-xs font-bold text-white">
+                                ⭐ Featured
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm text-purple-400">
+                            by {program.providerName}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {program.active === false ? (
+                            <span className="rounded-full border border-slate-600 bg-slate-700/30 px-3 py-1 text-xs font-medium text-slate-400">
+                              Inactive
+                            </span>
+                          ) : program.status === "pending" ? (
+                            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
+                              Pending Review
+                            </span>
+                          ) : program.status === "rejected" ? (
+                            <span className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300">
+                              Rejected
+                            </span>
+                          ) : (
+                            <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-300">
+                              Approved
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {program.shortDescription && (
+                        <p className="mt-3 text-sm text-slate-300">
+                          {program.shortDescription.slice(0, 150)}
+                          {program.shortDescription.length > 150 ? "..." : ""}
+                        </p>
+                      )}
+
+                      <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
+                        <span className="rounded-full bg-slate-700/50 px-2 py-1">
+                          {program.format === "online" ? "💻 Online" : program.format === "in-person" ? "🏢 In-Person" : "🔄 Hybrid"}
+                        </span>
+                        {program.category && (
+                          <span className="rounded-full bg-purple-500/20 px-2 py-1 text-purple-300">
+                            {program.category}
+                          </span>
+                        )}
+                        {program.duration && (
+                          <span className="rounded-full bg-slate-700/50 px-2 py-1">
+                            ⏱️ {program.duration}
+                          </span>
+                        )}
+                        {program.cost && (
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-1 text-emerald-300">
+                            💰 {program.cost}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+                        <span>👁️ {program.viewCount || 0} views</span>
+                        <span>🖱️ {program.clickCount || 0} clicks</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      href={`/organization/training/${program.id}/edit`}
+                      className="rounded-lg bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+                    >
+                      Edit
+                    </Link>
+                    <Link
+                      href={`/jobs-training/programs/${program.id}`}
+                      className="rounded-lg bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-300 transition-all hover:bg-blue-500/30"
+                    >
+                      View public page
+                    </Link>
+                    <a
+                      href={program.enrollmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg bg-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-300 transition-all hover:bg-slate-700"
+                    >
+                      View enrollment page ↗
+                    </a>
+                    <button
+                      onClick={() => handleDeleteTrainingProgram(program.id, program.title)}
                       className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-300 transition-all hover:bg-red-500/30"
                     >
                       Delete

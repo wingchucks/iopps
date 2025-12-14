@@ -172,6 +172,51 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // SAVED TRAINING PROGRAMS (Member Bookmarks)
+    // ===========================================================================
+    match /savedTraining/{savedId} {
+      // Users can only read their own saved training
+      allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+
+      // Users can only create for themselves
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+
+      // Users can only delete their own
+      allow delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
+
+      // No updates needed
+      allow update: if false;
+    }
+
+    // ===========================================================================
+    // SERVICES (Indigenous Marketplace Professional Services)
+    // ===========================================================================
+    match /services/{serviceId} {
+      // Public read for active services
+      allow read: if resource.data.status == 'active';
+
+      // Vendor/owner can read their own (any status)
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Admins/moderators can read all
+      allow read: if isAdminOrModerator();
+
+      // Authenticated users can create services (userId must match)
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Owners can update their own services (cannot change status/featured)
+      allow update: if (
+        isSignedIn() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.get('featured', false) == resource.data.get('featured', false)
+      ) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdminOrModerator();
+    }
+
+    // ===========================================================================
     // POW WOWS
     // ===========================================================================
     match /powwows/{powwowId} {
