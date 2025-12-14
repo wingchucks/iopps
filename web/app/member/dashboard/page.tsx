@@ -41,9 +41,12 @@ export default function MemberDashboard() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
 
+  // Check if user is a community member (not employer/admin/moderator)
+  const isCommunityMember = role === "community" || (role !== "employer" && role !== "admin" && role !== "moderator");
+
   // Load all data
   useEffect(() => {
-    if (!user || role !== "community") {
+    if (!user || !isCommunityMember) {
       setDataLoading(false);
       return;
     }
@@ -69,7 +72,7 @@ export default function MemberDashboard() {
     };
 
     loadData();
-  }, [user, role]);
+  }, [user, role, isCommunityMember]);
 
   // Handle Wizard Dismissal
   const handleWizardDismiss = async () => {
@@ -145,7 +148,7 @@ export default function MemberDashboard() {
     );
   }
 
-  if (!user || role !== "community") {
+  if (!user || !isCommunityMember) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="text-center">

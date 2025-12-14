@@ -33,9 +33,10 @@ export default function SiteHeader() {
       if (!user || !role) return;
 
       try {
-        // Only fetch for community (member) or employer roles
-        if (role === "community" || role === "employer") {
-          const userType = role === "community" ? "member" : "employer";
+        // Fetch for community members (any role that's not employer/admin/moderator) or employer roles
+        const isCommunityMember = role !== "employer" && role !== "admin" && role !== "moderator";
+        if (isCommunityMember || role === "employer") {
+          const userType = isCommunityMember ? "member" : "employer";
           const count = await getUnreadMessageCount(user.uid, userType);
           setUnreadMessageCount(count);
         }
@@ -155,7 +156,7 @@ export default function SiteHeader() {
                       <div className="my-3 border-t border-slate-800/50" />
 
                       <div className="space-y-1.5">
-                        {role === "community" && (
+                        {role !== "employer" && role !== "admin" && role !== "moderator" && (
                           <>
                             <Link
                               href="/member/dashboard"
@@ -241,7 +242,7 @@ export default function SiteHeader() {
                       </p>
                     </div>
 
-                    {role === "community" && (
+                    {role !== "employer" && role !== "admin" && role !== "moderator" && (
                       <>
                         <Link
                           href="/member/dashboard"
