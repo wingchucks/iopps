@@ -19,6 +19,7 @@ import {
   BuildingStorefrontIcon,
   ArrowTopRightOnSquareIcon,
   CheckBadgeIcon,
+  ShareIcon,
 } from "@heroicons/react/24/outline";
 
 interface Props {
@@ -29,7 +30,7 @@ interface Props {
   services: Service[];
 }
 
-type TabType = "overview" | "jobs" | "training" | "products" | "services";
+type TabType = "about" | "jobs" | "training" | "shop" | "services" | "events";
 
 export default function OrganizationProfileClient({
   profile,
@@ -38,20 +39,20 @@ export default function OrganizationProfileClient({
   vendor,
   services,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [activeTab, setActiveTab] = useState<TabType>("about");
 
-  const tabs: { id: TabType; label: string; count?: number; icon: React.ReactNode }[] = [
-    { id: "overview", label: "Overview", icon: <BuildingOfficeIcon className="h-4 w-4" /> },
-    { id: "jobs", label: "Jobs", count: jobs.length, icon: <BriefcaseIcon className="h-4 w-4" /> },
-    { id: "training", label: "Training", count: training.length, icon: <AcademicCapIcon className="h-4 w-4" /> },
+  const tabs: { id: TabType; label: string; count?: number; icon: string }[] = [
+    { id: "about", label: "About", icon: "📄" },
+    { id: "jobs", label: "Jobs", count: jobs.length, icon: "💼" },
+    { id: "training", label: "Training", count: training.length, icon: "📚" },
   ];
 
   if (vendor) {
-    tabs.push({ id: "products", label: "Products", icon: <BuildingStorefrontIcon className="h-4 w-4" /> });
+    tabs.push({ id: "shop", label: "Shop", icon: "🛒" });
   }
 
   if (services.length > 0) {
-    tabs.push({ id: "services", label: "Services", count: services.length, icon: <BriefcaseIcon className="h-4 w-4" /> });
+    tabs.push({ id: "services", label: "Services", count: services.length, icon: "💼" });
   }
 
   const industrylabels: Record<string, string> = {
@@ -71,522 +72,558 @@ export default function OrganizationProfileClient({
     other: "Other",
   };
 
+  const getCategoryColor = (category?: string) => {
+    switch (category) {
+      case "professional":
+        return { bg: "bg-[#14B8A6]/20", border: "border-[#14B8A6]/40", text: "text-[#14B8A6]" };
+      case "trades":
+        return { bg: "bg-amber-500/20", border: "border-amber-500/40", text: "text-amber-400" };
+      case "cultural":
+        return { bg: "bg-sky-500/20", border: "border-sky-500/40", text: "text-sky-400" };
+      case "workplace":
+        return { bg: "bg-green-500/20", border: "border-green-500/40", text: "text-green-400" };
+      default:
+        return { bg: "bg-[#14B8A6]/20", border: "border-[#14B8A6]/40", text: "text-[#14B8A6]" };
+    }
+  };
+
+  const getCategoryIcon = (category?: string) => {
+    switch (category) {
+      case "professional":
+        return "💼";
+      case "trades":
+        return "🔧";
+      case "cultural":
+        return "🪶";
+      case "workplace":
+        return "📋";
+      default:
+        return "📚";
+    }
+  };
+
+  const formatSalary = (salaryRange?: JobPosting["salaryRange"]): string | null => {
+    if (!salaryRange) return null;
+    if (typeof salaryRange === "string") return salaryRange;
+    if (salaryRange.min || salaryRange.max) {
+      const currency = salaryRange.currency || "CAD";
+      if (salaryRange.min && salaryRange.max) {
+        return `$${salaryRange.min.toLocaleString()} - $${salaryRange.max.toLocaleString()} ${currency}`;
+      }
+      if (salaryRange.min) return `From $${salaryRange.min.toLocaleString()} ${currency}`;
+      if (salaryRange.max) return `Up to $${salaryRange.max.toLocaleString()} ${currency}`;
+    }
+    return null;
+  };
+
   return (
     <PageShell>
-      <div className="mx-auto max-w-6xl">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-slate-700 mb-8">
-          {/* Banner */}
-          {profile.bannerUrl ? (
-            <div className="relative h-48 sm:h-64">
-              <Image
-                src={profile.bannerUrl}
-                alt={`${profile.organizationName} banner`}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
-            </div>
-          ) : (
-            <div className="h-32 sm:h-48 bg-gradient-to-br from-emerald-600/20 to-teal-600/20" />
-          )}
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-slate-400">
+        <Link href="/marketplace" className="hover:text-white transition-colors">
+          Indigenous Marketplace
+        </Link>
+        <span className="mx-2">→</span>
+        <Link href="/marketplace/directory" className="hover:text-white transition-colors">
+          Business Directory
+        </Link>
+        <span className="mx-2">→</span>
+        <span className="text-slate-200">{profile.organizationName}</span>
+      </nav>
 
-          {/* Profile Content */}
-          <div className="relative px-6 pb-6 sm:px-8">
-            {/* Logo */}
-            <div className={`${profile.bannerUrl ? "-mt-16" : "-mt-8"} mb-4`}>
-              <div className="h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-xl">
-                {profile.logoUrl ? (
-                  <Image
-                    src={profile.logoUrl}
-                    alt={profile.organizationName}
-                    width={128}
-                    height={128}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 text-3xl font-bold text-white">
-                    {profile.organizationName.charAt(0)}
-                  </div>
-                )}
-              </div>
+      {/* Profile Hero */}
+      <div className="rounded-3xl bg-gradient-to-br from-[#14B8A6]/15 to-sky-500/8 border border-[#14B8A6]/30 p-10 mb-8">
+        <div className="flex gap-10 items-start">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <div className="h-[120px] w-[120px] overflow-hidden rounded-2xl bg-gradient-to-br from-[#14B8A6] to-sky-500 shadow-xl shadow-[#14B8A6]/40 flex items-center justify-center">
+              {profile.logoUrl ? (
+                <Image
+                  src={profile.logoUrl}
+                  alt={profile.organizationName}
+                  width={120}
+                  height={120}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-5xl">🏛️</span>
+              )}
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="flex-1">
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2.5 mb-4">
+              {profile.status === "approved" && (
+                <span className="rounded-lg bg-[#14B8A6] px-3 py-1.5 text-xs font-bold text-slate-900 uppercase flex items-center gap-1.5">
+                  <CheckBadgeIcon className="h-3.5 w-3.5" />
+                  Verified Organization
+                </span>
+              )}
+              {profile.location && (
+                <span className="rounded-lg bg-slate-900/50 border border-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300">
+                  📍 {profile.location}
+                </span>
+              )}
             </div>
 
-            {/* Name & Status */}
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            {/* Name & Tagline */}
+            <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+              {profile.organizationName}
+            </h1>
+            <p className="text-lg text-slate-400 mb-6">
+              {industrylabels[profile.industry || ""] || "Indigenous-focused organization"}
+            </p>
+
+            {/* Quick Stats */}
+            <div className="flex gap-8 mb-7 flex-wrap">
               <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                    {profile.organizationName}
-                  </h1>
-                  {profile.status === "approved" && (
-                    <CheckBadgeIcon className="h-6 w-6 text-emerald-400" />
-                  )}
-                </div>
-
-                {/* Quick Info */}
-                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-400">
-                  {profile.location && (
-                    <span className="flex items-center gap-1.5">
-                      <MapPinIcon className="h-4 w-4" />
-                      {profile.location}
-                    </span>
-                  )}
-                  {profile.industry && (
-                    <span className="flex items-center gap-1.5">
-                      <BuildingOfficeIcon className="h-4 w-4" />
-                      {industrylabels[profile.industry] || profile.industry}
-                    </span>
-                  )}
-                  {profile.companySize && (
-                    <span className="flex items-center gap-1.5">
-                      <UsersIcon className="h-4 w-4" />
-                      {profile.companySize} employees
-                    </span>
-                  )}
-                  {profile.foundedYear && (
-                    <span className="flex items-center gap-1.5">
-                      <CalendarIcon className="h-4 w-4" />
-                      Founded {profile.foundedYear}
-                    </span>
-                  )}
-                </div>
+                <div className="text-3xl font-bold text-[#14B8A6]">{jobs.length}</div>
+                <div className="text-sm text-slate-400">Open Jobs</div>
               </div>
-
-              {/* Actions */}
-              <div className="flex gap-3">
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 font-semibold text-white hover:bg-emerald-600 transition-colors"
-                  >
-                    <GlobeAltIcon className="h-5 w-5" />
-                    Visit Website
-                  </a>
-                )}
+              <div>
+                <div className="text-3xl font-bold text-sky-400">{training.length}</div>
+                <div className="text-sm text-slate-400">Training Programs</div>
               </div>
+              {vendor && (
+                <div>
+                  <div className="text-3xl font-bold text-amber-400">Shop</div>
+                  <div className="text-sm text-slate-400">Products Available</div>
+                </div>
+              )}
+              {services.length > 0 && (
+                <div>
+                  <div className="text-3xl font-bold text-white">{services.length}</div>
+                  <div className="text-sm text-slate-400">Services</div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-3">
+              <button className="inline-flex items-center gap-2 rounded-xl bg-[#14B8A6] px-6 py-3.5 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors">
+                + Follow Organization
+              </button>
+              {profile.website && (
+                <a
+                  href={profile.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900/50 border border-slate-800 px-6 py-3.5 font-semibold text-slate-300 hover:border-slate-700 transition-colors"
+                >
+                  <GlobeAltIcon className="h-5 w-5" />
+                  Visit Website
+                </a>
+              )}
+              {profile.contactEmail && (
+                <a
+                  href={`mailto:${profile.contactEmail}`}
+                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900/50 border border-slate-800 px-6 py-3.5 font-semibold text-slate-300 hover:border-slate-700 transition-colors"
+                >
+                  <EnvelopeIcon className="h-5 w-5" />
+                  Contact
+                </a>
+              )}
+              <button className="inline-flex items-center gap-2 rounded-xl bg-slate-900/50 border border-slate-800 px-6 py-3.5 font-semibold text-slate-300 hover:border-slate-700 transition-colors">
+                <ShareIcon className="h-5 w-5" />
+                Share
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-800 pb-px">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${
-                activeTab === tab.id
-                  ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                  : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-              {tab.count !== undefined && tab.count > 0 && (
-                <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs">
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex gap-1 border-b border-slate-800 mb-8 overflow-x-auto">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 whitespace-nowrap px-6 py-4 text-sm font-semibold transition-all border-b-2 ${
+              activeTab === tab.id
+                ? "border-[#14B8A6] text-white"
+                : "border-transparent text-slate-400 hover:text-slate-300"
+            }`}
+          >
+            <span>{tab.icon}</span>
+            {tab.label}
+            {tab.count !== undefined && tab.count > 0 && (
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  activeTab === tab.id ? "bg-[#14B8A6]/30" : "bg-slate-800"
+                }`}
+              >
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
-        {/* Tab Content */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Overview Tab */}
-            {activeTab === "overview" && (
-              <>
-                {/* About */}
-                {profile.description && (
-                  <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">About</h2>
-                    <p className="text-slate-300 whitespace-pre-line">
-                      {profile.description}
-                    </p>
-                  </section>
-                )}
+      {/* Tab Content */}
+      <div className="grid gap-10 lg:grid-cols-3">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* About Tab */}
+          {activeTab === "about" && (
+            <>
+              {/* About Section */}
+              <section>
+                <h2 className="text-2xl font-bold text-white mb-5">
+                  About {profile.organizationName}
+                </h2>
+                <p className="text-slate-300 whitespace-pre-line leading-relaxed">
+                  {profile.description || "No description available."}
+                </p>
+              </section>
 
-                {/* Company Video */}
-                {profile.companyIntroVideo?.videoUrl && (
-                  <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">About Us</h2>
-                    <div className="aspect-video rounded-xl overflow-hidden bg-slate-800">
-                      <iframe
-                        src={profile.companyIntroVideo.videoUrl.replace("watch?v=", "embed/")}
-                        className="h-full w-full"
-                        allowFullScreen
-                      />
-                    </div>
-                    {profile.companyIntroVideo.description && (
-                      <p className="mt-3 text-sm text-slate-400">
-                        {profile.companyIntroVideo.description}
-                      </p>
-                    )}
-                  </section>
-                )}
-
-                {/* Quick Stats */}
-                <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
-                    <BriefcaseIcon className="h-8 w-8 mx-auto text-emerald-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{jobs.length}</p>
-                    <p className="text-sm text-slate-400">Open Jobs</p>
-                  </div>
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
-                    <AcademicCapIcon className="h-8 w-8 mx-auto text-purple-400 mb-2" />
-                    <p className="text-2xl font-bold text-white">{training.length}</p>
-                    <p className="text-sm text-slate-400">Training Programs</p>
-                  </div>
+              {/* What We Offer */}
+              <section>
+                <h3 className="text-xl font-bold text-white mb-5">What We Offer on IOPPS</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {jobs.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab("jobs")}
+                      className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-left hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">💼</span>
+                        <span className="font-semibold text-white">Career Opportunities</span>
+                      </div>
+                      <div className="text-sm text-[#14B8A6]">{jobs.length} open positions</div>
+                    </button>
+                  )}
+                  {training.length > 0 && (
+                    <button
+                      onClick={() => setActiveTab("training")}
+                      className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-left hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">📚</span>
+                        <span className="font-semibold text-white">Training Programs</span>
+                      </div>
+                      <div className="text-sm text-sky-400">{training.length} programs available</div>
+                    </button>
+                  )}
                   {vendor && (
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
-                      <BuildingStorefrontIcon className="h-8 w-8 mx-auto text-teal-400 mb-2" />
-                      <p className="text-2xl font-bold text-white">Shop</p>
-                      <p className="text-sm text-slate-400">Products Available</p>
-                    </div>
+                    <button
+                      onClick={() => setActiveTab("shop")}
+                      className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-left hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">🛒</span>
+                        <span className="font-semibold text-white">Shop</span>
+                      </div>
+                      <div className="text-sm text-amber-400">Products available</div>
+                    </button>
                   )}
                   {services.length > 0 && (
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
-                      <BriefcaseIcon className="h-8 w-8 mx-auto text-indigo-400 mb-2" />
-                      <p className="text-2xl font-bold text-white">{services.length}</p>
-                      <p className="text-sm text-slate-400">Services</p>
-                    </div>
+                    <button
+                      onClick={() => setActiveTab("services")}
+                      className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-left hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">💼</span>
+                        <span className="font-semibold text-white">Services</span>
+                      </div>
+                      <div className="text-sm text-slate-400">{services.length} services</div>
+                    </button>
+                  )}
+                </div>
+              </section>
+
+              {/* Company Video */}
+              {profile.companyIntroVideo?.videoUrl && (
+                <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+                  <h3 className="text-xl font-semibold text-white mb-4">About Us</h3>
+                  <div className="aspect-video rounded-xl overflow-hidden bg-slate-800">
+                    <iframe
+                      src={profile.companyIntroVideo.videoUrl.replace("watch?v=", "embed/")}
+                      className="h-full w-full"
+                      allowFullScreen
+                    />
+                  </div>
+                  {profile.companyIntroVideo.description && (
+                    <p className="mt-3 text-sm text-slate-400">
+                      {profile.companyIntroVideo.description}
+                    </p>
                   )}
                 </section>
+              )}
+            </>
+          )}
 
-                {/* Recent Jobs Preview */}
-                {jobs.length > 0 && (
-                  <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-semibold text-white">Recent Jobs</h2>
-                      <button
-                        onClick={() => setActiveTab("jobs")}
-                        className="text-sm text-emerald-400 hover:text-emerald-300"
-                      >
-                        View all →
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      {jobs.slice(0, 3).map((job) => (
-                        <Link
-                          key={job.id}
-                          href={`/jobs-training/${job.id}`}
-                          className="block rounded-xl border border-slate-700 bg-slate-800/50 p-4 hover:border-emerald-500/50 transition-colors"
-                        >
-                          <h3 className="font-semibold text-white">{job.title}</h3>
-                          <div className="mt-1 flex items-center gap-3 text-sm text-slate-400">
-                            <span>{job.location}</span>
-                            <span>{job.employmentType}</span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </section>
-                )}
-              </>
-            )}
-
-            {/* Jobs Tab */}
-            {activeTab === "jobs" && (
-              <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">
+          {/* Jobs Tab */}
+          {activeTab === "jobs" && (
+            <section>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">
                   Open Positions ({jobs.length})
                 </h2>
-                {jobs.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-                    <BriefcaseIcon className="h-12 w-12 mx-auto text-slate-600 mb-3" />
-                    <p className="text-slate-400">No open positions at this time.</p>
-                  </div>
-                ) : (
-                  jobs.map((job) => (
+              </div>
+              {jobs.length === 0 ? (
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+                  <BriefcaseIcon className="h-12 w-12 mx-auto text-slate-600 mb-3" />
+                  <p className="text-slate-400">No open positions at this time.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {jobs.map((job) => (
                     <Link
                       key={job.id}
-                      href={`/jobs-training/${job.id}`}
-                      className="block rounded-xl border border-slate-800 bg-slate-900/50 p-5 hover:border-emerald-500/50 transition-colors"
+                      href={`/jobs-training/jobs/${job.id}`}
+                      className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-[#14B8A6]/50 transition-colors"
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-5">
+                        <div className="flex h-13 w-13 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+                          <span className="text-xl">💼</span>
+                        </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs text-slate-300">
-                              {job.location}
-                            </span>
-                            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">
-                              {job.employmentType}
-                            </span>
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span className="text-lg font-bold text-white">{job.title}</span>
+                            {job.indigenousPreference && (
+                              <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6] uppercase">
+                                Indigenous Preference
+                              </span>
+                            )}
                             {job.remoteFlag && (
-                              <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-300">
+                              <span className="rounded bg-green-500/20 border border-green-500/40 px-2 py-0.5 text-xs font-semibold text-green-400 uppercase">
                                 Remote
                               </span>
                             )}
+                            <span className="rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400 uppercase">
+                              {job.employmentType}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                            <span>📍 {job.location}</span>
+                            {formatSalary(job.salaryRange) && <span>💰 {formatSalary(job.salaryRange)}</span>}
                           </div>
                         </div>
-                        <ArrowTopRightOnSquareIcon className="h-5 w-5 text-slate-500" />
                       </div>
+                      <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-5 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
+                        View & Apply
+                      </button>
                     </Link>
-                  ))
-                )}
-              </section>
-            )}
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
-            {/* Training Tab */}
-            {activeTab === "training" && (
-              <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">
+          {/* Training Tab */}
+          {activeTab === "training" && (
+            <section>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">
                   Training Programs ({training.length})
                 </h2>
-                {training.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-                    <AcademicCapIcon className="h-12 w-12 mx-auto text-slate-600 mb-3" />
-                    <p className="text-slate-400">No training programs available.</p>
-                  </div>
-                ) : (
-                  training.map((program) => (
-                    <Link
-                      key={program.id}
-                      href={`/jobs-training/programs/${program.id}`}
-                      className="block rounded-xl border border-slate-800 bg-slate-900/50 p-5 hover:border-purple-500/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{program.title}</h3>
-                          <p className="mt-1 text-sm text-slate-400">{program.providerName}</p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs text-purple-300">
+              </div>
+              {training.length === 0 ? (
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+                  <AcademicCapIcon className="h-12 w-12 mx-auto text-slate-600 mb-3" />
+                  <p className="text-slate-400">No training programs available.</p>
+                </div>
+              ) : (
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {training.map((program) => {
+                    const colors = getCategoryColor(program.category);
+                    return (
+                      <Link
+                        key={program.id}
+                        href={`/jobs-training/programs/${program.id}`}
+                        className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-slate-700 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div
+                            className={`flex h-12 w-12 items-center justify-center rounded-xl ${colors.bg} border ${colors.border}`}
+                          >
+                            <span className="text-xl">{getCategoryIcon(program.category)}</span>
+                          </div>
+                          {program.format && (
+                            <span className="rounded-md bg-slate-800 border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-300">
                               {program.format}
                             </span>
-                            {program.category && (
-                              <span className="rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs text-slate-300">
-                                {program.category}
-                              </span>
-                            )}
-                            {program.duration && (
-                              <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs text-blue-300">
-                                {program.duration}
-                              </span>
-                            )}
-                          </div>
+                          )}
                         </div>
-                        <ArrowTopRightOnSquareIcon className="h-5 w-5 text-slate-500" />
-                      </div>
-                    </Link>
-                  ))
-                )}
-              </section>
-            )}
+                        <div className={`text-xs font-semibold ${colors.text} uppercase mb-1.5`}>
+                          {program.category || "Training"}
+                        </div>
+                        <h3 className="font-bold text-white mb-3 leading-snug line-clamp-2">
+                          {program.title}
+                        </h3>
+                        <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-4">
+                          {program.duration && <span>⏱ {program.duration}</span>}
+                          {program.viewCount && <span>👥 {program.viewCount} enrolled</span>}
+                        </div>
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                          <span
+                            className={`text-lg font-bold ${
+                              program.cost === "Free" || program.fundingAvailable
+                                ? "text-[#14B8A6]"
+                                : "text-white"
+                            }`}
+                          >
+                            {program.cost || "Free"}
+                          </span>
+                          <span className={`text-sm font-semibold ${colors.text}`}>
+                            Learn More
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
 
-            {/* Products Tab */}
-            {activeTab === "products" && vendor && (
-              <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">Products & Shop</h2>
-                <Link
-                  href={`/marketplace/${vendor.slug}`}
-                  className="block rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-teal-500/50 transition-colors"
-                >
-                  {vendor.coverImageUrl && (
-                    <div className="relative h-48">
-                      <Image
-                        src={vendor.coverImageUrl}
-                        alt={vendor.businessName}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="p-5">
-                    <h3 className="text-lg font-semibold text-white">{vendor.businessName}</h3>
-                    {vendor.tagline && (
-                      <p className="mt-1 text-slate-400">{vendor.tagline}</p>
-                    )}
-                    <div className="mt-3 flex items-center gap-2 text-sm text-teal-400">
-                      <BuildingStorefrontIcon className="h-4 w-4" />
-                      Visit Shop →
-                    </div>
+          {/* Shop Tab */}
+          {activeTab === "shop" && vendor && (
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-6">Products & Shop</h2>
+              <Link
+                href={`/marketplace/${vendor.slug}`}
+                className="block rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-[#14B8A6]/50 transition-colors"
+              >
+                {vendor.coverImageUrl && (
+                  <div className="relative h-48">
+                    <Image
+                      src={vendor.coverImageUrl}
+                      alt={vendor.businessName}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                </Link>
-              </section>
-            )}
+                )}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-2">{vendor.businessName}</h3>
+                  {vendor.tagline && (
+                    <p className="text-slate-400 mb-4">{vendor.tagline}</p>
+                  )}
+                  <div className="flex items-center gap-2 text-[#14B8A6] font-semibold">
+                    <BuildingStorefrontIcon className="h-5 w-5" />
+                    Visit Shop →
+                  </div>
+                </div>
+              </Link>
+            </section>
+          )}
 
-            {/* Services Tab */}
-            {activeTab === "services" && (
-              <section className="space-y-4">
-                <h2 className="text-xl font-semibold text-white">
-                  Professional Services ({services.length})
-                </h2>
+          {/* Services Tab */}
+          {activeTab === "services" && (
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-6">
+                Professional Services ({services.length})
+              </h2>
+              <div className="space-y-4">
                 {services.map((service) => (
                   <Link
                     key={service.id}
                     href={`/marketplace/services/${service.id}`}
-                    className="block rounded-xl border border-slate-800 bg-slate-900/50 p-5 hover:border-indigo-500/50 transition-colors"
+                    className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-sky-500/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{service.title}</h3>
-                        <p className="mt-1 text-sm text-slate-400">{service.businessName}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs text-indigo-300">
-                            {service.category}
-                          </span>
-                          {service.servesRemote && (
-                            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs text-emerald-300">
-                              Remote Available
-                            </span>
-                          )}
-                        </div>
+                    <div className="flex h-13 w-13 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-500/40 flex-shrink-0">
+                      <span className="text-xl">💼</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-sky-400 uppercase mb-1">
+                        {service.category}
                       </div>
-                      <ArrowTopRightOnSquareIcon className="h-5 w-5 text-slate-500" />
+                      <h3 className="font-bold text-white mb-1">{service.title}</h3>
+                      <p className="text-sm text-slate-400 line-clamp-2">{service.description}</p>
+                    </div>
+                    <div className="text-right">
+                      {service.priceRange && (
+                        <div className="text-lg font-bold text-sky-400">{service.priceRange}</div>
+                      )}
                     </div>
                   </Link>
                 ))}
-              </section>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Contact Card */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
-              <div className="space-y-3">
-                {profile.contactEmail && (
-                  <a
-                    href={`mailto:${profile.contactEmail}`}
-                    className="flex items-center gap-3 text-sm text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    <EnvelopeIcon className="h-5 w-5 text-slate-500" />
-                    {profile.contactEmail}
-                  </a>
-                )}
-                {profile.contactPhone && (
-                  <a
-                    href={`tel:${profile.contactPhone}`}
-                    className="flex items-center gap-3 text-sm text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    <PhoneIcon className="h-5 w-5 text-slate-500" />
-                    {profile.contactPhone}
-                  </a>
-                )}
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-sm text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    <GlobeAltIcon className="h-5 w-5 text-slate-500" />
-                    Website
-                  </a>
-                )}
               </div>
+            </section>
+          )}
+        </div>
 
-              {/* Social Links */}
-              {profile.socialLinks && (
-                <div className="mt-4 pt-4 border-t border-slate-800">
-                  <div className="flex gap-3">
-                    {profile.socialLinks.linkedin && (
-                      <a
-                        href={profile.socialLinks.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors"
-                      >
-                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {profile.socialLinks.twitter && (
-                      <a
-                        href={profile.socialLinks.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors"
-                      >
-                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {profile.socialLinks.facebook && (
-                      <a
-                        href={profile.socialLinks.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors"
-                      >
-                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {profile.socialLinks.instagram && (
-                      <a
-                        href={profile.socialLinks.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg bg-slate-800 p-2 text-slate-400 hover:text-white transition-colors"
-                      >
-                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                        </svg>
-                      </a>
-                    )}
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Contact Card */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+            <h3 className="text-lg font-bold text-white mb-5">Contact Information</h3>
+            <div className="space-y-4">
+              {profile.website && (
+                <div className="flex items-start gap-3">
+                  <span className="text-lg">🌐</span>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-0.5">Website</div>
+                    <a
+                      href={profile.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-slate-300 hover:text-[#14B8A6] transition-colors"
+                    >
+                      {profile.website.replace(/^https?:\/\//, "")}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {profile.contactEmail && (
+                <div className="flex items-start gap-3 pt-3 border-t border-slate-800">
+                  <span className="text-lg">📧</span>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-0.5">Email</div>
+                    <a
+                      href={`mailto:${profile.contactEmail}`}
+                      className="text-sm font-medium text-slate-300 hover:text-[#14B8A6] transition-colors"
+                    >
+                      {profile.contactEmail}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {profile.contactPhone && (
+                <div className="flex items-start gap-3 pt-3 border-t border-slate-800">
+                  <span className="text-lg">📞</span>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-0.5">Phone</div>
+                    <a
+                      href={`tel:${profile.contactPhone}`}
+                      className="text-sm font-medium text-slate-300 hover:text-[#14B8A6] transition-colors"
+                    >
+                      {profile.contactPhone}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {profile.location && (
+                <div className="flex items-start gap-3 pt-3 border-t border-slate-800">
+                  <span className="text-lg">📍</span>
+                  <div>
+                    <div className="text-xs text-slate-500 mb-0.5">Location</div>
+                    <div className="text-sm font-medium text-slate-300">{profile.location}</div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Share Card */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Share</h3>
-              <ShareButtons
-                item={{
-                  id: profile.id,
-                  title: profile.organizationName,
-                  description: profile.description?.substring(0, 100) || "",
-                  url: `/organizations/${profile.id}`,
-                  image: profile.logoUrl,
-                }}
-              />
-            </div>
+            <button className="w-full mt-6 rounded-xl bg-[#14B8A6] py-3.5 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors">
+              Send Message
+            </button>
+          </div>
 
-            {/* Quick Links */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-              <div className="space-y-2">
-                {jobs.length > 0 && (
-                  <button
-                    onClick={() => setActiveTab("jobs")}
-                    className="w-full text-left flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
-                  >
-                    <BriefcaseIcon className="h-4 w-4 text-emerald-400" />
-                    View {jobs.length} Open Jobs
-                  </button>
-                )}
-                {training.length > 0 && (
-                  <button
-                    onClick={() => setActiveTab("training")}
-                    className="w-full text-left flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
-                  >
-                    <AcademicCapIcon className="h-4 w-4 text-purple-400" />
-                    View {training.length} Training Programs
-                  </button>
-                )}
-                {vendor && (
-                  <Link
-                    href={`/marketplace/${vendor.slug}`}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
-                  >
-                    <BuildingStorefrontIcon className="h-4 w-4 text-teal-400" />
-                    Visit Shop
-                  </Link>
-                )}
-              </div>
-            </div>
+          {/* Share Card */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+            <h3 className="text-lg font-bold text-white mb-4">Share This Profile</h3>
+            <ShareButtons
+              item={{
+                id: profile.id,
+                title: profile.organizationName,
+                description: profile.description?.substring(0, 100) || "",
+                url: `/organizations/${profile.id}`,
+                image: profile.logoUrl,
+              }}
+            />
           </div>
         </div>
       </div>

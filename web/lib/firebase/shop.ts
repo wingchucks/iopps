@@ -18,6 +18,7 @@ import {
   serverTimestamp,
   increment,
   Timestamp,
+  QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Vendor, VendorProduct, VendorStatus, VendorCategory, NorthAmericanRegion } from '@/lib/types';
@@ -292,6 +293,54 @@ export async function getVendorProducts(vendorId: string): Promise<VendorProduct
     });
   } catch (error) {
     // If query fails (e.g., no composite index), return empty array
+    return [];
+  }
+}
+
+export async function listAllProducts(options?: {
+  limit?: number;
+  featuredOnly?: boolean;
+  category?: string;
+}): Promise<VendorProduct[]> {
+  if (!db) return [];
+
+  try {
+    const constraints: QueryConstraint[] = [
+      where('active', '==', true),
+    ];
+
+    if (options?.featuredOnly) {
+      constraints.push(where('featured', '==', true));
+    }
+
+    if (options?.category) {
+      constraints.push(where('category', '==', options.category));
+    }
+
+    const q = query(
+      collection(db, PRODUCTS_COLLECTION),
+      ...constraints
+    );
+
+    const snap = await getDocs(q);
+    let products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as VendorProduct));
+
+    // Sort by featured first, then by createdAt
+    products.sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      const timeA = a.createdAt?.toMillis?.() ?? 0;
+      const timeB = b.createdAt?.toMillis?.() ?? 0;
+      return timeB - timeA;
+    });
+
+    if (options?.limit) {
+      products = products.slice(0, options.limit);
+    }
+
+    return products;
+  } catch (error) {
+    console.error('Error listing products:', error);
     return [];
   }
 }
