@@ -129,21 +129,105 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">6. Content Ownership and License</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">6. Payments and Subscriptions</h2>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">6.1 Your Content</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">6.1 Payment Processing</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              All payments on IOPPS are processed securely through Stripe. By making a payment, you agree to:
+            </p>
+            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2 ml-4">
+              <li>Provide accurate payment information</li>
+              <li>Authorize us to charge your payment method for the amount specified</li>
+              <li>Comply with Stripe&apos;s terms of service</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">6.2 Employer Subscriptions</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              Employer subscriptions provide access to job posting credits and platform features:
+            </p>
+            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2 ml-4">
+              <li>Subscriptions are valid for the period specified at purchase</li>
+              <li>Job credits expire at the end of your subscription period</li>
+              <li>Unused credits are non-refundable and non-transferable</li>
+              <li>Pricing may change; existing subscriptions will be honored until renewal</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">6.3 Conference and Event Registrations</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              Purchases for conferences, training programs, and events:
+            </p>
+            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2 ml-4">
+              <li>Tickets are non-refundable unless otherwise stated by the event organizer</li>
+              <li>IOPPS facilitates payment but is not responsible for event delivery</li>
+              <li>Refund requests should be directed to the event organizer</li>
+              <li>Event details and schedules may change at the organizer&apos;s discretion</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">6.4 Refund Policy</h3>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Refunds are handled on a case-by-case basis. For subscription issues, contact us within 30 days of purchase. We reserve the right to refuse refunds for services already rendered or credits already used.
+            </p>
+          </section>
+
+          <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">7. Artificial Intelligence Features</h2>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">7.1 AI-Generated Content</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              IOPPS offers AI-powered features to assist users:
+            </p>
+            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2 ml-4">
+              <li><strong>Job Description Generator:</strong> AI can draft job descriptions based on your input</li>
+              <li><strong>Poster Analysis:</strong> AI can extract event information from uploaded images</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">7.2 Your Responsibilities for AI Content</h3>
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              When using AI features, you agree to:
+            </p>
+            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2 ml-4">
+              <li>Review and verify all AI-generated content before publishing</li>
+              <li>Edit AI output to ensure accuracy and compliance with laws</li>
+              <li>Take full responsibility for content you publish, regardless of how it was created</li>
+              <li>Not use AI features to generate misleading, discriminatory, or illegal content</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">7.3 AI Limitations</h3>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              AI-generated content is provided &quot;as is&quot; without warranties. AI may produce inaccurate, incomplete, or inappropriate results. IOPPS is not liable for any damages arising from AI-generated content. Always verify important information independently.
+            </p>
+          </section>
+
+          <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">8. Training Programs</h2>
+            <p className="text-sm text-slate-300 leading-relaxed mb-3">
+              Organizations may offer training programs through IOPPS:
+            </p>
+            <ul className="list-disc list-inside text-sm text-slate-300 space-y-2 ml-4">
+              <li>Training content is provided by third-party organizations, not IOPPS</li>
+              <li>IOPPS does not guarantee the quality or outcomes of training programs</li>
+              <li>Completion certificates are issued by the training provider, not IOPPS</li>
+              <li>Payment for training programs is non-refundable unless stated otherwise</li>
+              <li>Access to purchased training may be time-limited as specified at purchase</li>
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">9. Content Ownership and License</h2>
+
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">9.1 Your Content</h3>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               You retain ownership of content you post on IOPPS (profiles, job postings, applications, vendor listings). By posting content, you grant IOPPS a non-exclusive, worldwide, royalty-free license to use, display, and distribute your content on the platform.
             </p>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">6.2 Platform Content</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">9.2 Platform Content</h3>
             <p className="text-sm text-slate-300 leading-relaxed">
               The IOPPS platform, including its design, features, text, graphics, logos, and software, is owned by IOPPS and protected by copyright, trademark, and other laws. You may not copy, modify, or distribute platform content without permission.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">7. Privacy and Data</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">10. Privacy and Data</h2>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               Your privacy is important to us. Our collection, use, and protection of your personal information is governed by our <Link href="/privacy" className="text-[#14B8A6] hover:underline">Privacy Policy</Link>.
             </p>
@@ -153,31 +237,31 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">8. Disclaimers</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">11. Disclaimers</h2>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">8.1 Platform "As Is"</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">11.1 Platform &quot;As Is&quot;</h3>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               IOPPS is provided "as is" and "as available" without warranties of any kind, either express or implied. We do not guarantee that the platform will be uninterrupted, error-free, or secure.
             </p>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">8.2 No Employment Guarantees</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">11.2 No Employment Guarantees</h3>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               IOPPS is a platform connecting job seekers and employers. We do not guarantee job placement, interviews, or hiring outcomes.
             </p>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">8.3 Third-Party Content</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">11.3 Third-Party Content</h3>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               Job postings, vendor listings, and other user-generated content are provided by third parties. IOPPS does not verify, endorse, or guarantee the accuracy or legality of such content.
             </p>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">8.4 External Links</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">11.4 External Links</h3>
             <p className="text-sm text-slate-300 leading-relaxed">
               The platform may contain links to external websites. We are not responsible for the content or practices of third-party sites.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">9. Limitation of Liability</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">12. Limitation of Liability</h2>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               To the maximum extent permitted by law, IOPPS and its operators shall not be liable for:
             </p>
@@ -193,35 +277,35 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">10. Indemnification</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">13. Indemnification</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
               You agree to indemnify and hold harmless IOPPS, its operators, and affiliates from any claims, damages, losses, or expenses (including legal fees) arising from your use of the platform, your content, or your violation of these terms.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">11. Dispute Resolution</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">14. Dispute Resolution</h2>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">11.1 User Disputes</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">14.1 User Disputes</h3>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               Disputes between users (e.g., employers and candidates, vendors and customers) should be resolved directly between the parties. IOPPS is not responsible for mediating or resolving such disputes.
             </p>
 
-            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">11.2 Disputes with IOPPS</h3>
+            <h3 className="text-lg font-semibold text-slate-100 mt-6 mb-3">14.2 Disputes with IOPPS</h3>
             <p className="text-sm text-slate-300 leading-relaxed">
               If you have a dispute with IOPPS, please contact us first to attempt informal resolution. If informal resolution fails, disputes shall be resolved through binding arbitration or in the courts of the jurisdiction where IOPPS operates, as determined by applicable law.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">12. Modifications to Terms</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">15. Modifications to Terms</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
               We may update these Terms of Service from time to time. We will notify users of significant changes by posting the new terms and updating the "Last updated" date. Your continued use of the platform after changes are posted constitutes acceptance of the new terms.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">13. Termination</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">16. Termination</h2>
             <p className="text-sm text-slate-300 leading-relaxed mb-3">
               We reserve the right to:
             </p>
@@ -236,21 +320,21 @@ export default function TermsOfServicePage() {
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">14. Governing Law</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">17. Governing Law</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
               These Terms of Service are governed by the laws of Canada and the province/territory where IOPPS operates, without regard to conflict of law principles.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">15. Severability</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">18. Severability</h2>
             <p className="text-sm text-slate-300 leading-relaxed">
               If any provision of these terms is found to be invalid or unenforceable, the remaining provisions shall continue in full force and effect.
             </p>
           </section>
 
           <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">16. Contact Information</h2>
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">19. Contact Information</h2>
             <p className="text-sm text-slate-300 leading-relaxed mb-4">
               If you have questions about these Terms of Service, please contact us:
             </p>
