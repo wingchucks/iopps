@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `Professional ${service.category} services by ${service.businessName}`;
 
   // Build subtitle with location and remote info
-  const subtitleParts = [service.category];
+  const subtitleParts: string[] = [service.category];
   if (service.location) subtitleParts.push(service.location);
   if (service.servesRemote) subtitleParts.push("Remote Available");
   const subtitle = subtitleParts.join(" • ");
