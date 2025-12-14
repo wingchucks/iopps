@@ -6,7 +6,8 @@
  */
 
 export interface ParsedJobDescription {
-  description: string;
+  description: string;         // HTML-preserved description for rendering
+  plainDescription: string;    // Plain text version (HTML stripped)
   requirements?: string;
   benefits?: string;
   qualifications?: string[];
@@ -48,7 +49,7 @@ const NEXT_SECTION_MARKERS = [
 ];
 
 /**
- * Clean up HTML and normalize whitespace in text
+ * Clean up HTML and normalize whitespace in text (strips HTML tags)
  */
 export function cleanText(text: string): string {
   if (!text) return "";
@@ -75,6 +76,31 @@ export function cleanText(text: string): string {
     .replace(/\r/g, "\n")
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * Preserve HTML but decode entities and sanitize basic structure
+ * This keeps HTML tags intact for proper rendering with dangerouslySetInnerHTML
+ */
+export function preserveHtml(text: string): string {
+  if (!text) return "";
+
+  return text
+    // Decode HTML entities that might be double-encoded
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&bull;/g, "•")
+    // Decode HTML tags that were encoded as entities (double-encoded)
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    // Normalize whitespace between tags
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
     .trim();
 }
 
@@ -132,31 +158,33 @@ function textToArray(text: string): string[] {
  * Parse a complete job description into structured fields
  */
 export function parseJobDescription(rawDescription: string): ParsedJobDescription {
-  const text = cleanText(rawDescription);
+  const plainText = cleanText(rawDescription);
+  const htmlText = preserveHtml(rawDescription);
 
   const result: ParsedJobDescription = {
-    description: text,
+    description: htmlText,           // Preserve HTML for rendering
+    plainDescription: plainText,     // Plain text for section extraction
   };
 
   // Track what parts we've extracted so we can remove them from main description
   const extractedRanges: Array<{ start: number; end: number }> = [];
 
-  // Extract requirements
-  const requirementsSection = extractSection(text, SECTION_PATTERNS.requirements);
+  // Extract requirements (using plain text for pattern matching)
+  const requirementsSection = extractSection(plainText, SECTION_PATTERNS.requirements);
   if (requirementsSection) {
     result.requirements = requirementsSection.content;
     extractedRanges.push({ start: requirementsSection.startIndex, end: requirementsSection.endIndex });
   }
 
   // Extract benefits
-  const benefitsSection = extractSection(text, SECTION_PATTERNS.benefits);
+  const benefitsSection = extractSection(plainText, SECTION_PATTERNS.benefits);
   if (benefitsSection) {
     result.benefits = benefitsSection.content;
     extractedRanges.push({ start: benefitsSection.startIndex, end: benefitsSection.endIndex });
   }
 
   // Extract qualifications as array
-  const qualificationsSection = extractSection(text, SECTION_PATTERNS.qualifications);
+  const qualificationsSection = extractSection(plainText, SECTION_PATTERNS.qualifications);
   if (qualificationsSection) {
     const items = textToArray(qualificationsSection.content);
     if (items.length > 0) {
@@ -166,7 +194,7 @@ export function parseJobDescription(rawDescription: string): ParsedJobDescriptio
   }
 
   // Extract responsibilities as array
-  const responsibilitiesSection = extractSection(text, SECTION_PATTERNS.responsibilities);
+  const responsibilitiesSection = extractSection(plainText, SECTION_PATTERNS.responsibilities);
   if (responsibilitiesSection) {
     const items = textToArray(responsibilitiesSection.content);
     if (items.length > 0) {

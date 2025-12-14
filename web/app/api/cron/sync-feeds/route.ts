@@ -241,9 +241,10 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
       // Decode and parse description for structured fields
       const decodedDescription = decode(rawDescription);
       const parsedDescription = parseJobDescription(decodedDescription);
+      const plainTextDescription = parsedDescription.plainDescription;
 
       // Check if job passes keyword filter - if it does, mark as indigenous preference
-      const passedKeywordFilter = matchesKeywordFilter(title, decodedDescription, feed.keywordFilter);
+      const passedKeywordFilter = matchesKeywordFilter(title, plainTextDescription, feed.keywordFilter);
 
       // If keyword filter is enabled and job doesn't pass, skip it
       if (keywordFilterEnabled && !passedKeywordFilter) {
@@ -268,7 +269,7 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
 
       // Try to extract location from description if not provided
       if (!locationStr) {
-        locationStr = extractLocationFromDescription(decodedDescription) || "";
+        locationStr = extractLocationFromDescription(plainTextDescription) || "";
       }
 
       // Determine final location with better fallback
@@ -280,9 +281,9 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
       // Check for remote work indicators
       const remoteFlag =
         locationStr.toLowerCase().includes("remote") ||
-        decodedDescription.toLowerCase().includes("work from home") ||
-        decodedDescription.toLowerCase().includes("remote position") ||
-        decodedDescription.toLowerCase().includes("fully remote");
+        plainTextDescription.toLowerCase().includes("work from home") ||
+        plainTextDescription.toLowerCase().includes("remote position") ||
+        plainTextDescription.toLowerCase().includes("fully remote");
 
       const existingQuery = await db!
         .collection("jobs")
@@ -471,9 +472,10 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
       // Decode and parse description for structured fields
       const decodedDescription = decode(rawDescription || "");
       const parsedDescription = parseJobDescription(decodedDescription);
+      const plainTextDescription = parsedDescription.plainDescription;
 
       // Check if job passes keyword filter - if it does, mark as indigenous preference
-      const passedKeywordFilter = matchesKeywordFilter(title, decodedDescription, feed.keywordFilter);
+      const passedKeywordFilter = matchesKeywordFilter(title, plainTextDescription, feed.keywordFilter);
 
       // If keyword filter is enabled and job doesn't pass, skip it
       if (keywordFilterEnabled && !passedKeywordFilter) {
@@ -502,7 +504,7 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
 
       // Try to extract location from description if not found
       if (!location) {
-        location = extractLocationFromDescription(decodedDescription) || "";
+        location = extractLocationFromDescription(plainTextDescription) || "";
       }
 
       // Better fallback than "Location not specified"
@@ -516,9 +518,9 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         remote?.toLowerCase() === "yes" ||
         remote?.toLowerCase() === "true" ||
         location.toLowerCase().includes("remote") ||
-        decodedDescription.toLowerCase().includes("work from home") ||
-        decodedDescription.toLowerCase().includes("remote position") ||
-        decodedDescription.toLowerCase().includes("fully remote");
+        plainTextDescription.toLowerCase().includes("work from home") ||
+        plainTextDescription.toLowerCase().includes("remote position") ||
+        plainTextDescription.toLowerCase().includes("fully remote");
 
       // Use XML-provided requirements/benefits if available, otherwise use parsed ones
       const finalRequirements = xmlRequirements ? decode(xmlRequirements) : parsedDescription.requirements;
