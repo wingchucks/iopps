@@ -64,9 +64,7 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Empowering Indigenous
-            <br />
-            Opportunities & Success
+            Empowering Indigenous Success
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg">
             Your platform for careers, training, marketplace, scholarships, events, and community connection.
