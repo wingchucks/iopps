@@ -143,6 +143,9 @@ export default function PricingPage() {
   // Hide "Create employer account" for employers, admins, and moderators
   const shouldHideEmployerButton = user && role && role !== "community";
 
+  // Check if user is a community member (not allowed to post)
+  const isCommunityMember = role === "community";
+
   const handleSubscriptionCheckout = async (tier: "TIER1" | "TIER2") => {
     if (!user) {
       router.push("/register?redirect=/pricing&role=employer");
@@ -264,8 +267,10 @@ export default function PricingPage() {
               "Standard placement on the IOPPS job board",
               "Basic employer profile",
             ]}
-            buttonText="Post a Job"
-            buttonHref="/organization/jobs/new"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Job"}
+            buttonHref={isCommunityMember ? undefined : "/organization/jobs/new"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
           />
           <PricingCard
             title="Featured Job Ad"
@@ -277,8 +282,10 @@ export default function PricingPage() {
               "Employer logo + branding on listing",
               "Analytics (views & clicks)",
             ]}
-            buttonText="Post a Featured Job"
-            buttonHref="/organization/jobs/new?featured=true"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Job"}
+            buttonHref={isCommunityMember ? undefined : "/organization/jobs/new?featured=true"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
           />
         </div>
       </section>
@@ -360,8 +367,10 @@ export default function PricingPage() {
               "Includes banner image, description, registration link",
               "Social promo formatting",
             ]}
-            buttonText="Post an Event"
-            buttonHref="/organization/conferences/new"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post an Event"}
+            buttonHref={isCommunityMember ? undefined : "/organization/conferences/new"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
           />
           <PricingCard
             title={CONFERENCE_PRODUCTS.FEATURED.name}
@@ -374,8 +383,10 @@ export default function PricingPage() {
               `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
               "Priority visibility on homepage",
             ]}
-            buttonText="Post a Featured Event"
-            buttonHref="/organization/conferences/new?featured=true"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Event"}
+            buttonHref={isCommunityMember ? undefined : "/organization/conferences/new?featured=true"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
           />
         </div>
       </section>
@@ -395,8 +406,10 @@ export default function PricingPage() {
             period="/ month"
             badge="First month FREE"
             features={VENDOR_PRODUCTS.MONTHLY.features}
-            buttonText="List Your Business"
-            buttonHref="/organization/shop/setup"
+            buttonText={isCommunityMember ? "Employer Account Required" : "List Your Business"}
+            buttonHref={isCommunityMember ? undefined : "/organization/shop/setup"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to list your business." : undefined}
           />
           <PricingCard
             title={VENDOR_PRODUCTS.ANNUAL.name}
@@ -404,8 +417,10 @@ export default function PricingPage() {
             period="/ year"
             badge="Save $200"
             features={VENDOR_PRODUCTS.ANNUAL.features}
-            buttonText="Get Annual Plan"
-            buttonHref="/organization/shop/setup?plan=annual"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Get Annual Plan"}
+            buttonHref={isCommunityMember ? undefined : "/organization/shop/setup?plan=annual"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to list your business." : undefined}
           />
         </div>
       </section>

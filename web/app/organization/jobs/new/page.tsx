@@ -250,7 +250,48 @@ function NewJobPageContent() {
   };
 
   if (authLoading || loading) return <div className="p-12 text-center text-slate-500">Loading...</div>;
-  if (!user || (role !== "employer" && !isSuperAdmin)) return <div className="p-12 text-center text-slate-300">Access Restricted</div>;
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
+        <p className="text-sm text-slate-300">
+          You need to be signed in to post job opportunities.
+        </p>
+        <Link
+          href="/login?redirect=/organization/jobs/new"
+          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+        >
+          Login
+        </Link>
+      </div>
+    );
+  }
+
+  if (role !== "employer" && !isSuperAdmin) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Employer Account Required</h1>
+        <p className="text-sm text-slate-300">
+          To post job opportunities on IOPPS, you need an employer account.
+        </p>
+        <div className="flex gap-3">
+          <Link
+            href="/organization/register"
+            className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          >
+            Register as Employer
+          </Link>
+          <Link
+            href="/jobs-training"
+            className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+          >
+            Browse Jobs
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#020306] pb-20">
