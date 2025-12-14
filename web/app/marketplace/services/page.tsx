@@ -6,11 +6,16 @@ import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, BriefcaseIcon } from '@hero
 import { PageShell } from '@/components/PageShell';
 import { ServiceCard } from '@/components/shop';
 import { listServices, getFeaturedServices } from '@/lib/firestore';
+import { useAuth } from '@/components/AuthProvider';
 import type { Service, ServiceCategory, NorthAmericanRegion } from '@/lib/types';
 import { SERVICE_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
 export default function ServicesPage() {
+  const { role } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
+
+  // Only show service listing CTA to employers/admins
+  const canListServices = role === 'employer' || role === 'admin';
   const [featuredServices, setFeaturedServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -284,32 +289,34 @@ export default function ServicesPage() {
         )}
       </section>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Offer Professional Services?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Join our growing network of Indigenous professional service providers. Showcase your expertise and connect with clients across North America.
-        </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/organization/services/new"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
-          >
-            List Your Services
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </Link>
-          <Link
-            href="/marketplace"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/50 px-8 py-3 text-lg font-semibold text-white transition-all hover:bg-slate-700"
-          >
-            Browse Products
-          </Link>
-        </div>
-      </section>
+      {/* CTA Section - Only for employers/admins */}
+      {canListServices && (
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+            Offer Professional Services?
+          </h2>
+          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+            Join our growing network of Indigenous professional service providers. Showcase your expertise and connect with clients across North America.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/organization/services/new"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
+            >
+              List Your Services
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/50 px-8 py-3 text-lg font-semibold text-white transition-all hover:bg-slate-700"
+            >
+              Browse Products
+            </Link>
+          </div>
+        </section>
+      )}
     </PageShell>
   );
 }
