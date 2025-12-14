@@ -1,0 +1,25 @@
+# Allow all search engines and social media crawlers
+User-agent: *
+Allow: /
+
+# Explicitly allow social media crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+# Sitemap location
+Sitemap: https://iopps.ca/sitemap.xml

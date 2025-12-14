@@ -36,21 +36,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca";
   const title = `${job.title} at ${job.employerName || "Company"} | IOPPS`;
-  const description = job.description?.slice(0, 160) || `${job.title} - Job Opportunity`;
-  const url = `https://iopps.ca/jobs/${jobId}`;
+  const description = job.description?.replace(/<[^>]*>/g, '').slice(0, 160) || `${job.title} - Job Opportunity`;
+  const url = `${siteUrl}/jobs-training/${jobId}`;
 
-  // Build location and job type info
-  let jobInfo = "";
-  if (job.location) {
-    jobInfo += job.location;
-  }
-  if (job.employmentType) {
-    jobInfo += jobInfo ? ` | ${job.employmentType}` : job.employmentType;
-  }
+  // Build location and job type info for subtitle
+  const subtitleParts = [];
+  if (job.location) subtitleParts.push(job.location);
+  if (job.employmentType) subtitleParts.push(job.employmentType);
+  if (job.remoteFlag) subtitleParts.push("Remote");
+  const subtitle = subtitleParts.join(" • ") || "Job Opportunity";
 
-  const fullDescription = jobInfo
-    ? `${jobInfo}\n\n${description}`
+  // Generate dynamic OG image URL
+  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(job.title)}&type=job&subtitle=${encodeURIComponent(subtitle)}${job.companyLogoUrl ? `&image=${encodeURIComponent(job.companyLogoUrl)}` : ''}`;
+
+  const fullDescription = subtitle
+    ? `${subtitle} — ${description}`
     : description;
 
   return {
@@ -62,29 +64,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url,
       siteName: "IOPPS - Indigenous Opportunities",
       type: "website",
-      images: job.companyLogoUrl
-        ? [
-            {
-              url: job.companyLogoUrl,
-              width: 1200,
-              height: 630,
-              alt: `${job.employerName || "Company"} logo`,
-            },
-          ]
-        : [
-            {
-              url: "https://iopps.ca/og-image.png",
-              width: 1200,
-              height: 630,
-              alt: "IOPPS - Indigenous Opportunities",
-            },
-          ],
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${job.title} at ${job.employerName || "Company"}`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${job.title} at ${job.employerName || "Company"}`,
       description: fullDescription,
-      images: job.companyLogoUrl ? [job.companyLogoUrl] : ["https://iopps.ca/og-image.png"],
+      images: [ogImageUrl],
     },
   };
 }
