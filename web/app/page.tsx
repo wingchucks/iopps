@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { StatsCounter } from "@/components/StatsCounter";
 import OceanWaveHero from "@/components/OceanWaveHero";
+import { useAuth } from "@/components/AuthProvider";
 
 const pillars = [
   {
@@ -44,6 +45,8 @@ const pillars = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen text-slate-100">
       {/* Ocean Wave Hero Section */}
@@ -52,20 +55,22 @@ export default function Home() {
         subtitle="Your platform for careers, training, marketplace, scholarships, events, and community connection."
         size="lg"
       >
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/jobs-training"
-            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Find Jobs
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-          >
-            Join Free
-          </Link>
-        </div>
+        {!user && (
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              href="/register"
+              className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Join Free
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
       </OceanWaveHero>
 
       {/* Pillars Grid */}
