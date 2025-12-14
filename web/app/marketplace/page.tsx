@@ -7,10 +7,15 @@ import { VendorCard } from "@/components/shop";
 import { getFeaturedVendors } from "@/lib/firebase/shop";
 import type { Vendor } from "@/lib/types";
 import OceanWaveHero from "@/components/OceanWaveHero";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function MarketplacePage() {
+  const { role } = useAuth();
   const [featuredVendors, setFeaturedVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Only show business listing CTAs to employers/admins (not community members)
+  const canListBusiness = role === "employer" || role === "admin";
 
   useEffect(() => {
     (async () => {
@@ -143,35 +148,37 @@ export default function MarketplacePage() {
 
       </PageShell>
 
-      {/* CTA Section - Ocean Wave Style */}
-      <section className="relative overflow-hidden">
-        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
-          <div className="bg-gradient-to-b from-white/5 to-transparent">
-            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
-              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
-                Own an Indigenous Business?
-              </h2>
-              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
-                Join our growing community of Indigenous entrepreneurs. List your business and connect with customers across North America.
-              </p>
-              <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/organization/shop"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-                >
-                  List Your Business
-                </Link>
-                <Link
-                  href="/organization/services/new"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                >
-                  Add a Service
-                </Link>
+      {/* CTA Section - Ocean Wave Style (only for employers/admins) */}
+      {canListBusiness && (
+        <section className="relative overflow-hidden">
+          <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+            <div className="bg-gradient-to-b from-white/5 to-transparent">
+              <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+                <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                  Own an Indigenous Business?
+                </h2>
+                <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                  Join our growing community of Indigenous entrepreneurs. List your business and connect with customers across North America.
+                </p>
+                <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link
+                    href="/organization/shop"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                  >
+                    List Your Business
+                  </Link>
+                  <Link
+                    href="/organization/services/new"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                  >
+                    Add a Service
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
