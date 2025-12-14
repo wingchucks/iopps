@@ -1,694 +1,381 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  XMarkIcon,
-  BriefcaseIcon,
-  MapPinIcon,
-  BookmarkIcon,
-  BellIcon,
-  CurrencyDollarIcon,
-  CalendarIcon,
-} from "@heroicons/react/24/outline";
-import { BookmarkIcon as BookmarkSolidIcon } from "@heroicons/react/24/solid";
-import {
-  listJobPostings,
-  listSavedJobIds,
-  toggleSavedJob,
-} from "@/lib/firestore";
-import type { JobPosting } from "@/lib/types";
-import { useAuth } from "@/components/AuthProvider";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { listJobPostings, listTrainingPrograms } from "@/lib/firestore";
+import type { JobPosting, TrainingProgram } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import CreateJobAlertModal from "@/components/CreateJobAlertModal";
 
-const JOB_TYPES = ["All", "Full-time", "Part-time", "Contract", "Seasonal", "Internship"] as const;
-type JobType = typeof JOB_TYPES[number];
-
-type MaybeDateInput = string | Date | { toDate: () => Date } | null | undefined;
-
-const getTimeValue = (value: MaybeDateInput, fallback = Number.MAX_SAFE_INTEGER) => {
-  if (!value) return fallback;
-  if (typeof value === "string") {
-    const parsed = new Date(value).getTime();
-    return Number.isNaN(parsed) ? fallback : parsed;
-  }
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === "object" && "toDate" in value) {
-    const maybeDate = value.toDate();
-    return maybeDate instanceof Date ? maybeDate.getTime() : fallback;
-  }
-  return fallback;
-};
-
-const formatDate = (value: MaybeDateInput) => {
-  const time = getTimeValue(value, Number.NaN);
-  if (Number.isNaN(time)) return null;
-  return new Date(time).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-function JobsContent() {
+function JobsTrainingContent() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user, role } = useAuth();
-  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
-  const [savingJobId, setSavingJobId] = useState<string | null>(null);
-  const [displayLimit, setDisplayLimit] = useState(12);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showAlertModal, setShowAlertModal] = useState(false);
-
-  // Filter state
-  const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("");
-  const [jobType, setJobType] = useState<JobType>("All");
-  const [remoteOnly, setRemoteOnly] = useState(false);
-  const [indigenousOnly, setIndigenousOnly] = useState(false);
-  const [savedOnly, setSavedOnly] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
     (async () => {
       try {
-        setError(null);
-        const data = await listJobPostings({ activeOnly: true });
-        setJobs(data);
+        const [jobData, programData] = await Promise.all([
+          listJobPostings({ activeOnly: true }),
+          listTrainingPrograms({ status: "approved", activeOnly: true }),
+        ]);
+        setJobs(jobData);
+        setPrograms(programData);
       } catch (err) {
-        console.error("Failed to load jobs", err);
-        setError("Unable to load jobs right now.");
+        console.error("Failed to load data", err);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  useEffect(() => {
-    const loadSaved = async () => {
-      if (user && role === "community") {
-        const ids = await listSavedJobIds(user.uid);
-        setSavedJobIds(new Set(ids));
-      } else {
-        setSavedJobIds(new Set());
-      }
-    };
-    loadSaved();
-  }, [role, user]);
+  const featuredJobs = useMemo(() => {
+    return jobs.filter((job) => job.indigenousPreference).slice(0, 3);
+  }, [jobs]);
 
-  const handleToggleSave = async (jobId: string) => {
-    if (!user || role !== "community") return;
-    const shouldSave = !savedJobIds.has(jobId);
-    setSavingJobId(jobId);
-    try {
-      await toggleSavedJob(user.uid, jobId, shouldSave);
-      setSavedJobIds((prev) => {
-        const next = new Set(prev);
-        if (shouldSave) next.add(jobId);
-        else next.delete(jobId);
-        return next;
-      });
-    } catch (err) {
-      console.error("Failed to toggle saved job", err);
-    } finally {
-      setSavingJobId(null);
+  const featuredPrograms = useMemo(() => {
+    return programs.filter((p) => p.featured || p.indigenousFocused).slice(0, 3);
+  }, [programs]);
+
+  const getCategoryColor = (category?: string) => {
+    switch (category) {
+      case "professional":
+        return "teal";
+      case "trades":
+        return "amber";
+      case "cultural":
+        return "sky";
+      default:
+        return "teal";
     }
   };
 
-  // Filtered jobs
-  const filtered = useMemo(() => {
-    return jobs.filter((job) => {
-      if (!job.active) return false;
+  const getCategoryIcon = (category?: string) => {
+    switch (category) {
+      case "professional":
+        return "💼";
+      case "trades":
+        return "🔧";
+      case "cultural":
+        return "🪶";
+      default:
+        return "📚";
+    }
+  };
 
-      const matchesSearch = search
-        ? `${job.title ?? ""} ${job.employerName ?? ""} ${job.description ?? ""} ${job.location ?? ""}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
-        : true;
-
-      const matchesLocation = location
-        ? (job.location ?? "").toLowerCase().includes(location.toLowerCase())
-        : true;
-
-      const matchesType = jobType === "All" ||
-        (job.employmentType ?? "").toLowerCase() === jobType.toLowerCase();
-
-      const matchesRemote = !remoteOnly ||
-        job.remoteFlag ||
-        (job.location ?? "").toLowerCase().includes("remote");
-
-      const matchesIndigenous = !indigenousOnly || Boolean(job.indigenousPreference);
-
-      const matchesSaved = !savedOnly || savedJobIds.has(job.id);
-
-      return matchesSearch && matchesLocation && matchesType && matchesRemote && matchesIndigenous && matchesSaved;
-    });
-  }, [jobs, search, location, jobType, remoteOnly, indigenousOnly, savedOnly, savedJobIds]);
-
-  // Sort by newest first
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      const aDate = getTimeValue(a.createdAt ?? null, 0);
-      const bDate = getTimeValue(b.createdAt ?? null, 0);
-      return bDate - aDate;
-    });
-  }, [filtered]);
-
-  // Get featured jobs (Indigenous preference or remote)
-  const featuredJobs = useMemo(() => {
-    return sorted.filter((job) => job.indigenousPreference).slice(0, 3);
-  }, [sorted]);
-
-  const displayedJobs = useMemo(
-    () => sorted.slice(0, displayLimit),
-    [displayLimit, sorted]
-  );
-
-  const hasMore = displayLimit < sorted.length;
-  const hasFilters = search || location || jobType !== "All" || remoteOnly || indigenousOnly || savedOnly;
-
-  const clearFilters = () => {
-    setSearch("");
-    setLocation("");
-    setJobType("All");
-    setRemoteOnly(false);
-    setIndigenousOnly(false);
-    setSavedOnly(false);
-    setDisplayLimit(12);
+  const formatSalary = (salaryRange?: JobPosting["salaryRange"]): string | null => {
+    if (!salaryRange) return null;
+    if (typeof salaryRange === "string") return salaryRange;
+    if (salaryRange.min || salaryRange.max) {
+      const currency = salaryRange.currency || "CAD";
+      if (salaryRange.min && salaryRange.max) {
+        return `$${salaryRange.min.toLocaleString()} - $${salaryRange.max.toLocaleString()} ${currency}`;
+      }
+      if (salaryRange.min) return `From $${salaryRange.min.toLocaleString()} ${currency}`;
+      if (salaryRange.max) return `Up to $${salaryRange.max.toLocaleString()} ${currency}`;
+    }
+    return null;
   };
 
   return (
     <PageShell>
+      {/* Breadcrumb */}
+      <nav className="mb-8 text-sm text-slate-400">
+        <Link href="/" className="hover:text-white transition-colors">
+          Home
+        </Link>
+        <span className="mx-2">→</span>
+        <span className="text-white">Jobs & Training</span>
+      </nav>
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="jobs-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="5" cy="5" r="1" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#jobs-grid)" />
-          </svg>
-        </div>
+      <div className="relative text-center mb-12">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
+          Jobs & Training
+        </p>
+        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl lg:text-6xl">
+          Find Your Path.
+          <br />
+          Build Your Future.
+        </h1>
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
+          Discover career opportunities with employers committed to Indigenous hiring,
+          and training programs to build your skills.
+        </p>
+      </div>
 
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Jobs & Careers
-          </h1>
-          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Build your career with employers committed to Indigenous talent and community success.
-            Find opportunities across Turtle Island.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search jobs..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-            >
-              <FunnelIcon className="h-5 w-5" />
-              Filters
-              {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
-                  !
-                </span>
-              )}
-            </button>
+      {/* Three Cards Section */}
+      <div className="grid gap-6 md:grid-cols-3 mb-12">
+        {/* Find Jobs Card */}
+        <Link
+          href="/jobs-training/jobs"
+          className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-left transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
+        >
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+            <span className="text-2xl">💼</span>
           </div>
+          <h2 className="text-xl font-bold text-white mb-2">Find Jobs</h2>
+          <p className="text-sm text-slate-400 leading-relaxed mb-4">
+            Browse {jobs.length || "100"}+ job opportunities from employers committed to Indigenous hiring.
+          </p>
+          <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 inline-block transition-transform">
+            Browse Jobs →
+          </span>
+        </Link>
 
-          {/* Quick Actions */}
-          {role === "community" && (
-            <div className="mt-6 flex justify-center gap-3">
-              <button
-                onClick={() => setShowAlertModal(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-4 py-2 text-sm font-medium text-white hover:bg-white/30 transition-colors"
-              >
-                <BellIcon className="h-4 w-4" />
-                Create Job Alert
-              </button>
-              <button
-                onClick={() => setSavedOnly(!savedOnly)}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  savedOnly
-                    ? "bg-white text-teal-600"
-                    : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
-                }`}
-              >
-                <BookmarkIcon className="h-4 w-4" />
-                Saved Jobs
-              </button>
-            </div>
-          )}
+        {/* Build Skills Card */}
+        <Link
+          href="/jobs-training/programs"
+          className="group rounded-2xl border border-sky-500/30 bg-slate-900/50 p-8 text-left transition-all hover:border-sky-500/50 hover:-translate-y-1"
+        >
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-500/40">
+            <span className="text-2xl">📚</span>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Build Skills</h2>
+          <p className="text-sm text-slate-400 leading-relaxed mb-4">
+            Access training from Indigenous institutions — professional, trades, and cultural.
+          </p>
+          <span className="text-sm font-semibold text-sky-400 group-hover:translate-x-1 inline-block transition-transform">
+            Browse Training →
+          </span>
+        </Link>
+
+        {/* My Dashboard Card */}
+        <Link
+          href="/member/dashboard"
+          className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-left transition-all hover:border-amber-500/50 hover:-translate-y-1"
+        >
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-500/40">
+            <span className="text-2xl">📊</span>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">My Dashboard</h2>
+          <p className="text-sm text-slate-400 leading-relaxed mb-4">
+            Track applications, continue learning, and manage your certificates.
+          </p>
+          <span className="text-sm font-semibold text-amber-400 group-hover:translate-x-1 inline-block transition-transform">
+            View Dashboard →
+          </span>
+        </Link>
+      </div>
+
+      {/* Stats Banner */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div>
+            <div className="text-3xl font-bold text-[#14B8A6] mb-1">250+</div>
+            <div className="text-sm text-slate-400">Active Jobs</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-[#14B8A6] mb-1">85+</div>
+            <div className="text-sm text-slate-400">Training Programs</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-[#14B8A6] mb-1">120+</div>
+            <div className="text-sm text-slate-400">Employers</div>
+          </div>
+          <div>
+            <div className="text-3xl font-bold text-[#14B8A6] mb-1">45+</div>
+            <div className="text-sm text-slate-400">Training Providers</div>
+          </div>
         </div>
       </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Filters</h3>
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                <XMarkIcon className="h-4 w-4" />
-                Clear all
-              </button>
-            )}
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Location */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Location</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, province, or remote"
-                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Job Type */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Job Type</label>
-              <div className="flex flex-wrap gap-2">
-                {JOB_TYPES.slice(0, 4).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setJobType(type)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      jobType === type
-                        ? "bg-teal-500 text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Remote Toggle */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Work Style</label>
-              <button
-                onClick={() => setRemoteOnly(!remoteOnly)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  remoteOnly
-                    ? "bg-blue-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Remote / Hybrid Only
-              </button>
-            </div>
-
-            {/* Indigenous Preference */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Preference</label>
-              <button
-                onClick={() => setIndigenousOnly(!indigenousOnly)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  indigenousOnly
-                    ? "bg-teal-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Indigenous Preference
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Training Programs Banner */}
-      {!hasFilters && (
-        <section className="mb-12">
-          <Link
-            href="/jobs-training/programs"
-            className="group relative block overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/30 via-indigo-900/20 to-violet-900/30 p-6 sm:p-8 transition-all hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-indigo-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
-            <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 shadow-lg shadow-purple-500/25">
-                  <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M12 14l9-5-9-5-9 5 9 5z" />
-                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">
-                    Looking to Build Your Skills?
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-300">
-                    Explore training programs, certifications, and professional development opportunities.
-                  </p>
-                </div>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-colors group-hover:bg-purple-500/30">
-                Browse Training Programs
-                <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-        </section>
-      )}
-
       {/* Featured Jobs Section */}
-      {!hasFilters && featuredJobs.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500">
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-white">Indigenous Preference Jobs</h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                featured
-                isSaved={savedJobIds.has(job.id)}
-                onToggleSave={() => handleToggleSave(job.id)}
-                saving={savingJobId === job.id}
-                showSaveButton={role === "community"}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      {/* All Jobs */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {hasFilters ? "Search Results" : "All Jobs"}
-          </h2>
-          <span className="text-sm text-slate-400">
-            {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "job" : "jobs"}`}
-          </span>
+      <section className="mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Featured Jobs</h2>
+          <Link
+            href="/jobs-training/jobs"
+            className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
+          >
+            View All Jobs →
+          </Link>
         </div>
 
         {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-72" />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-24" />
             ))}
           </div>
-        ) : jobs.length === 0 && !hasFilters ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <BriefcaseIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No jobs posted yet</h3>
-            <p className="text-slate-400">
-              Check back soon! Employers are adding new opportunities regularly.
-            </p>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No jobs found</h3>
-            <p className="text-slate-400 mb-4">
-              Try adjusting your filters or search terms.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
-            >
-              Clear filters
-            </button>
+        ) : featuredJobs.length > 0 ? (
+          <div className="space-y-4">
+            {featuredJobs.map((job) => (
+              <Link
+                key={job.id}
+                href={`/jobs-training/jobs/${job.id}`}
+                className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+              >
+                <div className="flex items-center gap-5">
+                  <div className="flex h-13 w-13 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+                    <span className="text-xl">💼</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <span className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
+                        {job.title}
+                      </span>
+                      {job.indigenousPreference && (
+                        <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6] uppercase">
+                          Indigenous Preference
+                        </span>
+                      )}
+                      <span className="rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400 uppercase">
+                        {job.employmentType}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                      <span className="text-[#14B8A6] font-medium">{job.employerName}</span>
+                      <span>📍 {job.location}</span>
+                      {formatSalary(job.salaryRange) && <span>💰 {formatSalary(job.salaryRange)}</span>}
+                    </div>
+                  </div>
+                </div>
+                <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
+                  View Job →
+                </button>
+              </Link>
+            ))}
           </div>
         ) : (
-          <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedJobs.map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  isSaved={savedJobIds.has(job.id)}
-                  onToggleSave={() => handleToggleSave(job.id)}
-                  saving={savingJobId === job.id}
-                  showSaveButton={role === "community"}
-                />
-              ))}
-            </div>
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
-                <button
-                  onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+            <p className="text-slate-400">Featured jobs coming soon!</p>
+            <Link
+              href="/jobs-training/jobs"
+              className="mt-4 inline-block text-[#14B8A6] hover:text-[#16cdb8] font-medium"
+            >
+              Browse all jobs →
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* Featured Training Section */}
+      <section className="mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-white">Featured Training</h2>
+          <Link
+            href="/jobs-training/programs"
+            className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
+          >
+            View All Training →
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-64" />
+            ))}
+          </div>
+        ) : featuredPrograms.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredPrograms.map((program) => {
+              const colorClass = getCategoryColor(program.category);
+              return (
+                <Link
+                  key={program.id}
+                  href={`/jobs-training/programs/${program.id}`}
+                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-slate-700"
                 >
-                  Load more jobs
-                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </>
+                  <div className="flex justify-between items-start mb-4">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl bg-${colorClass}-500/20 border border-${colorClass}-500/40`}
+                    >
+                      <span className="text-xl">{getCategoryIcon(program.category)}</span>
+                    </div>
+                    {program.format && (
+                      <span className="rounded-md bg-slate-800 border border-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-300">
+                        {program.format}
+                      </span>
+                    )}
+                  </div>
+                  <div className={`text-xs font-semibold text-${colorClass}-400 uppercase mb-1.5`}>
+                    {program.providerName}
+                  </div>
+                  <h3 className="font-bold text-white mb-3 leading-snug line-clamp-2">
+                    {program.title}
+                  </h3>
+                  <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-4">
+                    {program.duration && <span>⏱ {program.duration}</span>}
+                    {program.viewCount && <span>👥 {program.viewCount} enrolled</span>}
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                    <span
+                      className={`text-lg font-bold ${
+                        program.cost === "Free" || program.fundingAvailable
+                          ? "text-[#14B8A6]"
+                          : "text-white"
+                      }`}
+                    >
+                      {program.cost || "Free"}
+                    </span>
+                    <span className={`text-sm font-semibold text-${colorClass}-400`}>
+                      Learn More
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+            <p className="text-slate-400">Featured training programs coming soon!</p>
+            <Link
+              href="/jobs-training/programs"
+              className="mt-4 inline-block text-[#14B8A6] hover:text-[#16cdb8] font-medium"
+            >
+              Browse all programs →
+            </Link>
+          </div>
         )}
       </section>
 
       {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+      <section className="rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
         <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Hiring Indigenous Talent?
+          Are you an employer or training provider?
         </h2>
         <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Post your job on IOPPS. Reach Indigenous professionals and community members across North America.
+          Post your opportunities on IOPPS and connect with Indigenous talent across North America.
         </p>
-        <a
-          href="/organization/jobs/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-        >
-          Post a Job
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </a>
+        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/organization/jobs/new"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-all hover:bg-[#0d9488]"
+          >
+            Post a Job
+          </Link>
+          <Link
+            href="/organization/training/new"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-600 px-6 py-3 font-semibold text-white transition-all hover:border-slate-500 hover:bg-slate-800"
+          >
+            Submit Training Program
+          </Link>
+        </div>
       </section>
-
-      {/* Job Alert Modal */}
-      {showAlertModal && (
-        <CreateJobAlertModal
-          initialKeywords={search}
-          initialLocation={location}
-          onClose={() => setShowAlertModal(false)}
-        />
-      )}
     </PageShell>
   );
 }
 
-// Job Card Component
-function JobCard({
-  job,
-  featured = false,
-  isSaved,
-  onToggleSave,
-  saving,
-  showSaveButton,
-}: {
-  job: JobPosting;
-  featured?: boolean;
-  isSaved: boolean;
-  onToggleSave: () => void;
-  saving: boolean;
-  showSaveButton: boolean;
-}) {
-  const deadline = formatDate(job.closingDate ?? null);
-
-  const getSalaryDisplay = () => {
-    // Check for structured salaryRange first
-    if (job.salaryRange) {
-      if (typeof job.salaryRange === "string") return job.salaryRange;
-      if (job.salaryRange.disclosed === false) return "Competitive";
-      if (job.salaryRange.min && job.salaryRange.max) {
-        return `$${job.salaryRange.min.toLocaleString()} - $${job.salaryRange.max.toLocaleString()}`;
-      }
-      if (job.salaryRange.min) return `From $${job.salaryRange.min.toLocaleString()}`;
-      if (job.salaryRange.max) return `Up to $${job.salaryRange.max.toLocaleString()}`;
-    }
-    // Fallback to legacy salary.display field (used by RSS imports)
-    const legacySalary = (job as any).salary;
-    if (legacySalary?.display) return legacySalary.display;
-    return null;
-  };
-
-  const salary = getSalaryDisplay();
-
-  return (
-    <div
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
-        featured
-          ? "border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
-      }`}
-    >
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-teal-600/20 to-emerald-600/10 px-5 py-5">
-        {/* Save Button */}
-        {showSaveButton && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              onToggleSave();
-            }}
-            disabled={saving}
-            className={`absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full transition-all ${
-              isSaved
-                ? "bg-amber-500 text-white"
-                : "bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-amber-400"
-            }`}
-          >
-            {isSaved ? (
-              <BookmarkSolidIcon className="h-4 w-4" />
-            ) : (
-              <BookmarkIcon className="h-4 w-4" />
-            )}
-          </button>
-        )}
-
-        {/* Indigenous Preference Badge */}
-        {job.indigenousPreference && (
-          <div className="inline-flex items-center gap-1 rounded-full bg-teal-500/20 px-2.5 py-1 text-xs font-semibold text-teal-300 mb-2">
-            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-            </svg>
-            Indigenous Preference
-          </div>
-        )}
-
-        {/* Employment Type & Remote */}
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-300">
-            {job.employmentType || "Full-time"}
-          </span>
-          {job.remoteFlag && (
-            <span className="rounded-full bg-blue-500/20 px-2.5 py-1 text-xs font-medium text-blue-300">
-              Remote
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-5">
-        {job.employerName && (
-          <p className="text-xs font-semibold uppercase tracking-wider text-teal-400 mb-1">
-            {job.employerName}
-          </p>
-        )}
-
-        <Link href={`/jobs/${job.id}`}>
-          <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors cursor-pointer">
-            {job.title}
-          </h3>
-        </Link>
-
-        <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-400">
-          <MapPinIcon className="h-4 w-4 flex-shrink-0" />
-          <span className="line-clamp-1">{job.location}</span>
-        </div>
-
-        {salary && (
-          <div className="mt-2 flex items-center gap-1.5 text-sm text-emerald-400">
-            <CurrencyDollarIcon className="h-4 w-4 flex-shrink-0" />
-            <span>{salary}</span>
-          </div>
-        )}
-
-        {job.description && (
-          <p className="mt-3 text-sm text-slate-300 line-clamp-2 flex-1">
-            {job.description}
-          </p>
-        )}
-
-        {/* Footer */}
-        <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
-          {deadline ? (
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <CalendarIcon className="h-4 w-4" />
-              <span>Closes {deadline}</span>
-            </div>
-          ) : (
-            <span className="text-xs text-slate-500">Open until filled</span>
-          )}
-          <Link
-            href={`/jobs/${job.id}`}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 group-hover:gap-2 transition-all"
-          >
-            View
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function JobsPage() {
+export default function JobsTrainingPage() {
   return (
     <Suspense
       fallback={
         <PageShell>
-          <div className="mx-auto max-w-7xl">
-            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-72 animate-pulse rounded-2xl bg-slate-800/50"
-                />
-              ))}
-            </div>
+          <div className="text-center mb-16">
+            <div className="h-6 w-32 mx-auto bg-slate-800 rounded animate-pulse mb-4" />
+            <div className="h-16 w-96 mx-auto bg-slate-800 rounded animate-pulse mb-6" />
+            <div className="h-6 w-64 mx-auto bg-slate-800 rounded animate-pulse" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-3 mb-12">
+            <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
+            <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
+            <div className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
           </div>
         </PageShell>
       }
     >
-      <JobsContent />
+      <JobsTrainingContent />
     </Suspense>
   );
 }
