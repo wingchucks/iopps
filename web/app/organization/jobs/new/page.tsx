@@ -222,8 +222,8 @@ function NewJobPageContent() {
         responsibilities: formData.responsibilities.split('\n').filter(r => r.trim()),
         qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
         salaryRange: formData.salaryRange.disclosed !== false ? {
-          min: formData.salaryRange.min,
-          max: formData.salaryRange.max,
+          ...(formData.salaryRange.min !== undefined && { min: formData.salaryRange.min }),
+          ...(formData.salaryRange.max !== undefined && { max: formData.salaryRange.max }),
           currency: formData.salaryRange.currency || "CAD",
           period: formData.salaryRange.period as SalaryPeriod,
           disclosed: true,

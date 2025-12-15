@@ -203,10 +203,10 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         };
       }
 
-      // Prepare salary range for Firestore
+      // Prepare salary range for Firestore (only include min/max if defined)
       const salaryRangeData = salaryRange.disclosed === false ? undefined : {
-        min: salaryRange.min,
-        max: salaryRange.max,
+        ...(salaryRange.min !== undefined && { min: salaryRange.min }),
+        ...(salaryRange.max !== undefined && { max: salaryRange.max }),
         currency: salaryRange.currency,
         period: salaryRange.period,
       };
