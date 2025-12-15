@@ -212,3 +212,60 @@ Follow existing dark theme patterns:
 - Accent: `#14B8A6` (teal)
 - Rounded: `rounded-xl`, `rounded-2xl`
 - Focus: `focus:border-[#14B8A6] focus:outline-none`
+
+---
+
+# Jobs & Training Hub Redesign (NEW)
+
+## The Problem
+
+When users click "Jobs & Training", they expect to see jobs. Instead:
+- They land on a hub page with action cards
+- "Featured Jobs coming soon!" appears when no featured jobs exist
+- Extra clicks required to reach actual content
+- The hub creates friction instead of delivering value
+
+## The Solution
+
+Transform `/jobs-training` into a **tabbed content page** that shows jobs immediately.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  OceanWaveHero (simplified)                                 │
+│  "Find Your Next Opportunity"                               │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐                         │
+│  │   ● Jobs     │  │   Training   │    ← Tabs (Jobs default)│
+│  └──────────────┘  └──────────────┘                         │
+├─────────────────────────────────────────────────────────────┤
+│  [Search] [Filters]                                         │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │  Job Card   │ │  Job Card   │ │  Job Card   │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘           │
+│  ... actual listings ...                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Implementation
+
+### Files to Create
+
+1. `web/components/jobs-training/JobsTabContent.tsx`
+   - Self-contained component with all jobs search/filter/listing UI
+
+2. `web/components/jobs-training/TrainingTabContent.tsx`
+   - Self-contained component with all training search/filter/listing UI
+
+### Files to Modify
+
+1. `web/app/jobs-training/page.tsx`
+   - Replace hub design with tabbed interface
+   - Jobs tab active by default
+   - URL param sync: `?tab=jobs` or `?tab=training`
+
+## Behavior
+
+- Default: Jobs tab active, shows all jobs with search/filter
+- Click Training tab: Shows all programs with search/filter
+- URL updates: `/jobs-training?tab=training`
+- Existing pages remain: `/jobs-training/jobs` and `/jobs-training/programs` still work
