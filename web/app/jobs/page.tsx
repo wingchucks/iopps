@@ -19,14 +19,11 @@ import {
   listJobPostings,
   listSavedJobIds,
   toggleSavedJob,
-  listTrainingPrograms,
 } from "@/lib/firestore";
-import type { JobPosting, TrainingProgram } from "@/lib/types";
+import type { JobPosting } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import CreateJobAlertModal from "@/components/CreateJobAlertModal";
-import TrainingCard from "@/components/training/TrainingCard";
-import { AcademicCapIcon } from "@heroicons/react/24/outline";
 
 const JOB_TYPES = ["All", "Full-time", "Part-time", "Contract", "Seasonal", "Internship"] as const;
 type JobType = typeof JOB_TYPES[number];
@@ -63,7 +60,6 @@ function JobsContent() {
   const pathname = usePathname();
 
   const [jobs, setJobs] = useState<JobPosting[]>([]);
-  const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, role } = useAuth();
@@ -109,13 +105,8 @@ function JobsContent() {
     (async () => {
       try {
         setError(null);
-        // Load both jobs and training
-        const [jobsData, trainingData] = await Promise.all([
-          listJobPostings({ activeOnly: true }),
-          listTrainingPrograms({ limit: 3, featured: true })
-        ]);
+        const jobsData = await listJobPostings({ activeOnly: true });
         setJobs(jobsData);
-        setTrainingPrograms(trainingData);
       } catch (err) {
         console.error("Failed to load content", err);
         setError("Unable to load jobs right now.");
@@ -241,11 +232,10 @@ function JobsContent() {
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Jobs & Training
+            Indigenous Jobs
           </h1>
           <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Build your career with employers committed to Indigenous talent.
-            Find jobs and training opportunities across Turtle Island.
+            Build your career with employers committed to Indigenous talent across Turtle Island.
           </p>
 
           {/* Search Bar */}
@@ -315,20 +305,6 @@ function JobsContent() {
           </span>
         </div>
 
-        {/* Build Skills */}
-        <Link href="/jobs/training" className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-6 flex flex-col hover:border-teal-500/30 transition-all group">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <AcademicCapIcon className="h-6 w-6 text-purple-400" />
-          </div>
-          <h3 className="text-lg font-bold text-white mb-2">Build Skills</h3>
-          <p className="text-slate-400 text-sm mb-4 flex-1">
-            Discover training programs, workshops, and courses to advance your career.
-          </p>
-          <span className="text-purple-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
-            Explore Training <span className="text-lg">→</span>
-          </span>
-        </Link>
-
         {/* Member Dashboard */}
         <Link href={user ? "/member/dashboard" : "/login"} className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-6 flex flex-col hover:border-teal-500/30 transition-all group">
           <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -344,29 +320,6 @@ function JobsContent() {
         </Link>
       </div>
 
-      {/* Featured Training Section */}
-      {!hasFilters && trainingPrograms.length > 0 && (
-        <section className="mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
-                <AcademicCapIcon className="h-5 w-5 text-purple-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">Featured Training</h2>
-            </div>
-            <Link href="/jobs/training" className="text-sm font-semibold text-purple-400 hover:text-purple-300 transition-colors">
-              View all training →
-            </Link>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {trainingPrograms.map(program => (
-              <TrainingCard key={program.id} program={program} featured />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Filters Panel */}
       {/* Filters Panel */}
       <div id="jobs-list">
         {showFilters && (
