@@ -5,8 +5,9 @@
 
 import { Resend } from "resend";
 
-const ADMIN_EMAIL = "nathan.arias@iopps.ca";
-const FROM_EMAIL = "IOPPS Notifications <notifications@iopps.ca>";
+// Use environment variables with fallbacks for backwards compatibility
+const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "nathan.arias@iopps.ca";
+const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL || "IOPPS Notifications <notifications@iopps.ca>";
 
 type NotificationType =
   | "new_employer"
@@ -46,7 +47,9 @@ interface NotificationData {
 export async function notifyAdmin(data: NotificationData): Promise<void> {
   // Skip if no API key configured
   if (!process.env.RESEND_API_KEY) {
-    console.log("[Admin Notification] Skipped - RESEND_API_KEY not configured");
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Admin Notification] Skipped - RESEND_API_KEY not configured");
+    }
     return;
   }
 
@@ -62,7 +65,9 @@ export async function notifyAdmin(data: NotificationData): Promise<void> {
       text,
     });
 
-    console.log(`[Admin Notification] Sent: ${data.type}`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[Admin Notification] Sent: ${data.type}`);
+    }
   } catch (error) {
     // Log but don't throw - notifications shouldn't break main flows
     console.error("[Admin Notification] Failed to send:", error);

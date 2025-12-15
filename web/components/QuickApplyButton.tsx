@@ -131,7 +131,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className="rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                className="rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-accent-hover"
             >
                 ⚡ Quick Apply
             </button>
@@ -219,17 +219,17 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
 
                                         {/* Saved Resume Display */}
                                         {resumeSource === "saved" && memberProfile?.resumeUrl ? (
-                                            <div className="p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                                            <div className="p-3 bg-accent/10 border border-accent/30 rounded-lg">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
-                                                        <DocumentIcon className="h-5 w-5 text-[#14B8A6]" />
+                                                        <DocumentIcon className="h-5 w-5 text-accent" />
                                                         <span className="text-sm text-slate-200">Using your saved resume</span>
                                                     </div>
                                                     <a
                                                         href={memberProfile.resumeUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-sm text-[#14B8A6] hover:underline"
+                                                        className="text-sm text-accent hover:underline"
                                                     >
                                                         View
                                                     </a>
@@ -251,9 +251,9 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         {(resumeSource === "upload" || !memberProfile?.resumeUrl) && (
                                             <div className="space-y-3">
                                                 {uploadedResume ? (
-                                                    <div className="flex items-center justify-between p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                                                    <div className="flex items-center justify-between p-3 bg-accent/10 border border-accent/30 rounded-lg">
                                                         <div className="flex items-center gap-2 overflow-hidden">
-                                                            <DocumentIcon className="h-5 w-5 text-[#14B8A6] flex-shrink-0" />
+                                                            <DocumentIcon className="h-5 w-5 text-accent flex-shrink-0" />
                                                             <span className="text-sm text-slate-200 truncate">
                                                                 {uploadedResume.name}
                                                             </span>
@@ -320,13 +320,13 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     onChange={(e) => setCoverLetterText(e.target.value)}
                                                     rows={6}
                                                     placeholder="Introduce yourself and explain why you're a great fit for this role..."
-                                                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
+                                                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                                                 />
                                                 <div className="flex justify-between mt-1">
                                                     <p className="text-xs text-slate-500">
                                                         {coverLetterText.length} characters
                                                     </p>
-                                                    <a href="/member/tools/cover-letter-builder" target="_blank" className="text-xs text-[#14B8A6] hover:underline flex items-center gap-1">
+                                                    <a href="/member/tools/cover-letter-builder" target="_blank" className="text-xs text-accent hover:underline flex items-center gap-1">
                                                         Need help? Use our Cover Letter Builder ↗
                                                     </a>
                                                 </div>
@@ -334,9 +334,9 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         ) : (
                                             <div className="space-y-3">
                                                 {coverLetterFile ? (
-                                                    <div className="flex items-center justify-between p-3 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                                                    <div className="flex items-center justify-between p-3 bg-accent/10 border border-accent/30 rounded-lg">
                                                         <div className="flex items-center gap-2 overflow-hidden">
-                                                            <DocumentIcon className="h-5 w-5 text-[#14B8A6] flex-shrink-0" />
+                                                            <DocumentIcon className="h-5 w-5 text-accent flex-shrink-0" />
                                                             <span className="text-sm text-slate-200 truncate">{coverLetterFile.name}</span>
                                                         </div>
                                                         <button
@@ -360,7 +360,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     />
                                                 )}
                                                 <p className="text-xs text-slate-500">
-                                                    Don't have one? <a href="/member/tools/cover-letter-builder" target="_blank" className="text-[#14B8A6] hover:underline">Create one with our builder</a>.
+                                                    Don't have one? <a href="/member/tools/cover-letter-builder" target="_blank" className="text-accent hover:underline">Create one with our builder</a>.
                                                 </p>
                                             </div>
                                         )}
@@ -379,7 +379,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     <div key={idx} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg border border-slate-700">
                                                         <div className="flex items-center gap-2 overflow-hidden">
                                                             <DocumentIcon className="h-4 w-4 text-slate-400" />
-                                                            <a href={doc.url} target="_blank" className="text-sm text-slate-300 hover:text-[#14B8A6] truncate">{doc.name}</a>
+                                                            <a href={doc.url} target="_blank" className="text-sm text-slate-300 hover:text-accent truncate">{doc.name}</a>
                                                         </div>
                                                         <button
                                                             onClick={() => setAdditionalDocs(prev => prev.filter((_, i) => i !== idx))}
@@ -414,7 +414,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         ) : (
                                             <button
                                                 onClick={() => setShowAddDoc(true)}
-                                                className="flex items-center gap-2 text-sm text-[#14B8A6] hover:text-[#0F9488] transition-colors font-medium hover:bg-[#14B8A6]/5 px-3 py-2 rounded-lg -ml-3"
+                                                className="flex items-center gap-2 text-sm text-accent hover:text-accent-hover transition-colors font-medium hover:bg-accent/5 px-3 py-2 rounded-lg -ml-3"
                                             >
                                                 <PlusCircleIcon className="h-5 w-5" />
                                                 Add Another Document
@@ -427,7 +427,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         <button
                                             onClick={handleQuickApply}
                                             disabled={applying || !((resumeSource === "saved" && hasResume) || (resumeSource === "upload" && uploadedResume))}
-                                            className="flex-1 rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-[#14B8A6]/20 transition-all hover:shadow-[#14B8A6]/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex-1 rounded-full bg-gradient-to-r from-accent to-accent-soft px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-accent/20 transition-all hover:shadow-accent/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {applying ? "Submitting Application..." : "Submit Application"}
                                         </button>

@@ -4,7 +4,8 @@
  */
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
-const CHANNEL_ID = "UCNU_AdHFo34l_LMjqEAyt3w";
+// Use environment variable with fallback for backwards compatibility
+const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || "UCNU_AdHFo34l_LMjqEAyt3w";
 
 // Cache for API responses to avoid hitting quota limits
 const cache = new Map<string, { data: unknown; expiry: number }>();
