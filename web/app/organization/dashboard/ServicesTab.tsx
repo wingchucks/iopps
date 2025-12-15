@@ -32,7 +32,7 @@ export default function ServicesTab() {
         title: "",
         description: "",
         shortDescription: "",
-        category: "consulting",
+        category: "Consulting",
         priceType: "quote",
         priceDisplay: "",
         serviceArea: []
@@ -69,7 +69,7 @@ export default function ServicesTab() {
                 title: "",
                 description: "",
                 shortDescription: "",
-                category: "consulting",
+                category: "Consulting",
                 priceType: "quote",
                 priceDisplay: "",
                 serviceArea: []
