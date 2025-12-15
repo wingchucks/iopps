@@ -134,13 +134,10 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
           <div className="lg:col-span-8">
             <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
               <h2 className="text-xl font-bold text-slate-200">Job Description</h2>
-              <div className="mt-4 space-y-4 text-slate-300">
-                {job.description?.split("\n").map((paragraph, i) => (
-                  <p key={i} className="leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
+              <div
+                className="mt-4 prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-p:leading-relaxed prose-headings:text-slate-200 prose-strong:text-slate-200 prose-ul:text-slate-300 prose-li:text-slate-300"
+                dangerouslySetInnerHTML={{ __html: job.description || '' }}
+              />
 
               {job.requirements && (
                 <>
