@@ -6,6 +6,13 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
+import type { LocationType, SalaryPeriod } from "@/lib/types";
+
+// Form Components
+import { RichTextEditor } from "@/components/forms/RichTextEditor";
+import { SalaryRangeInput } from "@/components/forms/SalaryRangeInput";
+import { LocationTypeSelector } from "@/components/forms/LocationTypeSelector";
+import { CategorySelect, EmploymentTypeSelect } from "@/components/forms/CategorySelect";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -13,6 +20,14 @@ type SubscriptionInfo = {
   remainingCredits: number;
   unlimitedPosts: boolean;
 } | null;
+
+interface SalaryRangeValue {
+  min?: number;
+  max?: number;
+  currency?: string;
+  period?: SalaryPeriod;
+  disclosed?: boolean;
+}
 
 function NewJobPageContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -33,12 +48,19 @@ function NewJobPageContent() {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
+    locationType: "onsite" as LocationType,
     employmentType: "Full-time",
-    remoteFlag: false,
+    category: "",
     description: "",
-    responsibilities: "", // keeping as string for textarea
-    qualifications: "",   // keeping as string for textarea
-    salaryRange: "",
+    responsibilities: "",
+    qualifications: "",
+    salaryRange: {
+      min: undefined,
+      max: undefined,
+      currency: "CAD",
+      period: "yearly",
+      disclosed: true,
+    } as SalaryRangeValue,
     indigenousPreference: true,
     cpicRequired: false,
     willTrain: false,
@@ -58,8 +80,9 @@ function NewJobPageContent() {
             ...prev,
             title: duplicateData.title || prev.title,
             location: duplicateData.location || prev.location,
+            locationType: duplicateData.locationType || (duplicateData.remoteFlag ? "remote" : "onsite"),
             employmentType: duplicateData.employmentType || prev.employmentType,
-            remoteFlag: duplicateData.remoteFlag ?? prev.remoteFlag,
+            category: duplicateData.category || prev.category,
             description: duplicateData.description || prev.description,
             responsibilities: Array.isArray(duplicateData.responsibilities)
               ? duplicateData.responsibilities.join("\n")
@@ -67,12 +90,13 @@ function NewJobPageContent() {
             qualifications: Array.isArray(duplicateData.qualifications)
               ? duplicateData.qualifications.join("\n")
               : prev.qualifications,
-            salaryRange: duplicateData.salaryRange || prev.salaryRange,
+            salaryRange: typeof duplicateData.salaryRange === "object"
+              ? duplicateData.salaryRange
+              : prev.salaryRange,
             indigenousPreference: duplicateData.indigenousPreference ?? prev.indigenousPreference,
             cpicRequired: duplicateData.cpicRequired ?? prev.cpicRequired,
             willTrain: duplicateData.willTrain ?? prev.willTrain,
           }));
-          // Clean up sessionStorage
           sessionStorage.removeItem("duplicateJobData");
         } catch (e) {
           console.error("Failed to parse duplicate job data:", e);
@@ -119,16 +143,6 @@ function NewJobPageContent() {
     loadData();
   }, [user, role, authLoading]);
 
-  // Handlers
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
   const generateWithAI = async () => {
     if (!formData.title) return alert("Please enter a job title first.");
     setAiGenerating(true);
@@ -161,6 +175,17 @@ function NewJobPageContent() {
 
   const handlePostJob = async (productType: "SINGLE" | "FEATURED" | "SUBSCRIPTION" | "FREE_POSTING") => {
     if (!user) return;
+
+    // Validation
+    if (!formData.title.trim()) {
+      setError("Job title is required");
+      return;
+    }
+    if (!formData.description.trim()) {
+      setError("Job description is required");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -185,29 +210,36 @@ function NewJobPageContent() {
         employerName: organizationName,
         title: formData.title,
         location: formData.location,
+        locationType: formData.locationType,
         employmentType: formData.employmentType,
-        remoteFlag: formData.remoteFlag,
+        category: formData.category || undefined,
+        remoteFlag: formData.locationType === "remote",
         indigenousPreference: formData.indigenousPreference,
         cpicRequired: formData.cpicRequired,
         willTrain: formData.willTrain,
         driversLicense: formData.driversLicense,
         description: formData.description,
-        responsibilities: formData.responsibilities.split('\n'),
-        qualifications: formData.qualifications.split('\n'),
-        salaryRange: formData.salaryRange,
+        responsibilities: formData.responsibilities.split('\n').filter(r => r.trim()),
+        qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+        salaryRange: formData.salaryRange.disclosed !== false ? {
+          min: formData.salaryRange.min,
+          max: formData.salaryRange.max,
+          currency: formData.salaryRange.currency || "CAD",
+          period: formData.salaryRange.period as SalaryPeriod,
+          disclosed: true,
+        } : { disclosed: false },
         closingDate: formData.closingDate,
-        quickApplyEnabled: true, // Always enable Quick Apply as the only application method
+        quickApplyEnabled: true,
         ...(jobVideo && { jobVideo }),
       };
 
-      // Payment Logic (Shared with Wizard)
+      // Payment Logic
       if (productType === "SUBSCRIPTION") {
         if (subscription && !subscription.unlimitedPosts && subscription.remainingCredits <= 0) {
           throw new Error("No credits remaining.");
         }
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
         const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
-        // Notify admin of new job posting
         fetch("/api/admin/notify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -220,7 +252,6 @@ function NewJobPageContent() {
       if (productType === "FREE_POSTING") {
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
         const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
-        // Notify admin of new job posting
         fetch("/api/admin/notify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -230,13 +261,13 @@ function NewJobPageContent() {
         return;
       }
 
-      // Single
-      const id = await createJobPosting({ ...jobPayload, active: false, paymentStatus: 'pending', productType: 'SINGLE' });
+      // Single/Featured
+      const id = await createJobPosting({ ...jobPayload, active: false, paymentStatus: 'pending', productType: productType });
       const idToken = await user.getIdToken();
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
-        body: JSON.stringify({ productType: "SINGLE", jobId: id, userId: user.uid })
+        body: JSON.stringify({ productType, jobId: id, userId: user.uid })
       });
       if (!res.ok) throw new Error("Checkout failed");
       const { url } = await res.json();
@@ -255,13 +286,8 @@ function NewJobPageContent() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
-        <p className="text-sm text-slate-300">
-          You need to be signed in to post job opportunities.
-        </p>
-        <Link
-          href="/login?redirect=/organization/jobs/new"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
-        >
+        <p className="text-sm text-slate-300">You need to be signed in to post job opportunities.</p>
+        <Link href="/login?redirect=/organization/jobs/new" className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors">
           Login
         </Link>
       </div>
@@ -272,20 +298,12 @@ function NewJobPageContent() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Employer Account Required</h1>
-        <p className="text-sm text-slate-300">
-          To post job opportunities on IOPPS, you need an employer account.
-        </p>
+        <p className="text-sm text-slate-300">To post job opportunities on IOPPS, you need an employer account.</p>
         <div className="flex gap-3">
-          <Link
-            href="/organization/register"
-            className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
-          >
+          <Link href="/organization/register" className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors">
             Register as Employer
           </Link>
-          <Link
-            href="/jobs-training"
-            className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
-          >
+          <Link href="/jobs-training" className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors">
             Browse Jobs
           </Link>
         </div>
@@ -299,21 +317,14 @@ function NewJobPageContent() {
       <div className="border-b border-slate-800 bg-[#08090C] py-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-50">
-              {isDuplicate ? "Duplicate Job" : "Post a Job"}
-            </h1>
+            <h1 className="text-2xl font-bold text-slate-50">{isDuplicate ? "Duplicate Job" : "Post a Job"}</h1>
             <p className="text-slate-400 text-sm mt-1">
-              {isDuplicate
-                ? "Review and modify the duplicated job details, then publish."
-                : "Create a new opportunity for the community."}
+              {isDuplicate ? "Review and modify the duplicated job details, then publish." : "Create a new opportunity for the community."}
             </p>
           </div>
-          <Link
-            href="/organization/jobs/import"
-            className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-          >
+          <Link href="/organization/jobs/import" className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-            Import form CSV
+            Import from CSV
           </Link>
         </div>
       </div>
@@ -330,32 +341,60 @@ function NewJobPageContent() {
               <h2 className="text-lg font-bold text-slate-100 mb-4">Core Details</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Job Title *</label>
-                  <input name="title" value={formData.title} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="e.g. Community Coordinator" />
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Job Title <span className="text-red-400">*</span></label>
+                  <input
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    placeholder="e.g. Community Coordinator"
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
-                    <input name="location" value={formData.location} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="City, Prov" />
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                    <CategorySelect
+                      value={formData.category}
+                      onChange={(category) => setFormData(prev => ({ ...prev, category }))}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Employment Type</label>
-                    <select name="employmentType" value={formData.employmentType} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none">
-                      <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Seasonal</option><option>Internship</option>
-                    </select>
+                    <EmploymentTypeSelect
+                      value={formData.employmentType}
+                      onChange={(employmentType) => setFormData(prev => ({ ...prev, employmentType }))}
+                    />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Salary Range</label>
-                    <input name="salaryRange" value={formData.salaryRange} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="e.g. $50k - $70k" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date</label>
-                    <input type="date" name="closingDate" value={formData.closingDate} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date</label>
+                  <input
+                    type="date"
+                    value={formData.closingDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, closingDate: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  />
                 </div>
               </div>
+            </section>
+
+            {/* Location */}
+            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+              <h2 className="text-lg font-bold text-slate-100 mb-4">Location</h2>
+              <LocationTypeSelector
+                locationType={formData.locationType}
+                locationAddress={formData.location}
+                onLocationTypeChange={(locationType) => setFormData(prev => ({ ...prev, locationType }))}
+                onAddressChange={(location) => setFormData(prev => ({ ...prev, location }))}
+              />
+            </section>
+
+            {/* Salary */}
+            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+              <h2 className="text-lg font-bold text-slate-100 mb-4">Salary Range</h2>
+              <SalaryRangeInput
+                value={formData.salaryRange}
+                onChange={(salaryRange) => setFormData(prev => ({ ...prev, salaryRange }))}
+              />
             </section>
 
             {/* Description & AI */}
@@ -368,16 +407,33 @@ function NewJobPageContent() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Job Description *</label>
-                  <textarea name="description" rows={6} value={formData.description} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="Role overview..." />
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Job Description <span className="text-red-400">*</span></label>
+                  <RichTextEditor
+                    value={formData.description}
+                    onChange={(description) => setFormData(prev => ({ ...prev, description }))}
+                    placeholder="Describe the role, responsibilities, and what makes this opportunity unique..."
+                    minHeight="200px"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Responsibilities (One per line)</label>
-                  <textarea name="responsibilities" rows={5} value={formData.responsibilities} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
+                  <textarea
+                    rows={5}
+                    value={formData.responsibilities}
+                    onChange={(e) => setFormData(prev => ({ ...prev, responsibilities: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    placeholder="Enter each responsibility on a new line..."
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Qualifications (One per line)</label>
-                  <textarea name="qualifications" rows={5} value={formData.qualifications} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
+                  <textarea
+                    rows={5}
+                    value={formData.qualifications}
+                    onChange={(e) => setFormData(prev => ({ ...prev, qualifications: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    placeholder="Enter each qualification on a new line..."
+                  />
                 </div>
               </div>
             </section>
@@ -392,7 +448,7 @@ function NewJobPageContent() {
                   <h2 className="text-lg font-bold text-slate-100 mb-1">Application Method</h2>
                   <p className="text-sm text-slate-300">
                     All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
-                    You'll be able to view and manage all applications in your{" "}
+                    You&apos;ll be able to view and manage all applications in your{" "}
                     <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline font-semibold">
                       employer dashboard
                     </Link>.
@@ -402,47 +458,67 @@ function NewJobPageContent() {
 
               <div className="mt-4">
                 <label className="block text-sm font-medium text-slate-300 mb-1">Job Video (Optional)</label>
-                <input type="url" name="jobVideoUrl" value={formData.jobVideoUrl} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="YouTube or Vimeo URL - Showcase your workplace" />
+                <input
+                  type="url"
+                  value={formData.jobVideoUrl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, jobVideoUrl: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  placeholder="YouTube or Vimeo URL - Showcase your workplace"
+                />
                 <p className="text-xs text-slate-500 mt-1.5">Add a video to give applicants a better sense of your organization</p>
               </div>
             </section>
 
           </div>
 
-          {/* Sidebar / Sidebar Options */}
+          {/* Sidebar */}
           <div className="space-y-6">
             {/* Attributes */}
             <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Job Attributes</h2>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="indigenousPreference" checked={formData.indigenousPreference} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
+                  <input
+                    type="checkbox"
+                    checked={formData.indigenousPreference}
+                    onChange={(e) => setFormData(prev => ({ ...prev, indigenousPreference: e.target.checked }))}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
                   <span className="text-sm text-slate-300">Indigenous Preference</span>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="remoteFlag" checked={formData.remoteFlag} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
-                  <span className="text-sm text-slate-300">Remote / Hybrid Friendly</span>
-                </label>
                 <div className="h-px bg-slate-800 my-2" />
-
-                {/* New Attributes Requested */}
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="cpicRequired" checked={formData.cpicRequired} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
+                  <input
+                    type="checkbox"
+                    checked={formData.cpicRequired}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cpicRequired: e.target.checked }))}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
                   <div>
                     <span className="block text-sm font-medium text-white">CPIC Required</span>
                     <span className="block text-xs text-slate-500">Criminal Record Check</span>
                   </div>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="willTrain" checked={formData.willTrain} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
+                  <input
+                    type="checkbox"
+                    checked={formData.willTrain}
+                    onChange={(e) => setFormData(prev => ({ ...prev, willTrain: e.target.checked }))}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
                   <div>
                     <span className="block text-sm font-medium text-white">Training Provided</span>
                     <span className="block text-xs text-slate-500">Employer will train for role</span>
                   </div>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="driversLicense" checked={formData.driversLicense} onChange={handleChange} className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]" />
-                  <span className="text-sm text-slate-300">Driver's License Required</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.driversLicense}
+                    onChange={(e) => setFormData(prev => ({ ...prev, driversLicense: e.target.checked }))}
+                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
+                  <span className="text-sm text-slate-300">Driver&apos;s License Required</span>
                 </label>
               </div>
             </section>
@@ -467,10 +543,8 @@ function NewJobPageContent() {
                   </>
                 ) : (
                   <div className="space-y-3">
-                    {/* Per-Post Options Header */}
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Pay Per Post</div>
 
-                    {/* Standard Post Option */}
                     <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -485,7 +559,6 @@ function NewJobPageContent() {
                       </button>
                     </div>
 
-                    {/* Featured Post Option */}
                     <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
                       <div className="absolute -top-2 right-3">
                         <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Popular</span>
@@ -503,7 +576,6 @@ function NewJobPageContent() {
                       </button>
                     </div>
 
-                    {/* Divider */}
                     <div className="relative py-3">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-slate-700"></div>
@@ -513,10 +585,8 @@ function NewJobPageContent() {
                       </div>
                     </div>
 
-                    {/* Annual Subscriptions Header */}
                     <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Annual Plans</div>
 
-                    {/* Tier 1 Subscription */}
                     <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-teal-500/50 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -538,7 +608,6 @@ function NewJobPageContent() {
                       </Link>
                     </div>
 
-                    {/* Tier 2 Subscription */}
                     <div className="rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-4 border border-purple-500/30 relative">
                       <div className="absolute -top-2 right-3">
                         <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full">Best Value</span>

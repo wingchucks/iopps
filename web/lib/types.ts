@@ -3,6 +3,51 @@ import type { Timestamp } from "firebase/firestore";
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "pending" | "approved" | "rejected";
 
+// ============================================
+// JOB POSTING TYPES
+// ============================================
+
+export type LocationType = 'onsite' | 'remote' | 'hybrid';
+export type ApplicationMethod = 'email' | 'url' | 'quickApply';
+export type SalaryPeriod = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export const JOB_CATEGORIES = [
+  'Accounting & Finance',
+  'Administration',
+  'Arts & Culture',
+  'Construction & Trades',
+  'Education & Training',
+  'Engineering',
+  'Environmental',
+  'Government',
+  'Healthcare',
+  'Human Resources',
+  'Information Technology',
+  'Legal',
+  'Management',
+  'Marketing & Communications',
+  'Natural Resources',
+  'Operations',
+  'Sales',
+  'Social Services',
+  'Transportation',
+  'Other',
+] as const;
+
+export type JobCategory = typeof JOB_CATEGORIES[number];
+
+export const EMPLOYMENT_TYPES = [
+  'Full-time',
+  'Part-time',
+  'Contract',
+  'Temporary',
+  'Internship',
+  'Seasonal',
+  'Casual',
+] as const;
+
+export type EmploymentType = typeof EMPLOYMENT_TYPES[number];
+
 export interface Interview {
   id: string;
   videoUrl: string;
@@ -148,17 +193,29 @@ export interface JobPosting {
   qualifications?: string[];
   requirements?: string;
   benefits?: string;
+  // Enhanced salary range with period
   salaryRange?: {
     min?: number;
     max?: number;
     currency?: string;
+    period?: SalaryPeriod;
     disclosed?: boolean;
   } | string; // Support both structured and legacy string format
+  // Enhanced location type
+  locationType?: LocationType;
+  // Job category
+  category?: JobCategory | string;
+  // Application method
+  applicationMethod?: ApplicationMethod;
   applicationLink?: string;
   applicationEmail?: string;
   createdAt?: Timestamp | null;
+  // Posting date (for scheduled posts)
+  postedAt?: Timestamp | null;
   closingDate?: Timestamp | string | null;
   active: boolean;
+  // Featured job flag
+  featured?: boolean;
   viewsCount?: number;
   applicationsCount?: number;
   // Quick Apply & Enhanced Features
