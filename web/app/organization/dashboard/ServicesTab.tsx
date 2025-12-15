@@ -31,11 +31,10 @@ export default function ServicesTab() {
     const [formData, setFormData] = useState<Partial<Service>>({
         title: "",
         description: "",
-        shortDescription: "",
+        tagline: "",
         category: "Consulting",
-        priceType: "quote",
-        priceDisplay: "",
-        serviceArea: []
+        priceRange: "",
+        serviceAreas: []
     });
 
     useEffect(() => {
@@ -68,11 +67,10 @@ export default function ServicesTab() {
             setFormData({
                 title: "",
                 description: "",
-                shortDescription: "",
+                tagline: "",
                 category: "Consulting",
-                priceType: "quote",
-                priceDisplay: "",
-                serviceArea: []
+                priceRange: "",
+                serviceAreas: []
             });
         }
         setShowModal(true);
@@ -100,7 +98,7 @@ export default function ServicesTab() {
                 }
             };
 
-            // Ensure serviceArea is array (split string if manual input)
+            // Ensure serviceAreas is array (split string if manual input)
             // For now assume formData handles it correctly or simplified
 
             if (editingService) {
@@ -173,9 +171,9 @@ export default function ServicesTab() {
                                 </div>
                             </div>
                             <h3 className="font-semibold text-white mb-1 line-clamp-1">{service.title}</h3>
-                            <p className="text-sm text-slate-400 line-clamp-2 mb-4">{service.shortDescription}</p>
+                            <p className="text-sm text-slate-400 line-clamp-2 mb-4">{service.tagline}</p>
                             <div className="text-xs text-slate-500">
-                                <p>{service.priceDisplay}</p>
+                                <p>{service.priceRange}</p>
                             </div>
                         </div>
                     ))}
@@ -205,12 +203,12 @@ export default function ServicesTab() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Short Description (for cards)</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">Tagline (for cards)</label>
                                 <input
                                     required
                                     className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    value={formData.shortDescription}
-                                    onChange={e => setFormData({ ...formData, shortDescription: e.target.value })}
+                                    value={formData.tagline}
+                                    onChange={e => setFormData({ ...formData, tagline: e.target.value })}
                                 />
                             </div>
                             <div>
@@ -241,12 +239,12 @@ export default function ServicesTab() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Price Display</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Price Range</label>
                                     <input
                                         placeholder="e.g. $150/hr or Contact for Quote"
                                         className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                        value={formData.priceDisplay}
-                                        onChange={e => setFormData({ ...formData, priceDisplay: e.target.value })}
+                                        value={formData.priceRange}
+                                        onChange={e => setFormData({ ...formData, priceRange: e.target.value })}
                                     />
                                 </div>
                             </div>
