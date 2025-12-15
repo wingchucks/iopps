@@ -215,9 +215,9 @@ export default function EditEmployerPage() {
         location: location.trim(),
         contactEmail: contactEmail.trim(),
         contactPhone: contactPhone.trim(),
-        industry: industry || undefined,
-        companySize: companySize || undefined,
-        foundedYear: foundedYear || undefined,
+        industry: industry || null,
+        companySize: companySize || null,
+        foundedYear: foundedYear || null,
         socialLinks: {
           linkedin: socialLinkedin.trim(),
           twitter: socialTwitter.trim(),
