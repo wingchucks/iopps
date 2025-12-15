@@ -16,9 +16,24 @@ export function TrustedPartners() {
     async function loadPartners() {
       try {
         const employers = await listEmployers("approved");
-        // Filter to only those with logos
-        const withLogos = employers.filter((e) => e.logoUrl);
-        setPartners(withLogos);
+        // Filter to only those with logos AND either:
+        // 1. featuredOnCarousel flag is true, OR
+        // 2. Have an active Tier 1 or Tier 2 subscription
+        const featured = employers.filter((e) => {
+          if (!e.logoUrl) return false;
+
+          // Check if manually featured by admin
+          if ((e as any).featuredOnCarousel) return true;
+
+          // Check if has active Tier 1 or Tier 2 subscription
+          const sub = e.subscription;
+          if (sub?.active && (sub.tier === "TIER1" || sub.tier === "TIER2")) {
+            return true;
+          }
+
+          return false;
+        });
+        setPartners(featured);
       } catch (error) {
         console.error("Failed to load partners:", error);
       } finally {
@@ -129,7 +144,7 @@ export function TrustedPartners() {
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
           <p className="text-slate-400">
             Join{" "}
-            <span className="font-bold text-white">{partners.length}+</span>{" "}
+            <span className="font-bold text-white">3+</span>{" "}
             organizations on IOPPS
           </p>
           <Link
