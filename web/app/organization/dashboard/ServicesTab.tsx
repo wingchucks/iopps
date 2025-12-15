@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile } from "@/lib/firestore/employers";
 import {
-    listServices,
+    listUserServices,
     createService,
     updateService,
     deleteService
@@ -44,9 +44,7 @@ export default function ServicesTab() {
                 const profile = await getEmployerProfile(user.uid);
                 if (profile) {
                     setEmployerId(profile.id);
-                    // Currently listServices does not support filtering by orgId strictly in the implementation shown earlier (it filters client side potentially or param support might be missing in query construction)
-                    // Let's rely on listServices support for organizationId which IS in the logic.
-                    const data = await listServices({ organizationId: profile.id });
+                    const data = await listUserServices(user.uid);
                     setServices(data);
                 }
             } catch (err) {
@@ -107,7 +105,7 @@ export default function ServicesTab() {
                 await createService(serviceData);
             }
 
-            const data = await listServices({ organizationId: employerId });
+            const data = await listUserServices(user.uid);
             setServices(data);
             setShowModal(false);
         } catch (err) {
