@@ -13,7 +13,7 @@ export function SectionHeader({
 }: SectionHeaderProps) {
   return (
     <section className={className}>
-      <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
+      <p className="text-xs uppercase tracking-[0.4em] text-accent">
         {eyebrow}
       </p>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">

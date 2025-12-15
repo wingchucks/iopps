@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -18,11 +19,14 @@ import {
   listJobPostings,
   listSavedJobIds,
   toggleSavedJob,
+  listTrainingPrograms,
 } from "@/lib/firestore";
-import type { JobPosting } from "@/lib/types";
+import type { JobPosting, TrainingProgram } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import CreateJobAlertModal from "@/components/CreateJobAlertModal";
+import TrainingCard from "@/components/training/TrainingCard";
+import { AcademicCapIcon } from "@heroicons/react/24/outline";
 
 const JOB_TYPES = ["All", "Full-time", "Part-time", "Contract", "Seasonal", "Internship"] as const;
 type JobType = typeof JOB_TYPES[number];
@@ -54,33 +58,66 @@ const formatDate = (value: MaybeDateInput) => {
 };
 
 function JobsContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, role } = useAuth();
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
-  const [displayLimit, setDisplayLimit] = useState(12);
   const [showFilters, setShowFilters] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
 
-  // Filter state
-  const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("");
-  const [jobType, setJobType] = useState<JobType>("All");
-  const [remoteOnly, setRemoteOnly] = useState(false);
-  const [indigenousOnly, setIndigenousOnly] = useState(false);
-  const [savedOnly, setSavedOnly] = useState(false);
+  // Read pagination from URL, default to 12
+  const displayLimit = parseInt(searchParams.get("limit") || "12", 10);
+
+  // Filter state from URL params
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [location, setLocation] = useState(searchParams.get("location") || "");
+  const [jobType, setJobType] = useState<JobType>((searchParams.get("type") as JobType) || "All");
+  const [remoteOnly, setRemoteOnly] = useState(searchParams.get("remote") === "true");
+  const [indigenousOnly, setIndigenousOnly] = useState(searchParams.get("indigenous") === "true");
+  const [savedOnly, setSavedOnly] = useState(searchParams.get("saved") === "true");
+
+  // Function to update URL params
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === "" || value === "All" || value === "false" || value === "12") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    }
+
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.push(newUrl, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  // Load more function that updates URL
+  const loadMore = useCallback(() => {
+    updateUrlParams({ limit: String(displayLimit + 12) });
+  }, [displayLimit, updateUrlParams]);
 
   useEffect(() => {
     setLoading(true);
     (async () => {
       try {
         setError(null);
-        const data = await listJobPostings({ activeOnly: true });
-        setJobs(data);
+        // Load both jobs and training
+        const [jobsData, trainingData] = await Promise.all([
+          listJobPostings({ activeOnly: true }),
+          listTrainingPrograms({ limit: 3, featured: true })
+        ]);
+        setJobs(jobsData);
+        setTrainingPrograms(trainingData);
       } catch (err) {
-        console.error("Failed to load jobs", err);
+        console.error("Failed to load content", err);
         setError("Unable to load jobs right now.");
       } finally {
         setLoading(false);
@@ -126,8 +163,8 @@ function JobsContent() {
 
       const matchesSearch = search
         ? `${job.title ?? ""} ${job.employerName ?? ""} ${job.description ?? ""} ${job.location ?? ""}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
+          .toLowerCase()
+          .includes(search.toLowerCase())
         : true;
 
       const matchesLocation = location
@@ -178,7 +215,8 @@ function JobsContent() {
     setRemoteOnly(false);
     setIndigenousOnly(false);
     setSavedOnly(false);
-    setDisplayLimit(12);
+    // Clear all URL params
+    router.push(pathname, { scroll: false });
   };
 
   return (
@@ -203,11 +241,11 @@ function JobsContent() {
 
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Jobs & Careers
+            Jobs & Training
           </h1>
           <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Build your career with employers committed to Indigenous talent and community success.
-            Find opportunities across Turtle Island.
+            Build your career with employers committed to Indigenous talent.
+            Find jobs and training opportunities across Turtle Island.
           </p>
 
           {/* Search Bar */}
@@ -248,11 +286,10 @@ function JobsContent() {
               </button>
               <button
                 onClick={() => setSavedOnly(!savedOnly)}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  savedOnly
-                    ? "bg-white text-teal-600"
-                    : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
-                }`}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${savedOnly
+                  ? "bg-white text-teal-600"
+                  : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
+                  }`}
               >
                 <BookmarkIcon className="h-4 w-4" />
                 Saved Jobs
@@ -262,172 +299,171 @@ function JobsContent() {
         </div>
       </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Filters</h3>
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                <XMarkIcon className="h-4 w-4" />
-                Clear all
-              </button>
-            )}
+      {/* Pathways Cards */}
+      <div className="grid gap-6 md:grid-cols-3 mb-16">
+        {/* Find Jobs */}
+        <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-6 flex flex-col hover:border-teal-500/30 transition-all cursor-pointer group" onClick={() => document.getElementById('jobs-list')?.scrollIntoView({ behavior: 'smooth' })}>
+          <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <BriefcaseIcon className="h-6 w-6 text-blue-400" />
           </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Location */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Location</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, province, or remote"
-                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Job Type */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Job Type</label>
-              <div className="flex flex-wrap gap-2">
-                {JOB_TYPES.slice(0, 4).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setJobType(type)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      jobType === type
-                        ? "bg-teal-500 text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Remote Toggle */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Work Style</label>
-              <button
-                onClick={() => setRemoteOnly(!remoteOnly)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  remoteOnly
-                    ? "bg-blue-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Remote / Hybrid Only
-              </button>
-            </div>
-
-            {/* Indigenous Preference */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Preference</label>
-              <button
-                onClick={() => setIndigenousOnly(!indigenousOnly)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  indigenousOnly
-                    ? "bg-teal-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Indigenous Preference
-              </button>
-            </div>
-          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Find Jobs</h3>
+          <p className="text-slate-400 text-sm mb-4 flex-1">
+            Browse thousands of career opportunities from Indigenous-friendly employers.
+          </p>
+          <span className="text-blue-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+            Browse Jobs <span className="text-lg">→</span>
+          </span>
         </div>
-      )}
 
-      {/* Featured Jobs Section */}
-      {!hasFilters && featuredJobs.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500">
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-              </svg>
+        {/* Build Skills */}
+        <Link href="/jobs/training" className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-6 flex flex-col hover:border-teal-500/30 transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <AcademicCapIcon className="h-6 w-6 text-purple-400" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Build Skills</h3>
+          <p className="text-slate-400 text-sm mb-4 flex-1">
+            Discover training programs, workshops, and courses to advance your career.
+          </p>
+          <span className="text-purple-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+            Explore Training <span className="text-lg">→</span>
+          </span>
+        </Link>
+
+        {/* Member Dashboard */}
+        <Link href={user ? "/member/dashboard" : "/login"} className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-6 flex flex-col hover:border-teal-500/30 transition-all group">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <BookmarkIcon className="h-6 w-6 text-emerald-400" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">My Career</h3>
+          <p className="text-slate-400 text-sm mb-4 flex-1">
+            Track your applications, saved jobs, and learning progress in one place.
+          </p>
+          <span className="text-emerald-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+            {user ? "Go to Dashboard" : "Sign In to Track"} <span className="text-lg">→</span>
+          </span>
+        </Link>
+      </div>
+
+      {/* Featured Training Section */}
+      {!hasFilters && trainingPrograms.length > 0 && (
+        <section className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
+                <AcademicCapIcon className="h-5 w-5 text-purple-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">Featured Training</h2>
             </div>
-            <h2 className="text-2xl font-bold text-white">Indigenous Preference Jobs</h2>
+            <Link href="/jobs/training" className="text-sm font-semibold text-purple-400 hover:text-purple-300 transition-colors">
+              View all training →
+            </Link>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredJobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                featured
-                isSaved={savedJobIds.has(job.id)}
-                onToggleSave={() => handleToggleSave(job.id)}
-                saving={savingJobId === job.id}
-                showSaveButton={role === "community"}
-              />
+            {trainingPrograms.map(program => (
+              <TrainingCard key={program.id} program={program} featured />
             ))}
           </div>
         </section>
       )}
 
-      {/* Error State */}
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      {/* All Jobs */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {hasFilters ? "Search Results" : "All Jobs"}
-          </h2>
-          <span className="text-sm text-slate-400">
-            {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "job" : "jobs"}`}
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-72" />
-            ))}
-          </div>
-        ) : jobs.length === 0 && !hasFilters ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <BriefcaseIcon className="h-8 w-8 text-slate-500" />
+      {/* Filters Panel */}
+      {/* Filters Panel */}
+      <div id="jobs-list">
+        {showFilters && (
+          <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Filters</h3>
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                  Clear all
+                </button>
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No jobs posted yet</h3>
-            <p className="text-slate-400">
-              Check back soon! Employers are adding new opportunities regularly.
-            </p>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {/* Location */}
+              <div>
+                <label className="text-sm font-medium text-slate-400 mb-2 block">Location</label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="City, province, or remote"
+                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Job Type */}
+              <div>
+                <label className="text-sm font-medium text-slate-400 mb-2 block">Job Type</label>
+                <div className="flex flex-wrap gap-2">
+                  {JOB_TYPES.slice(0, 4).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setJobType(type)}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${jobType === type
+                        ? "bg-teal-500 text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Remote Toggle */}
+              <div>
+                <label className="text-sm font-medium text-slate-400 mb-2 block">Work Style</label>
+                <button
+                  onClick={() => setRemoteOnly(!remoteOnly)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${remoteOnly
+                    ? "bg-blue-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                >
+                  Remote / Hybrid Only
+                </button>
+              </div>
+
+              {/* Indigenous Preference */}
+              <div>
+                <label className="text-sm font-medium text-slate-400 mb-2 block">Preference</label>
+                <button
+                  onClick={() => setIndigenousOnly(!indigenousOnly)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${indigenousOnly
+                    ? "bg-teal-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    }`}
+                >
+                  Indigenous Preference
+                </button>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No jobs found</h3>
-            <p className="text-slate-400 mb-4">
-              Try adjusting your filters or search terms.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
-            >
-              Clear filters
-            </button>
           </div>
-        ) : (
-          <>
+        )}
+
+        {/* Featured Jobs Section */}
+        {!hasFilters && featuredJobs.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500">
+                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white">Indigenous Preference Jobs</h2>
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedJobs.map((job) => (
+              {featuredJobs.map((job) => (
                 <JobCard
                   key={job.id}
                   job={job}
+                  featured
                   isSaved={savedJobIds.has(job.id)}
                   onToggleSave={() => handleToggleSave(job.id)}
                   saving={savingJobId === job.id}
@@ -435,50 +471,101 @@ function JobsContent() {
                 />
               ))}
             </div>
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
-                <button
-                  onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
-                >
-                  Load more jobs
-                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </>
+          </section>
         )}
-      </section>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Hiring Indigenous Talent?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Post your job on IOPPS. Reach Indigenous professionals and community members across North America.
-        </p>
-        <a
-          href="/organization/jobs/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-        >
-          Post a Job
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </a>
-      </section>
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
 
-      {/* Job Alert Modal */}
-      {showAlertModal && (
-        <CreateJobAlertModal
-          initialKeywords={search}
-          initialLocation={location}
-          onClose={() => setShowAlertModal(false)}
-        />
-      )}
+        {/* All Jobs */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {hasFilters ? "Search Results" : "All Jobs"}
+            </h2>
+            <span className="text-sm text-slate-400">
+              {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "job" : "jobs"}`}
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-72" />
+              ))}
+            </div>
+          ) : jobs.length === 0 && !hasFilters ? (
+            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+                <BriefcaseIcon className="h-8 w-8 text-slate-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">No jobs posted yet</h3>
+              <p className="text-slate-400">
+                Check back soon! Employers are adding new opportunities regularly.
+              </p>
+            </div>
+          ) : sorted.length === 0 ? (
+            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+                <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">No jobs found</h3>
+              <p className="text-slate-400 mb-4">
+                Try adjusting your filters or search terms.
+              </p>
+              <button
+                onClick={clearFilters}
+                className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {displayedJobs.map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    isSaved={savedJobIds.has(job.id)}
+                    onToggleSave={() => handleToggleSave(job.id)}
+                    saving={savingJobId === job.id}
+                    showSaveButton={role === "community"}
+                  />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="mt-10 flex justify-center">
+                  <button
+                    onClick={loadMore}
+                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+                  >
+                    Load more jobs
+                    <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* Job Alert Modal */}
+        {showAlertModal && (
+          <CreateJobAlertModal
+            initialKeywords={search}
+            initialLocation={location}
+            onClose={() => setShowAlertModal(false)}
+          />
+        )}
+        {/* Tooltip or additional modals can go here */}
+
+      </div>
     </PageShell>
   );
 }
@@ -522,11 +609,10 @@ function JobCard({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
-        featured
-          ? "border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
-      }`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${featured
+        ? "border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5"
+        : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
+        }`}
     >
       {/* Header */}
       <div className="relative bg-gradient-to-br from-teal-600/20 to-emerald-600/10 px-5 py-5">
@@ -538,11 +624,10 @@ function JobCard({
               onToggleSave();
             }}
             disabled={saving}
-            className={`absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full transition-all ${
-              isSaved
-                ? "bg-amber-500 text-white"
-                : "bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-amber-400"
-            }`}
+            className={`absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full transition-all ${isSaved
+              ? "bg-amber-500 text-white"
+              : "bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-amber-400"
+              }`}
           >
             {isSaved ? (
               <BookmarkSolidIcon className="h-4 w-4" />

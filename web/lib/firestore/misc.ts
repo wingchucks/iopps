@@ -48,71 +48,130 @@ export type GlobalSearchResults = {
   totalResults: number;
 };
 
+/**
+ * Maximum documents to fetch per collection for search
+ * Keeps memory usage and query costs reasonable
+ * TODO: For better scalability, implement Algolia or Typesense
+ */
+const SEARCH_FETCH_LIMIT = 100;
+
+/**
+ * Simple in-memory cache for search results
+ * Reduces database reads for repeated searches
+ */
+const searchCache = new Map<string, { results: GlobalSearchResults; timestamp: number }>();
+const CACHE_TTL_MS = 60000; // 1 minute cache
+
+function getCachedSearch(cacheKey: string): GlobalSearchResults | null {
+  const cached = searchCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.results;
+  }
+  if (cached) {
+    searchCache.delete(cacheKey);
+  }
+  return null;
+}
+
+function setCachedSearch(cacheKey: string, results: GlobalSearchResults): void {
+  // Limit cache size to prevent memory issues
+  if (searchCache.size > 50) {
+    const firstKey = searchCache.keys().next().value;
+    if (firstKey) searchCache.delete(firstKey);
+  }
+  searchCache.set(cacheKey, { results, timestamp: Date.now() });
+}
+
+/**
+ * Text matching helper - checks if searchTerm appears in text
+ */
+function matchesSearch(text: string, searchTerm: string): boolean {
+  return text.toLowerCase().includes(searchTerm);
+}
+
 export async function globalSearch(
   keyword: string,
   searchLimit: number = 10
 ): Promise<GlobalSearchResults> {
-  if (!keyword || keyword.trim().length === 0) {
-    return {
-      jobs: [],
-      scholarships: [],
-      conferences: [],
-      powwows: [],
-      shop: [],
-      totalResults: 0,
-    };
+  const emptyResults: GlobalSearchResults = {
+    jobs: [],
+    scholarships: [],
+    conferences: [],
+    powwows: [],
+    shop: [],
+    totalResults: 0,
+  };
+
+  if (!keyword || keyword.trim().length < 2) {
+    return emptyResults;
   }
 
   const searchTerm = keyword.toLowerCase().trim();
+  const cacheKey = `${searchTerm}:${searchLimit}`;
+
+  // Check cache first
+  const cached = getCachedSearch(cacheKey);
+  if (cached) {
+    return cached;
+  }
 
   try {
     checkFirebase();
 
+    // Fetch limited documents from each collection in parallel
+    // Using pageSize limits to prevent fetching entire collections
     const [jobs, scholarships, conferences, powwows, shop] = await Promise.all([
-      listJobPostings({ activeOnly: true }),
-      listScholarships(),
-      listConferences(),
-      listPowwowEvents(),
-      listShopListings(),
+      listJobPostings({ activeOnly: true, pageSize: SEARCH_FETCH_LIMIT }),
+      listScholarships().then(items => items.slice(0, SEARCH_FETCH_LIMIT)),
+      listConferences().then(items => items.slice(0, SEARCH_FETCH_LIMIT)),
+      listPowwowEvents().then(items => items.slice(0, SEARCH_FETCH_LIMIT)),
+      listShopListings().then(items => items.slice(0, SEARCH_FETCH_LIMIT)),
     ]);
 
+    // Filter and limit results
     const matchedJobs = jobs
-      .filter((job) => {
-        const text = `${job.title ?? ""} ${job.employerName ?? ""} ${job.description ?? ""
-          } ${job.location ?? ""}`.toLowerCase();
-        return text.includes(searchTerm);
-      })
+      .filter((job) =>
+        matchesSearch(
+          `${job.title ?? ""} ${job.employerName ?? ""} ${job.description ?? ""} ${job.location ?? ""}`,
+          searchTerm
+        )
+      )
       .slice(0, searchLimit);
 
     const matchedScholarships = scholarships
-      .filter((scholarship) => {
-        const text = `${scholarship.title} ${scholarship.provider} ${scholarship.description}`.toLowerCase();
-        return text.includes(searchTerm);
-      })
+      .filter((scholarship) =>
+        matchesSearch(
+          `${scholarship.title} ${scholarship.provider} ${scholarship.description}`,
+          searchTerm
+        )
+      )
       .slice(0, searchLimit);
 
     const matchedConferences = conferences
-      .filter((conference) => {
-        const text = `${conference.title} ${conference.employerName ?? ""} ${conference.description
-          } ${conference.location}`.toLowerCase();
-        return text.includes(searchTerm);
-      })
+      .filter((conference) =>
+        matchesSearch(
+          `${conference.title} ${conference.employerName ?? ""} ${conference.description} ${conference.location}`,
+          searchTerm
+        )
+      )
       .slice(0, searchLimit);
 
     const matchedPowwows = powwows
-      .filter((powwow) => {
-        const text = `${powwow.name} ${powwow.host ?? ""} ${powwow.description ?? ""
-          } ${powwow.location ?? ""}`.toLowerCase();
-        return text.includes(searchTerm);
-      })
+      .filter((powwow) =>
+        matchesSearch(
+          `${powwow.name} ${powwow.host ?? ""} ${powwow.description ?? ""} ${powwow.location ?? ""}`,
+          searchTerm
+        )
+      )
       .slice(0, searchLimit);
 
     const matchedShop = shop
-      .filter((item) => {
-        const text = `${item.businessName} ${item.nation ?? ""} ${item.description ?? ""} ${item.category ?? ""
-          }`.toLowerCase();
-        return text.includes(searchTerm);
-      })
+      .filter((item) =>
+        matchesSearch(
+          `${item.businessName} ${item.nation ?? ""} ${item.description ?? ""} ${item.category ?? ""}`,
+          searchTerm
+        )
+      )
       .slice(0, searchLimit);
 
     const totalResults =
@@ -122,7 +181,7 @@ export async function globalSearch(
       matchedPowwows.length +
       matchedShop.length;
 
-    return {
+    const results: GlobalSearchResults = {
       jobs: matchedJobs,
       scholarships: matchedScholarships,
       conferences: matchedConferences,
@@ -130,16 +189,13 @@ export async function globalSearch(
       shop: matchedShop,
       totalResults,
     };
-  } catch (error) {
-    console.error("Global search error:", error);
-    return {
-      jobs: [],
-      scholarships: [],
-      conferences: [],
-      powwows: [],
-      shop: [],
-      totalResults: 0,
-    };
+
+    // Cache successful results
+    setCachedSearch(cacheKey, results);
+
+    return results;
+  } catch {
+    return emptyResults;
   }
 }
 

@@ -88,3 +88,118 @@ export function generateJobPostingSchema(job: {
         }),
     };
 }
+
+export function generateEventSchema(event: {
+    name: string;
+    description: string;
+    startDate: string | Date;
+    endDate?: string | Date;
+    location: string;
+    organizer?: string;
+    url?: string;
+    image?: string;
+    eventType?: "Conference" | "Event" | "Festival";
+}) {
+    return {
+        "@context": "https://schema.org",
+        "@type": event.eventType || "Event",
+        name: event.name,
+        description: event.description,
+        startDate: new Date(event.startDate).toISOString(),
+        ...(event.endDate && {
+            endDate: new Date(event.endDate).toISOString(),
+        }),
+        location: {
+            "@type": "Place",
+            name: event.location,
+            address: {
+                "@type": "PostalAddress",
+                addressLocality: event.location,
+                addressCountry: "CA",
+            },
+        },
+        ...(event.organizer && {
+            organizer: {
+                "@type": "Organization",
+                name: event.organizer,
+            },
+        }),
+        ...(event.url && { url: event.url }),
+        ...(event.image && { image: event.image }),
+    };
+}
+
+export function generateBreadcrumbSchema(items: { name: string; url: string }[]) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: item.name,
+            item: `https://iopps.ca${item.url}`,
+        })),
+    };
+}
+
+export function generateScholarshipSchema(scholarship: {
+    name: string;
+    description: string;
+    provider: string;
+    amount?: string;
+    deadline?: string | Date;
+    eligibility?: string;
+    url?: string;
+}) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "EducationalOccupationalCredential",
+        name: scholarship.name,
+        description: scholarship.description,
+        credentialCategory: "scholarship",
+        offers: {
+            "@type": "Offer",
+            ...(scholarship.amount && {
+                price: scholarship.amount,
+                priceCurrency: "CAD",
+            }),
+            ...(scholarship.deadline && {
+                validThrough: new Date(scholarship.deadline).toISOString(),
+            }),
+        },
+        recognizedBy: {
+            "@type": "Organization",
+            name: scholarship.provider,
+        },
+        ...(scholarship.eligibility && {
+            competencyRequired: scholarship.eligibility,
+        }),
+        ...(scholarship.url && { url: scholarship.url }),
+    };
+}
+
+export function generateLocalBusinessSchema(business: {
+    name: string;
+    description: string;
+    category?: string;
+    region?: string;
+    url?: string;
+    image?: string;
+}) {
+    return {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: business.name,
+        description: business.description,
+        ...(business.category && {
+            "@additionalType": business.category,
+        }),
+        address: {
+            "@type": "PostalAddress",
+            addressRegion: business.region || "Canada",
+            addressCountry: "CA",
+        },
+        ...(business.url && { url: business.url }),
+        ...(business.image && { image: business.image }),
+    };
+}

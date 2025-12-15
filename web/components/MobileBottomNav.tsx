@@ -46,14 +46,14 @@ export function MobileBottomNav() {
                             key={href}
                             href={href}
                             className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive
-                                    ? "text-[#14B8A6]"
+                                    ? "text-accent"
                                     : "text-slate-400 active:text-slate-200"
                                 }`}
                         >
                             <IconComponent className="h-6 w-6" />
                             <span>{label}</span>
                             {isActive && (
-                                <span className="absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-[#14B8A6]" />
+                                <span className="absolute -top-px left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-accent" />
                             )}
                         </Link>
                     );

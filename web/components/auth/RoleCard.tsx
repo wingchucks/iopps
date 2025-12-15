@@ -15,16 +15,16 @@ export function RoleCard({ title, description, icon, selected, onClick }: RoleCa
       onClick={onClick}
       className={`flex flex-col items-start rounded-xl border px-4 py-4 text-left transition-all duration-200 ${
         selected
-          ? "border-[#14B8A6] bg-[#14B8A6]/10 shadow-lg shadow-[#14B8A6]/10"
+          ? "border-accent bg-accent/10 shadow-lg shadow-accent/10"
           : "border-slate-700 bg-slate-900 hover:border-slate-600 hover:bg-slate-800/50"
       }`}
     >
       <div className={`mb-3 rounded-lg p-2 ${
-        selected ? "bg-[#14B8A6]/20 text-[#14B8A6]" : "bg-slate-800 text-slate-400"
+        selected ? "bg-accent/20 text-accent" : "bg-slate-800 text-slate-400"
       }`}>
         {icon}
       </div>
-      <span className={`text-sm font-semibold ${selected ? "text-[#14B8A6]" : "text-slate-200"}`}>
+      <span className={`text-sm font-semibold ${selected ? "text-accent" : "text-slate-200"}`}>
         {title}
       </span>
       <span className="mt-1 text-sm text-slate-400 leading-snug">

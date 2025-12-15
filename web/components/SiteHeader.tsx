@@ -9,10 +9,10 @@ import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
-  { href: "/jobs", label: "Jobs" },
+  { href: "/jobs", label: "Jobs & Training" },
   { href: "/conferences", label: "Conferences" },
   { href: "/scholarships", label: "Scholarships & Grants" },
-  { href: "/shop", label: "Shop Indigenous" },
+  { href: "/marketplace", label: "Indigenous Marketplace" },
   { href: "/powwows", label: "Pow Wows & Events" },
   { href: "/live", label: "Live Streams" },
   { href: "/pricing", label: "Pricing" },
@@ -66,13 +66,13 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-gradient-to-r from-[#0D0D0F] via-[#0A0A0C] to-[#0D0D0F] shadow-lg shadow-black/20 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 shadow-lg shadow-black/20 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4">
         {/* Single row with logo, navigation, and account */}
         <div className="flex items-center justify-between py-3">
           {/* Branding */}
           <Link href="/" className="group flex items-center gap-3">
-            <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-lg shadow-[#14B8A6]/20">
+            <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-lg shadow-accent/20">
               <Image
                 src="/logo.png"
                 alt="IOPPS Logo"
@@ -83,7 +83,7 @@ export default function SiteHeader() {
               />
             </div>
             <div className="hidden sm:flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-[#14B8A6]">
+              <span className="text-lg font-bold tracking-tight text-accent">
                 IOPPS
               </span>
               <span className="text-[0.65rem] text-slate-400">
@@ -98,7 +98,7 @@ export default function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]"
+                className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-accent"
               >
                 {link.label}
               </Link>
@@ -108,7 +108,7 @@ export default function SiteHeader() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="lg:hidden rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
+            className="lg:hidden rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-accent/50 hover:text-accent"
             aria-label="Toggle menu"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,16 +123,19 @@ export default function SiteHeader() {
           {/* Account section */}
           <div className="hidden lg:flex items-center gap-3">
             {loading ? (
-              <div className="text-xs text-slate-400">Loading...</div>
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 animate-pulse rounded-full bg-slate-700" />
+                <div className="hidden sm:block h-4 w-20 animate-pulse rounded bg-slate-700" />
+              </div>
             ) : user ? (
               <>
                 <NotificationBell />
                 <div className="relative" ref={menuRef}>
                   <button
-                    className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-[#14B8A6]/50 hover:bg-slate-800/60"
+                    className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-accent/50 hover:bg-slate-800/60"
                     onClick={() => setMenuOpen((prev) => !prev)}
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#14B8A6] to-[#0B8A7A] text-[0.65rem] font-bold text-slate-900">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-soft text-[0.65rem] font-bold text-slate-900">
                       {user.displayName?.charAt(0)?.toUpperCase() ??
                         user.email?.charAt(0)?.toUpperCase() ??
                         "U"}
@@ -143,7 +146,7 @@ export default function SiteHeader() {
                     </svg>
                   </button>
                   {menuOpen && (
-                    <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-slate-800/80 bg-[#08090C] p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                    <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-slate-800/80 bg-card p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
                       <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
                         Account
                       </p>
@@ -159,7 +162,7 @@ export default function SiteHeader() {
                           <>
                             <Link
                               href="/member/dashboard"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-accent"
                               onClick={closeMenu}
                             >
                               <span className="font-semibold">My Dashboard</span>
@@ -170,7 +173,7 @@ export default function SiteHeader() {
                           <>
                             <Link
                               href="/organization/dashboard"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-accent"
                               onClick={closeMenu}
                             >
                               <span className="font-semibold">Organization Dashboard</span>
@@ -181,7 +184,7 @@ export default function SiteHeader() {
                           <>
                             <Link
                               href="/admin"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-[#14B8A6]"
+                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-accent"
                               onClick={closeMenu}
                             >
                               <span className="font-semibold">Admin Dashboard</span>
@@ -196,7 +199,7 @@ export default function SiteHeader() {
                             closeMenu();
                             void logout();
                           }}
-                          className="w-full rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-3 py-2 text-xs font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]"
+                          className="w-full rounded-lg bg-gradient-to-r from-accent to-accent-soft px-3 py-2 text-xs font-semibold text-slate-900 transition hover:from-accent-hover hover:to-accent"
                         >
                           Sign out
                         </button>
@@ -209,13 +212,13 @@ export default function SiteHeader() {
               <div className="flex gap-2">
                 <Link
                   href="/login"
-                  className="rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
+                  className="rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-accent/50 hover:text-accent"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]"
+                  className="rounded-full bg-gradient-to-r from-accent to-accent-soft px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:from-accent-hover hover:to-accent"
                 >
                   Sign Up
                 </Link>
@@ -246,7 +249,7 @@ export default function SiteHeader() {
                         <Link
                           href="/member/dashboard"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/member/dashboard" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/member/dashboard" ? "bg-slate-800/60 text-accent" : "text-slate-300"
                             }`}
                         >
                           Dashboard
@@ -259,7 +262,7 @@ export default function SiteHeader() {
                         <Link
                           href="/organization/dashboard"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/organization/dashboard" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/organization/dashboard" ? "bg-slate-800/60 text-accent" : "text-slate-300"
                             }`}
                         >
                           Dashboard
@@ -267,7 +270,7 @@ export default function SiteHeader() {
                         <Link
                           href="/organization/profile"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/organization/profile" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/organization/profile" ? "bg-slate-800/60 text-accent" : "text-slate-300"
                             }`}
                         >
                           Manage Organization
@@ -279,7 +282,7 @@ export default function SiteHeader() {
                       <Link
                         href="/admin"
                         onClick={() => setMobileNavOpen(false)}
-                        className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === "/admin" ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                        className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/admin" ? "bg-slate-800/60 text-accent" : "text-slate-300"
                           }`}
                       >
                         Admin Dashboard
@@ -295,7 +298,7 @@ export default function SiteHeader() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileNavOpen(false)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-[#14B8A6] ${pathname === link.href ? "bg-slate-800/60 text-[#14B8A6]" : "text-slate-300"
+                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === link.href ? "bg-slate-800/60 text-accent" : "text-slate-300"
                     }`}
                 >
                   {link.label}
@@ -308,14 +311,14 @@ export default function SiteHeader() {
                   <Link
                     href="/login"
                     onClick={() => setMobileNavOpen(false)}
-                    className="rounded-lg border border-slate-700/50 bg-slate-800/40 px-4 py-2.5 text-center text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
+                    className="rounded-lg border border-slate-700/50 bg-slate-800/40 px-4 py-2.5 text-center text-sm font-semibold text-slate-200 transition hover:border-accent/50 hover:text-accent"
                   >
                     Login
                   </Link>
                   <Link
                     href="/register"
                     onClick={() => setMobileNavOpen(false)}
-                    className="rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-4 py-2.5 text-center text-sm font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]"
+                    className="rounded-lg bg-gradient-to-r from-accent to-accent-soft px-4 py-2.5 text-center text-sm font-semibold text-slate-900 transition hover:from-accent-hover hover:to-accent"
                   >
                     Sign Up
                   </Link>

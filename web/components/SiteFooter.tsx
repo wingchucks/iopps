@@ -58,14 +58,14 @@ export default function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-800/50 bg-gradient-to-b from-slate-900/80 to-[#0A0A0C]">
+    <footer className="border-t border-slate-800/50 bg-gradient-to-b from-slate-900/80 to-slate-950">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Main Footer Content */}
         <div className="grid gap-8 md:grid-cols-3">
           {/* Brand Section */}
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-[#14B8A6]">IOPPS</span>
+              <span className="text-xl font-bold text-accent">IOPPS</span>
             </div>
             <p className="mt-3 text-sm text-slate-400">
               Empowering Indigenous success across Canada through jobs, conferences, scholarships, and community connections.
@@ -82,7 +82,7 @@ export default function SiteFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-slate-400 transition hover:text-[#14B8A6]"
+                    className="text-sm text-slate-400 transition hover:text-accent"
                   >
                     {link.label}
                   </Link>
@@ -103,7 +103,7 @@ export default function SiteFooter() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700/50 bg-slate-800/40 text-slate-400 transition hover:border-[#14B8A6]/50 hover:bg-slate-800/60 hover:text-[#14B8A6]"
+                  className="group flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700/50 bg-slate-800/40 text-slate-400 transition hover:border-accent/50 hover:bg-slate-800/60 hover:text-accent"
                   aria-label={`Visit our ${social.name} page`}
                 >
                   {social.icon}

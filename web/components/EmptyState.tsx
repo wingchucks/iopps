@@ -63,7 +63,7 @@ export function EmptyState({
             {action && (
                 <Link
                     href={action.href}
-                    className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-white transition-all hover:bg-[#0d9488] hover:shadow-lg hover:shadow-[#14B8A6]/20"
+                    className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/20"
                 >
                     {action.label}
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

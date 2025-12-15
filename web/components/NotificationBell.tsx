@@ -130,7 +130,7 @@ export default function NotificationBell() {
     switch (type) {
       case "new_application":
         return (
-          <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         );
@@ -180,7 +180,7 @@ export default function NotificationBell() {
       {/* Bell Button */}
       <button
         onClick={handleToggle}
-        className="relative rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]"
+        className="relative rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-accent/50 hover:text-accent"
         aria-label="Notifications"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,7 +193,7 @@ export default function NotificationBell() {
         </svg>
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-[10px] font-bold text-slate-900">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-slate-900">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -201,14 +201,14 @@ export default function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-80 sm:w-96 rounded-xl border border-slate-800/80 bg-[#08090C] shadow-2xl shadow-black/40">
+        <div className="absolute right-0 z-50 mt-2 w-80 sm:w-96 rounded-xl border border-slate-800/80 bg-card shadow-2xl shadow-black/40">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <h3 className="font-semibold text-slate-100">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-xs text-[#14B8A6] hover:underline"
+                className="text-xs text-accent hover:underline"
               >
                 Mark all read
               </button>
@@ -265,7 +265,7 @@ export default function NotificationBell() {
                       </div>
                       {!notification.read && (
                         <div className="flex-shrink-0">
-                          <span className="h-2 w-2 rounded-full bg-[#14B8A6] block" />
+                          <span className="h-2 w-2 rounded-full bg-accent block" />
                         </div>
                       )}
                     </Link>
@@ -292,7 +292,7 @@ export default function NotificationBell() {
                       </div>
                       {!notification.read && (
                         <div className="flex-shrink-0">
-                          <span className="h-2 w-2 rounded-full bg-[#14B8A6] block" />
+                          <span className="h-2 w-2 rounded-full bg-accent block" />
                         </div>
                       )}
                     </div>
@@ -308,7 +308,7 @@ export default function NotificationBell() {
               <Link
                 href="/notifications"
                 onClick={() => setIsOpen(false)}
-                className="block rounded-lg px-4 py-2 text-center text-sm font-medium text-[#14B8A6] transition hover:bg-slate-800/50"
+                className="block rounded-lg px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-slate-800/50"
               >
                 View all notifications
               </Link>

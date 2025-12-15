@@ -75,18 +75,18 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative px-4 py-16 sm:py-24">
         {/* Radial glow behind pill */}
-        <div className="absolute left-1/2 top-32 h-96 w-96 -translate-x-1/2 bg-[radial-gradient(circle_at_center,_#14B8A633,_#8b5cf633,_transparent)] blur-3xl" />
+        <div className="absolute left-1/2 top-32 h-96 w-96 -translate-x-1/2 bg-[radial-gradient(circle_at_center,_var(--accent)33,_#8b5cf633,_transparent)] blur-3xl" />
 
         <div className="relative mx-auto max-w-5xl text-center">
-          <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
+          <p className="text-xs uppercase tracking-[0.4em] text-accent">
             Indigenous Opportunities
           </p>
           <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Choose where you want to go.
+            Indigenous Jobs, Events &amp; Opportunities Across Canada
           </h1>
           <p className="mt-6 text-base text-slate-400 sm:text-lg">
-            IOPPS brings together jobs, conferences, scholarships, Indigenous
-            businesses, pow wows & events, and live streams in one place.
+            IOPPS connects Indigenous communities with jobs, conferences, scholarships,
+            Indigenous-owned businesses, pow wows &amp; events, and live streams — all in one place.
           </p>
 
           {/* Multi-color gradient pill with glow */}

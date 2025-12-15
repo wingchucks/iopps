@@ -178,12 +178,12 @@ export default function FileUploader({
             </label>
 
             {uploadedFile ? (
-                <div className="flex items-center justify-between p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-accent/10 border border-accent/30 rounded-lg">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <CheckCircleIcon className="h-6 w-6 text-[#14B8A6] flex-shrink-0" />
+                        <CheckCircleIcon className="h-6 w-6 text-accent flex-shrink-0" />
                         <div className="truncate">
                             <p className="text-sm font-medium text-slate-200 truncate">{uploadedFile.name}</p>
-                            <a href={uploadedFile.url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#14B8A6] hover:underline">View File</a>
+                            <a href={uploadedFile.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline">View File</a>
                         </div>
                     </div>
                     <button
@@ -201,7 +201,7 @@ export default function FileUploader({
                 <div
                     className={`
             relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer
-            ${dragActive ? 'border-[#14B8A6] bg-[#14B8A6]/5' : 'border-slate-700 bg-slate-800/30 hover:border-slate-500 hover:bg-slate-800/50'}
+            ${dragActive ? 'border-accent bg-accent/5' : 'border-slate-700 bg-slate-800/30 hover:border-slate-500 hover:bg-slate-800/50'}
           `}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -225,7 +225,7 @@ export default function FileUploader({
                             </div>
                             <div className="w-full bg-slate-700 rounded-full h-2">
                                 <div
-                                    className="bg-[#14B8A6] h-2 rounded-full transition-all duration-300"
+                                    className="bg-accent h-2 rounded-full transition-all duration-300"
                                     style={{ width: `${progress}%` }}
                                 ></div>
                             </div>
@@ -234,7 +234,7 @@ export default function FileUploader({
                         <>
                             <CloudArrowUpIcon className="h-10 w-10 text-slate-400 mb-3" />
                             <p className="text-sm text-slate-300 font-medium">
-                                <span className="text-[#14B8A6]">Click to upload</span> or drag and drop
+                                <span className="text-accent">Click to upload</span> or drag and drop
                             </p>
                             <p className="text-xs text-slate-500 mt-1">
                                 {accept.replace(/,/g, ', ')} (Max {maxSizeMB}MB)

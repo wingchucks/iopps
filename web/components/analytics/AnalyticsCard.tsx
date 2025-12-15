@@ -30,7 +30,7 @@ export function AnalyticsCard({
   colorScheme = "teal",
 }: AnalyticsCardProps) {
   const colorClasses = {
-    teal: "from-[#14B8A6] to-[#0D9488]",
+    teal: "from-accent to-accent-soft",
     blue: "from-blue-500 to-blue-600",
     purple: "from-purple-500 to-purple-600",
     orange: "from-orange-500 to-orange-600",
@@ -52,7 +52,7 @@ export function AnalyticsCard({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+      <div className="rounded-2xl border border-slate-800/80 bg-card p-6 shadow-lg shadow-black/30">
         <div className="animate-pulse space-y-3">
           <div className="h-4 w-24 rounded bg-slate-800"></div>
           <div className="h-8 w-32 rounded bg-slate-800"></div>
@@ -63,9 +63,9 @@ export function AnalyticsCard({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30 transition-all duration-300 hover:border-[#14B8A6]/50">
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-card p-6 shadow-lg shadow-black/30 transition-all duration-300 hover:border-accent/50">
       {/* Background gradient on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#14B8A6]/0 to-[#14B8A6]/0 opacity-0 transition-opacity duration-300 group-hover:from-[#14B8A6]/5 group-hover:to-transparent group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-gradient-to-br from-accent/0 to-accent/0 opacity-0 transition-opacity duration-300 group-hover:from-accent/5 group-hover:to-transparent group-hover:opacity-100" />
 
       <div className="relative">
         {/* Header with icon */}
@@ -119,7 +119,7 @@ export function AnalyticsCard({
 
 export function AnalyticsCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+    <div className="rounded-2xl border border-slate-800/80 bg-card p-6 shadow-lg shadow-black/30">
       <div className="animate-pulse space-y-3">
         <div className="h-4 w-24 rounded bg-slate-800"></div>
         <div className="h-8 w-32 rounded bg-slate-800"></div>
