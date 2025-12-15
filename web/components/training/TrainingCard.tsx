@@ -31,6 +31,9 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
+    // Check if cost indicates free
+    const isFree = !program.cost || program.cost.toLowerCase().includes('free') || program.cost === '$0';
+
     return (
         <div className={`group flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${featured
             ? "border-teal-500/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5 hover:border-teal-500/50"
@@ -43,11 +46,13 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFormatBadgeColor(program.format)}`}>
                             {program.format.replace('-', ' ')}
                         </span>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300">
-                            {program.category}
-                        </span>
+                        {program.category && (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300">
+                                {program.category}
+                            </span>
+                        )}
                     </div>
-                    {program.costType === 'free' && (
+                    {isFree && (
                         <span className="px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs font-bold border border-green-500/30">
                             FREE
                         </span>
@@ -57,16 +62,16 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
 
             {/* Content */}
             <div className="flex-1 p-5 flex flex-col">
-                {program.provider?.name && (
+                {program.providerName && (
                     <div className="flex items-center gap-1.5 mb-2 text-sm font-medium text-teal-400/90">
-                        {program.provider.name}
-                        {program.provider.isVerified && (
+                        {program.providerName}
+                        {program.status === 'approved' && (
                             <CheckBadgeIcon className="h-4 w-4 text-blue-400" title="Verified Provider" />
                         )}
                     </div>
                 )}
 
-                <Link href={`/jobs/training/${program.id}`} className="mb-3 block">
+                <Link href={`/jobs-training/training/${program.id}`} className="mb-3 block">
                     <h3 className="text-xl font-bold text-white group-hover:text-teal-300 transition-colors line-clamp-2">
                         {program.title}
                     </h3>
@@ -78,14 +83,16 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-slate-300 mb-5">
-                    <div className="flex items-center gap-1.5">
-                        <CalendarIcon className="h-4 w-4 text-slate-500" />
-                        <span>{program.duration}</span>
-                    </div>
+                    {program.duration && (
+                        <div className="flex items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4 text-slate-500" />
+                            <span>{program.duration}</span>
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-1.5">
                         <MapPinIcon className="h-4 w-4 text-slate-500" />
-                        <span>{program.location?.isRemote ? 'Remote' : program.location?.city || 'Location varies'}</span>
+                        <span>{program.format === 'online' ? 'Remote' : program.location || 'Location varies'}</span>
                     </div>
 
                     {program.startDate && (
@@ -98,7 +105,7 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
 
                 <div className="mt-auto pt-4 border-t border-slate-700/50 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-slate-200 font-medium">
-                        {program.costType === 'free' ? (
+                        {isFree ? (
                             <span className="text-green-400">No Cost</span>
                         ) : (
                             <span>{program.cost}</span>
@@ -107,13 +114,13 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
 
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/jobs"
+                            href="/jobs-training"
                             className="text-xs font-semibold text-blue-400 hover:text-blue-300"
                         >
                             Find Jobs
                         </Link>
                         <Link
-                            href={`/jobs/training/${program.id}`}
+                            href={`/jobs-training/training/${program.id}`}
                             className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-teal-600 text-white text-sm font-medium transition-colors"
                         >
                             View Details
