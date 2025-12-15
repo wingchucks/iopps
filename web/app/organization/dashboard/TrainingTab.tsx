@@ -112,7 +112,8 @@ export default function TrainingTab() {
             if (editingProgram) {
                 await updateTrainingProgram(editingProgram.id, programData);
             } else {
-                await createTrainingProgram(programData);
+                // Pass false for isVerifiedOrganization (safe default)
+                await createTrainingProgram(programData, false);
             }
 
             // Reload
