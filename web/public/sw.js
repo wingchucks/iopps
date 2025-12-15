@@ -51,6 +51,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip non-GET requests (Cache API only supports GET)
+  if (request.method !== 'GET') {
+    return;
+  }
+
   // API requests - Network-first strategy
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/data/')) {
     event.respondWith(
