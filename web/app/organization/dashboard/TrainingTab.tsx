@@ -38,8 +38,8 @@ export default function TrainingTab() {
         cost: "",
         costType: "free",
         externalUrl: "",
-        isActive: true,
-        isFeatured: false
+        active: true,
+        featured: false
     });
 
     useEffect(() => {
@@ -168,9 +168,9 @@ export default function TrainingTab() {
                     {programs.map(program => (
                         <div key={program.id} className="group relative overflow-hidden rounded-xl border border-slate-700 bg-slate-800 p-5 hover:border-teal-500/50 transition-colors">
                             <div className="flex justify-between items-start mb-2">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${program.isActive ? "bg-teal-500/10 text-teal-400" : "bg-slate-700 text-slate-400"
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${program.active ? "bg-teal-500/10 text-teal-400" : "bg-slate-700 text-slate-400"
                                     }`}>
-                                    {program.isActive ? "Active" : "Inactive"}
+                                    {program.active ? "Active" : "Inactive"}
                                 </span>
                                 <div className="flex gap-2">
                                     <button onClick={() => handleOpenModal(program)} className="text-slate-400 hover:text-white">
@@ -288,8 +288,8 @@ export default function TrainingTab() {
                                         <input
                                             type="checkbox"
                                             className="h-5 w-5 rounded border-slate-700 bg-slate-800 text-teal-600 focus:ring-teal-500"
-                                            checked={formData.isActive}
-                                            onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
+                                            checked={formData.active}
+                                            onChange={e => setFormData({ ...formData, active: e.target.checked })}
                                         />
                                         <span className="ml-2 text-sm text-slate-400">Visible to public</span>
                                     </div>
