@@ -18,6 +18,7 @@ import {
     BuildingStorefrontIcon,
     Cog6ToothIcon,
     DocumentTextIcon,
+    EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 
 export default function AdminLayout({
@@ -62,6 +63,7 @@ export default function AdminLayout({
         { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
         { name: "Videos", href: "/admin/videos", icon: VideoCameraIcon },
         { name: "Job Auto Import", href: "/admin/feeds", icon: ArrowDownTrayIcon },
+        { name: "Email Campaigns", href: "/admin/emails", icon: EnvelopeIcon },
         { name: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
     ];
 

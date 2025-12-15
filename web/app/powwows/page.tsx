@@ -8,6 +8,7 @@ import { listPowwowEvents } from "@/lib/firestore";
 import type { PowwowEvent, PowwowEventType, NorthAmericanRegion } from "@/lib/types";
 import { POWWOW_EVENT_TYPES, NORTH_AMERICAN_REGIONS } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
 
 // Date range filter options
 const DATE_RANGES = [
@@ -153,61 +154,42 @@ function PowwowsContent() {
   };
 
   return (
-    <PageShell>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="event-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="5" cy="5" r="1" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#event-grid)" />
-          </svg>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Pow Wows & Events
-          </h1>
-          <p className="mt-4 text-lg text-teal-100 sm:text-xl">
-            Celebrations & gatherings across Turtle Island. Find pow wows, sports events,
-            and cultural gatherings hosted by Nations, communities, and partners across North America.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search events..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-            >
-              <FunnelIcon className="h-5 w-5" />
-              Filters
-              {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-teal-600">
-                  !
-                </span>
-              )}
-            </button>
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Pow Wows & Events"
+        title="Celebrate Together"
+        subtitle="Celebrations & gatherings across Turtle Island. Find pow wows, sports events, and cultural gatherings hosted by Nations, communities, and partners across North America."
+        size="md"
+      >
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+            />
           </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+          >
+            <FunnelIcon className="h-5 w-5" />
+            Filters
+            {hasFilters && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
+                !
+              </span>
+            )}
+          </button>
         </div>
-      </div>
+      </OceanWaveHero>
+
+      <PageShell>
 
       {/* Filters Panel */}
       {showFilters && (
@@ -234,7 +216,7 @@ function PowwowsContent() {
                   onClick={() => setEventType(null)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     eventType === null
-                      ? "bg-teal-500 text-white"
+                      ? "bg-[#14B8A6] text-white"
                       : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                   }`}
                 >
@@ -246,7 +228,7 @@ function PowwowsContent() {
                     onClick={() => setEventType(type)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       eventType === type
-                        ? "bg-teal-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -266,7 +248,7 @@ function PowwowsContent() {
                     onClick={() => setDateRange(range.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       dateRange === range.value
-                        ? "bg-teal-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -282,7 +264,7 @@ function PowwowsContent() {
               <select
                 value={region || ""}
                 onChange={(e) => setRegion(e.target.value as NorthAmericanRegion || null)}
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
               >
                 <option value="">All Regions</option>
                 <optgroup label="Canada">
@@ -307,7 +289,7 @@ function PowwowsContent() {
                   type="checkbox"
                   checked={showLivestreamOnly}
                   onChange={(e) => setShowLivestreamOnly(e.target.checked)}
-                  className="rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                  className="rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
                 />
                 <span className="text-sm text-slate-300">Livestream available</span>
               </label>
@@ -380,7 +362,7 @@ function PowwowsContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d9488] transition-colors"
             >
               Clear filters
             </button>
@@ -396,7 +378,7 @@ function PowwowsContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-teal-500 hover:text-teal-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                 >
                   Load more events
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -409,25 +391,33 @@ function PowwowsContent() {
         )}
       </section>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Hosting an Event?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          List your pow wow, sports event, or cultural gathering on IOPPS. Reach Indigenous communities across North America.
-        </p>
-        <a
-          href="/organization/dashboard"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-        >
-          List Your Event
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </a>
+      </PageShell>
+
+      {/* CTA Section - Ocean Wave Style */}
+      <section className="relative overflow-hidden">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent">
+            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                Hosting an Event?
+              </h2>
+              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                List your pow wow, sports event, or cultural gathering on IOPPS. Reach Indigenous communities across North America.
+              </p>
+              <Link
+                href="/organization/dashboard"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-lg font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                List Your Event
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
-    </PageShell>
+    </div>
   );
 }
 
@@ -456,11 +446,11 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-teal-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
       }`}
     >
       {/* Event Image */}
-      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-teal-600 to-emerald-700">
+      <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-[#14B8A6] to-cyan-700">
         {event.imageUrl ? (
           <Image
             src={event.imageUrl}
@@ -524,7 +514,7 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
           )}
         </div>
 
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-teal-300 transition-colors">
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
           {event.name}
         </h3>
 
@@ -551,7 +541,7 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
               Registration {event.registrationStatus}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 group-hover:gap-2 transition-all">
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#14B8A6] group-hover:gap-2 transition-all">
             View details
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -567,9 +557,14 @@ export default function PowwowsPage() {
   return (
     <Suspense
       fallback={
-        <PageShell>
-          <div className="mx-auto max-w-7xl">
-            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
+        <div className="min-h-screen text-slate-100">
+          <OceanWaveHero
+            eyebrow="Pow Wows & Events"
+            title="Celebrate Together"
+            subtitle="Celebrations & gatherings across Turtle Island. Find pow wows, sports events, and cultural gatherings hosted by Nations, communities, and partners across North America."
+            size="md"
+          />
+          <PageShell>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
                 <div
@@ -578,8 +573,8 @@ export default function PowwowsPage() {
                 />
               ))}
             </div>
-          </div>
-        </PageShell>
+          </PageShell>
+        </div>
       }
     >
       <PowwowsContent />

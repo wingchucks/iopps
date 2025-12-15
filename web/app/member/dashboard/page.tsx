@@ -26,9 +26,10 @@ import ApplicationsTab from "./ApplicationsTab";
 import SavedItemsTab from "./SavedItemsTab";
 import JobAlertsTab from "./JobAlertsTab";
 import MessagesTab from "./MessagesTab";
+import TrainingTab from "./TrainingTab";
 import ProfileWizard from "@/components/member/ProfileWizard";
 
-type TabType = "overview" | "profile" | "applications" | "saved" | "alerts" | "messages";
+type TabType = "overview" | "profile" | "applications" | "saved" | "training" | "alerts" | "messages";
 
 export default function MemberDashboard() {
   const { user, role, loading } = useAuth();
@@ -40,9 +41,15 @@ export default function MemberDashboard() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
 
+  // Check if user is a community member (not employer/admin/moderator)
+  const isCommunityMember = role === "community" || (role !== "employer" && role !== "admin" && role !== "moderator");
+
   // Load all data
   useEffect(() => {
-    if (!user || role !== "community") return;
+    if (!user || !isCommunityMember) {
+      setDataLoading(false);
+      return;
+    }
 
     const loadData = async () => {
       try {
@@ -65,8 +72,7 @@ export default function MemberDashboard() {
     };
 
     loadData();
-    loadData();
-  }, [user, role]);
+  }, [user, role, isCommunityMember]);
 
   // Handle Wizard Dismissal
   const handleWizardDismiss = async () => {
@@ -142,7 +148,7 @@ export default function MemberDashboard() {
     );
   }
 
-  if (!user || role !== "community") {
+  if (!user || !isCommunityMember) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="text-center">
@@ -208,6 +214,15 @@ export default function MemberDashboard() {
             Saved Items
           </button>
           <button
+            onClick={() => setActiveTab("training")}
+            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "training"
+              ? "border-b-2 border-amber-500 text-amber-400"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
+          >
+            Training
+          </button>
+          <button
             onClick={() => setActiveTab("alerts")}
             className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "alerts"
               ? "border-b-2 border-emerald-500 text-emerald-400"
@@ -246,6 +261,9 @@ export default function MemberDashboard() {
           {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "saved" && (
             <SavedItemsTab />
+          )}
+          {activeTab === "training" && (
+            <TrainingTab />
           )}
 
           {activeTab === "alerts" && (
@@ -378,7 +396,7 @@ function OverviewTab({
         <h3 className="text-xl font-bold text-white">Quick Actions</h3>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Link
-            href="/jobs"
+            href="/jobs-training"
             className="group rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4 transition-all hover:border-emerald-500/50 hover:bg-slate-900/70"
           >
             <div className="flex items-center gap-4">
@@ -390,6 +408,25 @@ function OverviewTab({
               <div>
                 <p className="font-semibold text-white">Browse Jobs</p>
                 <p className="text-sm text-slate-400">Find new opportunities</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/jobs-training/programs"
+            className="group rounded-xl border border-amber-500/20 bg-slate-900/50 p-4 transition-all hover:border-amber-500/50 hover:bg-slate-900/70"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-400 transition-transform group-hover:scale-110">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                  <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-semibold text-white">Training Programs</p>
+                <p className="text-sm text-slate-400">Build new skills</p>
               </div>
             </div>
           </Link>
@@ -435,9 +472,7 @@ function OverviewTab({
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-400 transition-transform group-hover:scale-110">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M12 14l9-5-9-5-9 5 9 5z" />
-                  <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>

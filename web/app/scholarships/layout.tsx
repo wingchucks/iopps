@@ -1,44 +1,29 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Indigenous Scholarships & Grants",
-  description:
-    "Find scholarships, bursaries, and grants for Indigenous students across Canada. Access funding for education from undergraduate to graduate studies. Browse opportunities for First Nations, Métis, and Inuit students.",
-  keywords: [
-    "Indigenous scholarships",
-    "Indigenous grants",
-    "Indigenous bursaries",
-    "First Nations scholarships",
-    "Métis scholarships",
-    "Inuit scholarships",
-    "Indigenous student funding",
-    "Indigenous education funding",
-    "Indigenous university scholarships",
-    "Indigenous college bursaries",
-    "Canada Indigenous education",
-  ],
+  title: {
+    template: '%s | IOPPS Scholarships',
+    default: 'Indigenous Scholarships & Bursaries | IOPPS.ca',
+  },
+  description: 'Find scholarships, bursaries, and funding opportunities for Indigenous students across Canada. Support your educational journey with financial aid designed for First Nations, Métis, and Inuit students.',
   openGraph: {
-    title: "Indigenous Scholarships & Grants | IOPPS.ca",
-    description:
-      "Find scholarships, bursaries, and grants for Indigenous students across Canada. Access funding for your educational journey.",
-    url: "/scholarships",
+    title: 'Indigenous Scholarships & Bursaries | IOPPS.ca',
+    description: 'Find scholarships, bursaries, and funding opportunities for Indigenous students across Canada.',
+    type: 'website',
     images: [
       {
-        url: "/og-scholarships.png",
+        url: '/api/og?title=Indigenous%20Scholarships&type=scholarship&subtitle=Funding%20Opportunities%20for%20Indigenous%20Students',
         width: 1200,
         height: 630,
-        alt: "IOPPS Indigenous Scholarships & Grants",
+        alt: 'IOPPS Indigenous Scholarships',
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Indigenous Scholarships & Grants | IOPPS.ca",
-    description:
-      "Find scholarships, bursaries, and grants for Indigenous students across Canada.",
-  },
-  alternates: {
-    canonical: "/scholarships",
+    card: 'summary_large_image',
+    title: 'Indigenous Scholarships & Bursaries | IOPPS.ca',
+    description: 'Find funding opportunities for Indigenous students across Canada.',
+    images: ['/api/og?title=Indigenous%20Scholarships&type=scholarship&subtitle=Funding%20Opportunities%20for%20Indigenous%20Students'],
   },
 };
 
@@ -47,5 +32,5 @@ export default function ScholarshipsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return children;
 }

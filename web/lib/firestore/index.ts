@@ -173,3 +173,42 @@ export {
   updateJobAlert,
 } from "./misc";
 export type { GlobalSearchResults, ContactSubmissionInput } from "./misc";
+
+// Training Programs
+export {
+  listTrainingPrograms,
+  getTrainingProgram,
+  createTrainingProgram,
+  updateTrainingProgram,
+  updateTrainingProgramStatus,
+  setTrainingProgramFeatured,
+  deleteTrainingProgram,
+  incrementTrainingProgramViews,
+  trackEnrollmentClick,
+  getMemberTrainingInterests,
+  listOrganizationTrainingPrograms,
+  getTrainingProgramsPendingReview,
+  saveTrainingProgram,
+  unsaveTrainingProgram,
+  isTrainingSaved,
+  listSavedTraining,
+} from "./training";
+export type { ListTrainingProgramsOptions } from "./training";
+
+// Services (Indigenous Marketplace)
+export {
+  listServices,
+  getFeaturedServices,
+  getService,
+  getServiceBySlug,
+  createService,
+  updateService,
+  deleteService,
+  updateServiceStatus,
+  setServiceFeatured,
+  incrementServiceViews,
+  trackServiceContactClick,
+  listUserServices,
+  getServicesPendingReview,
+} from "./services";
+export type { ListServicesOptions, CreateServiceInput } from "./services";

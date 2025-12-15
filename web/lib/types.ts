@@ -3,6 +3,51 @@ import type { Timestamp } from "firebase/firestore";
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "pending" | "approved" | "rejected";
 
+// ============================================
+// JOB POSTING TYPES
+// ============================================
+
+export type LocationType = 'onsite' | 'remote' | 'hybrid';
+export type ApplicationMethod = 'email' | 'url' | 'quickApply';
+export type SalaryPeriod = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export const JOB_CATEGORIES = [
+  'Accounting & Finance',
+  'Administration',
+  'Arts & Culture',
+  'Construction & Trades',
+  'Education & Training',
+  'Engineering',
+  'Environmental',
+  'Government',
+  'Healthcare',
+  'Human Resources',
+  'Information Technology',
+  'Legal',
+  'Management',
+  'Marketing & Communications',
+  'Natural Resources',
+  'Operations',
+  'Sales',
+  'Social Services',
+  'Transportation',
+  'Other',
+] as const;
+
+export type JobCategory = typeof JOB_CATEGORIES[number];
+
+export const EMPLOYMENT_TYPES = [
+  'Full-time',
+  'Part-time',
+  'Contract',
+  'Temporary',
+  'Internship',
+  'Seasonal',
+  'Casual',
+] as const;
+
+export type EmploymentType = typeof EMPLOYMENT_TYPES[number];
+
 export interface Interview {
   id: string;
   videoUrl: string;
@@ -148,17 +193,29 @@ export interface JobPosting {
   qualifications?: string[];
   requirements?: string;
   benefits?: string;
+  // Enhanced salary range with period
   salaryRange?: {
     min?: number;
     max?: number;
     currency?: string;
+    period?: SalaryPeriod;
     disclosed?: boolean;
   } | string; // Support both structured and legacy string format
+  // Enhanced location type
+  locationType?: LocationType;
+  // Job category
+  category?: JobCategory | string;
+  // Application method
+  applicationMethod?: ApplicationMethod;
   applicationLink?: string;
   applicationEmail?: string;
   createdAt?: Timestamp | null;
+  // Posting date (for scheduled posts)
+  postedAt?: Timestamp | null;
   closingDate?: Timestamp | string | null;
   active: boolean;
+  // Featured job flag
+  featured?: boolean;
   viewsCount?: number;
   applicationsCount?: number;
   // Quick Apply & Enhanced Features
@@ -445,6 +502,14 @@ export interface SavedJob {
   memberId: string;
   createdAt?: Timestamp | null;
   job?: JobPosting | null;
+}
+
+export interface SavedTraining {
+  id: string;
+  programId: string;
+  memberId: string;
+  createdAt?: Timestamp | null;
+  program?: TrainingProgram | null;
 }
 
 export type JobAlertFrequency = "instant" | "daily" | "weekly";
@@ -945,6 +1010,12 @@ export interface EmailPreferences {
   shopFrequency: EmailDigestFrequency;
   shopCategories: string[]; // empty = all categories
 
+  // Training Programs
+  trainingUpdates: boolean;
+  trainingFrequency: EmailDigestFrequency;
+  trainingCategories: string[]; // empty = all categories
+  trainingFormats: TrainingFormat[]; // empty = all formats
+
   // Platform Newsletter
   weeklyDigest: boolean;
 
@@ -1109,4 +1180,170 @@ export interface ProductConfig {
   features: string[];
   // Default stats when product is granted
   defaultStats: EmployerProduct["stats"];
+}
+
+// ============================================
+// TRAINING PROGRAMS
+// ============================================
+
+export type TrainingProgramStatus = "pending" | "approved" | "rejected";
+export type TrainingFormat = "in-person" | "online" | "hybrid";
+export type TrainingDuration = "hours" | "days" | "weeks" | "months" | "self-paced";
+
+export interface TrainingProgram {
+  id: string;
+
+  // Organization/Provider
+  organizationId: string; // References employers collection
+  organizationName?: string; // Denormalized for display
+
+  // Program Details
+  title: string;
+  description: string;
+  shortDescription?: string; // For cards/previews
+
+  // External Enrollment (external redirect only)
+  enrollmentUrl: string; // Required - external provider URL
+  providerName: string; // Name of training institution
+  providerWebsite?: string;
+
+  // Format & Duration
+  format: TrainingFormat;
+  duration?: string; // e.g., "6 weeks", "40 hours"
+  durationType?: TrainingDuration;
+  startDate?: Timestamp | string | null;
+  endDate?: Timestamp | string | null;
+  ongoing?: boolean; // If true, continuous enrollment
+
+  // Location (for in-person/hybrid)
+  location?: string;
+  region?: NorthAmericanRegion;
+
+  // Categorization
+  category?: string; // e.g., "Technology", "Trades", "Healthcare"
+  skills?: string[]; // Skills taught
+  certificationOffered?: string;
+
+  // Indigenous Focus
+  indigenousFocused?: boolean;
+  targetCommunities?: string[]; // Specific nations/communities
+
+  // Cost & Funding
+  cost?: string; // Display string, e.g., "Free", "$500", "Contact provider"
+  fundingAvailable?: boolean;
+  scholarshipInfo?: string;
+
+  // Media
+  imageUrl?: string;
+
+  // Status & Approval (hybrid workflow)
+  status: TrainingProgramStatus;
+  featured: boolean; // Paid featuring
+  active: boolean;
+
+  // Analytics
+  viewCount?: number;
+  clickCount?: number; // Clicks to enrollment URL
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+  approvedAt?: Timestamp | null;
+  approvedBy?: string;
+}
+
+// For tracking user interest/clicks (analytics)
+export interface MemberTrainingInterest {
+  id: string;
+  userId: string;
+  programId: string;
+  programTitle?: string; // Denormalized
+  organizationName?: string; // Denormalized
+  clickedAt: Timestamp | null;
+  enrollmentClicked: boolean; // Did they click through to provider?
+}
+
+// ============================================
+// INDIGENOUS MARKETPLACE - SERVICES
+// ============================================
+
+export const SERVICE_CATEGORIES = [
+  'Consulting',
+  'Legal Services',
+  'Accounting & Finance',
+  'Marketing & Communications',
+  'IT & Technology',
+  'Design & Creative',
+  'Construction & Trades',
+  'Health & Wellness',
+  'Education & Training',
+  'Environmental Services',
+  'Cultural Services',
+  'Translation & Language',
+  'Event Services',
+  'Other Professional Services',
+] as const;
+
+export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
+
+export type ServiceStatus = 'draft' | 'pending' | 'active' | 'suspended';
+
+export interface Service {
+  id: string;
+  vendorId: string; // Can be linked to a vendor or standalone
+  userId: string; // Owner's user ID
+
+  // Business Info
+  businessName: string;
+  slug: string; // URL-friendly identifier
+  title: string; // Service title (e.g., "Indigenous Business Consulting")
+  tagline?: string;
+  description: string;
+  category: ServiceCategory;
+
+  // Location & Availability
+  location?: string;
+  region: NorthAmericanRegion;
+  servesRemote: boolean; // Can serve clients remotely
+  serviceAreas?: string[]; // Specific areas served
+
+  // Contact & Links
+  email?: string;
+  phone?: string;
+  website?: string;
+  linkedin?: string;
+  bookingUrl?: string; // External booking/contact link
+
+  // Media
+  logoUrl?: string;
+  coverImageUrl?: string;
+  portfolioImages?: string[];
+
+  // Indigenous Identity
+  nation?: string;
+  indigenousOwned: boolean;
+  communityStory?: string;
+
+  // Service Details
+  services?: string[]; // List of specific services offered
+  industries?: string[]; // Industries served
+  certifications?: string[];
+  yearsExperience?: number;
+
+  // Pricing
+  priceRange?: string; // e.g., "$100-$200/hr", "Contact for quote"
+  freeConsultation?: boolean;
+
+  // Status & Visibility
+  status: ServiceStatus;
+  featured: boolean;
+  verified: boolean;
+
+  // Analytics
+  viewCount: number;
+  contactClicks: number;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
 }

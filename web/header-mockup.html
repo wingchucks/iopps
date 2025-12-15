@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Header Redesign Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: #020617;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .section-label {
+      color: #94a3b8;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      padding: 8px 16px;
+      background: #1e293b;
+      border-radius: 4px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-[1400px] mx-auto py-8 px-4">
+
+    <!-- Current Design -->
+    <div class="mb-16">
+      <span class="section-label">Current Design</span>
+      <header class="border-b border-slate-800/50 bg-gradient-to-r from-[#0D0D0F] via-[#0A0A0C] to-[#0D0D0F] shadow-lg shadow-black/20">
+        <div class="mx-auto max-w-7xl px-4">
+          <div class="flex items-center justify-between py-3">
+            <!-- Logo -->
+            <a href="#" class="group flex items-center gap-3">
+              <div class="relative h-10 w-10 overflow-hidden rounded-xl shadow-lg bg-slate-800 flex items-center justify-center">
+                <svg class="w-6 h-6 text-[#14B8A6]" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-lg font-bold tracking-tight text-[#14B8A6]">IOPPS</span>
+                <span class="text-[0.65rem] text-slate-400">Empowering Indigenous Success</span>
+              </div>
+            </a>
+
+            <!-- Nav - Current cramped style -->
+            <nav class="flex items-center gap-1">
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Jobs & Training</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Conferences</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Scholarships & Grants</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Indigenous Marketplace</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Pow Wows & Events</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Live Streams</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-[#14B8A6]">Pricing</a>
+            </nav>
+
+            <!-- Auth buttons - Current low contrast -->
+            <div class="flex gap-2">
+              <a href="#" class="rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-[#14B8A6]/50 hover:text-[#14B8A6]">Login</a>
+              <a href="#" class="rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:from-[#16cdb8] hover:to-[#0d9d8a]">Sign Up</a>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- Redesign Option A: Clean & Spacious -->
+    <div class="mb-16">
+      <span class="section-label">Option A: Clean & Spacious</span>
+      <header class="border-b border-slate-700/30 bg-[#0a0a0c]/95 backdrop-blur-xl">
+        <div class="mx-auto max-w-7xl px-6">
+          <div class="flex items-center justify-between py-4">
+            <!-- Logo -->
+            <a href="#" class="group flex items-center gap-3">
+              <div class="relative h-10 w-10 overflow-hidden rounded-xl shadow-lg bg-slate-800 flex items-center justify-center ring-1 ring-[#14B8A6]/20">
+                <svg class="w-6 h-6 text-[#14B8A6]" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-lg font-bold tracking-tight text-white">IOPPS</span>
+                <span class="text-[0.6rem] text-slate-500 tracking-wide">Empowering Indigenous Success</span>
+              </div>
+            </a>
+
+            <!-- Nav - More breathing room -->
+            <nav class="flex items-center gap-1">
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white">Jobs & Training</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white">Conferences</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white">Scholarships</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white">Marketplace</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white">Events</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white">Live</a>
+              <a href="#" class="whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium text-[#14B8A6] transition-all hover:bg-white/5">Pricing</a>
+            </nav>
+
+            <!-- Auth buttons - Higher contrast -->
+            <div class="flex items-center gap-3">
+              <a href="#" class="px-4 py-2 text-sm font-medium text-slate-300 transition hover:text-white">Login</a>
+              <a href="#" class="rounded-lg bg-[#14B8A6] px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#16cdb8] shadow-lg shadow-[#14B8A6]/20">Sign Up</a>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- Redesign Option B: With Active States & Accent Line -->
+    <div class="mb-16">
+      <span class="section-label">Option B: Active States & Accent Line</span>
+      <header class="bg-[#08090c] border-b-2 border-[#14B8A6]/20">
+        <div class="mx-auto max-w-7xl px-6">
+          <div class="flex items-center justify-between py-4">
+            <!-- Logo -->
+            <a href="#" class="group flex items-center gap-3">
+              <div class="relative h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-[#14B8A6] to-[#0B8A7A] flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-lg font-bold tracking-tight text-white">IOPPS</span>
+                <span class="text-[0.6rem] text-[#14B8A6]/70 tracking-wide uppercase">Empowering Indigenous Success</span>
+              </div>
+            </a>
+
+            <!-- Nav with active state -->
+            <nav class="flex items-center gap-0.5">
+              <a href="#" class="relative whitespace-nowrap px-4 py-2 text-[13px] font-medium text-white transition-all after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-[#14B8A6]">Jobs & Training</a>
+              <a href="#" class="whitespace-nowrap px-4 py-2 text-[13px] font-medium text-slate-400 transition-all hover:text-slate-200">Conferences</a>
+              <a href="#" class="whitespace-nowrap px-4 py-2 text-[13px] font-medium text-slate-400 transition-all hover:text-slate-200">Scholarships</a>
+              <a href="#" class="whitespace-nowrap px-4 py-2 text-[13px] font-medium text-slate-400 transition-all hover:text-slate-200">Marketplace</a>
+              <a href="#" class="whitespace-nowrap px-4 py-2 text-[13px] font-medium text-slate-400 transition-all hover:text-slate-200">Events</a>
+              <a href="#" class="whitespace-nowrap px-4 py-2 text-[13px] font-medium text-slate-400 transition-all hover:text-slate-200">Live</a>
+              <a href="#" class="whitespace-nowrap px-4 py-2 text-[13px] font-medium text-slate-400 transition-all hover:text-slate-200">Pricing</a>
+            </nav>
+
+            <!-- Auth buttons with outline login -->
+            <div class="flex items-center gap-2">
+              <a href="#" class="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-white">Login</a>
+              <a href="#" class="rounded-lg bg-[#14B8A6] px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#16cdb8]">Sign Up</a>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- Redesign Option C: Grouped Navigation with Dropdown Hint -->
+    <div class="mb-16">
+      <span class="section-label">Option C: Grouped with Visual Hierarchy</span>
+      <header class="bg-gradient-to-b from-[#0f1014] to-[#0a0a0c] border-b border-slate-800/50">
+        <div class="mx-auto max-w-7xl px-6">
+          <div class="flex items-center justify-between py-4">
+            <!-- Logo with glow -->
+            <a href="#" class="group flex items-center gap-3">
+              <div class="relative h-11 w-11 overflow-hidden rounded-xl bg-[#0D1117] flex items-center justify-center border border-[#14B8A6]/30 shadow-lg shadow-[#14B8A6]/10">
+                <svg class="w-6 h-6 text-[#14B8A6]" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                  <path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-lg font-bold tracking-tight text-white">IOPPS</span>
+                <span class="text-[0.6rem] text-slate-500">Empowering Indigenous Success</span>
+              </div>
+            </a>
+
+            <!-- Nav grouped -->
+            <nav class="flex items-center">
+              <!-- Primary links -->
+              <div class="flex items-center gap-1 pr-4 border-r border-slate-700/50">
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-white bg-white/5 transition-all">Jobs</a>
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-slate-400 transition-all hover:text-white hover:bg-white/5">Events</a>
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-slate-400 transition-all hover:text-white hover:bg-white/5">Marketplace</a>
+              </div>
+              <!-- Secondary links -->
+              <div class="flex items-center gap-1 pl-4">
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-slate-500 transition-all hover:text-slate-300">Scholarships</a>
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-slate-500 transition-all hover:text-slate-300">Conferences</a>
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-slate-500 transition-all hover:text-slate-300">Live</a>
+                <a href="#" class="whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium text-[#14B8A6] transition-all hover:text-[#16cdb8]">Pricing</a>
+              </div>
+            </nav>
+
+            <!-- Auth buttons -->
+            <div class="flex items-center gap-3">
+              <a href="#" class="text-sm font-medium text-slate-400 transition hover:text-white">Login</a>
+              <a href="#" class="rounded-lg bg-gradient-to-r from-[#14B8A6] to-[#0ea593] px-5 py-2.5 text-sm font-semibold text-white transition hover:shadow-lg hover:shadow-[#14B8A6]/25 hover:-translate-y-0.5">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- Redesign Option D: Minimal & Modern -->
+    <div class="mb-16">
+      <span class="section-label">Option D: Minimal & Modern</span>
+      <header class="bg-[#0a0a0c]">
+        <div class="mx-auto max-w-7xl px-6">
+          <div class="flex items-center justify-between py-5 border-b border-slate-800/30">
+            <!-- Logo minimal -->
+            <a href="#" class="group flex items-center gap-4">
+              <div class="relative h-9 w-9 overflow-hidden rounded-lg bg-[#14B8A6] flex items-center justify-center">
+                <span class="text-sm font-bold text-slate-900">IO</span>
+              </div>
+              <span class="text-sm font-semibold text-white tracking-wide">IOPPS</span>
+            </a>
+
+            <!-- Nav minimal -->
+            <nav class="flex items-center gap-8">
+              <a href="#" class="text-sm font-medium text-white transition-all">Jobs</a>
+              <a href="#" class="text-sm font-medium text-slate-500 transition-all hover:text-slate-300">Events</a>
+              <a href="#" class="text-sm font-medium text-slate-500 transition-all hover:text-slate-300">Marketplace</a>
+              <a href="#" class="text-sm font-medium text-slate-500 transition-all hover:text-slate-300">Scholarships</a>
+              <a href="#" class="text-sm font-medium text-slate-500 transition-all hover:text-slate-300">Live</a>
+              <a href="#" class="text-sm font-medium text-slate-500 transition-all hover:text-slate-300">Pricing</a>
+            </nav>
+
+            <!-- Auth buttons minimal -->
+            <div class="flex items-center gap-4">
+              <a href="#" class="text-sm font-medium text-slate-400 transition hover:text-white">Sign in</a>
+              <a href="#" class="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <!-- Summary -->
+    <div class="mt-12 p-6 rounded-xl bg-slate-900/50 border border-slate-800">
+      <h2 class="text-lg font-semibold text-white mb-4">Summary of Changes</h2>
+      <div class="grid grid-cols-2 gap-6 text-sm">
+        <div>
+          <h3 class="font-medium text-[#14B8A6] mb-2">Option A: Clean & Spacious</h3>
+          <ul class="text-slate-400 space-y-1">
+            <li>- Shorter nav labels (less cramped)</li>
+            <li>- Plain text Login button (visible)</li>
+            <li>- More padding overall</li>
+            <li>- Subtle hover states</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-medium text-[#14B8A6] mb-2">Option B: Active States</h3>
+          <ul class="text-slate-400 space-y-1">
+            <li>- Teal accent line at bottom</li>
+            <li>- Dot indicator for active page</li>
+            <li>- Bordered Login button</li>
+            <li>- Gradient logo background</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-medium text-[#14B8A6] mb-2">Option C: Grouped</h3>
+          <ul class="text-slate-400 space-y-1">
+            <li>- Primary/secondary nav grouping</li>
+            <li>- Visual divider between groups</li>
+            <li>- "Get Started" CTA button</li>
+            <li>- Subtle logo glow effect</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-medium text-[#14B8A6] mb-2">Option D: Minimal</h3>
+          <ul class="text-slate-400 space-y-1">
+            <li>- Ultra-clean aesthetic</li>
+            <li>- Simplified logo</li>
+            <li>- Wide spacing between nav items</li>
+            <li>- White "Get Started" button (high contrast)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

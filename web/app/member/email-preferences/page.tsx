@@ -12,6 +12,7 @@ import {
   BuildingOfficeIcon,
   SparklesIcon,
   BuildingStorefrontIcon,
+  AcademicCapIcon,
   NewspaperIcon,
   EnvelopeIcon,
   ChatBubbleLeftIcon,
@@ -318,6 +319,24 @@ export default function EmailPreferencesPage() {
               <FrequencySelect
                 value={preferences.shopFrequency}
                 onChange={(val) => handleFrequencyChange("shopFrequency", val)}
+                disabled={saving}
+              />
+            )}
+          </PreferenceSection>
+
+          {/* Training Programs */}
+          <PreferenceSection
+            icon={<AcademicCapIcon className="h-6 w-6" />}
+            title="Training Programs"
+            description="New training opportunities, certifications, and skills development"
+            enabled={preferences.trainingUpdates}
+            onToggle={() => handleToggle("trainingUpdates")}
+            saving={saving}
+          >
+            {preferences.trainingUpdates && (
+              <FrequencySelect
+                value={preferences.trainingFrequency}
+                onChange={(val) => handleFrequencyChange("trainingFrequency", val)}
                 disabled={saving}
               />
             )}

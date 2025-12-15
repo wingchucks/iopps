@@ -8,7 +8,7 @@ export interface ShareItem {
   description?: string;
   url?: string;
   image?: string;
-  type?: 'job' | 'scholarship' | 'conference';
+  type?: 'job' | 'scholarship' | 'conference' | 'training';
 }
 
 export interface ShareButtonsProps {

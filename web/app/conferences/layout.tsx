@@ -1,43 +1,29 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Indigenous Conferences & Summits",
-  description:
-    "Discover Indigenous conferences, summits, and professional events across Canada. Network, learn, and connect with Indigenous leaders, professionals, and organizations. Find upcoming events in business, education, health, and culture.",
-  keywords: [
-    "Indigenous conferences",
-    "Indigenous summits",
-    "Indigenous events Canada",
-    "First Nations conferences",
-    "Indigenous business events",
-    "Indigenous professional development",
-    "Indigenous networking",
-    "Indigenous education conferences",
-    "Indigenous health summits",
-    "reconciliation events",
-  ],
+  title: {
+    template: '%s | IOPPS Conferences',
+    default: 'Indigenous Conferences & Events | IOPPS.ca',
+  },
+  description: 'Discover Indigenous conferences, summits, and professional networking events across Canada. Connect with leaders, learn from experts, and grow your network.',
   openGraph: {
-    title: "Indigenous Conferences & Summits | IOPPS.ca",
-    description:
-      "Discover Indigenous conferences, summits, and professional events across Canada. Network and connect with Indigenous leaders and organizations.",
-    url: "/conferences",
+    title: 'Indigenous Conferences & Events | IOPPS.ca',
+    description: 'Discover Indigenous conferences, summits, and professional networking events across Canada.',
+    type: 'website',
     images: [
       {
-        url: "/og-conferences.png",
+        url: '/api/og?title=Indigenous%20Conferences&type=conference&subtitle=Professional%20Events%20%26%20Networking',
         width: 1200,
         height: 630,
-        alt: "IOPPS Indigenous Conferences & Events",
+        alt: 'IOPPS Indigenous Conferences',
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Indigenous Conferences & Summits | IOPPS.ca",
-    description:
-      "Discover Indigenous conferences, summits, and professional events across Canada.",
-  },
-  alternates: {
-    canonical: "/conferences",
+    card: 'summary_large_image',
+    title: 'Indigenous Conferences & Events | IOPPS.ca',
+    description: 'Discover Indigenous conferences and professional events across Canada.',
+    images: ['/api/og?title=Indigenous%20Conferences&type=conference&subtitle=Professional%20Events%20%26%20Networking'],
   },
 };
 
@@ -46,5 +32,5 @@ export default function ConferencesLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return children;
 }

@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
-import { SectionHeader } from "@/components/SectionHeader";
 import { useAuth } from "@/components/AuthProvider";
+import OceanWaveHero from "@/components/OceanWaveHero";
 import {
   JOB_POSTING_PRODUCTS,
   SUBSCRIPTION_PRODUCTS,
@@ -143,6 +143,9 @@ export default function PricingPage() {
   // Hide "Create employer account" for employers, admins, and moderators
   const shouldHideEmployerButton = user && role && role !== "community";
 
+  // Check if user is a community member (not allowed to post)
+  const isCommunityMember = role === "community";
+
   const handleSubscriptionCheckout = async (tier: "TIER1" | "TIER2") => {
     if (!user) {
       router.push("/register?redirect=/pricing&role=employer");
@@ -185,12 +188,31 @@ export default function PricingPage() {
   };
 
   return (
-    <PageShell>
-      <SectionHeader
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
         eyebrow="Pricing & Plans"
-        title="Partner with IOPPS to hire, promote, and grow"
+        title="Partner with IOPPS"
         subtitle="Choose flexible options for single job posts, annual hiring plans, conferences, and Shop Indigenous vendors across Turtle Island."
-      />
+        size="sm"
+      >
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link
+            href="/contact"
+            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            Talk to IOPPS
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+          >
+            Create Account
+          </Link>
+        </div>
+      </OceanWaveHero>
+
+      <PageShell>
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
@@ -245,8 +267,10 @@ export default function PricingPage() {
               "Standard placement on the IOPPS job board",
               "Basic employer profile",
             ]}
-            buttonText="Post a Job"
-            buttonHref="/organization/jobs/new"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Job"}
+            buttonHref={isCommunityMember ? undefined : "/organization/jobs/new"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
           />
           <PricingCard
             title="Featured Job Ad"
@@ -258,8 +282,10 @@ export default function PricingPage() {
               "Employer logo + branding on listing",
               "Analytics (views & clicks)",
             ]}
-            buttonText="Post a Featured Job"
-            buttonHref="/organization/jobs/new?featured=true"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Job"}
+            buttonHref={isCommunityMember ? undefined : "/organization/jobs/new?featured=true"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
           />
         </div>
       </section>
@@ -341,8 +367,10 @@ export default function PricingPage() {
               "Includes banner image, description, registration link",
               "Social promo formatting",
             ]}
-            buttonText="Post an Event"
-            buttonHref="/organization/conferences/new"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post an Event"}
+            buttonHref={isCommunityMember ? undefined : "/organization/conferences/new"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
           />
           <PricingCard
             title={CONFERENCE_PRODUCTS.FEATURED.name}
@@ -355,8 +383,10 @@ export default function PricingPage() {
               `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
               "Priority visibility on homepage",
             ]}
-            buttonText="Post a Featured Event"
-            buttonHref="/organization/conferences/new?featured=true"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Event"}
+            buttonHref={isCommunityMember ? undefined : "/organization/conferences/new?featured=true"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
           />
         </div>
       </section>
@@ -376,8 +406,10 @@ export default function PricingPage() {
             period="/ month"
             badge="First month FREE"
             features={VENDOR_PRODUCTS.MONTHLY.features}
-            buttonText="List Your Business"
-            buttonHref="/organization/shop/setup"
+            buttonText={isCommunityMember ? "Employer Account Required" : "List Your Business"}
+            buttonHref={isCommunityMember ? undefined : "/organization/shop/setup"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to list your business." : undefined}
           />
           <PricingCard
             title={VENDOR_PRODUCTS.ANNUAL.name}
@@ -385,8 +417,10 @@ export default function PricingPage() {
             period="/ year"
             badge="Save $200"
             features={VENDOR_PRODUCTS.ANNUAL.features}
-            buttonText="Get Annual Plan"
-            buttonHref="/organization/shop/setup?plan=annual"
+            buttonText={isCommunityMember ? "Employer Account Required" : "Get Annual Plan"}
+            buttonHref={isCommunityMember ? undefined : "/organization/shop/setup?plan=annual"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to list your business." : undefined}
           />
         </div>
       </section>
@@ -537,29 +571,39 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* CTA Section - Bottom */}
-      <section className="mt-12 rounded-2xl border border-slate-800/80 bg-[#08090C] p-8 text-center shadow-lg shadow-black/30">
-        <h2 className="text-2xl font-bold text-slate-50">Ready to get started?</h2>
-        <p className="mt-3 text-sm text-slate-400">
-          Join employers, Nations, and partners building Indigenous workforce connections across Canada.
-        </p>
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href="/contact"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#14B8A6] px-8 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
-          >
-            Talk to IOPPS about pricing
-          </Link>
-          {!shouldHideEmployerButton && (
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-8 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
-            >
-              Create organization account
-            </Link>
-          )}
+      </PageShell>
+
+      {/* CTA Section - Ocean Wave Style */}
+      <section className="relative overflow-hidden">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent">
+            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                Ready to get started?
+              </h2>
+              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                Join employers, Nations, and partners building Indigenous workforce connections across Canada.
+              </p>
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  Talk to IOPPS about pricing
+                </Link>
+                {!shouldHideEmployerButton && (
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                  >
+                    Create organization account
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-    </PageShell>
+    </div>
   );
 }

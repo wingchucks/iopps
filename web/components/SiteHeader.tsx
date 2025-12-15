@@ -9,12 +9,12 @@ import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
-  { href: "/jobs", label: "Jobs & Training" },
+  { href: "/jobs-training", label: "Jobs & Training" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/scholarships", label: "Scholarships & Grants" },
-  { href: "/marketplace", label: "Indigenous Marketplace" },
-  { href: "/powwows", label: "Pow Wows & Events" },
-  { href: "/live", label: "Live Streams" },
+  { href: "/scholarships", label: "Scholarships" },
+  { href: "/marketplace", label: "Marketplace" },
+  { href: "/powwows", label: "Events" },
+  { href: "/live", label: "Live" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -33,9 +33,10 @@ export default function SiteHeader() {
       if (!user || !role) return;
 
       try {
-        // Only fetch for community (member) or employer roles
-        if (role === "community" || role === "employer") {
-          const userType = role === "community" ? "member" : "employer";
+        // Fetch for community members (any role that's not employer/admin/moderator) or employer roles
+        const isCommunityMember = role !== "employer" && role !== "admin" && role !== "moderator";
+        if (isCommunityMember || role === "employer") {
+          const userType = isCommunityMember ? "member" : "employer";
           const count = await getUnreadMessageCount(user.uid, userType);
           setUnreadMessageCount(count);
         }
@@ -66,279 +67,288 @@ export default function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/50 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 shadow-lg shadow-black/20 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4">
-        {/* Single row with logo, navigation, and account */}
-        <div className="flex items-center justify-between py-3">
-          {/* Branding */}
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-lg shadow-accent/20">
-              <Image
-                src="/logo.png"
-                alt="IOPPS Logo"
-                width={40}
-                height={40}
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div className="hidden sm:flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-accent">
-                IOPPS
-              </span>
-              <span className="text-[0.65rem] text-slate-400">
-                Empowering Indigenous Success
-              </span>
-            </div>
-          </Link>
-
-          {/* Navigation bar */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-slate-800/60 hover:text-accent"
-              >
-                {link.label}
+    <header className="sticky top-0 z-50">
+      {/* Ocean Wave gradient background */}
+      <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+        {/* Subtle white overlay */}
+        <div className="bg-gradient-to-b from-white/5 to-transparent">
+          <div className="mx-auto w-full px-4 lg:px-6">
+            {/* Single row with logo, navigation, and account */}
+            <div className="flex items-center justify-between gap-4 py-3">
+              {/* Branding */}
+              <Link href="/" className="group flex shrink-0 items-center gap-2">
+                <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-white/30 bg-white/20 shadow-lg backdrop-blur">
+                  <Image
+                    src="/logo.png"
+                    alt="IOPPS Logo"
+                    width={44}
+                    height={44}
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                <span className="text-xl font-black tracking-tight text-white drop-shadow-lg">
+                  IOPPS
+                </span>
               </Link>
-            ))}
-          </nav>
 
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="lg:hidden rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-accent/50 hover:text-accent"
-            aria-label="Toggle menu"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {mobileNavOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+              {/* Navigation bar - Pill container */}
+              <nav className="hidden lg:flex flex-1 items-center justify-center">
+                <div className="flex items-center rounded-full border border-white/20 bg-white/10 px-1.5 py-1 backdrop-blur">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                        pathname === link.href
+                          ? "bg-white/20 font-semibold text-white"
+                          : "text-white/80 hover:text-white"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </nav>
 
-          {/* Account section */}
-          <div className="hidden lg:flex items-center gap-3">
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 animate-pulse rounded-full bg-slate-700" />
-                <div className="hidden sm:block h-4 w-20 animate-pulse rounded bg-slate-700" />
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                className="lg:hidden rounded-full border border-white/30 bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20"
+                aria-label="Toggle menu"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {mobileNavOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+
+              {/* Account section */}
+              <div className="hidden lg:flex shrink-0 items-center gap-2">
+                {loading ? (
+                  <div className="text-xs text-white/60">Loading...</div>
+                ) : user ? (
+                  <>
+                    <NotificationBell />
+                    <div className="relative" ref={menuRef}>
+                      <button
+                        className="flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/20"
+                        onClick={() => setMenuOpen((prev) => !prev)}
+                      >
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[0.65rem] font-bold text-blue-900">
+                          {user.displayName?.charAt(0)?.toUpperCase() ??
+                            user.email?.charAt(0)?.toUpperCase() ??
+                            "U"}
+                        </span>
+                        <span className="hidden sm:inline">{user.displayName ?? user.email ?? "Account"}</span>
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {menuOpen && (
+                        <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-slate-700/50 bg-slate-900/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                          <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                            Account
+                          </p>
+                          <p className="mt-1 truncate text-sm font-semibold text-slate-100">
+                            {user.displayName ?? user.email}
+                          </p>
+                          <p className="text-xs text-slate-400 capitalize">{role ?? "User"}</p>
+
+                          <div className="my-3 border-t border-slate-700/50" />
+
+                          <div className="space-y-1.5">
+                            {role !== "employer" && role !== "admin" && role !== "moderator" && (
+                              <Link
+                                href="/member/dashboard"
+                                className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-[#14B8A6]/20 hover:text-[#14B8A6]"
+                                onClick={closeMenu}
+                              >
+                                <span className="font-semibold">My Dashboard</span>
+                              </Link>
+                            )}
+                            {role === "employer" && (
+                              <Link
+                                href="/organization/dashboard"
+                                className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-[#14B8A6]/20 hover:text-[#14B8A6]"
+                                onClick={closeMenu}
+                              >
+                                <span className="font-semibold">Organization Dashboard</span>
+                              </Link>
+                            )}
+                            {(role === "admin" || role === "moderator") && (
+                              <Link
+                                href="/admin"
+                                className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-[#14B8A6]/20 hover:text-[#14B8A6]"
+                                onClick={closeMenu}
+                              >
+                                <span className="font-semibold">Admin Dashboard</span>
+                              </Link>
+                            )}
+                          </div>
+
+                          <div className="mt-3 border-t border-slate-700/50 pt-3">
+                            <button
+                              onClick={() => {
+                                closeMenu();
+                                void logout();
+                              }}
+                              className="w-full rounded-lg bg-gradient-to-r from-[#14B8A6] to-cyan-600 px-3 py-2 text-xs font-semibold text-white transition hover:from-[#16cdb8] hover:to-cyan-500"
+                            >
+                              Sign out
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/login"
+                      className="text-sm font-medium text-white/80 transition hover:text-white"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                    >
+                      Get Started
+                    </Link>
+                  </div>
+                )}
               </div>
-            ) : user ? (
-              <>
-                <NotificationBell />
-                <div className="relative" ref={menuRef}>
-                  <button
-                    className="flex items-center gap-2 rounded-full border border-slate-700/50 bg-slate-800/40 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-accent/50 hover:bg-slate-800/60"
-                    onClick={() => setMenuOpen((prev) => !prev)}
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-soft text-[0.65rem] font-bold text-slate-900">
-                      {user.displayName?.charAt(0)?.toUpperCase() ??
-                        user.email?.charAt(0)?.toUpperCase() ??
-                        "U"}
-                    </span>
-                    <span className="hidden sm:inline">{user.displayName ?? user.email ?? "Account"}</span>
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {menuOpen && (
-                    <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-slate-800/80 bg-card p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
-                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
-                        Account
-                      </p>
-                      <p className="mt-1 truncate text-sm font-semibold text-slate-100">
-                        {user.displayName ?? user.email}
-                      </p>
-                      <p className="text-xs text-slate-400 capitalize">{role ?? "User"}</p>
+            </div>
 
-                      <div className="my-3 border-t border-slate-800/50" />
-
-                      <div className="space-y-1.5">
-                        {role === "community" && (
-                          <>
-                            <Link
-                              href="/member/dashboard"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-accent"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">My Dashboard</span>
-                            </Link>
-                          </>
-                        )}
-                        {role === "employer" && (
-                          <>
-                            <Link
-                              href="/organization/dashboard"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-accent"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">Organization Dashboard</span>
-                            </Link>
-                          </>
-                        )}
-                        {(role === "admin" || role === "moderator") && (
-                          <>
-                            <Link
-                              href="/admin"
-                              className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-slate-800/50 hover:text-accent"
-                              onClick={closeMenu}
-                            >
-                              <span className="font-semibold">Admin Dashboard</span>
-                            </Link>
-                          </>
-                        )}
+            {/* Mobile Navigation Menu */}
+            {mobileNavOpen && (
+              <div className="lg:hidden border-t border-white/20 py-4">
+                <nav className="flex flex-col gap-2">
+                  {/* Authenticated User Links */}
+                  {user && (
+                    <div className="mb-2 flex flex-col gap-2 border-b border-white/20 pb-3">
+                      <div className="px-4 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-white/60">
+                          Account
+                        </p>
+                        <p className="truncate text-sm font-medium text-white">
+                          {user.displayName ?? user.email}
+                        </p>
                       </div>
 
-                      <div className="mt-3 border-t border-slate-800/50 pt-3">
-                        <button
-                          onClick={() => {
-                            closeMenu();
-                            void logout();
-                          }}
-                          className="w-full rounded-lg bg-gradient-to-r from-accent to-accent-soft px-3 py-2 text-xs font-semibold text-slate-900 transition hover:from-accent-hover hover:to-accent"
+                      {role !== "employer" && role !== "admin" && role !== "moderator" && (
+                        <Link
+                          href="/member/dashboard"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                            pathname === "/member/dashboard"
+                              ? "bg-white/20 text-white"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                          }`}
                         >
-                          Sign out
-                        </button>
-                      </div>
+                          Dashboard
+                        </Link>
+                      )}
+
+                      {role === "employer" && (
+                        <>
+                          <Link
+                            href="/organization/dashboard"
+                            onClick={() => setMobileNavOpen(false)}
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                              pathname === "/organization/dashboard"
+                                ? "bg-white/20 text-white"
+                                : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }`}
+                          >
+                            Dashboard
+                          </Link>
+                          <Link
+                            href="/organization/profile"
+                            onClick={() => setMobileNavOpen(false)}
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                              pathname === "/organization/profile"
+                                ? "bg-white/20 text-white"
+                                : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }`}
+                          >
+                            Manage Organization
+                          </Link>
+                        </>
+                      )}
+
+                      {(role === "admin" || role === "moderator") && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setMobileNavOpen(false)}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                            pathname === "/admin"
+                              ? "bg-white/20 text-white"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                          }`}
+                        >
+                          Admin Dashboard
+                        </Link>
+                      )}
                     </div>
                   )}
-                </div>
-              </>
-            ) : (
-              <div className="flex gap-2">
-                <Link
-                  href="/login"
-                  className="rounded-full border border-slate-700/50 bg-slate-800/40 px-4 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-accent/50 hover:text-accent"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-full bg-gradient-to-r from-accent to-accent-soft px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:from-accent-hover hover:to-accent"
-                >
-                  Sign Up
-                </Link>
+
+                  {/* Main Navigation Links */}
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileNavOpen(false)}
+                      className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                        pathname === link.href
+                          ? "bg-white/20 text-white"
+                          : "text-white/80 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+
+                  {/* Auth Buttons */}
+                  {!user ? (
+                    <div className="mt-3 flex flex-col gap-2 border-t border-white/20 pt-4">
+                      <Link
+                        href="/login"
+                        onClick={() => setMobileNavOpen(false)}
+                        className="rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-white/20"
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/register"
+                        onClick={() => setMobileNavOpen(false)}
+                        className="rounded-full bg-white px-4 py-2.5 text-center text-sm font-bold text-blue-900 shadow-lg transition hover:shadow-xl"
+                      >
+                        Get Started
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="mt-3 border-t border-white/20 pt-4 px-4">
+                      <button
+                        onClick={() => {
+                          setMobileNavOpen(false);
+                          void logout();
+                        }}
+                        className="w-full rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-500/20 hover:border-red-400/50"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </nav>
               </div>
             )}
           </div>
         </div>
-
-        {/* Mobile Navigation Menu */}
-        {mobileNavOpen && (
-          <div className="lg:hidden border-t border-slate-800/50 py-4">
-            <nav className="flex flex-col gap-2">
-              {/* Authenticated User Links */}
-              {user && (
-                <>
-                  <div className="mb-2 flex flex-col gap-2 border-b border-slate-800/50 pb-2">
-                    <div className="px-4 py-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Account
-                      </p>
-                      <p className="truncate text-sm font-medium text-slate-200">
-                        {user.displayName ?? user.email}
-                      </p>
-                    </div>
-
-                    {role === "community" && (
-                      <>
-                        <Link
-                          href="/member/dashboard"
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/member/dashboard" ? "bg-slate-800/60 text-accent" : "text-slate-300"
-                            }`}
-                        >
-                          Dashboard
-                        </Link>
-                      </>
-                    )}
-
-                    {role === "employer" && (
-                      <>
-                        <Link
-                          href="/organization/dashboard"
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/organization/dashboard" ? "bg-slate-800/60 text-accent" : "text-slate-300"
-                            }`}
-                        >
-                          Dashboard
-                        </Link>
-                        <Link
-                          href="/organization/profile"
-                          onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/organization/profile" ? "bg-slate-800/60 text-accent" : "text-slate-300"
-                            }`}
-                        >
-                          Manage Organization
-                        </Link>
-                      </>
-                    )}
-
-                    {(role === "admin" || role === "moderator") && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setMobileNavOpen(false)}
-                        className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === "/admin" ? "bg-slate-800/60 text-accent" : "text-slate-300"
-                          }`}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* Main Navigation Links */}
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileNavOpen(false)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-medium transition-all hover:bg-slate-800/60 hover:text-accent ${pathname === link.href ? "bg-slate-800/60 text-accent" : "text-slate-300"
-                    }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-
-              {/* Auth Buttons */}
-              {!user ? (
-                <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/50 pt-4">
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="rounded-lg border border-slate-700/50 bg-slate-800/40 px-4 py-2.5 text-center text-sm font-semibold text-slate-200 transition hover:border-accent/50 hover:text-accent"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    onClick={() => setMobileNavOpen(false)}
-                    className="rounded-lg bg-gradient-to-r from-accent to-accent-soft px-4 py-2.5 text-center text-sm font-semibold text-slate-900 transition hover:from-accent-hover hover:to-accent"
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-              ) : (
-                <div className="mt-2 border-t border-slate-800/50 pt-4 px-4">
-                  <button
-                    onClick={() => {
-                      setMobileNavOpen(false);
-                      void logout();
-                    }}
-                    className="w-full rounded-lg bg-slate-800/40 border border-slate-700/50 px-4 py-2.5 text-center text-sm font-semibold text-slate-300 transition hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/50"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </nav>
-          </div>
-        )}
       </div>
     </header>
   );

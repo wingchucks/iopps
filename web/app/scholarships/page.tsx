@@ -6,6 +6,7 @@ import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, AcademicCapIcon, CurrencyDo
 import { listScholarships } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
 
 const AWARD_TYPES = ["All", "Scholarship", "Grant", "Bursary"] as const;
 const EDUCATION_LEVELS = ["All", "High School", "Post-secondary", "Graduate", "Community"] as const;
@@ -187,61 +188,42 @@ function ScholarshipsContent() {
   };
 
   return (
-    <PageShell>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="scholarship-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="5" cy="5" r="1" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#scholarship-grid)" />
-          </svg>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Scholarships & Grants
-          </h1>
-          <p className="mt-4 text-lg text-emerald-100 sm:text-xl">
-            Funding Indigenous learners and community leaders. Browse scholarships, bursaries,
-            and grants from organizations across Turtle Island.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search scholarships..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-            >
-              <FunnelIcon className="h-5 w-5" />
-              Filters
-              {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-emerald-600">
-                  !
-                </span>
-              )}
-            </button>
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Scholarships & Grants"
+        title="Fund Your Future"
+        subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants from organizations across Turtle Island."
+        size="md"
+      >
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+            <input
+              type="text"
+              placeholder="Search scholarships..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+            />
           </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+          >
+            <FunnelIcon className="h-5 w-5" />
+            Filters
+            {hasFilters && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
+                !
+              </span>
+            )}
+          </button>
         </div>
-      </div>
+      </OceanWaveHero>
+
+      <PageShell>
 
       {/* Filters Panel */}
       {showFilters && (
@@ -270,7 +252,7 @@ function ScholarshipsContent() {
                     onClick={() => setAwardType(type)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       awardType === type
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -290,7 +272,7 @@ function ScholarshipsContent() {
                     onClick={() => setLevel(lvl)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       level === lvl
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -310,7 +292,7 @@ function ScholarshipsContent() {
                     onClick={() => setDeadlineRange(range.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       deadlineRange === range.value
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-[#14B8A6] text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -386,7 +368,7 @@ function ScholarshipsContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d9488] transition-colors"
             >
               Clear filters
             </button>
@@ -402,7 +384,7 @@ function ScholarshipsContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-emerald-500 hover:text-emerald-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                 >
                   Load more scholarships
                   <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -415,25 +397,33 @@ function ScholarshipsContent() {
         )}
       </section>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Offering a Scholarship or Grant?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          List your scholarship, bursary, or community grant on IOPPS. Help fund the next generation of Indigenous leaders.
-        </p>
-        <a
-          href="/organization/scholarships/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105"
-        >
-          Post a Scholarship
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </a>
+      </PageShell>
+
+      {/* CTA Section - Ocean Wave Style */}
+      <section className="relative overflow-hidden">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent">
+            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                Offering a Scholarship or Grant?
+              </h2>
+              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                List your scholarship, bursary, or community grant on IOPPS. Help fund the next generation of Indigenous leaders.
+              </p>
+              <Link
+                href="/organization/scholarships/new"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-lg font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Post a Scholarship
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
-    </PageShell>
+    </div>
   );
 }
 
@@ -495,11 +485,11 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-emerald-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
       }`}
     >
       {/* Header with Amount */}
-      <div className="relative bg-gradient-to-br from-emerald-600/20 to-teal-600/10 px-5 py-6">
+      <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-6">
         {/* Featured Badge */}
         {featured && (
           <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
@@ -510,7 +500,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
         {/* Amount */}
         {scholarship.amount && (
-          <div className="text-3xl font-bold text-emerald-400">
+          <div className="text-3xl font-bold text-[#14B8A6]">
             {scholarship.amount}
           </div>
         )}
@@ -525,7 +515,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-emerald-300 transition-colors">
+        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
           {scholarship.title}
         </h3>
 
@@ -582,9 +572,14 @@ export default function ScholarshipsPage() {
   return (
     <Suspense
       fallback={
-        <PageShell>
-          <div className="mx-auto max-w-7xl">
-            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
+        <div className="min-h-screen text-slate-100">
+          <OceanWaveHero
+            eyebrow="Scholarships & Grants"
+            title="Fund Your Future"
+            subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants from organizations across Turtle Island."
+            size="md"
+          />
+          <PageShell>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
                 <div
@@ -593,8 +588,8 @@ export default function ScholarshipsPage() {
                 />
               ))}
             </div>
-          </div>
-        </PageShell>
+          </PageShell>
+        </div>
       }
     >
       <ScholarshipsContent />
