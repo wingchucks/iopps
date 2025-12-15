@@ -188,8 +188,17 @@ export async function updateJobPosting(
   data: Partial<Omit<JobPosting, "id" | "createdAt" | "employerId">>
 ) {
   const ref = doc(db!, jobsCollection, jobId);
+
+  // Filter out undefined values - Firestore doesn't accept undefined
+  const cleanData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleanData[key] = value;
+    }
+  }
+
   await updateDoc(ref, {
-    ...data,
+    ...cleanData,
     updatedAt: serverTimestamp(),
   });
 }
