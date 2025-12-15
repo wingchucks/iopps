@@ -49,6 +49,7 @@ export const SUBSCRIPTION_PRODUCTS = {
             "Basic organization profile page",
             "Access to posting analytics",
             "15 Featured Job Listings included",
+            "Logo on homepage Partner Carousel",
         ],
     },
     TIER2: {
@@ -64,6 +65,7 @@ export const SUBSCRIPTION_PRODUCTS = {
         features: [
             "Unlimited job postings for 12 months",
             "Organization branding on postings",
+            "Logo on homepage Partner Carousel",
             "Rotating featured listings on homepage & job board",
             "Candidate engagement analytics",
             "Standard customer support",
