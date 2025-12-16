@@ -302,6 +302,20 @@ export default function ProfileTab() {
                   <p className="text-sm text-slate-300">
                     Your profile is being reviewed by our team. This typically takes 1-2 business days.
                   </p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <a
+                      href={`/employers/${user?.uid}?preview=true`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 hover:bg-amber-500/30 transition-colors"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Preview Public Profile
+                    </a>
+                  </div>
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
                     <p className="text-sm font-medium text-amber-200">What happens next?</p>
                     <ul className="mt-2 space-y-1 text-sm text-slate-300">
