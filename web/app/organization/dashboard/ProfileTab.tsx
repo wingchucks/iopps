@@ -13,6 +13,7 @@ import {
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import type { EmployerProfile, Interview } from "@/lib/types";
+import ProfileCompletenessScore from "@/components/ProfileCompletenessScore";
 
 export default function ProfileTab() {
   const { user } = useAuth();
@@ -242,6 +243,16 @@ export default function ProfileTab() {
         </p>
       </div>
 
+      {/* Profile Completeness Score */}
+      <ProfileCompletenessScore
+        profile={profile}
+        emailVerified={user?.emailVerified ?? false}
+        onTabChange={() => {
+          // Already on profile tab, just scroll to form
+          document.getElementById("profile-form")?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
+
       {/* Profile Approval Status */}
       {profile?.status && (
         <div className={`rounded-3xl border p-8 shadow-xl ${profile.status === "approved"
@@ -362,7 +373,7 @@ export default function ProfileTab() {
       )}
 
       {/* Organization Profile */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
+      <div id="profile-form" className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <h3 className="mb-6 text-xl font-semibold text-white">Organization Profile</h3>
 
         <div className="space-y-6">
