@@ -19,6 +19,7 @@ export {
   trackInterviewView,
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
+  updateEmployerCarouselFeature,
 } from "./employers";
 export type { GrantFreePostingParams } from "./employers";
 
