@@ -421,3 +421,14 @@ export async function removeEmployerCompanyIntro(employerId: string) {
     updatedAt: serverTimestamp(),
   });
 }
+
+export async function updateEmployerCarouselFeature(
+  employerId: string,
+  featured: boolean
+) {
+  const ref = doc(db!, employerCollection, employerId);
+  await updateDoc(ref, {
+    featuredOnCarousel: featured,
+    updatedAt: serverTimestamp(),
+  });
+}
