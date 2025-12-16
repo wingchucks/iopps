@@ -9,10 +9,44 @@ import {
   extractLocationFromDescription,
   cleanText,
 } from "@/lib/job-description-parser";
+import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+// Log cron execution to Firestore for monitoring
+async function logCronExecution(
+  cronType: string,
+  frequency: string | null,
+  status: "started" | "success" | "error",
+  details: {
+    feedsSynced?: number;
+    feedsFailed?: number;
+    totalJobsImported?: number;
+    totalJobsUpdated?: number;
+    totalJobsExpired?: number;
+    errors?: string[];
+    durationMs?: number;
+    errorMessage?: string;
+  } = {}
+) {
+  if (!db) return;
+
+  try {
+    await db.collection("cronLogs").add({
+      cronType,
+      frequency,
+      status,
+      ...details,
+      timestamp: FieldValue.serverTimestamp(),
+      createdAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    // Don't let logging failures break the cron
+    console.error("Failed to log cron execution:", err);
+  }
+}
 
 interface FieldMappings {
   jobIdOrUrl?: string;
@@ -110,9 +144,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  const startTime = Date.now();
+  const { searchParams } = new URL(request.url);
+  const frequency = searchParams.get("frequency") as "hourly" | "daily" | "weekly" | null;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const frequency = searchParams.get("frequency") as "hourly" | "daily" | "weekly" | null;
+    // Log cron start
+    await logCronExecution("sync-feeds", frequency, "started");
 
     let query = db.collection("rssFeeds").where("active", "==", true);
 
@@ -123,6 +161,10 @@ export async function GET(request: NextRequest) {
     const feedsSnapshot = await query.get();
 
     if (feedsSnapshot.empty) {
+      await logCronExecution("sync-feeds", frequency, "success", {
+        feedsSynced: 0,
+        durationMs: Date.now() - startTime,
+      });
       return NextResponse.json({ success: true, feedsSynced: 0, message: "No active feeds to sync" });
     }
 
@@ -161,10 +203,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Log successful completion
+    await logCronExecution("sync-feeds", frequency, "success", {
+      ...results,
+      durationMs: Date.now() - startTime,
+    });
+
     return NextResponse.json({ success: true, ...results, timestamp: new Date().toISOString() });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Log error
+    await logCronExecution("sync-feeds", frequency, "error", {
+      errorMessage,
+      durationMs: Date.now() - startTime,
+    });
+
     return NextResponse.json(
-      { error: "Failed to process feed sync", details: error instanceof Error ? error.message : String(error) },
+      { error: "Failed to process feed sync", details: errorMessage },
       { status: 500 }
     );
   }
