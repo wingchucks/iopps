@@ -349,45 +349,46 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 3: Conference & Event Uploads */}
+      {/* Section 3: Conference Uploads */}
       <section className="mt-12">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-50">Conference & Event Uploads</h2>
+          <h2 className="text-2xl font-bold text-slate-50">Conference Uploads</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Promote your conferences, summits, gatherings, and training events.
+            Promote your conferences, summits, and professional gatherings. Pow wows and community events are free in the Events section.
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <PricingCard
             title={CONFERENCE_PRODUCTS.STANDARD.name}
             price={`$${CONFERENCE_PRODUCTS.STANDARD.price / 100}`}
-            period="per event"
+            period="per conference"
             features={[
-              "Upload any conference, summit, gathering, hiring event, or training",
-              'Listed under the IOPPS "Conferences & Events" pillar',
+              `Live for ${CONFERENCE_PRODUCTS.STANDARD.duration} days`,
+              "Upload any conference, summit, or professional gathering",
+              'Listed under the IOPPS "Conferences" section',
               "Includes banner image, description, registration link",
               "Social promo formatting",
             ]}
-            buttonText={isCommunityMember ? "Employer Account Required" : "Post an Event"}
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Conference"}
             buttonHref={isCommunityMember ? undefined : "/organization/conferences/new"}
             disabled={isCommunityMember}
-            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
+            helperText={isCommunityMember ? "Create an employer account to post conferences." : undefined}
           />
           <PricingCard
             title={CONFERENCE_PRODUCTS.FEATURED.name}
             price={`$${CONFERENCE_PRODUCTS.FEATURED.price / 100}`}
-            period="per event"
+            period="per conference"
             badge="Featured"
             features={[
+              `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
               "All standard features included",
               "Featured badge and top positioning",
-              `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
               "Priority visibility on homepage",
             ]}
-            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Event"}
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Conference"}
             buttonHref={isCommunityMember ? undefined : "/organization/conferences/new?featured=true"}
             disabled={isCommunityMember}
-            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
+            helperText={isCommunityMember ? "Create an employer account to post conferences." : undefined}
           />
         </div>
       </section>
