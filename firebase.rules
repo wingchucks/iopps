@@ -45,8 +45,10 @@ service cloud.firestore {
     match /users/{userId} {
       // Any signed-in user can read user profiles (for display names, etc.)
       allow read: if isSignedIn();
-      // Users can only write to their own document
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      // Users can write to their own document, admins/moderators can update any user (for role management)
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isModerator());
+      allow delete: if isSignedIn() && isAdmin();
     }
 
     match /employers/{userId} {
@@ -283,6 +285,60 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow update: if isSignedIn();
       allow delete: if isModerator();
+    }
+
+    // RSS Feeds (admin only)
+    match /rssFeeds/{feedId} {
+      allow read: if isSignedIn() && isModerator();
+      allow write: if isSignedIn() && isModerator();
+    }
+
+    // Cron Logs (admin read-only, server writes via Admin SDK)
+    match /cronLogs/{logId} {
+      allow read: if isSignedIn() && isModerator();
+      allow write: if false; // Server only via Admin SDK
+    }
+
+    // Training Programs
+    match /trainingPrograms/{programId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.organizationId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.organizationId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    // Services (marketplace)
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isApprovedEmployer() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (
+        (isEmployer() && resource.data.userId == request.auth.uid) ||
+        isModerator()
+      );
+    }
+
+    // Subscriptions
+    match /subscriptions/{subscriptionId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == subscriptionId ||
+        isModerator()
+      );
+      allow write: if false; // Server only via Admin SDK (Stripe webhooks)
+    }
+
+    // Member profiles (community members)
+    match /members/{memberId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == memberId ||
+        isModerator()
+      );
+      allow create: if isSignedIn() && request.auth.uid == memberId;
+      allow update: if isSignedIn() && request.auth.uid == memberId;
+      allow delete: if isSignedIn() && isAdmin();
     }
   }
 }
