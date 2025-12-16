@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
+import WelcomeWizard from "@/components/WelcomeWizard";
 import {
   getEmployerProfile,
   listEmployerJobs,
@@ -30,6 +31,7 @@ export default function OverviewTab() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [showWelcomeWizard, setShowWelcomeWizard] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -61,6 +63,16 @@ export default function OverviewTab() {
         setConferences(confsData);
         setEvents(eventsData);
         setUnreadMessages(unreadCount);
+
+        // Check if user should see the welcome wizard
+        const wizardKey = `iopps_welcome_wizard_${user.uid}`;
+        const hasSeenWizard = localStorage.getItem(wizardKey);
+
+        // Show wizard if user hasn't seen it and profile is new (pending or no description)
+        if (!hasSeenWizard && profileData &&
+            (profileData.status === "pending" || !profileData.description)) {
+          setShowWelcomeWizard(true);
+        }
       } catch (err) {
         console.error("Error loading employer data:", err);
       } finally {
@@ -68,6 +80,14 @@ export default function OverviewTab() {
       }
     })();
   }, [user]);
+
+  const handleWizardComplete = () => {
+    if (user) {
+      const wizardKey = `iopps_welcome_wizard_${user.uid}`;
+      localStorage.setItem(wizardKey, "true");
+    }
+    setShowWelcomeWizard(false);
+  };
 
   if (loading) {
     return (
@@ -87,6 +107,14 @@ export default function OverviewTab() {
 
   return (
     <div className="space-y-8">
+      {/* Welcome Wizard for new employers */}
+      {showWelcomeWizard && (
+        <WelcomeWizard
+          onComplete={handleWizardComplete}
+          organizationName={profile?.organizationName}
+        />
+      )}
+
       {/* Welcome Section */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <h2 className="text-2xl font-bold text-white">
