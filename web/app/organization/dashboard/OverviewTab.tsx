@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import WelcomeWizard from "@/components/WelcomeWizard";
+import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import {
   getEmployerProfile,
   listEmployerJobs,
@@ -124,6 +125,12 @@ export default function OverviewTab() {
           Here's an overview of your opportunities and applicants.
         </p>
       </div>
+
+      {/* Email Verification Banner */}
+      <EmailVerificationBanner
+        email={user?.email}
+        emailVerified={user?.emailVerified ?? false}
+      />
 
       {/* KPI Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
