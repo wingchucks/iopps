@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 import {
   getEmployerProfile,
   listEmployerJobs,
@@ -367,29 +368,16 @@ export default function OverviewTab() {
         )}
       </div>
 
-      {/* Profile Completion Nudge */}
-      {(!profile?.organizationName || !profile?.description || !profile?.location) && (
-        <div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-8 shadow-xl shadow-amber-900/20">
-          <div className="flex items-start gap-4">
-            <div className="text-3xl">⚠️</div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-amber-300">
-                Complete Your Profile
-              </h3>
-              <p className="mt-2 text-sm text-slate-300">
-                Your organization profile is incomplete. Add your organization details,
-                description, and location to build trust with candidates.
-              </p>
-              <Link
-                href="/organization/setup"
-                className="mt-4 inline-flex rounded-xl bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/30"
-              >
-                Complete profile →
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist
+        profile={profile}
+        emailVerified={user?.emailVerified ?? false}
+        hasJobs={jobs.length > 0}
+        onTabChange={(tab) => {
+          const event = new CustomEvent("switchTab", { detail: { tab } });
+          window.dispatchEvent(event);
+        }}
+      />
     </div>
   );
 }

@@ -30,6 +30,21 @@ function EmployerDashboardContent() {
     }
   }, [searchParams]);
 
+  // Handle tab switching from child components (e.g., OnboardingChecklist)
+  useEffect(() => {
+    const handleSwitchTab = (event: CustomEvent<{ tab: string }>) => {
+      const tab = event.detail.tab;
+      if (["overview", "opportunities", "applications", "messages", "videos", "shop", "billing", "profile"].includes(tab)) {
+        setActiveTab(tab as TabType);
+      }
+    };
+
+    window.addEventListener("switchTab", handleSwitchTab as EventListener);
+    return () => {
+      window.removeEventListener("switchTab", handleSwitchTab as EventListener);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
