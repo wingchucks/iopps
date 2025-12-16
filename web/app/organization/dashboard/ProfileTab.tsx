@@ -242,7 +242,7 @@ export default function ProfileTab() {
         </p>
       </div>
 
-      {/* TRC #92 Status */}
+      {/* Profile Approval Status */}
       {profile?.status && (
         <div className={`rounded-3xl border p-8 shadow-xl ${profile.status === "approved"
           ? "border-green-500/30 bg-green-500/10 shadow-green-900/20"
@@ -256,37 +256,92 @@ export default function ProfileTab() {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-white">
-                TRC #92 Compliance Status:{" "}
+                Profile Status:{" "}
                 <span className={`rounded-full border px-3 py-1 text-sm ${getStatusColor(profile.status)}`}>
-                  {profile.status}
+                  {profile.status === "approved" ? "Live" : profile.status === "pending" ? "Under Review" : "Rejected"}
                 </span>
               </h3>
-              <p className="mt-2 text-sm text-slate-300">
-                {profile.status === "approved" && "Your organization has been verified for TRC #92 compliance."}
-                {profile.status === "pending" && "Your application is under review. We'll notify you once approved."}
-                {profile.status === "rejected" && `Application rejected: ${profile.rejectionReason || "Please contact support for more information."}`}
-              </p>
-              {profile.approvedAt && (
-                <p className="mt-2 text-xs text-slate-400">
-                  Approved on: {new Date(profile.approvedAt.seconds * 1000).toLocaleDateString()}
-                </p>
-              )}
 
-              <div className="mt-4 border-t border-slate-700 pt-4">
-                {profile.status === "approved" && (
-                  <p className="mt-1 text-sm">
-                    <span className="font-semibold text-slate-300">Public Profile:</span>{" "}
+              {profile.status === "approved" && (
+                <div className="mt-3">
+                  <p className="text-sm text-slate-300">
+                    Your organization profile is live and visible to the public.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3">
                     <a
                       href={`/employers/${user?.uid}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#14B8A6] hover:underline"
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
                     >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
                       View Public Profile
                     </a>
+                    <a
+                      href="/organizations"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800/50 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700/50 transition-colors"
+                    >
+                      View Organization Directory
+                    </a>
+                  </div>
+                  {profile.approvedAt && (
+                    <p className="mt-3 text-xs text-slate-400">
+                      Approved on {new Date(profile.approvedAt.seconds * 1000).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {profile.status === "pending" && (
+                <div className="mt-3 space-y-3">
+                  <p className="text-sm text-slate-300">
+                    Your profile is being reviewed by our team. This typically takes 1-2 business days.
                   </p>
-                )}
-              </div>
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                    <p className="text-sm font-medium text-amber-200">What happens next?</p>
+                    <ul className="mt-2 space-y-1 text-sm text-slate-300">
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        We&apos;ll review your organization details
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        Once approved, your profile will appear in the <a href="/organizations" target="_blank" className="text-[#14B8A6] hover:underline">Organization Directory</a>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        You&apos;ll be able to post jobs and your company info will show on all listings
+                      </li>
+                    </ul>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Questions? Contact us at{" "}
+                    <a href="mailto:support@iopps.ca" className="text-[#14B8A6] hover:underline">support@iopps.ca</a>
+                  </p>
+                </div>
+              )}
+
+              {profile.status === "rejected" && (
+                <div className="mt-3 space-y-3">
+                  <p className="text-sm text-red-300">
+                    {profile.rejectionReason || "Your application was not approved. Please contact support for more information."}
+                  </p>
+                  <p className="text-sm text-slate-300">
+                    If you believe this was a mistake or have additional information to provide, please contact us.
+                  </p>
+                  <a
+                    href="mailto:support@iopps.ca"
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 hover:bg-red-500/20 transition-colors"
+                  >
+                    Contact Support
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
