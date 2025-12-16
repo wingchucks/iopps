@@ -3,6 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
+import WelcomeWizard from "@/components/WelcomeWizard";
+import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import {
   getEmployerProfile,
   listEmployerJobs,
@@ -29,6 +32,7 @@ export default function OverviewTab() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const [showWelcomeWizard, setShowWelcomeWizard] = useState(false);
   const createMenuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -60,6 +64,16 @@ export default function OverviewTab() {
         setConferences(confsData);
         setEvents(eventsData);
         setUnreadMessages(unreadCount);
+
+        // Check if user should see the welcome wizard
+        const wizardKey = `iopps_welcome_wizard_${user.uid}`;
+        const hasSeenWizard = localStorage.getItem(wizardKey);
+
+        // Show wizard if user hasn't seen it and profile is new (pending or no description)
+        if (!hasSeenWizard && profileData &&
+            (profileData.status === "pending" || !profileData.description)) {
+          setShowWelcomeWizard(true);
+        }
       } catch (err) {
         console.error("Error loading employer data:", err);
       } finally {
@@ -67,6 +81,14 @@ export default function OverviewTab() {
       }
     })();
   }, [user]);
+
+  const handleWizardComplete = () => {
+    if (user) {
+      const wizardKey = `iopps_welcome_wizard_${user.uid}`;
+      localStorage.setItem(wizardKey, "true");
+    }
+    setShowWelcomeWizard(false);
+  };
 
   if (loading) {
     return (
@@ -86,6 +108,14 @@ export default function OverviewTab() {
 
   return (
     <div className="space-y-8">
+      {/* Welcome Wizard for new employers */}
+      {showWelcomeWizard && (
+        <WelcomeWizard
+          onComplete={handleWizardComplete}
+          organizationName={profile?.organizationName}
+        />
+      )}
+
       {/* Welcome Section */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <h2 className="text-2xl font-bold text-white">
@@ -95,6 +125,12 @@ export default function OverviewTab() {
           Here's an overview of your opportunities and applicants.
         </p>
       </div>
+
+      {/* Email Verification Banner */}
+      <EmailVerificationBanner
+        email={user?.email}
+        emailVerified={user?.emailVerified ?? false}
+      />
 
       {/* KPI Cards */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -367,29 +403,16 @@ export default function OverviewTab() {
         )}
       </div>
 
-      {/* Profile Completion Nudge */}
-      {(!profile?.organizationName || !profile?.description || !profile?.location) && (
-        <div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-8 shadow-xl shadow-amber-900/20">
-          <div className="flex items-start gap-4">
-            <div className="text-3xl">⚠️</div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-amber-300">
-                Complete Your Profile
-              </h3>
-              <p className="mt-2 text-sm text-slate-300">
-                Your organization profile is incomplete. Add your organization details,
-                description, and location to build trust with candidates.
-              </p>
-              <Link
-                href="/organization/setup"
-                className="mt-4 inline-flex rounded-xl bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/30"
-              >
-                Complete profile →
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist
+        profile={profile}
+        emailVerified={user?.emailVerified ?? false}
+        hasJobs={jobs.length > 0}
+        onTabChange={(tab) => {
+          const event = new CustomEvent("switchTab", { detail: { tab } });
+          window.dispatchEvent(event);
+        }}
+      />
     </div>
   );
 }

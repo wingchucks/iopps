@@ -232,7 +232,7 @@ export default function OrganizationsPage() {
           {organizations.map((org) => (
             <Link
               key={org.id}
-              href={`/organizations/${org.id}`}
+              href={`/employers/${org.id}`}
               className="group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-500/30"
             >
               {/* Banner/Cover */}
