@@ -89,9 +89,9 @@ export const CONFERENCE_PRODUCTS = {
     FEATURED: {
         name: "Featured Conference Spotlight",
         price: 40000, // $400.00
-        duration: 120, // days
+        duration: 360, // days
         featured: true,
-        description: "Premium spotlight placement with featured badge and top positioning for 120 days",
+        description: "Premium spotlight placement with featured badge and top positioning for 360 days",
     },
 } as const;
 
