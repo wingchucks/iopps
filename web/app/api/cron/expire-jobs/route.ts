@@ -137,12 +137,49 @@ export async function GET(request: NextRequest) {
       `Vendor featured expiration completed. Total vendors unfeatured: ${vendorFeaturedRemoved}`
     );
 
+    // =========================================================================
+    // TALENT POOL ACCESS EXPIRATION
+    // Deactivate talent pool access for employers whose subscription has expired
+    // =========================================================================
+    let talentPoolAccessExpired = 0;
+
+    console.log("Querying employers with expired talent pool access...");
+    const expiredTalentPoolSnapshot = await db
+      .collection("employers")
+      .where("talentPoolAccess.active", "==", true)
+      .where("talentPoolAccess.expiresAt", "<=", now)
+      .get();
+
+    if (!expiredTalentPoolSnapshot.empty) {
+      console.log(
+        `Found ${expiredTalentPoolSnapshot.size} employers with expired talent pool access`
+      );
+
+      for (const employerDoc of expiredTalentPoolSnapshot.docs) {
+        try {
+          await db.collection("employers").doc(employerDoc.id).update({
+            "talentPoolAccess.active": false,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          talentPoolAccessExpired++;
+          console.log(`Expired talent pool access for employer: ${employerDoc.id}`);
+        } catch (error) {
+          console.error(`Error updating employer ${employerDoc.id}:`, error);
+        }
+      }
+    }
+
+    console.log(
+      `Talent pool access expiration completed. Total expired: ${talentPoolAccessExpired}`
+    );
+
     return NextResponse.json({
       success: true,
       jobsExpired: expiredCount,
       vendorFeaturedRemoved,
+      talentPoolAccessExpired,
       timestamp: now.toISOString(),
-      message: `Successfully expired ${expiredCount} job(s) and removed featured from ${vendorFeaturedRemoved} vendor(s)`,
+      message: `Successfully expired ${expiredCount} job(s), removed featured from ${vendorFeaturedRemoved} vendor(s), and expired ${talentPoolAccessExpired} talent pool access(es)`,
     });
   } catch (error) {
     console.error("Job expiration cron error:", error);

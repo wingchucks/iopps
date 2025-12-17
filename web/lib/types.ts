@@ -100,6 +100,15 @@ export interface EmployerSubscription {
   unlimitedPosts: boolean;
 }
 
+export interface TalentPoolAccess {
+  active: boolean;
+  tier: "monthly" | "annual";
+  purchasedAt?: Timestamp | Date | null;
+  expiresAt?: Timestamp | Date | null;
+  paymentId?: string;
+  amountPaid?: number;
+}
+
 // Grant types for free posting packages
 export type GrantType = "single" | "featured" | "tier1" | "tier2";
 
@@ -168,6 +177,8 @@ export interface EmployerProfile {
   approvedBy?: string;
   rejectionReason?: string;
   subscription?: EmployerSubscription;
+  // Talent Pool Access - for viewing resumes and messaging candidates
+  talentPoolAccess?: TalentPoolAccess;
   // Admin Bypass - Free posting without payment (legacy fields for backward compatibility)
   freePostingEnabled?: boolean;
   freePostingReason?: string;

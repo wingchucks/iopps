@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
                 jobId,
                 duration: product.duration.toString(),
                 featured: product.featured.toString(),
+                talentPoolAccessDays: product.talentPoolAccessDays.toString(),
             },
         });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, SUBSCRIPTION_PRODUCTS, SubscriptionProductType } from "@/lib/stripe";
+import { stripe, TALENT_POOL_PRODUCTS, TalentPoolProductType } from "@/lib/stripe";
 import { auth, db } from "@/lib/firebase-admin";
 
 export async function POST(request: NextRequest) {
@@ -35,37 +35,40 @@ export async function POST(request: NextRequest) {
         const userData = userDoc.data();
         if (userData?.role !== "employer") {
             return NextResponse.json(
-                { error: "Subscriptions are only available to employers. Please create an employer account to post jobs." },
+                { error: "Talent Pool access is only available to employer accounts." },
                 { status: 403 }
             );
         }
 
         const body = await request.json();
-        const { productType } = body as {
-            productType: SubscriptionProductType;
+        const { tier } = body as {
+            tier: TalentPoolProductType;
         };
 
-        // Validate product type
-        if (!productType || !(productType in SUBSCRIPTION_PRODUCTS)) {
+        // Validate tier
+        if (!tier || !(tier in TALENT_POOL_PRODUCTS)) {
             return NextResponse.json(
-                { error: "Invalid subscription type" },
+                { error: "Invalid subscription tier. Please select Monthly or Annual." },
                 { status: 400 }
             );
         }
 
-        // Check if user already has an active subscription
+        // Check if user already has active talent pool access
         const employerDoc = await db.collection("employers").doc(userId).get();
         if (employerDoc.exists) {
             const employerData = employerDoc.data();
-            if (employerData?.subscription?.active && employerData?.subscription?.expiresAt?.toDate() > new Date()) {
+            if (
+                employerData?.talentPoolAccess?.active &&
+                employerData?.talentPoolAccess?.expiresAt?.toDate() > new Date()
+            ) {
                 return NextResponse.json(
-                    { error: "You already have an active subscription. Manage it from your dashboard." },
+                    { error: "You already have active Talent Pool access. Check your dashboard for details." },
                     { status: 400 }
                 );
             }
         }
 
-        const product = SUBSCRIPTION_PRODUCTS[productType];
+        const product = TALENT_POOL_PRODUCTS[tier];
 
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -84,24 +87,20 @@ export async function POST(request: NextRequest) {
                 },
             ],
             mode: "payment",
-            success_url: `${request.nextUrl.origin}/organization/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${request.nextUrl.origin}/pricing?canceled=true`,
+            success_url: `${request.nextUrl.origin}/organization/talent?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${request.nextUrl.origin}/organization/talent?canceled=true`,
             metadata: {
-                type: "subscription",
-                productType,
+                type: "talent_pool",
+                tier,
                 userId,
                 duration: product.duration.toString(),
-                jobCredits: product.jobCredits.toString(),
-                featuredJobCredits: product.featuredJobCredits.toString(),
-                unlimitedPosts: product.unlimitedPosts.toString(),
-                talentPoolAccessDays: product.talentPoolAccessDays.toString(),
             },
         });
 
         return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to create checkout session";
-        console.error("Stripe subscription checkout error:", error);
+        console.error("Stripe talent pool checkout error:", error);
         return NextResponse.json(
             { error: message },
             { status: 500 }
