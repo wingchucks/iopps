@@ -18,6 +18,7 @@ export const JOB_POSTING_PRODUCTS = {
         duration: 30, // days
         featured: false,
         jobCredits: 1,
+        talentPoolAccessDays: 0, // No bonus talent pool access
         description: "1 job posting live for 30 days with standard placement",
     },
     FEATURED: {
@@ -26,6 +27,7 @@ export const JOB_POSTING_PRODUCTS = {
         duration: 45, // days
         featured: true,
         jobCredits: 1,
+        talentPoolAccessDays: 7, // 7 days bonus talent pool access
         description: 'Posted for 45 days with "Featured" spotlight placement, employer logo & branding, and analytics',
     },
 } as const;
@@ -42,6 +44,7 @@ export const SUBSCRIPTION_PRODUCTS = {
         jobCredits: 15, // 15 job postings per year
         featuredJobCredits: 15, // 15 featured listings included
         unlimitedPosts: false,
+        talentPoolAccessDays: 0, // Not included - purchase separately
         description: "15 job postings per year with standard placement and basic organization profile",
         features: [
             "15 job postings per year",
@@ -61,6 +64,7 @@ export const SUBSCRIPTION_PRODUCTS = {
         featuredJobCredits: 5, // 5 rotating featured
         unlimitedPosts: true,
         shopListingIncluded: true,
+        talentPoolAccessDays: 30, // 30 days bonus talent pool access
         description: "Unlimited job postings for 12 months with Shop Indigenous listing included",
         features: [
             "Unlimited job postings for 12 months",
@@ -71,6 +75,7 @@ export const SUBSCRIPTION_PRODUCTS = {
             "Standard customer support",
             "Rotating Featured Jobs included",
             "Shop Indigenous listing included",
+            "30 days Talent Pool Access included",
         ],
     },
 } as const;
@@ -153,4 +158,34 @@ export const TRAINING_PRODUCTS = {
 } as const;
 
 export type TrainingProductType = keyof typeof TRAINING_PRODUCTS;
+
+// Talent Pool Access products (for viewing resumes and messaging candidates)
+export const TALENT_POOL_PRODUCTS = {
+    MONTHLY: {
+        name: "Talent Pool Access - Monthly",
+        price: 9900, // $99.00 CAD per month
+        duration: 30, // days
+        description: "Access Indigenous talent pool, view resumes, and message candidates directly",
+        features: [
+            "View all community member resumes",
+            "Unlimited direct messaging to candidates",
+            "Search and filter talent by skills and location",
+            "Download resumes for offline review",
+        ],
+    },
+    ANNUAL: {
+        name: "Talent Pool Access - Annual",
+        price: 89900, // $899.00 CAD per year (save ~$290)
+        duration: 365, // days
+        description: "Full year of talent pool access with priority support",
+        features: [
+            "All monthly features included",
+            "Priority customer support",
+            "Save $290 vs monthly billing",
+            "Early access to new talent features",
+        ],
+    },
+} as const;
+
+export type TalentPoolProductType = keyof typeof TALENT_POOL_PRODUCTS;
 

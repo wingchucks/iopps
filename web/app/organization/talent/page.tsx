@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import TalentCard from "@/components/organization/TalentCard";
+import TalentPoolPaywall from "@/components/organization/TalentPoolPaywall";
 import {
     searchMembers,
     getEmployerProfile,
@@ -13,13 +14,15 @@ import {
 } from "@/lib/firestore";
 import { MemberProfile, EmployerProfile } from "@/lib/types";
 
-export default function TalentSearchPage() {
+function TalentSearchPageContent() {
     const { user, role, loading: authLoading } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [members, setMembers] = useState<MemberProfile[]>([]);
     const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
     // Modal state
     const [showInviteModal, setShowInviteModal] = useState(false);
@@ -27,33 +30,57 @@ export default function TalentSearchPage() {
     const [inviteMessage, setInviteMessage] = useState("");
     const [sending, setSending] = useState(false);
 
+    // Check for success/canceled query params
+    useEffect(() => {
+        if (searchParams.get("success") === "true") {
+            setShowSuccessMessage(true);
+            // Clear the URL params
+            router.replace("/organization/talent");
+            // Hide message after 5 seconds
+            setTimeout(() => setShowSuccessMessage(false), 5000);
+        }
+    }, [searchParams, router]);
+
     // Initial load
     useEffect(() => {
         if (user && role === "employer") {
-            fetchTalent();
             fetchEmployerProfile();
         }
     }, [user, role]);
 
+    // Fetch talent only when we have access
+    useEffect(() => {
+        if (hasTalentAccess && user) {
+            fetchTalent();
+        }
+    }, [employerProfile]);
+
+    // Check if employer has talent pool access
+    const hasTalentAccess = employerProfile?.talentPoolAccess?.active &&
+        employerProfile?.talentPoolAccess?.expiresAt &&
+        (employerProfile.talentPoolAccess.expiresAt instanceof Date
+            ? employerProfile.talentPoolAccess.expiresAt > new Date()
+            : (employerProfile.talentPoolAccess.expiresAt as { toDate: () => Date }).toDate() > new Date());
+
     const fetchEmployerProfile = async () => {
         if (!user) return;
+        setLoading(true);
         try {
             const profile = await getEmployerProfile(user.uid);
             setEmployerProfile(profile);
         } catch (err) {
             console.error("Failed to load employer profile", err);
+        } finally {
+            setLoading(false);
         }
     };
 
     const fetchTalent = async () => {
-        setLoading(true);
         try {
             const results = await searchMembers({ availableOnly: true, limit: 20 });
             setMembers(results);
         } catch (err) {
             console.error("Failed to load talent", err);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -118,7 +145,13 @@ export default function TalentSearchPage() {
         setInviteMessage("");
     };
 
-    if (authLoading) return null;
+    if (authLoading || loading) {
+        return (
+            <div className="min-h-screen bg-[#020306] flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+            </div>
+        );
+    }
 
     if (role !== "employer") {
         return (
@@ -130,17 +163,52 @@ export default function TalentSearchPage() {
         );
     }
 
+    // Show paywall if no talent pool access
+    if (!hasTalentAccess && user) {
+        return (
+            <div className="min-h-screen bg-[#020306]">
+                <TalentPoolPaywall employerId={user.uid} />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#020306]">
+            {/* Success Message */}
+            {showSuccessMessage && (
+                <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 transform">
+                    <div className="rounded-lg bg-emerald-500 px-6 py-3 text-white shadow-lg">
+                        <span className="font-semibold">Success!</span> You now have access to the Indigenous Talent Pool.
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="border-b border-slate-800 bg-[#08090C] py-8">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-bold text-slate-50">
-                        Indigenous Talent Search
-                    </h1>
-                    <p className="mt-2 text-slate-400">
-                        Proactively find and invite qualified professionals to your opportunities.
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-50">
+                                Indigenous Talent Search
+                            </h1>
+                            <p className="mt-2 text-slate-400">
+                                Proactively find and invite qualified professionals to your opportunities.
+                            </p>
+                        </div>
+                        {employerProfile?.talentPoolAccess?.expiresAt && (
+                            <div className="text-right text-sm text-slate-400">
+                                <span className="text-teal-400">Active Access</span>
+                                <p>
+                                    Expires: {
+                                        (employerProfile.talentPoolAccess.expiresAt instanceof Date
+                                            ? employerProfile.talentPoolAccess.expiresAt
+                                            : (employerProfile.talentPoolAccess.expiresAt as { toDate: () => Date }).toDate()
+                                        ).toLocaleDateString()
+                                    }
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -275,5 +343,17 @@ export default function TalentSearchPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function TalentSearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#020306] flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+            </div>
+        }>
+            <TalentSearchPageContent />
+        </Suspense>
     );
 }

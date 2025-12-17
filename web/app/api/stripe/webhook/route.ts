@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
                 // Extract and validate metadata
                 const metadata = session.metadata || {};
-                const { type, productType, userId, jobId, conferenceId, vendorId, programId, duration, featured, jobCredits, featuredJobCredits, unlimitedPosts } = metadata;
+                const { type, productType, userId, jobId, conferenceId, vendorId, programId, duration, featured, jobCredits, featuredJobCredits, unlimitedPosts, talentPoolAccessDays } = metadata;
 
                 // Validate required metadata
                 if (!type) {
@@ -110,13 +110,15 @@ export async function POST(request: NextRequest) {
                     const durationDays = duration ? parseInt(duration, 10) : 365;
                     const credits = jobCredits ? parseInt(jobCredits, 10) : 0;
                     const featuredCredits = featuredJobCredits ? parseInt(featuredJobCredits, 10) : 0;
+                    const talentPoolDays = talentPoolAccessDays ? parseInt(talentPoolAccessDays, 10) : 0;
 
                     const expirationDate = new Date();
                     expirationDate.setDate(expirationDate.getDate() + durationDays);
 
                     const employerRef = db.collection("employers").doc(userId);
 
-                    await employerRef.update({
+                    // Build update object with subscription data
+                    const updateData: Record<string, unknown> = {
                         subscription: {
                             active: true,
                             tier: productType || "TIER1",
@@ -130,7 +132,26 @@ export async function POST(request: NextRequest) {
                             featuredJobCreditsUsed: 0,
                             unlimitedPosts: unlimitedPosts === "true",
                         },
-                    });
+                    };
+
+                    // Grant bundled talent pool access if included with subscription tier
+                    if (talentPoolDays > 0) {
+                        const talentPoolExpiration = new Date();
+                        talentPoolExpiration.setDate(talentPoolExpiration.getDate() + talentPoolDays);
+
+                        updateData.talentPoolAccess = {
+                            active: true,
+                            tier: "bundled",
+                            purchasedAt: new Date(),
+                            expiresAt: talentPoolExpiration,
+                            paymentId: session.payment_intent as string,
+                            amountPaid: 0, // Bundled - no separate charge
+                        };
+
+                        console.log(`Bundled ${talentPoolDays} days talent pool access for user ${userId}`);
+                    }
+
+                    await employerRef.update(updateData);
 
                     console.log(`Subscription ${productType} activated for user ${userId}`);
                     break;
@@ -167,6 +188,7 @@ export async function POST(request: NextRequest) {
                 // Handle job posting payment
                 if (jobId) {
                     const durationDays = duration ? parseInt(duration, 10) : 30;
+                    const talentPoolDays = talentPoolAccessDays ? parseInt(talentPoolAccessDays, 10) : 0;
                     // Calculate expiration date
                     const expirationDate = new Date();
                     expirationDate.setDate(expirationDate.getDate() + durationDays);
@@ -187,6 +209,38 @@ export async function POST(request: NextRequest) {
                         productType: productType || "SINGLE",
                         amountPaid: session.amount_total,
                     });
+
+                    // Grant bonus talent pool access for featured jobs
+                    if (talentPoolDays > 0 && jobData?.employerId) {
+                        const employerRef = db.collection("employers").doc(jobData.employerId);
+                        const employerDoc = await employerRef.get();
+                        const existing = employerDoc.exists ? employerDoc.data()?.talentPoolAccess : null;
+
+                        // Extend existing access or create new
+                        let newExpiration = new Date();
+                        if (existing?.active && existing?.expiresAt) {
+                            // Get expiration date from existing access
+                            const existingExpires = existing.expiresAt.toDate ? existing.expiresAt.toDate() : new Date(existing.expiresAt);
+                            if (existingExpires > new Date()) {
+                                newExpiration = existingExpires;
+                            }
+                        }
+                        newExpiration.setDate(newExpiration.getDate() + talentPoolDays);
+
+                        await employerRef.update({
+                            talentPoolAccess: {
+                                active: true,
+                                tier: existing?.tier || "bonus",
+                                purchasedAt: existing?.purchasedAt || new Date(),
+                                expiresAt: newExpiration,
+                                // Preserve existing payment info if upgrading
+                                ...(existing?.paymentId && { paymentId: existing.paymentId }),
+                                ...(existing?.amountPaid && { amountPaid: existing.amountPaid }),
+                            },
+                        });
+
+                        console.log(`Granted ${talentPoolDays} days bonus talent pool access to employer ${jobData.employerId}`);
+                    }
 
                     // Send admin notification for new paid job
                     if (jobData) {
@@ -246,6 +300,31 @@ export async function POST(request: NextRequest) {
                     });
 
                     console.log(`Training program ${programId} featured successfully until ${featuredExpiresAt.toISOString()}`);
+                    break;
+                }
+
+                // Handle Talent Pool Access purchase
+                if (type === "talent_pool" && userId) {
+                    const tier = metadata.tier as "MONTHLY" | "ANNUAL";
+                    const durationDays = duration ? parseInt(duration, 10) : 30;
+
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + durationDays);
+
+                    const employerRef = db.collection("employers").doc(userId);
+
+                    await employerRef.update({
+                        talentPoolAccess: {
+                            active: true,
+                            tier: tier.toLowerCase(),
+                            purchasedAt: new Date(),
+                            expiresAt: expirationDate,
+                            paymentId: session.payment_intent as string,
+                            amountPaid: session.amount_total,
+                        },
+                    });
+
+                    console.log(`Talent Pool Access (${tier}) activated for user ${userId} until ${expirationDate.toISOString()}`);
                     break;
                 }
 
