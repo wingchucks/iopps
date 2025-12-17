@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
@@ -14,7 +14,7 @@ import {
 } from "@/lib/firestore";
 import { MemberProfile, EmployerProfile } from "@/lib/types";
 
-export default function TalentSearchPage() {
+function TalentSearchPageContent() {
     const { user, role, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -343,5 +343,17 @@ export default function TalentSearchPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function TalentSearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#020306] flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+            </div>
+        }>
+            <TalentSearchPageContent />
+        </Suspense>
     );
 }
