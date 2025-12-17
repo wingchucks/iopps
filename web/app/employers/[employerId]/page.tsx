@@ -8,16 +8,16 @@ import CompanyIntroVideo from "@/components/employer/CompanyIntroVideo";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     employerId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     preview?: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { employerId } = params;
+  const { employerId } = await params;
 
   if (!db) {
     return { title: 'Employer Profile' };
@@ -215,8 +215,9 @@ function SocialIcon({ platform, url }: { platform: string; url: string }) {
 }
 
 export default async function EmployerPublicProfilePage({ params, searchParams }: PageProps) {
-  const { employerId } = params;
-  const isPreview = searchParams.preview === "true";
+  const { employerId } = await params;
+  const { preview } = await searchParams;
+  const isPreview = preview === "true";
   const { employer, jobs, status } = await getEmployerData(employerId, isPreview);
 
   // Show 404 only if employer doesn't exist
