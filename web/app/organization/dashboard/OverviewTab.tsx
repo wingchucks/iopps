@@ -275,15 +275,20 @@ export default function OverviewTab() {
           </div>
 
           <Link
-            href="/organization/talent"
-            className="group rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-6 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/20"
+            href="/organization/applications"
+            className="group relative rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-6 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/20"
           >
-            <div className="mb-2 text-2xl">🔍</div>
+            {pendingApplications.length > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-xs font-bold text-white">
+                {pendingApplications.length > 9 ? "9+" : pendingApplications.length}
+              </span>
+            )}
+            <div className="mb-2 text-2xl">📋</div>
             <h4 className="font-semibold text-white group-hover:text-cyan-400">
-              Search Talent
+              Applications
             </h4>
             <p className="mt-1 text-sm text-slate-400">
-              Find qualified candidates
+              {pendingApplications.length > 0 ? `${pendingApplications.length} pending` : "Review candidates"}
             </p>
           </Link>
 
