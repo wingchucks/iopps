@@ -4,9 +4,9 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
+import { getEmployerProfile, createJobPosting, isProfileComplete, getMissingProfileFields } from "@/lib/firestore";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
-import type { LocationType, SalaryPeriod } from "@/lib/types";
+import type { LocationType, SalaryPeriod, EmployerProfile } from "@/lib/types";
 
 // Form Components
 import { RichTextEditor } from "@/components/forms/RichTextEditor";
@@ -43,6 +43,9 @@ function NewJobPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
+  // Profile state for approval checks
+  const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
+  const [profileStatus, setProfileStatus] = useState<"no_profile" | "incomplete" | "pending" | "rejected" | "approved">("no_profile");
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -117,9 +120,25 @@ function NewJobPageContent() {
     const loadData = async () => {
       try {
         const profile = await getEmployerProfile(user.uid);
-        if (profile) {
+        setEmployerProfile(profile);
+
+        if (!profile) {
+          setProfileStatus("no_profile");
+        } else {
           setOrganizationName(profile.organizationName);
           setFreePostingEnabled(!!profile.freePostingEnabled);
+
+          // Determine profile status
+          if (!isProfileComplete(profile)) {
+            setProfileStatus("incomplete");
+          } else if (profile.status === "rejected") {
+            setProfileStatus("rejected");
+          } else if (profile.status === "approved") {
+            setProfileStatus("approved");
+          } else {
+            // Default to pending (includes undefined status)
+            setProfileStatus("pending");
+          }
 
           if (profile.subscription?.active && profile.subscription.expiresAt) {
             const rawExpires = profile.subscription.expiresAt;
@@ -170,6 +189,76 @@ function NewJobPageContent() {
       alert("Failed to generate description. Please try again.");
     } finally {
       setAiGenerating(false);
+    }
+  };
+
+  // Save as draft (for pending approval employers)
+  const handleSaveDraft = async () => {
+    if (!user) return;
+
+    if (!formData.title.trim()) {
+      setError("Job title is required");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      let jobVideo = undefined;
+      if (formData.jobVideoUrl.trim()) {
+        const url = formData.jobVideoUrl;
+        let provider: "youtube" | "vimeo" | "custom" = "custom";
+        let videoId = undefined;
+        const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (ytMatch) { provider = "youtube"; videoId = ytMatch[1]; }
+        else {
+          const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+          if (vimeoMatch) { provider = "vimeo"; videoId = vimeoMatch[1]; }
+        }
+        jobVideo = { videoUrl: url, videoProvider: provider, videoId };
+      }
+
+      const jobPayload = {
+        employerId: user.uid,
+        employerName: organizationName,
+        title: formData.title,
+        location: formData.location,
+        locationType: formData.locationType,
+        employmentType: formData.employmentType,
+        category: formData.category || undefined,
+        remoteFlag: formData.locationType === "remote",
+        indigenousPreference: formData.indigenousPreference,
+        cpicRequired: formData.cpicRequired,
+        willTrain: formData.willTrain,
+        driversLicense: formData.driversLicense,
+        description: formData.description,
+        responsibilities: formData.responsibilities.split('\n').filter(r => r.trim()),
+        qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+        salaryRange: formData.salaryRange.disclosed !== false ? {
+          ...(formData.salaryRange.min !== undefined && { min: formData.salaryRange.min }),
+          ...(formData.salaryRange.max !== undefined && { max: formData.salaryRange.max }),
+          currency: formData.salaryRange.currency || "CAD",
+          period: formData.salaryRange.period as SalaryPeriod,
+          disclosed: true,
+        } : { disclosed: false },
+        closingDate: formData.closingDate,
+        quickApplyEnabled: true,
+        ...(jobVideo && { jobVideo }),
+      };
+
+      const id = await createJobPosting({
+        ...jobPayload,
+        active: false,
+        paymentStatus: 'draft',
+        productType: 'DRAFT',
+      });
+
+      router.push(`/organization/jobs?saved=true&job_id=${id}`);
+    } catch (e: any) {
+      console.error(e);
+      setError(e.message);
+      setSubmitting(false);
     }
   };
 
@@ -311,8 +400,109 @@ function NewJobPageContent() {
     );
   }
 
+  // Profile checks - show appropriate message based on profile status
+  if (profileStatus === "no_profile") {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">Complete Your Profile First</h1>
+          <p className="text-slate-300 mb-6 max-w-md mx-auto">
+            Before posting jobs, please complete your organization profile. This helps job seekers learn about your company.
+          </p>
+          <Link href="/organization/profile" className="inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors">
+            Complete Profile
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileStatus === "incomplete") {
+    const missingFields = getMissingProfileFields(employerProfile);
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">Profile Incomplete</h1>
+          <p className="text-slate-300 mb-4 max-w-md mx-auto">
+            Please complete the following required fields before posting jobs:
+          </p>
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {missingFields.map((field) => (
+              <span key={field} className="rounded-full bg-amber-500/20 border border-amber-500/40 px-3 py-1 text-sm font-medium text-amber-400">
+                {field}
+              </span>
+            ))}
+          </div>
+          <Link href="/organization/profile" className="inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors">
+            Complete Profile
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileStatus === "rejected") {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10">
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">Profile Not Approved</h1>
+          <p className="text-slate-300 mb-4 max-w-md mx-auto">
+            Your employer profile was not approved. Please review and update your profile, then contact us if you have questions.
+          </p>
+          {employerProfile?.rejectionReason && (
+            <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4 mb-6 max-w-md mx-auto">
+              <p className="text-sm text-red-300">
+                <strong>Reason:</strong> {employerProfile.rejectionReason}
+              </p>
+            </div>
+          )}
+          <div className="flex justify-center gap-3">
+            <Link href="/organization/profile" className="inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors">
+              Update Profile
+            </Link>
+            <Link href="/contact" className="inline-block rounded-lg border border-slate-600 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800 transition-colors">
+              Contact Support
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For pending status, show a banner but still allow creating drafts
+  const isPendingApproval = profileStatus === "pending";
+
   return (
     <div className="min-h-screen bg-[#020306] pb-20">
+      {/* Pending Approval Banner */}
+      {isPendingApproval && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30">
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-amber-200">
+              <strong>Profile Pending Approval</strong> — You can create job drafts, but they won&apos;t be published until your profile is approved by our team.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-slate-800 bg-[#08090C] py-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -525,9 +715,34 @@ function NewJobPageContent() {
 
             {/* Publish Actions */}
             <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sticky top-6">
-              <h2 className="text-lg font-bold text-slate-100 mb-4">Publish</h2>
+              <h2 className="text-lg font-bold text-slate-100 mb-4">{isPendingApproval ? "Save Draft" : "Publish"}</h2>
               <div className="space-y-4">
-                {freePostingEnabled ? (
+                {/* Pending Approval - Only allow drafts */}
+                {isPendingApproval ? (
+                  <div className="space-y-4">
+                    <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-amber-200 font-medium">Awaiting Approval</p>
+                          <p className="text-xs text-slate-400 mt-1">Your profile is being reviewed. You can save jobs as drafts for now.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSaveDraft}
+                      disabled={submitting}
+                      className="w-full rounded-lg bg-slate-700 py-3 font-bold text-white hover:bg-slate-600 transition-colors"
+                    >
+                      {submitting ? "Saving..." : "Save as Draft"}
+                    </button>
+                    <p className="text-center text-xs text-slate-500">
+                      Once approved, you can publish your drafts.
+                    </p>
+                  </div>
+                ) : freePostingEnabled ? (
                   <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
                     {submitting ? "Posting..." : "Post Free (Admin)"}
                   </button>

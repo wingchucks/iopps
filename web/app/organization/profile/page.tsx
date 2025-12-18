@@ -5,10 +5,11 @@ import { useAuth } from "@/components/AuthProvider";
 import {
   getEmployerProfile,
   upsertEmployerProfile,
+  isProfileComplete,
 } from "@/lib/firestore";
 import { storage } from "@/lib/firebase";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import type { IndustryType, CompanySize, SocialLinks } from "@/lib/types";
+import type { IndustryType, CompanySize, SocialLinks, EmployerProfile } from "@/lib/types";
 
 const INDUSTRY_OPTIONS: { value: IndustryType; label: string }[] = [
   { value: "government", label: "Government / First Nations Administration" },
@@ -67,6 +68,9 @@ export default function EmployerProfilePage() {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Track if profile was already complete (for notification trigger)
+  const [wasProfileComplete, setWasProfileComplete] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!user || role !== "employer") return;
@@ -89,6 +93,9 @@ export default function EmployerProfilePage() {
           setTwitter(profile.socialLinks?.twitter ?? "");
           setFacebook(profile.socialLinks?.facebook ?? "");
           setInstagram(profile.socialLinks?.instagram ?? "");
+          // Track if profile was already complete
+          setWasProfileComplete(isProfileComplete(profile));
+          setProfileStatus(profile.status);
         }
       } catch (err) {
         console.error(err);
@@ -175,7 +182,37 @@ export default function EmployerProfilePage() {
         contactEmail: contactEmail || undefined,
         contactPhone: contactPhone || undefined,
       });
-      setStatusMessage("Profile updated!");
+
+      // Check if profile just became complete (wasn't complete before, is complete now)
+      const newProfileData: Partial<EmployerProfile> = {
+        organizationName,
+        description,
+        location,
+        logoUrl,
+      };
+      const isNowComplete = isProfileComplete(newProfileData as EmployerProfile);
+
+      // Send admin notification if profile just became complete and not yet approved
+      if (!wasProfileComplete && isNowComplete && profileStatus !== "approved") {
+        // Fire and forget - don't block the save
+        fetch("/api/admin/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "employer_ready",
+            organizationName,
+            employerEmail: user.email || "",
+          }),
+        }).catch(() => {
+          // Silently fail - notification shouldn't affect user experience
+        });
+
+        // Update local state so we don't send notification again
+        setWasProfileComplete(true);
+        setStatusMessage("Profile updated! Your profile is now under review and you'll be notified once approved.");
+      } else {
+        setStatusMessage("Profile updated!");
+      }
     } catch (err) {
       console.error(err);
       setError(

@@ -11,6 +11,7 @@ const ALLOWED_TYPES = [
   "new_application",
   "new_contact",
   "new_user",
+  "employer_ready",
 ] as const;
 
 type AllowedType = (typeof ALLOWED_TYPES)[number];
