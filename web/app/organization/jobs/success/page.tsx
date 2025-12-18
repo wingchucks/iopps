@@ -9,18 +9,20 @@ import { PageShell } from "@/components/PageShell";
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("session_id");
+    const jobId = searchParams.get("job_id");
+    const isSubscription = searchParams.get("subscription") === "true";
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (sessionId) {
-            // Payment was successful
+        // Success if we have a Stripe session OR a job_id from subscription/free posting
+        if (sessionId || jobId) {
             setLoading(false);
         } else {
             setError("No session ID found");
             setLoading(false);
         }
-    }, [sessionId]);
+    }, [sessionId, jobId]);
 
     if (loading) {
         return (
@@ -73,7 +75,7 @@ function PaymentSuccessContent() {
                 </div>
 
                 <h1 className="mt-6 text-3xl font-bold text-slate-50">
-                    Payment Successful! 🎉
+                    {isSubscription ? "Job Posted Successfully!" : "Payment Successful!"} 🎉
                 </h1>
 
                 <p className="mt-4 text-lg text-slate-300">
@@ -81,9 +83,19 @@ function PaymentSuccessContent() {
                 </p>
 
                 <div className="mt-8 space-y-3 text-sm text-slate-400">
-                    <p>✅ Payment confirmed</p>
-                    <p>✅ Job posting is now live on IOPPS</p>
-                    <p>✅ You'll receive a confirmation email shortly</p>
+                    {isSubscription ? (
+                        <>
+                            <p>✅ Credit applied from your plan</p>
+                            <p>✅ Job posting is now live on IOPPS</p>
+                            <p>✅ You&apos;ll receive a confirmation email shortly</p>
+                        </>
+                    ) : (
+                        <>
+                            <p>✅ Payment confirmed</p>
+                            <p>✅ Job posting is now live on IOPPS</p>
+                            <p>✅ You&apos;ll receive a confirmation email shortly</p>
+                        </>
+                    )}
                 </div>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -101,9 +113,16 @@ function PaymentSuccessContent() {
                     </Link>
                 </div>
 
-                <p className="mt-8 text-xs text-slate-500">
-                    Session ID: {sessionId}
-                </p>
+                {sessionId && (
+                    <p className="mt-8 text-xs text-slate-500">
+                        Session ID: {sessionId}
+                    </p>
+                )}
+                {jobId && !sessionId && (
+                    <p className="mt-8 text-xs text-slate-500">
+                        Job ID: {jobId}
+                    </p>
+                )}
             </div>
         </div>
     );
