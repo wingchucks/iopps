@@ -372,7 +372,7 @@ export default function OrganizationProfileClient({
                   {jobs.map((job) => (
                     <Link
                       key={job.id}
-                      href={`/jobs-training/jobs/${job.id}`}
+                      href={`/jobs-training/${job.id}`}
                       className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-[#14B8A6]/50 transition-colors"
                     >
                       <div className="flex items-center gap-5">

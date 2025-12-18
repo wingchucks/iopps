@@ -172,6 +172,8 @@ export interface EmployerProfile {
   // Video content
   companyIntroVideo?: CompanyVideo; // "About Us" intro video
   interviews?: Interview[]; // IOPPS interviews + employer promo videos (distinguished by isIOPPSInterview flag)
+  // Profile completion tracking
+  profileCompletedAt?: Timestamp | null;
   status?: EmployerStatus;
   approvedAt?: Timestamp | null;
   approvedBy?: string;
