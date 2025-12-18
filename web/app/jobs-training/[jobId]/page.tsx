@@ -7,8 +7,39 @@ interface PageProps {
   params: Promise<{ jobId: string }>;
 }
 
+// Helper to serialize Firestore data for client components
+function serializeForClient(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  // Handle Firestore Timestamp (Admin SDK has .seconds and .toDate())
+  if (obj && typeof obj === 'object' && typeof obj.toDate === 'function') {
+    return { _seconds: obj.seconds || Math.floor(obj.toDate().getTime() / 1000) };
+  }
+
+  // Handle Date objects
+  if (obj instanceof Date) {
+    return { _seconds: Math.floor(obj.getTime() / 1000) };
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(serializeForClient);
+  }
+
+  // Handle plain objects
+  if (typeof obj === 'object') {
+    const result: any = {};
+    for (const key of Object.keys(obj)) {
+      result[key] = serializeForClient(obj[key]);
+    }
+    return result;
+  }
+
+  return obj;
+}
+
 // Fetch job data server-side
-async function getJobData(jobId: string): Promise<JobPosting | null> {
+async function getJobData(jobId: string): Promise<any | null> {
   try {
     if (!db) {
       console.error("Firebase Admin not initialized");
@@ -17,7 +48,10 @@ async function getJobData(jobId: string): Promise<JobPosting | null> {
     const docRef = db.collection("jobs").doc(jobId);
     const docSnap = await docRef.get();
     if (!docSnap.exists) return null;
-    return { id: docSnap.id, ...docSnap.data() } as JobPosting;
+
+    const data = docSnap.data();
+    // Serialize the entire object to make it safe for client components
+    return serializeForClient({ id: docSnap.id, ...data });
   } catch (error) {
     console.error("Error fetching job:", error);
     return null;
@@ -86,26 +120,9 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { jobId } = await params;
   const job = await getJobData(jobId);
 
-  // Serialize Firestore Timestamps for client component
-  const serializedJob = job
-    ? {
-        ...job,
-        createdAt: job.createdAt
-          ? typeof job.createdAt === "object" && "_seconds" in job.createdAt
-            ? { _seconds: (job.createdAt as any)._seconds }
-            : job.createdAt
-          : undefined,
-        closingDate: job.closingDate
-          ? typeof job.closingDate === "object" && "_seconds" in job.closingDate
-            ? { _seconds: (job.closingDate as any)._seconds }
-            : job.closingDate
-          : undefined,
-      }
-    : null;
-
   return (
     <JobDetailClient
-      job={serializedJob as JobPosting | null}
+      job={job as JobPosting | null}
       error={!job ? "Job not found" : undefined}
     />
   );
