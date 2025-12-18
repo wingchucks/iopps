@@ -196,8 +196,22 @@ export default function OverviewTab() {
       {/* Quick Actions */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <h3 className="mb-6 text-xl font-semibold text-white">Quick Actions</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {/* Create New Dropdown */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          {/* Post a Job - Primary CTA */}
+          <Link
+            href="/organization/jobs/new"
+            className="group rounded-xl border-2 border-teal-500/50 bg-gradient-to-br from-teal-500/30 to-emerald-500/20 p-6 transition-all hover:border-teal-400 hover:from-teal-500/40 hover:to-emerald-500/30 hover:shadow-lg hover:shadow-teal-500/20"
+          >
+            <div className="mb-2 text-2xl">💼</div>
+            <h4 className="font-semibold text-teal-300 group-hover:text-teal-200">
+              Post a Job
+            </h4>
+            <p className="mt-1 text-sm text-slate-400">
+              Create job listing
+            </p>
+          </Link>
+
+          {/* Create New Dropdown - For other opportunity types */}
           <div className="relative" ref={createMenuRef}>
             <button
               onClick={() => setShowCreateMenu(!showCreateMenu)}
@@ -216,24 +230,13 @@ export default function OverviewTab() {
                 </svg>
               </h4>
               <p className="mt-1 text-sm text-slate-400">
-                Post opportunity
+                Events & more
               </p>
             </button>
 
             {/* Dropdown Menu */}
             {showCreateMenu && (
               <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl">
-                <Link
-                  href="/organization/jobs/new"
-                  onClick={() => setShowCreateMenu(false)}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-300"
-                >
-                  <span className="text-xl">💼</span>
-                  <div>
-                    <p className="font-medium">Job Posting</p>
-                    <p className="text-xs text-slate-400">Share job opportunities</p>
-                  </div>
-                </Link>
                 <Link
                   href="/organization/powwows/new"
                   onClick={() => setShowCreateMenu(false)}
