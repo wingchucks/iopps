@@ -433,7 +433,7 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
                       </div>
                       <div className="flex-1">
                         <Link
-                          href={`/jobs/${job.jobId}`}
+                          href={`/jobs-training/${job.jobId}`}
                           className="text-sm font-medium text-slate-200 hover:text-[#14B8A6]"
                         >
                           {job.title}

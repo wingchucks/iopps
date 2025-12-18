@@ -75,7 +75,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             {error || "Job not found"}
           </h1>
           <Link
-            href="/jobs"
+            href="/jobs-training/jobs"
             className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
             Back to Jobs

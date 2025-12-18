@@ -153,7 +153,7 @@ export default function SavedItemsTab() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
                     <Link
-                      href={`/jobs/${entry.jobId}`}
+                      href={`/jobs-training/${entry.jobId}`}
                       className="text-lg font-semibold text-white transition-colors hover:text-emerald-400"
                     >
                       {entry.job?.title}
@@ -205,7 +205,7 @@ export default function SavedItemsTab() {
 
                 <div className="mt-4 flex gap-3">
                   <Link
-                    href={`/jobs/${entry.jobId}`}
+                    href={`/jobs-training/${entry.jobId}`}
                     className="text-sm font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
                   >
                     View job details →
