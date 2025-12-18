@@ -187,7 +187,7 @@ function JobsTrainingContent() {
             {featuredJobs.map((job) => (
               <Link
                 key={job.id}
-                href={`/jobs-training/jobs/${job.id}`}
+                href={`/jobs-training/${job.id}`}
                 className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
               >
                 <div className="flex items-center gap-5">
