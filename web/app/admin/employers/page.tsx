@@ -56,6 +56,13 @@ export default function AdminEmployersPage() {
   const [previewModalId, setPreviewModalId] = useState<string | null>(null);
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFixingJobs, setIsFixingJobs] = useState(false);
+  const [fixJobsResult, setFixJobsResult] = useState<{
+    dryRun: boolean;
+    checked: number;
+    deactivated: number;
+    jobs: Array<{ id: string; title: string; employerId: string; reason: string }>;
+  } | null>(null);
 
   // Check admin access
   if (!loading && role !== "admin" && role !== "moderator") {
@@ -293,6 +300,42 @@ export default function AdminEmployersPage() {
     }
   };
 
+  const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
+    if (!user) return;
+
+    try {
+      setIsFixingJobs(true);
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/fix-employer-jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ dryRun, employerId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to fix jobs");
+      }
+
+      const result = await response.json();
+      setFixJobsResult({
+        dryRun: result.dryRun,
+        checked: result.checked,
+        deactivated: result.deactivated,
+        jobs: result.jobs,
+      });
+
+      if (!dryRun && result.deactivated > 0) {
+        showToast("success", `Deactivated ${result.deactivated} jobs from unapproved employers`);
+      }
+    } catch (error) {
+      console.error("Error fixing jobs:", error);
+      showToast("error", error instanceof Error ? error.message : "Failed to fix jobs");
+    } finally {
+      setIsFixingJobs(false);
+    }
+  };
+
   // Get estimated value for display
   const getGrantValue = () => {
     switch (grantType) {
@@ -518,6 +561,87 @@ export default function AdminEmployersPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Tools - Fix Jobs */}
+      {role === "admin" && (
+        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-medium text-slate-200">Maintenance Tools</h3>
+              <p className="text-sm text-slate-400">Find and deactivate jobs from unapproved employers</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleFixJobs(true)}
+                disabled={isFixingJobs}
+                className="rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isFixingJobs ? "Checking..." : "Check Jobs (Dry Run)"}
+              </button>
+              {fixJobsResult && fixJobsResult.dryRun && fixJobsResult.deactivated > 0 && (
+                <button
+                  onClick={() => handleFixJobs(false)}
+                  disabled={isFixingJobs}
+                  className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Fix {fixJobsResult.deactivated} Jobs
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Fix Jobs Results */}
+          {fixJobsResult && (
+            <div className="mt-4 rounded-md border border-slate-700 bg-slate-800/50 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-300">
+                    {fixJobsResult.dryRun ? "Would deactivate" : "Deactivated"}{" "}
+                    <span className="font-bold text-amber-400">{fixJobsResult.deactivated}</span> of{" "}
+                    <span className="font-bold">{fixJobsResult.checked}</span> active jobs
+                  </p>
+                  {fixJobsResult.dryRun && fixJobsResult.deactivated > 0 && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Click &quot;Fix Jobs&quot; to deactivate these jobs
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setFixJobsResult(null)}
+                  className="text-slate-500 hover:text-slate-300"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {fixJobsResult.jobs.length > 0 && (
+                <div className="mt-3 max-h-40 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="text-slate-500">
+                      <tr>
+                        <th className="pb-2 text-left">Job Title</th>
+                        <th className="pb-2 text-left">Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-400">
+                      {fixJobsResult.jobs.map((job) => (
+                        <tr key={job.id} className="border-t border-slate-700/50">
+                          <td className="py-1.5">{job.title}</td>
+                          <td className="py-1.5">
+                            <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-400">
+                              {job.reason.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filters and Search */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -19,6 +19,8 @@ export {
   trackInterviewView,
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
+  isProfileComplete,
+  getMissingProfileFields,
 } from "./employers";
 export type { GrantFreePostingParams } from "./employers";
 
