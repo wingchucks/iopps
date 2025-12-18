@@ -201,7 +201,16 @@ function AdminUsersContent() {
       if (!response.ok) throw new Error("Failed to get impersonation token");
       const { token } = await response.json();
       await signInWithCustomToken(auth, token);
-      router.push("/");
+
+      // Redirect based on the target user's role
+      const targetUser = users.find(u => u.id === userId);
+      if (targetUser?.role === "employer") {
+        router.push("/organization");
+      } else if (targetUser?.role === "admin" || targetUser?.role === "moderator") {
+        router.push("/admin");
+      } else {
+        router.push("/member/dashboard");
+      }
     } catch (error) {
       console.error("Error impersonating user:", error);
       alert("Failed to impersonate user. Please try again.");
