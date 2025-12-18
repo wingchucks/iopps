@@ -250,8 +250,7 @@ function NewJobPageContent() {
       const id = await createJobPosting({
         ...jobPayload,
         active: false,
-        paymentStatus: 'draft',
-        productType: 'DRAFT',
+        // Draft jobs have no payment status - they're saved but not submitted
       });
 
       router.push(`/organization/jobs?saved=true&job_id=${id}`);
