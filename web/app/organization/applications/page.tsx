@@ -296,7 +296,7 @@ export default function ApplicationsInboxPage() {
                         : ""}
                     </p>
                     <Link
-                      href={`/jobs/${app.jobId}`}
+                      href={`/jobs-training/${app.jobId}`}
                       className="mt-1 inline-flex text-xs text-[#14B8A6] underline"
                     >
                       View job posting
