@@ -21,6 +21,7 @@ export {
   removeEmployerCompanyIntro,
   isProfileComplete,
   getMissingProfileFields,
+  updateEmployerCarouselFeature,
 } from "./employers";
 export type { GrantFreePostingParams } from "./employers";
 

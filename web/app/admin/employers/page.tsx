@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid } from "@/lib/firestore";
+import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid, updateEmployerCarouselFeature } from "@/lib/firestore";
 import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -23,6 +23,7 @@ import {
   XMarkIcon,
   PencilSquareIcon,
   CurrencyDollarIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -300,7 +301,7 @@ export default function AdminEmployersPage() {
     }
   };
 
-  const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
+const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
     if (!user) return;
 
     try {
@@ -333,6 +334,28 @@ export default function AdminEmployersPage() {
       showToast("error", error instanceof Error ? error.message : "Failed to fix jobs");
     } finally {
       setIsFixingJobs(false);
+    }
+  };
+
+  const handleToggleCarouselFeature = async (employer: EmployerProfile) => {
+    const currentlyFeatured = (employer as any).featuredOnCarousel;
+    const newValue = !currentlyFeatured;
+
+    setProcessingId(employer.id);
+    try {
+      await updateEmployerCarouselFeature(employer.id, newValue);
+      await fetchEmployers();
+      showToast(
+        "success",
+        newValue
+          ? `${employer.organizationName} added to Partner Carousel`
+          : `${employer.organizationName} removed from Partner Carousel`
+      );
+    } catch (error) {
+      console.error("Failed to toggle carousel feature:", error);
+      showToast("error", "Failed to update carousel feature");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -749,6 +772,12 @@ export default function AdminEmployersPage() {
                               {getGrantLabel(employer.freePostingGrant)}
                             </span>
                           )}
+                          {(employer as any).featuredOnCarousel && (
+                            <span className="inline-flex items-center rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-400" title="Featured on homepage Partner Carousel">
+                              <SparklesIcon className="mr-1 h-3 w-3" />
+                              Carousel
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
@@ -887,6 +916,22 @@ export default function AdminEmployersPage() {
                         >
                           <GiftIcon className="h-4 w-4" />
                           {employer.freePostingEnabled ? "Revoke Free Posting" : "Grant Free Posting"}
+                        </button>
+                      )}
+
+                      {/* Partner Carousel Toggle - Only for approved employers with logos */}
+                      {status === "approved" && employer.logoUrl && (
+                        <button
+                          onClick={() => handleToggleCarouselFeature(employer)}
+                          disabled={!!processingId}
+                          className={`flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                            (employer as any).featuredOnCarousel
+                              ? "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+                              : "bg-slate-700/50 text-slate-400 hover:bg-slate-700"
+                          }`}
+                        >
+                          <SparklesIcon className="h-4 w-4" />
+                          {(employer as any).featuredOnCarousel ? "Remove from Carousel" : "Feature on Carousel"}
                         </button>
                       )}
 

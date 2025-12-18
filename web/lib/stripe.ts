@@ -52,6 +52,7 @@ export const SUBSCRIPTION_PRODUCTS = {
             "Basic organization profile page",
             "Access to posting analytics",
             "15 Featured Job Listings included",
+            "Logo on homepage Partner Carousel",
         ],
     },
     TIER2: {
@@ -68,6 +69,7 @@ export const SUBSCRIPTION_PRODUCTS = {
         features: [
             "Unlimited job postings for 12 months",
             "Organization branding on postings",
+            "Logo on homepage Partner Carousel",
             "Rotating featured listings on homepage & job board",
             "Candidate engagement analytics",
             "Standard customer support",
@@ -92,9 +94,9 @@ export const CONFERENCE_PRODUCTS = {
     FEATURED: {
         name: "Featured Conference Spotlight",
         price: 40000, // $400.00
-        duration: 120, // days
+        duration: 360, // days
         featured: true,
-        description: "Premium spotlight placement with featured badge and top positioning for 120 days",
+        description: "Premium spotlight placement with featured badge and top positioning for 360 days",
     },
 } as const;
 

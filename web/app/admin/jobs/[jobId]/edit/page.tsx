@@ -180,18 +180,15 @@ export default function AdminJobEditPage() {
     try {
       const jobRef = doc(db!, "jobs", jobId);
 
-      // Build update data
-      const updateData: Partial<JobPosting> & { updatedAt: ReturnType<typeof serverTimestamp> } = {
+      // Build update data - filter out undefined values as Firestore doesn't accept them
+      const updateData: Record<string, unknown> = {
         title: formData.title.trim(),
         description: formData.description,
         location: formData.location.trim(),
         employmentType: formData.employmentType,
-        category: formData.category || undefined,
         locationType: formData.locationType,
         remoteFlag: formData.locationType === "remote",
         applicationMethod: formData.applicationMethod,
-        applicationEmail: formData.applicationMethod === "email" ? formData.applicationEmail : undefined,
-        applicationLink: formData.applicationMethod === "url" ? formData.applicationLink : undefined,
         quickApplyEnabled: formData.applicationMethod === "quickApply",
         salaryRange: formData.salaryRange.disclosed !== false ? {
           ...(formData.salaryRange.min !== undefined && { min: formData.salaryRange.min }),
@@ -209,6 +206,17 @@ export default function AdminJobEditPage() {
         closingDate: formData.closingDate || null,
         updatedAt: serverTimestamp(),
       };
+
+      // Add optional fields only if they have values
+      if (formData.category) {
+        updateData.category = formData.category;
+      }
+      if (formData.applicationMethod === "email" && formData.applicationEmail) {
+        updateData.applicationEmail = formData.applicationEmail;
+      }
+      if (formData.applicationMethod === "url" && formData.applicationLink) {
+        updateData.applicationLink = formData.applicationLink;
+      }
 
       await updateDoc(jobRef, updateData);
 

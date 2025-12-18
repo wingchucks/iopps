@@ -8,13 +8,16 @@ import CompanyIntroVideo from "@/components/employer/CompanyIntroVideo";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     employerId: string;
-  };
+  }>;
+  searchParams: Promise<{
+    preview?: string;
+  }>;
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { employerId } = params;
+  const { employerId } = await params;
 
   if (!db) {
     return { title: 'Employer Profile' };
@@ -104,10 +107,10 @@ const SIZE_LABELS: Record<string, string> = {
   '500+': '500+ employees',
 };
 
-async function getEmployerData(employerId: string): Promise<{
+async function getEmployerData(employerId: string, isPreview: boolean = false): Promise<{
   employer: EmployerProfile | null;
   jobs: JobPosting[];
-  status: "not_found" | "pending" | "rejected" | "approved";
+  status: "not_found" | "pending" | "rejected" | "approved" | "preview";
 }> {
   if (!db) {
     return { employer: null, jobs: [], status: "not_found" };
@@ -128,8 +131,32 @@ async function getEmployerData(employerId: string): Promise<{
       return { employer: null, jobs: [], status: "not_found" };
     }
 
-    // Return status for non-approved employers (show different message)
+    // For non-approved employers
     if (employerData.status !== "approved") {
+      // If preview mode is enabled, show the profile
+      if (isPreview && employerData.status === "pending") {
+        const employer = {
+          ...employerData,
+          id: employerDoc.id,
+        };
+
+        // Get jobs for preview (even if not active, show recent ones)
+        const jobsSnapshot = await db
+          .collection("jobs")
+          .where("employerId", "==", employerId)
+          .orderBy("createdAt", "desc")
+          .limit(20)
+          .get();
+
+        const jobs = jobsSnapshot.docs.map((doc: any) => ({
+          ...doc.data(),
+          id: doc.id,
+        })) as JobPosting[];
+
+        return { employer, jobs, status: "preview" };
+      }
+
+      // Otherwise show pending/rejected message
       return {
         employer: null,
         jobs: [],
@@ -187,16 +214,18 @@ function SocialIcon({ platform, url }: { platform: string; url: string }) {
   );
 }
 
-export default async function EmployerPublicProfilePage({ params }: PageProps) {
-  const { employerId } = params;
-  const { employer, jobs, status } = await getEmployerData(employerId);
+export default async function EmployerPublicProfilePage({ params, searchParams }: PageProps) {
+  const { employerId } = await params;
+  const { preview } = await searchParams;
+  const isPreview = preview === "true";
+  const { employer, jobs, status } = await getEmployerData(employerId, isPreview);
 
   // Show 404 only if employer doesn't exist
   if (status === "not_found") {
     notFound();
   }
 
-  // Show pending/rejected message
+  // Show pending/rejected message (only if not in preview mode)
   if (status === "pending" || status === "rejected") {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
@@ -237,6 +266,8 @@ export default async function EmployerPublicProfilePage({ params }: PageProps) {
     notFound();
   }
 
+  const isPreviewMode = status === "preview";
+
   const hasSocialLinks = employer.socialLinks && (
     employer.socialLinks.linkedin ||
     employer.socialLinks.twitter ||
@@ -249,6 +280,32 @@ export default async function EmployerPublicProfilePage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
+      {/* Preview Mode Banner */}
+      {isPreviewMode && (
+        <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+              <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-amber-300">Preview Mode</p>
+              <p className="text-sm text-amber-200/80">
+                This is a preview of your public profile. It will be visible to the public once approved.
+              </p>
+            </div>
+            <Link
+              href="/organization/dashboard?tab=profile"
+              className="flex-shrink-0 rounded-lg bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-500/30 transition-colors"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Banner Image */}
       {employer.bannerUrl && (
         <div className="relative w-full h-48 md:h-64 rounded-t-lg overflow-hidden mb-0">

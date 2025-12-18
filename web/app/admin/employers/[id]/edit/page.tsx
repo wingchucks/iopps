@@ -67,6 +67,7 @@ export default function EditEmployerPage() {
   const [socialTwitter, setSocialTwitter] = useState("");
   const [socialFacebook, setSocialFacebook] = useState("");
   const [socialInstagram, setSocialInstagram] = useState("");
+  const [featuredOnCarousel, setFeaturedOnCarousel] = useState(false);
 
   useEffect(() => {
     if (!user || (role !== "admin" && role !== "moderator")) {
@@ -101,6 +102,7 @@ export default function EditEmployerPage() {
       setSocialTwitter(data.socialLinks?.twitter || "");
       setSocialFacebook(data.socialLinks?.facebook || "");
       setSocialInstagram(data.socialLinks?.instagram || "");
+      setFeaturedOnCarousel((data as any).featuredOnCarousel || false);
     } catch (error) {
       console.error("Error loading employer:", error);
       showToast("error", "Failed to load employer");
@@ -213,17 +215,18 @@ export default function EditEmployerPage() {
         location: location.trim(),
         contactEmail: contactEmail.trim(),
         contactPhone: contactPhone.trim(),
-        industry: industry || undefined,
-        companySize: companySize || undefined,
-        foundedYear: foundedYear || undefined,
+        industry: industry || null,
+        companySize: companySize || null,
+        foundedYear: foundedYear || null,
         socialLinks: {
           linkedin: socialLinkedin.trim(),
           twitter: socialTwitter.trim(),
           facebook: socialFacebook.trim(),
           instagram: socialInstagram.trim(),
         },
+        featuredOnCarousel,
         updatedAt: serverTimestamp() as any,
-      };
+      } as any;
 
       await updateDoc(doc(db!, "employers", employerId), updateData);
       showToast("success", "Employer profile updated successfully");
@@ -487,6 +490,39 @@ export default function EditEmployerPage() {
                   placeholder="https://instagram.com/..."
                   className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Homepage Visibility */}
+          <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6">
+            <h2 className="text-lg font-semibold text-slate-100">Homepage Visibility</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Control whether this organization appears on the homepage partner carousel.
+            </p>
+            <div className="mt-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={featuredOnCarousel}
+                    onChange={(e) => setFeaturedOnCarousel(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <div className="h-6 w-11 rounded-full bg-slate-700 peer-checked:bg-teal-500 transition-colors"></div>
+                  <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5"></div>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-200">Featured on Partner Carousel</span>
+                  <p className="text-xs text-slate-500">
+                    Show this organization&apos;s logo in the homepage &quot;Trusted Partners&quot; section
+                  </p>
+                </div>
+              </label>
+              <div className="mt-3 rounded-lg bg-slate-800/50 border border-slate-700 px-4 py-3">
+                <p className="text-xs text-slate-400">
+                  <span className="font-semibold text-teal-400">Note:</span> Organizations with Tier 1 or Tier 2 subscriptions are automatically featured on the carousel.
+                </p>
               </div>
             </div>
           </div>
