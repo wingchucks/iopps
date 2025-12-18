@@ -19,6 +19,12 @@ service cloud.firestore {
       // For now, checking user document 'role' field.
       return isSignedIn() && getUserData().role == 'employer';
     }
+
+    // Helper function to check if employer is approved
+    function isApprovedEmployer() {
+      return isEmployer() &&
+        get(/databases/$(database)/documents/employers/$(request.auth.uid)).data.status == 'approved';
+    }
     
     // Helper: Check if user is owner of resource
     function isOwner(userId) {
@@ -75,8 +81,24 @@ service cloud.firestore {
     // ===========================================================================
     match /jobs/{jobId} {
       allow read: if true;
-      allow create: if isEmployer() && (request.resource.data.employerId == request.auth.uid || isAdminOrModerator());
-      allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
+      // Job creation rules:
+      // - Approved employers can create any job (draft or published)
+      // - Unapproved employers can only create drafts (active: false)
+      // - Admins can create any job
+      allow create: if isAdminOrModerator() || (
+        isEmployer() &&
+        request.resource.data.employerId == request.auth.uid && (
+          isApprovedEmployer() ||
+          request.resource.data.active == false
+        )
+      );
+      // Job update rules: Only approved employers can publish (set active: true)
+      allow update: if isAdminOrModerator() || (
+        isOwner(resource.data.employerId) && (
+          isApprovedEmployer() ||
+          request.resource.data.active == false
+        )
+      );
       allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
 
