@@ -146,7 +146,7 @@ async function getEmployerData(employerId: string): Promise<{
     const jobsSnapshot = await db
       .collection("jobs")
       .where("employerId", "==", employerId)
-      .where("status", "==", "active")
+      .where("active", "==", true)
       .orderBy("createdAt", "desc")
       .limit(20)
       .get();
