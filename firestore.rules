@@ -549,8 +549,10 @@ service cloud.firestore {
     // MEMBER PROFILES (Job Seekers)
     // ===========================================================================
     match /memberProfiles/{userId} {
-      // Users can read their own profile, admins can read all
-      allow read: if isOwner(userId) || isAdminOrModerator();
+      // Users can read their own profile
+      // Employers can read profiles (for talent search feature)
+      // Admins can read all
+      allow read: if isOwner(userId) || isEmployer() || isAdminOrModerator();
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isOwner(userId) || isAdminOrModerator();
       allow delete: if isAdmin();
