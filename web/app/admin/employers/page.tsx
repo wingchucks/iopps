@@ -92,15 +92,35 @@ export default function AdminEmployersPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleApprove = async (employerId: string, employerName: string) => {
+  const handleApprove = async (employerId: string, employerName: string, employerEmail?: string) => {
     if (!user) return;
     if (!confirm(`Are you sure you want to approve "${employerName}"?`)) return;
 
     setProcessingId(employerId);
     try {
       await updateEmployerStatus(employerId, "approved", user.uid);
+
+      // Send approval email to employer (fire and forget)
+      if (employerEmail) {
+        const idToken = await user.getIdToken();
+        fetch("/api/emails/send-approval", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            to: employerEmail,
+            organizationName: employerName,
+            status: "approved",
+          }),
+        }).catch((err) => {
+          console.error("Failed to send approval email:", err);
+        });
+      }
+
       await fetchEmployers();
-      showToast("success", `${employerName} has been approved`);
+      showToast("success", `${employerName} has been approved${employerEmail ? " and notified via email" : ""}`);
     } catch (error) {
       console.error("Failed to approve employer:", error);
       showToast("error", "Failed to approve employer");
@@ -113,7 +133,7 @@ export default function AdminEmployersPage() {
     setRejectModalId(employerId);
   };
 
-  const confirmReject = async (employerId: string, employerName: string) => {
+  const confirmReject = async (employerId: string, employerName: string, employerEmail?: string) => {
     if (!rejectionReason.trim()) {
       showToast("error", "Please provide a rejection reason");
       return;
@@ -127,8 +147,29 @@ export default function AdminEmployersPage() {
         undefined,
         rejectionReason
       );
+
+      // Send rejection email to employer (fire and forget)
+      if (employerEmail) {
+        const idToken = await user!.getIdToken();
+        fetch("/api/emails/send-approval", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            to: employerEmail,
+            organizationName: employerName,
+            status: "rejected",
+            rejectionReason,
+          }),
+        }).catch((err) => {
+          console.error("Failed to send rejection email:", err);
+        });
+      }
+
       await fetchEmployers();
-      showToast("success", `${employerName} has been rejected`);
+      showToast("success", `${employerName} has been rejected${employerEmail ? " and notified via email" : ""}`);
       setRejectModalId(null);
       setRejectionReason("");
     } catch (error) {
@@ -669,7 +710,7 @@ export default function AdminEmployersPage() {
                       {status === "pending" && (
                         <>
                           <button
-                            onClick={() => handleApprove(employer.id, employer.organizationName)}
+                            onClick={() => handleApprove(employer.id, employer.organizationName, employer.contactEmail)}
                             disabled={!!processingId}
                             className="flex items-center justify-center gap-2 rounded-md bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -816,7 +857,7 @@ export default function AdminEmployersPage() {
                 onClick={() => {
                   const employer = allEmployers.find((e) => e.id === rejectModalId);
                   if (employer) {
-                    confirmReject(rejectModalId, employer.organizationName);
+                    confirmReject(rejectModalId, employer.organizationName, employer.contactEmail);
                   }
                 }}
                 disabled={!rejectionReason.trim() || !!processingId}
@@ -1126,7 +1167,7 @@ export default function AdminEmployersPage() {
                     <button
                       onClick={() => {
                         setPreviewModalId(null);
-                        handleApprove(employer.id, employer.organizationName);
+                        handleApprove(employer.id, employer.organizationName, employer.contactEmail);
                       }}
                       disabled={!!processingId}
                       className="flex items-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
