@@ -115,7 +115,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
   return (
     <PageShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <JobHeader job={job} />
+        <JobHeader job={job} employerId={job.employerId} />
 
         {/* Share Section */}
         <div className="mt-4 rounded-xl border border-slate-800 bg-[#08090C] p-4">
