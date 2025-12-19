@@ -5,6 +5,8 @@ import { listConferences } from "@/lib/firestore/conferences";
 import { listPowwowEvents } from "@/lib/firestore/powwows";
 import { listEmployers } from "@/lib/firestore/employers";
 import { listApprovedVendors } from "@/lib/firestore/vendors";
+import { listTrainingPrograms } from "@/lib/firestore/training";
+import { listLiveStreams } from "@/lib/firestore/livestreams";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca";
 
@@ -60,13 +62,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     // Dynamic content - fetch all in parallel for performance
-    const [jobs, scholarships, conferences, powwows, employers, vendors] = await Promise.all([
+    const [jobs, scholarships, conferences, powwows, employers, vendors, trainingPrograms, liveStreams] = await Promise.all([
         listJobPostings({ activeOnly: true }).catch(() => []),
         listScholarships().catch(() => []),
         listConferences().catch(() => []),
         listPowwowEvents().catch(() => []),
         listEmployers("approved").catch(() => []),
         listApprovedVendors().catch(() => []),
+        listTrainingPrograms({ activeOnly: true }).catch(() => []),
+        listLiveStreams().catch(() => []),
     ]);
 
     // Job routes
@@ -129,6 +133,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.6,
         }));
 
+    // Training program routes
+    const trainingRoutes: MetadataRoute.Sitemap = trainingPrograms
+        .filter((p) => p.active && p.id)
+        .map((program) => ({
+            url: `${baseUrl}/jobs-training/programs/${program.id}`,
+            lastModified: toDate(program.updatedAt || program.createdAt),
+            changeFrequency: "weekly" as const,
+            priority: 0.7,
+        }));
+
+    // Live stream routes
+    const liveStreamRoutes: MetadataRoute.Sitemap = liveStreams
+        .filter((s) => s.id)
+        .map((stream) => ({
+            url: `${baseUrl}/live/${stream.id}`,
+            lastModified: toDate(stream.createdAt),
+            changeFrequency: "daily" as const,
+            priority: 0.6,
+        }));
+
     return [
         ...staticRoutes,
         ...authRoutes,
@@ -138,5 +162,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ...powwowRoutes,
         ...employerRoutes,
         ...vendorRoutes,
+        ...trainingRoutes,
+        ...liveStreamRoutes,
     ];
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/firebase-admin";
 import PowwowDetailClient from "./PowwowDetailClient";
 import type { PowwowEvent } from "@/lib/types";
+import { generatePowwowSchema } from "@/lib/seo";
 
 interface PageProps {
   params: Promise<{ powwowId: string }>;
@@ -117,10 +118,33 @@ export default async function PowwowDetailPage({ params }: PageProps) {
       }
     : null;
 
+  // Generate JSON-LD schema for SEO
+  const powwowSchema = powwow
+    ? generatePowwowSchema({
+        name: powwow.name,
+        description: powwow.description,
+        startDate: powwow.startDate,
+        endDate: powwow.endDate,
+        location: powwow.location,
+        host: powwow.host,
+        eventType: powwow.eventType,
+        url: `https://iopps.ca/powwows/${powwowId}`,
+        image: powwow.imageUrl,
+      })
+    : null;
+
   return (
-    <PowwowDetailClient
-      powwow={serializedPowwow as PowwowEvent | null}
-      error={!powwow ? "Event not found" : undefined}
-    />
+    <>
+      {powwowSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(powwowSchema) }}
+        />
+      )}
+      <PowwowDetailClient
+        powwow={serializedPowwow as PowwowEvent | null}
+        error={!powwow ? "Event not found" : undefined}
+      />
+    </>
   );
 }

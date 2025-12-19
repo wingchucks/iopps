@@ -17,6 +17,7 @@ import {
 import { PageShell } from '@/components/PageShell';
 import { getVendorBySlug, getVendorBySlugAnyStatus, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct } from '@/lib/types';
+import { generateVendorSchema } from '@/lib/seo';
 
 // Social icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -156,8 +157,27 @@ async function VendorPage({ params, searchParams }: Props) {
   // Get vendor products
   const products = await getVendorProducts(vendor.id);
 
+  // Generate JSON-LD schema for SEO
+  const vendorSchema = generateVendorSchema({
+    businessName: vendor.businessName,
+    description: vendor.description,
+    category: vendor.category,
+    location: vendor.location,
+    region: vendor.region,
+    website: vendor.website,
+    email: vendor.email,
+    phone: vendor.phone,
+    logoUrl: vendor.logoUrl,
+    isIndigenousOwned: true,
+  });
+
   return (
-    <PageShell className="pb-24">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(vendorSchema) }}
+      />
+      <PageShell className="pb-24">
       {/* Status Banner for non-active vendors */}
       <StatusBanner status={vendor.status} />
 
@@ -428,7 +448,8 @@ async function VendorPage({ params, searchParams }: Props) {
           </div>
         </div>
       </div>
-    </PageShell>
+      </PageShell>
+    </>
   );
 }
 
