@@ -5,12 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { listEmployers } from "@/lib/firestore";
 import type { EmployerProfile } from "@/lib/types";
+import { useAuth } from "@/components/AuthProvider";
 
 export function TrustedPartners() {
   const [partners, setPartners] = useState<EmployerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const { user, role } = useAuth();
+
+  // Determine button text and href based on auth state
+  const isEmployer = user && role && role !== "community";
+  const buttonText = isEmployer ? "Go to Dashboard" : "Become a Partner";
+  const buttonHref = isEmployer ? "/organization" : "/register?role=employer";
 
   useEffect(() => {
     async function loadPartners() {
@@ -148,10 +155,10 @@ export function TrustedPartners() {
             organizations on IOPPS
           </p>
           <Link
-            href="/register?role=employer"
+            href={buttonHref}
             className="rounded-full border border-[#14B8A6] bg-[#14B8A6]/10 px-6 py-2.5 text-sm font-semibold text-[#14B8A6] transition-all hover:bg-[#14B8A6] hover:text-slate-900"
           >
-            Become a Partner
+            {buttonText}
           </Link>
         </div>
       </div>
