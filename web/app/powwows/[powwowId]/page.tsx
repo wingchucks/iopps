@@ -4,6 +4,22 @@ import PowwowDetailClient from "./PowwowDetailClient";
 import type { PowwowEvent } from "@/lib/types";
 import { generatePowwowSchema } from "@/lib/seo";
 
+// Helper to convert Firestore Timestamp to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === "object" && "_seconds" in timestamp) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  if (timestamp.toDate && typeof timestamp.toDate === "function") {
+    return timestamp.toDate();
+  }
+  if (typeof timestamp === "string") {
+    return new Date(timestamp);
+  }
+  return null;
+}
+
 interface PageProps {
   params: Promise<{ powwowId: string }>;
 }
@@ -123,8 +139,8 @@ export default async function PowwowDetailPage({ params }: PageProps) {
     ? generatePowwowSchema({
         name: powwow.name,
         description: powwow.description,
-        startDate: powwow.startDate,
-        endDate: powwow.endDate,
+        startDate: toDate(powwow.startDate),
+        endDate: toDate(powwow.endDate),
         location: powwow.location,
         host: powwow.host,
         eventType: powwow.eventType,
