@@ -3,9 +3,10 @@ import { JobPosting } from "@/lib/types";
 
 interface JobHeaderProps {
     job: JobPosting;
+    employerId?: string;
 }
 
-export default function JobHeader({ job }: JobHeaderProps) {
+export default function JobHeader({ job, employerId }: JobHeaderProps) {
     return (
         <div className="mb-8">
             {/* Breadcrumb */}
@@ -25,9 +26,18 @@ export default function JobHeader({ job }: JobHeaderProps) {
                     <h1 className="text-3xl font-bold text-slate-50 sm:text-4xl">{job.title}</h1>
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                         {job.employerName && (
-                            <span className="text-lg font-medium text-[#14B8A6]">
-                                {job.employerName}
-                            </span>
+                            employerId ? (
+                                <Link
+                                    href={`/employers/${employerId}`}
+                                    className="text-lg font-medium text-[#14B8A6] hover:underline transition-colors"
+                                >
+                                    {job.employerName}
+                                </Link>
+                            ) : (
+                                <span className="text-lg font-medium text-[#14B8A6]">
+                                    {job.employerName}
+                                </span>
+                            )
                         )}
                         {/* Location Type Badge */}
                         {job.locationType === "remote" ? (
