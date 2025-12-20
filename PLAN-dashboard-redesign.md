@@ -15,310 +15,506 @@ Currently, both personas share ONE dashboard with:
 
 ---
 
-## Current Architecture Analysis
+## Recommended Solution: Unified Profile with Feature Selection
 
-### Data Models
+### Registration Flow
+
+When a user registers as an organization, they select what they want to do:
+
 ```
-EmployerProfile (employers collection)
-├── organizationName, description, website, location
-├── logoUrl, bannerUrl
-├── industry, contactEmail
-├── status (pending/approved/rejected)
-└── Used for: jobs, conferences, scholarships, pow wows, training
+What would you like to do on IOPPS? (select all that apply)
 
-Vendor (vendors collection)
-├── businessName, tagline, description
-├── category, region, location
-├── logoUrl, coverImageUrl
-├── email, phone, social links
-├── nation, communityStory
-├── status (draft/pending/active)
-└── Used for: marketplace products/services
+☐ Post Jobs & Training Programs
+☐ Host Events (Conferences, Pow Wows)
+☐ Offer Scholarships
+☐ Sell Products/Services
 ```
 
-### Current Dashboard Tabs
-| Tab | Employer Use | Vendor Use |
-|-----|-------------|------------|
-| Overview | Yes | Partial |
-| Opportunities | Yes (jobs, events) | No |
-| Applications | Yes | No |
-| Messages | Yes | Yes |
-| Videos | Yes | No |
-| **Shop** | No | **Yes** |
-| Billing & Payments | Yes | Yes (separate) |
-| Profile & Settings | Yes | Has separate profile in Shop |
-
-### Registration Flow Problem
-When someone registers as "employer":
-- They get an `EmployerProfile` created
-- They ALSO get a draft `Vendor` profile auto-created
-- But they might only want ONE of these features
+*(Live Streaming is IOPPS-only, not shown to users)*
 
 ---
 
-## Proposed Solutions
+## How Each Selection Affects the Dashboard
 
-### Option A: Role-Based Tab Visibility (Quick Fix)
-**Effort: Low | Impact: Medium**
+### Single Selection Scenarios
 
-Keep the single dashboard but show/hide tabs based on user activity:
+#### Option 1 Only: "Post Jobs & Training Programs"
+**Use case:** Company that just wants to hire Indigenous talent
 
-```
-Default view (new employer):
-├── Overview
-├── Opportunities (jobs, conferences, pow wows, scholarships)
-├── Applications
-├── Messages
-├── Billing
-└── Profile
+**Dashboard Tabs:**
+| Tab | Included |
+|-----|----------|
+| Overview | ✓ (shows job stats only) |
+| Jobs & Training | ✓ |
+| Applications | ✓ |
+| Messages | ✓ |
+| Billing | ✓ |
+| Profile | ✓ |
 
-If vendor profile is activated:
-├── + Shop tab appears
-```
+**Overview KPIs:**
+- Active Jobs: 5
+- Total Applications: 23
+- Pending Review: 8
+- Profile Views: 156
 
-**Pros:**
-- Minimal code changes
-- Progressive disclosure - users see complexity only when needed
-- Preserves existing data architecture
-
-**Cons:**
-- Still one profile per feature (employer + vendor profiles remain separate)
-- Doesn't solve the "two profiles" confusion
-
----
-
-### Option B: Unified Profile with Feature Toggles (Recommended)
-**Effort: Medium | Impact: High**
-
-Create a single Organization profile with toggleable features:
-
-```
-Organization Profile (unified)
-├── Core Info: name, logo, banner, description, location
-├── Contact: email, phone, website, social links
-├── Identity: industry, nation/affiliation
-│
-├── Features Enabled:
-│   ├── [ ] Hiring (jobs, training)
-│   ├── [ ] Events (conferences, pow wows)
-│   ├── [ ] Scholarships
-│   ├── [ ] Marketplace (products/services)
-│   └── [ ] Live Streaming
-```
-
-**Dashboard Structure:**
-```
-Overview (shows only enabled features)
-├── Jobs & Training (if hiring enabled)
-├── Events (if events enabled)
-├── Scholarships (if enabled)
-├── Shop (if marketplace enabled)
-├── Applications (if hiring enabled)
-├── Messages
-├── Analytics
-├── Billing
-└── Organization Settings (single profile)
-```
-
-**Pros:**
-- Single source of truth for organization info
-- Users enable only what they need
-- Cleaner mental model
-- Scales well as you add more pillars
-
-**Cons:**
-- Requires data migration (merge employer + vendor profiles)
-- Medium development effort
+**Profile Fields Shown:**
+- Organization name, logo, banner
+- Description (focused on "why work here")
+- Location, website
+- Industry
+- Contact email for applicants
 
 ---
 
-### Option C: Separate Dashboards (Complete Split)
-**Effort: High | Impact: High**
+#### Option 2 Only: "Host Events (Conferences, Pow Wows)"
+**Use case:** Event organizer, cultural organization, or band council hosting gatherings
 
-Create TWO distinct dashboards with separate entry points:
+**Dashboard Tabs:**
+| Tab | Included |
+|-----|----------|
+| Overview | ✓ (shows event stats only) |
+| Events | ✓ (conferences + pow wows combined) |
+| Messages | ✓ |
+| Billing | ✓ |
+| Profile | ✓ |
 
-```
-/organization/dashboard     → Employer Dashboard (jobs, events, scholarships)
-/shop/dashboard            → Vendor Dashboard (marketplace only)
-```
+**Overview KPIs:**
+- Active Events: 2
+- Upcoming This Month: 1
+- Total RSVPs: 340
+- Profile Views: 89
 
-**Registration Options:**
-- "I want to post jobs/opportunities" → Employer flow
-- "I want to sell products/services" → Vendor flow
-- "Both" → Creates both accounts linked together
-
-**Pros:**
-- Cleanest separation of concerns
-- Each dashboard is focused and simple
-- Different subscription tiers per dashboard
-
-**Cons:**
-- Users who want both must manage two dashboards
-- More code to maintain
-- May confuse users who want both features
-
----
-
-### Option D: Workspace/Context Switcher
-**Effort: Medium-High | Impact: High**
-
-Single dashboard with a context switcher at the top:
-
-```
-┌─────────────────────────────────────────────────────┐
-│  [IOPPS Indigenous Opportunities]  [Switch Context ▼]│
-│                                    ├── Hiring & Events│
-│                                    └── Shop & Sell   │
-└─────────────────────────────────────────────────────┘
-```
-
-Each context shows only relevant tabs and uses the appropriate profile:
-
-**Hiring & Events Context:**
-- Overview, Opportunities, Applications, Messages, Billing, Profile
-
-**Shop & Sell Context:**
-- Overview, Products, Orders, Messages, Analytics, Profile
-
-**Pros:**
-- Clear separation without separate URLs
-- Easy to switch between roles
-- Familiar pattern (like Slack workspaces)
-
-**Cons:**
-- Still two profiles under the hood
-- UI complexity for the switcher
+**Profile Fields Shown:**
+- Organization name, logo, banner
+- Description (focused on your mission/history)
+- Location
+- Website, social media links
+- Contact email
 
 ---
 
-## Recommended Approach: Option B (Unified Profile)
+#### Option 3 Only: "Offer Scholarships"
+**Use case:** Foundation, band, or company offering educational funding
 
-### Implementation Phases
+**Dashboard Tabs:**
+| Tab | Included |
+|-----|----------|
+| Overview | ✓ (shows scholarship stats only) |
+| Scholarships | ✓ |
+| Applications | ✓ |
+| Messages | ✓ |
+| Billing | ✓ |
+| Profile | ✓ |
 
-#### Phase 1: Profile Unification (Week 1-2)
-1. Create migration script to merge Vendor fields into EmployerProfile
-2. Add feature flags to EmployerProfile:
+**Overview KPIs:**
+- Active Scholarships: 3
+- Total Applications: 67
+- Awarded This Year: 12
+- Total Value Awarded: $45,000
+
+**Profile Fields Shown:**
+- Organization name, logo, banner
+- Description (focused on mission/giving back)
+- Location
+- Website
+- Contact email
+
+---
+
+#### Option 4 Only: "Sell Products/Services"
+**Use case:** Indigenous artisan, craftsperson, or service provider
+
+**Dashboard Tabs:**
+| Tab | Included |
+|-----|----------|
+| Overview | ✓ (shows shop stats only) |
+| Shop | ✓ |
+| Products | ✓ |
+| Messages | ✓ |
+| Billing | ✓ |
+| Profile | ✓ |
+
+**Overview KPIs:**
+- Products Listed: 12
+- Profile Views: 234
+- Favorites: 18
+- Messages This Week: 5
+
+**Profile Fields Shown:**
+- Business name, logo, cover image
+- Tagline
+- Description + "Your Story" (community connection)
+- Category (Art & Crafts, Services, Food, etc.)
+- Location, region
+- Shipping options (offers shipping, online only)
+- Contact: email, phone, website
+- Social media: Instagram, Facebook, TikTok
+- Nation/Affiliation
+
+---
+
+### Multi-Selection Scenarios
+
+#### Options 1 + 2: "Jobs & Training" + "Events"
+**Use case:** Large organization that hires AND hosts conferences/pow wows
+
+**Dashboard Tabs:**
+```
+Overview | Jobs & Training | Events | Applications | Messages | Billing | Profile
+```
+
+**Overview shows:**
+- Section: "Hiring" - Active Jobs, Applications, etc.
+- Section: "Events" - Upcoming events, RSVPs, etc.
+
+---
+
+#### Options 1 + 3: "Jobs & Training" + "Scholarships"
+**Use case:** Company that hires AND offers educational scholarships
+
+**Dashboard Tabs:**
+```
+Overview | Jobs & Training | Scholarships | Applications | Messages | Billing | Profile
+```
+
+**Applications tab has sub-filters:**
+- Job Applications
+- Scholarship Applications
+
+---
+
+#### Options 1 + 4: "Jobs & Training" + "Sell Products"
+**Use case:** Indigenous business that hires employees AND sells products
+
+**Dashboard Tabs:**
+```
+Overview | Jobs & Training | Shop | Applications | Messages | Billing | Profile
+```
+
+**This is the current confusing state - but now it's OPT-IN, not forced on everyone**
+
+---
+
+#### Options 2 + 4: "Events" + "Sell Products"
+**Use case:** Artisan who sells crafts AND hosts workshops/gatherings
+
+**Dashboard Tabs:**
+```
+Overview | Events | Shop | Products | Messages | Billing | Profile
+```
+
+---
+
+#### Options 1 + 2 + 3: "Jobs" + "Events" + "Scholarships"
+**Use case:** Large Indigenous organization (band council, tribal enterprise)
+
+**Dashboard Tabs:**
+```
+Overview | Jobs & Training | Events | Scholarships | Applications | Messages | Billing | Profile
+```
+
+---
+
+#### All 4 Options Selected
+**Use case:** Full-service Indigenous organization doing everything
+
+**Dashboard Tabs:**
+```
+Overview | Jobs & Training | Events | Scholarships | Shop | Applications | Messages | Billing | Profile
+```
+
+**This is essentially today's dashboard - but the user CHOSE to have all these features**
+
+---
+
+## Profile Field Mapping
+
+The unified profile combines fields from both current profiles:
+
+| Field | Jobs | Events | Scholarships | Shop | Source |
+|-------|------|--------|--------------|------|--------|
+| Organization/Business Name | ✓ | ✓ | ✓ | ✓ | Both |
+| Logo | ✓ | ✓ | ✓ | ✓ | Both |
+| Banner/Cover Image | ✓ | ✓ | ✓ | ✓ | Both |
+| Description | ✓ | ✓ | ✓ | ✓ | Both |
+| Tagline | - | - | - | ✓ | Vendor |
+| Location | ✓ | ✓ | ✓ | ✓ | Both |
+| Region/Province | - | - | - | ✓ | Vendor |
+| Industry | ✓ | - | - | - | Employer |
+| Category | - | - | - | ✓ | Vendor |
+| Website | ✓ | ✓ | ✓ | ✓ | Both |
+| Contact Email | ✓ | ✓ | ✓ | ✓ | Both |
+| Phone | - | - | - | ✓ | Vendor |
+| Instagram | - | - | - | ✓ | Vendor |
+| Facebook | - | - | - | ✓ | Vendor |
+| TikTok | - | - | - | ✓ | Vendor |
+| Nation/Affiliation | - | - | - | ✓ | Vendor |
+| "Your Story" | - | - | - | ✓ | Vendor |
+| Offers Shipping | - | - | - | ✓ | Vendor |
+| Online Only | - | - | - | ✓ | Vendor |
+
+**Key insight:** The profile form dynamically shows only the fields relevant to the selected features.
+
+---
+
+## User Flow: Changing Features Later
+
+Users can enable/disable features anytime from Settings:
+
+```
+Organization Settings → Features
+
+Currently Active:
+✓ Jobs & Training     [Manage →]
+✓ Events              [Manage →]
+
+Available to Enable:
+○ Scholarships        [Enable →]
+○ Marketplace         [Enable →]
+
+Note: Disabling a feature hides it from your dashboard
+but doesn't delete your data.
+```
+
+---
+
+## Billing Considerations
+
+Different features may have different pricing:
+
+| Feature | Pricing Model |
+|---------|---------------|
+| Jobs & Training | Pay per posting OR subscription |
+| Events | Free to list (conferences, pow wows) |
+| Scholarships | Free to list |
+| Marketplace | Monthly subscription ($15-50/mo) |
+
+When a user enables a paid feature, they're prompted to subscribe or pay.
+
+---
+
+## Implementation Phases
+
+### Phase 1: Data Model Update
+1. Add `enabledFeatures` object to EmployerProfile:
    ```typescript
    enabledFeatures: {
-     hiring: boolean,      // jobs, training
-     events: boolean,      // conferences, pow wows
+     hiring: boolean,      // jobs & training
+     events: boolean,      // conferences & pow wows
      scholarships: boolean,
-     marketplace: boolean, // shop/products
-     streaming: boolean    // live streams
+     marketplace: boolean  // shop
    }
    ```
-3. Update registration to ask "What do you want to do on IOPPS?" with checkboxes
-4. Single profile form with all fields
+2. Add missing Vendor fields to EmployerProfile (tagline, category, nation, social links, etc.)
 
-#### Phase 2: Dashboard Refactor (Week 2-3)
-1. Conditionally render tabs based on `enabledFeatures`
-2. Merge Shop profile editing into main Profile tab
-3. Update Overview to only show relevant KPIs
-4. Clean up Quick Actions based on enabled features
+### Phase 2: Registration Update
+1. Replace role selector with feature checkboxes
+2. Create appropriate initial profile based on selections
+3. Redirect to relevant onboarding
 
-#### Phase 3: Onboarding Flow (Week 3)
-1. New user sees feature selection screen
-2. Guided setup based on selected features
-3. Easy way to enable new features later (Settings → Features)
+### Phase 3: Dashboard Refactor
+1. Create `useDashboardTabs()` hook that returns tabs based on `enabledFeatures`
+2. Update Overview to show only relevant KPIs
+3. Conditionally render Quick Actions
+4. Update navigation
 
-#### Phase 4: Data Migration (Week 4)
-1. Run migration for existing users
-2. Map Vendor data → EmployerProfile fields
-3. Handle edge cases (users with both profiles)
+### Phase 4: Profile Form Update
+1. Create sections that show/hide based on features
+2. Merge Vendor profile editing into main Profile tab
+3. Remove separate Shop profile editing
 
----
-
-## UI/UX Wireframes
-
-### New Registration Flow
-```
-Step 1: Create Account
-┌─────────────────────────────────────────┐
-│         Welcome to IOPPS                │
-│                                         │
-│  Organization Name: [________________]  │
-│  Email: [________________]              │
-│  Password: [________________]           │
-│                                         │
-│  What would you like to do? (select all)│
-│  ┌─────────────────────────────────┐   │
-│  │ ☐ Post Jobs & Training Programs │   │
-│  │ ☐ Host Events (Conferences, etc)│   │
-│  │ ☐ Offer Scholarships            │   │
-│  │ ☐ Sell Products/Services        │   │
-│  │ ☐ Live Stream Events            │   │
-│  └─────────────────────────────────┘   │
-│                                         │
-│  [Create Account]                       │
-└─────────────────────────────────────────┘
-```
-
-### New Dashboard (Unified)
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  IOPPS Organization Dashboard                                    │
-├─────────────────────────────────────────────────────────────────┤
-│  [Overview] [Jobs] [Events] [Shop] [Messages] [Billing] [Settings]│
-│                ↑       ↑       ↑                                 │
-│           (only if  (only if (only if                           │
-│            hiring)   events)  marketplace)                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Profile Strength: 85%                                          │
-│  [================----]                                          │
-│                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                        │
-│  │ 5 Active │ │ 2 Events │ │ 12 Prods │  ← Only shows          │
-│  │   Jobs   │ │  Posted  │ │ Listed   │    enabled features    │
-│  └──────────┘ └──────────┘ └──────────┘                        │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Settings → Enable Features
-```
-┌─────────────────────────────────────────┐
-│  Organization Features                   │
-│                                         │
-│  Active Features:                        │
-│  ✓ Jobs & Training     [Manage →]       │
-│  ✓ Events              [Manage →]       │
-│                                         │
-│  Available Features:                     │
-│  ○ Marketplace         [Enable →]       │
-│  ○ Scholarships        [Enable →]       │
-│  ○ Live Streaming      [Enable →]       │
-│                                         │
-└─────────────────────────────────────────┘
-```
+### Phase 5: Migration
+1. For existing users with Vendor data, set `marketplace: true`
+2. For existing employers without Vendor data, set based on activity
+3. Merge Vendor fields into EmployerProfile where applicable
 
 ---
 
-## Questions to Consider
+## Visual Mockups
 
-1. **Should marketplace (Shop) have its own subscription tier separate from job posting?**
-   - Currently both seem to have different billing flows
+### Registration Screen
+```
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│              Join IOPPS as an Organization              │
+│                                                         │
+│  Organization Name                                      │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ Red Pheasant First Nation                       │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  Email                                                  │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ contact@example.com                             │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  Password                                               │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ ••••••••••••                                    │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ─────────────────────────────────────────────────────  │
+│                                                         │
+│  What would you like to do on IOPPS?                   │
+│  Select all that apply - you can change this later     │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │ ☑ Post Jobs & Training Programs                 │   │
+│  │   Reach Indigenous talent across Canada         │   │
+│  ├─────────────────────────────────────────────────┤   │
+│  │ ☐ Host Events (Conferences, Pow Wows)          │   │
+│  │   Promote gatherings and cultural events        │   │
+│  ├─────────────────────────────────────────────────┤   │
+│  │ ☐ Offer Scholarships                           │   │
+│  │   Support Indigenous students and learners      │   │
+│  ├─────────────────────────────────────────────────┤   │
+│  │ ☑ Sell Products or Services                    │   │
+│  │   List on the Indigenous Marketplace            │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │            Create Organization Account          │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
 
-2. **Can one organization have multiple "brands"?**
-   - e.g., Main company + separate marketplace storefront name
+### Dashboard - Jobs + Shop Selected
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  IOPPS                                           [Notifications] [User] │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Organization Dashboard                                                 │
+│  Manage your opportunities and business                                 │
+│                                                                         │
+│  ┌─────────┬─────────────┬─────────────┬──────────┬─────────┬────────┐ │
+│  │Overview │Jobs&Training│    Shop     │Applications│Messages│Settings│ │
+│  └─────────┴─────────────┴─────────────┴──────────┴─────────┴────────┘ │
+│       ↑                        ↑                                        │
+│    (active)              (because they                                  │
+│                          enabled Shop)                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ Profile Strength: 85%  [████████████████░░░░]                   │   │
+│  │ Quick wins: Add banner image (+5%), Add contact email (+5%)     │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  HIRING                                    MARKETPLACE                  │
+│  ┌──────────────┐ ┌──────────────┐        ┌──────────────┐             │
+│  │   5          │ │   23         │        │   12         │             │
+│  │ Active Jobs  │ │ Applications │        │ Products     │             │
+│  │              │ │ 8 pending    │        │ Listed       │             │
+│  └──────────────┘ └──────────────┘        └──────────────┘             │
+│                                                                         │
+│  Quick Actions                                                          │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐          │
+│  │ 💼         │ │ 📦         │ │ 💬         │ │ ⚙️         │          │
+│  │ Post a Job │ │ Add Product│ │ Messages   │ │ Settings   │          │
+│  └────────────┘ └────────────┘ └────────────┘ └────────────┘          │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-3. **Should we keep separate public pages for employers vs vendors?**
-   - `/employers/[id]` shows job-focused profile
-   - `/marketplace/[slug]` shows shop-focused profile
+### Dashboard - Shop Only Selected
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  IOPPS                                           [Notifications] [User] │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Shop Dashboard                                                         │
+│  Manage your Indigenous business listing                                │
+│                                                                         │
+│  ┌─────────┬──────────┬──────────┬─────────┬────────┐                  │
+│  │Overview │ Products │ Messages │ Billing │Settings│                  │
+│  └─────────┴──────────┴──────────┴─────────┴────────┘                  │
+│                                                                         │
+│  ↑ Much simpler! Only 5 tabs instead of 8                              │
+│                                                                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                    │
+│  │   12         │ │   234        │ │ Saskatchewan │                    │
+│  │ Products     │ │ Profile      │ │   Region     │                    │
+│  │ Listed       │ │ Views        │ │              │                    │
+│  └──────────────┘ └──────────────┘ └──────────────┘                    │
+│                                                                         │
+│  Your Listing Preview                                                   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  [Banner Image]                                                  │   │
+│  │  ┌────┐                                                         │   │
+│  │  │Logo│  INDIGENOUS CRAFTS CO.                                  │   │
+│  │  └────┘  Handmade beadwork and traditional crafts               │   │
+│  │          Art & Crafts · Saskatchewan · Offers Shipping          │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  Quick Actions                                                          │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐                         │
+│  │ 📦         │ │ ✏️         │ │ 👁️         │                         │
+│  │Add Product │ │Edit Profile│ │View Public │                         │
+│  └────────────┘ └────────────┘ └────────────┘                         │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
-4. **Data migration strategy for existing users?**
-   - Some may have both employer AND vendor profiles with different data
+### Settings - Enable More Features
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Organization Settings                                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Features                                                               │
+│  Choose what you want to do on IOPPS                                   │
+│                                                                         │
+│  CURRENTLY ACTIVE                                                       │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ ✓ Sell Products or Services                      [Manage →]     │   │
+│  │   Your shop is live with 12 products                            │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  AVAILABLE TO ENABLE                                                    │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ ○ Post Jobs & Training Programs                  [Enable →]     │   │
+│  │   Reach Indigenous talent across Canada                         │   │
+│  │   Free to enable · Pay per job posting                          │   │
+│  ├─────────────────────────────────────────────────────────────────┤   │
+│  │ ○ Host Events (Conferences, Pow Wows)           [Enable →]     │   │
+│  │   Promote gatherings and cultural events                        │   │
+│  │   Free to enable and post                                       │   │
+│  ├─────────────────────────────────────────────────────────────────┤   │
+│  │ ○ Offer Scholarships                            [Enable →]     │   │
+│  │   Support Indigenous students and learners                      │   │
+│  │   Free to enable and post                                       │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ℹ️ Enabling a feature adds it to your dashboard. You can disable     │
+│     features anytime without losing your data.                         │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Next Steps
+## Questions for You
 
-1. **Decide on approach** - Review this plan and pick an option
-2. **Create detailed tasks** - Break down chosen option into specific dev tasks
-3. **Design mockups** - Create detailed UI mockups for user approval
-4. **Implementation** - Build incrementally with frequent feedback
+1. **Should "Events" be split into "Conferences" and "Pow Wows" as separate features?**
+   - Or keep them combined since they share similar data?
+
+2. **For the marketplace subscription, should it be separate from job posting credits?**
+   - Current: Separate billing flows
+   - Proposed: Keep separate OR bundle into tiers?
+
+3. **Should we keep separate public profile pages?**
+   - `/employers/[id]` - Shows jobs, about company
+   - `/marketplace/[slug]` - Shows products, shop info
+   - Or unify into `/organizations/[slug]` with sections?
+
+4. **Migration strategy for existing users?**
+   - Auto-detect based on what they've posted?
+   - Ask them to select features on next login?
 
 ---
 
 *Created: 2025-12-20*
-*Author: Claude (AI Assistant)*
+*Updated: 2025-12-20*
