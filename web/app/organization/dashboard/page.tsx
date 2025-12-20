@@ -25,7 +25,11 @@ import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
 import MessagesTab from "./MessagesTab";
+
+// Vendor-specific tabs
 import VendorOverviewTab from "./VendorOverviewTab";
+import ProductsTab from "./ProductsTab";
+import ShopProfileTab from "./ShopProfileTab";
 
 // Storage key for mode persistence
 const MODE_STORAGE_KEY = "dashboard_active_mode";
@@ -215,10 +219,12 @@ function DashboardContent() {
           return <VendorOverviewTab onNavigate={handleSectionChange} />;
         case "products":
         case "services":
+          return <ProductsTab />;
         case "inquiries":
-        case "shop-profile":
-          // ShopTab handles products, services, inquiries, and shop profile
+          // TODO: Create dedicated InquiriesTab
           return <ShopTab />;
+        case "shop-profile":
+          return <ShopProfileTab onNavigate={handleSectionChange} />;
         // Shared sections accessible in vendor mode
         case "messages":
           return <MessagesTab />;
