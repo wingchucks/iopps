@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
             success: true,
             message: `Password reset email sent to ${email}`,
             email,
-            resetLink, // Return link so admin can also share directly if needed
+            // Note: resetLink intentionally not returned for security - only sent via email
         });
     } catch (error) {
         console.error("Error sending password reset:", error);

@@ -8,20 +8,24 @@ export const runtime = "nodejs";
 // Verify an unsubscribe token
 function verifyUnsubscribeToken(token: string, email: string): string | null {
   try {
+    const secret = process.env.UNSUBSCRIBE_SECRET;
+    if (!secret) {
+      console.error("UNSUBSCRIBE_SECRET environment variable is not configured");
+      return null;
+    }
+
     const decoded = Buffer.from(token, "base64url").toString();
     const [userId, signature] = decoded.split(":");
 
     if (!userId || !signature) return null;
 
     // Verify signature (check current day and previous day for timezone edge cases)
-    const secret = process.env.UNSUBSCRIBE_SECRET || process.env.CRON_SECRET || "fallback-secret";
-
     for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
       const dayTimestamp = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) - dayOffset;
       const data = `${userId}:${email}:${dayTimestamp}`;
       const hmac = crypto.createHmac("sha256", secret);
       hmac.update(data);
-      const expectedSignature = hmac.digest("hex").substring(0, 16);
+      const expectedSignature = hmac.digest("hex");
 
       if (signature === expectedSignature) {
         return userId;

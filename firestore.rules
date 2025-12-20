@@ -243,8 +243,8 @@ service cloud.firestore {
     // ===========================================================================
     match /powwows/{powwowId} {
       allow read: if true;
-      // Restrict creation to employers (or admins)
-      allow create: if isEmployer() || isAdminOrModerator();
+      // Restrict creation to employers (or admins), must set their own employerId
+      allow create: if (isEmployer() && request.resource.data.employerId == request.auth.uid) || isAdminOrModerator();
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
       allow delete: if isAdminOrModerator();
     }
