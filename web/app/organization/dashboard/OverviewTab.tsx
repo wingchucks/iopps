@@ -162,13 +162,12 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                 <h3 className="text-xl font-bold text-white">{profile.organizationName || "Your Organization"}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${
-                      profile.status === "approved"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${profile.status === "approved"
                         ? "bg-emerald-500"
                         : profile.status === "pending"
                           ? "bg-amber-500"
                           : "bg-slate-500"
-                    }`}
+                      }`}
                   >
                     {profile.status === "approved" ? "Active" : profile.status === "pending" ? "Pending" : "Draft"}
                   </span>
@@ -296,6 +295,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                 </Link>
               </div>
             )}
+
           </div>
         </div>
       </div>
@@ -336,13 +336,12 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      app.status === "submitted" || app.status === "reviewed"
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${app.status === "submitted" || app.status === "reviewed"
                         ? "bg-blue-500/20 text-blue-300"
                         : app.status === "hired" || app.status === "shortlisted"
                           ? "bg-green-500/20 text-green-300"
                           : "bg-slate-500/20 text-slate-400"
-                    }`}
+                      }`}
                   >
                     {app.status || "submitted"}
                   </span>
