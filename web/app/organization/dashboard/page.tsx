@@ -24,6 +24,7 @@ import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
 import MessagesTab from "./MessagesTab";
+import TrainingTab from "./TrainingTab";
 
 // Unified profile tab (combines employer and vendor profiles)
 import UnifiedProfileTab from "./UnifiedProfileTab";
@@ -50,7 +51,7 @@ const LEGACY_TAB_MAP: Record<string, { mode: DashboardMode; section: DashboardSe
 
 // Valid sections for each mode (for URL validation)
 const VALID_SECTIONS: Record<DashboardMode, DashboardSection[]> = {
-  employer: ["overview", "jobs", "applications", "videos", "messages", "profile", "billing"],
+  employer: ["overview", "jobs", "training", "applications", "videos", "messages", "profile", "billing"],
   vendor: ["overview", "products", "services", "inquiries", "messages", "profile", "billing"],
 };
 
@@ -255,6 +256,8 @@ function DashboardContent() {
           return <OverviewTab onNavigate={handleSectionChange} />;
         case "jobs":
           return <OpportunitiesTab />;
+        case "training":
+          return <TrainingTab />;
         case "applications":
           return <ApplicationsTab />;
         case "videos":
@@ -288,6 +291,7 @@ function DashboardContent() {
     const employerSections: Record<string, { title: string; description: string }> = {
       overview: { title: "Overview", description: "Track your hiring activity and key metrics" },
       jobs: { title: "Job Postings", description: "Manage your job listings and opportunities" },
+      training: { title: "Training Programs", description: "Manage your training programs and courses" },
       applications: { title: "Applications", description: "Review and manage candidate applications" },
       videos: { title: "Interview Videos", description: "Review video responses from candidates" },
     };
