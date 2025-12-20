@@ -66,14 +66,13 @@ export default function MobileBottomNav({
   // Secondary items in the more menu
   const employerMoreItems = [
     { id: 'videos' as const, label: 'Interview Videos', icon: VideoCameraIcon },
-    { id: 'profile' as const, label: 'Organization Profile', icon: UserCircleIcon },
+    { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
     { id: 'billing' as const, label: 'Billing', icon: CreditCardIcon },
   ];
 
   const vendorMoreItems = [
     { id: 'services' as const, label: 'Services', icon: WrenchIcon },
-    { id: 'shop-profile' as const, label: 'Shop Profile', icon: ShoppingBagIcon },
-    { id: 'profile' as const, label: 'Organization Profile', icon: UserCircleIcon },
+    { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
     { id: 'billing' as const, label: 'Billing', icon: CreditCardIcon },
   ];
 
