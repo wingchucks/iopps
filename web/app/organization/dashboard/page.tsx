@@ -177,7 +177,7 @@ function DashboardContent() {
 
   // Badge counts
   const badges = {
-    applications: applications.filter((a) => a.status === "pending").length,
+    applications: applications.filter((a) => a.status === "submitted").length,
     inquiries: 0, // TODO: Implement vendor inquiries count
     messages: unreadMessages,
   };
