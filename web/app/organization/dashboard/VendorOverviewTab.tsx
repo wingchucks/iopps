@@ -14,11 +14,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/components/AuthProvider';
 import { getVendorByUserId, getVendorProducts, validateVendorForPublish } from '@/lib/firebase/shop';
-import { StatCard } from '@/components/organization/dashboard';
+import { StatCard, type DashboardSection } from '@/components/organization/dashboard';
 import type { Vendor, VendorProduct } from '@/lib/types';
 
 interface VendorOverviewTabProps {
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: DashboardSection) => void;
 }
 
 /**
