@@ -25,6 +25,7 @@ import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
 import MessagesTab from "./MessagesTab";
+import VendorOverviewTab from "./VendorOverviewTab";
 
 // Storage key for mode persistence
 const MODE_STORAGE_KEY = "dashboard_active_mode";
@@ -211,12 +212,12 @@ function DashboardContent() {
     if (mode === "vendor") {
       switch (activeSection) {
         case "overview":
+          return <VendorOverviewTab onNavigate={handleSectionChange} />;
         case "products":
         case "services":
         case "inquiries":
         case "shop-profile":
-          // For now, render ShopTab for all vendor sections
-          // Phase 3 will split these into separate components
+          // ShopTab handles products, services, inquiries, and shop profile
           return <ShopTab />;
         // Shared sections accessible in vendor mode
         case "messages":
