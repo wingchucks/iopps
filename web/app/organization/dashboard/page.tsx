@@ -20,16 +20,17 @@ import {
 import OverviewTab from "./OverviewTab";
 import OpportunitiesTab from "./OpportunitiesTab";
 import ApplicationsTab from "./ApplicationsTab";
-import ProfileTab from "./ProfileTab";
 import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
 import MessagesTab from "./MessagesTab";
 
+// Unified profile tab (combines employer and vendor profiles)
+import UnifiedProfileTab from "./UnifiedProfileTab";
+
 // Vendor-specific tabs
 import VendorOverviewTab from "./VendorOverviewTab";
 import ProductsTab from "./ProductsTab";
-import ShopProfileTab from "./ShopProfileTab";
 
 // Storage key for mode persistence
 const MODE_STORAGE_KEY = "dashboard_active_mode";
@@ -50,7 +51,7 @@ const LEGACY_TAB_MAP: Record<string, { mode: DashboardMode; section: DashboardSe
 // Valid sections for each mode (for URL validation)
 const VALID_SECTIONS: Record<DashboardMode, DashboardSection[]> = {
   employer: ["overview", "jobs", "applications", "videos", "messages", "profile", "billing"],
-  vendor: ["overview", "products", "services", "inquiries", "shop-profile", "messages", "profile", "billing"],
+  vendor: ["overview", "products", "services", "inquiries", "messages", "profile", "billing"],
 };
 
 function DashboardContent() {
@@ -237,6 +238,16 @@ function DashboardContent() {
 
   // Render content based on mode and section
   const renderContent = () => {
+    // Shared sections (same component for both modes)
+    switch (activeSection) {
+      case "messages":
+        return <MessagesTab />;
+      case "billing":
+        return <BillingTab />;
+      case "profile":
+        return <UnifiedProfileTab mode={mode} onNavigate={handleSectionChange} />;
+    }
+
     // Employer mode sections
     if (mode === "employer") {
       switch (activeSection) {
@@ -248,13 +259,6 @@ function DashboardContent() {
           return <ApplicationsTab />;
         case "videos":
           return <VideosTab />;
-        // Shared sections accessible in employer mode
-        case "messages":
-          return <MessagesTab />;
-        case "billing":
-          return <BillingTab />;
-        case "profile":
-          return <ProfileTab />;
         default:
           return <OverviewTab onNavigate={handleSectionChange} />;
       }
@@ -271,17 +275,8 @@ function DashboardContent() {
         case "inquiries":
           // TODO: Create dedicated InquiriesTab
           return <ShopTab />;
-        case "shop-profile":
-          return <ShopProfileTab onNavigate={handleSectionChange} />;
-        // Shared sections accessible in vendor mode
-        case "messages":
-          return <MessagesTab />;
-        case "billing":
-          return <BillingTab />;
-        case "profile":
-          return <ProfileTab />;
         default:
-          return <ShopTab />;
+          return <VendorOverviewTab onNavigate={handleSectionChange} />;
       }
     }
 
@@ -302,13 +297,12 @@ function DashboardContent() {
       products: { title: "Products", description: "Manage your product listings" },
       services: { title: "Services", description: "Manage your service offerings" },
       inquiries: { title: "Inquiries", description: "Respond to customer inquiries" },
-      "shop-profile": { title: "Shop Profile", description: "Update your shop information" },
     };
 
     const sharedSections: Record<string, { title: string; description: string }> = {
       messages: { title: "Messages", description: "View and respond to messages" },
       billing: { title: "Billing & Subscription", description: "Manage your subscription and payments" },
-      profile: { title: "Organization Profile", description: "Update your organization information" },
+      profile: { title: "Profile", description: "Manage your organization and business profile" },
     };
 
     const sections = mode === "employer" ? employerSections : vendorSections;

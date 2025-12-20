@@ -20,7 +20,7 @@ import type { EmployerProfile } from '@/lib/types';
 export type DashboardMode = 'employer' | 'vendor';
 
 export type EmployerSection = 'overview' | 'jobs' | 'applications' | 'videos';
-export type VendorSection = 'overview' | 'products' | 'services' | 'inquiries' | 'shop-profile';
+export type VendorSection = 'overview' | 'products' | 'services' | 'inquiries';
 export type SharedSection = 'messages' | 'profile' | 'billing';
 export type DashboardSection = EmployerSection | VendorSection | SharedSection;
 
@@ -77,13 +77,12 @@ export default function DashboardSidebar({
     { id: 'products' as const, label: 'Products', icon: CubeIcon },
     { id: 'services' as const, label: 'Services', icon: WrenchIcon },
     { id: 'inquiries' as const, label: 'Inquiries', icon: ChatBubbleLeftRightIcon, badge: badges.inquiries },
-    { id: 'shop-profile' as const, label: 'Shop Profile', icon: ShoppingBagIcon },
   ];
 
   // Shared account navigation
   const sharedNav = [
     { id: 'messages' as const, label: 'Messages', icon: ChatBubbleLeftRightIcon, badge: badges.messages },
-    { id: 'profile' as const, label: 'Organization Profile', icon: UserCircleIcon },
+    { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
     { id: 'billing' as const, label: 'Billing & Subscription', icon: CreditCardIcon },
   ];
 

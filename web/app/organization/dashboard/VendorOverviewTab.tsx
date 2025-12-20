@@ -10,7 +10,6 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/components/AuthProvider';
 import { getVendorByUserId, getVendorProducts, validateVendorForPublish } from '@/lib/firebase/shop';
@@ -73,10 +72,10 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
         <CubeIcon className="mx-auto h-12 w-12 text-slate-600" />
         <h3 className="mt-4 text-lg font-semibold text-white">No Shop Profile Yet</h3>
         <p className="mt-2 text-slate-400">
-          Create your shop profile to start selling on Shop Indigenous.
+          Create your shop profile to start selling on the Indigenous Marketplace.
         </p>
         <button
-          onClick={() => onNavigate?.('shop-profile')}
+          onClick={() => onNavigate?.('profile')}
           className="mt-4 px-6 py-2 rounded-lg bg-accent text-slate-950 font-semibold hover:bg-accent-hover transition-colors"
         >
           Create Shop Profile
@@ -120,41 +119,32 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
 
       {/* Shop Status Card */}
       <div className="rounded-2xl bg-card border border-card-border p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            {vendor.logoUrl ? (
-              <Image
-                src={vendor.logoUrl}
-                alt={vendor.businessName}
-                width={64}
-                height={64}
-                className="rounded-xl object-cover"
-              />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-2xl font-bold text-white">
-                {vendor.businessName?.charAt(0) || 'S'}
-              </div>
-            )}
-            <div>
-              <h3 className="text-xl font-bold text-white">{vendor.businessName || 'Your Shop'}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${statusColors[vendor.status]}`}>
-                  <StatusIcon className="h-3.5 w-3.5" />
-                  {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
-                </span>
-                {vendor.category && (
-                  <span className="text-sm text-slate-500">{vendor.category}</span>
-                )}
-              </div>
+        <div className="flex items-center gap-4">
+          {vendor.logoUrl ? (
+            <Image
+              src={vendor.logoUrl}
+              alt={vendor.businessName}
+              width={64}
+              height={64}
+              className="rounded-xl object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-2xl font-bold text-white">
+              {vendor.businessName?.charAt(0) || 'S'}
+            </div>
+          )}
+          <div>
+            <h3 className="text-xl font-bold text-white">{vendor.businessName || 'Your Shop'}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${statusColors[vendor.status]}`}>
+                <StatusIcon className="h-3.5 w-3.5" />
+                {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
+              </span>
+              {vendor.category && (
+                <span className="text-sm text-slate-500">{vendor.category}</span>
+              )}
             </div>
           </div>
-          <button
-            onClick={() => onNavigate?.('shop-profile')}
-            className="flex items-center gap-1.5 text-sm text-accent hover:text-accent-hover transition-colors"
-          >
-            <PencilSquareIcon className="h-4 w-4" />
-            Edit Profile
-          </button>
         </div>
       </div>
 
@@ -176,7 +166,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
                 ))}
               </ul>
               <button
-                onClick={() => onNavigate?.('shop-profile')}
+                onClick={() => onNavigate?.('profile')}
                 className="mt-4 inline-flex rounded-xl bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/30"
               >
                 Complete profile now
@@ -267,7 +257,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <button
           onClick={() => onNavigate?.('products')}
           className="p-4 rounded-xl bg-card border border-card-border hover:border-accent/50 transition-colors text-left"
@@ -275,14 +265,6 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
           <CubeIcon className="h-6 w-6 text-accent mb-2" />
           <h4 className="font-medium text-white">Manage Products</h4>
           <p className="text-sm text-slate-400">Add or edit your products</p>
-        </button>
-        <button
-          onClick={() => onNavigate?.('shop-profile')}
-          className="p-4 rounded-xl bg-card border border-card-border hover:border-accent/50 transition-colors text-left"
-        >
-          <PencilSquareIcon className="h-6 w-6 text-accent mb-2" />
-          <h4 className="font-medium text-white">Edit Shop Profile</h4>
-          <p className="text-sm text-slate-400">Update your business info</p>
         </button>
       </div>
     </div>
