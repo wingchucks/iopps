@@ -163,14 +163,14 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${
-                      profile.status === "active"
+                      profile.status === "approved"
                         ? "bg-emerald-500"
                         : profile.status === "pending"
                           ? "bg-amber-500"
                           : "bg-slate-500"
                     }`}
                   >
-                    {profile.status === "active" ? "Active" : profile.status === "pending" ? "Pending" : "Draft"}
+                    {profile.status === "approved" ? "Active" : profile.status === "pending" ? "Pending" : "Draft"}
                   </span>
                   {profile.location && <span className="text-sm text-slate-500">{profile.location}</span>}
                 </div>
