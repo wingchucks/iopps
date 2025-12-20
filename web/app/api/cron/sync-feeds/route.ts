@@ -9,6 +9,7 @@ import {
   extractLocationFromDescription,
   cleanText,
 } from "@/lib/job-description-parser";
+import { validateExternalUrl } from "@/lib/url-validator";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -235,6 +236,20 @@ async function syncFeed(feed: RSSFeedConfig): Promise<{
   error?: string;
 }> {
   try {
+    // SSRF protection: Validate the feed URL before fetching
+    const urlValidation = validateExternalUrl(feed.feedUrl);
+    if (!urlValidation.isValid) {
+      console.warn(`[SECURITY] Blocked SSRF attempt for feed ${feed.id}: ${urlValidation.error}`);
+      return {
+        success: false,
+        jobsImported: 0,
+        jobsUpdated: 0,
+        jobsExpired: 0,
+        jobsSkipped: 0,
+        error: `Invalid feed URL: ${urlValidation.error}`,
+      };
+    }
+
     const response = await fetch(feed.feedUrl, {
       headers: {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
