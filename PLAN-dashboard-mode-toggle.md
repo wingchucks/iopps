@@ -2,7 +2,16 @@
 
 ## Executive Summary
 
-This plan outlines how to implement the simplified dashboard design from the mockup, which introduces a **sidebar-based navigation with an Employer/Vendor toggle** to replace the current horizontal tab navigation.
+This plan outlines how to implement the simplified dashboard design from the mockup, which introduces a **sidebar-based navigation with a binary Employer/Vendor toggle** to replace the current horizontal tab navigation.
+
+**Design Reference**: `EnhancedDashboard.tsx` mockup component (binary toggle version)
+
+**Key Design Decisions** (from refined mockup):
+- Binary toggle switch (click to flip between modes)
+- localStorage persistence for mode preference
+- Lucide icons throughout
+- Glassmorphic UI with IOPPS brand colors
+- Blue accent for Employer mode, Teal accent for Vendor mode
 
 ---
 
@@ -236,30 +245,165 @@ The existing data model already supports this redesign:
 
 ---
 
-## Open Questions for Discussion
+## Design Decisions (Resolved from Mockup)
 
-1. **Enable/Disable Modes**: Should users be able to disable a mode they don't use? (mockup shows checkboxes)
-   - If yes: Where is this preference stored? User profile or localStorage?
-   - If no: Both modes always available to employers
+1. **Binary Toggle** (not checkboxes): Users simply click to flip between modes. Both modes always available to employers.
 
-2. **Vendor-Only Users**: Can someone be a vendor without being an employer?
+2. **Mode Persistence**: localStorage (`dashboard_active_mode`) - no URL params for mode itself.
+
+3. **Icon System**: Lucide React icons throughout (already used elsewhere in codebase).
+
+4. **Color Scheme**:
+   - Employer Mode: Blue (`#3B82F6` / `blue-600`)
+   - Vendor Mode: Teal (`#14B8A6` / accent color)
+   - Shared Account: Teal accent
+
+---
+
+## Component Mapping (Mockup → Codebase)
+
+### From EnhancedDashboard.tsx Mockup
+
+| Mockup Element | Target Location | Notes |
+|----------------|-----------------|-------|
+| `EnhancedDashboard` | `/app/organization/dashboard/page.tsx` | Complete rewrite |
+| Sidebar section | `/components/organization/DashboardSidebar.tsx` | New component |
+| Binary toggle | Part of `DashboardSidebar.tsx` | Inline, not separate |
+| `SidebarItem` | `/components/organization/SidebarItem.tsx` | Reusable nav item |
+| `StatCard` | `/components/organization/StatCard.tsx` | New component |
+| Background glows | Already in `globals.css` | Matches existing |
+
+### Existing Tabs → New Sections
+
+| Current Tab | New Location | Mode |
+|-------------|--------------|------|
+| `OverviewTab.tsx` | Keep as `EmployerOverviewTab.tsx` | Employer |
+| `OpportunitiesTab.tsx` | Keep, rename to `JobsTab.tsx` | Employer |
+| `ApplicationsTab.tsx` | Keep as-is | Employer |
+| `VideosTab.tsx` | Keep as-is | Employer |
+| `ShopTab.tsx` → Overview | `VendorOverviewTab.tsx` | Vendor |
+| `ShopTab.tsx` → Products | `ProductsTab.tsx` | Vendor |
+| `ShopTab.tsx` → Profile | `ShopProfileTab.tsx` | Vendor |
+| `MessagesTab.tsx` | Keep as-is | Shared |
+| `BillingTab.tsx` | Keep as-is | Shared |
+| `ProfileTab.tsx` | Keep as-is | Shared |
+
+---
+
+## Remaining Questions
+
+1. **Vendor-Only Users**: Can someone be a vendor without being an employer?
    - Current: All employers get draft vendor profile
-   - Future: Pure vendor accounts?
+   - Future consideration: Pure vendor accounts?
 
-3. **Mobile Navigation**: Sidebar drawer or bottom tab bar?
-   - Drawer: More consistent with desktop
-   - Bottom tabs: More native mobile feel
+2. **Mobile Navigation**: The mockup is desktop-focused. Options:
+   - Sidebar drawer (hamburger menu)
+   - Bottom tab bar
+   - Full-page mode selector
 
-4. **Analytics Section**: The shared nav in mockup shows "Analytics" - is this a new feature or existing?
-   - Currently no dedicated analytics tab
-   - Could aggregate stats from both modes
+3. **Shop Performance Tab**: Mockup shows "Shop Performance" in vendor nav - is this separate from Overview stats?
+
+---
+
+## Detailed Integration Analysis
+
+### ShopTab Decomposition
+
+The current `ShopTab.tsx` has 4 sub-tabs that need to be extracted:
+
+```
+ShopTab (current)
+├── overview    → VendorOverviewTab.tsx (new)
+├── profile     → ShopProfileTab.tsx (new)
+├── products    → ProductsTab.tsx (new)
+└── subscription → VendorBillingTab.tsx (new, or merge into BillingTab)
+```
+
+**Shared State to Extract**:
+- `vendor` state (Vendor profile)
+- `products` state (VendorProduct[])
+- `formData` for profile editing
+- Image upload handlers
+
+**Recommendation**: Create a `VendorContext.tsx` provider to share vendor state across tabs.
+
+### OverviewTab Enhancement
+
+Current `OverviewTab.tsx` loads:
+- Employer profile
+- Jobs list
+- Applications list
+- Conferences
+- Pow wows
+- Unread message count
+
+**Changes needed**:
+1. Rename to `EmployerOverviewTab.tsx`
+2. Update stats to match mockup (Active Jobs, Applications, Job Views, Interviews)
+3. Add "Recent Applications" list component
+
+### New VendorOverviewTab
+
+**Data to load**:
+- Vendor profile (from `getVendorByUserId`)
+- Products list (from `getVendorProducts`)
+- Shop views (need new field or analytics)
+- Inquiries count (need to define - messages to vendor?)
+
+**Stats to display**:
+- Products count
+- Services count (products with type='service')
+- Shop views
+- Inquiries
+
+### State Architecture
+
+```typescript
+// New context for dashboard state
+interface DashboardState {
+  mode: 'employer' | 'vendor';
+  setMode: (mode: 'employer' | 'vendor') => void;
+  activeSection: string;
+  setActiveSection: (section: string) => void;
+
+  // Employer data
+  employerProfile: EmployerProfile | null;
+  jobs: JobPosting[];
+  applications: JobApplication[];
+
+  // Vendor data
+  vendor: Vendor | null;
+  products: VendorProduct[];
+}
+```
+
+### URL Structure
+
+**Current**: `/organization/dashboard?tab=shop`
+**New**: `/organization/dashboard?section=products`
+
+Mode stored in localStorage, section in URL for deep linking.
+
+### Event System
+
+The existing `switchTab` custom event needs to be updated:
+
+```typescript
+// Old
+window.dispatchEvent(new CustomEvent('switchTab', { detail: { tab: 'shop' } }));
+
+// New
+window.dispatchEvent(new CustomEvent('switchSection', {
+  detail: { mode: 'vendor', section: 'products' }
+}));
+```
 
 ---
 
 ## Estimated Scope
 
-- **Files to create**: ~10 new components/pages
-- **Files to modify**: ~8 existing files
+- **Files to create**: ~8 new components/pages
+- **Files to modify**: ~6 existing files
 - **Data model changes**: None
 - **API changes**: None
 - **Breaking changes**: None (backwards compatible)
