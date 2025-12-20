@@ -1,19 +1,39 @@
 'use client';
 
 import { ReactNode } from 'react';
+import MobileBottomNav from './MobileBottomNav';
+import type { DashboardMode, DashboardSection } from './DashboardSidebar';
 
 interface DashboardLayoutProps {
   sidebar: ReactNode;
   children: ReactNode;
+  // Mobile nav props
+  mode: DashboardMode;
+  activeSection: DashboardSection;
+  onModeChange: (mode: DashboardMode) => void;
+  onSectionChange: (section: DashboardSection) => void;
+  badges?: {
+    applications?: number;
+    inquiries?: number;
+    messages?: number;
+  };
 }
 
 /**
  * DashboardLayout - Grid layout with sidebar + main content
  *
  * Desktop: 280px sidebar + flexible content area
- * Mobile: Full-width content with bottom tab bar (Phase 5)
+ * Mobile: Full-width content with bottom tab bar
  */
-export default function DashboardLayout({ sidebar, children }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  sidebar,
+  children,
+  mode,
+  activeSection,
+  onModeChange,
+  onSectionChange,
+  badges,
+}: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-accent/30">
       {/* Background Glows - matches globals.css radial gradients */}
@@ -23,7 +43,7 @@ export default function DashboardLayout({ sidebar, children }: DashboardLayoutPr
       </div>
 
       {/* Main Layout Container */}
-      <div className="relative max-w-[1600px] mx-auto flex min-h-screen gap-6 p-6">
+      <div className="relative max-w-[1600px] mx-auto flex min-h-screen gap-6 p-4 md:p-6 pb-20 md:pb-6">
         {/* Sidebar - Hidden on mobile, shown on desktop */}
         <aside className="hidden md:flex w-72 flex-col gap-6 flex-shrink-0">
           <div className="sticky top-6">
@@ -37,12 +57,14 @@ export default function DashboardLayout({ sidebar, children }: DashboardLayoutPr
         </main>
       </div>
 
-      {/* Mobile Bottom Tab Bar - Placeholder for Phase 5 */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#08090C] border-t border-slate-800/60 px-4 py-2 z-50">
-        <div className="flex items-center justify-around">
-          <span className="text-xs text-slate-500">Mobile nav coming in Phase 5</span>
-        </div>
-      </div>
+      {/* Mobile Bottom Tab Bar */}
+      <MobileBottomNav
+        mode={mode}
+        activeSection={activeSection}
+        onModeChange={onModeChange}
+        onSectionChange={onSectionChange}
+        badges={badges}
+      />
     </div>
   );
 }

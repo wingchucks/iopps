@@ -281,6 +281,11 @@ function DashboardContent() {
           badges={badges}
         />
       }
+      mode={mode}
+      activeSection={activeSection}
+      onModeChange={handleModeChange}
+      onSectionChange={handleSectionChange}
+      badges={badges}
     >
       {/* Page Header */}
       <header className="flex items-center justify-between mb-8 sticky top-0 bg-slate-950/20 backdrop-blur-lg p-2 -mx-2 z-10 rounded-xl">
