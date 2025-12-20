@@ -5,18 +5,37 @@ import { ComponentType, SVGProps } from 'react';
 // Heroicon component type
 type HeroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
+type ColorVariant = 'employer' | 'vendor' | 'shared';
+
 interface SidebarItemProps {
   icon: HeroIcon;
   label: string;
   active?: boolean;
   badge?: number;
   onClick?: () => void;
+  colorVariant?: ColorVariant;
 }
+
+// Color classes for each variant
+const colorClasses: Record<ColorVariant, { active: string; badge: string }> = {
+  employer: {
+    active: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    badge: 'bg-blue-500 text-white',
+  },
+  vendor: {
+    active: 'bg-accent/10 text-accent border border-accent/20',
+    badge: 'bg-accent text-slate-950',
+  },
+  shared: {
+    active: 'bg-accent/10 text-accent border border-accent/20',
+    badge: 'bg-accent text-slate-950',
+  },
+};
 
 /**
  * SidebarItem - Reusable navigation item for dashboard sidebar
  *
- * Supports active state, badge counts, and click handling
+ * Supports active state, badge counts, color variants, and click handling
  */
 export default function SidebarItem({
   icon: Icon,
@@ -24,7 +43,10 @@ export default function SidebarItem({
   active = false,
   badge = 0,
   onClick,
+  colorVariant = 'shared',
 }: SidebarItemProps) {
+  const colors = colorClasses[colorVariant];
+
   return (
     <button
       onClick={onClick}
@@ -32,7 +54,7 @@ export default function SidebarItem({
         flex items-center justify-between w-full px-4 py-3 rounded-xl
         transition-all cursor-pointer mb-1 text-left
         ${active
-          ? 'bg-accent/10 text-accent border border-accent/20'
+          ? colors.active
           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
         }
       `}
@@ -42,7 +64,7 @@ export default function SidebarItem({
         <span className="text-sm font-medium">{label}</span>
       </div>
       {badge > 0 && (
-        <span className="bg-accent text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+        <span className={`${colors.badge} text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center`}>
           {badge}
         </span>
       )}
