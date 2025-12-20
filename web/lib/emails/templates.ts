@@ -6,11 +6,15 @@ const BRAND_COLOR = "#14B8A6";
 
 // Generate a secure unsubscribe token for a user
 export function generateUnsubscribeToken(userId: string, email: string): string {
-  const secret = process.env.UNSUBSCRIBE_SECRET || process.env.CRON_SECRET || "fallback-secret";
-  const data = `${userId}:${email}:${Math.floor(Date.now() / (1000 * 60 * 60 * 24))}`; // Valid for ~24 hours based on day
+  const secret = process.env.UNSUBSCRIBE_SECRET;
+  if (!secret) {
+    throw new Error("UNSUBSCRIBE_SECRET environment variable is required");
+  }
+  const dayTimestamp = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+  const data = `${userId}:${email}:${dayTimestamp}`;
   const hmac = crypto.createHmac("sha256", secret);
   hmac.update(data);
-  const signature = hmac.digest("hex").substring(0, 16);
+  const signature = hmac.digest("hex"); // Full signature for better security
   return Buffer.from(`${userId}:${signature}`).toString("base64url");
 }
 

@@ -10,6 +10,7 @@ import JobVideoSection from "@/components/jobs/JobVideoSection";
 import ShareButtons from "@/components/ShareButtons";
 import { getMemberProfile, getEmployerProfile, incrementJobViews } from "@/lib/firestore";
 import type { JobPosting, MemberProfile, EmployerProfile } from "@/lib/types";
+import { sanitizeHtml } from "@/lib/sanitize";
 import QuickApplyButton from "@/components/QuickApplyButton";
 import JobHeader from "@/components/jobs/JobHeader";
 import JobSidebar from "@/components/jobs/JobSidebar";
@@ -115,7 +116,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
   return (
     <PageShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <JobHeader job={job} />
+        <JobHeader job={job} employerId={job.employerId} />
 
         {/* Share Section */}
         <div className="mt-4 rounded-xl border border-slate-800 bg-[#08090C] p-4">
@@ -136,7 +137,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
               <h2 className="text-xl font-bold text-slate-200">Job Description</h2>
               <div
                 className="mt-4 prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-p:leading-relaxed prose-headings:text-slate-200 prose-strong:text-slate-200 prose-ul:text-slate-300 prose-li:text-slate-300"
-                dangerouslySetInnerHTML={{ __html: job.description || '' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description || '') }}
               />
 
               {job.requirements && (

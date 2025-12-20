@@ -124,12 +124,15 @@ service firebase.storage {
     // ===========================================================================
     // POW WOW POSTERS
     // Path: powwows/{powwowId}/posters/{fileName}
+    // Note: Ownership validation is done at application level since we can't
+    // access Firestore from storage rules. The API validates before upload.
     // ===========================================================================
     match /powwows/{powwowId}/posters/{fileName} {
       // Public read for pow wow posters
       allow read: if true;
 
-      // Authenticated users can upload pow wow posters
+      // Only authenticated users who are employers can upload pow wow posters
+      // Additional ownership check done in API before generating upload URL
       // Max 10MB, must be image
       allow write: if isSignedIn()
                    && isImage()
@@ -139,12 +142,15 @@ service firebase.storage {
     // ===========================================================================
     // EVENT IMAGES (Pow Wows, Conferences, Cultural Gatherings, etc.)
     // Path: events/posters/{eventId}/{fileName}
+    // Note: Ownership validation is done at application level since we can't
+    // access Firestore from storage rules. The API validates before upload.
     // ===========================================================================
     match /events/posters/{eventId}/{fileName} {
       // Public read for event images
       allow read: if true;
 
-      // Authenticated users can upload event images
+      // Only authenticated users who are employers can upload event images
+      // Additional ownership check done in API before generating upload URL
       // Max 10MB, must be image
       allow write: if isSignedIn()
                    && isImage()

@@ -63,8 +63,8 @@ export default function MarketplacePage() {
 
       <PageShell>
 
-      {/* Three Cards Section */}
-      <div className="grid gap-6 md:grid-cols-3 mb-12">
+      {/* Two Cards Section - Products & Services */}
+      <div className="grid gap-6 md:grid-cols-2 mb-6">
         {/* Browse Products Card */}
         <Link
           href="/marketplace/products"
@@ -73,47 +73,41 @@ export default function MarketplacePage() {
           <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
             <span className="text-2xl">🛍️</span>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Browse Products</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Shop Products</h2>
           <p className="text-sm text-slate-400 leading-relaxed mb-4">
             Shop authentic Indigenous-made goods — art, clothing, jewelry, food, and more.
           </p>
           <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Shop Now →
+            Browse Products →
           </span>
         </Link>
 
-        {/* Browse Services Card */}
+        {/* Hire Services Card */}
         <Link
           href="/marketplace/services"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-indigo-500/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/10"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20">
             <span className="text-2xl">💼</span>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Browse Services</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Hire Services</h2>
           <p className="text-sm text-slate-400 leading-relaxed mb-4">
             Find Indigenous professionals — legal, accounting, construction, tech, and more.
           </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Find Services →
+          <span className="text-sm font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+            Find Professionals →
           </span>
         </Link>
+      </div>
 
-        {/* Business Directory Card */}
+      {/* Secondary Link to Directory */}
+      <div className="text-center mb-12">
         <Link
           href="/marketplace/directory"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#14B8A6] transition-colors"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-            <span className="text-2xl">🏢</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Business Directory</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Explore all Indigenous-owned businesses. Find partners and suppliers.
-          </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Explore →
-          </span>
+          <span>Looking for all businesses?</span>
+          <span className="font-semibold">View Full Directory →</span>
         </Link>
       </div>
 

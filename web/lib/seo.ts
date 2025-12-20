@@ -203,3 +203,103 @@ export function generateLocalBusinessSchema(business: {
         ...(business.image && { image: business.image }),
     };
 }
+
+export function generatePowwowSchema(powwow: {
+    name: string;
+    description: string;
+    startDate?: string | Date | null;
+    endDate?: string | Date | null;
+    location: string;
+    host?: string;
+    eventType?: string;
+    url?: string;
+    image?: string;
+}) {
+    const schema: Record<string, unknown> = {
+        "@context": "https://schema.org",
+        "@type": "Festival",
+        name: powwow.name,
+        description: powwow.description,
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        location: {
+            "@type": "Place",
+            name: powwow.location,
+            address: {
+                "@type": "PostalAddress",
+                addressLocality: powwow.location,
+            },
+        },
+    };
+
+    if (powwow.startDate) {
+        schema.startDate = new Date(powwow.startDate).toISOString();
+    }
+    if (powwow.endDate) {
+        schema.endDate = new Date(powwow.endDate).toISOString();
+    }
+    if (powwow.host) {
+        schema.organizer = {
+            "@type": "Organization",
+            name: powwow.host,
+        };
+    }
+    if (powwow.eventType) {
+        schema.eventType = powwow.eventType;
+    }
+    if (powwow.url) {
+        schema.url = powwow.url;
+    }
+    if (powwow.image) {
+        schema.image = powwow.image;
+    }
+
+    return schema;
+}
+
+export function generateVendorSchema(vendor: {
+    businessName: string;
+    description: string;
+    category?: string;
+    location?: string;
+    region?: string;
+    website?: string;
+    email?: string;
+    phone?: string;
+    logoUrl?: string;
+    isIndigenousOwned?: boolean;
+}) {
+    const schema: Record<string, unknown> = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: vendor.businessName,
+        description: vendor.description,
+        address: {
+            "@type": "PostalAddress",
+            addressLocality: vendor.location || "",
+            addressRegion: vendor.region || "",
+            addressCountry: "CA",
+        },
+    };
+
+    if (vendor.category) {
+        schema.category = vendor.category;
+    }
+    if (vendor.website) {
+        schema.url = vendor.website;
+    }
+    if (vendor.email) {
+        schema.email = vendor.email;
+    }
+    if (vendor.phone) {
+        schema.telephone = vendor.phone;
+    }
+    if (vendor.logoUrl) {
+        schema.image = vendor.logoUrl;
+        schema.logo = vendor.logoUrl;
+    }
+    if (vendor.isIndigenousOwned) {
+        schema.additionalType = "Indigenous-owned business";
+    }
+
+    return schema;
+}

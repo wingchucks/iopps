@@ -89,6 +89,29 @@ export async function updateEmployerLogo(userId: string, logoUrl: string) {
   }
 }
 
+export async function updateEmployerBanner(userId: string, bannerUrl: string) {
+  const ref = doc(db!, employerCollection, userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    await updateDoc(ref, {
+      bannerUrl,
+      updatedAt: serverTimestamp(),
+    });
+  } else {
+    await setDoc(ref, {
+      id: userId,
+      userId,
+      organizationName: "",
+      description: "",
+      website: "",
+      location: "",
+      bannerUrl,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
 export async function upsertEmployerProfile(
   userId: string,
   data: Omit<EmployerProfile, "id" | "userId" | "createdAt" | "updatedAt">

@@ -59,8 +59,9 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Webhook signature verification failed:", message);
+        // Return generic error message to avoid information leakage
         return NextResponse.json(
-            { error: `Webhook Error: ${message}` },
+            { error: "Webhook signature verification failed" },
             { status: 400 }
         );
     }
@@ -479,8 +480,9 @@ export async function POST(request: NextRequest) {
             console.error("Failed to log to Firestore:", logErr);
         }
 
+        // Return generic error message to avoid information leakage
         return NextResponse.json(
-            { error: `Webhook Error: ${errMessage}` },
+            { error: "Webhook processing failed" },
             { status: 400 }
         );
     }

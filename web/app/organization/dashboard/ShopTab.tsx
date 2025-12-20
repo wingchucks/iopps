@@ -236,12 +236,12 @@ export default function ShopTab() {
         </div>
         <div>
           <h2 className="text-xl font-bold text-white">
-            {isNewVendor ? 'List Your Business' : 'Shop Indigenous'}
+            {isNewVendor ? 'List Your Business' : 'Indigenous Marketplace'}
           </h2>
           <p className="text-sm text-slate-400">
             {isNewVendor
               ? 'Create your business profile to start connecting with customers.'
-              : 'Manage your Shop Indigenous business listing.'}
+              : 'Manage your Indigenous Marketplace business listing.'}
           </p>
         </div>
       </div>
@@ -281,7 +281,6 @@ export default function ShopTab() {
         <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl w-fit">
           {[
             { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-            { id: 'profile', label: 'Edit Profile', icon: PencilSquareIcon },
             { id: 'products', label: 'Products', icon: PhotoIcon },
             { id: 'subscription', label: 'Subscription', icon: CreditCardIcon },
           ].map((tab) => (
@@ -1200,7 +1199,7 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
                 {isExpired ? 'Subscription Expired' : 'No Active Subscription'}
               </p>
               <p className="text-sm text-slate-400">
-                Subscribe to make your business visible in Shop Indigenous.
+                Subscribe to make your business visible in the Indigenous Marketplace.
               </p>
             </div>
           </div>
