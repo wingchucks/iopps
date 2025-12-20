@@ -6,13 +6,14 @@ import {
   getEmployerProfile,
   upsertEmployerProfile,
   updateEmployerLogo,
+  updateEmployerBanner,
   addEmployerInterview,
   updateEmployerInterview,
   deleteEmployerInterview,
 } from "@/lib/firestore";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import type { EmployerProfile, Interview } from "@/lib/types";
+import type { EmployerProfile, Interview, IndustryType } from "@/lib/types";
 import ProfileCompletenessScore from "@/components/ProfileCompletenessScore";
 
 export default function ProfileTab() {
@@ -23,10 +24,14 @@ export default function ProfileTab() {
   const [website, setWebsite] = useState("");
   const [location, setLocation] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [industry, setIndustry] = useState<IndustryType | "">("");
+  const [contactEmail, setContactEmail] = useState("");
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   // Interview modal state
   const [showInterviewModal, setShowInterviewModal] = useState(false);
@@ -37,6 +42,7 @@ export default function ProfileTab() {
   const [interviewProvider, setInterviewProvider] = useState<"youtube" | "vimeo" | "custom">("youtube");
 
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -55,6 +61,9 @@ export default function ProfileTab() {
         setWebsite(data.website || "");
         setLocation(data.location || "");
         setLogoUrl(data.logoUrl || "");
+        setBannerUrl(data.bannerUrl || "");
+        setIndustry(data.industry || "");
+        setContactEmail(data.contactEmail || "");
         setInterviews(data.interviews || []);
       }
     } catch (err) {
@@ -81,6 +90,9 @@ export default function ProfileTab() {
         website: website.trim(),
         location: location.trim(),
         logoUrl,
+        bannerUrl,
+        industry: industry || undefined,
+        contactEmail: contactEmail.trim() || undefined,
       });
       alert("Profile updated successfully!");
       await loadProfile();
@@ -146,6 +158,59 @@ export default function ProfileTab() {
       alert(errorMessage);
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert(`Invalid file type: ${file.type}\n\nPlease upload a PNG, JPG, GIF, or WebP image.`);
+      return;
+    }
+
+    // Validate file size (max 10MB for banners)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert(`File too large: ${(file.size / 1024 / 1024).toFixed(2)}MB\n\nPlease upload an image smaller than 10MB.`);
+      return;
+    }
+
+    // Check if storage is initialized
+    if (!storage) {
+      alert("Storage service is not available. Please try again later or contact support.");
+      console.error("Firebase Storage not initialized");
+      return;
+    }
+
+    setUploadingBanner(true);
+    try {
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const storageRef = ref(storage, `employers/${user.uid}/banner/banner_${Date.now()}.${fileExtension}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setBannerUrl(url);
+      // Save the banner URL to the profile
+      await updateEmployerBanner(user.uid, url);
+      alert("Banner uploaded successfully!");
+    } catch (err: any) {
+      console.error("Error uploading banner:", err);
+      let errorMessage = "Failed to upload banner";
+      if (err?.code === 'storage/unauthorized') {
+        errorMessage = "You don't have permission to upload files. Please contact support.";
+      } else if (err?.code === 'storage/canceled') {
+        errorMessage = "Upload was canceled.";
+      } else if (err?.code === 'storage/unknown') {
+        errorMessage = "An unknown error occurred. Please try again.";
+      } else if (err?.message) {
+        errorMessage = `Upload failed: ${err.message}`;
+      }
+      alert(errorMessage);
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -409,6 +474,41 @@ export default function ProfileTab() {
             </div>
           </div>
 
+          {/* Banner Image */}
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Banner Image
+            </label>
+            <p className="mb-2 text-sm text-slate-400">
+              Recommended size: 1200x300px. This will appear at the top of your public profile.
+            </p>
+            <div className="space-y-3">
+              {bannerUrl && (
+                <img
+                  src={bannerUrl}
+                  alt="Organization banner"
+                  className="h-32 w-full rounded-xl border border-emerald-500/30 object-cover"
+                />
+              )}
+              <div>
+                <input
+                  ref={bannerInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                  className="rounded-xl bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30 disabled:opacity-50"
+                >
+                  {uploadingBanner ? "Uploading..." : bannerUrl ? "Change banner" : "Upload banner"}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Organization Name */}
           <div>
             <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -467,6 +567,51 @@ export default function ProfileTab() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="City, Province/State, Country"
+              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          </div>
+
+          {/* Industry */}
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Industry
+            </label>
+            <select
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value as IndustryType | "")}
+              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            >
+              <option value="">Select an industry</option>
+              <option value="government">Government</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="education">Education</option>
+              <option value="construction">Construction</option>
+              <option value="natural-resources">Natural Resources</option>
+              <option value="environmental">Environmental</option>
+              <option value="technology">Technology</option>
+              <option value="arts-culture">Arts & Culture</option>
+              <option value="finance">Finance</option>
+              <option value="legal">Legal</option>
+              <option value="nonprofit">Non-Profit</option>
+              <option value="retail">Retail</option>
+              <option value="transportation">Transportation</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          {/* Contact Email */}
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Contact Email
+            </label>
+            <p className="mb-2 text-sm text-slate-400">
+              Public email for job applicants to reach your organization
+            </p>
+            <input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="hiring@example.com"
               className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>

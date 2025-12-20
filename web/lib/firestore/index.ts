@@ -5,6 +5,7 @@
 export {
   getEmployerProfile,
   updateEmployerLogo,
+  updateEmployerBanner,
   upsertEmployerProfile,
   listEmployers,
   updateEmployerStatus,
