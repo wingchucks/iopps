@@ -26,6 +26,11 @@ import VideosTab from "./VideosTab";
 import ShopTab from "./ShopTab";
 import MessagesTab from "./MessagesTab";
 
+// Vendor-specific tabs
+import VendorOverviewTab from "./VendorOverviewTab";
+import ProductsTab from "./ProductsTab";
+import ShopProfileTab from "./ShopProfileTab";
+
 // Storage key for mode persistence
 const MODE_STORAGE_KEY = "dashboard_active_mode";
 
@@ -40,6 +45,12 @@ const LEGACY_TAB_MAP: Record<string, { mode: DashboardMode; section: DashboardSe
   billing: { mode: "employer", section: "billing" },
   profile: { mode: "employer", section: "profile" },
   events: { mode: "employer", section: "jobs" }, // Legacy redirect
+};
+
+// Valid sections for each mode (for URL validation)
+const VALID_SECTIONS: Record<DashboardMode, DashboardSection[]> = {
+  employer: ["overview", "jobs", "applications", "videos", "messages", "profile", "billing"],
+  vendor: ["overview", "products", "services", "inquiries", "shop-profile", "messages", "profile", "billing"],
 };
 
 function DashboardContent() {
@@ -58,34 +69,58 @@ function DashboardContent() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
-  // Initialize mode from localStorage and URL params
+  // Initialize from URL params and localStorage
   useEffect(() => {
+    let initialMode: DashboardMode = "employer";
+    let initialSection: DashboardSection = "overview";
+    let shouldUpdateUrl = false;
+
     // Check for legacy ?tab= parameter first
     const tabParam = searchParams.get("tab");
     if (tabParam && LEGACY_TAB_MAP[tabParam]) {
-      const { mode: newMode, section } = LEGACY_TAB_MAP[tabParam];
-      setMode(newMode);
-      setActiveSection(section);
-      setIsInitialized(true);
-      return;
+      const mapped = LEGACY_TAB_MAP[tabParam];
+      initialMode = mapped.mode;
+      initialSection = mapped.section;
+      shouldUpdateUrl = true; // Clean up legacy param
+    } else {
+      // Check for new ?mode= parameter
+      const modeParam = searchParams.get("mode");
+      if (modeParam === "employer" || modeParam === "vendor") {
+        initialMode = modeParam;
+      } else {
+        // Fall back to localStorage
+        const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
+        if (savedMode === "employer" || savedMode === "vendor") {
+          initialMode = savedMode;
+        }
+      }
+
+      // Check for ?section= parameter
+      const sectionParam = searchParams.get("section") as DashboardSection;
+      if (sectionParam && VALID_SECTIONS[initialMode].includes(sectionParam)) {
+        initialSection = sectionParam;
+      } else if (sectionParam) {
+        // Section not valid for this mode, reset to overview
+        initialSection = "overview";
+        shouldUpdateUrl = true;
+      }
     }
 
-    // Check for new ?section= parameter
-    const sectionParam = searchParams.get("section");
-    if (sectionParam) {
-      setActiveSection(sectionParam as DashboardSection);
-    }
-
-    // Load mode from localStorage
-    const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
-    if (savedMode === "employer" || savedMode === "vendor") {
-      setMode(savedMode);
-    }
-
+    setMode(initialMode);
+    setActiveSection(initialSection);
     setIsInitialized(true);
-  }, [searchParams]);
 
-  // Persist mode to localStorage
+    // Clean up URL if we handled legacy params or invalid sections
+    if (shouldUpdateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("tab");
+      url.searchParams.set("mode", initialMode);
+      url.searchParams.set("section", initialSection);
+      router.replace(url.pathname + url.search, { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Persist mode to localStorage when it changes
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem(MODE_STORAGE_KEY, mode);
@@ -117,20 +152,34 @@ function DashboardContent() {
     loadData();
   }, [user]);
 
-  // Handle mode change
+  // Helper to update URL with current state
+  const updateUrl = useCallback((newMode: DashboardMode, newSection: DashboardSection, useReplace = false) => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tab"); // Remove legacy param
+    url.searchParams.set("mode", newMode);
+    url.searchParams.set("section", newSection);
+
+    // Use push for user-initiated navigation (enables back button)
+    // Use replace for automatic redirects (doesn't add to history)
+    if (useReplace) {
+      router.replace(url.pathname + url.search, { scroll: false });
+    } else {
+      router.push(url.pathname + url.search, { scroll: false });
+    }
+  }, [router]);
+
+  // Handle mode change - resets to overview and updates URL
   const handleModeChange = useCallback((newMode: DashboardMode) => {
     setMode(newMode);
-  }, []);
+    setActiveSection("overview");
+    updateUrl(newMode, "overview");
+  }, [updateUrl]);
 
   // Handle section change with URL update
   const handleSectionChange = useCallback((section: DashboardSection) => {
     setActiveSection(section);
-    // Update URL without full navigation
-    const url = new URL(window.location.href);
-    url.searchParams.set("section", section);
-    url.searchParams.delete("tab"); // Remove legacy param
-    router.replace(url.pathname + url.search, { scroll: false });
-  }, [router]);
+    updateUrl(mode, section);
+  }, [mode, updateUrl]);
 
   // Handle legacy switchTab events from child components
   useEffect(() => {
@@ -140,15 +189,19 @@ function DashboardContent() {
         const { mode: newMode, section } = LEGACY_TAB_MAP[tab];
         setMode(newMode);
         setActiveSection(section);
+        updateUrl(newMode, section);
       }
     };
 
     // Also handle new switchSection events
     const handleSwitchSection = (event: CustomEvent<{ mode?: DashboardMode; section: DashboardSection }>) => {
+      const newMode = event.detail.mode || mode;
+      const newSection = event.detail.section;
       if (event.detail.mode) {
-        setMode(event.detail.mode);
+        setMode(newMode);
       }
-      setActiveSection(event.detail.section);
+      setActiveSection(newSection);
+      updateUrl(newMode, newSection);
     };
 
     window.addEventListener("switchTab", handleSwitchTab as EventListener);
@@ -158,7 +211,7 @@ function DashboardContent() {
       window.removeEventListener("switchTab", handleSwitchTab as EventListener);
       window.removeEventListener("switchSection", handleSwitchSection as EventListener);
     };
-  }, []);
+  }, [mode, updateUrl]);
 
   // Auth check
   if (loading || !isInitialized) {
@@ -188,7 +241,7 @@ function DashboardContent() {
     if (mode === "employer") {
       switch (activeSection) {
         case "overview":
-          return <OverviewTab />;
+          return <OverviewTab onNavigate={handleSectionChange} />;
         case "jobs":
           return <OpportunitiesTab />;
         case "applications":
@@ -203,7 +256,7 @@ function DashboardContent() {
         case "profile":
           return <ProfileTab />;
         default:
-          return <OverviewTab />;
+          return <OverviewTab onNavigate={handleSectionChange} />;
       }
     }
 
@@ -211,13 +264,15 @@ function DashboardContent() {
     if (mode === "vendor") {
       switch (activeSection) {
         case "overview":
+          return <VendorOverviewTab onNavigate={handleSectionChange} />;
         case "products":
         case "services":
+          return <ProductsTab />;
         case "inquiries":
-        case "shop-profile":
-          // For now, render ShopTab for all vendor sections
-          // Phase 3 will split these into separate components
+          // TODO: Create dedicated InquiriesTab
           return <ShopTab />;
+        case "shop-profile":
+          return <ShopProfileTab onNavigate={handleSectionChange} />;
         // Shared sections accessible in vendor mode
         case "messages":
           return <MessagesTab />;
@@ -274,6 +329,11 @@ function DashboardContent() {
           badges={badges}
         />
       }
+      mode={mode}
+      activeSection={activeSection}
+      onModeChange={handleModeChange}
+      onSectionChange={handleSectionChange}
+      badges={badges}
     >
       {/* Page Header */}
       <header className="flex items-center justify-between mb-8 sticky top-0 bg-slate-950/20 backdrop-blur-lg p-2 -mx-2 z-10 rounded-xl">

@@ -166,7 +166,9 @@ export default function DashboardSidebar({
       {/* Mode-Specific Navigation */}
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         <div className="mb-8">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 px-4 flex items-center gap-2">
+          <h3 className={`text-[10px] font-bold uppercase tracking-[0.2em] mb-4 px-4 flex items-center gap-2 ${
+            mode === 'employer' ? 'text-blue-400' : 'text-accent'
+          }`}>
             {mode === 'employer' ? <BriefcaseIcon className="w-2.5 h-2.5" /> : <ShoppingBagIcon className="w-2.5 h-2.5" />}
             {mode === 'employer' ? 'Employer Tools' : 'Vendor Tools'}
           </h3>
@@ -179,6 +181,7 @@ export default function DashboardSidebar({
               active={activeSection === item.id}
               badge={item.badge}
               onClick={() => onSectionChange(item.id)}
+              colorVariant={mode}
             />
           ))}
         </div>
@@ -197,6 +200,7 @@ export default function DashboardSidebar({
               active={activeSection === item.id}
               badge={item.badge}
               onClick={() => onSectionChange(item.id)}
+              colorVariant="shared"
             />
           ))}
         </div>
