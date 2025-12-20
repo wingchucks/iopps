@@ -76,7 +76,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
           Create your shop profile to start selling on Shop Indigenous.
         </p>
         <button
-          onClick={() => onNavigate?.('shop-profile')}
+          onClick={() => onNavigate?.('profile')}
           className="mt-4 px-6 py-2 rounded-lg bg-accent text-slate-950 font-semibold hover:bg-accent-hover transition-colors"
         >
           Create Shop Profile
@@ -149,7 +149,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
             </div>
           </div>
           <button
-            onClick={() => onNavigate?.('shop-profile')}
+            onClick={() => onNavigate?.('profile')}
             className="flex items-center gap-1.5 text-sm text-accent hover:text-accent-hover transition-colors"
           >
             <PencilSquareIcon className="h-4 w-4" />
@@ -176,7 +176,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
                 ))}
               </ul>
               <button
-                onClick={() => onNavigate?.('shop-profile')}
+                onClick={() => onNavigate?.('profile')}
                 className="mt-4 inline-flex rounded-xl bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/30"
               >
                 Complete profile now
@@ -277,7 +277,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
           <p className="text-sm text-slate-400">Add or edit your products</p>
         </button>
         <button
-          onClick={() => onNavigate?.('shop-profile')}
+          onClick={() => onNavigate?.('profile')}
           className="p-4 rounded-xl bg-card border border-card-border hover:border-accent/50 transition-colors text-left"
         >
           <PencilSquareIcon className="h-6 w-6 text-accent mb-2" />
