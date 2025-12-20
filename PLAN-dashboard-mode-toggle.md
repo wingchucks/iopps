@@ -166,7 +166,7 @@ This plan outlines how to implement the simplified dashboard design from the moc
 2. Add mode indicator badge to page headers
 3. Update primary action buttons based on mode
 4. Add smooth transitions between modes
-5. Responsive design for mobile (sidebar collapses to bottom nav or hamburger)
+5. **Mobile bottom tab bar** - fixed navigation at bottom on screens <768px
 
 ### Phase 6: Persistence & Deep Linking
 1. Persist mode in URL query params
@@ -205,9 +205,12 @@ type SharedSection = 'messages' | 'profile' | 'billing';
 
 ### Mobile Responsiveness
 
-- Sidebar: 280px fixed width on desktop
-- Mobile (<768px): Sidebar becomes collapsible drawer or bottom navigation
-- Toggle remains accessible in mobile view
+- **Desktop** (≥768px): Sidebar 280px fixed width
+- **Mobile** (<768px): Bottom tab bar navigation
+  - 5 tabs max visible (Overview, [Mode Tools], Messages, Profile, More)
+  - Mode toggle in "More" menu or via swipe gesture
+  - Sticky at bottom of screen
+- Toggle remains accessible in both views
 
 ---
 
@@ -290,18 +293,21 @@ The existing data model already supports this redesign:
 
 ---
 
-## Remaining Questions
+## Final Decisions
 
-1. **Vendor-Only Users**: Can someone be a vendor without being an employer?
+1. **Mobile Navigation**: **Bottom tab bar**
+   - On mobile (<768px), sidebar converts to a fixed bottom navigation
+   - Mode toggle accessible via a dedicated tab or long-press
+   - Clean, native mobile feel
+
+2. **Vendor-Only Users**: Future consideration
    - Current: All employers get draft vendor profile
-   - Future consideration: Pure vendor accounts?
+   - May add pure vendor accounts based on platform growth
 
-2. **Mobile Navigation**: The mockup is desktop-focused. Options:
-   - Sidebar drawer (hamburger menu)
-   - Bottom tab bar
-   - Full-page mode selector
-
-3. **Shop Performance Tab**: Mockup shows "Shop Performance" in vendor nav - is this separate from Overview stats?
+3. **Shop Performance**: **Part of Overview (no separate page)**
+   - Vendor Overview shows stats (Products, Services, Views, Inquiries)
+   - "Product Performance" list shows per-product metrics
+   - Dedicated analytics page can be added later if needed
 
 ---
 
