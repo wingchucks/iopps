@@ -95,8 +95,7 @@ function LiveStreamsContent() {
   return (
     <div className="min-h-screen text-slate-100">
       <OceanWaveHero
-        eyebrow="IOPPS Live"
-        title="Cultural Broadcasts & Community Media"
+        title="IOPPS LIVESTREAM"
         subtitle="Watch our official live streams, pow wows, and events directly from the source."
         size="md"
       />
@@ -511,8 +510,7 @@ export default function LivePage() {
       fallback={
         <div className="min-h-screen text-slate-100">
           <OceanWaveHero
-            eyebrow="IOPPS Live"
-            title="Cultural Broadcasts & Community Media"
+            title="IOPPS LIVESTREAM"
             subtitle="Watch our official live streams, pow wows, and events directly from the source."
             size="md"
           />
