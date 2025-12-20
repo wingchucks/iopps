@@ -13,13 +13,14 @@ import {
   ChatBubbleLeftRightIcon,
   UserCircleIcon,
   CreditCardIcon,
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 import SidebarItem from './SidebarItem';
 import type { EmployerProfile } from '@/lib/types';
 
 export type DashboardMode = 'employer' | 'vendor';
 
-export type EmployerSection = 'overview' | 'jobs' | 'applications' | 'videos';
+export type EmployerSection = 'overview' | 'jobs' | 'training' | 'applications' | 'videos';
 export type VendorSection = 'overview' | 'products' | 'services' | 'inquiries';
 export type SharedSection = 'messages' | 'profile' | 'billing';
 export type DashboardSection = EmployerSection | VendorSection | SharedSection;
@@ -67,6 +68,7 @@ export default function DashboardSidebar({
   const employerNav = [
     { id: 'overview' as const, label: 'Overview', icon: Squares2X2Icon },
     { id: 'jobs' as const, label: 'Job Postings', icon: DocumentTextIcon },
+    { id: 'training' as const, label: 'Training Programs', icon: AcademicCapIcon },
     { id: 'applications' as const, label: 'Applications', icon: UsersIcon, badge: badges.applications },
     { id: 'videos' as const, label: 'Interview Videos', icon: VideoCameraIcon },
   ];
