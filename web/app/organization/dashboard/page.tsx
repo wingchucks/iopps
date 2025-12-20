@@ -193,7 +193,7 @@ function DashboardContent() {
     if (mode === "employer") {
       switch (activeSection) {
         case "overview":
-          return <OverviewTab />;
+          return <OverviewTab onNavigate={handleSectionChange} />;
         case "jobs":
           return <OpportunitiesTab />;
         case "applications":
@@ -208,7 +208,7 @@ function DashboardContent() {
         case "profile":
           return <ProfileTab />;
         default:
-          return <OverviewTab />;
+          return <OverviewTab onNavigate={handleSectionChange} />;
       }
     }
 
