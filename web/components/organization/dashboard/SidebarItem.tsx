@@ -1,9 +1,12 @@
 'use client';
 
-import { LucideIcon } from 'lucide-react';
+import { ComponentType, SVGProps } from 'react';
+
+// Heroicon component type
+type HeroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 interface SidebarItemProps {
-  icon: LucideIcon;
+  icon: HeroIcon;
   label: string;
   active?: boolean;
   badge?: number;
@@ -35,7 +38,7 @@ export default function SidebarItem({
       `}
     >
       <div className="flex items-center gap-3">
-        <Icon size={18} />
+        <Icon className="w-[18px] h-[18px]" />
         <span className="text-sm font-medium">{label}</span>
       </div>
       {badge > 0 && (

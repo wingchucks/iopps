@@ -1,20 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
-  LayoutDashboard,
-  Briefcase,
-  ShoppingBag,
-  FileText,
-  Users,
-  Video,
-  Package,
-  Wrench,
-  MessageSquare,
-  UserCircle,
-  CreditCard,
-} from 'lucide-react';
+  Squares2X2Icon,
+  BriefcaseIcon,
+  ShoppingBagIcon,
+  DocumentTextIcon,
+  UsersIcon,
+  VideoCameraIcon,
+  CubeIcon,
+  WrenchIcon,
+  ChatBubbleLeftRightIcon,
+  UserCircleIcon,
+  CreditCardIcon,
+} from '@heroicons/react/24/outline';
 import SidebarItem from './SidebarItem';
 import type { EmployerProfile } from '@/lib/types';
 
@@ -66,26 +65,26 @@ export default function DashboardSidebar({
 
   // Employer mode navigation items
   const employerNav = [
-    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard },
-    { id: 'jobs' as const, label: 'Job Postings', icon: FileText },
-    { id: 'applications' as const, label: 'Applications', icon: Users, badge: badges.applications },
-    { id: 'videos' as const, label: 'Interview Videos', icon: Video },
+    { id: 'overview' as const, label: 'Overview', icon: Squares2X2Icon },
+    { id: 'jobs' as const, label: 'Job Postings', icon: DocumentTextIcon },
+    { id: 'applications' as const, label: 'Applications', icon: UsersIcon, badge: badges.applications },
+    { id: 'videos' as const, label: 'Interview Videos', icon: VideoCameraIcon },
   ];
 
   // Vendor mode navigation items
   const vendorNav = [
-    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard },
-    { id: 'products' as const, label: 'Products', icon: Package },
-    { id: 'services' as const, label: 'Services', icon: Wrench },
-    { id: 'inquiries' as const, label: 'Inquiries', icon: MessageSquare, badge: badges.inquiries },
-    { id: 'shop-profile' as const, label: 'Shop Profile', icon: ShoppingBag },
+    { id: 'overview' as const, label: 'Overview', icon: Squares2X2Icon },
+    { id: 'products' as const, label: 'Products', icon: CubeIcon },
+    { id: 'services' as const, label: 'Services', icon: WrenchIcon },
+    { id: 'inquiries' as const, label: 'Inquiries', icon: ChatBubbleLeftRightIcon, badge: badges.inquiries },
+    { id: 'shop-profile' as const, label: 'Shop Profile', icon: ShoppingBagIcon },
   ];
 
   // Shared account navigation
   const sharedNav = [
-    { id: 'messages' as const, label: 'Messages', icon: MessageSquare, badge: badges.messages },
-    { id: 'profile' as const, label: 'Organization Profile', icon: UserCircle },
-    { id: 'billing' as const, label: 'Billing & Subscription', icon: CreditCard },
+    { id: 'messages' as const, label: 'Messages', icon: ChatBubbleLeftRightIcon, badge: badges.messages },
+    { id: 'profile' as const, label: 'Organization Profile', icon: UserCircleIcon },
+    { id: 'billing' as const, label: 'Billing & Subscription', icon: CreditCardIcon },
   ];
 
   const currentNav = mode === 'employer' ? employerNav : vendorNav;
@@ -148,7 +147,7 @@ export default function DashboardSidebar({
               ${mode === 'employer' ? 'text-white' : 'text-slate-500'}
             `}
           >
-            <Briefcase size={14} />
+            <BriefcaseIcon className="w-3.5 h-3.5" />
             Employer
           </div>
           <div
@@ -159,7 +158,7 @@ export default function DashboardSidebar({
             `}
           >
             Vendor
-            <ShoppingBag size={14} />
+            <ShoppingBagIcon className="w-3.5 h-3.5" />
           </div>
         </button>
       </div>
@@ -168,7 +167,7 @@ export default function DashboardSidebar({
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         <div className="mb-8">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 px-4 flex items-center gap-2">
-            {mode === 'employer' ? <Briefcase size={10} /> : <ShoppingBag size={10} />}
+            {mode === 'employer' ? <BriefcaseIcon className="w-2.5 h-2.5" /> : <ShoppingBagIcon className="w-2.5 h-2.5" />}
             {mode === 'employer' ? 'Employer Tools' : 'Vendor Tools'}
           </h3>
 
