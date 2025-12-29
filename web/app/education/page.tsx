@@ -278,7 +278,7 @@ function EducationContent() {
                         </span>
                         {scholarship.amount && (
                           <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6]">
-                            ${typeof scholarship.amount === 'number' ? scholarship.amount.toLocaleString() : scholarship.amount}
+                            ${scholarship.amount}
                           </span>
                         )}
                       </div>
