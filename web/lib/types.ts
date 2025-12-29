@@ -1358,9 +1358,11 @@ export type EducationEventType =
   | "campus_tour"
   | "webinar"
   | "career_fair"
-  | "application_workshop";
+  | "application_workshop"
+  | "orientation"
+  | "other";
 
-export type EducationEventFormat = "virtual" | "in-person" | "hybrid";
+export type EducationEventFormat = "online" | "in-person" | "hybrid";
 
 // Education subscription tiers
 export type EducationTier = "starter" | "growth" | "partner" | "enterprise";

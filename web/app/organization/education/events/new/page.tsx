@@ -21,7 +21,7 @@ const EVENT_TYPES: { value: EducationEventType; label: string }[] = [
 
 const EVENT_FORMATS: { value: EducationEventFormat; label: string }[] = [
   { value: "in-person", label: "In-Person" },
-  { value: "virtual", label: "Virtual" },
+  { value: "online", label: "Online" },
   { value: "hybrid", label: "Hybrid" },
 ];
 
@@ -147,7 +147,7 @@ export default function NewEducationEventPage() {
         format,
         startDate: startDatetime,
         endDate: endDatetime,
-        location: format !== "virtual" ? location : undefined,
+        location: format !== "online" ? location : undefined,
         virtualLink: format !== "in-person" ? virtualLink : undefined,
         registrationUrl: registrationUrl || undefined,
         registrationRequired,
@@ -328,7 +328,7 @@ export default function NewEducationEventPage() {
               Location
             </h2>
 
-            {format !== "virtual" && (
+            {format !== "online" && (
               <div>
                 <label className="block text-sm font-medium text-slate-200">
                   Physical Location {format === "in-person" && "*"}
@@ -347,11 +347,11 @@ export default function NewEducationEventPage() {
             {format !== "in-person" && (
               <div>
                 <label className="block text-sm font-medium text-slate-200">
-                  Virtual Meeting Link {format === "virtual" && "*"}
+                  Virtual Meeting Link {format === "online" && "*"}
                 </label>
                 <input
                   type="url"
-                  required={format === "virtual"}
+                  required={format === "online"}
                   value={virtualLink}
                   onChange={(e) => setVirtualLink(e.target.value)}
                   placeholder="https://zoom.us/j/..."
