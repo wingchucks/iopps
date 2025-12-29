@@ -89,7 +89,22 @@ export {
   listScholarshipApplicantsForEmployer,
   updateScholarshipApplicationStatus,
   withdrawScholarshipApplication,
+  // Extended scholarship functions (Education Pillar)
+  listScholarshipsFiltered,
+  listSchoolScholarships,
+  getUpcomingScholarshipDeadlines,
+  getScholarshipsForLevel,
+  getFeaturedScholarships,
+  createExtendedScholarship,
+  incrementScholarshipViews,
+  getScholarshipBySlug,
+  saveScholarship,
+  unsaveScholarship,
+  getSavedScholarshipRecord,
+  isScholarshipSaved,
+  listSavedScholarships,
 } from "./scholarships";
+export type { ListScholarshipsOptions } from "./scholarships";
 
 // Powwows
 export {
@@ -216,3 +231,84 @@ export {
   getServicesPendingReview,
 } from "./services";
 export type { ListServicesOptions, CreateServiceInput } from "./services";
+
+// Schools (Education Pillar)
+export {
+  listSchools,
+  getSchool,
+  getSchoolBySlug,
+  getSchoolByOrganizationId,
+  createSchool,
+  updateSchool,
+  updateSchoolStatus,
+  setSchoolPublished,
+  deleteSchool,
+  incrementSchoolViews,
+  verifySchool,
+  saveSchool,
+  unsaveSchool,
+  getSavedSchool,
+  isSchoolSaved,
+  listSavedSchools,
+  createSchoolInquiry,
+  listSchoolInquiries,
+  getUnreadInquiryCount,
+  updateInquiryStatus,
+  listMemberInquiries,
+  getSchoolsPendingReview,
+  getFeaturedSchools,
+} from "./schools";
+export type { ListSchoolsOptions, CreateSchoolInquiryInput } from "./schools";
+
+// Education Programs
+export {
+  listEducationPrograms,
+  getEducationProgram,
+  getEducationProgramBySlug,
+  listSchoolPrograms,
+  createEducationProgram,
+  bulkCreateEducationPrograms,
+  updateEducationProgram,
+  updateEducationProgramStatus,
+  setEducationProgramPublished,
+  setEducationProgramFeatured,
+  deleteEducationProgram,
+  incrementEducationProgramViews,
+  incrementEducationProgramInquiries,
+  getEducationProgramsPendingReview,
+  getFeaturedEducationPrograms,
+  getEducationProgramsByCategory,
+  getEducationProgramsByLevel,
+  saveEducationProgram,
+  unsaveEducationProgram,
+  getSavedProgram,
+  isEducationProgramSaved,
+  listSavedPrograms,
+  getSchoolProgramCount,
+} from "./educationPrograms";
+export type { ListEducationProgramsOptions } from "./educationPrograms";
+
+// Education Events
+export {
+  listEducationEvents,
+  getEducationEvent,
+  listSchoolEvents,
+  getUpcomingEducationEvents,
+  getEducationEventsInRange,
+  createEducationEvent,
+  updateEducationEvent,
+  setEducationEventPublished,
+  setEducationEventFeatured,
+  deleteEducationEvent,
+  incrementEducationEventViews,
+  trackEducationEventRegistrationClick,
+  rsvpToEducationEvent,
+  updateEducationEventRSVP,
+  cancelEducationEventRSVP,
+  getEducationEventRSVP,
+  listEducationEventRSVPs,
+  listMemberEventRSVPs,
+  getEducationEventRSVPCount,
+  hasMemberRSVP,
+} from "./educationEvents";
+export type { ListEducationEventsOptions } from "./educationEvents";
