@@ -65,7 +65,8 @@ export default function EducationEventsPage() {
     }
   };
 
-  const formatEventDate = (dateValue: Date | string | { seconds: number }) => {
+  const formatEventDate = (dateValue: Date | string | { seconds: number } | null | undefined) => {
+    if (!dateValue) return "TBD";
     let date: Date;
     if (typeof dateValue === 'object' && 'seconds' in dateValue) {
       date = new Date(dateValue.seconds * 1000);
@@ -80,7 +81,8 @@ export default function EducationEventsPage() {
     });
   };
 
-  const formatEventTime = (dateValue: Date | string | { seconds: number }) => {
+  const formatEventTime = (dateValue: Date | string | { seconds: number } | null | undefined) => {
+    if (!dateValue) return "TBD";
     let date: Date;
     if (typeof dateValue === 'object' && 'seconds' in dateValue) {
       date = new Date(dateValue.seconds * 1000);
@@ -91,6 +93,20 @@ export default function EducationEventsPage() {
       hour: "numeric",
       minute: "2-digit",
     });
+  };
+
+  const getDatePart = (dateValue: Date | string | { seconds: number } | null | undefined, part: "month" | "day") => {
+    if (!dateValue) return part === "month" ? "TBD" : "--";
+    let date: Date;
+    if (typeof dateValue === 'object' && 'seconds' in dateValue) {
+      date = new Date(dateValue.seconds * 1000);
+    } else {
+      date = new Date(dateValue);
+    }
+    if (part === "month") {
+      return date.toLocaleDateString("en-US", { month: "short" });
+    }
+    return date.getDate().toString();
   };
 
   return (
@@ -198,10 +214,10 @@ export default function EducationEventsPage() {
               {/* Date Box */}
               <div className="flex flex-col items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 p-4 shrink-0 w-20">
                 <span className="text-xs font-semibold text-[#14B8A6] uppercase">
-                  {new Date(event.startDatetime).toLocaleDateString("en-US", { month: "short" })}
+                  {getDatePart(event.startDatetime, "month")}
                 </span>
                 <span className="text-2xl font-bold text-white">
-                  {new Date(event.startDatetime).getDate()}
+                  {getDatePart(event.startDatetime, "day")}
                 </span>
               </div>
 
