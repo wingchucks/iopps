@@ -233,7 +233,7 @@ export default function EducationEventsPage() {
                 </div>
 
                 <h3 className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
-                  {event.title}
+                  {event.name}
                 </h3>
 
                 <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-400">
