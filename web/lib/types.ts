@@ -1360,3 +1360,618 @@ export interface Service {
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
 }
+
+// ============================================
+// EDUCATION PILLAR
+// ============================================
+
+// School/Institution Types
+export type SchoolType = 'university' | 'college' | 'polytechnic' | 'tribal_college' | 'training_provider';
+export type SchoolStatus = 'draft' | 'pending' | 'active' | 'suspended';
+
+export const SCHOOL_TYPES_ARRAY = [
+  'university',
+  'college',
+  'polytechnic',
+  'tribal_college',
+  'training_provider',
+] as const;
+
+export const SCHOOL_TYPES = [
+  { value: 'university', label: 'University' },
+  { value: 'college', label: 'College' },
+  { value: 'polytechnic', label: 'Polytechnic' },
+  { value: 'tribal_college', label: 'Indigenous/Tribal College' },
+  { value: 'training_provider', label: 'Training Provider' },
+] as const;
+
+// Program Types
+export type ProgramLevel = 'certificate' | 'diploma' | 'bachelor' | 'master' | 'doctorate' | 'microcredential';
+export type ProgramDeliveryMethod = 'in-person' | 'online' | 'hybrid';
+export type ProgramStatus = 'draft' | 'pending' | 'approved' | 'rejected';
+
+export const PROGRAM_LEVELS_ARRAY = [
+  'certificate',
+  'diploma',
+  'bachelor',
+  'master',
+  'doctorate',
+  'microcredential',
+] as const;
+
+export const PROGRAM_LEVELS = [
+  { value: 'certificate', label: 'Certificate' },
+  { value: 'diploma', label: 'Diploma' },
+  { value: 'bachelor', label: 'Bachelor\'s Degree' },
+  { value: 'master', label: 'Master\'s Degree' },
+  { value: 'doctorate', label: 'Doctorate' },
+  { value: 'microcredential', label: 'Microcredential' },
+] as const;
+
+export const PROGRAM_CATEGORIES_ARRAY = [
+  'Business & Management',
+  'Health Sciences',
+  'Trades & Technology',
+  'Information Technology',
+  'Arts & Culture',
+  'Sciences',
+  'Education',
+  'Social Work & Human Services',
+  'Law & Justice',
+  'Environmental Studies',
+  'Indigenous Studies',
+  'Engineering',
+  'Agriculture & Natural Resources',
+  'Communications & Media',
+  'Hospitality & Tourism',
+  'Other',
+] as const;
+
+export const PROGRAM_CATEGORIES = [
+  { value: 'business', label: 'Business & Management' },
+  { value: 'health', label: 'Health Sciences' },
+  { value: 'trades', label: 'Trades & Technology' },
+  { value: 'it', label: 'Information Technology' },
+  { value: 'arts', label: 'Arts & Culture' },
+  { value: 'sciences', label: 'Sciences' },
+  { value: 'education', label: 'Education' },
+  { value: 'social-work', label: 'Social Work & Human Services' },
+  { value: 'law', label: 'Law & Justice' },
+  { value: 'environment', label: 'Environmental Studies' },
+  { value: 'indigenous', label: 'Indigenous Studies' },
+  { value: 'engineering', label: 'Engineering' },
+  { value: 'agriculture', label: 'Agriculture & Natural Resources' },
+  { value: 'communications', label: 'Communications & Media' },
+  { value: 'hospitality', label: 'Hospitality & Tourism' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export type ProgramCategory = typeof PROGRAM_CATEGORIES_ARRAY[number];
+
+// Indigenous Status Types for eligibility
+export const INDIGENOUS_STATUS_TYPES = [
+  'first_nations',
+  'metis',
+  'inuit',
+  'all_indigenous',
+  'any',
+] as const;
+
+export type IndigenousStatusType = typeof INDIGENOUS_STATUS_TYPES[number];
+
+// School Campus
+export interface SchoolCampus {
+  id: string;
+  name: string;
+  address?: string;
+  city: string;
+  province: string;
+  phone?: string;
+  isMain: boolean;
+}
+
+// Indigenous Services offered by school
+export interface IndigenousServices {
+  studentCentre?: {
+    name: string;
+    description?: string;
+  };
+  elderInResidence?: boolean;
+  culturalCoordinators?: boolean;
+  academicCoaches?: boolean;
+  learningSpecialists?: boolean;
+  wellnessCoaches?: boolean;
+  psychologists?: boolean;
+  languagePrograms?: string[]; // e.g., ['Cree', 'Ojibwe']
+  culturalProgramming?: boolean;
+  ceremonySpace?: boolean;
+  communitySupports?: string[]; // e.g., ['housing', 'childcare', 'transportation']
+}
+
+// School Stats
+export interface SchoolStats {
+  indigenousStudentPercentage?: number;
+  indigenousStaffPercentage?: number;
+  totalPrograms?: number;
+  alumniCount?: string;
+  nationsRepresented?: number;
+  employerPartners?: number;
+}
+
+// School Verification Info
+export interface SchoolVerification {
+  isVerified: boolean;
+  verifiedDate?: Timestamp | null;
+  verifiedBy?: string;
+  indigenousControlled?: boolean; // First Nation governed?
+  accreditation?: string[];
+}
+
+// School Social Links
+export interface SchoolSocialLinks {
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
+// School Contact Info
+export interface SchoolContact {
+  admissionsEmail?: string;
+  admissionsPhone?: string;
+  indigenousServicesEmail?: string;
+  recruitmentTeam?: {
+    name: string;
+    title?: string;
+    email?: string;
+    phone?: string;
+  }[];
+}
+
+// School Subscription Tier
+export type SchoolSubscriptionTier = 'starter' | 'growth' | 'partner' | 'enterprise';
+
+export interface SchoolSubscription {
+  tier: SchoolSubscriptionTier;
+  startedAt?: Timestamp | null;
+  expiresAt?: Timestamp | null;
+  isIndigenousDiscount?: boolean;
+  stripeSubscriptionId?: string;
+}
+
+// Main School Interface
+export interface School {
+  id: string;
+  organizationId: string; // Links to employers collection
+
+  // Basic Info
+  name: string;
+  shortName?: string;
+  type: SchoolType;
+  established?: number;
+  website?: string;
+  slug: string;
+
+  // Description
+  description?: string;
+  shortDescription?: string;
+
+  // Location (alias for headOffice for convenience)
+  location?: {
+    address?: string;
+    city: string;
+    province: string;
+    postalCode?: string;
+    reserveName?: string;
+    coordinates?: { lat: number; lng: number };
+  };
+  headOffice?: {
+    address?: string;
+    city: string;
+    province: string;
+    postalCode?: string;
+    reserveName?: string; // If on reserve land
+    coordinates?: { lat: number; lng: number };
+  };
+
+  // Campuses
+  campuses?: SchoolCampus[];
+
+  // Indigenous Focus
+  indigenousFocused?: boolean;
+  indigenousServices?: IndigenousServices;
+
+  // Stats
+  stats?: SchoolStats;
+  programCount?: number; // Denormalized count
+
+  // Verification
+  verification?: SchoolVerification;
+  isVerified?: boolean; // Convenience property
+
+  // Media
+  logoUrl?: string;
+  bannerUrl?: string;
+  photos?: string[];
+  videoTourUrl?: string;
+
+  // Contact
+  contact?: SchoolContact;
+
+  // Social
+  social?: SchoolSocialLinks;
+
+  // Subscription
+  subscription?: SchoolSubscription;
+
+  // Status
+  status: SchoolStatus;
+  isPublished: boolean;
+  featured?: boolean;
+
+  // Analytics
+  viewCount?: number;
+
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  lastScrapedAt?: Timestamp | null;
+}
+
+// Education Program Interface (Academic Programs)
+export interface EducationProgram {
+  id: string;
+  schoolId: string;
+  schoolName?: string; // Denormalized
+
+  // Basic Info
+  name: string;
+  slug: string;
+  description: string;
+  shortDescription?: string;
+
+  // Classification
+  category: ProgramCategory | string;
+  subcategory?: string;
+  level: ProgramLevel;
+  credential?: string; // e.g., "Bachelor of Business Administration (BBA)"
+
+  // Delivery
+  deliveryMethod: ProgramDeliveryMethod;
+  duration?: {
+    value: number;
+    unit: 'weeks' | 'months' | 'years';
+  };
+  fullTime?: boolean;
+  partTimeAvailable?: boolean;
+
+  // Location
+  campuses?: string[]; // Which campuses offer this
+  communityDelivery?: boolean; // Offered in communities?
+
+  // Dates
+  intakeDates?: {
+    startDate?: Timestamp | string | null;
+    applicationDeadline?: Timestamp | string | null;
+    isAccepting: boolean;
+  }[];
+
+  // Costs
+  tuition?: {
+    domestic?: number;
+    international?: number;
+    per?: 'year' | 'program' | 'semester';
+  };
+  additionalFees?: {
+    name: string;
+    amount: number;
+  }[];
+  totalCostEstimate?: number;
+
+  // Requirements
+  admissionRequirements?: {
+    education?: string; // e.g., 'Grade 12', 'Adult 12'
+    prerequisites?: string[];
+    englishRequirement?: string;
+    other?: string[];
+  };
+
+  // Curriculum
+  courses?: {
+    code?: string;
+    name: string;
+    year?: number;
+    semester?: number;
+  }[];
+
+  // Outcomes
+  careerOutcomes?: {
+    description?: string;
+    occupations?: string[];
+    salaryRange?: { min: number; max: number };
+    employmentRate?: number;
+  };
+
+  // Pathways
+  transferPathways?: {
+    institution: string;
+    program: string;
+    creditsTransferred?: number;
+  }[];
+
+  // Indigenous Focus
+  indigenousFocused?: boolean;
+  indigenousContentPercentage?: number;
+
+  // Scholarships linked
+  scholarshipIds?: string[];
+
+  // Social proof (calculated)
+  communityStats?: {
+    totalEnrolled?: number;
+    totalGraduated?: number;
+    connectionsCount?: number; // IOPPS members in this program
+  };
+
+  // Media
+  imageUrl?: string;
+
+  // Status
+  status: ProgramStatus;
+  isPublished: boolean;
+  featured?: boolean;
+
+  // Analytics
+  viewCount?: number;
+  inquiryCount?: number;
+
+  // Metadata
+  sourceUrl?: string; // Original URL on school website
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  approvedAt?: Timestamp | null;
+  approvedBy?: string;
+}
+
+// Extended Scholarship Interface for Education Pillar
+export type ScholarshipProviderType = 'school' | 'government' | 'organization' | 'private';
+
+export interface ScholarshipEligibility {
+  indigenousStatus?: IndigenousStatusType[];
+  nations?: string[]; // Specific nations if restricted
+  provinces?: string[];
+  studyLevel?: ProgramLevel[];
+  fieldsOfStudy?: string[];
+  programIds?: string[]; // Specific programs if restricted
+  schoolIds?: string[]; // Specific schools if restricted
+  gpaRequirement?: number;
+  financialNeed?: boolean;
+  otherRequirements?: string[];
+}
+
+export interface ScholarshipAmount {
+  value: number;
+  type: 'fixed' | 'range' | 'variable' | 'full_tuition';
+  maxValue?: number; // If range
+  currency?: string;
+}
+
+// Extended Scholarship (compatible with existing Scholarship but with more fields)
+export interface ExtendedScholarship extends Scholarship {
+  // Source
+  providerType?: ScholarshipProviderType;
+  schoolId?: string; // If school-provided
+  organizationId?: string; // If org-provided
+  providerName?: string;
+
+  // Amount (structured)
+  amountStructured?: ScholarshipAmount;
+
+  // Eligibility (structured)
+  eligibility?: ScholarshipEligibility;
+
+  // Application
+  applicationOpen?: Timestamp | string | null;
+  isRecurring?: boolean; // Annual?
+  applicationProcess?: string;
+
+  // Social proof
+  communityStats?: {
+    recipientsCount?: number;
+    connectionsReceived?: number;
+  };
+
+  // Metadata
+  sourceUrl?: string;
+  slug?: string;
+  featured?: boolean;
+  viewCount?: number;
+}
+
+// Education Event Types
+export type EducationEventType = 'open_house' | 'info_session' | 'campus_tour' | 'webinar' | 'career_fair' | 'other';
+export type EducationEventFormat = 'virtual' | 'in-person' | 'hybrid';
+
+export interface EducationEvent {
+  id: string;
+  schoolId: string;
+  schoolName?: string; // Denormalized
+
+  // Basic Info
+  name: string;
+  description: string;
+  type: EducationEventType;
+
+  // Timing
+  startDatetime: Timestamp | string | null;
+  endDatetime?: Timestamp | string | null;
+  timezone?: string;
+
+  // Format
+  format: EducationEventFormat;
+  location?: {
+    venue?: string;
+    address?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+  };
+  virtualLink?: string; // If virtual
+
+  // Registration
+  registrationUrl?: string;
+  registrationRequired?: boolean;
+  capacity?: number;
+
+  // Programs featured
+  featuredProgramIds?: string[];
+
+  // Social
+  attendeeIds?: string[]; // Member IDs who RSVP'd
+  attendeeCount?: number;
+
+  // Status
+  isPublished: boolean;
+  featured?: boolean;
+
+  // Analytics
+  viewCount?: number;
+  registrationClicks?: number;
+
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+// Education Event RSVP
+export interface EducationEventRSVP {
+  id: string;
+  eventId: string;
+  memberId: string;
+  memberEmail?: string;
+  memberName?: string;
+  status: 'going' | 'maybe' | 'not_going';
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+// School Inquiry (Student to School)
+export interface SchoolInquiry {
+  id: string;
+  schoolId: string;
+  programId?: string;
+  memberId: string;
+  memberEmail: string;
+  memberName: string;
+
+  // Inquiry Content
+  subject: string;
+  message: string;
+
+  // Interest Details
+  interestedInPrograms?: string[];
+  intendedStartDate?: string;
+  educationLevel?: string;
+
+  // Status
+  status: 'new' | 'read' | 'responded' | 'archived';
+
+  // Response
+  respondedAt?: Timestamp | null;
+  respondedBy?: string;
+
+  // Metadata
+  createdAt?: Timestamp | null;
+}
+
+// Saved Education Items (for members)
+export interface SavedProgram {
+  id: string;
+  programId: string;
+  memberId: string;
+  createdAt?: Timestamp | null;
+  program?: EducationProgram | null;
+}
+
+export interface SavedScholarship {
+  id: string;
+  scholarshipId: string;
+  memberId: string;
+  createdAt?: Timestamp | null;
+  scholarship?: ExtendedScholarship | null;
+}
+
+export interface SavedSchool {
+  id: string;
+  schoolId: string;
+  memberId: string;
+  createdAt?: Timestamp | null;
+  school?: School | null;
+}
+
+// Member Education Extensions
+export interface MemberEducationInterests {
+  seekingEducation?: boolean;
+  educationLevelInterested?: ProgramLevel[];
+  fieldsInterested?: string[];
+  preferredDelivery?: ProgramDeliveryMethod[];
+  preferredLocations?: string[];
+  timeline?: 'immediately' | 'next_6_months' | 'next_year' | 'exploring';
+}
+
+export interface MemberEducationHistory {
+  id: string;
+  schoolId?: string;
+  programId?: string;
+  institutionName?: string; // If not in system
+  programName?: string; // If not in system
+  status: 'current' | 'completed' | 'did_not_complete';
+  startYear?: number;
+  endYear?: number;
+  isVisible?: boolean;
+}
+
+// Organization Education Settings (for schools)
+export interface OrganizationEducationSettings {
+  isEnabled: boolean;
+  schoolId?: string;
+  tier?: SchoolSubscriptionTier;
+  programsCount?: number;
+  scholarshipsCount?: number;
+}
+
+// Organization Capabilities
+export type OrganizationCapability = 'employer' | 'vendor' | 'education';
+
+// School Import Job (for AI import)
+export type SchoolImportStatus = 'pending' | 'crawling' | 'extracting' | 'review' | 'completed' | 'failed';
+
+export interface SchoolImportJob {
+  id: string;
+  organizationId: string;
+  websiteUrl: string;
+
+  status: SchoolImportStatus;
+
+  progress?: {
+    pagesCrawled?: number;
+    pagesTotal?: number;
+    currentStep?: string;
+  };
+
+  extractedData?: {
+    institution?: Partial<School>;
+    programs?: Partial<EducationProgram>[];
+    scholarships?: Partial<ExtendedScholarship>[];
+    needsReview?: string[];
+  };
+
+  validationErrors?: string[];
+
+  startedAt?: Timestamp | null;
+  completedAt?: Timestamp | null;
+
+  createdBy: string;
+  createdAt?: Timestamp | null;
+}
