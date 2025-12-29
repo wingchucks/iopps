@@ -34,6 +34,7 @@ export interface ListEducationEventsOptions {
   format?: EducationEventFormat;
   upcomingOnly?: boolean;
   publishedOnly?: boolean;
+  isPublished?: boolean; // Alias for publishedOnly
   featured?: boolean;
   startAfter?: Date;
   startBefore?: Date;
@@ -65,7 +66,9 @@ export async function listEducationEvents(
   }
 
   // Default: only show published events for public listings
-  if (options.publishedOnly !== false && !options.schoolId) {
+  // isPublished is an alias for publishedOnly
+  const showPublishedOnly = options.isPublished ?? options.publishedOnly;
+  if (showPublishedOnly !== false && !options.schoolId) {
     constraints.push(where("isPublished", "==", true));
   }
 
@@ -144,14 +147,25 @@ export async function listSchoolEvents(
 
 /**
  * Get upcoming events
+ * @param daysAhead - Number of days to look ahead (default: unlimited)
+ * @param maxResults - Maximum number of results (default: 10)
  */
 export async function getUpcomingEducationEvents(
+  daysAhead?: number,
   maxResults: number = 10
 ): Promise<EducationEvent[]> {
-  return listEducationEvents({
+  const options: ListEducationEventsOptions = {
     upcomingOnly: true,
     maxResults,
-  });
+  };
+
+  if (daysAhead) {
+    const future = new Date();
+    future.setDate(future.getDate() + daysAhead);
+    options.startBefore = future;
+  }
+
+  return listEducationEvents(options);
 }
 
 /**

@@ -1369,7 +1369,7 @@ export interface Service {
 export type SchoolType = 'university' | 'college' | 'polytechnic' | 'tribal_college' | 'training_provider';
 export type SchoolStatus = 'draft' | 'pending' | 'active' | 'suspended';
 
-export const SCHOOL_TYPES = [
+export const SCHOOL_TYPES_ARRAY = [
   'university',
   'college',
   'polytechnic',
@@ -1377,12 +1377,20 @@ export const SCHOOL_TYPES = [
   'training_provider',
 ] as const;
 
+export const SCHOOL_TYPES = [
+  { value: 'university', label: 'University' },
+  { value: 'college', label: 'College' },
+  { value: 'polytechnic', label: 'Polytechnic' },
+  { value: 'tribal_college', label: 'Indigenous/Tribal College' },
+  { value: 'training_provider', label: 'Training Provider' },
+] as const;
+
 // Program Types
 export type ProgramLevel = 'certificate' | 'diploma' | 'bachelor' | 'master' | 'doctorate' | 'microcredential';
 export type ProgramDeliveryMethod = 'in-person' | 'online' | 'hybrid';
 export type ProgramStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 
-export const PROGRAM_LEVELS = [
+export const PROGRAM_LEVELS_ARRAY = [
   'certificate',
   'diploma',
   'bachelor',
@@ -1391,7 +1399,16 @@ export const PROGRAM_LEVELS = [
   'microcredential',
 ] as const;
 
-export const PROGRAM_CATEGORIES = [
+export const PROGRAM_LEVELS = [
+  { value: 'certificate', label: 'Certificate' },
+  { value: 'diploma', label: 'Diploma' },
+  { value: 'bachelor', label: 'Bachelor\'s Degree' },
+  { value: 'master', label: 'Master\'s Degree' },
+  { value: 'doctorate', label: 'Doctorate' },
+  { value: 'microcredential', label: 'Microcredential' },
+] as const;
+
+export const PROGRAM_CATEGORIES_ARRAY = [
   'Business & Management',
   'Health Sciences',
   'Trades & Technology',
@@ -1410,7 +1427,26 @@ export const PROGRAM_CATEGORIES = [
   'Other',
 ] as const;
 
-export type ProgramCategory = typeof PROGRAM_CATEGORIES[number];
+export const PROGRAM_CATEGORIES = [
+  { value: 'business', label: 'Business & Management' },
+  { value: 'health', label: 'Health Sciences' },
+  { value: 'trades', label: 'Trades & Technology' },
+  { value: 'it', label: 'Information Technology' },
+  { value: 'arts', label: 'Arts & Culture' },
+  { value: 'sciences', label: 'Sciences' },
+  { value: 'education', label: 'Education' },
+  { value: 'social-work', label: 'Social Work & Human Services' },
+  { value: 'law', label: 'Law & Justice' },
+  { value: 'environment', label: 'Environmental Studies' },
+  { value: 'indigenous', label: 'Indigenous Studies' },
+  { value: 'engineering', label: 'Engineering' },
+  { value: 'agriculture', label: 'Agriculture & Natural Resources' },
+  { value: 'communications', label: 'Communications & Media' },
+  { value: 'hospitality', label: 'Hospitality & Tourism' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export type ProgramCategory = typeof PROGRAM_CATEGORIES_ARRAY[number];
 
 // Indigenous Status Types for eligibility
 export const INDIGENOUS_STATUS_TYPES = [
@@ -1517,7 +1553,19 @@ export interface School {
   website?: string;
   slug: string;
 
-  // Location
+  // Description
+  description?: string;
+  shortDescription?: string;
+
+  // Location (alias for headOffice for convenience)
+  location?: {
+    address?: string;
+    city: string;
+    province: string;
+    postalCode?: string;
+    reserveName?: string;
+    coordinates?: { lat: number; lng: number };
+  };
   headOffice?: {
     address?: string;
     city: string;
@@ -1530,14 +1578,17 @@ export interface School {
   // Campuses
   campuses?: SchoolCampus[];
 
-  // Indigenous Services
+  // Indigenous Focus
+  indigenousFocused?: boolean;
   indigenousServices?: IndigenousServices;
 
   // Stats
   stats?: SchoolStats;
+  programCount?: number; // Denormalized count
 
   // Verification
   verification?: SchoolVerification;
+  isVerified?: boolean; // Convenience property
 
   // Media
   logoUrl?: string;
@@ -1557,6 +1608,7 @@ export interface School {
   // Status
   status: SchoolStatus;
   isPublished: boolean;
+  featured?: boolean;
 
   // Analytics
   viewCount?: number;
@@ -1583,6 +1635,7 @@ export interface EducationProgram {
   category: ProgramCategory | string;
   subcategory?: string;
   level: ProgramLevel;
+  credential?: string; // e.g., "Bachelor of Business Administration (BBA)"
 
   // Delivery
   deliveryMethod: ProgramDeliveryMethod;
@@ -1757,7 +1810,13 @@ export interface EducationEvent {
 
   // Format
   format: EducationEventFormat;
-  location?: string; // If in-person
+  location?: {
+    venue?: string;
+    address?: string;
+    city?: string;
+    province?: string;
+    postalCode?: string;
+  };
   virtualLink?: string; // If virtual
 
   // Registration

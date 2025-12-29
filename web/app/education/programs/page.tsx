@@ -232,7 +232,7 @@ function ProgramsContent() {
               >
                 <option value="All">All Categories</option>
                 {PROGRAM_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
                 ))}
               </select>
             </div>
@@ -243,17 +243,27 @@ function ProgramsContent() {
                 Level
               </label>
               <div className="flex flex-wrap gap-2">
-                {["All", ...PROGRAM_LEVELS.slice(0, 3)].map((lvl) => (
+                <button
+                  onClick={() => setLevel("All")}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                    level === "All"
+                      ? "bg-purple-500 text-white"
+                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                  }`}
+                >
+                  All
+                </button>
+                {PROGRAM_LEVELS.slice(0, 3).map((lvl) => (
                   <button
-                    key={lvl}
-                    onClick={() => setLevel(lvl as ProgramLevel | "All")}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all capitalize ${
-                      level === lvl
+                    key={lvl.value}
+                    onClick={() => setLevel(lvl.value as ProgramLevel | "All")}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
+                      level === lvl.value
                         ? "bg-purple-500 text-white"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
-                    {lvl}
+                    {lvl.label}
                   </button>
                 ))}
               </div>

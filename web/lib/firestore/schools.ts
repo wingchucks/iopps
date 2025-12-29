@@ -36,6 +36,7 @@ export interface ListSchoolsOptions {
   province?: string;
   status?: SchoolStatus;
   publishedOnly?: boolean;
+  isPublished?: boolean; // Alias for publishedOnly
   indigenousControlled?: boolean;
   hasElderInResidence?: boolean;
   featured?: boolean;
@@ -71,7 +72,9 @@ export async function listSchools(
   }
 
   // Default: only show published schools for public listings
-  if (options.publishedOnly !== false && !options.organizationId) {
+  // isPublished is an alias for publishedOnly
+  const showPublishedOnly = options.isPublished ?? options.publishedOnly;
+  if (showPublishedOnly !== false && !options.organizationId) {
     constraints.push(where("isPublished", "==", true));
     constraints.push(where("status", "==", "active"));
   }

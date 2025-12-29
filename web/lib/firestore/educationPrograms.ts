@@ -163,11 +163,13 @@ export async function getEducationProgramBySlug(
  * List programs for a school (includes drafts)
  */
 export async function listSchoolPrograms(
-  schoolId: string
+  schoolId: string,
+  maxResults?: number
 ): Promise<EducationProgram[]> {
   return listEducationPrograms({
     schoolId,
     publishedOnly: false,
+    maxResults,
   });
 }
 
