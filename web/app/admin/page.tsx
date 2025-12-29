@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { collection, getCountFromServer, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import {
   BuildingStorefrontIcon,
   DocumentTextIcon,
   ExclamationCircleIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 interface StatValue {
@@ -55,11 +56,16 @@ export default function AdminDashboard() {
   });
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    async function fetchStats() {
+  const fetchStats = useCallback(async (isRefresh = false) => {
+      if (isRefresh) {
+        setRefreshing(true);
+      }
+
       if (!db) {
         setLoading(false);
+        setRefreshing(false);
         return;
       }
 
@@ -218,10 +224,23 @@ export default function AdminDashboard() {
       setStats(results);
       setPendingItems(pending.slice(0, 5));
       setLoading(false);
-    }
-
-    fetchStats();
+      setRefreshing(false);
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  // Auto-refresh when window gains focus (e.g., after approving an employer in another tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchStats(true);
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [fetchStats]);
 
   if (loading) {
     return (
@@ -250,9 +269,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Dashboard Overview</h1>
-        <p className="text-slate-400">Welcome to the IOPPS administration panel.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Dashboard Overview</h1>
+          <p className="text-slate-400">Welcome to the IOPPS administration panel.</p>
+        </div>
+        <button
+          onClick={() => fetchStats(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-white disabled:opacity-50"
+        >
+          <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing..." : "Refresh"}
+        </button>
       </div>
 
       {/* Primary Stats */}
