@@ -13,13 +13,13 @@ export default function OrganizationNotFound() {
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
-          href="/jobs-training"
+          href="/careers"
           className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white hover:bg-emerald-600 transition-colors"
         >
           Browse Jobs
         </Link>
         <Link
-          href="/marketplace"
+          href="/business"
           className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800 px-6 py-3 font-semibold text-white hover:bg-slate-700 transition-colors"
         >
           Visit Marketplace

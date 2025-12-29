@@ -217,7 +217,7 @@ function GlobalSearchContent() {
                     Scholarships ({results.scholarships.length})
                   </h2>
                   <Link
-                    href={`/scholarships?keyword=${encodeURIComponent(query)}`}
+                    href={`/education/scholarships?keyword=${encodeURIComponent(query)}`}
                     className="text-sm font-semibold text-[#14B8A6] hover:text-[#14B8A6]/80"
                   >
                     View all scholarships →
@@ -227,7 +227,7 @@ function GlobalSearchContent() {
                   {results.scholarships.map((scholarship) => (
                     <Link
                       key={scholarship.id}
-                      href={`/scholarships/${scholarship.id}`}
+                      href={`/education/scholarships/${scholarship.id}`}
                       className="block rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30 transition-all hover:-translate-y-1 hover:border-[#14B8A6]/70"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -304,7 +304,7 @@ function GlobalSearchContent() {
                     Pow Wows ({results.powwows.length})
                   </h2>
                   <Link
-                    href={`/powwows?keyword=${encodeURIComponent(query)}`}
+                    href={`/community?keyword=${encodeURIComponent(query)}`}
                     className="text-sm font-semibold text-[#14B8A6] hover:text-[#14B8A6]/80"
                   >
                     View all pow wows →
@@ -314,7 +314,7 @@ function GlobalSearchContent() {
                   {results.powwows.map((powwow) => (
                     <Link
                       key={powwow.id}
-                      href={`/powwows/${powwow.id}`}
+                      href={`/community/powwows/${powwow.id}`}
                       className="block rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30 transition-all hover:-translate-y-1 hover:border-[#14B8A6]/70"
                     >
                       <h3 className="text-xl font-semibold text-white">
@@ -342,7 +342,7 @@ function GlobalSearchContent() {
                     Indigenous Businesses ({results.shop.length})
                   </h2>
                   <Link
-                    href={`/shop?keyword=${encodeURIComponent(query)}`}
+                    href={`/business?keyword=${encodeURIComponent(query)}`}
                     className="text-sm font-semibold text-[#14B8A6] hover:text-[#14B8A6]/80"
                   >
                     View all businesses →

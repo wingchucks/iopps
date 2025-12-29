@@ -1,33 +1,38 @@
 "use client";
 
 import { useEffect, useState, useMemo, FormEvent } from "react";
-import Image from "next/image";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
   listEmployerPowwows,
+  listEmployerConferences,
   createPowwowEvent,
   updatePowwowEvent,
   deletePowwow,
+  deleteConference,
 } from "@/lib/firestore";
 import { PosterUploader } from "@/components/PosterUploader";
-import type { PowwowEvent } from "@/lib/types";
+import type { PowwowEvent, Conference } from "@/lib/types";
 import type { PowwowExtractedData } from "@/lib/googleAi";
 import {
   CalendarDaysIcon,
   MapPinIcon,
   PlusIcon,
-  PencilSquareIcon,
-  TrashIcon,
   XMarkIcon,
   SparklesIcon,
   VideoCameraIcon,
+  BuildingOfficeIcon,
+  FireIcon,
 } from "@heroicons/react/24/outline";
 
+type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
 
 export default function EventsTab() {
   const { user } = useAuth();
-  const [events, setEvents] = useState<PowwowEvent[]>([]);
+  const [eventType, setEventType] = useState<EventType>("powwows");
+  const [powwows, setPowwows] = useState<PowwowEvent[]>([]);
+  const [conferences, setConferences] = useState<Conference[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
@@ -42,8 +47,12 @@ export default function EventsTab() {
     if (!user) return;
     setLoading(true);
     try {
-      const eventsData = await listEmployerPowwows(user.uid);
-      setEvents(eventsData);
+      const [powwowsData, conferencesData] = await Promise.all([
+        listEmployerPowwows(user.uid),
+        listEmployerConferences(user.uid),
+      ]);
+      setPowwows(powwowsData);
+      setConferences(conferencesData);
     } catch (err) {
       console.error("Error loading events:", err);
     } finally {
@@ -51,8 +60,8 @@ export default function EventsTab() {
     }
   };
 
-  const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
+  const filteredPowwows = useMemo(() => {
+    return powwows.filter((event) => {
       if (statusFilter === "active" && event.active === false) return false;
       if (statusFilter === "inactive" && event.active !== false) return false;
       if (
@@ -65,9 +74,25 @@ export default function EventsTab() {
       }
       return true;
     });
-  }, [events, keyword, statusFilter]);
+  }, [powwows, keyword, statusFilter]);
 
-  const handleToggleStatus = async (eventId: string, currentStatus: boolean) => {
+  const filteredConferences = useMemo(() => {
+    return conferences.filter((conf) => {
+      if (statusFilter === "active" && conf.active === false) return false;
+      if (statusFilter === "inactive" && conf.active !== false) return false;
+      if (
+        keyword &&
+        !`${conf.title} ${conf.description} ${conf.location}`
+          .toLowerCase()
+          .includes(keyword.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [conferences, keyword, statusFilter]);
+
+  const handleTogglePowwowStatus = async (eventId: string, currentStatus: boolean) => {
     try {
       await updatePowwowEvent(eventId, { active: !currentStatus });
       await loadData();
@@ -77,7 +102,7 @@ export default function EventsTab() {
     }
   };
 
-  const handleDelete = async (eventId: string, name: string) => {
+  const handleDeletePowwow = async (eventId: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
       return;
     }
@@ -90,14 +115,69 @@ export default function EventsTab() {
     }
   };
 
+  const handleDeleteConference = async (confId: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await deleteConference(confId);
+      await loadData();
+    } catch (err) {
+      console.error("Error deleting conference:", err);
+      alert("Failed to delete conference");
+    }
+  };
+
+  const getNewButtonConfig = () => {
+    switch (eventType) {
+      case "powwows":
+        return { href: "/organization/events/new", label: "Pow Wow", modal: true };
+      case "conferences":
+        return { href: "/organization/conferences/new", label: "Conference", modal: false };
+    }
+  };
+
+  const newButtonConfig = getNewButtonConfig();
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-rose-500/10 p-8 shadow-xl shadow-purple-900/20">
-        <h2 className="text-2xl font-bold text-white">Pow Wows & Events</h2>
-        <p className="mt-2 text-slate-400">
-          Manage your pow wow gatherings and cultural events
-        </p>
+        <div className="flex items-center gap-3">
+          <CalendarDaysIcon className="h-8 w-8 text-purple-400" />
+          <div>
+            <h2 className="text-2xl font-bold text-white">Events</h2>
+            <p className="mt-1 text-slate-400">
+              Manage conferences, pow wows, and cultural events
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
+        <button
+          onClick={() => setEventType("powwows")}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
+            eventType === "powwows"
+              ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
+              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+          }`}
+        >
+          <FireIcon className="h-4 w-4" />
+          Pow Wows ({powwows.length})
+        </button>
+        <button
+          onClick={() => setEventType("conferences")}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
+            eventType === "conferences"
+              ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
+              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+          }`}
+        >
+          <BuildingOfficeIcon className="h-4 w-4" />
+          Conferences ({conferences.length})
+        </button>
       </div>
 
       {/* Filters and Actions */}
@@ -107,10 +187,10 @@ export default function EventsTab() {
             <label className="sr-only">Search</label>
             <input
               type="text"
-              placeholder="Search events..."
+              placeholder={`Search ${eventType === "powwows" ? "pow wows" : "conferences"}...`}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
             />
           </div>
           <div>
@@ -118,7 +198,7 @@ export default function EventsTab() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className="rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none"
+              className="rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
             >
               <option value="all">All</option>
               <option value="active">Active</option>
@@ -126,113 +206,237 @@ export default function EventsTab() {
             </select>
           </div>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all"
-        >
-          <PlusIcon className="h-5 w-5" />
-          New Event
-        </button>
+        {newButtonConfig.modal ? (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 transition-all"
+          >
+            <PlusIcon className="h-5 w-5" />
+            New {newButtonConfig.label}
+          </button>
+        ) : (
+          <Link
+            href={newButtonConfig.href}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 transition-all"
+          >
+            <PlusIcon className="h-5 w-5" />
+            New {newButtonConfig.label}
+          </Link>
+        )}
       </div>
 
-      {/* Events List */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
-        </div>
-      ) : filteredEvents.length === 0 ? (
-        <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-          <CalendarDaysIcon className="mx-auto h-12 w-12 text-slate-600" />
-          <h3 className="mt-4 text-lg font-semibold text-white">
-            {keyword || statusFilter !== "all" ? "No events found" : "No events yet"}
-          </h3>
-          <p className="mt-2 text-slate-400">
-            {keyword || statusFilter !== "all"
-              ? "Try adjusting your search or filter"
-              : "Create your first pow wow or cultural event to share with the community."}
-          </p>
-          {!keyword && statusFilter === "all" && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white"
-            >
-              <PlusIcon className="h-5 w-5" />
-              Create your first event
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredEvents.map((event) => (
-            <div
-              key={event.id}
-              className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-white truncate">
-                      {event.name}
-                    </h3>
-                    {event.livestream && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                        <VideoCameraIcon className="h-3 w-3" />
-                        Livestream
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-400">
-                    <span className="flex items-center gap-1.5">
-                      <MapPinIcon className="h-4 w-4" />
-                      {event.location}
-                    </span>
-                    {(event.dateRange || event.startDate) && (
-                      <span className="flex items-center gap-1.5">
-                        <CalendarDaysIcon className="h-4 w-4" />
-                        {event.dateRange || (event.startDate ? new Date(event.startDate as any).toLocaleDateString() : '')}
-                      </span>
-                    )}
-                    {event.host && (
-                      <span className="text-slate-500">
-                        Hosted by {event.host}
-                      </span>
-                    )}
-                  </div>
-                  {event.description && (
-                    <p className="mt-3 text-sm text-slate-300 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      event.active !== false
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-slate-700 text-slate-400"
-                    }`}
-                  >
-                    {event.active !== false ? "Active" : "Inactive"}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
-                <button
-                  onClick={() => handleToggleStatus(event.id, event.active !== false)}
-                  className="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
-                >
-                  {event.active !== false ? "Pause" : "Activate"}
-                </button>
-                <button
-                  onClick={() => handleDelete(event.id, event.name)}
-                  className="rounded-lg px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
+      {/* Pow Wows List */}
+      {eventType === "powwows" && (
+        <>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
             </div>
-          ))}
-        </div>
+          ) : filteredPowwows.length === 0 ? (
+            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
+              <FireIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <h3 className="mt-4 text-lg font-semibold text-white">
+                {keyword || statusFilter !== "all" ? "No pow wows found" : "No pow wows yet"}
+              </h3>
+              <p className="mt-2 text-slate-400">
+                {keyword || statusFilter !== "all"
+                  ? "Try adjusting your search or filter"
+                  : "Create your first pow wow event to share with the community."}
+              </p>
+              {!keyword && statusFilter === "all" && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Create your first pow wow
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredPowwows.map((event) => (
+                <div
+                  key={event.id}
+                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-lg font-semibold text-white truncate">
+                          {event.name}
+                        </h3>
+                        {event.livestream && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+                            <VideoCameraIcon className="h-3 w-3" />
+                            Livestream
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <MapPinIcon className="h-4 w-4" />
+                          {event.location}
+                        </span>
+                        {(event.dateRange || event.startDate) && (
+                          <span className="flex items-center gap-1.5">
+                            <CalendarDaysIcon className="h-4 w-4" />
+                            {event.dateRange || (event.startDate ? new Date(event.startDate as any).toLocaleDateString() : '')}
+                          </span>
+                        )}
+                        {event.host && (
+                          <span className="text-slate-500">
+                            Hosted by {event.host}
+                          </span>
+                        )}
+                      </div>
+                      {event.description && (
+                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                          {event.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          event.active !== false
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-slate-700 text-slate-400"
+                        }`}
+                      >
+                        {event.active !== false ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                    <Link
+                      href={`/community/${event.id}`}
+                      className="rounded-lg px-3 py-1.5 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors"
+                    >
+                      View public page
+                    </Link>
+                    <button
+                      onClick={() => handleTogglePowwowStatus(event.id, event.active !== false)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                    >
+                      {event.active !== false ? "Pause" : "Activate"}
+                    </button>
+                    <button
+                      onClick={() => handleDeletePowwow(event.id, event.name)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Conferences List */}
+      {eventType === "conferences" && (
+        <>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+            </div>
+          ) : filteredConferences.length === 0 ? (
+            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
+              <BuildingOfficeIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <h3 className="mt-4 text-lg font-semibold text-white">
+                {keyword || statusFilter !== "all" ? "No conferences found" : "No conferences yet"}
+              </h3>
+              <p className="mt-2 text-slate-400">
+                {keyword || statusFilter !== "all"
+                  ? "Try adjusting your search or filter"
+                  : "Create your first conference to share with professionals."}
+              </p>
+              {!keyword && statusFilter === "all" && (
+                <Link
+                  href="/organization/conferences/new"
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-6 py-3 text-sm font-semibold text-white"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Create your first conference
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredConferences.map((conf) => (
+                <div
+                  key={conf.id}
+                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-white truncate">
+                        {conf.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-indigo-400">
+                        {conf.organizerName}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                        <span className="flex items-center gap-1.5">
+                          <MapPinIcon className="h-4 w-4" />
+                          {conf.location || "TBD"}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <CalendarDaysIcon className="h-4 w-4" />
+                          {typeof conf.startDate === 'string' ? conf.startDate :
+                            conf.startDate && typeof conf.startDate === 'object' && 'toDate' in conf.startDate
+                              ? conf.startDate.toDate().toLocaleDateString()
+                              : 'TBD'}
+                        </span>
+                        {conf.registrationUrl && (
+                          <span className="text-emerald-400">Registration open</span>
+                        )}
+                      </div>
+                      {conf.description && (
+                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                          {conf.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          conf.active !== false
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-slate-700 text-slate-400"
+                        }`}
+                      >
+                        {conf.active !== false ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                    <Link
+                      href={`/organization/conferences/${conf.id}/edit`}
+                      className="rounded-lg px-3 py-1.5 text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                    >
+                      Edit
+                    </Link>
+                    <Link
+                      href={`/conferences/${conf.id}`}
+                      className="rounded-lg px-3 py-1.5 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors"
+                    >
+                      View public page
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteConference(conf.id, conf.title)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Event Modal */}

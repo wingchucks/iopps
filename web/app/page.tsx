@@ -7,15 +7,21 @@ import { useAuth } from "@/components/AuthProvider";
 
 const pillars = [
   {
-    title: "Jobs & Training",
-    description: "Find career opportunities and build your skills with Indigenous-focused training programs.",
-    href: "/jobs-training",
+    title: "Careers",
+    description: "Find career opportunities and build your skills with Indigenous-focused jobs and training programs.",
+    href: "/careers",
     icon: "💼",
   },
   {
-    title: "Indigenous Marketplace",
-    description: "Shop Indigenous products, hire professional services, and discover Indigenous-owned businesses.",
-    href: "/marketplace",
+    title: "Education",
+    description: "Explore Indigenous-focused schools, programs, and scholarship opportunities across Canada.",
+    href: "/education",
+    icon: "🎓",
+  },
+  {
+    title: "Business",
+    description: "Shop Indigenous products, hire professional services, and discover funding opportunities.",
+    href: "/business",
     icon: "🏪",
   },
   {
@@ -25,19 +31,13 @@ const pillars = [
     icon: "📅",
   },
   {
-    title: "Scholarships & Grants",
-    description: "Access funding for your educational and professional journey.",
-    href: "/scholarships",
-    icon: "🎓",
-  },
-  {
-    title: "Pow Wows & Events",
+    title: "Community",
     description: "Discover pow wows, sporting events, and community celebrations.",
-    href: "/powwows",
+    href: "/community",
     icon: "🪶",
   },
   {
-    title: "Live Streams",
+    title: "Live",
     description: "Tune into live events and broadcasts from the community.",
     href: "/live",
     icon: "📺",
@@ -52,7 +52,7 @@ export default function Home() {
       {/* Ocean Wave Hero Section */}
       <OceanWaveHero
         title="Empowering Indigenous Success"
-        subtitle="Your platform for careers, training, marketplace, scholarships, events, and community connection."
+        subtitle="Your platform for careers, education, business, conferences, community events, and live streams."
         size="lg"
       >
         {!user && (

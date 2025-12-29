@@ -4,15 +4,17 @@ import { useState, useEffect, Suspense } from "react";
 import { redirect, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import OverviewTab from "./OverviewTab";
-import OpportunitiesTab from "./OpportunitiesTab";
+import CareersTab from "./CareersTab";
+import EducationTab from "./EducationTab";
+import EventsTab from "./EventsTab";
 import ApplicationsTab from "./ApplicationsTab";
 import ProfileTab from "./ProfileTab";
 import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
-import ShopTab from "./ShopTab";
+import BusinessTab from "./BusinessTab";
 import MessagesTab from "./MessagesTab";
 
-type TabType = "overview" | "opportunities" | "applications" | "messages" | "videos" | "shop" | "billing" | "profile";
+type TabType = "overview" | "careers" | "education" | "events" | "applications" | "messages" | "videos" | "business" | "billing" | "profile";
 
 function EmployerDashboardContent() {
   const { user, role, loading } = useAuth();
@@ -22,10 +24,12 @@ function EmployerDashboardContent() {
   // Handle URL tab parameter for deep linking
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    // Redirect legacy "events" tab to "opportunities" (pow wows are now in opportunities)
-    if (tabParam === "events") {
-      setActiveTab("opportunities");
-    } else if (tabParam && ["overview", "opportunities", "applications", "messages", "videos", "shop", "billing", "profile"].includes(tabParam)) {
+    // Handle legacy tab redirects
+    if (tabParam === "opportunities") {
+      setActiveTab("careers");
+    } else if (tabParam === "shop") {
+      setActiveTab("business");
+    } else if (tabParam && ["overview", "careers", "education", "events", "applications", "messages", "videos", "business", "billing", "profile"].includes(tabParam)) {
       setActiveTab(tabParam as TabType);
     }
   }, [searchParams]);
@@ -46,13 +50,15 @@ function EmployerDashboardContent() {
 
   const tabs = [
     { id: "overview" as TabType, label: "Overview", icon: "📊" },
-    { id: "opportunities" as TabType, label: "Opportunities", icon: "💼" },
+    { id: "careers" as TabType, label: "Careers", icon: "💼" },
+    { id: "education" as TabType, label: "Education", icon: "🎓" },
+    { id: "events" as TabType, label: "Events", icon: "🎪" },
     { id: "applications" as TabType, label: "Applications", icon: "📝" },
     { id: "messages" as TabType, label: "Messages", icon: "💬" },
     { id: "videos" as TabType, label: "Videos", icon: "🎬" },
-    { id: "shop" as TabType, label: "Shop", icon: "🏪" },
-    { id: "billing" as TabType, label: "Billing & Payments", icon: "💳" },
-    { id: "profile" as TabType, label: "Profile & Settings", icon: "⚙️" },
+    { id: "business" as TabType, label: "Business", icon: "🏪" },
+    { id: "billing" as TabType, label: "Billing", icon: "💳" },
+    { id: "profile" as TabType, label: "Settings", icon: "⚙️" },
   ];
 
   return (
@@ -61,10 +67,10 @@ function EmployerDashboardContent() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white sm:text-4xl">
-            Employer Dashboard
+            Organization Dashboard
           </h1>
           <p className="mt-2 text-slate-400">
-            Manage your opportunities, track applications, and update your organization profile
+            Manage careers, events, business listings, and your organization profile
           </p>
         </div>
 
@@ -88,11 +94,13 @@ function EmployerDashboardContent() {
         {/* Tab Content */}
         <div className="min-h-[600px]">
           {activeTab === "overview" && <OverviewTab />}
-          {activeTab === "opportunities" && <OpportunitiesTab />}
+          {activeTab === "careers" && <CareersTab />}
+          {activeTab === "education" && <EducationTab />}
+          {activeTab === "events" && <EventsTab />}
           {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "messages" && <MessagesTab />}
           {activeTab === "videos" && <VideosTab />}
-          {activeTab === "shop" && <ShopTab />}
+          {activeTab === "business" && <BusinessTab />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab />}
         </div>

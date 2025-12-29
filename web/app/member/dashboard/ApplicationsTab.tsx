@@ -384,7 +384,7 @@ export default function ApplicationsTab() {
               scholarships to get started.
             </p>
             <Link
-              href="/scholarships"
+              href="/education/scholarships"
               className="mt-4 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50"
             >
               Browse scholarships

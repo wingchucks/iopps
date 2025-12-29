@@ -85,7 +85,13 @@ export {
   listScholarshipApplicantsForEmployer,
   updateScholarshipApplicationStatus,
   withdrawScholarshipApplication,
+  // Education Pillar extensions
+  listSchoolScholarships,
+  listUpcomingDeadlineScholarships,
+  listScholarshipsForProgram,
+  createExtendedScholarship,
 } from "./scholarships";
+export type { ExtendedScholarshipInput } from "./scholarships";
 
 // Powwows
 export {
@@ -212,3 +218,95 @@ export {
   getServicesPendingReview,
 } from "./services";
 export type { ListServicesOptions, CreateServiceInput } from "./services";
+
+// ============================================
+// EDUCATION PILLAR
+// ============================================
+
+// Schools
+export {
+  createSchool,
+  getSchool,
+  getSchoolBySlug,
+  getSchoolByEmployerId,
+  updateSchool,
+  deleteSchool,
+  listSchools,
+  listFeaturedSchools,
+  createStudentInquiry,
+  listSchoolInquiries,
+  updateInquiryStatus,
+  getUnreadInquiryCount,
+  saveSchool,
+  unsaveSchool,
+  isSchoolSaved,
+  listSavedSchools,
+  listSavedSchoolIds,
+  incrementSchoolViews,
+} from "./schools";
+export type { ListSchoolsOptions } from "./schools";
+
+// Education Programs
+export {
+  createEducationProgram,
+  getEducationProgram,
+  getEducationProgramBySlug,
+  updateEducationProgram,
+  deleteEducationProgram,
+  listEducationPrograms,
+  listSchoolPrograms,
+  listSchoolProgramsForDashboard,
+  listFeaturedPrograms,
+  listIndigenousFocusedPrograms,
+  bulkCreatePrograms,
+  saveProgram,
+  unsaveProgram,
+  isProgramSaved,
+  listSavedPrograms,
+  listSavedProgramIds,
+  incrementProgramViews,
+  getProgramCountsByCategory,
+} from "./programs";
+export type { ListEducationProgramsOptions } from "./programs";
+
+// Education Events
+export {
+  createEducationEvent,
+  getEducationEvent,
+  updateEducationEvent,
+  deleteEducationEvent,
+  listEducationEvents,
+  listSchoolEvents,
+  listSchoolEventsForDashboard,
+  listUpcomingEvents,
+  listThisWeekEvents,
+  listEventsByMonth,
+  rsvpToEvent,
+  cancelRsvp,
+  isRsvpd,
+  getEventRsvpCount,
+  listMemberRsvps,
+  getEventStats,
+} from "./educationEvents";
+export type { ListEducationEventsOptions } from "./educationEvents";
+
+// ============================================
+// BUSINESS PILLAR
+// ============================================
+
+// Business Grants / Funding
+export {
+  listBusinessGrants,
+  getFeaturedGrants,
+  getBusinessGrant,
+  getBusinessGrantBySlug,
+  incrementGrantViews,
+  createBusinessGrant,
+  updateBusinessGrant,
+  deleteBusinessGrant,
+  updateGrantStatus,
+  setGrantFeatured,
+  listOrganizationGrants,
+  getGrantsPendingReview,
+} from "./grants";
+export type { ListBusinessGrantsOptions, CreateGrantInput } from "./grants";

@@ -173,3 +173,127 @@ export async function withdrawScholarshipApplication(applicationId: string) {
     updatedAt: serverTimestamp(),
   });
 }
+
+// ============================================
+// SCHOOL-LINKED SCHOLARSHIPS (Education Pillar)
+// ============================================
+
+export async function listSchoolScholarships(schoolId: string): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+    const ref = collection(firestore, scholarshipsCollection);
+    // Query for scholarships that have schoolId field matching
+    const q = query(
+      ref,
+      where("schoolId", "==", schoolId),
+      where("active", "==", true),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Scholarship));
+  } catch {
+    return [];
+  }
+}
+
+export async function listUpcomingDeadlineScholarships(daysAhead: number = 30): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    // Get all active scholarships and filter client-side for deadline
+    const ref = collection(firestore, scholarshipsCollection);
+    const q = query(
+      ref,
+      where("active", "==", true),
+      orderBy("deadline", "asc")
+    );
+    const snap = await getDocs(q);
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(now.getDate() + daysAhead);
+
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as Scholarship))
+      .filter((s) => {
+        if (!s.deadline) return false;
+        const deadline = typeof s.deadline === 'string'
+          ? new Date(s.deadline)
+          : (s.deadline as any).toDate?.() || new Date(s.deadline);
+        return deadline >= now && deadline <= futureDate;
+      });
+  } catch {
+    return [];
+  }
+}
+
+export async function listScholarshipsForProgram(programId: string): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+    const ref = collection(firestore, scholarshipsCollection);
+    // Query for scholarships that include this program in their eligibility
+    const q = query(
+      ref,
+      where("eligibility.programIds", "array-contains", programId),
+      where("active", "==", true),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Scholarship));
+  } catch {
+    return [];
+  }
+}
+
+// Extended scholarship type that includes Education pillar fields
+export type ExtendedScholarshipInput = Omit<
+  Scholarship,
+  "id" | "createdAt" | "active"
+> & {
+  active?: boolean;
+  schoolId?: string;
+  providerType?: "school" | "government" | "organization" | "private";
+  eligibility?: {
+    indigenousStatus?: string[];
+    nations?: string[];
+    provinces?: string[];
+    studyLevel?: string[];
+    fieldsOfStudy?: string[];
+    programIds?: string[];
+    schoolIds?: string[];
+    gpaRequirement?: number;
+    financialNeed?: boolean;
+    otherRequirements?: string[];
+  };
+  amountStructured?: {
+    value: number;
+    type: "fixed" | "range" | "variable" | "full_tuition";
+    maxValue?: number;
+    currency?: string;
+  };
+  applicationOpen?: Date | null;
+  isRecurring?: boolean;
+  applicationProcess?: string;
+  sourceUrl?: string;
+  communityStats?: {
+    recipientsCount?: number;
+    connectionsReceived?: number;
+  };
+};
+
+export async function createExtendedScholarship(
+  input: ExtendedScholarshipInput
+): Promise<string> {
+  const ref = collection(db!, scholarshipsCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    active: input.active ?? true,
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db!, scholarshipsCollection, docRef.id), {
+    id: docRef.id,
+  });
+  return docRef.id;
+}

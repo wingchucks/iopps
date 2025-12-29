@@ -565,5 +565,175 @@ service cloud.firestore {
       // Only server-side (admin SDK) can create/modify
       allow write: if false;
     }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - SCHOOLS
+    // ===========================================================================
+    match /schools/{schoolId} {
+      // Public read for published schools
+      allow read: if resource.data.isPublished == true;
+
+      // Employer (owner) can read their own school (any status)
+      allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
+
+      // Admins/moderators can read all
+      allow read: if isAdminOrModerator();
+
+      // Employers can create schools for their organization
+      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
+
+      // Owners can update their own schools
+      allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - EDUCATION PROGRAMS
+    // ===========================================================================
+    match /education_programs/{programId} {
+      // Public read for published programs
+      allow read: if resource.data.isPublished == true;
+
+      // School owner can read their programs (any status)
+      // Note: We check via schoolId -> schools -> employerId
+      allow read: if isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid;
+
+      // Admins/moderators can read all
+      allow read: if isAdminOrModerator();
+
+      // School owners can create programs
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data.employerId == request.auth.uid;
+
+      // School owners can update their programs
+      allow update: if (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid
+      ) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdminOrModerator();
+    }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - EDUCATION EVENTS
+    // ===========================================================================
+    match /education_events/{eventId} {
+      // Public read for published events
+      allow read: if resource.data.isPublished == true;
+
+      // School owner can read their events (any status)
+      allow read: if isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid;
+
+      // Admins/moderators can read all
+      allow read: if isAdminOrModerator();
+
+      // School owners can create events
+      allow create: if isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(request.resource.data.schoolId)).data.employerId == request.auth.uid;
+
+      // School owners can update their events (including RSVP management)
+      allow update: if (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid
+      ) || isAdminOrModerator();
+
+      // Allow members to update RSVP arrays (limited field update)
+      allow update: if isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvpMemberIds', 'attendeeCount']);
+
+      // Only admins can delete
+      allow delete: if isAdminOrModerator();
+    }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - STUDENT INQUIRIES
+    // ===========================================================================
+    match /student_inquiries/{inquiryId} {
+      // School owners can read inquiries for their school
+      allow read: if isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid;
+
+      // Members can read their own inquiries
+      allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Members can create inquiries
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+
+      // School owners can update status (read, replied)
+      allow update: if isSignedIn() &&
+        exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
+        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid;
+
+      // Admins can update/delete
+      allow update, delete: if isAdminOrModerator();
+    }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - SAVED PROGRAMS
+    // ===========================================================================
+    match /savedPrograms/{savedId} {
+      // Users can only read their own saved programs
+      allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+      // Users can create saved programs for themselves
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+      // Users can delete their own saved programs
+      allow delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
+      // No updates needed
+      allow update: if false;
+    }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - SAVED SCHOOLS
+    // ===========================================================================
+    match /savedSchools/{savedId} {
+      // Users can only read their own saved schools
+      allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+      // Users can create saved schools for themselves
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+      // Users can delete their own saved schools
+      allow delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
+      // No updates needed
+      allow update: if false;
+    }
+
+    // ===========================================================================
+    // EDUCATION PILLAR - IMPORT JOBS (AI Scraping)
+    // ===========================================================================
+    match /import_jobs/{jobId} {
+      // Employers can read their own import jobs
+      allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Employers can create import jobs for themselves
+      allow create: if isSignedIn() && request.resource.data.employerId == request.auth.uid;
+
+      // Import jobs are updated by server-side processes
+      // Employers can only cancel (limited update)
+      allow update: if (
+        isSignedIn() &&
+        resource.data.employerId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+      ) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
   }
 }

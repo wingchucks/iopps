@@ -283,7 +283,7 @@ function NewJobPageContent() {
             Register as Employer
           </Link>
           <Link
-            href="/jobs-training"
+            href="/careers"
             className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
           >
             Browse Jobs

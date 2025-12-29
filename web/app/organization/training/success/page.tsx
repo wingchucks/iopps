@@ -120,7 +120,7 @@ function PaymentSuccessContent() {
                         View Dashboard
                     </Link>
                     <Link
-                        href="/jobs-training/programs"
+                        href="/careers/programs"
                         className="rounded-lg border border-slate-700 bg-slate-800 px-6 py-3 font-semibold text-slate-200 transition hover:bg-slate-700"
                     >
                         View Training Programs

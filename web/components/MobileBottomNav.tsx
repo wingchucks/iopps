@@ -19,9 +19,9 @@ import {
 
 const navItems = [
     { href: "/", label: "Home", Icon: HomeIcon, ActiveIcon: HomeIconSolid },
-    { href: "/jobs-training", label: "Jobs", Icon: BriefcaseIcon, ActiveIcon: BriefcaseIconSolid },
-    { href: "/powwows", label: "Events", Icon: CalendarDaysIcon, ActiveIcon: CalendarDaysIconSolid },
-    { href: "/marketplace", label: "Market", Icon: ShoppingBagIcon, ActiveIcon: ShoppingBagIconSolid },
+    { href: "/careers", label: "Careers", Icon: BriefcaseIcon, ActiveIcon: BriefcaseIconSolid },
+    { href: "/community", label: "Events", Icon: CalendarDaysIcon, ActiveIcon: CalendarDaysIconSolid },
+    { href: "/business", label: "Business", Icon: ShoppingBagIcon, ActiveIcon: ShoppingBagIconSolid },
     { href: "/account", label: "Account", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
 ];
 
