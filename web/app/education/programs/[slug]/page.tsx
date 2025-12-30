@@ -209,10 +209,10 @@ export default function ProgramDetailPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
               <h2 className="text-xl font-bold text-white mb-4">Admission Requirements</h2>
               <div className="space-y-4 text-slate-300">
-                {program.admissionRequirements.minimumEducation && (
+                {program.admissionRequirements.education && (
                   <div>
                     <h3 className="text-sm font-semibold text-slate-400 uppercase mb-1">Minimum Education</h3>
-                    <p>{program.admissionRequirements.minimumEducation}</p>
+                    <p>{program.admissionRequirements.education}</p>
                   </div>
                 )}
                 {program.admissionRequirements.prerequisites && program.admissionRequirements.prerequisites.length > 0 && (
@@ -225,10 +225,10 @@ export default function ProgramDetailPage() {
                     </ul>
                   </div>
                 )}
-                {program.admissionRequirements.languageRequirements && (
+                {program.admissionRequirements.englishRequirement && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-400 uppercase mb-1">Language Requirements</h3>
-                    <p>{program.admissionRequirements.languageRequirements}</p>
+                    <h3 className="text-sm font-semibold text-slate-400 uppercase mb-1">English Requirement</h3>
+                    <p>{program.admissionRequirements.englishRequirement}</p>
                   </div>
                 )}
               </div>
@@ -236,18 +236,25 @@ export default function ProgramDetailPage() {
           )}
 
           {/* Career Outcomes */}
-          {program.careerOutcomes && program.careerOutcomes.length > 0 && (
+          {program.careerOutcomes && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
               <h2 className="text-xl font-bold text-white mb-4">Career Outcomes</h2>
-              <div className="flex flex-wrap gap-2">
-                {program.careerOutcomes.map((outcome, i) => (
-                  <span
-                    key={i}
-                    className="rounded-full bg-slate-800 border border-slate-700 px-3 py-1 text-sm text-slate-300"
-                  >
-                    {outcome}
-                  </span>
-                ))}
+              <div className="space-y-4 text-slate-300">
+                {program.careerOutcomes.description && (
+                  <p>{program.careerOutcomes.description}</p>
+                )}
+                {program.careerOutcomes.occupations && program.careerOutcomes.occupations.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {program.careerOutcomes.occupations.map((occupation, i) => (
+                      <span
+                        key={i}
+                        className="rounded-full bg-slate-800 border border-slate-700 px-3 py-1 text-sm text-slate-300"
+                      >
+                        {occupation}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
