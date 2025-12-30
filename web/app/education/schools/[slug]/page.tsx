@@ -176,7 +176,7 @@ export default function SchoolDetailPage() {
 
             <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-4">
               <span>📍 {school.headOffice?.city}, {school.headOffice?.province}</span>
-              {school.stats?.programCount && <span>📚 {school.stats.programCount} programs</span>}
+              {school.stats?.totalPrograms && <span>📚 {school.stats.totalPrograms} programs</span>}
               {school.stats?.indigenousStudentPercentage && (
                 <span>🪶 {school.stats.indigenousStudentPercentage}% Indigenous students</span>
               )}
