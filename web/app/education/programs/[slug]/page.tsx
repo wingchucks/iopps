@@ -167,7 +167,7 @@ export default function ProgramDetailPage() {
             )}
 
             <div className="flex flex-wrap gap-4 text-sm text-slate-400 mt-4">
-              {program.duration && <span>⏱ Duration: {program.duration}</span>}
+              {program.duration && <span>⏱ Duration: {program.duration.value} {program.duration.unit}</span>}
               <span className="capitalize">📍 {program.deliveryMethod}</span>
               {program.startDate && (
                 <span>📅 Starts: {new Date(program.startDate).toLocaleDateString()}</span>
