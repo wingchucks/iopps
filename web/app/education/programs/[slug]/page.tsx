@@ -183,14 +183,14 @@ export default function ProgramDetailPage() {
               >
                 {savingState === "saving" ? "..." : isSaved ? "✓ Saved" : "Save Program"}
               </button>
-              {program.applicationUrl && (
+              {program.sourceUrl && (
                 <a
-                  href={program.applicationUrl}
+                  href={program.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
                 >
-                  Apply Now →
+                  View Program →
                 </a>
               )}
             </div>
