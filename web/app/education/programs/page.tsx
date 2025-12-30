@@ -83,17 +83,20 @@ export default function EducationProgramsPage() {
 
   const getCategoryIcon = (cat?: ProgramCategory) => {
     switch (cat) {
-      case "business": return "💼";
-      case "technology": return "💻";
-      case "healthcare": return "🏥";
-      case "trades": return "🔧";
-      case "arts": return "🎨";
-      case "science": return "🔬";
-      case "education": return "📖";
-      case "law": return "⚖️";
-      case "social_work": return "🤝";
-      case "indigenous_studies": return "🪶";
-      case "environmental": return "🌿";
+      case "Business & Management": return "💼";
+      case "Technology & IT": return "💻";
+      case "Healthcare & Nursing": return "🏥";
+      case "Trades & Industrial": return "🔧";
+      case "Arts & Design": return "🎨";
+      case "Sciences": return "🔬";
+      case "Education & Teaching": return "📖";
+      case "Law & Justice": return "⚖️";
+      case "Social Work & Community": return "🤝";
+      case "Indigenous Studies": return "🪶";
+      case "Environment & Natural Resources": return "🌿";
+      case "Engineering": return "⚙️";
+      case "Agriculture": return "🌾";
+      case "Hospitality & Tourism": return "🏨";
       default: return "📚";
     }
   };
