@@ -340,9 +340,9 @@ export default function ProgramDetailPage() {
             <p className="text-sm text-slate-400 mb-4">
               Contact the school directly to learn more about this program.
             </p>
-            {school?.websiteUrl && (
+            {school?.website && (
               <a
-                href={school.websiteUrl}
+                href={school.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
