@@ -319,7 +319,7 @@ export default function ProgramDetailPage() {
                     <p className="font-medium text-white text-sm">{scholarship.title}</p>
                     {scholarship.amount && (
                       <p className="text-[#14B8A6] text-sm font-semibold">
-                        ${typeof scholarship.amount === 'number' ? scholarship.amount.toLocaleString() : scholarship.amount}
+                        ${scholarship.amount}
                       </p>
                     )}
                   </Link>
