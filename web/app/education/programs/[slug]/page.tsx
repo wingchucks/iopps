@@ -269,25 +269,17 @@ export default function ProgramDetailPage() {
               <div className="space-y-3">
                 {program.tuition.domestic && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase">Domestic</p>
+                    <p className="text-xs text-slate-500 uppercase">Domestic (per {program.tuition.per})</p>
                     <p className="text-xl font-bold text-white">
-                      ${program.tuition.domestic.toLocaleString()} {program.tuition.currency || "CAD"}
+                      ${program.tuition.domestic.toLocaleString()} CAD
                     </p>
                   </div>
                 )}
                 {program.tuition.international && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase">International</p>
+                    <p className="text-xs text-slate-500 uppercase">International (per {program.tuition.per})</p>
                     <p className="text-xl font-bold text-white">
-                      ${program.tuition.international.toLocaleString()} {program.tuition.currency || "CAD"}
-                    </p>
-                  </div>
-                )}
-                {program.tuition.perCredit && (
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase">Per Credit</p>
-                    <p className="text-lg font-bold text-white">
-                      ${program.tuition.perCredit.toLocaleString()} {program.tuition.currency || "CAD"}
+                      ${program.tuition.international.toLocaleString()} CAD
                     </p>
                   </div>
                 )}
