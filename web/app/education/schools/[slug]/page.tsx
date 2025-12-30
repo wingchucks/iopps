@@ -282,8 +282,8 @@ export default function SchoolDetailPage() {
               {school.headOffice?.address && (
                 <p>📍 {school.headOffice.address}, {school.headOffice.city}, {school.headOffice.province}</p>
               )}
-              {school.contactEmail && <p>✉️ {school.contactEmail}</p>}
-              {school.contactPhone && <p>📞 {school.contactPhone}</p>}
+              {school.contact?.admissionsEmail && <p>✉️ {school.contact.admissionsEmail}</p>}
+              {school.contact?.admissionsPhone && <p>📞 {school.contact.admissionsPhone}</p>}
             </div>
           </div>
         </div>
