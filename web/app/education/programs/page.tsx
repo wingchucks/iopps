@@ -280,7 +280,7 @@ export default function EducationProgramsPage() {
               </p>
 
               <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-4">
-                {program.duration && <span>⏱ {program.duration}</span>}
+                {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
                 <span className="capitalize">📍 {program.deliveryMethod}</span>
               </div>
 
