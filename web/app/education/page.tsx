@@ -285,7 +285,11 @@ function EducationContent() {
                       <div className="flex flex-wrap gap-4 text-sm text-slate-400">
                         <span className="text-[#14B8A6] font-medium">{scholarship.employerName}</span>
                         {scholarship.deadline && (
-                          <span>📅 Deadline: {new Date(scholarship.deadline).toLocaleDateString()}</span>
+                          <span>📅 Deadline: {new Date(
+                            typeof scholarship.deadline === 'object' && 'seconds' in scholarship.deadline
+                              ? scholarship.deadline.seconds * 1000
+                              : scholarship.deadline
+                          ).toLocaleDateString()}</span>
                         )}
                       </div>
                     </div>
