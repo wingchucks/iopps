@@ -247,25 +247,25 @@ export default function SchoolDetailPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
               <h2 className="text-xl font-bold text-white mb-4">Indigenous Student Services</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                {school.indigenousServices.hasIndigenousCentre && (
+                {school.indigenousServices.studentCentre && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
-                    <span className="text-slate-300">Indigenous Student Centre</span>
+                    <span className="text-slate-300">{school.indigenousServices.studentCentre.name || "Indigenous Student Centre"}</span>
                   </div>
                 )}
-                {school.indigenousServices.hasElderProgram && (
+                {school.indigenousServices.elderInResidence && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
                     <span className="text-slate-300">Elder-in-Residence Program</span>
                   </div>
                 )}
-                {school.indigenousServices.hasCulturalSpaces && (
+                {school.indigenousServices.ceremonySpace && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
                     <span className="text-slate-300">Dedicated Cultural Spaces</span>
                   </div>
                 )}
-                {school.indigenousServices.hasIndigenousCounselling && (
+                {school.indigenousServices.psychologists && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
                     <span className="text-slate-300">Indigenous Counselling Services</span>
