@@ -194,9 +194,9 @@ export default function SchoolDetailPage() {
               >
                 {savingState === "saving" ? "..." : isSaved ? "✓ Saved" : "Save School"}
               </button>
-              {school.websiteUrl && (
+              {school.website && (
                 <a
-                  href={school.websiteUrl}
+                  href={school.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
