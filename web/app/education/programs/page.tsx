@@ -8,18 +8,18 @@ import type { EducationProgram, ProgramCategory, ProgramLevel, ProgramDelivery }
 
 const CATEGORIES: { value: ProgramCategory | ""; label: string }[] = [
   { value: "", label: "All Categories" },
-  { value: "business", label: "Business" },
-  { value: "technology", label: "Technology" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "trades", label: "Trades" },
-  { value: "arts", label: "Arts & Design" },
-  { value: "science", label: "Science" },
-  { value: "education", label: "Education" },
-  { value: "law", label: "Law" },
-  { value: "social_work", label: "Social Work" },
-  { value: "indigenous_studies", label: "Indigenous Studies" },
-  { value: "environmental", label: "Environmental" },
-  { value: "other", label: "Other" },
+  { value: "Business & Management", label: "Business" },
+  { value: "Technology & IT", label: "Technology" },
+  { value: "Healthcare & Nursing", label: "Healthcare" },
+  { value: "Trades & Industrial", label: "Trades" },
+  { value: "Arts & Design", label: "Arts & Design" },
+  { value: "Sciences", label: "Science" },
+  { value: "Education & Teaching", label: "Education" },
+  { value: "Law & Justice", label: "Law" },
+  { value: "Social Work & Community", label: "Social Work" },
+  { value: "Indigenous Studies", label: "Indigenous Studies" },
+  { value: "Environment & Natural Resources", label: "Environmental" },
+  { value: "Other", label: "Other" },
 ];
 
 const LEVELS: { value: ProgramLevel | ""; label: string }[] = [
