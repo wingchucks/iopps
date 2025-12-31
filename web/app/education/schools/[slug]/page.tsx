@@ -344,7 +344,13 @@ export default function SchoolDetailPage() {
                         </span>
                       )}
                       {scholarship.deadline && (
-                        <span>📅 Deadline: {new Date(scholarship.deadline).toLocaleDateString()}</span>
+                        <span>📅 Deadline: {
+                          typeof scholarship.deadline === 'string'
+                            ? new Date(scholarship.deadline).toLocaleDateString()
+                            : 'seconds' in scholarship.deadline
+                              ? new Date(scholarship.deadline.seconds * 1000).toLocaleDateString()
+                              : new Date(scholarship.deadline).toLocaleDateString()
+                        }</span>
                       )}
                     </div>
                   </div>
