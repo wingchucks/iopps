@@ -385,10 +385,16 @@ export default function SchoolDetailPage() {
                     </span>
                   </div>
                   <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors">
-                    {event.title}
+                    {event.name}
                   </h3>
                   <p className="text-sm text-slate-400">
-                    📅 {new Date(event.startDatetime).toLocaleDateString()}
+                    📅 {event.startDatetime && (
+                      typeof event.startDatetime === 'string'
+                        ? new Date(event.startDatetime).toLocaleDateString()
+                        : 'seconds' in event.startDatetime
+                          ? new Date(event.startDatetime.seconds * 1000).toLocaleDateString()
+                          : 'TBD'
+                    )}
                   </p>
                 </Link>
               ))}
