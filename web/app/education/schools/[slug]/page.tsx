@@ -309,7 +309,7 @@ export default function SchoolDetailPage() {
                     {program.name}
                   </h3>
                   <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                    {program.duration && <span>⏱ {program.duration}</span>}
+                    {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
                     <span className="capitalize">📍 {program.deliveryMethod}</span>
                   </div>
                 </Link>
