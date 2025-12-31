@@ -21,6 +21,15 @@ export const JOB_CATEGORIES = [
 
 export type JobCategory = typeof JOB_CATEGORIES[number];
 
+// Location Types
+export type LocationType = "onsite" | "remote" | "hybrid";
+
+// Salary Period
+export type SalaryPeriod = "hourly" | "daily" | "weekly" | "monthly" | "yearly";
+
+// Application Method
+export type ApplicationMethod = "email" | "url" | "quickApply";
+
 export interface Interview {
   id: string;
   videoUrl: string;
