@@ -333,3 +333,13 @@ export async function incrementSchoolViews(schoolId: string): Promise<void> {
     // Silently fail - analytics shouldn't break the page
   }
 }
+
+// ============================================
+// ALIASES (for backward compatibility)
+// ============================================
+
+// Alias for getSchoolByEmployerId (some files use organizationId terminology)
+export const getSchoolByOrganizationId = getSchoolByEmployerId;
+
+// Alias for createStudentInquiry (some files use createSchoolInquiry)
+export const createSchoolInquiry = createStudentInquiry;

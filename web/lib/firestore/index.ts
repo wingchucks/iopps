@@ -5,6 +5,7 @@
 export {
   getEmployerProfile,
   updateEmployerLogo,
+  updateEmployerBanner,
   upsertEmployerProfile,
   listEmployers,
   updateEmployerStatus,
@@ -19,6 +20,7 @@ export {
   trackInterviewView,
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
+  updateEmployerCarouselFeature,
 } from "./employers";
 export type { GrantFreePostingParams } from "./employers";
 
@@ -229,11 +231,13 @@ export {
   getSchool,
   getSchoolBySlug,
   getSchoolByEmployerId,
+  getSchoolByOrganizationId,
   updateSchool,
   deleteSchool,
   listSchools,
   listFeaturedSchools,
   createStudentInquiry,
+  createSchoolInquiry,
   listSchoolInquiries,
   updateInquiryStatus,
   getUnreadInquiryCount,

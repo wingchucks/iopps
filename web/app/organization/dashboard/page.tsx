@@ -8,7 +8,7 @@ import CareersTab from "./CareersTab";
 import EducationTab from "./EducationTab";
 import EventsTab from "./EventsTab";
 import ApplicationsTab from "./ApplicationsTab";
-import ProfileTab from "./ProfileTab";
+import ProfileTab from "./UnifiedProfileTab";
 import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import BusinessTab from "./BusinessTab";

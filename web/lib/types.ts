@@ -3,6 +3,24 @@ import type { Timestamp } from "firebase/firestore";
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "pending" | "approved" | "rejected";
 
+// Job Categories
+export const JOB_CATEGORIES = [
+  "Technology",
+  "Healthcare",
+  "Education",
+  "Construction",
+  "Finance",
+  "Government",
+  "Non-Profit",
+  "Trades",
+  "Arts & Culture",
+  "Environment",
+  "Legal",
+  "Other"
+] as const;
+
+export type JobCategory = typeof JOB_CATEGORIES[number];
+
 export interface Interview {
   id: string;
   videoUrl: string;
@@ -1315,22 +1333,28 @@ export interface Service {
 export type OrganizationCapability = "employer" | "vendor" | "education";
 
 // School types
-export type SchoolType =
-  | "university"
-  | "college"
-  | "polytechnic"
-  | "tribal_college"
-  | "training_provider";
+export const SCHOOL_TYPES = [
+  "university",
+  "college",
+  "polytechnic",
+  "tribal_college",
+  "training_provider"
+] as const;
+
+export type SchoolType = typeof SCHOOL_TYPES[number];
 
 // Program levels
-export type ProgramLevel =
-  | "certificate"
-  | "diploma"
-  | "bachelor"
-  | "master"
-  | "doctorate"
-  | "microcredential"
-  | "apprenticeship";
+export const PROGRAM_LEVELS = [
+  "certificate",
+  "diploma",
+  "bachelor",
+  "master",
+  "doctorate",
+  "microcredential",
+  "apprenticeship"
+] as const;
+
+export type ProgramLevel = typeof PROGRAM_LEVELS[number];
 
 // Program delivery methods
 export type ProgramDelivery = "in-person" | "online" | "hybrid";
