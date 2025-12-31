@@ -241,8 +241,8 @@ export default function SchoolsPage() {
 
               <div className="flex flex-wrap gap-3 text-xs text-slate-400">
                 <span>📍 {school.headOffice?.city}, {school.headOffice?.province}</span>
-                {school.stats?.programCount && (
-                  <span>📚 {school.stats.programCount} programs</span>
+                {school.stats?.totalPrograms && (
+                  <span>📚 {school.stats.totalPrograms} programs</span>
                 )}
               </div>
 
