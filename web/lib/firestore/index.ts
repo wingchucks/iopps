@@ -21,6 +21,7 @@ export {
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
   updateEmployerCarouselFeature,
+  isProfileComplete,
 } from "./employers";
 export type { GrantFreePostingParams } from "./employers";
 
@@ -247,6 +248,7 @@ export {
   listSavedSchools,
   listSavedSchoolIds,
   incrementSchoolViews,
+  setSchoolPublished,
 } from "./schools";
 export type { ListSchoolsOptions } from "./schools";
 
@@ -272,6 +274,12 @@ export {
   getProgramCountsByCategory,
 } from "./programs";
 export type { ListEducationProgramsOptions } from "./programs";
+
+// Education Programs (additional functions from educationPrograms.ts)
+export {
+  getSchoolProgramCount,
+  incrementEducationProgramInquiries,
+} from "./educationPrograms";
 
 // Education Events
 export {

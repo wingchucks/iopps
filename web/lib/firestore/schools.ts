@@ -334,6 +334,17 @@ export async function incrementSchoolViews(schoolId: string): Promise<void> {
   }
 }
 
+/**
+ * Set school published status
+ */
+export async function setSchoolPublished(schoolId: string, isPublished: boolean): Promise<void> {
+  const ref = doc(db!, schoolsCollection, schoolId);
+  await updateDoc(ref, {
+    isPublished,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 // ============================================
 // ALIASES (for backward compatibility)
 // ============================================
