@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -48,7 +47,7 @@ function TrainingProgramsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState(12);
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   // Filter state
   const [search, setSearch] = useState("");
@@ -167,90 +166,44 @@ function TrainingProgramsContent() {
   return (
     <PageShell>
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg
-            className="h-full w-full"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
+      <div className="relative text-center mb-12">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
+          Professional Development
+        </p>
+        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl">
+          Training Programs
+        </h1>
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
+          Build your skills with training programs from Indigenous-focused
+          organizations and educational partners across Turtle Island.
+        </p>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search programs, skills, providers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-full bg-slate-800 border border-slate-700 py-3 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/50 focus:border-[#14B8A6]"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 rounded-full bg-slate-800 border border-slate-700 px-6 py-3 text-slate-300 transition-colors hover:border-[#14B8A6] hover:text-white"
           >
-            <defs>
-              <pattern
-                id="training-grid"
-                width="10"
-                height="10"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle cx="5" cy="5" r="1" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#training-grid)" />
-          </svg>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-violet-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 mb-4">
-            <AcademicCapIcon className="h-4 w-4" />
-            Professional Development
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Training Programs
-          </h1>
-          <p className="mt-4 text-lg text-purple-100 sm:text-xl">
-            Build your skills with training programs from Indigenous-focused
-            organizations and educational partners across Turtle Island.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search programs, skills, providers..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-            >
-              <FunnelIcon className="h-5 w-5" />
-              Filters
-              {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-purple-600">
-                  !
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="mt-8 flex justify-center gap-8">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">{programs.length}</p>
-              <p className="text-sm text-purple-200">Programs</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">
-                {programs.filter((p) => p.format === "online").length}
-              </p>
-              <p className="text-sm text-purple-200">Online</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">
-                {programs.filter((p) => p.fundingAvailable).length}
-              </p>
-              <p className="text-sm text-purple-200">With Funding</p>
-            </div>
-          </div>
+            <FunnelIcon className="h-5 w-5" />
+            Filters
+            {hasFilters && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-xs font-bold text-slate-900">
+                !
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -283,7 +236,7 @@ function TrainingProgramsContent() {
                     onClick={() => setCategory(cat)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       category === cat
-                        ? "bg-purple-500 text-white"
+                        ? "bg-[#14B8A6] text-slate-900"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -305,7 +258,7 @@ function TrainingProgramsContent() {
                     onClick={() => setFormat(f.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       format === f.value
-                        ? "bg-purple-500 text-white"
+                        ? "bg-[#14B8A6] text-slate-900"
                         : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                     }`}
                   >
@@ -429,7 +382,7 @@ function TrainingProgramsContent() {
             </p>
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-4 py-2 text-sm font-medium text-white hover:bg-purple-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#16cdb8] transition-colors"
             >
               Clear filters
             </button>
@@ -449,7 +402,7 @@ function TrainingProgramsContent() {
               <div className="mt-10 flex justify-center">
                 <button
                   onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-purple-500 hover:text-purple-400"
+                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                 >
                   Load more programs
                   <svg
@@ -495,35 +448,24 @@ function TrainingProgramsContent() {
         </Link>
       </div>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Offer Training Programs?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          List your training program on IOPPS. Reach Indigenous learners and
-          professionals across North America.
-        </p>
-        <a
-          href="/organization/training/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30 hover:scale-105"
-        >
-          Post a Training Program
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      {/* CTA Section - Only visible to employers and admins */}
+      {(role === 'employer' || role === 'admin') && (
+        <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+            Offer Training Programs?
+          </h2>
+          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+            List your training program on IOPPS. Reach Indigenous learners and
+            professionals across North America.
+          </p>
+          <Link
+            href="/organization/training/new"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 8l4 4m0 0l-4 4m4-4H3"
-            />
-          </svg>
-        </a>
-      </section>
+            Post a Training Program
+          </Link>
+        </section>
+      )}
     </PageShell>
   );
 }
@@ -570,11 +512,11 @@ function TrainingCard({
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-purple-500/50"
+          : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
       }`}
     >
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-purple-600/20 to-indigo-600/10 px-5 py-5">
+      <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-5">
         {/* Featured Badge */}
         {featured && (
           <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
@@ -599,7 +541,7 @@ function TrainingCard({
 
         {/* Category */}
         {program.category && (
-          <span className="mt-2 inline-block rounded-full bg-purple-500/20 px-2.5 py-1 text-xs font-medium text-purple-300">
+          <span className="mt-2 inline-block rounded-full bg-[#14B8A6]/20 px-2.5 py-1 text-xs font-medium text-[#14B8A6]">
             {program.category}
           </span>
         )}
@@ -607,12 +549,12 @@ function TrainingCard({
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-purple-400 mb-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#14B8A6] mb-1">
           {program.providerName}
         </p>
 
         <Link href={`/careers/programs/${program.id}`}>
-          <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-purple-300 transition-colors cursor-pointer">
+          <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-[#14B8A6] transition-colors cursor-pointer">
             {program.title}
           </h3>
         </Link>
@@ -684,7 +626,7 @@ function TrainingCard({
               e.preventDefault();
               onEnrollClick();
             }}
-            className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-3 py-1.5 text-sm font-semibold text-purple-300 hover:bg-purple-500/30 transition-colors"
+            className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/20 px-3 py-1.5 text-sm font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/30 transition-colors"
           >
             Learn More
             <ArrowTopRightOnSquareIcon className="h-4 w-4" />
