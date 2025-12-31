@@ -340,7 +340,7 @@ export default function SchoolDetailPage() {
                     <div className="flex flex-wrap gap-4 text-sm text-slate-400">
                       {scholarship.amount && (
                         <span className="text-[#14B8A6] font-medium">
-                          ${typeof scholarship.amount === 'number' ? scholarship.amount.toLocaleString() : scholarship.amount}
+                          {scholarship.amount}
                         </span>
                       )}
                       {scholarship.deadline && (
