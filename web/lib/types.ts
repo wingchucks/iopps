@@ -183,6 +183,7 @@ export interface JobPosting {
     min?: number;
     max?: number;
     currency?: string;
+    period?: SalaryPeriod;
     disclosed?: boolean;
   } | string; // Support both structured and legacy string format
   applicationLink?: string;
