@@ -69,7 +69,7 @@ export default function CreateJobAlertModal({
                             required
                             value={alertName}
                             onChange={(e) => setAlertName(e.target.value)}
-                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-accent focus:outline-none"
                         />
                     </div>
 
@@ -82,7 +82,7 @@ export default function CreateJobAlertModal({
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
                             placeholder="e.g. Developer, Manager"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-accent focus:outline-none"
                         />
                     </div>
 
@@ -95,7 +95,7 @@ export default function CreateJobAlertModal({
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             placeholder="e.g. Toronto, Remote"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-accent focus:outline-none"
                         />
                     </div>
 
@@ -106,7 +106,7 @@ export default function CreateJobAlertModal({
                         <select
                             value={frequency}
                             onChange={(e) => setFrequency(e.target.value as JobAlertFrequency)}
-                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-slate-100 focus:border-accent focus:outline-none"
                         >
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
@@ -118,7 +118,7 @@ export default function CreateJobAlertModal({
                         <button
                             type="submit"
                             disabled={saving}
-                            className="w-full rounded-lg bg-[#14B8A6] px-4 py-2 font-semibold text-slate-900 hover:bg-[#0F9488] disabled:opacity-50"
+                            className="w-full rounded-lg bg-accent px-4 py-2 font-semibold text-slate-900 hover:bg-accent-hover disabled:opacity-50"
                         >
                             {saving ? "Creating..." : "Create Alert"}
                         </button>

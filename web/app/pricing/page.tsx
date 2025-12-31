@@ -11,6 +11,7 @@ import {
   SUBSCRIPTION_PRODUCTS,
   CONFERENCE_PRODUCTS,
   VENDOR_PRODUCTS,
+  TRAINING_PRODUCTS,
 } from "@/lib/stripe";
 
 type PricingCardProps = {
@@ -348,50 +349,94 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 3: Conference & Event Uploads */}
+      {/* Section 3: Conference Uploads */}
       <section className="mt-12">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-50">Conference & Event Uploads</h2>
+          <h2 className="text-2xl font-bold text-slate-50">Conference Uploads</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Promote your conferences, summits, gatherings, and training events.
+            Promote your conferences, summits, and professional gatherings. Pow wows and community events are free in the Events section.
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <PricingCard
             title={CONFERENCE_PRODUCTS.STANDARD.name}
             price={`$${CONFERENCE_PRODUCTS.STANDARD.price / 100}`}
-            period="per event"
+            period="per conference"
             features={[
-              "Upload any conference, summit, gathering, hiring event, or training",
-              'Listed under the IOPPS "Conferences & Events" pillar',
+              `Live for ${CONFERENCE_PRODUCTS.STANDARD.duration} days`,
+              "Upload any conference, summit, or professional gathering",
+              'Listed under the IOPPS "Conferences" section',
               "Includes banner image, description, registration link",
               "Social promo formatting",
             ]}
-            buttonText={isCommunityMember ? "Employer Account Required" : "Post an Event"}
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Conference"}
             buttonHref={isCommunityMember ? undefined : "/organization/conferences/new"}
             disabled={isCommunityMember}
-            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
+            helperText={isCommunityMember ? "Create an employer account to post conferences." : undefined}
           />
           <PricingCard
             title={CONFERENCE_PRODUCTS.FEATURED.name}
             price={`$${CONFERENCE_PRODUCTS.FEATURED.price / 100}`}
-            period="per event"
+            period="per conference"
             badge="Featured"
             features={[
+              `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
               "All standard features included",
               "Featured badge and top positioning",
-              `Live for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
               "Priority visibility on homepage",
             ]}
-            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Event"}
+            buttonText={isCommunityMember ? "Employer Account Required" : "Post a Featured Conference"}
             buttonHref={isCommunityMember ? undefined : "/organization/conferences/new?featured=true"}
             disabled={isCommunityMember}
-            helperText={isCommunityMember ? "Create an employer account to post events." : undefined}
+            helperText={isCommunityMember ? "Create an employer account to post conferences." : undefined}
           />
         </div>
       </section>
 
-      {/* Section 4: Shop Indigenous Vendor Pricing */}
+      {/* Section 4: Training Program Featured Listings */}
+      <section className="mt-12">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-slate-50">Training Program Featured Listings</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Boost visibility for your training programs with premium spotlight placement.
+          </p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <PricingCard
+            title={TRAINING_PRODUCTS.FEATURED.name}
+            price={`$${TRAINING_PRODUCTS.FEATURED.price / 100}`}
+            period="per program"
+            features={[
+              `Premium spotlight placement for ${TRAINING_PRODUCTS.FEATURED.duration} days`,
+              "Featured badge on training listing",
+              "Top positioning in training directory",
+              "Increased visibility to job seekers",
+            ]}
+            buttonText={isCommunityMember ? "Employer Account Required" : "Feature Your Program"}
+            buttonHref={isCommunityMember ? undefined : "/organization/training"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to feature training programs." : undefined}
+          />
+          <PricingCard
+            title={TRAINING_PRODUCTS.FEATURED_90.name}
+            price={`$${TRAINING_PRODUCTS.FEATURED_90.price / 100}`}
+            period="per program"
+            badge="Save 25%"
+            features={[
+              `Extended spotlight placement for ${TRAINING_PRODUCTS.FEATURED_90.duration} days`,
+              "Featured badge on training listing",
+              "Top positioning in training directory",
+              "Best value for longer campaigns",
+            ]}
+            buttonText={isCommunityMember ? "Employer Account Required" : "Feature Your Program"}
+            buttonHref={isCommunityMember ? undefined : "/organization/training"}
+            disabled={isCommunityMember}
+            helperText={isCommunityMember ? "Create an employer account to feature training programs." : undefined}
+          />
+        </div>
+      </section>
+
+      {/* Section 5: Shop Indigenous Vendor Pricing */}
       <section className="mt-12">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-50">Shop Indigenous Vendor Pricing</h2>
@@ -425,7 +470,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 5: Live Streaming Services */}
+      {/* Section 6: Live Streaming Services */}
       <section className="mt-12">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-50">Live Streaming Services</h2>
@@ -466,7 +511,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 6: IOPPS Spotlight */}
+      {/* Section 7: IOPPS Spotlight */}
       <section className="mt-12">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-50">IOPPS Spotlight</h2>
@@ -530,7 +575,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Section 7: Everything in One Clean List */}
+      {/* Section 8: Everything in One Clean List */}
       <section className="mt-12">
         <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30">
           <h2 className="text-xl font-bold text-slate-50">Everything in One Clean List</h2>
@@ -554,6 +599,18 @@ export default function PricingPage() {
             <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
               <span className="text-sm text-slate-300">Conference/Event</span>
               <span className="font-semibold text-[#14B8A6]">$250</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
+              <span className="text-sm text-slate-300">Featured Conference</span>
+              <span className="font-semibold text-[#14B8A6]">$400</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
+              <span className="text-sm text-slate-300">Training Featured (60 days)</span>
+              <span className="font-semibold text-[#14B8A6]">$150</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
+              <span className="text-sm text-slate-300">Training Featured (90 days)</span>
+              <span className="font-semibold text-[#14B8A6]">$225</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3">
               <span className="text-sm text-slate-300">Shop Vendor (Monthly)</span>

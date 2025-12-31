@@ -5,15 +5,17 @@
 
 import { Resend } from "resend";
 
-const ADMIN_EMAIL = "nathan.arias@iopps.ca";
-const FROM_EMAIL = "IOPPS Notifications <notifications@iopps.ca>";
+// Use environment variables with fallbacks for backwards compatibility
+const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || "nathan.arias@iopps.ca";
+const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL || "IOPPS Notifications <notifications@iopps.ca>";
 
 type NotificationType =
   | "new_employer"
   | "new_job"
   | "new_application"
   | "new_contact"
-  | "new_user";
+  | "new_user"
+  | "employer_ready";
 
 interface NotificationData {
   type: NotificationType;
@@ -46,7 +48,9 @@ interface NotificationData {
 export async function notifyAdmin(data: NotificationData): Promise<void> {
   // Skip if no API key configured
   if (!process.env.RESEND_API_KEY) {
-    console.log("[Admin Notification] Skipped - RESEND_API_KEY not configured");
+    if (process.env.NODE_ENV === "development") {
+      console.log("[Admin Notification] Skipped - RESEND_API_KEY not configured");
+    }
     return;
   }
 
@@ -62,7 +66,9 @@ export async function notifyAdmin(data: NotificationData): Promise<void> {
       text,
     });
 
-    console.log(`[Admin Notification] Sent: ${data.type}`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[Admin Notification] Sent: ${data.type}`);
+    }
   } catch (error) {
     // Log but don't throw - notifications shouldn't break main flows
     console.error("[Admin Notification] Failed to send:", error);
@@ -85,6 +91,8 @@ function buildEmail(data: NotificationData): {
       return buildNewContactEmail(data);
     case "new_user":
       return buildNewUserEmail(data);
+    case "employer_ready":
+      return buildEmployerReadyEmail(data);
     default:
       return {
         subject: "IOPPS Notification",
@@ -199,5 +207,30 @@ function buildNewUserEmail(data: NotificationData) {
 </body>
 </html>`;
   const text = `New User Signup\n\nEmail: ${data.userEmail}${data.userName ? `\nName: ${data.userName}` : ""}`;
+  return { subject, html, text };
+}
+
+function buildEmployerReadyEmail(data: NotificationData) {
+  const subject = `Employer Profile Ready for Review: ${data.organizationName}`;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155;">
+    <div style="background: #14b8a6; color: #0f172a; padding: 8px 16px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-bottom: 16px;">Action Required</div>
+    <h2 style="color: #14b8a6; margin-top: 0;">Employer Profile Ready for Review</h2>
+    <p>An employer has completed their profile and is waiting for approval to post jobs.</p>
+    <div style="background: #0f172a; padding: 16px; border-radius: 8px; margin: 16px 0;">
+      <p style="margin: 0 0 8px 0;"><strong>Organization:</strong> ${data.organizationName}</p>
+      <p style="margin: 0;"><strong>Email:</strong> ${data.employerEmail}</p>
+    </div>
+    <p style="margin-top: 24px;">
+      <a href="https://iopps.ca/admin/employers?status=pending" style="display: inline-block; background: #14b8a6; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Review & Approve</a>
+    </p>
+  </div>
+</body>
+</html>`;
+  const text = `Employer Profile Ready for Review\n\nOrganization: ${data.organizationName}\nEmail: ${data.employerEmail}\n\nReview: https://iopps.ca/admin/employers?status=pending`;
   return { subject, html, text };
 }

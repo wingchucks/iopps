@@ -108,7 +108,7 @@ export default function RegisterPage() {
         setSuccess(true);
       } catch (verifyError) {
         console.error("Email verification error:", verifyError);
-        router.push(role === "employer" ? "/organization/dashboard?tab=shop" : "/jobs");
+        router.push(role === "employer" ? "/organization/dashboard" : "/jobs");
       }
     } catch (err) {
       console.error(err);
@@ -201,7 +201,7 @@ export default function RegisterPage() {
         }
       }
 
-      router.push(selectedRole === "employer" ? "/organization/dashboard?tab=shop" : "/jobs");
+      router.push(selectedRole === "employer" ? "/organization/dashboard" : "/jobs");
     } catch (err) {
       console.error(err);
       setError("Failed to update role. Please try again.");

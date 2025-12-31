@@ -2,6 +2,23 @@ import type { Metadata } from "next";
 import { db } from "@/lib/firebase-admin";
 import PowwowDetailClient from "./PowwowDetailClient";
 import type { PowwowEvent } from "@/lib/types";
+import { generatePowwowSchema } from "@/lib/seo";
+
+// Helper to convert Firestore Timestamp to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === "object" && "_seconds" in timestamp) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  if (timestamp.toDate && typeof timestamp.toDate === "function") {
+    return timestamp.toDate();
+  }
+  if (typeof timestamp === "string") {
+    return new Date(timestamp);
+  }
+  return null;
+}
 
 interface PageProps {
   params: Promise<{ powwowId: string }>;
@@ -117,10 +134,33 @@ export default async function PowwowDetailPage({ params }: PageProps) {
       }
     : null;
 
+  // Generate JSON-LD schema for SEO
+  const powwowSchema = powwow
+    ? generatePowwowSchema({
+        name: powwow.name,
+        description: powwow.description,
+        startDate: toDate(powwow.startDate),
+        endDate: toDate(powwow.endDate),
+        location: powwow.location,
+        host: powwow.host,
+        eventType: powwow.eventType,
+        url: `https://iopps.ca/powwows/${powwowId}`,
+        image: powwow.imageUrl,
+      })
+    : null;
+
   return (
-    <PowwowDetailClient
-      powwow={serializedPowwow as PowwowEvent | null}
-      error={!powwow ? "Event not found" : undefined}
-    />
+    <>
+      {powwowSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(powwowSchema) }}
+        />
+      )}
+      <PowwowDetailClient
+        powwow={serializedPowwow as PowwowEvent | null}
+        error={!powwow ? "Event not found" : undefined}
+      />
+    </>
   );
 }

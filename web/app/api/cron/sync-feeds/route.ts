@@ -9,10 +9,45 @@ import {
   extractLocationFromDescription,
   cleanText,
 } from "@/lib/job-description-parser";
+import { validateExternalUrl } from "@/lib/url-validator";
+import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+// Log cron execution to Firestore for monitoring
+async function logCronExecution(
+  cronType: string,
+  frequency: string | null,
+  status: "started" | "success" | "error",
+  details: {
+    feedsSynced?: number;
+    feedsFailed?: number;
+    totalJobsImported?: number;
+    totalJobsUpdated?: number;
+    totalJobsExpired?: number;
+    errors?: string[];
+    durationMs?: number;
+    errorMessage?: string;
+  } = {}
+) {
+  if (!db) return;
+
+  try {
+    await db.collection("cronLogs").add({
+      cronType,
+      frequency,
+      status,
+      ...details,
+      timestamp: FieldValue.serverTimestamp(),
+      createdAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    // Don't let logging failures break the cron
+    console.error("Failed to log cron execution:", err);
+  }
+}
 
 interface FieldMappings {
   jobIdOrUrl?: string;
@@ -110,9 +145,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
   }
 
+  const startTime = Date.now();
+  const { searchParams } = new URL(request.url);
+  const frequency = searchParams.get("frequency") as "hourly" | "daily" | "weekly" | null;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const frequency = searchParams.get("frequency") as "hourly" | "daily" | "weekly" | null;
+    // Log cron start
+    await logCronExecution("sync-feeds", frequency, "started");
 
     let query = db.collection("rssFeeds").where("active", "==", true);
 
@@ -123,6 +162,10 @@ export async function GET(request: NextRequest) {
     const feedsSnapshot = await query.get();
 
     if (feedsSnapshot.empty) {
+      await logCronExecution("sync-feeds", frequency, "success", {
+        feedsSynced: 0,
+        durationMs: Date.now() - startTime,
+      });
       return NextResponse.json({ success: true, feedsSynced: 0, message: "No active feeds to sync" });
     }
 
@@ -161,10 +204,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Log successful completion
+    await logCronExecution("sync-feeds", frequency, "success", {
+      ...results,
+      durationMs: Date.now() - startTime,
+    });
+
     return NextResponse.json({ success: true, ...results, timestamp: new Date().toISOString() });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Log error
+    await logCronExecution("sync-feeds", frequency, "error", {
+      errorMessage,
+      durationMs: Date.now() - startTime,
+    });
+
     return NextResponse.json(
-      { error: "Failed to process feed sync", details: error instanceof Error ? error.message : String(error) },
+      { error: "Failed to process feed sync", details: errorMessage },
       { status: 500 }
     );
   }
@@ -179,6 +236,20 @@ async function syncFeed(feed: RSSFeedConfig): Promise<{
   error?: string;
 }> {
   try {
+    // SSRF protection: Validate the feed URL before fetching
+    const urlValidation = validateExternalUrl(feed.feedUrl);
+    if (!urlValidation.isValid) {
+      console.warn(`[SECURITY] Blocked SSRF attempt for feed ${feed.id}: ${urlValidation.error}`);
+      return {
+        success: false,
+        jobsImported: 0,
+        jobsUpdated: 0,
+        jobsExpired: 0,
+        jobsSkipped: 0,
+        error: `Invalid feed URL: ${urlValidation.error}`,
+      };
+    }
+
     const response = await fetch(feed.feedUrl, {
       headers: {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -241,9 +312,10 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
       // Decode and parse description for structured fields
       const decodedDescription = decode(rawDescription);
       const parsedDescription = parseJobDescription(decodedDescription);
+      const plainTextDescription = parsedDescription.plainDescription;
 
       // Check if job passes keyword filter - if it does, mark as indigenous preference
-      const passedKeywordFilter = matchesKeywordFilter(title, decodedDescription, feed.keywordFilter);
+      const passedKeywordFilter = matchesKeywordFilter(title, plainTextDescription, feed.keywordFilter);
 
       // If keyword filter is enabled and job doesn't pass, skip it
       if (keywordFilterEnabled && !passedKeywordFilter) {
@@ -268,7 +340,7 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
 
       // Try to extract location from description if not provided
       if (!locationStr) {
-        locationStr = extractLocationFromDescription(decodedDescription) || "";
+        locationStr = extractLocationFromDescription(plainTextDescription) || "";
       }
 
       // Determine final location with better fallback
@@ -280,9 +352,9 @@ async function processHtmlFeed(feed: RSSFeedConfig, html: string) {
       // Check for remote work indicators
       const remoteFlag =
         locationStr.toLowerCase().includes("remote") ||
-        decodedDescription.toLowerCase().includes("work from home") ||
-        decodedDescription.toLowerCase().includes("remote position") ||
-        decodedDescription.toLowerCase().includes("fully remote");
+        plainTextDescription.toLowerCase().includes("work from home") ||
+        plainTextDescription.toLowerCase().includes("remote position") ||
+        plainTextDescription.toLowerCase().includes("fully remote");
 
       const existingQuery = await db!
         .collection("jobs")
@@ -471,9 +543,10 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
       // Decode and parse description for structured fields
       const decodedDescription = decode(rawDescription || "");
       const parsedDescription = parseJobDescription(decodedDescription);
+      const plainTextDescription = parsedDescription.plainDescription;
 
       // Check if job passes keyword filter - if it does, mark as indigenous preference
-      const passedKeywordFilter = matchesKeywordFilter(title, decodedDescription, feed.keywordFilter);
+      const passedKeywordFilter = matchesKeywordFilter(title, plainTextDescription, feed.keywordFilter);
 
       // If keyword filter is enabled and job doesn't pass, skip it
       if (keywordFilterEnabled && !passedKeywordFilter) {
@@ -502,7 +575,7 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
 
       // Try to extract location from description if not found
       if (!location) {
-        location = extractLocationFromDescription(decodedDescription) || "";
+        location = extractLocationFromDescription(plainTextDescription) || "";
       }
 
       // Better fallback than "Location not specified"
@@ -516,9 +589,9 @@ async function processXmlFeed(feed: RSSFeedConfig, xmlText: string) {
         remote?.toLowerCase() === "yes" ||
         remote?.toLowerCase() === "true" ||
         location.toLowerCase().includes("remote") ||
-        decodedDescription.toLowerCase().includes("work from home") ||
-        decodedDescription.toLowerCase().includes("remote position") ||
-        decodedDescription.toLowerCase().includes("fully remote");
+        plainTextDescription.toLowerCase().includes("work from home") ||
+        plainTextDescription.toLowerCase().includes("remote position") ||
+        plainTextDescription.toLowerCase().includes("fully remote");
 
       // Use XML-provided requirements/benefits if available, otherwise use parsed ones
       const finalRequirements = xmlRequirements ? decode(xmlRequirements) : parsedDescription.requirements;

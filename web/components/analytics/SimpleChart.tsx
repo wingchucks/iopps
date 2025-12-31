@@ -83,6 +83,8 @@ export function LineChart({
     );
   }
 
+  const chartDescription = `Line chart showing ${data.length} data points ranging from ${minValue} to ${maxValue}`;
+
   return (
     <div className={className}>
       <svg
@@ -90,7 +92,11 @@ export function LineChart({
         preserveAspectRatio="none"
         style={{ height, width: "100%" }}
         className="overflow-visible"
+        role="img"
+        aria-label={chartDescription}
       >
+        <title>Line Chart</title>
+        <desc>{chartDescription}</desc>
         {/* Grid lines */}
         {showGrid && (
           <g className="opacity-20">
@@ -112,8 +118,8 @@ export function LineChart({
         {/* Area fill */}
         <defs>
           <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#14B8A6" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#14B8A6" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--accent, #14B8A6)" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="var(--accent, #14B8A6)" stopOpacity="0" />
           </linearGradient>
         </defs>
         <polygon
@@ -125,7 +131,7 @@ export function LineChart({
         <polyline
           points={points}
           fill="none"
-          stroke="#14B8A6"
+          stroke="var(--accent, #14B8A6)"
           strokeWidth={strokeWidth / 10}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -147,7 +153,7 @@ export function LineChart({
                   cy={y}
                   r="1.5"
                   fill="#0F172A"
-                  stroke="#14B8A6"
+                  stroke="var(--accent, #14B8A6)"
                   strokeWidth="0.8"
                   className="drop-shadow-[0_0_6px_rgba(20,184,166,0.8)]"
                 />
@@ -226,7 +232,7 @@ export function BarChart({
   }
 
   return (
-    <div className={className}>
+    <div className={className} role="img" aria-label={`Bar chart showing ${data.length} categories with maximum value of ${maxValue}`}>
       <div
         className="flex items-end justify-around gap-2"
         style={{ height }}
@@ -365,7 +371,14 @@ export function PieChart({
     <div className={`flex flex-col items-center gap-6 ${className}`}>
       {/* Chart */}
       <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size}>
+        <svg
+          width={size}
+          height={size}
+          role="img"
+          aria-label={`${donut ? 'Donut' : 'Pie'} chart showing ${data.length} segments totaling ${total}`}
+        >
+          <title>{donut ? 'Donut Chart' : 'Pie Chart'}</title>
+          <desc>{`Chart with ${data.length} segments: ${data.map(d => `${d.label}: ${d.value}`).join(', ')}`}</desc>
           {segments.map((segment, i) => (
             <g key={i} className="group cursor-pointer">
               <path

@@ -41,8 +41,8 @@ export default function MemberDashboard() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
 
-  // Check if user is a community member (not employer/admin/moderator)
-  const isCommunityMember = role === "community" || (role !== "employer" && role !== "admin" && role !== "moderator");
+  // Check if user is a community member - must be explicitly "community" role
+  const isCommunityMember = role === "community";
 
   // Load all data
   useEffect(() => {

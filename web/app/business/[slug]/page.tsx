@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -16,6 +17,7 @@ import {
 import { PageShell } from '@/components/PageShell';
 import { getVendorBySlug, getVendorBySlugAnyStatus, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct } from '@/lib/types';
+import { generateVendorSchema } from '@/lib/seo';
 
 // Social icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -45,6 +47,47 @@ function TikTokIcon({ className }: { className?: string }) {
 interface Props {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ preview?: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const vendor = await getVendorBySlug(slug);
+
+  if (!vendor) {
+    return {
+      title: 'Business Not Found',
+    };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://iopps.ca';
+  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(vendor.businessName)}&type=business&subtitle=${encodeURIComponent(vendor.tagline || vendor.category)}${vendor.logoUrl ? `&image=${encodeURIComponent(vendor.logoUrl)}` : ''}`;
+
+  const description = vendor.tagline || vendor.description?.substring(0, 160) || `Shop ${vendor.category} from ${vendor.businessName} - an Indigenous-owned business`;
+
+  return {
+    title: vendor.businessName,
+    description,
+    openGraph: {
+      title: vendor.businessName,
+      description,
+      type: 'website',
+      url: `${siteUrl}/marketplace/${slug}`,
+      images: [
+        {
+          url: vendor.coverImageUrl || ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: vendor.businessName,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: vendor.businessName,
+      description,
+      images: [vendor.coverImageUrl || ogImageUrl],
+    },
+  };
 }
 
 // Status banner component for non-active vendors
@@ -114,8 +157,27 @@ async function VendorPage({ params, searchParams }: Props) {
   // Get vendor products
   const products = await getVendorProducts(vendor.id);
 
+  // Generate JSON-LD schema for SEO
+  const vendorSchema = generateVendorSchema({
+    businessName: vendor.businessName,
+    description: vendor.description,
+    category: vendor.category,
+    location: vendor.location,
+    region: vendor.region,
+    website: vendor.website,
+    email: vendor.email,
+    phone: vendor.phone,
+    logoUrl: vendor.logoUrl,
+    isIndigenousOwned: true,
+  });
+
   return (
-    <PageShell className="pb-24">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(vendorSchema) }}
+      />
+      <PageShell className="pb-24">
       {/* Status Banner for non-active vendors */}
       <StatusBanner status={vendor.status} />
 
@@ -386,7 +448,8 @@ async function VendorPage({ params, searchParams }: Props) {
           </div>
         </div>
       </div>
-    </PageShell>
+      </PageShell>
+    </>
   );
 }
 

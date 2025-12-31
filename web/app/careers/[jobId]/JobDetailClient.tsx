@@ -10,6 +10,7 @@ import JobVideoSection from "@/components/jobs/JobVideoSection";
 import ShareButtons from "@/components/ShareButtons";
 import { getMemberProfile, getEmployerProfile, incrementJobViews } from "@/lib/firestore";
 import type { JobPosting, MemberProfile, EmployerProfile } from "@/lib/types";
+import { sanitizeHtml } from "@/lib/sanitize";
 import QuickApplyButton from "@/components/QuickApplyButton";
 import JobHeader from "@/components/jobs/JobHeader";
 import JobSidebar from "@/components/jobs/JobSidebar";
@@ -75,7 +76,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             {error || "Job not found"}
           </h1>
           <Link
-            href="/jobs"
+            href="/jobs-training/jobs"
             className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
             Back to Jobs
@@ -115,7 +116,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
   return (
     <PageShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <JobHeader job={job} />
+        <JobHeader job={job} employerId={job.employerId} />
 
         {/* Share Section */}
         <div className="mt-4 rounded-xl border border-slate-800 bg-[#08090C] p-4">
@@ -134,13 +135,10 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
           <div className="lg:col-span-8">
             <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
               <h2 className="text-xl font-bold text-slate-200">Job Description</h2>
-              <div className="mt-4 space-y-4 text-slate-300">
-                {job.description?.split("\n").map((paragraph, i) => (
-                  <p key={i} className="leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
+              <div
+                className="mt-4 prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-p:leading-relaxed prose-headings:text-slate-200 prose-strong:text-slate-200 prose-ul:text-slate-300 prose-li:text-slate-300"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description || '') }}
+              />
 
               {job.requirements && (
                 <>

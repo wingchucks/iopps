@@ -201,7 +201,7 @@ export default function ShareButtons({
         </svg>
       ),
       onClick: handleEmailShare,
-      color: 'hover:bg-[#14B8A6] hover:text-white',
+      color: 'hover:bg-accent hover:text-white',
       label: 'Email',
     },
     {
@@ -232,7 +232,7 @@ export default function ShareButtons({
         {webShareSupported && (
           <button
             onClick={handleWebShare}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0F172A] text-[#14B8A6] border border-[#14B8A6] hover:bg-[#14B8A6] hover:text-white transition-all duration-200"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-accent border border-accent hover:bg-accent hover:text-white transition-all duration-200"
             title="Share"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +247,7 @@ export default function ShareButtons({
           <button
             key={button.name}
             onClick={button.onClick}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0F172A] text-white border border-gray-700 transition-all duration-200 ${button.color}`}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white border border-gray-700 transition-all duration-200 ${button.color}`}
             title={button.label}
           >
             {button.icon}
@@ -259,8 +259,8 @@ export default function ShareButtons({
         <button
           onClick={handleCopyLink}
           className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${copied
-              ? 'bg-[#14B8A6] text-white border-[#14B8A6]'
-              : 'bg-[#0F172A] text-[#14B8A6] border-gray-700 hover:bg-[#14B8A6] hover:text-white'
+              ? 'bg-accent text-white border-accent'
+              : 'bg-slate-900 text-accent border-gray-700 hover:bg-accent hover:text-white'
             } border`}
           title={copied ? 'Copied!' : 'Copy Link'}
         >

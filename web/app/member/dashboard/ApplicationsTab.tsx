@@ -334,7 +334,7 @@ export default function ApplicationsTab() {
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     {app.job && (
                       <Link
-                        href={`/jobs/${app.jobId}`}
+                        href={`/jobs-training/${app.jobId}`}
                         className="inline-flex text-sm text-emerald-400 transition-colors hover:text-emerald-300"
                       >
                         View job posting →

@@ -18,6 +18,35 @@ import {
 import type { EmployerProfile, Interview, EmployerStatus, CompanyVideo, GrantType, FreePostingGrant } from "@/lib/types";
 import { MOCK_EMPLOYERS } from "../mockData";
 
+/**
+ * Check if an employer profile has all required fields completed.
+ * Required: organizationName, description, location, logoUrl
+ */
+export function isProfileComplete(profile: EmployerProfile | null | undefined): boolean {
+  if (!profile) return false;
+  return !!(
+    profile.organizationName?.trim() &&
+    profile.description?.trim() &&
+    profile.location?.trim() &&
+    profile.logoUrl?.trim()
+  );
+}
+
+/**
+ * Get which required fields are missing from the profile
+ */
+export function getMissingProfileFields(profile: EmployerProfile | null | undefined): string[] {
+  if (!profile) return ["Organization Name", "Description", "Location", "Logo"];
+
+  const missing: string[] = [];
+  if (!profile.organizationName?.trim()) missing.push("Organization Name");
+  if (!profile.description?.trim()) missing.push("Description");
+  if (!profile.location?.trim()) missing.push("Location");
+  if (!profile.logoUrl?.trim()) missing.push("Logo");
+
+  return missing;
+}
+
 export async function getEmployerProfile(
   userId: string
 ): Promise<EmployerProfile | null> {
@@ -54,6 +83,29 @@ export async function updateEmployerLogo(userId: string, logoUrl: string) {
       website: "",
       location: "",
       logoUrl,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
+export async function updateEmployerBanner(userId: string, bannerUrl: string) {
+  const ref = doc(db!, employerCollection, userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    await updateDoc(ref, {
+      bannerUrl,
+      updatedAt: serverTimestamp(),
+    });
+  } else {
+    await setDoc(ref, {
+      id: userId,
+      userId,
+      organizationName: "",
+      description: "",
+      website: "",
+      location: "",
+      bannerUrl,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -418,6 +470,17 @@ export async function removeEmployerCompanyIntro(employerId: string) {
 
   await updateDoc(ref, {
     companyIntroVideo: null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function updateEmployerCarouselFeature(
+  employerId: string,
+  featured: boolean
+) {
+  const ref = doc(db!, employerCollection, employerId);
+  await updateDoc(ref, {
+    featuredOnCarousel: featured,
     updatedAt: serverTimestamp(),
   });
 }

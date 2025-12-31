@@ -7,17 +7,27 @@ interface JobSidebarProps {
     employerProfile: EmployerProfile | null;
 }
 
+const SALARY_PERIOD_LABELS: Record<string, string> = {
+    hourly: "per hour",
+    daily: "per day",
+    weekly: "per week",
+    monthly: "per month",
+    yearly: "per year",
+};
+
 function formatSalaryRange(salaryRange: JobPosting["salaryRange"]): string {
     if (!salaryRange) return "";
     if (typeof salaryRange === "string") return salaryRange;
     if (!salaryRange.disclosed) return "";
 
-    const { min, max, currency = "CAD" } = salaryRange;
+    const { min, max, currency = "CAD", period = "yearly" } = salaryRange;
+    const periodLabel = SALARY_PERIOD_LABELS[period] || "per year";
+
     if (min && max) {
-        return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency}`;
+        return `$${min.toLocaleString()} - $${max.toLocaleString()} ${currency} ${periodLabel}`;
     }
-    if (min) return `$${min.toLocaleString()}+ ${currency}`;
-    if (max) return `Up to $${max.toLocaleString()} ${currency}`;
+    if (min) return `$${min.toLocaleString()}+ ${currency} ${periodLabel}`;
+    if (max) return `Up to $${max.toLocaleString()} ${currency} ${periodLabel}`;
     return "";
 }
 
@@ -169,6 +179,21 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
                         </div>
                     </div>
 
+                    {/* Category */}
+                    {job.category && (
+                        <div className="flex items-start gap-3">
+                            <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800/50 text-slate-400">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-slate-400">Category</p>
+                                <p className="text-sm font-semibold text-slate-200">{job.category}</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* CPIC Required */}
                     {job.cpicRequired && (
                         <div className="flex items-start gap-3">
@@ -210,7 +235,16 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
                             {job.employerName.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                            <p className="font-bold text-slate-200">{job.employerName}</p>
+                            {job.employerId ? (
+                                <Link
+                                    href={`/employers/${job.employerId}`}
+                                    className="font-bold text-slate-200 hover:text-[#14B8A6] transition-colors"
+                                >
+                                    {job.employerName}
+                                </Link>
+                            ) : (
+                                <p className="font-bold text-slate-200">{job.employerName}</p>
+                            )}
                             {employerProfile?.website && (
                                 <a
                                     href={employerProfile.website}
@@ -227,6 +261,17 @@ export default function JobSidebar({ job, employerProfile }: JobSidebarProps) {
                         <p className="mt-4 text-sm text-slate-400 line-clamp-4">
                             {employerProfile.description}
                         </p>
+                    )}
+                    {job.employerId && (
+                        <Link
+                            href={`/employers/${job.employerId}`}
+                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-4 py-2.5 text-sm font-semibold text-[#14B8A6] transition-colors hover:bg-[#14B8A6]/20"
+                        >
+                            View Employer Profile
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </Link>
                     )}
                 </div>
             )}

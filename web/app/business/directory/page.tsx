@@ -14,6 +14,7 @@ import {
   CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
+import { useAuth } from '@/components/AuthProvider';
 import { getActiveVendors } from '@/lib/firebase/shop';
 import { listServices } from '@/lib/firestore';
 import type { Vendor, Service, NorthAmericanRegion } from '@/lib/types';
@@ -40,12 +41,16 @@ interface DirectoryItem {
 }
 
 export default function BusinessDirectoryPage() {
+  const { role } = useAuth();
   const [items, setItems] = useState<DirectoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [businessType, setBusinessType] = useState<BusinessType>('all');
   const [region, setRegion] = useState<NorthAmericanRegion | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Only employers and admins can list businesses
+  const canListBusiness = role === 'employer' || role === 'admin';
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -477,31 +482,33 @@ export default function BusinessDirectoryPage() {
         </div>
       )}
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Join Our Business Directory
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Whether you sell products or offer professional services, list your Indigenous-owned business and connect with customers across North America.
-        </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/organization/shop"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-          >
-            <BuildingStorefrontIcon className="h-5 w-5" />
-            List Products
-          </Link>
-          <Link
-            href="/organization/services/new"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
-          >
-            <BriefcaseIcon className="h-5 w-5" />
-            List Services
-          </Link>
-        </div>
-      </section>
+      {/* CTA Section - Only show to employers/admins */}
+      {canListBusiness && (
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+            Join Our Business Directory
+          </h2>
+          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+            Whether you sell products or offer professional services, list your Indigenous-owned business and connect with customers across North America.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/organization/shop"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
+            >
+              <BuildingStorefrontIcon className="h-5 w-5" />
+              List Products
+            </Link>
+            <Link
+              href="/organization/services/new"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
+            >
+              <BriefcaseIcon className="h-5 w-5" />
+              List Services
+            </Link>
+          </div>
+        </section>
+      )}
     </PageShell>
   );
 }

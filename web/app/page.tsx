@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { StatsCounter } from "@/components/StatsCounter";
 import OceanWaveHero from "@/components/OceanWaveHero";
+import { TrustedPartners } from "@/components/TrustedPartners";
 import { useAuth } from "@/components/AuthProvider";
 
 const pillars = [
@@ -72,6 +73,9 @@ export default function Home() {
           </div>
         )}
       </OceanWaveHero>
+
+      {/* Trusted Partners */}
+      <TrustedPartners />
 
       {/* Pillars Grid */}
       <section className="relative px-4 py-16 sm:py-24">

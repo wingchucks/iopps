@@ -162,7 +162,7 @@ export default function SavedJobsPage() {
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
                 <div>
                   <Link
-                    href={`/jobs/${entry.jobId}`}
+                    href={`/jobs-training/${entry.jobId}`}
                     className="text-lg font-semibold text-slate-50 hover:text-[#14B8A6]"
                   >
                     {entry.job?.title}

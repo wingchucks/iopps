@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
                 jobCredits: product.jobCredits.toString(),
                 featuredJobCredits: product.featuredJobCredits.toString(),
                 unlimitedPosts: product.unlimitedPosts.toString(),
+                talentPoolAccessDays: product.talentPoolAccessDays.toString(),
             },
         });
 

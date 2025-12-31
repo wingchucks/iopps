@@ -51,10 +51,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca";
   const description =
     service.tagline ||
-    service.description.substring(0, 160) ||
+    service.description?.substring(0, 160) ||
     `Professional ${service.category} services by ${service.businessName}`;
+
+  // Build subtitle with location and remote info
+  const subtitleParts: string[] = [service.category];
+  if (service.location) subtitleParts.push(service.location);
+  if (service.servesRemote) subtitleParts.push("Remote Available");
+  const subtitle = subtitleParts.join(" • ");
+
+  // Generate dynamic OG image URL
+  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(service.title)}&type=service&subtitle=${encodeURIComponent(subtitle)}${service.logoUrl ? `&image=${encodeURIComponent(service.logoUrl)}` : ''}`;
 
   return {
     title: `${service.title} | ${service.businessName} | IOPPS`,
@@ -62,12 +72,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: service.title,
       description,
-      images: service.coverImageUrl ? [service.coverImageUrl] : [],
+      url: `${siteUrl}/marketplace/services/${id}`,
+      images: [
+        {
+          url: service.coverImageUrl || ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: service.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: service.title,
       description,
+      images: [service.coverImageUrl || ogImageUrl],
     },
   };
 }

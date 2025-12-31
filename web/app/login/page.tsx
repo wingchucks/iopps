@@ -4,7 +4,8 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
 import {
   AuthLayout,
@@ -12,6 +13,25 @@ import {
   AuthDivider,
   AuthInput,
 } from "@/components/auth";
+
+// Helper to get redirect path based on user role
+async function getRedirectPath(userId: string): Promise<string> {
+  if (!db) return "/jobs";
+
+  try {
+    const userDoc = await getDoc(doc(db, "users", userId));
+    if (userDoc.exists()) {
+      const role = userDoc.data()?.role;
+      if (role === "employer" || role === "admin" || role === "moderator") {
+        return "/organization/dashboard";
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching user role:", error);
+  }
+
+  return "/jobs";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,8 +54,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/jobs");
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const redirectPath = await getRedirectPath(cred.user.uid);
+      router.push(redirectPath);
     } catch (err) {
       console.error(err);
 
@@ -65,7 +86,13 @@ export default function LoginPage() {
 
     try {
       await signInWithGoogle();
-      router.push("/jobs");
+      // For Google sign-in, check role after auth completes
+      if (auth?.currentUser) {
+        const redirectPath = await getRedirectPath(auth.currentUser.uid);
+        router.push(redirectPath);
+      } else {
+        router.push("/jobs");
+      }
     } catch (err) {
       console.error(err);
 

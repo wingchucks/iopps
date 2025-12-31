@@ -291,7 +291,7 @@ export default function MemberApplicationsPage() {
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex-1">
                       <Link
-                        href={`/jobs/${app.jobId}`}
+                        href={`/jobs-training/${app.jobId}`}
                         className="inline-flex text-lg font-semibold text-slate-50 hover:text-[#14B8A6]"
                       >
                         {app.job?.title ?? "Job"}
