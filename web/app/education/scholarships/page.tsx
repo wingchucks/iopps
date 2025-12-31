@@ -98,8 +98,8 @@ function ScholarshipsContent() {
 
       const matchesSearch = search
         ? `${item.title} ${item.provider} ${item.description ?? ""} ${item.region ?? ""}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
+          .toLowerCase()
+          .includes(search.toLowerCase())
         : true;
 
       const matchesType = awardType === "All" || item.type === awardType;
@@ -125,9 +125,13 @@ function ScholarshipsContent() {
   const featuredScholarships = useMemo(() => {
     return sorted
       .filter((s) => {
-        const amounts = s.amount?.match(/\d+[,\d]*/g);
+        if (s.amount && typeof s.amount === "object" && "value" in s.amount) {
+          return (s.amount as any).value >= 5000;
+        }
+        const amountStr = typeof s.amount === "string" ? s.amount : (s.amount as any)?.display || "";
+        const amounts = amountStr.match(/\d+[,\d]*/g);
         if (!amounts) return false;
-        const maxAmount = Math.max(...amounts.map((a) => parseFloat(a.replace(/,/g, ""))));
+        const maxAmount = Math.max(...amounts.map((a: string) => parseFloat(a.replace(/,/g, ""))));
         return maxAmount >= 5000;
       })
       .slice(0, 3);
@@ -224,11 +228,10 @@ function ScholarshipsContent() {
                     <button
                       key={type}
                       onClick={() => setAwardType(type)}
-                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                        awardType === type
-                          ? "bg-[#14B8A6] text-white"
-                          : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                      }`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${awardType === type
+                        ? "bg-[#14B8A6] text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        }`}
                     >
                       {type}
                     </button>
@@ -244,11 +247,10 @@ function ScholarshipsContent() {
                     <button
                       key={lvl}
                       onClick={() => setLevel(lvl)}
-                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                        level === lvl
-                          ? "bg-[#14B8A6] text-white"
-                          : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                      }`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${level === lvl
+                        ? "bg-[#14B8A6] text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        }`}
                     >
                       {lvl}
                     </button>
@@ -264,11 +266,10 @@ function ScholarshipsContent() {
                     <button
                       key={range.value}
                       onClick={() => setDeadlineRange(range.value)}
-                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                        deadlineRange === range.value
-                          ? "bg-[#14B8A6] text-white"
-                          : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                      }`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${deadlineRange === range.value
+                        ? "bg-[#14B8A6] text-white"
+                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        }`}
                     >
                       {range.label}
                     </button>
@@ -456,11 +457,10 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
   return (
     <Link
       href={`/education/scholarships/${scholarship.id}`}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
-        featured
-          ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
-      }`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${featured
+        ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
+        : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
+        }`}
     >
       {/* Header with Amount */}
       <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-6">
@@ -475,7 +475,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
         {/* Amount */}
         {scholarship.amount && (
           <div className="text-3xl font-bold text-[#14B8A6]">
-            {scholarship.amount}
+            {typeof scholarship.amount === "string" ? scholarship.amount : (scholarship.amount as any)?.display}
           </div>
         )}
 
@@ -518,15 +518,14 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
           <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
             <div className="flex items-center gap-1.5 text-sm">
               <CalendarIcon className="h-4 w-4 text-slate-400" />
-              <span className={`font-medium ${
-                urgency === "expired"
-                  ? "text-red-400"
-                  : urgency === "urgent"
+              <span className={`font-medium ${urgency === "expired"
+                ? "text-red-400"
+                : urgency === "urgent"
                   ? "text-orange-400"
                   : urgency === "soon"
-                  ? "text-yellow-400"
-                  : "text-slate-300"
-              }`}>
+                    ? "text-yellow-400"
+                    : "text-slate-300"
+                }`}>
                 {urgency === "expired" ? "Expired" : `Due ${deadline}`}
               </span>
             </div>

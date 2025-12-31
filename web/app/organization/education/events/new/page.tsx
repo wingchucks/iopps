@@ -141,10 +141,13 @@ export default function NewEducationEventPage() {
       await createEducationEvent({
         schoolId: school.id,
         schoolName: school.name,
+        name: title,
         title,
         description,
+        type: eventType,
         eventType,
         format,
+        startDatetime: startDatetime,
         startDate: startDatetime,
         endDate: endDatetime,
         location: format !== "online" ? location : undefined,

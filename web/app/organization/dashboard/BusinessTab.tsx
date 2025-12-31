@@ -145,33 +145,30 @@ export default function BusinessTab() {
       <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
         <button
           onClick={() => setBusinessType("shop")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            businessType === "shop"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${(businessType as any) === "shop"
               ? "border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <BuildingStorefrontIcon className="h-4 w-4" />
           Shop Profile
         </button>
         <button
           onClick={() => setBusinessType("services")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            businessType === "services"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${businessType === "services"
               ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <WrenchScrewdriverIcon className="h-4 w-4" />
           Services ({services.length})
         </button>
         <button
           onClick={() => setBusinessType("funding")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            businessType === "funding"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${businessType === "funding"
               ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <BanknotesIcon className="h-4 w-4" />
           Funding ({grants.length})
@@ -262,13 +259,12 @@ export default function BusinessTab() {
                       </div>
                     </div>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        service.status === "approved"
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${service.status === "approved"
                           ? "bg-emerald-500/20 text-emerald-400"
                           : service.status === "pending"
-                          ? "bg-amber-500/20 text-amber-400"
-                          : "bg-slate-700 text-slate-400"
-                      }`}
+                            ? "bg-amber-500/20 text-amber-400"
+                            : "bg-slate-700 text-slate-400"
+                        }`}
                     >
                       {service.status === "approved" ? "Active" : service.status === "pending" ? "Pending" : "Draft"}
                     </span>
@@ -390,13 +386,12 @@ export default function BusinessTab() {
                       </div>
                     </div>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        grant.status === "active"
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${grant.status === "active"
                           ? "bg-emerald-500/20 text-emerald-400"
                           : grant.status === "upcoming"
-                          ? "bg-amber-500/20 text-amber-400"
-                          : "bg-slate-700 text-slate-400"
-                      }`}
+                            ? "bg-amber-500/20 text-amber-400"
+                            : "bg-slate-700 text-slate-400"
+                        }`}
                     >
                       {grant.status === "active" ? "Active" : grant.status === "upcoming" ? "Upcoming" : "Closed"}
                     </span>

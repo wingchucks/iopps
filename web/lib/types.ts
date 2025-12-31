@@ -423,6 +423,9 @@ export interface MemberProfile {
   id: string;
   userId: string;
   displayName?: string;
+  avatarUrl?: string;
+  photoURL?: string; // For compatibility with Firebase User
+  tagline?: string;
   location?: string;
   skills?: string[];
   experience?: WorkExperience[];
@@ -492,9 +495,10 @@ export interface Scholarship {
   employerName?: string;
   title: string;
   provider: string;
+  providerName?: string; // Alias for provider
   description: string;
-  amount?: string;
-  deadline?: Timestamp | string | null;
+  amount?: any;
+  deadline?: Timestamp | string | Date | null;
   level: string;
   region?: string;
   type: string;
@@ -502,6 +506,7 @@ export interface Scholarship {
   imagePath?: string;
   createdAt?: Timestamp | null;
   active: boolean;
+  status?: "active" | "upcoming" | "closed";
 }
 
 export interface ScholarshipApplication {
@@ -1240,7 +1245,7 @@ export const SERVICE_CATEGORIES = [
 
 export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
 
-export type ServiceStatus = 'draft' | 'pending' | 'active' | 'suspended';
+export type ServiceStatus = 'draft' | 'pending' | 'active' | 'approved' | 'suspended';
 
 export interface Service {
   id: string;
@@ -1405,14 +1410,16 @@ export interface SchoolStats {
   indigenousStudentPercentage?: number;
   indigenousStaffPercentage?: number;
   totalPrograms?: number;
+  totalEnrollment?: number;
   alumniCount?: string;
   nationsRepresented?: number;
   employerPartners?: number;
+  viewsCount?: number;
 }
 
 // School verification info
 export interface SchoolVerification {
-  isVerified: boolean;
+  isVerified?: boolean;
   verifiedDate?: Timestamp | null;
   verifiedBy?: string;
   indigenousControlled: boolean; // First Nation governed?
@@ -1431,6 +1438,8 @@ export interface SchoolRecruitmentContact {
 export interface SchoolContact {
   admissionsEmail?: string;
   admissionsPhone?: string;
+  email?: string; // Alias
+  phone?: string; // Alias
   indigenousServicesEmail?: string;
   recruitmentTeam?: SchoolRecruitmentContact[];
 }
@@ -1573,6 +1582,7 @@ export interface EducationProgram {
 
   // Delivery
   deliveryMethod: ProgramDelivery;
+  delivery?: string; // Alias
   duration?: {
     value: number;
     unit: "weeks" | "months" | "years";
@@ -1619,6 +1629,7 @@ export interface EducationProgram {
 
   // Metadata
   sourceUrl?: string; // Original URL on school website
+  applicationUrl?: string; // For applying
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   isPublished: boolean;
@@ -1636,12 +1647,16 @@ export interface EducationEvent {
 
   // Basic Info
   name: string;
+  title?: string; // Alias
   description: string;
   type: EducationEventType;
+  eventType?: string; // Alias
 
   // Timing
-  startDatetime: Timestamp | string | null;
-  endDatetime?: Timestamp | string | null;
+  startDatetime: Timestamp | Date | string | null;
+  startDate?: Timestamp | Date | string | null; // Alias
+  endDatetime?: Timestamp | Date | string | null;
+  endDate?: Timestamp | Date | string | null; // Alias
   timezone?: string;
 
   // Format
@@ -1785,7 +1800,9 @@ export interface StudentInquiry {
   schoolId: string;
   memberId: string;
   memberEmail?: string;
+  studentEmail?: string; // Alias
   memberName?: string;
+  studentName?: string; // Alias
 
   // Inquiry details
   subject: string;
@@ -1914,4 +1931,71 @@ export interface BusinessGrant {
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   createdBy?: string;
+}
+
+// ============================================
+// SOCIAL HUB TYPES
+// ============================================
+
+export type AuthorType = 'member' | 'organization' | 'system';
+export type PostType = 'status' | 'share_job' | 'share_scholarship' | 'share_event' | 'share_product' | 'article' | 'poll';
+export type PostVisibility = 'public' | 'connections' | 'private';
+
+export interface Post {
+  id: string;
+  authorId: string;
+  authorType: AuthorType;
+  authorName: string;
+  authorAvatarUrl?: string;
+  authorTagline?: string;
+  content: string;
+  type: PostType;
+  visibility: PostVisibility;
+  mediaUrls?: string[];
+  likesCount: number;
+  commentsCount: number;
+  sharesCount: number;
+  referenceId?: string; // ID of the shared entity (job, scholarship, etc.)
+  referenceData?: any; // Cached data of the shared entity for display
+  isEdited?: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorType: AuthorType;
+  authorName: string;
+  authorAvatarUrl?: string;
+  content: string;
+  likesCount: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Connection {
+  id: string;
+  requesterId: string;
+  recipientId: string;
+  status: 'pending' | 'accepted' | 'declined' | 'blocked';
+  requesterName?: string;
+  requesterAvatarUrl?: string;
+  requesterTagline?: string;
+  recipientName?: string;
+  recipientAvatarUrl?: string;
+  recipientTagline?: string;
+  connectedAt?: Timestamp | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Activity {
+  id: string;
+  userId: string;
+  type: 'post' | 'comment' | 'like' | 'share' | 'connection';
+  referenceId: string;
+  content?: string;
+  createdAt: Timestamp;
 }

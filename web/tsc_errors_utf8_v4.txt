@@ -1,0 +1,18 @@
+﻿app/admin/scholarships/page.tsx(312,58): error TS2339: Property 'seconds' does not exist on type 'Date | Timestamp'.
+  Property 'seconds' does not exist on type 'Date'.
+app/education/scholarships/page.tsx(130,52): error TS7006: Parameter 'a' implicitly has an 'any' type.
+app/organization/dashboard/BusinessTab.tsx(149,13): error TS2367: This comparison appears to be unintentional because the types '"services" | "funding"' and '"shop"' have no overlap.
+app/organization/education/events/[id]/edit/page.tsx(96,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+app/organization/education/events/[id]/edit/page.tsx(98,24): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<EducationEventType>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<EducationEventType>'.
+app/organization/education/events/new/page.tsx(141,34): error TS2345: Argument of type '{ schoolId: string; schoolName: string; title: string; description: string; eventType: EducationEventType; format: EducationEventFormat; startDate: Date; ... 5 more ...; capacity: number | undefined; }' is not assignable to parameter of type 'EventInput'.
+  Type '{ schoolId: string; schoolName: string; title: string; description: string; eventType: EducationEventType; format: EducationEventFormat; startDate: Date; ... 5 more ...; capacity: number | undefined; }' is missing the following properties from type 'Omit<EducationEvent, "id" | "createdAt" | "updatedAt" | "isPublished" | "attendeeCount" | "rsvpMemberIds">': type, name, startDatetime
+lib/firestore/scholarships.ts(223,56): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'Date | Timestamp' is not assignable to parameter of type 'string | number | Date'.
+      Type 'Timestamp' is not assignable to type 'string | number | Date'.
+        Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'Date | Timestamp' is not assignable to parameter of type 'string | number'.
+      Type 'Date' is not assignable to type 'string | number'.

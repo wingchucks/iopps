@@ -37,13 +37,23 @@ const PROVINCES = [
   "Canada-wide",
 ];
 
-function formatDateForInput(date: Date | string | null | undefined): string {
+function formatDateForInput(date: any): string {
   if (!date) return "";
-  const d = typeof date === "string" ? new Date(date) : date;
-  if (typeof date === "object" && "toDate" in (date as any)) {
-    return (date as any).toDate().toISOString().split("T")[0];
+  if (typeof date === "object" && "toDate" in date) {
+    try {
+      return (date as any).toDate().toISOString().split("T")[0];
+    } catch (e) {
+      console.error("Error converting timestamp", e);
+      return "";
+    }
   }
-  return d.toISOString().split("T")[0];
+  try {
+    const d = typeof date === "string" ? new Date(date) : date;
+    if (!(d instanceof Date) || isNaN(d.getTime())) return "";
+    return d.toISOString().split("T")[0];
+  } catch (e) {
+    return "";
+  }
 }
 
 export default function EditFundingPage({
@@ -230,10 +240,10 @@ export default function EditFundingPage({
         amount:
           amountMin || amountMax || amountDisplay
             ? {
-                min: amountMin ? parseInt(amountMin) : undefined,
-                max: amountMax ? parseInt(amountMax) : undefined,
-                display: amountDisplay || undefined,
-              }
+              min: amountMin ? parseInt(amountMin) : undefined,
+              max: amountMax ? parseInt(amountMax) : undefined,
+              display: amountDisplay || undefined,
+            }
             : undefined,
         eligibility: {
           provinces: provinces.length > 0 ? provinces as any : undefined,
@@ -507,11 +517,10 @@ export default function EditFundingPage({
                     key={prov}
                     type="button"
                     onClick={() => handleProvinceToggle(prov)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      provinces.includes(prov)
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${provinces.includes(prov)
                         ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500"
                         : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
-                    }`}
+                      }`}
                   >
                     {prov}
                   </button>

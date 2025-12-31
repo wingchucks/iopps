@@ -1,0 +1,322 @@
+import {
+    collection,
+    doc,
+    setDoc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    query,
+    where,
+    orderBy,
+    limit,
+    startAfter,
+    increment,
+    serverTimestamp,
+    Timestamp,
+    deleteDoc,
+    DocumentSnapshot
+} from "firebase/firestore";
+import { db } from "../firebase";
+import { Post, Comment, Connection, Activity, AuthorType, PostType, PostVisibility, MemberProfile } from "../types";
+
+// Helper to ensure DB is initialized
+function getDb() {
+    if (!db) {
+        throw new Error("Firestore is not initialized");
+    }
+    return db;
+}
+
+// ============================================
+// POSTS
+// ============================================
+
+export async function createPost(postData: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount' | 'sharesCount'>) {
+    const firestore = getDb();
+    const postsRef = collection(firestore, "posts");
+    const newPostRef = doc(postsRef);
+
+    const post: Post = {
+        id: newPostRef.id,
+        ...postData,
+        likesCount: 0,
+        commentsCount: 0,
+        sharesCount: 0,
+        createdAt: serverTimestamp() as Timestamp,
+        updatedAt: serverTimestamp() as Timestamp,
+    };
+
+    await setDoc(newPostRef, post);
+
+    return post;
+}
+
+export async function getFeedPosts(limitCount: number = 20, lastSnapshot?: DocumentSnapshot) {
+    const firestore = getDb();
+    const postsRef = collection(firestore, "posts");
+
+    // Basic public feed for now. 
+    let q = query(
+        postsRef,
+        where("visibility", "==", "public"),
+        orderBy("createdAt", "desc"),
+        limit(limitCount)
+    );
+
+    if (lastSnapshot) {
+        q = query(q, startAfter(lastSnapshot));
+    }
+
+    const snapshot = await getDocs(q);
+    return {
+        posts: snapshot.docs.map(doc => doc.data() as Post),
+        lastSnapshot: snapshot.docs[snapshot.docs.length - 1]
+    };
+}
+
+export async function getUserPosts(userId: string, limitCount: number = 20) {
+    const firestore = getDb();
+    const postsRef = collection(firestore, "posts");
+    const q = query(
+        postsRef,
+        where("authorId", "==", userId),
+        orderBy("createdAt", "desc"),
+        limit(limitCount)
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Post);
+}
+
+// ============================================
+// INTERACTIONS (Likes/Comments)
+// ============================================
+
+export async function toggleLikePost(postId: string, userId: string) {
+    const firestore = getDb();
+    const likeRef = doc(firestore, "posts", postId, "likes", userId);
+    const postRef = doc(firestore, "posts", postId);
+
+    const likeSnap = await getDoc(likeRef);
+
+    if (likeSnap.exists()) {
+        // Unlike
+        await deleteDoc(likeRef);
+        await updateDoc(postRef, {
+            likesCount: increment(-1)
+        });
+        return false;
+    } else {
+        // Like
+        await setDoc(likeRef, {
+            userId,
+            createdAt: serverTimestamp()
+        });
+        await updateDoc(postRef, {
+            likesCount: increment(1)
+        });
+        return true;
+    }
+}
+
+export async function addComment(postId: string, commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt' | 'likesCount'>) {
+    const firestore = getDb();
+    const commentsRef = collection(firestore, "posts", postId, "comments");
+    const newCommentRef = doc(commentsRef);
+    const postRef = doc(firestore, "posts", postId);
+
+    const comment: Comment = {
+        id: newCommentRef.id,
+        ...commentData,
+        likesCount: 0,
+        createdAt: serverTimestamp() as Timestamp,
+        updatedAt: serverTimestamp() as Timestamp
+    };
+
+    await setDoc(newCommentRef, comment);
+    await updateDoc(postRef, {
+        commentsCount: increment(1)
+    });
+
+    return comment;
+}
+
+export async function getComments(postId: string) {
+    const firestore = getDb();
+    const commentsRef = collection(firestore, "posts", postId, "comments");
+    const q = query(commentsRef, orderBy("createdAt", "asc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Comment);
+}
+
+// ============================================
+// CONNECTIONS
+// ============================================
+
+export async function sendConnectionRequest(requesterId: string, recipientId: string) {
+    const firestore = getDb();
+
+    // Fetch profiles for denormalization
+    const [requesterSnap, recipientSnap] = await Promise.all([
+        getDoc(doc(firestore, "members", requesterId)),
+        getDoc(doc(firestore, "members", recipientId))
+    ]);
+
+    const requesterData = requesterSnap.exists() ? requesterSnap.data() as MemberProfile : null;
+    const recipientData = recipientSnap.exists() ? recipientSnap.data() as MemberProfile : null;
+
+    // Check if already connected or pending
+    const connectionsRef = collection(firestore, "connections");
+    const q = query(
+        connectionsRef,
+        where("requesterId", "==", requesterId),
+        where("recipientId", "==", recipientId)
+    );
+
+    const existing = await getDocs(q);
+    if (!existing.empty) {
+        throw new Error("Connection request already exists");
+    }
+
+    const newConnRef = doc(connectionsRef);
+    const connection: Connection = {
+        id: newConnRef.id,
+        requesterId,
+        recipientId,
+        status: 'pending',
+        requesterName: requesterData?.displayName || "Member",
+        requesterAvatarUrl: requesterData?.photoURL || "",
+        requesterTagline: requesterData?.tagline || "",
+        recipientName: recipientData?.displayName || "Member",
+        recipientAvatarUrl: recipientData?.photoURL || "",
+        recipientTagline: recipientData?.tagline || "",
+        createdAt: serverTimestamp() as Timestamp,
+        updatedAt: serverTimestamp() as Timestamp,
+    };
+
+    await setDoc(newConnRef, connection);
+    return connection;
+}
+
+export async function respondToConnectionRequest(connectionId: string, status: 'accepted' | 'declined') {
+    const firestore = getDb();
+    const connRef = doc(firestore, "connections", connectionId);
+
+    await updateDoc(connRef, {
+        status,
+        connectedAt: status === 'accepted' ? serverTimestamp() : null
+    });
+}
+
+export async function getMyConnections(userId: string) {
+    const firestore = getDb();
+    const connectionsRef = collection(firestore, "connections");
+
+    const q1 = query(
+        connectionsRef,
+        where("requesterId", "==", userId),
+        where("status", "==", "accepted")
+    );
+
+    const q2 = query(
+        connectionsRef,
+        where("recipientId", "==", userId),
+        where("status", "==", "accepted")
+    );
+
+    const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+    const connections = [...snap1.docs, ...snap2.docs].map(d => d.data() as Connection);
+    return connections;
+}
+
+export async function getPendingConnectionRequests(userId: string) {
+    const firestore = getDb();
+    const connectionsRef = collection(firestore, "connections");
+
+    // Requests SENT TO me that are PENDING
+    const q = query(
+        connectionsRef,
+        where("recipientId", "==", userId),
+        where("status", "==", "pending")
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as Connection);
+}
+
+// Check if there is a pending request FROM me TO them (to show "Cancel Request" or "Pending" on button)
+export async function getConnectionStatus(myUserId: string, otherUserId: string): Promise<Connection['status'] | 'none' | 'pending_sent' | 'pending_received'> {
+    const firestore = getDb();
+    const connectionsRef = collection(firestore, "connections");
+
+    // Check if I sent a request
+    const q1 = query(
+        connectionsRef,
+        where("requesterId", "==", myUserId),
+        where("recipientId", "==", otherUserId)
+    );
+
+    // Check if they sent a request
+    const q2 = query(
+        connectionsRef,
+        where("requesterId", "==", otherUserId),
+        where("recipientId", "==", myUserId)
+    );
+
+    const [sentSnap, receivedSnap] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+    if (!sentSnap.empty) {
+        const conn = sentSnap.docs[0].data() as Connection;
+        return conn.status === 'accepted' ? 'accepted' : 'pending_sent';
+    }
+
+    if (!receivedSnap.empty) {
+        const conn = receivedSnap.docs[0].data() as Connection;
+        return conn.status === 'accepted' ? 'accepted' : 'pending_received';
+    }
+
+    return 'none';
+}
+
+export async function getSuggestedConnections(userId: string) {
+    const firestore = getDb();
+    // For now, this is a "dumb" suggestion - just return some recent users who aren't me
+    // In a real app, we'd filter by industry/skills and exclude existing connections
+    // TODO: Enhance with Algolia or more complex queries
+    const usersRef = collection(firestore, "users"); // Assuming 'users' collection exists, or we use member profiles
+    const membersRef = collection(firestore, "members");
+
+    const q = query(membersRef, limit(5)); // Just grab 5 random members for demo
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs
+        .map(doc => doc.data() as MemberProfile)
+        .filter(m => m.userId !== userId); // Filter self
+}
+
+// ============================================
+// SHARING
+// ============================================
+
+export async function shareEntity(
+    userId: string,
+    userInfo: { name: string, avatarUrl?: string },
+    entityType: PostType,
+    entityReferenceId: string,
+    entityData: any,
+    comment?: string
+) {
+    // Sharing is just creating a post with special metadata
+    return createPost({
+        authorId: userId,
+        authorType: 'member',
+        authorName: userInfo.name,
+        authorAvatarUrl: userInfo.avatarUrl,
+        content: comment || "",
+        type: entityType,
+        visibility: 'public',
+        referenceId: entityReferenceId,
+        referenceData: entityData
+    });
+}

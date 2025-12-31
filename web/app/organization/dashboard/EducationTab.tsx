@@ -148,44 +148,40 @@ export default function EducationTab() {
       <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
         <button
           onClick={() => setEducationType("school")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            educationType === "school"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "school"
               ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <BuildingLibraryIcon className="h-4 w-4" />
           School Profile
         </button>
         <button
           onClick={() => setEducationType("programs")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            educationType === "programs"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "programs"
               ? "border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <BookOpenIcon className="h-4 w-4" />
           Programs ({programs.length})
         </button>
         <button
           onClick={() => setEducationType("scholarships")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            educationType === "scholarships"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "scholarships"
               ? "border-b-2 border-amber-500 bg-amber-500/10 text-amber-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <BanknotesIcon className="h-4 w-4" />
           Scholarships ({scholarships.length})
         </button>
         <button
           onClick={() => setEducationType("inquiries")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            educationType === "inquiries"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "inquiries"
               ? "border-b-2 border-blue-500 bg-blue-500/10 text-blue-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <EnvelopeIcon className="h-4 w-4" />
           Inquiries
@@ -197,11 +193,10 @@ export default function EducationTab() {
         </button>
         <button
           onClick={() => setEducationType("events")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            educationType === "events"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "events"
               ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <CalendarDaysIcon className="h-4 w-4" />
           Events ({events.length})
@@ -398,11 +393,10 @@ export default function EducationTab() {
                       )}
                     </div>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        program.isPublished
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${program.isPublished
                           ? "bg-emerald-500/20 text-emerald-400"
                           : "bg-slate-700 text-slate-400"
-                      }`}
+                        }`}
                     >
                       {program.isPublished ? "Published" : "Draft"}
                     </span>
@@ -502,19 +496,18 @@ export default function EducationTab() {
                       </div>
                     </div>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        scholarship.status === "active"
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${scholarship.status === "active"
                           ? "bg-emerald-500/20 text-emerald-400"
                           : scholarship.status === "upcoming"
-                          ? "bg-amber-500/20 text-amber-400"
-                          : "bg-slate-700 text-slate-400"
-                      }`}
+                            ? "bg-amber-500/20 text-amber-400"
+                            : "bg-slate-700 text-slate-400"
+                        }`}
                     >
                       {scholarship.status === "active"
                         ? "Active"
                         : scholarship.status === "upcoming"
-                        ? "Upcoming"
-                        : "Closed"}
+                          ? "Upcoming"
+                          : "Closed"}
                     </span>
                   </div>
                   <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
@@ -564,11 +557,10 @@ export default function EducationTab() {
               {inquiries.map((inquiry) => (
                 <div
                   key={inquiry.id}
-                  className={`rounded-2xl border bg-slate-800/50 p-6 transition-colors ${
-                    inquiry.status === "new"
+                  className={`rounded-2xl border bg-slate-800/50 p-6 transition-colors ${inquiry.status === "new"
                       ? "border-blue-500/50"
                       : "border-slate-700 hover:border-slate-600"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -577,19 +569,18 @@ export default function EducationTab() {
                           {inquiry.studentName}
                         </h3>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            inquiry.status === "new"
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${inquiry.status === "new"
                               ? "bg-blue-500/20 text-blue-400"
                               : inquiry.status === "replied"
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-slate-700 text-slate-400"
-                          }`}
+                                ? "bg-emerald-500/20 text-emerald-400"
+                                : "bg-slate-700 text-slate-400"
+                            }`}
                         >
                           {inquiry.status === "new"
                             ? "New"
                             : inquiry.status === "replied"
-                            ? "Replied"
-                            : "Read"}
+                              ? "Replied"
+                              : "Read"}
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-blue-400">{inquiry.studentEmail}</p>
@@ -600,9 +591,9 @@ export default function EducationTab() {
                       )}
                       <p className="mt-3 text-sm text-slate-300">{inquiry.message}</p>
                       <p className="mt-2 text-xs text-slate-500">
-                        {typeof inquiry.createdAt === "object" && "toDate" in inquiry.createdAt
-                          ? inquiry.createdAt.toDate().toLocaleDateString()
-                          : new Date(inquiry.createdAt as any).toLocaleDateString()}
+                        {inquiry.createdAt && typeof inquiry.createdAt === "object" && "toDate" in inquiry.createdAt
+                          ? (inquiry.createdAt as any).toDate().toLocaleDateString()
+                          : inquiry.createdAt ? new Date(inquiry.createdAt as any).toLocaleDateString() : ""}
                       </p>
                     </div>
                   </div>
@@ -677,9 +668,9 @@ export default function EducationTab() {
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
                         <span className="flex items-center gap-1.5">
                           <CalendarDaysIcon className="h-4 w-4" />
-                          {typeof event.startDate === "object" && "toDate" in event.startDate
-                            ? event.startDate.toDate().toLocaleDateString()
-                            : new Date(event.startDate as any).toLocaleDateString()}
+                          {event.startDate && typeof event.startDate === "object" && "toDate" in event.startDate
+                            ? (event.startDate as any).toDate().toLocaleDateString()
+                            : event.startDate ? new Date(event.startDate as any).toLocaleDateString() : ""}
                         </span>
                         <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs text-purple-300">
                           {event.eventType}

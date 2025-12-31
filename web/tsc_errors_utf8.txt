@@ -1,0 +1,63 @@
+﻿app/organization/dashboard/BusinessTab.tsx(149,13): error TS2367: This comparison appears to be unintentional because the types '"services" | "funding"' and '"shop"' have no overlap.
+app/organization/dashboard/BusinessTab.tsx(266,25): error TS2367: This comparison appears to be unintentional because the types 'ServiceStatus' and '"approved"' have no overlap.
+app/organization/dashboard/BusinessTab.tsx(273,24): error TS2367: This comparison appears to be unintentional because the types 'ServiceStatus' and '"approved"' have no overlap.
+app/organization/dashboard/BusinessTab.tsx(284,22): error TS2367: This comparison appears to be unintentional because the types 'ServiceStatus' and '"approved"' have no overlap.
+app/organization/dashboard/EducationTab.tsx(274,36): error TS2339: Property 'viewsCount' does not exist on type 'SchoolStats'.
+app/organization/dashboard/EducationTab.tsx(297,36): error TS2339: Property 'totalEnrollment' does not exist on type 'SchoolStats'.
+app/organization/dashboard/EducationTab.tsx(388,34): error TS2339: Property 'delivery' does not exist on type 'EducationProgram'.
+app/organization/dashboard/EducationTab.tsx(390,38): error TS2339: Property 'delivery' does not exist on type 'EducationProgram'.
+app/organization/dashboard/EducationTab.tsx(487,79): error TS2551: Property 'providerName' does not exist on type 'Scholarship'. Did you mean 'provider'?
+app/organization/dashboard/EducationTab.tsx(489,46): error TS2339: Property 'display' does not exist on type 'string'.
+app/organization/dashboard/EducationTab.tsx(491,49): error TS2339: Property 'display' does not exist on type 'string'.
+app/organization/dashboard/EducationTab.tsx(506,37): error TS2339: Property 'status' does not exist on type 'Scholarship'.
+app/organization/dashboard/EducationTab.tsx(508,41): error TS2339: Property 'status' does not exist on type 'Scholarship'.
+app/organization/dashboard/EducationTab.tsx(513,36): error TS2339: Property 'status' does not exist on type 'Scholarship'.
+app/organization/dashboard/EducationTab.tsx(515,39): error TS2339: Property 'status' does not exist on type 'Scholarship'.
+app/organization/dashboard/EducationTab.tsx(577,36): error TS2339: Property 'studentName' does not exist on type 'StudentInquiry'.
+app/organization/dashboard/EducationTab.tsx(595,74): error TS2339: Property 'studentEmail' does not exist on type 'StudentInquiry'.
+app/organization/dashboard/EducationTab.tsx(603,79): error TS18047: 'inquiry.createdAt' is possibly 'null'.
+app/organization/dashboard/EducationTab.tsx(611,47): error TS2339: Property 'studentEmail' does not exist on type 'StudentInquiry'.
+app/organization/dashboard/EducationTab.tsx(675,32): error TS2339: Property 'title' does not exist on type 'EducationEvent'.
+app/organization/dashboard/EducationTab.tsx(680,41): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/dashboard/EducationTab.tsx(680,85): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/dashboard/EducationTab.tsx(681,37): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/dashboard/EducationTab.tsx(682,46): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/dashboard/EducationTab.tsx(685,34): error TS2339: Property 'eventType' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(96,30): error TS2339: Property 'title' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(98,34): error TS2339: Property 'eventType' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(102,43): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(103,32): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(103,80): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(104,27): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(105,36): error TS2339: Property 'startDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(107,41): error TS2339: Property 'endDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(108,32): error TS2339: Property 'endDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(108,78): error TS2339: Property 'endDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(109,27): error TS2339: Property 'endDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(110,36): error TS2339: Property 'endDate' does not exist on type 'EducationEvent'.
+app/organization/education/events/[id]/edit/page.tsx(210,9): error TS2353: Object literal may only specify known properties, and 'title' does not exist in type 'Partial<EducationEvent>'.
+app/organization/education/events/[id]/edit/page.tsx(252,25): error TS2339: Property 'title' does not exist on type 'EducationEvent'.
+app/organization/education/events/new/page.tsx(144,9): error TS2353: Object literal may only specify known properties, and 'title' does not exist in type 'EventInput'.
+app/organization/education/programs/[id]/edit/page.tsx(112,41): error TS2339: Property 'applicationUrl' does not exist on type 'EducationProgram'.
+app/organization/education/programs/[id]/edit/page.tsx(230,9): error TS2353: Object literal may only specify known properties, and 'applicationUrl' does not exist in type 'Partial<EducationProgram>'.
+app/organization/education/programs/new/page.tsx(190,9): error TS2353: Object literal may only specify known properties, and 'applicationUrl' does not exist in type 'ProgramInput'.
+app/organization/education/school/edit/page.tsx(82,40): error TS2339: Property 'phone' does not exist on type 'SchoolContact'.
+app/organization/education/school/edit/page.tsx(83,40): error TS2339: Property 'email' does not exist on type 'SchoolContact'.
+app/organization/education/school/edit/page.tsx(192,9): error TS2322: Type '{ indigenousControlled: boolean; isVerified?: boolean | undefined; verifiedDate?: Timestamp | null; verifiedBy?: string; accreditation?: string[]; }' is not assignable to type 'SchoolVerification'.
+  Types of property 'isVerified' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+app/organization/education/school/edit/page.tsx(197,11): error TS2353: Object literal may only specify known properties, and 'phone' does not exist in type 'SchoolContact'.
+app/organization/education/school/new/page.tsx(138,11): error TS2353: Object literal may only specify known properties, and 'phone' does not exist in type 'SchoolContact'.
+app/organization/funding/[id]/edit/page.tsx(114,42): error TS2345: Argument of type 'string | Timestamp | Date | null | undefined' is not assignable to parameter of type 'string | Date | null | undefined'.
+  Type 'Timestamp' is not assignable to type 'string | Date | null | undefined'.
+    Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+app/organization/funding/[id]/edit/page.tsx(115,42): error TS2345: Argument of type 'string | Timestamp | Date | null | undefined' is not assignable to parameter of type 'string | Date | null | undefined'.
+  Type 'Timestamp' is not assignable to type 'string | Date | null | undefined'.
+    Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+lib/firestore/scholarships.ts(223,56): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'Timestamp' is not assignable to parameter of type 'string | number | Date'.
+      Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'Timestamp' is not assignable to parameter of type 'string | number'.

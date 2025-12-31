@@ -27,7 +27,10 @@ import type {
 // EVENT CRUD OPERATIONS
 // ============================================
 
-type EventInput = Omit<EducationEvent, "id" | "createdAt" | "updatedAt" | "isPublished" | "attendeeCount" | "rsvpMemberIds"> & {
+type EventInput = Omit<EducationEvent, "id" | "createdAt" | "updatedAt" | "isPublished" | "attendeeCount" | "rsvpMemberIds" | "name" | "type" | "startDatetime"> & {
+  name?: string;
+  type?: EducationEventType;
+  startDatetime?: Timestamp | Date | string | null;
   isPublished?: boolean;
 };
 

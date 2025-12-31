@@ -310,3 +310,22 @@ export {
   getGrantsPendingReview,
 } from "./grants";
 export type { ListBusinessGrantsOptions, CreateGrantInput } from "./grants";
+
+// ============================================
+// SOCIAL HUB
+// ============================================
+export {
+  createPost,
+  getFeedPosts,
+  getUserPosts,
+  toggleLikePost,
+  addComment,
+  getComments,
+  sendConnectionRequest,
+  respondToConnectionRequest,
+  getMyConnections,
+  getPendingConnectionRequests,
+  getConnectionStatus,
+  getSuggestedConnections,
+  shareEntity,
+} from "./social";

@@ -217,10 +217,11 @@ export async function listUpcomingDeadlineScholarships(daysAhead: number = 30): 
     return snap.docs
       .map((d) => ({ id: d.id, ...d.data() } as Scholarship))
       .filter((s) => {
-        if (!s.deadline) return false;
         const deadline = typeof s.deadline === 'string'
           ? new Date(s.deadline)
-          : (s.deadline as any).toDate?.() || new Date(s.deadline);
+          : (s.deadline && typeof s.deadline === 'object' && 'toDate' in s.deadline)
+            ? (s.deadline as any).toDate()
+            : s.deadline instanceof Date ? s.deadline : new Date(s.deadline as any);
         return deadline >= now && deadline <= futureDate;
       });
   } catch {

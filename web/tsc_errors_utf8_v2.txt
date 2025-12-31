@@ -1,0 +1,57 @@
+﻿app/admin/scholarships/page.tsx(283,33): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/education/page.tsx(281,30): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/education/programs/[slug]/page.tsx(322,26): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/education/scholarships/[scholarshipId]/page.tsx(194,17): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/education/scholarships/page.tsx(128,35): error TS2339: Property 'match' does not exist on type 'string | { display?: string | undefined; value?: number | undefined; }'.
+  Property 'match' does not exist on type '{ display?: string | undefined; value?: number | undefined; }'.
+app/education/scholarships/page.tsx(130,52): error TS7006: Parameter 'a' implicitly has an 'any' type.
+app/education/scholarships/page.tsx(478,13): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/education/schools/[slug]/page.tsx(343,27): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/member/dashboard/ApplicationsTab.tsx(414,28): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/organization/dashboard/BusinessTab.tsx(149,13): error TS2367: This comparison appears to be unintentional because the types '"services" | "funding"' and '"shop"' have no overlap.
+app/organization/dashboard/BusinessTab.tsx(266,25): error TS2367: This comparison appears to be unintentional because the types 'ServiceStatus' and '"approved"' have no overlap.
+app/organization/dashboard/BusinessTab.tsx(273,24): error TS2367: This comparison appears to be unintentional because the types 'ServiceStatus' and '"approved"' have no overlap.
+app/organization/dashboard/BusinessTab.tsx(284,22): error TS2367: This comparison appears to be unintentional because the types 'ServiceStatus' and '"approved"' have no overlap.
+app/organization/dashboard/EducationTab.tsx(489,46): error TS2339: Property 'display' does not exist on type 'string | { display?: string | undefined; value?: number | undefined; }'.
+  Property 'display' does not exist on type 'string'.
+app/organization/dashboard/EducationTab.tsx(491,49): error TS2339: Property 'display' does not exist on type 'string | { display?: string | undefined; value?: number | undefined; }'.
+  Property 'display' does not exist on type 'string'.
+app/organization/dashboard/EducationTab.tsx(603,79): error TS18047: 'inquiry.createdAt' is possibly 'null'.
+app/organization/dashboard/EducationTab.tsx(680,79): error TS18047: 'event.startDate' is possibly 'null'.
+app/organization/education/events/[id]/edit/page.tsx(96,20): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+app/organization/education/events/[id]/edit/page.tsx(98,24): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<EducationEventType>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<EducationEventType>'.
+app/organization/education/events/[id]/edit/page.tsx(214,9): error TS2322: Type 'Date' is not assignable to type 'string | Timestamp | null | undefined'.
+  Type 'Date' is missing the following properties from type 'Timestamp': seconds, nanoseconds, toDate, toMillis, isEqual
+app/organization/education/events/[id]/edit/page.tsx(215,9): error TS2322: Type 'Date | undefined' is not assignable to type 'string | Timestamp | null | undefined'.
+  Type 'Date' is not assignable to type 'string | Timestamp | null | undefined'.
+    Type 'Date' is missing the following properties from type 'Timestamp': seconds, nanoseconds, toDate, toMillis, isEqual
+app/organization/education/events/new/page.tsx(148,9): error TS2322: Type 'Date' is not assignable to type 'string | Timestamp | null | undefined'.
+  Type 'Date' is missing the following properties from type 'Timestamp': seconds, nanoseconds, toDate, toMillis, isEqual
+app/organization/education/events/new/page.tsx(149,9): error TS2322: Type 'Date | undefined' is not assignable to type 'string | Timestamp | null | undefined'.
+  Type 'Date' is not assignable to type 'string | Timestamp | null | undefined'.
+    Type 'Date' is missing the following properties from type 'Timestamp': seconds, nanoseconds, toDate, toMillis, isEqual
+app/organization/funding/[id]/edit/page.tsx(114,42): error TS2345: Argument of type 'string | Timestamp | Date | null | undefined' is not assignable to parameter of type 'string | Date | null | undefined'.
+  Type 'Timestamp' is not assignable to type 'string | Date | null | undefined'.
+    Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+app/organization/funding/[id]/edit/page.tsx(115,42): error TS2345: Argument of type 'string | Timestamp | Date | null | undefined' is not assignable to parameter of type 'string | Date | null | undefined'.
+  Type 'Timestamp' is not assignable to type 'string | Date | null | undefined'.
+    Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+app/organization/scholarships/page.tsx(121,25): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+app/search/page.tsx(251,31): error TS2322: Type 'string | { display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+  Type '{ display?: string | undefined; value?: number | undefined; }' is not assignable to type 'ReactNode'.
+lib/firestore/scholarships.ts(223,56): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'Timestamp' is not assignable to parameter of type 'string | number | Date'.
+      Type 'Timestamp' is missing the following properties from type 'Date': toDateString, toTimeString, toLocaleDateString, toLocaleTimeString, and 36 more.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'Timestamp' is not assignable to parameter of type 'string | number'.

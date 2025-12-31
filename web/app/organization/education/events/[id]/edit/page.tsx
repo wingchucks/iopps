@@ -93,10 +93,10 @@ export default function EditEducationEventPage({
 
           setEvent(eventData);
           // Populate form
-          setTitle(eventData.title);
-          setDescription(eventData.description);
-          setEventType(eventData.eventType);
-          setFormat(eventData.format);
+          setTitle(eventData.title || eventData.name || "");
+          setDescription(eventData.description || "");
+          setEventType((eventData.eventType as EducationEventType) || eventData.type || "info_session");
+          setFormat(eventData.format || "in-person");
 
           // Handle date/time
           const startDateTime = eventData.startDate
@@ -207,11 +207,15 @@ export default function EditEducationEventPage({
         : undefined;
 
       await updateEducationEvent(event.id, {
+        name: title,
         title,
         description,
+        type: eventType,
         eventType,
         format,
+        startDatetime: startDatetime,
         startDate: startDatetime,
+        endDatetime: endDatetime,
         endDate: endDatetime,
         location: format !== "online" ? location : undefined,
         virtualLink: format !== "in-person" ? virtualLink : undefined,
@@ -281,14 +285,12 @@ export default function EditEducationEventPage({
               <button
                 type="button"
                 onClick={() => setIsPublished(!isPublished)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isPublished ? "bg-purple-500" : "bg-slate-600"
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isPublished ? "bg-purple-500" : "bg-slate-600"
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isPublished ? "translate-x-6" : "translate-x-1"
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPublished ? "translate-x-6" : "translate-x-1"
+                    }`}
                 />
               </button>
             </label>
