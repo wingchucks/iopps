@@ -96,13 +96,22 @@ export default function OrganizationEducationProgramsPage() {
   };
 
   const getCategoryLabel = (category: string) => {
-    return (
-      PROGRAM_CATEGORIES.find((c) => c.value === category)?.label || category
-    );
+    // PROGRAM_CATEGORIES is a string array, return the category if it exists
+    return PROGRAM_CATEGORIES.includes(category as any) ? category : category;
   };
 
   const getLevelLabel = (level: string) => {
-    return PROGRAM_LEVELS.find((l) => l.value === level)?.label || level;
+    // PROGRAM_LEVELS is a string array, format the level for display
+    const levelLabels: Record<string, string> = {
+      certificate: "Certificate",
+      diploma: "Diploma",
+      bachelor: "Bachelor's",
+      master: "Master's",
+      doctorate: "Doctorate",
+      microcredential: "Microcredential",
+      apprenticeship: "Apprenticeship",
+    };
+    return levelLabels[level] || level;
   };
 
   if (loading) {

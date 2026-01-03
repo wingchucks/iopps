@@ -1,4 +1,4 @@
-// School Firestore operations
+// School-related Firestore operations for the Education Pillar
 import {
   addDoc,
   collection,
@@ -6,558 +6,351 @@ import {
   doc,
   getDoc,
   getDocs,
-  limit,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
+  limit,
   db,
-  checkFirebase,
   schoolsCollection,
+  studentInquiriesCollection,
   savedSchoolsCollection,
-  schoolInquiriesCollection,
+  checkFirebase,
 } from "./shared";
 import type {
   School,
-  SchoolStatus,
-  SchoolType,
+  StudentInquiry,
   SavedSchool,
-  SchoolInquiry,
 } from "@/lib/types";
 
 // ============================================
-// SCHOOLS
+// SCHOOL CRUD OPERATIONS
 // ============================================
 
-export interface ListSchoolsOptions {
-  organizationId?: string;
-  type?: SchoolType;
-  province?: string;
-  status?: SchoolStatus;
-  publishedOnly?: boolean;
-  isPublished?: boolean; // Alias for publishedOnly
-  indigenousControlled?: boolean;
-  hasElderInResidence?: boolean;
-  featured?: boolean;
-  maxResults?: number;
-}
+type SchoolInput = Omit<School, "id" | "createdAt" | "updatedAt" | "isPublished"> & {
+  isPublished?: boolean;
+};
 
-/**
- * List schools with filters
- */
-export async function listSchools(
-  options: ListSchoolsOptions = {}
-): Promise<School[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, schoolsCollection);
-  const constraints: Parameters<typeof query>[1][] = [];
-
-  if (options.organizationId) {
-    constraints.push(where("organizationId", "==", options.organizationId));
-  }
-
-  if (options.type) {
-    constraints.push(where("type", "==", options.type));
-  }
-
-  if (options.province) {
-    constraints.push(where("headOffice.province", "==", options.province));
-  }
-
-  if (options.status) {
-    constraints.push(where("status", "==", options.status));
-  }
-
-  // Default: only show published schools for public listings
-  // isPublished is an alias for publishedOnly
-  const showPublishedOnly = options.isPublished ?? options.publishedOnly;
-  if (showPublishedOnly !== false && !options.organizationId) {
-    constraints.push(where("isPublished", "==", true));
-    constraints.push(where("status", "==", "active"));
-  }
-
-  if (options.indigenousControlled !== undefined) {
-    constraints.push(where("verification.indigenousControlled", "==", options.indigenousControlled));
-  }
-
-  if (options.hasElderInResidence) {
-    constraints.push(where("indigenousServices.elderInResidence", "==", true));
-  }
-
-  constraints.push(orderBy("name", "asc"));
-
-  if (options.maxResults) {
-    constraints.push(limit(options.maxResults));
-  }
-
-  const q = query(colRef, ...constraints);
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as School[];
-}
-
-/**
- * Get a single school by ID
- */
-export async function getSchool(schoolId: string): Promise<School | null> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return null;
-
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  const snapshot = await getDoc(docRef);
-
-  if (!snapshot.exists()) return null;
-
-  return { id: snapshot.id, ...snapshot.data() } as School;
-}
-
-/**
- * Get a school by slug
- */
-export async function getSchoolBySlug(slug: string): Promise<School | null> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return null;
-
-  const colRef = collection(db!, schoolsCollection);
-  const q = query(
-    colRef,
-    where("slug", "==", slug),
-    where("isPublished", "==", true),
-    limit(1)
-  );
-
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-
-  const docSnap = snapshot.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as School;
-}
-
-/**
- * Get school by organization ID
- */
-export async function getSchoolByOrganizationId(
-  organizationId: string
-): Promise<School | null> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return null;
-
-  const colRef = collection(db!, schoolsCollection);
-  const q = query(
-    colRef,
-    where("organizationId", "==", organizationId),
-    limit(1)
-  );
-
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-
-  const docSnap = snapshot.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as School;
-}
-
-/**
- * Create a new school
- */
-export async function createSchool(
-  data: Omit<School, "id" | "createdAt" | "updatedAt" | "viewCount">
-): Promise<string> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const colRef = collection(db!, schoolsCollection);
-
-  const docRef = await addDoc(colRef, {
-    ...data,
-    viewCount: 0,
+export async function createSchool(input: SchoolInput): Promise<string> {
+  const ref = collection(db!, schoolsCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    isPublished: input.isPublished ?? false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-
+  // Update the document with its own ID
+  await updateDoc(doc(db!, schoolsCollection, docRef.id), {
+    id: docRef.id,
+  });
   return docRef.id;
 }
 
-/**
- * Update a school
- */
-export async function updateSchool(
-  schoolId: string,
-  data: Partial<Omit<School, "id" | "createdAt">>
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+export async function getSchool(id: string): Promise<School | null> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return null;
+    const ref = doc(firestore, schoolsCollection, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as School;
+  } catch {
+    return null;
+  }
+}
 
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  await updateDoc(docRef, {
+export async function getSchoolBySlug(slug: string): Promise<School | null> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return null;
+    const ref = collection(firestore, schoolsCollection);
+    const q = query(ref, where("slug", "==", slug), where("isPublished", "==", true), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    return snap.docs[0].data() as School;
+  } catch {
+    return null;
+  }
+}
+
+export async function getSchoolByEmployerId(employerId: string): Promise<School | null> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return null;
+    const ref = collection(firestore, schoolsCollection);
+    const q = query(ref, where("employerId", "==", employerId), limit(1));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    return snap.docs[0].data() as School;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateSchool(id: string, data: Partial<School>): Promise<void> {
+  const ref = doc(db!, schoolsCollection, id);
+  await updateDoc(ref, {
     ...data,
     updatedAt: serverTimestamp(),
   });
 }
 
-/**
- * Update school status
- */
-export async function updateSchoolStatus(
-  schoolId: string,
-  status: SchoolStatus
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+export async function deleteSchool(id: string): Promise<void> {
+  const ref = doc(db!, schoolsCollection, id);
+  await deleteDoc(ref);
+}
 
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  await updateDoc(docRef, {
+// ============================================
+// SCHOOL LISTING OPERATIONS
+// ============================================
+
+export interface ListSchoolsOptions {
+  type?: string;
+  province?: string;
+  indigenousControlled?: boolean;
+  publishedOnly?: boolean;
+  limitCount?: number;
+}
+
+export async function listSchools(options: ListSchoolsOptions = {}): Promise<School[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    const ref = collection(firestore, schoolsCollection);
+    const constraints: any[] = [];
+
+    if (options.publishedOnly !== false) {
+      constraints.push(where("isPublished", "==", true));
+    }
+
+    if (options.type) {
+      constraints.push(where("type", "==", options.type));
+    }
+
+    if (options.province) {
+      constraints.push(where("headOffice.province", "==", options.province));
+    }
+
+    if (options.indigenousControlled !== undefined) {
+      constraints.push(where("verification.indigenousControlled", "==", options.indigenousControlled));
+    }
+
+    constraints.push(orderBy("name", "asc"));
+
+    if (options.limitCount) {
+      constraints.push(limit(options.limitCount));
+    }
+
+    const q = query(ref, ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => docSnap.data() as School);
+  } catch {
+    return [];
+  }
+}
+
+export async function listFeaturedSchools(limitCount: number = 4): Promise<School[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    const ref = collection(firestore, schoolsCollection);
+    const q = query(
+      ref,
+      where("isPublished", "==", true),
+      where("verification.isVerified", "==", true),
+      orderBy("stats.indigenousStudentPercentage", "desc"),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => docSnap.data() as School);
+  } catch {
+    return [];
+  }
+}
+
+// ============================================
+// STUDENT INQUIRIES
+// ============================================
+
+type StudentInquiryInput = Omit<StudentInquiry, "id" | "createdAt" | "updatedAt" | "status">;
+
+export async function createStudentInquiry(input: StudentInquiryInput): Promise<string> {
+  const ref = collection(db!, studentInquiriesCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    status: "new",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function listSchoolInquiries(schoolId: string): Promise<StudentInquiry[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    const ref = collection(firestore, studentInquiriesCollection);
+    const q = query(
+      ref,
+      where("schoolId", "==", schoolId),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as StudentInquiry));
+  } catch {
+    return [];
+  }
+}
+
+export async function updateInquiryStatus(
+  inquiryId: string,
+  status: StudentInquiry["status"]
+): Promise<void> {
+  const ref = doc(db!, studentInquiriesCollection, inquiryId);
+  await updateDoc(ref, {
     status,
     updatedAt: serverTimestamp(),
+    ...(status === "replied" ? { repliedAt: serverTimestamp() } : {}),
   });
 }
 
-/**
- * Publish or unpublish a school
- */
-export async function setSchoolPublished(
-  schoolId: string,
-  isPublished: boolean
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+export async function getUnreadInquiryCount(schoolId: string): Promise<number> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return 0;
 
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  await updateDoc(docRef, {
+    const ref = collection(firestore, studentInquiriesCollection);
+    const q = query(
+      ref,
+      where("schoolId", "==", schoolId),
+      where("status", "==", "new")
+    );
+    const snap = await getDocs(q);
+    return snap.size;
+  } catch {
+    return 0;
+  }
+}
+
+// ============================================
+// SAVED SCHOOLS (Members)
+// ============================================
+
+export async function saveSchool(memberId: string, schoolId: string): Promise<void> {
+  const ref = collection(db!, savedSchoolsCollection);
+  await addDoc(ref, {
+    memberId,
+    schoolId,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function unsaveSchool(memberId: string, schoolId: string): Promise<void> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return;
+
+    const ref = collection(firestore, savedSchoolsCollection);
+    const q = query(
+      ref,
+      where("memberId", "==", memberId),
+      where("schoolId", "==", schoolId)
+    );
+    const snap = await getDocs(q);
+    for (const docSnap of snap.docs) {
+      await deleteDoc(docSnap.ref);
+    }
+  } catch {
+    // Silently fail
+  }
+}
+
+export async function isSchoolSaved(memberId: string, schoolId: string): Promise<boolean> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return false;
+
+    const ref = collection(firestore, savedSchoolsCollection);
+    const q = query(
+      ref,
+      where("memberId", "==", memberId),
+      where("schoolId", "==", schoolId),
+      limit(1)
+    );
+    const snap = await getDocs(q);
+    return !snap.empty;
+  } catch {
+    return false;
+  }
+}
+
+export async function listSavedSchools(memberId: string): Promise<SavedSchool[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    const ref = collection(firestore, savedSchoolsCollection);
+    const q = query(
+      ref,
+      where("memberId", "==", memberId),
+      orderBy("createdAt", "desc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() } as SavedSchool));
+  } catch {
+    return [];
+  }
+}
+
+export async function listSavedSchoolIds(memberId: string): Promise<string[]> {
+  try {
+    const saved = await listSavedSchools(memberId);
+    return saved.map((s) => s.schoolId);
+  } catch {
+    return [];
+  }
+}
+
+// ============================================
+// SCHOOL ANALYTICS
+// ============================================
+
+export async function incrementSchoolViews(schoolId: string): Promise<void> {
+  try {
+    const ref = doc(db!, schoolsCollection, schoolId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const currentViews = snap.data().stats?.viewsCount || 0;
+      await updateDoc(ref, {
+        "stats.viewsCount": currentViews + 1,
+      });
+    }
+  } catch {
+    // Silently fail - analytics shouldn't break the page
+  }
+}
+
+/**
+ * Set school published status
+ */
+export async function setSchoolPublished(schoolId: string, isPublished: boolean): Promise<void> {
+  const ref = doc(db!, schoolsCollection, schoolId);
+  await updateDoc(ref, {
     isPublished,
     updatedAt: serverTimestamp(),
   });
 }
 
-/**
- * Delete a school
- */
-export async function deleteSchool(schoolId: string): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  await deleteDoc(docRef);
-}
-
-/**
- * Increment view count for a school
- */
-export async function incrementSchoolViews(schoolId: string): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return;
-
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  const snapshot = await getDoc(docRef);
-
-  if (snapshot.exists()) {
-    await updateDoc(docRef, {
-      viewCount: (snapshot.data().viewCount || 0) + 1,
-    });
-  }
-}
-
-/**
- * Verify a school (admin only)
- */
-export async function verifySchool(
-  schoolId: string,
-  verifiedBy: string,
-  indigenousControlled?: boolean
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, schoolsCollection, schoolId);
-  await updateDoc(docRef, {
-    "verification.isVerified": true,
-    "verification.verifiedDate": serverTimestamp(),
-    "verification.verifiedBy": verifiedBy,
-    ...(indigenousControlled !== undefined && {
-      "verification.indigenousControlled": indigenousControlled,
-    }),
-    updatedAt: serverTimestamp(),
-  });
-}
-
 // ============================================
-// SAVED SCHOOLS (Member bookmarks)
+// ALIASES (for backward compatibility)
 // ============================================
 
-/**
- * Save a school for a member
- */
-export async function saveSchool(
-  memberId: string,
-  schoolId: string
-): Promise<string> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+// Alias for getSchoolByEmployerId (some files use organizationId terminology)
+export const getSchoolByOrganizationId = getSchoolByEmployerId;
 
-  // Check if already saved
-  const existing = await getSavedSchool(memberId, schoolId);
-  if (existing) return existing.id;
-
-  const colRef = collection(db!, savedSchoolsCollection);
-  const docRef = await addDoc(colRef, {
-    memberId,
-    schoolId,
-    createdAt: serverTimestamp(),
-  });
-
-  return docRef.id;
-}
-
-/**
- * Remove a saved school
- */
-export async function unsaveSchool(
-  memberId: string,
-  schoolId: string
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return;
-
-  const existing = await getSavedSchool(memberId, schoolId);
-  if (existing) {
-    const docRef = doc(db!, savedSchoolsCollection, existing.id);
-    await deleteDoc(docRef);
-  }
-}
-
-/**
- * Get a saved school record
- */
-export async function getSavedSchool(
-  memberId: string,
-  schoolId: string
-): Promise<SavedSchool | null> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return null;
-
-  const colRef = collection(db!, savedSchoolsCollection);
-  const q = query(
-    colRef,
-    where("memberId", "==", memberId),
-    where("schoolId", "==", schoolId),
-    limit(1)
-  );
-
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-
-  const docSnap = snapshot.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as SavedSchool;
-}
-
-/**
- * Check if a school is saved
- */
-export async function isSchoolSaved(
-  memberId: string,
-  schoolId: string
-): Promise<boolean> {
-  const saved = await getSavedSchool(memberId, schoolId);
-  return saved !== null;
-}
-
-/**
- * List all saved schools for a member
- */
-export async function listSavedSchools(
-  memberId: string
-): Promise<SavedSchool[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, savedSchoolsCollection);
-  const q = query(
-    colRef,
-    where("memberId", "==", memberId),
-    orderBy("createdAt", "desc")
-  );
-
-  const snapshot = await getDocs(q);
-  const savedItems = snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as SavedSchool[];
-
-  // Fetch school details
-  const schoolPromises = savedItems.map(async (item) => {
-    const school = await getSchool(item.schoolId);
-    return { ...item, school };
-  });
-
-  return Promise.all(schoolPromises);
-}
-
-// ============================================
-// SCHOOL INQUIRIES
-// ============================================
-
-export interface CreateSchoolInquiryInput {
-  schoolId: string;
-  programId?: string;
-  memberId: string;
-  memberEmail: string;
-  memberName: string;
-  subject: string;
-  message: string;
-  interestedInPrograms?: string[];
-  intendedStartDate?: string;
-  educationLevel?: string;
-}
-
-/**
- * Create a school inquiry
- */
-export async function createSchoolInquiry(
-  data: CreateSchoolInquiryInput
-): Promise<string> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const colRef = collection(db!, schoolInquiriesCollection);
-  const docRef = await addDoc(colRef, {
-    ...data,
-    status: "new",
-    createdAt: serverTimestamp(),
-  });
-
-  return docRef.id;
-}
-
-/**
- * List inquiries for a school
- */
-export async function listSchoolInquiries(
-  schoolId: string,
-  status?: "new" | "read" | "responded" | "archived"
-): Promise<SchoolInquiry[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, schoolInquiriesCollection);
-  const constraints: Parameters<typeof query>[1][] = [
-    where("schoolId", "==", schoolId),
-  ];
-
-  if (status) {
-    constraints.push(where("status", "==", status));
-  }
-
-  constraints.push(orderBy("createdAt", "desc"));
-
-  const q = query(colRef, ...constraints);
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as SchoolInquiry[];
-}
-
-/**
- * Get unread inquiry count for a school
- */
-export async function getUnreadInquiryCount(schoolId: string): Promise<number> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return 0;
-
-  const colRef = collection(db!, schoolInquiriesCollection);
-  const q = query(
-    colRef,
-    where("schoolId", "==", schoolId),
-    where("status", "==", "new")
-  );
-
-  const snapshot = await getDocs(q);
-  return snapshot.size;
-}
-
-/**
- * Update inquiry status
- */
-export async function updateInquiryStatus(
-  inquiryId: string,
-  status: "new" | "read" | "responded" | "archived",
-  respondedBy?: string
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, schoolInquiriesCollection, inquiryId);
-  const updateData: Record<string, unknown> = { status };
-
-  if (status === "responded" && respondedBy) {
-    updateData.respondedAt = serverTimestamp();
-    updateData.respondedBy = respondedBy;
-  }
-
-  await updateDoc(docRef, updateData);
-}
-
-/**
- * List inquiries from a member
- */
-export async function listMemberInquiries(
-  memberId: string
-): Promise<SchoolInquiry[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, schoolInquiriesCollection);
-  const q = query(
-    colRef,
-    where("memberId", "==", memberId),
-    orderBy("createdAt", "desc")
-  );
-
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as SchoolInquiry[];
-}
-
-/**
- * Get schools pending review (admin)
- */
-export async function getSchoolsPendingReview(): Promise<School[]> {
-  return listSchools({
-    status: "pending",
-    publishedOnly: false,
-  });
-}
-
-/**
- * Get featured schools
- */
-export async function getFeaturedSchools(maxResults: number = 6): Promise<School[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, schoolsCollection);
-  const q = query(
-    colRef,
-    where("isPublished", "==", true),
-    where("status", "==", "active"),
-    where("verification.isVerified", "==", true),
-    orderBy("name", "asc"),
-    limit(maxResults)
-  );
-
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as School[];
-}
+// Alias for createStudentInquiry (some files use createSchoolInquiry)
+export const createSchoolInquiry = createStudentInquiry;

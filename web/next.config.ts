@@ -81,26 +81,70 @@ const nextConfig: NextConfig = {
         destination: "/organization/shop/:path*",
         permanent: true,
       },
-      // Jobs to Jobs & Training redirects
+      // Jobs-training to Careers redirects (NEW)
+      {
+        source: "/jobs-training",
+        destination: "/careers",
+        permanent: true,
+      },
+      {
+        source: "/jobs-training/:path*",
+        destination: "/careers/:path*",
+        permanent: true,
+      },
+      // Old jobs to careers redirects
       {
         source: "/jobs",
-        destination: "/jobs-training",
+        destination: "/careers",
         permanent: true,
       },
       {
         source: "/jobs/:path*",
-        destination: "/jobs-training/:path*",
+        destination: "/careers/:path*",
         permanent: true,
       },
-      // Shop to Marketplace redirects
+      // Scholarships to Education/Scholarships redirects (NEW)
+      {
+        source: "/scholarships",
+        destination: "/education/scholarships",
+        permanent: true,
+      },
+      {
+        source: "/scholarships/:path*",
+        destination: "/education/scholarships/:path*",
+        permanent: true,
+      },
+      // Marketplace to Business redirects (NEW)
+      {
+        source: "/marketplace",
+        destination: "/business",
+        permanent: true,
+      },
+      {
+        source: "/marketplace/:path*",
+        destination: "/business/:path*",
+        permanent: true,
+      },
+      // Shop to Business redirects
       {
         source: "/shop",
-        destination: "/marketplace",
+        destination: "/business",
         permanent: true,
       },
       {
         source: "/shop/:path*",
-        destination: "/marketplace/:path*",
+        destination: "/business/:path*",
+        permanent: true,
+      },
+      // Powwows to Community redirects (NEW)
+      {
+        source: "/powwows",
+        destination: "/community",
+        permanent: true,
+      },
+      {
+        source: "/powwows/:path*",
+        destination: "/community/:path*",
         permanent: true,
       },
     ];

@@ -20,9 +20,8 @@ export {
   trackInterviewView,
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
-  isProfileComplete,
-  getMissingProfileFields,
   updateEmployerCarouselFeature,
+  isProfileComplete,
 } from "./employers";
 export type { GrantFreePostingParams } from "./employers";
 
@@ -89,22 +88,13 @@ export {
   listScholarshipApplicantsForEmployer,
   updateScholarshipApplicationStatus,
   withdrawScholarshipApplication,
-  // Extended scholarship functions (Education Pillar)
-  listScholarshipsFiltered,
+  // Education Pillar extensions
   listSchoolScholarships,
-  getUpcomingScholarshipDeadlines,
-  getScholarshipsForLevel,
-  getFeaturedScholarships,
+  listUpcomingDeadlineScholarships,
+  listScholarshipsForProgram,
   createExtendedScholarship,
-  incrementScholarshipViews,
-  getScholarshipBySlug,
-  saveScholarship,
-  unsaveScholarship,
-  getSavedScholarshipRecord,
-  isScholarshipSaved,
-  listSavedScholarships,
 } from "./scholarships";
-export type { ListScholarshipsOptions } from "./scholarships";
+export type { ExtendedScholarshipInput } from "./scholarships";
 
 // Powwows
 export {
@@ -232,83 +222,122 @@ export {
 } from "./services";
 export type { ListServicesOptions, CreateServiceInput } from "./services";
 
-// Schools (Education Pillar)
+// ============================================
+// EDUCATION PILLAR
+// ============================================
+
+// Schools
 export {
-  listSchools,
+  createSchool,
   getSchool,
   getSchoolBySlug,
+  getSchoolByEmployerId,
   getSchoolByOrganizationId,
-  createSchool,
   updateSchool,
-  updateSchoolStatus,
-  setSchoolPublished,
   deleteSchool,
-  incrementSchoolViews,
-  verifySchool,
-  saveSchool,
-  unsaveSchool,
-  getSavedSchool,
-  isSchoolSaved,
-  listSavedSchools,
+  listSchools,
+  listFeaturedSchools,
+  createStudentInquiry,
   createSchoolInquiry,
   listSchoolInquiries,
-  getUnreadInquiryCount,
   updateInquiryStatus,
-  listMemberInquiries,
-  getSchoolsPendingReview,
-  getFeaturedSchools,
+  getUnreadInquiryCount,
+  saveSchool,
+  unsaveSchool,
+  isSchoolSaved,
+  listSavedSchools,
+  listSavedSchoolIds,
+  incrementSchoolViews,
+  setSchoolPublished,
 } from "./schools";
-export type { ListSchoolsOptions, CreateSchoolInquiryInput } from "./schools";
+export type { ListSchoolsOptions } from "./schools";
 
 // Education Programs
 export {
-  listEducationPrograms,
+  createEducationProgram,
   getEducationProgram,
   getEducationProgramBySlug,
-  listSchoolPrograms,
-  createEducationProgram,
-  bulkCreateEducationPrograms,
   updateEducationProgram,
-  updateEducationProgramStatus,
-  setEducationProgramPublished,
-  setEducationProgramFeatured,
   deleteEducationProgram,
-  incrementEducationProgramViews,
-  incrementEducationProgramInquiries,
-  getEducationProgramsPendingReview,
-  getFeaturedEducationPrograms,
-  getEducationProgramsByCategory,
-  getEducationProgramsByLevel,
-  saveEducationProgram,
-  unsaveEducationProgram,
-  getSavedProgram,
-  isEducationProgramSaved,
+  listEducationPrograms,
+  listSchoolPrograms,
+  listSchoolProgramsForDashboard,
+  listFeaturedPrograms,
+  listIndigenousFocusedPrograms,
+  bulkCreatePrograms,
+  saveProgram,
+  unsaveProgram,
+  isProgramSaved,
   listSavedPrograms,
+  listSavedProgramIds,
+  incrementProgramViews,
+  getProgramCountsByCategory,
+} from "./programs";
+export type { ListEducationProgramsOptions } from "./programs";
+
+// Education Programs (additional functions from educationPrograms.ts)
+export {
   getSchoolProgramCount,
+  incrementEducationProgramInquiries,
 } from "./educationPrograms";
-export type { ListEducationProgramsOptions } from "./educationPrograms";
 
 // Education Events
 export {
-  listEducationEvents,
-  getEducationEvent,
-  listSchoolEvents,
-  getUpcomingEducationEvents,
-  getEducationEventsInRange,
   createEducationEvent,
+  getEducationEvent,
   updateEducationEvent,
-  setEducationEventPublished,
-  setEducationEventFeatured,
   deleteEducationEvent,
-  incrementEducationEventViews,
-  trackEducationEventRegistrationClick,
-  rsvpToEducationEvent,
-  updateEducationEventRSVP,
-  cancelEducationEventRSVP,
-  getEducationEventRSVP,
-  listEducationEventRSVPs,
-  listMemberEventRSVPs,
-  getEducationEventRSVPCount,
-  hasMemberRSVP,
+  listEducationEvents,
+  listSchoolEvents,
+  listSchoolEventsForDashboard,
+  listUpcomingEvents,
+  listThisWeekEvents,
+  listEventsByMonth,
+  rsvpToEvent,
+  cancelRsvp,
+  isRsvpd,
+  getEventRsvpCount,
+  listMemberRsvps,
+  getEventStats,
 } from "./educationEvents";
 export type { ListEducationEventsOptions } from "./educationEvents";
+
+// ============================================
+// BUSINESS PILLAR
+// ============================================
+
+// Business Grants / Funding
+export {
+  listBusinessGrants,
+  getFeaturedGrants,
+  getBusinessGrant,
+  getBusinessGrantBySlug,
+  incrementGrantViews,
+  createBusinessGrant,
+  updateBusinessGrant,
+  deleteBusinessGrant,
+  updateGrantStatus,
+  setGrantFeatured,
+  listOrganizationGrants,
+  getGrantsPendingReview,
+} from "./grants";
+export type { ListBusinessGrantsOptions, CreateGrantInput } from "./grants";
+
+// ============================================
+// SOCIAL HUB
+// ============================================
+export {
+  createPost,
+  getFeedPosts,
+  getUserPosts,
+  toggleLikePost,
+  addComment,
+  getComments,
+  sendConnectionRequest,
+  respondToConnectionRequest,
+  getMyConnections,
+  getPendingConnectionRequests,
+  getConnectionStatus,
+  getSuggestedConnections,
+  shareEntity,
+} from "./social";

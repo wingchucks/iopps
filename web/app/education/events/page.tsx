@@ -1,363 +1,288 @@
-import { Suspense } from "react";
+"use client";
+
 import Link from "next/link";
-import {
-  CalendarDaysIcon,
-  MapPinIcon,
-  ComputerDesktopIcon,
-  BuildingOfficeIcon,
-  ClockIcon,
-  UserGroupIcon,
-  AcademicCapIcon,
-} from "@heroicons/react/24/outline";
-import { getUpcomingEducationEvents, listEducationEvents } from "@/lib/firestore";
-import type { EducationEvent } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { PageShell } from "@/components/PageShell";
+import { listEducationEvents } from "@/lib/firestore";
+import type { EducationEvent, EducationEventType, EducationEventFormat } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
-
-const EVENT_TYPES = [
-  { value: "open-house", label: "Open House" },
-  { value: "info-session", label: "Info Session" },
-  { value: "campus-tour", label: "Campus Tour" },
+const EVENT_TYPES: { value: EducationEventType | ""; label: string }[] = [
+  { value: "", label: "All Types" },
+  { value: "open_house", label: "Open House" },
+  { value: "info_session", label: "Info Session" },
+  { value: "campus_tour", label: "Campus Tour" },
+  { value: "application_workshop", label: "Application Workshop" },
+  { value: "career_fair", label: "Career Fair" },
   { value: "webinar", label: "Webinar" },
-  { value: "career-fair", label: "Career Fair" },
-  { value: "workshop", label: "Workshop" },
   { value: "orientation", label: "Orientation" },
   { value: "other", label: "Other" },
 ];
 
-function formatDateTime(timestamp: unknown): string {
-  if (!timestamp) return "TBD";
-  const date =
-    typeof timestamp === "object" &&
-    timestamp !== null &&
-    "toDate" in timestamp
-      ? (timestamp as { toDate: () => Date }).toDate()
-      : new Date(timestamp as string);
-  return date.toLocaleDateString("en-CA", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const EVENT_FORMATS: { value: EducationEventFormat | ""; label: string }[] = [
+  { value: "", label: "All Formats" },
+  { value: "in-person", label: "In-Person" },
+  { value: "online", label: "Online" },
+  { value: "hybrid", label: "Hybrid" },
+];
 
-function formatShortDate(timestamp: unknown): { day: string; month: string } {
-  if (!timestamp) return { day: "--", month: "---" };
-  const date =
-    typeof timestamp === "object" &&
-    timestamp !== null &&
-    "toDate" in timestamp
-      ? (timestamp as { toDate: () => Date }).toDate()
-      : new Date(timestamp as string);
-  return {
-    day: date.getDate().toString(),
-    month: date.toLocaleDateString("en-CA", { month: "short" }),
-  };
-}
+export default function EducationEventsPage() {
+  const [events, setEvents] = useState<EducationEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [eventType, setEventType] = useState<EducationEventType | "">("");
+  const [eventFormat, setEventFormat] = useState<EducationEventFormat | "">("");
 
-async function UpcomingEvents() {
-  const events = await getUpcomingEducationEvents(30, 6);
+  useEffect(() => {
+    loadEvents();
+  }, [eventType, eventFormat]);
 
-  if (events.length === 0) {
-    return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-        <CalendarDaysIcon className="mx-auto h-12 w-12 text-slate-600" />
-        <p className="mt-4 text-slate-400">
-          No upcoming events in the next 30 days.
-        </p>
-        <p className="text-sm text-slate-500">Check back soon for new events!</p>
-      </div>
-    );
+  async function loadEvents() {
+    setLoading(true);
+    try {
+      const eventList = await listEducationEvents({
+        publishedOnly: true,
+        upcoming: true,
+        type: eventType || undefined,
+        format: eventFormat || undefined,
+      });
+      setEvents(eventList);
+    } catch (error) {
+      console.error("Failed to load events:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {events.map((event) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-    </div>
-  );
-}
-
-async function AllEvents({
-  type,
-  format,
-}: {
-  type?: string;
-  format?: string;
-}) {
-  const events = await listEducationEvents({
-    type: type as EducationEvent["type"],
-    format: format as EducationEvent["format"],
-    isPublished: true,
-    maxResults: 50,
-  });
-
-  // Filter to only show upcoming events
-  const now = new Date();
-  const upcomingEvents = events.filter((event) => {
-    if (!event.startDatetime) return false;
-    const eventDate =
-      typeof event.startDatetime === "object" &&
-      "toDate" in event.startDatetime
-        ? event.startDatetime.toDate()
-        : new Date(event.startDatetime as string);
-    return eventDate >= now;
-  });
-
-  if (upcomingEvents.length === 0) {
-    return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-        <CalendarDaysIcon className="mx-auto h-12 w-12 text-slate-600" />
-        <p className="mt-4 text-slate-400">
-          No events found matching your criteria.
-        </p>
-        <Link
-          href="/education/events"
-          className="mt-4 inline-block text-sm text-violet-400 hover:text-violet-300"
-        >
-          Clear filters
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {upcomingEvents.map((event) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-    </div>
-  );
-}
-
-function EventCard({ event }: { event: EducationEvent }) {
-  const dateInfo = formatShortDate(event.startDatetime);
-  const typeLabel =
-    EVENT_TYPES.find((t) => t.value === event.type)?.label || event.type;
-
-  const getFormatIcon = () => {
-    switch (event.format) {
-      case "virtual":
-        return <ComputerDesktopIcon className="h-4 w-4" />;
-      case "in-person":
-        return <BuildingOfficeIcon className="h-4 w-4" />;
-      case "hybrid":
-        return (
-          <div className="flex -space-x-1">
-            <ComputerDesktopIcon className="h-3 w-3" />
-            <BuildingOfficeIcon className="h-3 w-3" />
-          </div>
-        );
-      default:
-        return <CalendarDaysIcon className="h-4 w-4" />;
+  const getEventTypeIcon = (type?: EducationEventType) => {
+    switch (type) {
+      case "open_house": return "🏫";
+      case "info_session": return "📢";
+      case "campus_tour": return "🚶";
+      case "application_workshop": return "📝";
+      case "career_fair": return "💼";
+      case "webinar": return "💻";
+      case "orientation": return "🎓";
+      default: return "📅";
     }
   };
 
+  const formatEventDate = (dateValue: Date | string | { seconds: number } | null | undefined) => {
+    if (!dateValue) return "TBD";
+    let date: Date;
+    if (typeof dateValue === 'object' && 'seconds' in dateValue) {
+      date = new Date(dateValue.seconds * 1000);
+    } else {
+      date = new Date(dateValue);
+    }
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatEventTime = (dateValue: Date | string | { seconds: number } | null | undefined) => {
+    if (!dateValue) return "TBD";
+    let date: Date;
+    if (typeof dateValue === 'object' && 'seconds' in dateValue) {
+      date = new Date(dateValue.seconds * 1000);
+    } else {
+      date = new Date(dateValue);
+    }
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  const getDatePart = (dateValue: Date | string | { seconds: number } | null | undefined, part: "month" | "day") => {
+    if (!dateValue) return part === "month" ? "TBD" : "--";
+    let date: Date;
+    if (typeof dateValue === 'object' && 'seconds' in dateValue) {
+      date = new Date(dateValue.seconds * 1000);
+    } else {
+      date = new Date(dateValue);
+    }
+    if (part === "month") {
+      return date.toLocaleDateString("en-US", { month: "short" });
+    }
+    return date.getDate().toString();
+  };
+
   return (
-    <div className="group rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-violet-500/50 transition-colors">
-      <div className="flex">
-        {/* Date Badge */}
-        <div className="flex-shrink-0 w-20 bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex flex-col items-center justify-center p-4 border-r border-slate-800">
-          <span className="text-2xl font-bold text-white">{dateInfo.day}</span>
-          <span className="text-sm text-violet-300 uppercase">
-            {dateInfo.month}
-          </span>
-        </div>
+    <PageShell>
+      {/* Breadcrumb */}
+      <nav className="mb-8 text-sm text-slate-400">
+        <Link href="/" className="hover:text-white transition-colors">
+          Home
+        </Link>
+        <span className="mx-2">→</span>
+        <Link href="/education" className="hover:text-white transition-colors">
+          Education
+        </Link>
+        <span className="mx-2">→</span>
+        <span className="text-white">Events</span>
+      </nav>
 
-        {/* Content */}
-        <div className="flex-1 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-300">
-              {typeLabel}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300">
-              {getFormatIcon()}
-              {event.format.charAt(0).toUpperCase() + event.format.slice(1)}
-            </span>
+      {/* Hero Section */}
+      <div className="relative text-center mb-12">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
+          Education
+        </p>
+        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl">
+          Education Events
+        </h1>
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
+          Open houses, info sessions, campus tours, and more from Indigenous-serving institutions.
+        </p>
+      </div>
+
+      {/* Filters */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-8">
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Event Type */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+              Event Type
+            </label>
+            <select
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value as EducationEventType | "")}
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+            >
+              {EVENT_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <h3 className="font-semibold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
-            {event.name}
-          </h3>
-
-          <p className="mt-1 text-sm text-slate-400">{event.schoolName}</p>
-
-          <div className="mt-3 space-y-1 text-xs text-slate-500">
-            <div className="flex items-center gap-1">
-              <ClockIcon className="h-3 w-3" />
-              {formatDateTime(event.startDatetime)}
-            </div>
-            {event.location && event.format !== "virtual" && (
-              <div className="flex items-center gap-1">
-                <MapPinIcon className="h-3 w-3" />
-                {event.location.city}, {event.location.province}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 flex items-center justify-between">
-            {event.registrationRequired ? (
-              <span className="text-xs text-amber-400">
-                Registration required
-              </span>
-            ) : (
-              <span className="text-xs text-emerald-400">Open to all</span>
-            )}
-            {event.registrationUrl ? (
-              <a
-                href={event.registrationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg bg-violet-500 px-3 py-1 text-xs font-medium text-white hover:bg-violet-600 transition-colors"
-              >
-                Register
-              </a>
-            ) : (
-              <span className="text-xs text-slate-500">
-                <UserGroupIcon className="inline h-3 w-3 mr-1" />
-                {event.attendeeCount || 0} attending
-              </span>
-            )}
+          {/* Event Format */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+              Format
+            </label>
+            <select
+              value={eventFormat}
+              onChange={(e) => setEventFormat(e.target.value as EducationEventFormat | "")}
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+            >
+              {EVENT_FORMATS.map((format) => (
+                <option key={format.value} value={format.value}>
+                  {format.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-export default async function EducationEventsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | undefined }>;
-}) {
-  const params = await searchParams;
-  const type = params.type;
-  const format = params.format;
-  const hasFilters = type || format;
-
-  return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Hero */}
-      <section className="relative border-b border-slate-800 bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 py-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-white">Education Events</h1>
-          </div>
-          <p className="text-lg text-slate-400 max-w-2xl">
-            Discover open houses, info sessions, and campus tours from
-            post-secondary institutions across Canada.
-          </p>
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-6xl px-4 py-12">
-        {/* Filters */}
-        <div className="mb-8 flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-400">Event Type:</label>
-            <form action="/education/events" className="inline">
-              {format && <input type="hidden" name="format" value={format} />}
-              <select
-                name="type"
-                defaultValue={type || ""}
-                onChange={(e) => e.target.form?.submit()}
-                className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
-              >
-                <option value="">All Types</option>
-                {EVENT_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </form>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-400">Format:</label>
-            <form action="/education/events" className="inline">
-              {type && <input type="hidden" name="type" value={type} />}
-              <select
-                name="format"
-                defaultValue={format || ""}
-                onChange={(e) => e.target.form?.submit()}
-                className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
-              >
-                <option value="">All Formats</option>
-                <option value="virtual">Virtual</option>
-                <option value="in-person">In-Person</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
-            </form>
-          </div>
-
-          {hasFilters && (
-            <Link
-              href="/education/events"
-              className="text-sm text-violet-400 hover:text-violet-300"
-            >
-              Clear filters
-            </Link>
-          )}
-        </div>
-
-        {/* Events List */}
-        <section>
-          <h2 className="text-xl font-bold text-white mb-6">
-            {hasFilters ? "Search Results" : "Upcoming Events"}
-          </h2>
-          <Suspense
-            fallback={
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-48 rounded-xl border border-slate-800 bg-slate-900/50 animate-pulse"
-                  />
-                ))}
-              </div>
-            }
+      {/* Results Count */}
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-slate-400">
+          {loading ? "Loading..." : `${events.length} upcoming events`}
+        </p>
+        {(eventType || eventFormat) && (
+          <button
+            onClick={() => {
+              setEventType("");
+              setEventFormat("");
+            }}
+            className="text-sm text-[#14B8A6] hover:text-[#16cdb8]"
           >
-            {hasFilters ? (
-              <AllEvents type={type} format={format} />
-            ) : (
-              <UpcomingEvents />
-            )}
-          </Suspense>
-        </section>
-
-        {/* School CTA */}
-        <section className="mt-16 rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 p-8 text-center">
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Host Your Events Here
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto mb-6">
-            Educational institutions can list recruitment events, open houses,
-            and info sessions to connect with Indigenous students.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/organization/education"
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-3 font-semibold text-white hover:from-blue-600 hover:to-indigo-600 transition-colors"
-            >
-              <AcademicCapIcon className="h-5 w-5" />
-              Create School Profile
-            </Link>
-            <Link
-              href="/education/schools"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
-            >
-              Browse Schools
-            </Link>
-          </div>
-        </section>
+            Clear Filters
+          </button>
+        )}
       </div>
-    </div>
+
+      {/* Events List */}
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-32" />
+          ))}
+        </div>
+      ) : events.length > 0 ? (
+        <div className="space-y-4">
+          {events.map((event) => (
+            <Link
+              key={event.id}
+              href={`/education/events/${event.id}`}
+              className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+            >
+              {/* Date Box */}
+              <div className="flex flex-col items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 p-4 shrink-0 w-20">
+                <span className="text-xs font-semibold text-[#14B8A6] uppercase">
+                  {getDatePart(event.startDatetime, "month")}
+                </span>
+                <span className="text-2xl font-bold text-white">
+                  {getDatePart(event.startDatetime, "day")}
+                </span>
+              </div>
+
+              {/* Event Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
+                    {event.type?.replace("_", " ")}
+                  </span>
+                  <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 capitalize">
+                    {event.format}
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
+                  {event.name}
+                </h3>
+
+                <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-400">
+                  <span className="text-[#14B8A6] font-medium">{event.schoolName}</span>
+                  <span>🕐 {formatEventTime(event.startDatetime)}</span>
+                  {event.location && <span>📍 {event.location}</span>}
+                </div>
+              </div>
+
+              {/* RSVP Button */}
+              <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
+                View Event →
+              </button>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+          <span className="text-5xl mb-4 block">📅</span>
+          <h3 className="text-xl font-bold text-white mb-2">No Upcoming Events</h3>
+          <p className="text-slate-400 mb-6">
+            {eventType || eventFormat
+              ? "Try adjusting your filters."
+              : "Check back soon for education events from schools."}
+          </p>
+          <Link
+            href="/education/schools"
+            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          >
+            Browse Schools
+          </Link>
+        </div>
+      )}
+
+      {/* CTA Section */}
+      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-white sm:text-3xl">
+          Hosting an Education Event?
+        </h2>
+        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+          List your open house, info session, or campus tour on IOPPS to reach Indigenous students.
+        </p>
+        <Link
+          href="/organization/dashboard?tab=education"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+        >
+          Post an Event
+        </Link>
+      </section>
+    </PageShell>
   );
 }

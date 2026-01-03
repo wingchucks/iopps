@@ -156,7 +156,7 @@ export default function TrainingTab() {
                 Browse training programs and save ones you're interested in.
               </p>
               <Link
-                href="/jobs-training/programs"
+                href="/careers/programs"
                 className="mt-4 inline-block rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-500/30 transition-all hover:shadow-xl hover:shadow-amber-500/50"
               >
                 Browse Training Programs
@@ -192,7 +192,7 @@ export default function TrainingTab() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <Link
-                            href={`/jobs-training/programs/${saved.programId}`}
+                            href={`/careers/programs/${saved.programId}`}
                             className="text-lg font-semibold text-white transition-colors hover:text-amber-400"
                           >
                             {saved.program?.title || "Program Unavailable"}
@@ -247,7 +247,7 @@ export default function TrainingTab() {
                       {/* Actions */}
                       <div className="mt-4 flex gap-3">
                         <Link
-                          href={`/jobs-training/programs/${saved.programId}`}
+                          href={`/careers/programs/${saved.programId}`}
                           className="text-sm font-semibold text-amber-400 transition-colors hover:text-amber-300"
                         >
                           View details →
@@ -290,7 +290,7 @@ export default function TrainingTab() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <Link
-                        href={`/jobs-training/programs/${entry.programId}`}
+                        href={`/careers/programs/${entry.programId}`}
                         className="text-lg font-semibold text-white transition-colors hover:text-purple-400"
                       >
                         {entry.programTitle || "Program"}
@@ -329,13 +329,13 @@ export default function TrainingTab() {
       {/* Quick Actions */}
       <div className="flex flex-col gap-4 sm:flex-row">
         <Link
-          href="/jobs-training/programs"
+          href="/careers/programs"
           className="flex-1 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 px-6 py-4 text-center text-sm font-semibold text-amber-400 transition-all hover:from-amber-500/30 hover:to-orange-500/30"
         >
           Browse more training programs →
         </Link>
         <Link
-          href="/scholarships"
+          href="/education/scholarships"
           className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-6 py-4 text-center text-sm font-semibold text-emerald-400 transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
         >
           Find scholarships →

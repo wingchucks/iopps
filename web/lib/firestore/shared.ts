@@ -76,16 +76,17 @@ export const memberLearningCollection = "member_learning";
 export const savedTrainingCollection = "savedTraining";
 export const servicesCollection = "services";
 
-// Education Pillar Collections
+// Education Pillar collections
 export const schoolsCollection = "schools";
 export const educationProgramsCollection = "education_programs";
 export const educationEventsCollection = "education_events";
-export const educationEventRSVPsCollection = "education_event_rsvps";
-export const schoolInquiriesCollection = "school_inquiries";
+export const studentInquiriesCollection = "student_inquiries";
 export const savedProgramsCollection = "savedPrograms";
-export const savedScholarshipsCollection = "savedScholarships";
 export const savedSchoolsCollection = "savedSchools";
-export const schoolImportJobsCollection = "school_import_jobs";
+export const importJobsCollection = "import_jobs";
+
+// Business Pillar collections
+export const businessGrantsCollection = "business_grants";
 
 // Helper to check if Firebase is available
 export function checkFirebase() {

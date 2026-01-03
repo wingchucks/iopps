@@ -396,7 +396,7 @@ function OverviewTab({
         <h3 className="text-xl font-bold text-white">Quick Actions</h3>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Link
-            href="/jobs-training"
+            href="/careers"
             className="group rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4 transition-all hover:border-emerald-500/50 hover:bg-slate-900/70"
           >
             <div className="flex items-center gap-4">
@@ -413,7 +413,7 @@ function OverviewTab({
           </Link>
 
           <Link
-            href="/jobs-training/programs"
+            href="/careers/programs"
             className="group rounded-xl border border-amber-500/20 bg-slate-900/50 p-4 transition-all hover:border-amber-500/50 hover:bg-slate-900/70"
           >
             <div className="flex items-center gap-4">
@@ -466,7 +466,7 @@ function OverviewTab({
           </Link>
 
           <Link
-            href="/scholarships"
+            href="/education/scholarships"
             className="group rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4 transition-all hover:border-emerald-500/50 hover:bg-slate-900/70"
           >
             <div className="flex items-center gap-4">

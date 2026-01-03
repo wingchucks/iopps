@@ -327,14 +327,14 @@ export default function OrganizationsPage() {
         </p>
         <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/jobs-training"
+            href="/careers"
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105"
           >
             <BriefcaseIcon className="h-5 w-5" />
             Browse Jobs
           </Link>
           <Link
-            href="/jobs-training/programs"
+            href="/careers/programs"
             className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/50 px-8 py-3 text-lg font-semibold text-white transition-all hover:bg-slate-700"
           >
             View Training Programs

@@ -9,11 +9,11 @@ import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
-  { href: "/jobs-training", label: "Jobs & Training" },
+  { href: "/careers", label: "Careers" },
+  { href: "/education", label: "Education" },
+  { href: "/business", label: "Business" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/scholarships", label: "Scholarships" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/powwows", label: "Events" },
+  { href: "/community", label: "Community" },
   { href: "/live", label: "Live" },
   { href: "/pricing", label: "Pricing" },
 ];

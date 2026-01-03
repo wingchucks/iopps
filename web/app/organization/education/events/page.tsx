@@ -283,11 +283,10 @@ export default function OrganizationEducationEventsPage() {
                     </span>
                   </div>
 
-                  {event.location && (
+                  {(event.location || event.venue) && (
                     <div className="mt-2 flex items-center gap-1 text-sm text-slate-400">
                       <MapPinIcon className="h-4 w-4" />
-                      {event.location.venue}, {event.location.city},{" "}
-                      {event.location.province}
+                      {event.venue ? `${event.venue}, ${event.city}, ${event.province}` : event.location}
                     </div>
                   )}
                 </div>

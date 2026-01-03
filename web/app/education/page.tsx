@@ -1,474 +1,343 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  AcademicCapIcon,
-  BuildingLibraryIcon,
-  CalendarDaysIcon,
-  CurrencyDollarIcon,
-  MagnifyingGlassIcon,
-  ArrowRightIcon,
-} from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
-import {
-  listEducationPrograms,
-  listSchools,
-  listScholarshipsFiltered,
-  getUpcomingEducationEvents,
-} from "@/lib/firestore";
-import type {
-  EducationProgram,
-  School,
-  ExtendedScholarship,
-  EducationEvent,
-} from "@/lib/types";
+import { Suspense, useEffect, useState } from "react";
+import { listSchools, listEducationPrograms, listScholarships } from "@/lib/firestore";
+import type { School, EducationProgram, Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
 
 function EducationContent() {
-  const [programs, setPrograms] = useState<EducationProgram[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
-  const [scholarships, setScholarships] = useState<ExtendedScholarship[]>([]);
-  const [events, setEvents] = useState<EducationEvent[]>([]);
+  const [programs, setPrograms] = useState<EducationProgram[]>([]);
+  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+    (async () => {
       try {
-        const [programsData, schoolsData, scholarshipsData, eventsData] =
-          await Promise.all([
-            listEducationPrograms({ maxResults: 6 }),
-            listSchools({ maxResults: 6 }),
-            listScholarshipsFiltered({ maxResults: 6 }),
-            getUpcomingEducationEvents(4),
-          ]);
-        setPrograms(programsData);
-        setSchools(schoolsData);
-        setScholarships(scholarshipsData);
-        setEvents(eventsData);
+        const [schoolData, programData, scholarshipData] = await Promise.all([
+          listSchools({ publishedOnly: true, limitCount: 4 }),
+          listEducationPrograms({ publishedOnly: true, limitCount: 6 }),
+          listScholarships(),
+        ]);
+        setSchools(schoolData);
+        setPrograms(programData);
+        setScholarships(scholarshipData.filter(s => s.active).slice(0, 3));
       } catch (err) {
-        console.error("Error loading education data:", err);
+        console.error("Failed to load education data", err);
       } finally {
         setLoading(false);
       }
-    };
-    void load();
+    })();
   }, []);
 
-  const quickLinks = [
-    {
-      title: "Programs",
-      description: "Browse academic programs from Indigenous-focused institutions",
-      href: "/education/programs",
-      icon: AcademicCapIcon,
-      color: "from-purple-500 to-indigo-500",
-      count: programs.length,
-    },
-    {
-      title: "Schools",
-      description: "Discover colleges, universities, and training providers",
-      href: "/education/schools",
-      icon: BuildingLibraryIcon,
-      color: "from-teal-500 to-emerald-500",
-      count: schools.length,
-    },
-    {
-      title: "Scholarships",
-      description: "Find funding opportunities for your education journey",
-      href: "/scholarships",
-      icon: CurrencyDollarIcon,
-      color: "from-amber-500 to-orange-500",
-      count: scholarships.length,
-    },
-    {
-      title: "Events",
-      description: "Attend open houses, info sessions, and virtual tours",
-      href: "/education/events",
-      icon: CalendarDaysIcon,
-      color: "from-rose-500 to-pink-500",
-      count: events.length,
-    },
-  ];
-
   return (
-    <PageShell>
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg
-            className="h-full w-full"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Education"
+        title={
+          <>
+            Learn. Grow.
+            <br />
+            Achieve Your Dreams.
+          </>
+        }
+        subtitle="Explore schools, programs, and scholarships designed to support Indigenous learners on their educational journey."
+        size="md"
+      >
+        <div className="flex flex-wrap justify-center gap-4">
+          <Link
+            href="/education/schools"
+            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
           >
-            <defs>
-              <pattern
-                id="edu-grid"
-                width="10"
-                height="10"
-                patternUnits="userSpaceOnUse"
-              >
-                <circle cx="5" cy="5" r="1" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#edu-grid)" />
-          </svg>
+            Browse Schools
+          </Link>
+          <Link
+            href="/education/programs"
+            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+          >
+            Find Programs
+          </Link>
+        </div>
+      </OceanWaveHero>
+
+      <PageShell>
+        {/* Four Cards Section */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+          {/* Find Schools Card */}
+          <Link
+            href="/education/schools"
+            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          >
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
+              <span className="text-2xl">🏫</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Find Schools</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              Discover Indigenous-serving institutions and colleges across North America.
+            </p>
+            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
+              Browse Schools →
+            </span>
+          </Link>
+
+          {/* Explore Programs Card */}
+          <Link
+            href="/education/programs"
+            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          >
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
+              <span className="text-2xl">📚</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Explore Programs</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              Find degrees, certificates, and courses that match your goals.
+            </p>
+            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
+              View Programs →
+            </span>
+          </Link>
+
+          {/* Scholarships Card */}
+          <Link
+            href="/education/scholarships"
+            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          >
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
+              <span className="text-2xl">🎓</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Scholarships</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              Access funding opportunities specifically for Indigenous students.
+            </p>
+            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
+              Find Funding →
+            </span>
+          </Link>
+
+          {/* Events Card */}
+          <Link
+            href="/education/events"
+            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          >
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
+              <span className="text-2xl">📅</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Events</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              Open houses, info sessions, and campus tours from schools.
+            </p>
+            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
+              View Events →
+            </span>
+          </Link>
         </div>
 
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 mb-4">
-            <AcademicCapIcon className="h-4 w-4" />
-            Indigenous Education
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Education
-          </h1>
-          <p className="mt-4 text-lg text-cyan-100 sm:text-xl">
-            Discover academic programs, scholarships, and educational
-            opportunities from Indigenous-focused institutions across Turtle
-            Island.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search programs, schools, scholarships..."
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <Link
-              href="/education/programs"
-              className="flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-teal-700 transition-colors hover:bg-white/90"
-            >
-              Browse Programs
-              <ArrowRightIcon className="h-4 w-4" />
-            </Link>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="mt-8 flex justify-center gap-8">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">{programs.length}+</p>
-              <p className="text-sm text-cyan-200">Programs</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">{schools.length}+</p>
-              <p className="text-sm text-cyan-200">Schools</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-white">{scholarships.length}+</p>
-              <p className="text-sm text-cyan-200">Scholarships</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <section className="mb-12">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {quickLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="group relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50 p-6 transition-all hover:border-slate-600 hover:-translate-y-1"
-            >
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${link.color} opacity-0 group-hover:opacity-5 transition-opacity`}
-              />
-              <div
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${link.color}`}
-              >
-                <link.icon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="mt-4 text-lg font-semibold text-white">
-                {link.title}
-              </h3>
-              <p className="mt-1 text-sm text-slate-400">{link.description}</p>
-              {link.count > 0 && (
-                <p className="mt-3 text-xs font-medium text-slate-500">
-                  {link.count}+ available
-                </p>
-              )}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Programs */}
-      {programs.length > 0 && (
+        {/* Featured Schools Section */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500">
-                <AcademicCapIcon className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">Featured Programs</h2>
-            </div>
-            <Link
-              href="/education/programs"
-              className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1"
-            >
-              View all <ArrowRightIcon className="h-4 w-4" />
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse rounded-2xl bg-slate-800/50 h-64"
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {programs.slice(0, 3).map((program) => (
-                <ProgramCard key={program.id} program={program} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Featured Schools */}
-      {schools.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500">
-                <BuildingLibraryIcon className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">Partner Schools</h2>
-            </div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">Featured Schools</h2>
             <Link
               href="/education/schools"
-              className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1"
+              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
             >
-              View all <ArrowRightIcon className="h-4 w-4" />
+              View All Schools →
             </Link>
           </div>
 
           {loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse rounded-2xl bg-slate-800/50 h-48"
-                />
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-48" />
+              ))}
+            </div>
+          ) : schools.length > 0 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {schools.map((school) => (
+                <Link
+                  key={school.id}
+                  href={`/education/schools/${school.slug || school.id}`}
+                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+                      <span className="text-xl">🏫</span>
+                    </div>
+                    {school.verification?.isVerified && (
+                      <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6]">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+                    {school.name}
+                  </h3>
+                  <p className="text-sm text-slate-400">
+                    {school.headOffice?.city}, {school.headOffice?.province}
+                  </p>
+                </Link>
               ))}
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {schools.slice(0, 3).map((school) => (
-                <SchoolCard key={school.id} school={school} />
-              ))}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+              <p className="text-slate-400">Schools coming soon!</p>
             </div>
           )}
         </section>
-      )}
 
-      {/* Upcoming Events */}
-      {events.length > 0 && (
+        {/* Featured Programs Section */}
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-pink-500">
-                <CalendarDaysIcon className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">Upcoming Events</h2>
-            </div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">Featured Programs</h2>
             <Link
-              href="/education/events"
-              className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1"
+              href="/education/programs"
+              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
             >
-              View all <ArrowRightIcon className="h-4 w-4" />
+              View All Programs →
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-48" />
+              ))}
+            </div>
+          ) : programs.length > 0 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {programs.map((program) => (
+                <Link
+                  key={program.id}
+                  href={`/education/programs/${program.slug || program.id}`}
+                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+                      <span className="text-xl">📚</span>
+                    </div>
+                    <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 capitalize">
+                      {program.level}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#14B8A6] font-semibold mb-1">
+                    {program.schoolName}
+                  </p>
+                  <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+                    {program.name}
+                  </h3>
+                  <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                    {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
+                    <span className="capitalize">📍 {program.deliveryMethod}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+              <p className="text-slate-400">Programs coming soon!</p>
+            </div>
+          )}
         </section>
-      )}
 
-      {/* CTA Section */}
-      <section className="rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Are You an Educational Institution?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Partner with IOPPS to reach Indigenous learners across Turtle Island.
-          List your programs, scholarships, and events on our platform.
-        </p>
-        <Link
-          href="/organization/education"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 hover:scale-105"
-        >
-          Become a Partner School
-          <ArrowRightIcon className="h-5 w-5" />
-        </Link>
+        {/* Scholarships Section */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">Available Scholarships</h2>
+            <Link
+              href="/education/scholarships"
+              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
+            >
+              View All Scholarships →
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-24" />
+              ))}
+            </div>
+          ) : scholarships.length > 0 ? (
+            <div className="space-y-4">
+              {scholarships.map((scholarship) => (
+                <Link
+                  key={scholarship.id}
+                  href={`/education/scholarships/${scholarship.id}`}
+                  className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+                      <span className="text-2xl">🎓</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
+                          {scholarship.title}
+                        </span>
+                        {scholarship.amount && (
+                          <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6]">
+                            ${scholarship.amount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                        <span className="text-[#14B8A6] font-medium">{scholarship.employerName}</span>
+                        {scholarship.deadline && (
+                          <span>📅 Deadline: {new Date(
+                            typeof scholarship.deadline === 'object' && 'seconds' in scholarship.deadline
+                              ? scholarship.deadline.seconds * 1000
+                              : scholarship.deadline
+                          ).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
+                    Learn More →
+                  </button>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+              <p className="text-slate-400">Scholarships coming soon!</p>
+            </div>
+          )}
+        </section>
+      </PageShell>
+
+      {/* CTA Section - Ocean Wave Style */}
+      <section className="relative overflow-hidden">
+        <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
+          <div className="bg-gradient-to-b from-white/5 to-transparent">
+            <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center">
+              <h2 className="text-2xl font-bold text-white sm:text-3xl drop-shadow-lg">
+                Are you a school or education provider?
+              </h2>
+              <p className="mt-3 text-white/80 max-w-2xl mx-auto">
+                List your institution on IOPPS and connect with Indigenous students seeking educational opportunities.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/organization/dashboard?tab=education"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                  List Your School
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  View Pricing
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
-    </PageShell>
-  );
-}
-
-// Program Card Component
-function ProgramCard({ program }: { program: EducationProgram }) {
-  const getLevelLabel = (level: string) => {
-    const labels: Record<string, string> = {
-      certificate: "Certificate",
-      diploma: "Diploma",
-      bachelor: "Bachelor's",
-      master: "Master's",
-      doctorate: "Doctorate",
-      microcredential: "Microcredential",
-    };
-    return labels[level] || level;
-  };
-
-  return (
-    <Link
-      href={`/education/programs/${program.slug || program.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50 transition-all hover:-translate-y-1 hover:border-purple-500/50"
-    >
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-purple-600/20 to-indigo-600/10 px-5 py-5">
-        <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center rounded-full bg-purple-500/20 px-2.5 py-1 text-xs font-medium text-purple-300">
-            {getLevelLabel(program.level)}
-          </span>
-          {program.indigenousFocused && (
-            <span className="inline-flex items-center rounded-full bg-teal-500/20 px-2.5 py-1 text-xs font-semibold text-teal-300">
-              Indigenous-Focused
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-purple-400 mb-1">
-          {program.schoolName}
-        </p>
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-purple-300 transition-colors">
-          {program.name}
-        </h3>
-        {program.shortDescription && (
-          <p className="mt-2 text-sm text-slate-300 line-clamp-2">
-            {program.shortDescription}
-          </p>
-        )}
-
-        {/* Details */}
-        <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-400">
-          {program.deliveryMethod && (
-            <span className="capitalize">{program.deliveryMethod}</span>
-          )}
-          {program.duration && (
-            <span>
-              {program.duration.value} {program.duration.unit}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// School Card Component
-function SchoolCard({ school }: { school: School }) {
-  return (
-    <Link
-      href={`/education/schools/${school.slug || school.id}`}
-      className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50 p-5 transition-all hover:-translate-y-1 hover:border-teal-500/50"
-    >
-      {/* Logo */}
-      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10">
-        {school.logoUrl ? (
-          <img
-            src={school.logoUrl}
-            alt={school.name}
-            className="h-12 w-12 object-contain"
-          />
-        ) : (
-          <BuildingLibraryIcon className="h-8 w-8 text-teal-400" />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-white group-hover:text-teal-300 transition-colors truncate">
-          {school.name}
-        </h3>
-        <p className="text-sm text-slate-400">
-          {school.headOffice?.city}, {school.headOffice?.province}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <span className="inline-flex items-center rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
-            {school.type?.replace("_", " ")}
-          </span>
-          {school.verification?.indigenousControlled && (
-            <span className="inline-flex items-center rounded-full bg-teal-500/20 px-2 py-0.5 text-xs text-teal-300">
-              Indigenous-Controlled
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// Event Card Component
-function EventCard({ event }: { event: EducationEvent }) {
-  const formatDate = (date: any) => {
-    if (!date) return "";
-    const d = date.toDate ? date.toDate() : new Date(date);
-    return d.toLocaleDateString("en-CA", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  return (
-    <Link
-      href={`/education/events/${event.id}`}
-      className="group flex items-center gap-4 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 transition-all hover:border-rose-500/50"
-    >
-      {/* Date Badge */}
-      <div className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-rose-500/20 to-pink-500/10">
-        <CalendarDaysIcon className="h-6 w-6 text-rose-400" />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-white group-hover:text-rose-300 transition-colors truncate">
-          {event.name}
-        </h3>
-        <p className="text-sm text-slate-400">
-          {event.schoolName} • {formatDate(event.startDatetime)}
-        </p>
-        <div className="mt-1 flex gap-2">
-          <span className="text-xs text-slate-500 capitalize">
-            {event.type?.replace("_", " ")}
-          </span>
-          <span className="text-xs text-slate-500 capitalize">
-            {event.format}
-          </span>
-        </div>
-      </div>
-    </Link>
+    </div>
   );
 }
 
@@ -476,19 +345,22 @@ export default function EducationPage() {
   return (
     <Suspense
       fallback={
-        <PageShell>
-          <div className="mx-auto max-w-7xl">
-            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-12">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-40 animate-pulse rounded-2xl bg-slate-800/50"
-                />
-              ))}
+        <div className="min-h-screen text-slate-100">
+          <OceanWaveHero
+            eyebrow="Education"
+            title="Learn. Grow. Achieve Your Dreams."
+            subtitle="Explore schools, programs, and scholarships designed to support Indigenous learners on their educational journey."
+            size="md"
+          />
+          <PageShell>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+              <div className="h-48 bg-slate-800/50 rounded-2xl animate-pulse" />
+              <div className="h-48 bg-slate-800/50 rounded-2xl animate-pulse" />
+              <div className="h-48 bg-slate-800/50 rounded-2xl animate-pulse" />
+              <div className="h-48 bg-slate-800/50 rounded-2xl animate-pulse" />
             </div>
-          </div>
-        </PageShell>
+          </PageShell>
+        </div>
       }
     >
       <EducationContent />

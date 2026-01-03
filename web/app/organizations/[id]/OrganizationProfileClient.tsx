@@ -120,11 +120,11 @@ export default function OrganizationProfileClient({
     <PageShell>
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-slate-400">
-        <Link href="/marketplace" className="hover:text-white transition-colors">
+        <Link href="/business" className="hover:text-white transition-colors">
           Indigenous Marketplace
         </Link>
         <span className="mx-2">→</span>
-        <Link href="/marketplace/directory" className="hover:text-white transition-colors">
+        <Link href="/business/directory" className="hover:text-white transition-colors">
           Business Directory
         </Link>
         <span className="mx-2">→</span>
@@ -484,7 +484,7 @@ export default function OrganizationProfileClient({
             <section>
               <h2 className="text-2xl font-bold text-white mb-6">Products & Shop</h2>
               <Link
-                href={`/marketplace/${vendor.slug}`}
+                href={`/business/${vendor.slug}`}
                 className="block rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-[#14B8A6]/50 transition-colors"
               >
                 {vendor.coverImageUrl && (
@@ -521,7 +521,7 @@ export default function OrganizationProfileClient({
                 {services.map((service) => (
                   <Link
                     key={service.id}
-                    href={`/marketplace/services/${service.id}`}
+                    href={`/business/services/${service.id}`}
                     className="flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-sky-500/50 transition-colors"
                   >
                     <div className="flex h-13 w-13 items-center justify-center rounded-xl bg-sky-500/20 border border-sky-500/40 flex-shrink-0">

@@ -3,50 +3,32 @@ import type { Timestamp } from "firebase/firestore";
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "pending" | "approved" | "rejected";
 
-// ============================================
-// JOB POSTING TYPES
-// ============================================
-
-export type LocationType = 'onsite' | 'remote' | 'hybrid';
-export type ApplicationMethod = 'email' | 'url' | 'quickApply';
-export type SalaryPeriod = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-
+// Job Categories
 export const JOB_CATEGORIES = [
-  'Accounting & Finance',
-  'Administration',
-  'Arts & Culture',
-  'Construction & Trades',
-  'Education & Training',
-  'Engineering',
-  'Environmental',
-  'Government',
-  'Healthcare',
-  'Human Resources',
-  'Information Technology',
-  'Legal',
-  'Management',
-  'Marketing & Communications',
-  'Natural Resources',
-  'Operations',
-  'Sales',
-  'Social Services',
-  'Transportation',
-  'Other',
+  "Technology",
+  "Healthcare",
+  "Education",
+  "Construction",
+  "Finance",
+  "Government",
+  "Non-Profit",
+  "Trades",
+  "Arts & Culture",
+  "Environment",
+  "Legal",
+  "Other"
 ] as const;
 
 export type JobCategory = typeof JOB_CATEGORIES[number];
 
-export const EMPLOYMENT_TYPES = [
-  'Full-time',
-  'Part-time',
-  'Contract',
-  'Temporary',
-  'Internship',
-  'Seasonal',
-  'Casual',
-] as const;
+// Location Types
+export type LocationType = "onsite" | "remote" | "hybrid";
 
-export type EmploymentType = typeof EMPLOYMENT_TYPES[number];
+// Salary Period
+export type SalaryPeriod = "hourly" | "daily" | "weekly" | "monthly" | "yearly";
+
+// Application Method
+export type ApplicationMethod = "email" | "url" | "quickApply";
 
 export interface Interview {
   id: string;
@@ -98,15 +80,6 @@ export interface EmployerSubscription {
   featuredJobCredits: number;
   featuredJobCreditsUsed: number;
   unlimitedPosts: boolean;
-}
-
-export interface TalentPoolAccess {
-  active: boolean;
-  tier: "monthly" | "annual";
-  purchasedAt?: Timestamp | Date | null;
-  expiresAt?: Timestamp | Date | null;
-  paymentId?: string;
-  amountPaid?: number;
 }
 
 // Grant types for free posting packages
@@ -172,15 +145,11 @@ export interface EmployerProfile {
   // Video content
   companyIntroVideo?: CompanyVideo; // "About Us" intro video
   interviews?: Interview[]; // IOPPS interviews + employer promo videos (distinguished by isIOPPSInterview flag)
-  // Profile completion tracking
-  profileCompletedAt?: Timestamp | null;
   status?: EmployerStatus;
   approvedAt?: Timestamp | null;
   approvedBy?: string;
   rejectionReason?: string;
   subscription?: EmployerSubscription;
-  // Talent Pool Access - for viewing resumes and messaging candidates
-  talentPoolAccess?: TalentPoolAccess;
   // Admin Bypass - Free posting without payment (legacy fields for backward compatibility)
   freePostingEnabled?: boolean;
   freePostingReason?: string;
@@ -188,6 +157,10 @@ export interface EmployerProfile {
   freePostingGrantedBy?: string;
   // Enhanced free posting grant
   freePostingGrant?: FreePostingGrant;
+  // Organization Capabilities (for multi-mode dashboard)
+  capabilities?: OrganizationCapability[];
+  // Education Mode settings
+  educationSettings?: EducationSettings;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -206,7 +179,6 @@ export interface JobPosting {
   qualifications?: string[];
   requirements?: string;
   benefits?: string;
-  // Enhanced salary range with period
   salaryRange?: {
     min?: number;
     max?: number;
@@ -214,21 +186,11 @@ export interface JobPosting {
     period?: SalaryPeriod;
     disclosed?: boolean;
   } | string; // Support both structured and legacy string format
-  // Enhanced location type
-  locationType?: LocationType;
-  // Job category
-  category?: JobCategory | string;
-  // Application method
-  applicationMethod?: ApplicationMethod;
   applicationLink?: string;
   applicationEmail?: string;
   createdAt?: Timestamp | null;
-  // Posting date (for scheduled posts)
-  postedAt?: Timestamp | null;
   closingDate?: Timestamp | string | null;
   active: boolean;
-  // Featured job flag
-  featured?: boolean;
   viewsCount?: number;
   applicationsCount?: number;
   // Quick Apply & Enhanced Features
@@ -253,6 +215,11 @@ export interface JobPosting {
   noIndex?: boolean; // If true, tell search engines not to index
   expiredAt?: Timestamp | Date | null; // When job was auto-expired
   expirationReason?: string; // Why job was expired (e.g., "Removed from feed")
+  // Enhanced job fields
+  category?: JobCategory;
+  locationType?: LocationType;
+  applicationMethod?: ApplicationMethod;
+  featured?: boolean;
 }
 
 // Conference sub-types
@@ -489,6 +456,9 @@ export interface MemberProfile {
   id: string;
   userId: string;
   displayName?: string;
+  avatarUrl?: string;
+  photoURL?: string; // For compatibility with Firebase User
+  tagline?: string;
   location?: string;
   skills?: string[];
   experience?: WorkExperience[];
@@ -505,6 +475,13 @@ export interface MemberProfile {
   quickApplyEnabled?: boolean; // Allow using saved resume for quick applications
   defaultCoverLetter?: string; // Pre-filled cover letter for quick applies
   wizardDismissed?: boolean;
+  // Education Pillar - Enhanced tracking
+  educationInterests?: MemberEducationInterests;
+  educationHistory?: MemberEducationHistory[];
+  savedProgramIds?: string[];
+  savedScholarshipIds?: string[];
+  savedSchoolIds?: string[];
+  eventRsvps?: EventRSVP[];
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -551,9 +528,10 @@ export interface Scholarship {
   employerName?: string;
   title: string;
   provider: string;
+  providerName?: string; // Alias for provider
   description: string;
-  amount?: string;
-  deadline?: Timestamp | string | null;
+  amount?: any;
+  deadline?: Timestamp | string | Date | null;
   level: string;
   region?: string;
   type: string;
@@ -561,6 +539,7 @@ export interface Scholarship {
   imagePath?: string;
   createdAt?: Timestamp | null;
   active: boolean;
+  status?: "active" | "upcoming" | "closed";
 }
 
 export interface ScholarshipApplication {
@@ -1299,7 +1278,7 @@ export const SERVICE_CATEGORIES = [
 
 export type ServiceCategory = typeof SERVICE_CATEGORIES[number];
 
-export type ServiceStatus = 'draft' | 'pending' | 'active' | 'suspended';
+export type ServiceStatus = 'draft' | 'pending' | 'active' | 'approved' | 'suspended';
 
 export interface Service {
   id: string;
@@ -1362,115 +1341,96 @@ export interface Service {
 }
 
 // ============================================
-// EDUCATION PILLAR
+// EDUCATION PILLAR - Schools, Programs, Events
 // ============================================
 
-// School/Institution Types
-export type SchoolType = 'university' | 'college' | 'polytechnic' | 'tribal_college' | 'training_provider';
-export type SchoolStatus = 'draft' | 'pending' | 'active' | 'suspended';
+// Organization capabilities (for mode switching in dashboard)
+export type OrganizationCapability = "employer" | "vendor" | "education";
 
-export const SCHOOL_TYPES_ARRAY = [
-  'university',
-  'college',
-  'polytechnic',
-  'tribal_college',
-  'training_provider',
-] as const;
-
+// School types
 export const SCHOOL_TYPES = [
-  { value: 'university', label: 'University' },
-  { value: 'college', label: 'College' },
-  { value: 'polytechnic', label: 'Polytechnic' },
-  { value: 'tribal_college', label: 'Indigenous/Tribal College' },
-  { value: 'training_provider', label: 'Training Provider' },
+  "university",
+  "college",
+  "polytechnic",
+  "tribal_college",
+  "training_provider"
 ] as const;
 
-// Program Types
-export type ProgramLevel = 'certificate' | 'diploma' | 'bachelor' | 'master' | 'doctorate' | 'microcredential';
-export type ProgramDeliveryMethod = 'in-person' | 'online' | 'hybrid';
-export type ProgramStatus = 'draft' | 'pending' | 'approved' | 'rejected';
+export type SchoolType = typeof SCHOOL_TYPES[number];
 
-export const PROGRAM_LEVELS_ARRAY = [
-  'certificate',
-  'diploma',
-  'bachelor',
-  'master',
-  'doctorate',
-  'microcredential',
-] as const;
-
+// Program levels
 export const PROGRAM_LEVELS = [
-  { value: 'certificate', label: 'Certificate' },
-  { value: 'diploma', label: 'Diploma' },
-  { value: 'bachelor', label: 'Bachelor\'s Degree' },
-  { value: 'master', label: 'Master\'s Degree' },
-  { value: 'doctorate', label: 'Doctorate' },
-  { value: 'microcredential', label: 'Microcredential' },
+  "certificate",
+  "diploma",
+  "bachelor",
+  "master",
+  "doctorate",
+  "microcredential",
+  "apprenticeship"
 ] as const;
 
-export const PROGRAM_CATEGORIES_ARRAY = [
-  'Business & Management',
-  'Health Sciences',
-  'Trades & Technology',
-  'Information Technology',
-  'Arts & Culture',
-  'Sciences',
-  'Education',
-  'Social Work & Human Services',
-  'Law & Justice',
-  'Environmental Studies',
-  'Indigenous Studies',
-  'Engineering',
-  'Agriculture & Natural Resources',
-  'Communications & Media',
-  'Hospitality & Tourism',
-  'Other',
-] as const;
+export type ProgramLevel = typeof PROGRAM_LEVELS[number];
 
+// Program delivery methods
+export type ProgramDelivery = "in-person" | "online" | "hybrid";
+export type ProgramDeliveryMethod = ProgramDelivery; // Alias
+
+// Program status
+export type ProgramStatus = "draft" | "pending" | "active" | "approved" | "archived";
+
+// Program categories
 export const PROGRAM_CATEGORIES = [
-  { value: 'business', label: 'Business & Management' },
-  { value: 'health', label: 'Health Sciences' },
-  { value: 'trades', label: 'Trades & Technology' },
-  { value: 'it', label: 'Information Technology' },
-  { value: 'arts', label: 'Arts & Culture' },
-  { value: 'sciences', label: 'Sciences' },
-  { value: 'education', label: 'Education' },
-  { value: 'social-work', label: 'Social Work & Human Services' },
-  { value: 'law', label: 'Law & Justice' },
-  { value: 'environment', label: 'Environmental Studies' },
-  { value: 'indigenous', label: 'Indigenous Studies' },
-  { value: 'engineering', label: 'Engineering' },
-  { value: 'agriculture', label: 'Agriculture & Natural Resources' },
-  { value: 'communications', label: 'Communications & Media' },
-  { value: 'hospitality', label: 'Hospitality & Tourism' },
-  { value: 'other', label: 'Other' },
+  "Business & Management",
+  "Healthcare & Nursing",
+  "Trades & Industrial",
+  "Technology & IT",
+  "Indigenous Studies",
+  "Social Work & Community",
+  "Education & Teaching",
+  "Arts & Design",
+  "Sciences",
+  "Environment & Natural Resources",
+  "Engineering",
+  "Law & Justice",
+  "Agriculture",
+  "Hospitality & Tourism",
+  "Other",
 ] as const;
 
-export type ProgramCategory = typeof PROGRAM_CATEGORIES_ARRAY[number];
+export type ProgramCategory = typeof PROGRAM_CATEGORIES[number];
 
-// Indigenous Status Types for eligibility
-export const INDIGENOUS_STATUS_TYPES = [
-  'first_nations',
-  'metis',
-  'inuit',
-  'all_indigenous',
-  'any',
-] as const;
+// Education event types
+export type EducationEventType =
+  | "open_house"
+  | "info_session"
+  | "campus_tour"
+  | "webinar"
+  | "career_fair"
+  | "application_workshop"
+  | "orientation"
+  | "other";
 
-export type IndigenousStatusType = typeof INDIGENOUS_STATUS_TYPES[number];
+export type EducationEventFormat = "online" | "in-person" | "hybrid";
 
-// School Campus
+// Education subscription tiers
+export type EducationTier = "starter" | "growth" | "partner" | "enterprise";
+
+// School campus
 export interface SchoolCampus {
   id: string;
   name: string;
-  address?: string;
+  address: string;
   city: string;
   province: string;
   phone?: string;
   isMain: boolean;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
 }
 
-// Indigenous Services offered by school
+// Indigenous services offered by a school
 export interface IndigenousServices {
   studentCentre?: {
     name: string;
@@ -1482,113 +1442,89 @@ export interface IndigenousServices {
   learningSpecialists?: boolean;
   wellnessCoaches?: boolean;
   psychologists?: boolean;
-  languagePrograms?: string[]; // e.g., ['Cree', 'Ojibwe']
+  languagePrograms?: string[]; // ['Cree', 'Ojibwe', etc.]
   culturalProgramming?: boolean;
   ceremonySpace?: boolean;
-  communitySupports?: string[]; // e.g., ['housing', 'childcare', 'transportation']
+  communitySupports?: string[]; // ['housing', 'childcare', 'transportation']
 }
 
-// School Stats
+// School stats
 export interface SchoolStats {
   indigenousStudentPercentage?: number;
   indigenousStaffPercentage?: number;
   totalPrograms?: number;
+  totalEnrollment?: number;
   alumniCount?: string;
   nationsRepresented?: number;
   employerPartners?: number;
+  viewsCount?: number;
 }
 
-// School Verification Info
+// School verification info
 export interface SchoolVerification {
-  isVerified: boolean;
+  isVerified?: boolean;
   verifiedDate?: Timestamp | null;
   verifiedBy?: string;
-  indigenousControlled?: boolean; // First Nation governed?
+  indigenousControlled: boolean; // First Nation governed?
   accreditation?: string[];
 }
 
-// School Social Links
-export interface SchoolSocialLinks {
-  facebook?: string;
-  instagram?: string;
-  twitter?: string;
-  linkedin?: string;
-  youtube?: string;
+// School recruitment team member
+export interface SchoolRecruitmentContact {
+  name: string;
+  title: string;
+  email: string;
+  phone?: string;
 }
 
-// School Contact Info
+// School contact info
 export interface SchoolContact {
   admissionsEmail?: string;
   admissionsPhone?: string;
+  email?: string; // Alias
+  phone?: string; // Alias
   indigenousServicesEmail?: string;
-  recruitmentTeam?: {
-    name: string;
-    title?: string;
-    email?: string;
-    phone?: string;
-  }[];
+  recruitmentTeam?: SchoolRecruitmentContact[];
 }
 
-// School Subscription Tier
-export type SchoolSubscriptionTier = 'starter' | 'growth' | 'partner' | 'enterprise';
-
-export interface SchoolSubscription {
-  tier: SchoolSubscriptionTier;
-  startedAt?: Timestamp | null;
-  expiresAt?: Timestamp | null;
-  isIndigenousDiscount?: boolean;
-  stripeSubscriptionId?: string;
-}
-
-// Main School Interface
+// School profile (linked to an employer/organization)
 export interface School {
   id: string;
-  organizationId: string; // Links to employers collection
+  employerId: string; // Links to employers collection (organization)
 
   // Basic Info
   name: string;
   shortName?: string;
+  slug: string; // URL-friendly name
   type: SchoolType;
   established?: number;
   website?: string;
-  slug: string;
-
-  // Description
   description?: string;
-  shortDescription?: string;
 
-  // Location (alias for headOffice for convenience)
-  location?: {
-    address?: string;
-    city: string;
-    province: string;
-    postalCode?: string;
-    reserveName?: string;
-    coordinates?: { lat: number; lng: number };
-  };
+  // Head Office Location
   headOffice?: {
-    address?: string;
+    address: string;
     city: string;
     province: string;
     postalCode?: string;
     reserveName?: string; // If on reserve land
-    coordinates?: { lat: number; lng: number };
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
   };
 
   // Campuses
   campuses?: SchoolCampus[];
 
-  // Indigenous Focus
-  indigenousFocused?: boolean;
+  // Indigenous Services (key differentiator)
   indigenousServices?: IndigenousServices;
 
   // Stats
   stats?: SchoolStats;
-  programCount?: number; // Denormalized count
 
   // Verification
   verification?: SchoolVerification;
-  isVerified?: boolean; // Convenience property
 
   // Media
   logoUrl?: string;
@@ -1599,31 +1535,96 @@ export interface School {
   // Contact
   contact?: SchoolContact;
 
-  // Social
-  social?: SchoolSocialLinks;
+  // Social Links
+  social?: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+    youtube?: string;
+  };
 
   // Subscription
-  subscription?: SchoolSubscription;
-
-  // Status
-  status: SchoolStatus;
-  isPublished: boolean;
-  featured?: boolean;
-
-  // Analytics
-  viewCount?: number;
+  subscription?: {
+    tier: EducationTier;
+    startedAt?: Timestamp | null;
+    expiresAt?: Timestamp | null;
+    isIndigenousDiscount?: boolean;
+  };
 
   // Metadata
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   lastScrapedAt?: Timestamp | null;
+  isPublished: boolean;
+
+  // Convenience properties (denormalized for easier access)
+  isVerified?: boolean;
+  location?: {
+    city?: string;
+    province?: string;
+    address?: string;
+    postalCode?: string;
+  };
+  indigenousFocused?: boolean;
+  viewCount?: number;
+
+  // Status for approval workflow
+  status?: "pending" | "approved" | "rejected";
 }
 
-// Education Program Interface (Academic Programs)
+// Program intake dates
+export interface ProgramIntake {
+  startDate: Timestamp | string | null;
+  applicationDeadline?: Timestamp | string | null;
+  isAccepting: boolean;
+}
+
+// Program tuition
+export interface ProgramTuition {
+  domestic?: number;
+  international?: number;
+  per: "year" | "program" | "semester";
+}
+
+// Program admission requirements
+export interface ProgramAdmissionRequirements {
+  education?: string; // 'Grade 12', 'Adult 12', etc.
+  prerequisites?: string[];
+  englishRequirement?: string;
+  other?: string[];
+}
+
+// Program career outcomes
+export interface ProgramCareerOutcomes {
+  description?: string;
+  occupations?: string[];
+  salaryRange?: {
+    min: number;
+    max: number;
+  };
+  employmentRate?: number;
+}
+
+// Program transfer pathway
+export interface ProgramTransferPathway {
+  institution: string;
+  program: string;
+  creditsTransferred?: number;
+}
+
+// Program community stats (social proof)
+export interface ProgramCommunityStats {
+  totalEnrolled?: number;
+  totalGraduated?: number;
+  connectionsCount?: number; // IOPPS members in this program
+}
+
+// Education Program (academic programs offered by schools)
 export interface EducationProgram {
   id: string;
   schoolId: string;
-  schoolName?: string; // Denormalized
+  schoolName?: string; // Denormalized for display
 
   // Basic Info
   name: string;
@@ -1632,37 +1633,29 @@ export interface EducationProgram {
   shortDescription?: string;
 
   // Classification
-  category: ProgramCategory | string;
+  category: ProgramCategory;
   subcategory?: string;
   level: ProgramLevel;
-  credential?: string; // e.g., "Bachelor of Business Administration (BBA)"
 
   // Delivery
-  deliveryMethod: ProgramDeliveryMethod;
+  deliveryMethod: ProgramDelivery;
+  delivery?: string; // Alias
   duration?: {
     value: number;
-    unit: 'weeks' | 'months' | 'years';
+    unit: "weeks" | "months" | "years";
   };
-  fullTime?: boolean;
+  fullTime: boolean;
   partTimeAvailable?: boolean;
 
   // Location
-  campuses?: string[]; // Which campuses offer this
+  campuses?: string[]; // Which campus IDs offer this
   communityDelivery?: boolean; // Offered in communities?
 
   // Dates
-  intakeDates?: {
-    startDate?: Timestamp | string | null;
-    applicationDeadline?: Timestamp | string | null;
-    isAccepting: boolean;
-  }[];
+  intakeDates?: ProgramIntake[];
 
   // Costs
-  tuition?: {
-    domestic?: number;
-    international?: number;
-    per?: 'year' | 'program' | 'semester';
-  };
+  tuition?: ProgramTuition;
   additionalFees?: {
     name: string;
     amount: number;
@@ -1670,79 +1663,107 @@ export interface EducationProgram {
   totalCostEstimate?: number;
 
   // Requirements
-  admissionRequirements?: {
-    education?: string; // e.g., 'Grade 12', 'Adult 12'
-    prerequisites?: string[];
-    englishRequirement?: string;
-    other?: string[];
-  };
-
-  // Curriculum
-  courses?: {
-    code?: string;
-    name: string;
-    year?: number;
-    semester?: number;
-  }[];
+  admissionRequirements?: ProgramAdmissionRequirements;
 
   // Outcomes
-  careerOutcomes?: {
-    description?: string;
-    occupations?: string[];
-    salaryRange?: { min: number; max: number };
-    employmentRate?: number;
-  };
+  careerOutcomes?: ProgramCareerOutcomes;
 
   // Pathways
-  transferPathways?: {
-    institution: string;
-    program: string;
-    creditsTransferred?: number;
-  }[];
+  transferPathways?: ProgramTransferPathway[];
 
   // Indigenous Focus
   indigenousFocused?: boolean;
   indigenousContentPercentage?: number;
 
-  // Scholarships linked
+  // Linked scholarships
   scholarshipIds?: string[];
 
   // Social proof (calculated)
-  communityStats?: {
-    totalEnrolled?: number;
-    totalGraduated?: number;
-    connectionsCount?: number; // IOPPS members in this program
-  };
+  communityStats?: ProgramCommunityStats;
 
   // Media
   imageUrl?: string;
 
-  // Status
-  status: ProgramStatus;
-  isPublished: boolean;
-  featured?: boolean;
-
-  // Analytics
-  viewCount?: number;
-  inquiryCount?: number;
-
   // Metadata
   sourceUrl?: string; // Original URL on school website
+  applicationUrl?: string; // For applying
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
-  approvedAt?: Timestamp | null;
-  approvedBy?: string;
+  isPublished: boolean;
+
+  // Analytics
+  viewsCount?: number;
+  viewCount?: number; // Alias
+  savesCount?: number;
+  inquiryCount?: number;
+
+  // Display
+  featured?: boolean;
+  credential?: string; // Alias for level display
 }
 
-// Extended Scholarship Interface for Education Pillar
-export type ScholarshipProviderType = 'school' | 'government' | 'organization' | 'private';
+// Education Event (open houses, info sessions, campus tours)
+export interface EducationEvent {
+  id: string;
+  schoolId: string;
+  schoolName?: string; // Denormalized
+
+  // Basic Info
+  name: string;
+  title?: string; // Alias
+  description: string;
+  type: EducationEventType;
+  eventType?: string; // Alias
+
+  // Timing
+  startDatetime: Timestamp | Date | string | null;
+  startDate?: Timestamp | Date | string | null; // Alias
+  endDatetime?: Timestamp | Date | string | null;
+  endDate?: Timestamp | Date | string | null; // Alias
+  timezone?: string;
+
+  // Format
+  format: EducationEventFormat;
+  location?: string; // If in-person
+  virtualLink?: string; // If virtual
+
+  // Registration
+  registrationUrl?: string;
+  registrationRequired: boolean;
+  capacity?: number;
+
+  // Programs featured
+  featuredProgramIds?: string[];
+
+  // Social
+  attendeeCount?: number;
+  rsvpMemberIds?: string[]; // Member IDs who RSVP'd
+
+  // Media
+  imageUrl?: string;
+
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  isPublished: boolean;
+
+  // Additional location fields
+  venue?: string;
+  city?: string;
+  province?: string;
+  viewCount?: number;
+}
+
+// Extended Scholarship for Education pillar
+export type ScholarshipProviderType = "school" | "government" | "organization" | "private";
+export type IndigenousStatus = "first_nations" | "metis" | "inuit" | "all_indigenous" | "any";
 
 export interface ScholarshipEligibility {
-  indigenousStatus?: IndigenousStatusType[];
+  indigenousStatus?: IndigenousStatus[];
   nations?: string[]; // Specific nations if restricted
   provinces?: string[];
   studyLevel?: ProgramLevel[];
-  fieldsOfStudy?: string[];
+  fieldsOfStudy?: ProgramCategory[];
   programIds?: string[]; // Specific programs if restricted
   schoolIds?: string[]; // Specific schools if restricted
   gpaRequirement?: number;
@@ -1752,23 +1773,26 @@ export interface ScholarshipEligibility {
 
 export interface ScholarshipAmount {
   value: number;
-  type: 'fixed' | 'range' | 'variable' | 'full_tuition';
+  type: "fixed" | "range" | "variable" | "full_tuition";
   maxValue?: number; // If range
   currency?: string;
 }
 
-// Extended Scholarship (compatible with existing Scholarship but with more fields)
-export interface ExtendedScholarship extends Scholarship {
-  // Source
+export interface ScholarshipCommunityStats {
+  recipientsCount?: number; // IOPPS members who received this
+  connectionsReceived?: number;
+}
+
+// Extended scholarship (adds to existing Scholarship interface via intersection)
+export interface ExtendedScholarship extends Omit<Scholarship, 'amount'> {
+  // Extended source info
   providerType?: ScholarshipProviderType;
   schoolId?: string; // If school-provided
-  organizationId?: string; // If org-provided
-  providerName?: string;
 
-  // Amount (structured)
+  // Extended amount (structured)
   amountStructured?: ScholarshipAmount;
 
-  // Eligibility (structured)
+  // Extended eligibility
   eligibility?: ScholarshipEligibility;
 
   // Application
@@ -1777,115 +1801,36 @@ export interface ExtendedScholarship extends Scholarship {
   applicationProcess?: string;
 
   // Social proof
-  communityStats?: {
-    recipientsCount?: number;
-    connectionsReceived?: number;
-  };
+  communityStats?: ScholarshipCommunityStats;
 
-  // Metadata
+  // Source tracking
   sourceUrl?: string;
-  slug?: string;
-  featured?: boolean;
-  viewCount?: number;
 }
 
-// Education Event Types
-export type EducationEventType = 'open_house' | 'info_session' | 'campus_tour' | 'webinar' | 'career_fair' | 'other';
-export type EducationEventFormat = 'virtual' | 'in-person' | 'hybrid';
-
-export interface EducationEvent {
+// Member education history entry
+export interface MemberEducationHistory {
   id: string;
-  schoolId: string;
-  schoolName?: string; // Denormalized
-
-  // Basic Info
-  name: string;
-  description: string;
-  type: EducationEventType;
-
-  // Timing
-  startDatetime: Timestamp | string | null;
-  endDatetime?: Timestamp | string | null;
-  timezone?: string;
-
-  // Format
-  format: EducationEventFormat;
-  location?: {
-    venue?: string;
-    address?: string;
-    city?: string;
-    province?: string;
-    postalCode?: string;
-  };
-  virtualLink?: string; // If virtual
-
-  // Registration
-  registrationUrl?: string;
-  registrationRequired?: boolean;
-  capacity?: number;
-
-  // Programs featured
-  featuredProgramIds?: string[];
-
-  // Social
-  attendeeIds?: string[]; // Member IDs who RSVP'd
-  attendeeCount?: number;
-
-  // Status
-  isPublished: boolean;
-  featured?: boolean;
-
-  // Analytics
-  viewCount?: number;
-  registrationClicks?: number;
-
-  // Metadata
-  createdAt?: Timestamp | null;
-  updatedAt?: Timestamp | null;
-}
-
-// Education Event RSVP
-export interface EducationEventRSVP {
-  id: string;
-  eventId: string;
-  memberId: string;
-  memberEmail?: string;
-  memberName?: string;
-  status: 'going' | 'maybe' | 'not_going';
-  createdAt?: Timestamp | null;
-  updatedAt?: Timestamp | null;
-}
-
-// School Inquiry (Student to School)
-export interface SchoolInquiry {
-  id: string;
-  schoolId: string;
+  schoolId?: string;
+  schoolName?: string;
   programId?: string;
-  memberId: string;
-  memberEmail: string;
-  memberName: string;
-
-  // Inquiry Content
-  subject: string;
-  message: string;
-
-  // Interest Details
-  interestedInPrograms?: string[];
-  intendedStartDate?: string;
-  educationLevel?: string;
-
-  // Status
-  status: 'new' | 'read' | 'responded' | 'archived';
-
-  // Response
-  respondedAt?: Timestamp | null;
-  respondedBy?: string;
-
-  // Metadata
-  createdAt?: Timestamp | null;
+  programName?: string;
+  status: "current" | "completed" | "did_not_complete";
+  startYear?: number;
+  endYear?: number;
+  isVisible?: boolean;
 }
 
-// Saved Education Items (for members)
+// Member education interests
+export interface MemberEducationInterests {
+  seekingEducation: boolean;
+  educationLevelInterested?: ProgramLevel[];
+  fieldsInterested?: ProgramCategory[];
+  preferredDelivery?: ProgramDelivery[];
+  preferredLocations?: string[];
+  timeline?: "immediately" | "next_6_months" | "next_year" | "exploring";
+}
+
+// Member saved education items
 export interface SavedProgram {
   id: string;
   programId: string;
@@ -1899,7 +1844,7 @@ export interface SavedScholarship {
   scholarshipId: string;
   memberId: string;
   createdAt?: Timestamp | null;
-  scholarship?: ExtendedScholarship | null;
+  scholarship?: Scholarship | ExtendedScholarship | null;
 }
 
 export interface SavedSchool {
@@ -1910,61 +1855,76 @@ export interface SavedSchool {
   school?: School | null;
 }
 
-// Member Education Extensions
-export interface MemberEducationInterests {
-  seekingEducation?: boolean;
-  educationLevelInterested?: ProgramLevel[];
-  fieldsInterested?: string[];
-  preferredDelivery?: ProgramDeliveryMethod[];
-  preferredLocations?: string[];
-  timeline?: 'immediately' | 'next_6_months' | 'next_year' | 'exploring';
+// Event RSVP
+export interface EventRSVP {
+  eventId: string;
+  eventType: "education" | "community" | "conference";
+  rsvpDate: Timestamp | null;
+  status: "going" | "maybe" | "not_going";
 }
 
-export interface MemberEducationHistory {
+// Student inquiry to school
+export interface StudentInquiry {
   id: string;
-  schoolId?: string;
-  programId?: string;
-  institutionName?: string; // If not in system
-  programName?: string; // If not in system
-  status: 'current' | 'completed' | 'did_not_complete';
-  startYear?: number;
-  endYear?: number;
-  isVisible?: boolean;
+  schoolId: string;
+  memberId: string;
+  memberEmail?: string;
+  studentEmail?: string; // Alias
+  memberName?: string;
+  studentName?: string; // Alias
+
+  // Inquiry details
+  subject: string;
+  message: string;
+  programId?: string; // If about a specific program
+
+  // Status
+  status: "new" | "read" | "replied" | "responded" | "archived";
+  repliedAt?: Timestamp | null;
+  repliedBy?: string;
+
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+
+  // Additional fields
+  interestedInPrograms?: string[];
+  intendedStartDate?: string;
+  educationLevel?: string;
 }
 
-// Organization Education Settings (for schools)
-export interface OrganizationEducationSettings {
-  isEnabled: boolean;
-  schoolId?: string;
-  tier?: SchoolSubscriptionTier;
-  programsCount?: number;
-  scholarshipsCount?: number;
-}
+// Alias for backward compatibility
+export type SchoolInquiry = StudentInquiry;
 
-// Organization Capabilities
-export type OrganizationCapability = 'employer' | 'vendor' | 'education';
+// Input type for creating student inquiries
+export type StudentInquiryInput = Omit<StudentInquiry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'repliedAt' | 'repliedBy'> & {
+  interestedInPrograms?: string[];
+};
 
-// School Import Job (for AI import)
-export type SchoolImportStatus = 'pending' | 'crawling' | 'extracting' | 'review' | 'completed' | 'failed';
+// Inquiry status type
+export type InquiryStatus = "new" | "read" | "replied" | "responded" | "archived";
 
-export interface SchoolImportJob {
+// Import job for AI scraping
+export type ImportJobStatus = "pending" | "crawling" | "extracting" | "review" | "completed" | "failed";
+
+export interface ImportJob {
   id: string;
-  organizationId: string;
+  employerId: string;
   websiteUrl: string;
 
-  status: SchoolImportStatus;
+  status: ImportJobStatus;
 
   progress?: {
-    pagesCrawled?: number;
-    pagesTotal?: number;
-    currentStep?: string;
+    pagesCrawled: number;
+    pagesTotal: number;
+    currentStep: string;
   };
 
   extractedData?: {
     institution?: Partial<School>;
     programs?: Partial<EducationProgram>[];
-    scholarships?: Partial<ExtendedScholarship>[];
-    needsReview?: string[];
+    scholarships?: Partial<Scholarship>[];
+    needsReview?: string[]; // Items with low confidence
   };
 
   validationErrors?: string[];
@@ -1974,4 +1934,153 @@ export interface SchoolImportJob {
 
   createdBy: string;
   createdAt?: Timestamp | null;
+}
+
+// Education settings for organizations (stored in employer profile)
+export interface EducationSettings {
+  isEnabled: boolean;
+  schoolId?: string; // Links to schools collection
+  tier?: EducationTier;
+  programsCount?: number;
+  scholarshipsCount?: number;
+}
+
+// ============================================
+// BUSINESS FUNDING / GRANTS
+// ============================================
+
+export type BusinessGrantType =
+  | "startup"
+  | "expansion"
+  | "equipment"
+  | "training"
+  | "export"
+  | "innovation"
+  | "green"
+  | "women"
+  | "youth"
+  | "general";
+
+export type BusinessGrantStatus = "active" | "closed" | "upcoming";
+
+export interface BusinessGrant {
+  id: string;
+
+  // Basic Info
+  title: string;
+  slug: string;
+  description: string;
+  shortDescription?: string;
+
+  // Provider Info
+  provider: string;
+  providerLogo?: string;
+  providerWebsite?: string;
+
+  // Grant Details
+  grantType: BusinessGrantType;
+  amount?: {
+    min?: number;
+    max?: number;
+    display?: string; // e.g., "Up to $50,000" or "Varies"
+  };
+
+  // Eligibility
+  eligibility: {
+    businessTypes?: string[]; // e.g., ["sole proprietorship", "corporation"]
+    provinces?: NorthAmericanRegion[];
+    indigenousOwned?: boolean;
+    womenOwned?: boolean;
+    youthOwned?: boolean;
+    minYearsInBusiness?: number;
+    industries?: string[];
+    requirements?: string[];
+  };
+
+  // Dates
+  deadline?: Timestamp | Date | string | null;
+  openDate?: Timestamp | Date | string | null;
+
+  // Application
+  applicationUrl?: string;
+  applicationProcess?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+
+  // Status & Visibility
+  status: BusinessGrantStatus;
+  featured: boolean;
+
+  // Metadata
+  viewCount?: number;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  createdBy?: string;
+}
+
+// ============================================
+// SOCIAL HUB TYPES
+// ============================================
+
+export type AuthorType = 'member' | 'organization' | 'system';
+export type PostType = 'status' | 'share_job' | 'share_scholarship' | 'share_event' | 'share_product' | 'article' | 'poll';
+export type PostVisibility = 'public' | 'connections' | 'private';
+
+export interface Post {
+  id: string;
+  authorId: string;
+  authorType: AuthorType;
+  authorName: string;
+  authorAvatarUrl?: string;
+  authorTagline?: string;
+  content: string;
+  type: PostType;
+  visibility: PostVisibility;
+  mediaUrls?: string[];
+  likesCount: number;
+  commentsCount: number;
+  sharesCount: number;
+  referenceId?: string; // ID of the shared entity (job, scholarship, etc.)
+  referenceData?: any; // Cached data of the shared entity for display
+  isEdited?: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorType: AuthorType;
+  authorName: string;
+  authorAvatarUrl?: string;
+  content: string;
+  likesCount: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Connection {
+  id: string;
+  requesterId: string;
+  recipientId: string;
+  status: 'pending' | 'accepted' | 'declined' | 'blocked';
+  requesterName?: string;
+  requesterAvatarUrl?: string;
+  requesterTagline?: string;
+  recipientName?: string;
+  recipientAvatarUrl?: string;
+  recipientTagline?: string;
+  connectedAt?: Timestamp | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Activity {
+  id: string;
+  userId: string;
+  type: 'post' | 'comment' | 'like' | 'share' | 'connection';
+  referenceId: string;
+  content?: string;
+  createdAt: Timestamp;
 }

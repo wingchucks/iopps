@@ -1,4 +1,4 @@
-// Education Events Firestore operations
+// Education Event Firestore operations for the Education Pillar
 import {
   addDoc,
   collection,
@@ -6,521 +6,302 @@ import {
   doc,
   getDoc,
   getDocs,
-  limit,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
+  limit,
   db,
-  checkFirebase,
   educationEventsCollection,
-  educationEventRSVPsCollection,
+  checkFirebase,
+  Timestamp,
 } from "./shared";
 import type {
   EducationEvent,
   EducationEventType,
   EducationEventFormat,
-  EducationEventRSVP,
 } from "@/lib/types";
 
 // ============================================
-// EDUCATION EVENTS
+// EVENT CRUD OPERATIONS
+// ============================================
+
+type EventInput = Omit<EducationEvent, "id" | "createdAt" | "updatedAt" | "isPublished" | "attendeeCount" | "rsvpMemberIds" | "name" | "type" | "startDatetime"> & {
+  name?: string;
+  type?: EducationEventType;
+  startDatetime?: Timestamp | Date | string | null;
+  isPublished?: boolean;
+};
+
+export async function createEducationEvent(input: EventInput): Promise<string> {
+  const ref = collection(db!, educationEventsCollection);
+  const docRef = await addDoc(ref, {
+    ...input,
+    isPublished: input.isPublished ?? false,
+    attendeeCount: 0,
+    rsvpMemberIds: [],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  // Update the document with its own ID
+  await updateDoc(doc(db!, educationEventsCollection, docRef.id), {
+    id: docRef.id,
+  });
+  return docRef.id;
+}
+
+export async function getEducationEvent(id: string): Promise<EducationEvent | null> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return null;
+    const ref = doc(firestore, educationEventsCollection, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as EducationEvent;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateEducationEvent(id: string, data: Partial<EducationEvent>): Promise<void> {
+  const ref = doc(db!, educationEventsCollection, id);
+  await updateDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteEducationEvent(id: string): Promise<void> {
+  const ref = doc(db!, educationEventsCollection, id);
+  await deleteDoc(ref);
+}
+
+// ============================================
+// EVENT LISTING OPERATIONS
 // ============================================
 
 export interface ListEducationEventsOptions {
   schoolId?: string;
   type?: EducationEventType;
   format?: EducationEventFormat;
-  upcomingOnly?: boolean;
+  upcoming?: boolean;
   publishedOnly?: boolean;
-  isPublished?: boolean; // Alias for publishedOnly
-  featured?: boolean;
-  startAfter?: Date;
-  startBefore?: Date;
-  maxResults?: number;
+  limitCount?: number;
+  afterDate?: Date;
+  beforeDate?: Date;
 }
 
-/**
- * List education events with filters
- */
-export async function listEducationEvents(
-  options: ListEducationEventsOptions = {}
-): Promise<EducationEvent[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
+export async function listEducationEvents(options: ListEducationEventsOptions = {}): Promise<EducationEvent[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
 
-  const colRef = collection(db!, educationEventsCollection);
-  const constraints: Parameters<typeof query>[1][] = [];
+    const ref = collection(firestore, educationEventsCollection);
+    const constraints: any[] = [];
 
-  if (options.schoolId) {
-    constraints.push(where("schoolId", "==", options.schoolId));
+    if (options.publishedOnly !== false) {
+      constraints.push(where("isPublished", "==", true));
+    }
+
+    if (options.schoolId) {
+      constraints.push(where("schoolId", "==", options.schoolId));
+    }
+
+    if (options.type) {
+      constraints.push(where("type", "==", options.type));
+    }
+
+    if (options.format) {
+      constraints.push(where("format", "==", options.format));
+    }
+
+    // Filter for upcoming events only
+    if (options.upcoming) {
+      const now = Timestamp.now();
+      constraints.push(where("startDatetime", ">=", now));
+    }
+
+    if (options.afterDate) {
+      constraints.push(where("startDatetime", ">=", Timestamp.fromDate(options.afterDate)));
+    }
+
+    if (options.beforeDate) {
+      constraints.push(where("startDatetime", "<=", Timestamp.fromDate(options.beforeDate)));
+    }
+
+    constraints.push(orderBy("startDatetime", "asc"));
+
+    if (options.limitCount) {
+      constraints.push(limit(options.limitCount));
+    }
+
+    const q = query(ref, ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => docSnap.data() as EducationEvent);
+  } catch {
+    return [];
   }
-
-  if (options.type) {
-    constraints.push(where("type", "==", options.type));
-  }
-
-  if (options.format) {
-    constraints.push(where("format", "==", options.format));
-  }
-
-  // Default: only show published events for public listings
-  // isPublished is an alias for publishedOnly
-  const showPublishedOnly = options.isPublished ?? options.publishedOnly;
-  if (showPublishedOnly !== false && !options.schoolId) {
-    constraints.push(where("isPublished", "==", true));
-  }
-
-  if (options.featured) {
-    constraints.push(where("featured", "==", true));
-  }
-
-  // Filter by date range
-  if (options.startAfter) {
-    constraints.push(where("startDatetime", ">=", options.startAfter));
-  }
-
-  if (options.startBefore) {
-    constraints.push(where("startDatetime", "<=", options.startBefore));
-  }
-
-  // Default: order by start date
-  constraints.push(orderBy("startDatetime", "asc"));
-
-  if (options.maxResults) {
-    constraints.push(limit(options.maxResults));
-  }
-
-  const q = query(colRef, ...constraints);
-  const snapshot = await getDocs(q);
-
-  let events = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as EducationEvent[];
-
-  // Client-side filtering for upcoming events
-  if (options.upcomingOnly) {
-    const now = new Date();
-    events = events.filter((event) => {
-      const startDate = event.startDatetime
-        ? typeof event.startDatetime === "string"
-          ? new Date(event.startDatetime)
-          : event.startDatetime.toDate()
-        : null;
-      return startDate && startDate >= now;
-    });
-  }
-
-  return events;
 }
 
-/**
- * Get a single education event by ID
- */
-export async function getEducationEvent(
-  eventId: string
-): Promise<EducationEvent | null> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return null;
-
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  const snapshot = await getDoc(docRef);
-
-  if (!snapshot.exists()) return null;
-
-  return { id: snapshot.id, ...snapshot.data() } as EducationEvent;
+export async function listSchoolEvents(schoolId: string): Promise<EducationEvent[]> {
+  return listEducationEvents({ schoolId, publishedOnly: true, upcoming: true });
 }
 
-/**
- * List events for a school (includes unpublished)
- */
-export async function listSchoolEvents(
-  schoolId: string
-): Promise<EducationEvent[]> {
+export async function listSchoolEventsForDashboard(schoolId: string): Promise<EducationEvent[]> {
+  return listEducationEvents({ schoolId, publishedOnly: false });
+}
+
+export async function listUpcomingEvents(limitCount: number = 6): Promise<EducationEvent[]> {
+  return listEducationEvents({ upcoming: true, publishedOnly: true, limitCount });
+}
+
+export async function listThisWeekEvents(): Promise<EducationEvent[]> {
+  const now = new Date();
+  const endOfWeek = new Date(now);
+  endOfWeek.setDate(now.getDate() + 7);
+
   return listEducationEvents({
-    schoolId,
-    publishedOnly: false,
+    publishedOnly: true,
+    afterDate: now,
+    beforeDate: endOfWeek,
   });
 }
 
-/**
- * Get upcoming events
- * @param daysAhead - Number of days to look ahead (default: unlimited)
- * @param maxResults - Maximum number of results (default: 10)
- */
-export async function getUpcomingEducationEvents(
-  daysAhead?: number,
-  maxResults: number = 10
-): Promise<EducationEvent[]> {
-  const options: ListEducationEventsOptions = {
-    upcomingOnly: true,
-    maxResults,
-  };
+export async function listEventsByMonth(year: number, month: number): Promise<EducationEvent[]> {
+  const startOfMonth = new Date(year, month, 1);
+  const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
 
-  if (daysAhead) {
-    const future = new Date();
-    future.setDate(future.getDate() + daysAhead);
-    options.startBefore = future;
-  }
-
-  return listEducationEvents(options);
-}
-
-/**
- * Get events in a date range (for calendar view)
- */
-export async function getEducationEventsInRange(
-  startDate: Date,
-  endDate: Date
-): Promise<EducationEvent[]> {
   return listEducationEvents({
-    startAfter: startDate,
-    startBefore: endDate,
+    publishedOnly: true,
+    afterDate: startOfMonth,
+    beforeDate: endOfMonth,
   });
 }
 
-/**
- * Create a new education event
- */
-export async function createEducationEvent(
-  data: Omit<
-    EducationEvent,
-    "id" | "createdAt" | "updatedAt" | "viewCount" | "registrationClicks" | "attendeeCount"
-  >
-): Promise<string> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+// ============================================
+// EVENT RSVP OPERATIONS
+// ============================================
 
-  const colRef = collection(db!, educationEventsCollection);
+export async function rsvpToEvent(eventId: string, memberId: string): Promise<void> {
+  try {
+    const ref = doc(db!, educationEventsCollection, eventId);
+    const snap = await getDoc(ref);
 
-  const docRef = await addDoc(colRef, {
-    ...data,
-    viewCount: 0,
-    registrationClicks: 0,
-    attendeeCount: 0,
-    attendeeIds: [],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+    if (!snap.exists()) return;
 
-  return docRef.id;
-}
+    const event = snap.data() as EducationEvent;
+    const rsvpMemberIds = event.rsvpMemberIds || [];
 
-/**
- * Update an education event
- */
-export async function updateEducationEvent(
-  eventId: string,
-  data: Partial<Omit<EducationEvent, "id" | "createdAt">>
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+    // Check if already RSVP'd
+    if (rsvpMemberIds.includes(memberId)) return;
 
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  await updateDoc(docRef, {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-}
+    // Check capacity
+    if (event.capacity && rsvpMemberIds.length >= event.capacity) {
+      throw new Error("Event is at capacity");
+    }
 
-/**
- * Publish or unpublish an event
- */
-export async function setEducationEventPublished(
-  eventId: string,
-  isPublished: boolean
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  await updateDoc(docRef, {
-    isPublished,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-/**
- * Set featured status for an event
- */
-export async function setEducationEventFeatured(
-  eventId: string,
-  featured: boolean
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  await updateDoc(docRef, {
-    featured,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-/**
- * Delete an education event
- */
-export async function deleteEducationEvent(eventId: string): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  await deleteDoc(docRef);
-}
-
-/**
- * Increment view count for an event
- */
-export async function incrementEducationEventViews(
-  eventId: string
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return;
-
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  const snapshot = await getDoc(docRef);
-
-  if (snapshot.exists()) {
-    await updateDoc(docRef, {
-      viewCount: (snapshot.data().viewCount || 0) + 1,
+    await updateDoc(ref, {
+      rsvpMemberIds: [...rsvpMemberIds, memberId],
+      attendeeCount: rsvpMemberIds.length + 1,
+      updatedAt: serverTimestamp(),
     });
+  } catch (error) {
+    throw error;
   }
 }
 
-/**
- * Track registration click
- */
-export async function trackEducationEventRegistrationClick(
-  eventId: string
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return;
+export async function cancelRsvp(eventId: string, memberId: string): Promise<void> {
+  try {
+    const ref = doc(db!, educationEventsCollection, eventId);
+    const snap = await getDoc(ref);
 
-  const docRef = doc(db!, educationEventsCollection, eventId);
-  const snapshot = await getDoc(docRef);
+    if (!snap.exists()) return;
 
-  if (snapshot.exists()) {
-    await updateDoc(docRef, {
-      registrationClicks: (snapshot.data().registrationClicks || 0) + 1,
+    const event = snap.data() as EducationEvent;
+    const rsvpMemberIds = event.rsvpMemberIds || [];
+
+    const updatedRsvpIds = rsvpMemberIds.filter((id) => id !== memberId);
+
+    await updateDoc(ref, {
+      rsvpMemberIds: updatedRsvpIds,
+      attendeeCount: updatedRsvpIds.length,
+      updatedAt: serverTimestamp(),
     });
+  } catch {
+    // Silently fail
+  }
+}
+
+export async function isRsvpd(eventId: string, memberId: string): Promise<boolean> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return false;
+
+    const ref = doc(firestore, educationEventsCollection, eventId);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) return false;
+
+    const event = snap.data() as EducationEvent;
+    return (event.rsvpMemberIds || []).includes(memberId);
+  } catch {
+    return false;
+  }
+}
+
+export async function getEventRsvpCount(eventId: string): Promise<number> {
+  try {
+    const event = await getEducationEvent(eventId);
+    return event?.attendeeCount || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function listMemberRsvps(memberId: string): Promise<EducationEvent[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    const ref = collection(firestore, educationEventsCollection);
+    const q = query(
+      ref,
+      where("rsvpMemberIds", "array-contains", memberId),
+      orderBy("startDatetime", "asc")
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((docSnap) => docSnap.data() as EducationEvent);
+  } catch {
+    return [];
   }
 }
 
 // ============================================
-// EVENT RSVP
+// EVENT ANALYTICS
 // ============================================
 
-/**
- * RSVP to an event
- */
-export async function rsvpToEducationEvent(
-  eventId: string,
-  memberId: string,
-  memberEmail: string,
-  memberName: string,
-  status: "going" | "maybe" | "not_going" = "going"
-): Promise<string> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
+export async function getEventStats(schoolId: string): Promise<{
+  totalEvents: number;
+  upcomingEvents: number;
+  totalRsvps: number;
+}> {
+  try {
+    const allEvents = await listEducationEvents({ schoolId, publishedOnly: false });
+    const upcomingEvents = await listEducationEvents({ schoolId, publishedOnly: true, upcoming: true });
 
-  // Check if already RSVP'd
-  const existing = await getEducationEventRSVP(eventId, memberId);
+    const totalRsvps = allEvents.reduce((sum, event) => sum + (event.attendeeCount || 0), 0);
 
-  if (existing) {
-    // Update existing RSVP
-    await updateEducationEventRSVP(existing.id, status);
-    return existing.id;
+    return {
+      totalEvents: allEvents.length,
+      upcomingEvents: upcomingEvents.length,
+      totalRsvps,
+    };
+  } catch {
+    return {
+      totalEvents: 0,
+      upcomingEvents: 0,
+      totalRsvps: 0,
+    };
   }
-
-  // Create new RSVP
-  const colRef = collection(db!, educationEventRSVPsCollection);
-  const docRef = await addDoc(colRef, {
-    eventId,
-    memberId,
-    memberEmail,
-    memberName,
-    status,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  // Update event attendee count and list
-  if (status === "going") {
-    const eventRef = doc(db!, educationEventsCollection, eventId);
-    const eventSnap = await getDoc(eventRef);
-    if (eventSnap.exists()) {
-      const data = eventSnap.data();
-      const attendeeIds = data.attendeeIds || [];
-      if (!attendeeIds.includes(memberId)) {
-        attendeeIds.push(memberId);
-        await updateDoc(eventRef, {
-          attendeeIds,
-          attendeeCount: attendeeIds.length,
-        });
-      }
-    }
-  }
-
-  return docRef.id;
-}
-
-/**
- * Update an existing RSVP
- */
-export async function updateEducationEventRSVP(
-  rsvpId: string,
-  status: "going" | "maybe" | "not_going"
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) throw new Error("Firebase not initialized");
-
-  const docRef = doc(db!, educationEventRSVPsCollection, rsvpId);
-  await updateDoc(docRef, {
-    status,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-/**
- * Cancel an RSVP
- */
-export async function cancelEducationEventRSVP(
-  eventId: string,
-  memberId: string
-): Promise<void> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return;
-
-  const existing = await getEducationEventRSVP(eventId, memberId);
-  if (existing) {
-    const docRef = doc(db!, educationEventRSVPsCollection, existing.id);
-    await deleteDoc(docRef);
-
-    // Update event attendee count and list
-    const eventRef = doc(db!, educationEventsCollection, eventId);
-    const eventSnap = await getDoc(eventRef);
-    if (eventSnap.exists()) {
-      const data = eventSnap.data();
-      const attendeeIds = (data.attendeeIds || []).filter(
-        (id: string) => id !== memberId
-      );
-      await updateDoc(eventRef, {
-        attendeeIds,
-        attendeeCount: attendeeIds.length,
-      });
-    }
-  }
-}
-
-/**
- * Get RSVP for an event by member
- */
-export async function getEducationEventRSVP(
-  eventId: string,
-  memberId: string
-): Promise<EducationEventRSVP | null> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return null;
-
-  const colRef = collection(db!, educationEventRSVPsCollection);
-  const q = query(
-    colRef,
-    where("eventId", "==", eventId),
-    where("memberId", "==", memberId),
-    limit(1)
-  );
-
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-
-  const docSnap = snapshot.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as EducationEventRSVP;
-}
-
-/**
- * List RSVPs for an event
- */
-export async function listEducationEventRSVPs(
-  eventId: string,
-  status?: "going" | "maybe" | "not_going"
-): Promise<EducationEventRSVP[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, educationEventRSVPsCollection);
-  const constraints: Parameters<typeof query>[1][] = [
-    where("eventId", "==", eventId),
-  ];
-
-  if (status) {
-    constraints.push(where("status", "==", status));
-  }
-
-  constraints.push(orderBy("createdAt", "desc"));
-
-  const q = query(colRef, ...constraints);
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as EducationEventRSVP[];
-}
-
-/**
- * List member's event RSVPs
- */
-export async function listMemberEventRSVPs(
-  memberId: string
-): Promise<EducationEventRSVP[]> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return [];
-
-  const colRef = collection(db!, educationEventRSVPsCollection);
-  const q = query(
-    colRef,
-    where("memberId", "==", memberId),
-    orderBy("createdAt", "desc")
-  );
-
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as EducationEventRSVP[];
-}
-
-/**
- * Get RSVP count for an event
- */
-export async function getEducationEventRSVPCount(
-  eventId: string,
-  status: "going" | "maybe" | "not_going" = "going"
-): Promise<number> {
-  const fbApp = checkFirebase();
-  if (!fbApp) return 0;
-
-  const colRef = collection(db!, educationEventRSVPsCollection);
-  const q = query(
-    colRef,
-    where("eventId", "==", eventId),
-    where("status", "==", status)
-  );
-
-  const snapshot = await getDocs(q);
-  return snapshot.size;
-}
-
-/**
- * Check if member has RSVP'd to an event
- */
-export async function hasMemberRSVP(
-  eventId: string,
-  memberId: string
-): Promise<boolean> {
-  const rsvp = await getEducationEventRSVP(eventId, memberId);
-  return rsvp !== null && rsvp.status === "going";
 }

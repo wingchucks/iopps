@@ -150,7 +150,7 @@ export default function SchoolSetupPage() {
       }
 
       const schoolData: Omit<School, "id" | "createdAt" | "updatedAt" | "viewCount"> = {
-        organizationId: profile.id,
+        employerId: profile.id,
         name,
         shortName: shortName || undefined,
         type,
@@ -324,8 +324,8 @@ export default function SchoolSetupPage() {
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               >
                 {SCHOOL_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                  <option key={t} value={t}>
+                    {t.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </option>
                 ))}
               </select>
