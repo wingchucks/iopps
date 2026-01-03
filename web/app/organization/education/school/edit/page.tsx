@@ -74,11 +74,11 @@ export default function EditSchoolPage() {
           setEstablished(schoolData.established?.toString() || "");
           setWebsite(schoolData.website || "");
           setDescription(schoolData.description || "");
-          setAddress(schoolData.headOffice.address);
-          setCity(schoolData.headOffice.city);
-          setProvince(schoolData.headOffice.province);
-          setPostalCode(schoolData.headOffice.postalCode || "");
-          setReserveName(schoolData.headOffice.reserveName || "");
+          setAddress(schoolData.headOffice?.address || "");
+          setCity(schoolData.headOffice?.city || "");
+          setProvince(schoolData.headOffice?.province || "");
+          setPostalCode(schoolData.headOffice?.postalCode || "");
+          setReserveName(schoolData.headOffice?.reserveName || "");
           setPhone(schoolData.contact?.phone || "");
           setEmail(schoolData.contact?.email || "");
           setIndigenousControlled(schoolData.verification?.indigenousControlled || false);

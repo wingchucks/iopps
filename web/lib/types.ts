@@ -215,6 +215,11 @@ export interface JobPosting {
   noIndex?: boolean; // If true, tell search engines not to index
   expiredAt?: Timestamp | Date | null; // When job was auto-expired
   expirationReason?: string; // Why job was expired (e.g., "Removed from feed")
+  // Enhanced job fields
+  category?: JobCategory;
+  locationType?: LocationType;
+  applicationMethod?: ApplicationMethod;
+  featured?: boolean;
 }
 
 // Conference sub-types
@@ -1368,6 +1373,10 @@ export type ProgramLevel = typeof PROGRAM_LEVELS[number];
 
 // Program delivery methods
 export type ProgramDelivery = "in-person" | "online" | "hybrid";
+export type ProgramDeliveryMethod = ProgramDelivery; // Alias
+
+// Program status
+export type ProgramStatus = "draft" | "pending" | "active" | "approved" | "archived";
 
 // Program categories
 export const PROGRAM_CATEGORIES = [
@@ -1427,15 +1436,15 @@ export interface IndigenousServices {
     name: string;
     description?: string;
   };
-  elderInResidence: boolean;
-  culturalCoordinators: boolean;
-  academicCoaches: boolean;
-  learningSpecialists: boolean;
-  wellnessCoaches: boolean;
-  psychologists: boolean;
+  elderInResidence?: boolean;
+  culturalCoordinators?: boolean;
+  academicCoaches?: boolean;
+  learningSpecialists?: boolean;
+  wellnessCoaches?: boolean;
+  psychologists?: boolean;
   languagePrograms?: string[]; // ['Cree', 'Ojibwe', etc.]
-  culturalProgramming: boolean;
-  ceremonySpace: boolean;
+  culturalProgramming?: boolean;
+  ceremonySpace?: boolean;
   communitySupports?: string[]; // ['housing', 'childcare', 'transportation']
 }
 
@@ -1493,7 +1502,7 @@ export interface School {
   description?: string;
 
   // Head Office Location
-  headOffice: {
+  headOffice?: {
     address: string;
     city: string;
     province: string;
@@ -1506,7 +1515,7 @@ export interface School {
   };
 
   // Campuses
-  campuses: SchoolCampus[];
+  campuses?: SchoolCampus[];
 
   // Indigenous Services (key differentiator)
   indigenousServices?: IndigenousServices;
@@ -1548,6 +1557,20 @@ export interface School {
   updatedAt?: Timestamp | null;
   lastScrapedAt?: Timestamp | null;
   isPublished: boolean;
+
+  // Convenience properties (denormalized for easier access)
+  isVerified?: boolean;
+  location?: {
+    city?: string;
+    province?: string;
+    address?: string;
+    postalCode?: string;
+  };
+  indigenousFocused?: boolean;
+  viewCount?: number;
+
+  // Status for approval workflow
+  status?: "pending" | "approved" | "rejected";
 }
 
 // Program intake dates
@@ -1670,7 +1693,13 @@ export interface EducationProgram {
 
   // Analytics
   viewsCount?: number;
+  viewCount?: number; // Alias
   savesCount?: number;
+  inquiryCount?: number;
+
+  // Display
+  featured?: boolean;
+  credential?: string; // Alias for level display
 }
 
 // Education Event (open houses, info sessions, campus tours)
@@ -1717,6 +1746,12 @@ export interface EducationEvent {
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   isPublished: boolean;
+
+  // Additional location fields
+  venue?: string;
+  city?: string;
+  province?: string;
+  viewCount?: number;
 }
 
 // Extended Scholarship for Education pillar
@@ -1844,14 +1879,30 @@ export interface StudentInquiry {
   programId?: string; // If about a specific program
 
   // Status
-  status: "new" | "read" | "replied";
+  status: "new" | "read" | "replied" | "responded" | "archived";
   repliedAt?: Timestamp | null;
   repliedBy?: string;
 
   // Metadata
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+
+  // Additional fields
+  interestedInPrograms?: string[];
+  intendedStartDate?: string;
+  educationLevel?: string;
 }
+
+// Alias for backward compatibility
+export type SchoolInquiry = StudentInquiry;
+
+// Input type for creating student inquiries
+export type StudentInquiryInput = Omit<StudentInquiry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'repliedAt' | 'repliedBy'> & {
+  interestedInPrograms?: string[];
+};
+
+// Inquiry status type
+export type InquiryStatus = "new" | "read" | "replied" | "responded" | "archived";
 
 // Import job for AI scraping
 export type ImportJobStatus = "pending" | "crawling" | "extracting" | "review" | "completed" | "failed";

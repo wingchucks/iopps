@@ -102,7 +102,7 @@ function EmployerDashboardContent() {
           {activeTab === "videos" && <VideosTab />}
           {activeTab === "business" && <BusinessTab />}
           {activeTab === "billing" && <BillingTab />}
-          {activeTab === "profile" && <ProfileTab />}
+          {activeTab === "profile" && <ProfileTab mode="employer" />}
         </div>
       </div>
     </div>
