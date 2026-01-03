@@ -394,17 +394,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Firebase not initialized" }, { status: 500 });
     }
 
+    // Create local const for TypeScript narrowing in callbacks
+    const firestore = db;
+
     const decodedToken = await auth.verifyIdToken(token);
 
     // Check if user is admin
-    const userDoc = await db.collection("users").doc(decodedToken.uid).get();
+    const userDoc = await firestore.collection("users").doc(decodedToken.uid).get();
     const userData = userDoc.data();
     if (userData?.role !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     // Check if SIIT already exists
-    const existingSchool = await db
+    const existingSchool = await firestore
       .collection("schools")
       .where("slug", "==", "siit")
       .get();
@@ -414,13 +417,13 @@ export async function POST(request: Request) {
     if (!existingSchool.empty) {
       // Update existing school
       schoolId = existingSchool.docs[0].id;
-      await db.collection("schools").doc(schoolId).update({
+      await firestore.collection("schools").doc(schoolId).update({
         ...siitSchool,
         updatedAt: FieldValue.serverTimestamp(),
       });
     } else {
       // Create new school
-      const schoolRef = await db.collection("schools").add({
+      const schoolRef = await firestore.collection("schools").add({
         ...siitSchool,
         employerId: "demo-siit", // Demo employer ID
         createdAt: FieldValue.serverTimestamp(),
@@ -432,7 +435,7 @@ export async function POST(request: Request) {
     }
 
     // Delete existing SIIT programs to avoid duplicates
-    const existingPrograms = await db
+    const existingPrograms = await firestore
       .collection("educationPrograms")
       .where("schoolId", "==", schoolId)
       .get();
@@ -442,7 +445,7 @@ export async function POST(request: Request) {
 
     // Create programs
     const programPromises = siitPrograms.map(async (program) => {
-      const programRef = await db.collection("educationPrograms").add({
+      const programRef = await firestore.collection("educationPrograms").add({
         ...program,
         schoolId,
         schoolName: siitSchool.name,
