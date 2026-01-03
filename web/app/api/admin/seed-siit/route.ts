@@ -389,6 +389,11 @@ export async function POST(request: Request) {
     }
 
     const token = authHeader.split("Bearer ")[1];
+
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Firebase not initialized" }, { status: 500 });
+    }
+
     const decodedToken = await auth.verifyIdToken(token);
 
     // Check if user is admin
