@@ -1,7 +1,10 @@
 // Admin endpoint to seed SIIT demo data
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // SIIT School Data
 const siitSchool = {
@@ -386,17 +389,17 @@ export async function POST(request: Request) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
 
     // Check if user is admin
-    const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+    const userDoc = await db.collection("users").doc(decodedToken.uid).get();
     const userData = userDoc.data();
     if (userData?.role !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     // Check if SIIT already exists
-    const existingSchool = await adminDb
+    const existingSchool = await db
       .collection("schools")
       .where("slug", "==", "siit")
       .get();
@@ -406,13 +409,13 @@ export async function POST(request: Request) {
     if (!existingSchool.empty) {
       // Update existing school
       schoolId = existingSchool.docs[0].id;
-      await adminDb.collection("schools").doc(schoolId).update({
+      await db.collection("schools").doc(schoolId).update({
         ...siitSchool,
         updatedAt: FieldValue.serverTimestamp(),
       });
     } else {
       // Create new school
-      const schoolRef = await adminDb.collection("schools").add({
+      const schoolRef = await db.collection("schools").add({
         ...siitSchool,
         employerId: "demo-siit", // Demo employer ID
         createdAt: FieldValue.serverTimestamp(),
@@ -424,7 +427,7 @@ export async function POST(request: Request) {
     }
 
     // Delete existing SIIT programs to avoid duplicates
-    const existingPrograms = await adminDb
+    const existingPrograms = await db
       .collection("educationPrograms")
       .where("schoolId", "==", schoolId)
       .get();
@@ -434,7 +437,7 @@ export async function POST(request: Request) {
 
     // Create programs
     const programPromises = siitPrograms.map(async (program) => {
-      const programRef = await adminDb.collection("educationPrograms").add({
+      const programRef = await db.collection("educationPrograms").add({
         ...program,
         schoolId,
         schoolName: siitSchool.name,
