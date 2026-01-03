@@ -1571,6 +1571,11 @@ export interface School {
 
   // Status for approval workflow
   status?: "pending" | "approved" | "rejected";
+
+  // Claim status for pre-populated schools
+  claimStatus?: "unclaimed" | "pending_claim" | "claimed";
+  claimedBy?: string; // employerId who claimed
+  claimedAt?: Timestamp | null;
 }
 
 // Program intake dates
