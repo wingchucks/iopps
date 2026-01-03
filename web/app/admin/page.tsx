@@ -124,10 +124,12 @@ export default function AdminDashboard() {
       try {
         const pendingQuery = query(collection(db, "employers"), where("status", "==", "pending"));
         const pendingSnap = await getDocs(pendingQuery);
-        results.pendingEmployers = { count: pendingSnap.docs.length };
+        // Filter out soft-deleted employers
+        const activePendingDocs = pendingSnap.docs.filter(doc => !doc.data().deletedAt);
+        results.pendingEmployers = { count: activePendingDocs.length };
 
         // Add to pending items
-        pendingSnap.docs.slice(0, 5).forEach(doc => {
+        activePendingDocs.slice(0, 5).forEach(doc => {
           const data = doc.data();
           pending.push({
             id: doc.id,
