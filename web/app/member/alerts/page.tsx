@@ -40,16 +40,20 @@ export default function MemberAlertsPage() {
   const [maxSalary, setMaxSalary] = useState<number | "">("");
   const [frequency, setFrequency] = useState<JobAlertFrequency>("daily");
 
+  // Check if user is a community member - anyone who is NOT employer/admin/moderator
+  // This aligns with the SiteHeader logic for showing "My Dashboard" link
+  const isCommunityMember = role !== null && role !== "employer" && role !== "admin" && role !== "moderator";
+
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user || role !== "community") {
+    if (!user || !isCommunityMember) {
       router.push("/");
       return;
     }
 
     loadAlerts();
-  }, [user, role, authLoading, router]);
+  }, [user, isCommunityMember, authLoading, router]);
 
   async function loadAlerts() {
     if (!user) return;
@@ -231,7 +235,7 @@ export default function MemberAlertsPage() {
     );
   }
 
-  if (!user || role !== "community") {
+  if (!user || !isCommunityMember) {
     return null;
   }
 
