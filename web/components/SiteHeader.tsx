@@ -9,11 +9,13 @@ import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
+  { href: "/feed", label: "Feed" },
+  { href: "/network", label: "Network" },
   { href: "/careers", label: "Careers" },
   { href: "/education", label: "Education" },
   { href: "/business", label: "Business" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/community", label: "Community" },
+  { href: "/community", label: "Events" }, // Renamed from Community
   { href: "/live", label: "Live" },
   { href: "/pricing", label: "Pricing" },
 ];
@@ -99,11 +101,10 @@ export default function SiteHeader() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                        pathname === link.href
-                          ? "bg-white/20 font-semibold text-white"
-                          : "text-white/80 hover:text-white"
-                      }`}
+                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${pathname === link.href
+                        ? "bg-white/20 font-semibold text-white"
+                        : "text-white/80 hover:text-white"
+                        }`}
                     >
                       {link.label}
                     </Link>
@@ -244,11 +245,10 @@ export default function SiteHeader() {
                         <Link
                           href="/member/dashboard"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                            pathname === "/member/dashboard"
-                              ? "bg-white/20 text-white"
-                              : "text-white/80 hover:bg-white/10 hover:text-white"
-                          }`}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/member/dashboard"
+                            ? "bg-white/20 text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }`}
                         >
                           Dashboard
                         </Link>
@@ -259,22 +259,20 @@ export default function SiteHeader() {
                           <Link
                             href="/organization/dashboard"
                             onClick={() => setMobileNavOpen(false)}
-                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                              pathname === "/organization/dashboard"
-                                ? "bg-white/20 text-white"
-                                : "text-white/80 hover:bg-white/10 hover:text-white"
-                            }`}
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/organization/dashboard"
+                              ? "bg-white/20 text-white"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                              }`}
                           >
                             Dashboard
                           </Link>
                           <Link
                             href="/organization/profile"
                             onClick={() => setMobileNavOpen(false)}
-                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                              pathname === "/organization/profile"
-                                ? "bg-white/20 text-white"
-                                : "text-white/80 hover:bg-white/10 hover:text-white"
-                            }`}
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/organization/profile"
+                              ? "bg-white/20 text-white"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                              }`}
                           >
                             Manage Organization
                           </Link>
@@ -285,11 +283,10 @@ export default function SiteHeader() {
                         <Link
                           href="/admin"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                            pathname === "/admin"
-                              ? "bg-white/20 text-white"
-                              : "text-white/80 hover:bg-white/10 hover:text-white"
-                          }`}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/admin"
+                            ? "bg-white/20 text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }`}
                         >
                           Admin Dashboard
                         </Link>
@@ -303,11 +300,10 @@ export default function SiteHeader() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileNavOpen(false)}
-                      className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                        pathname === link.href
-                          ? "bg-white/20 text-white"
-                          : "text-white/80 hover:bg-white/10 hover:text-white"
-                      }`}
+                      className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === link.href
+                        ? "bg-white/20 text-white"
+                        : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }`}
                     >
                       {link.label}
                     </Link>

@@ -45,8 +45,18 @@ const pillars = [
   },
 ];
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/feed");
+    }
+  }, [user, loading, router]);
 
   return (
     <div className="min-h-screen text-slate-100">

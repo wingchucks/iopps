@@ -9,6 +9,7 @@ interface StatCardProps {
   icon: HeroIcon;
   value: string | number;
   label: string;
+  className?: string;
 }
 
 /**
@@ -16,9 +17,9 @@ interface StatCardProps {
  *
  * Used in dashboard overview for key metrics
  */
-export default function StatCard({ icon: Icon, value, label }: StatCardProps) {
+export default function StatCard({ icon: Icon, value, label, className = "" }: StatCardProps) {
   return (
-    <div className="bg-card border border-card-border p-6 rounded-2xl hover:border-accent/50 transition-all group">
+    <div className={`p-6 rounded-2xl transition-all group ${className || "bg-card border border-card-border hover:border-accent/50"}`}>
       <div className="flex items-center gap-4 mb-2">
         <div className="p-2.5 rounded-xl bg-slate-900/50 text-slate-400 group-hover:text-accent transition-colors">
           <Icon className="w-5 h-5" />

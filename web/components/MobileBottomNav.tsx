@@ -5,23 +5,23 @@ import { usePathname } from "next/navigation";
 import {
     HomeIcon,
     BriefcaseIcon,
-    ShoppingBagIcon,
+    UserGroupIcon,
     CalendarDaysIcon,
     UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
     HomeIcon as HomeIconSolid,
     BriefcaseIcon as BriefcaseIconSolid,
-    ShoppingBagIcon as ShoppingBagIconSolid,
+    UserGroupIcon as UserGroupIconSolid,
     CalendarDaysIcon as CalendarDaysIconSolid,
     UserCircleIcon as UserCircleIconSolid,
 } from "@heroicons/react/24/solid";
 
 const navItems = [
-    { href: "/", label: "Home", Icon: HomeIcon, ActiveIcon: HomeIconSolid },
+    { href: "/feed", label: "Feed", Icon: HomeIcon, ActiveIcon: HomeIconSolid }, // Feed acts as Home
     { href: "/careers", label: "Careers", Icon: BriefcaseIcon, ActiveIcon: BriefcaseIconSolid },
+    { href: "/network", label: "Network", Icon: UserGroupIcon, ActiveIcon: UserGroupIconSolid }, // Swapped Business for Network
     { href: "/community", label: "Events", Icon: CalendarDaysIcon, ActiveIcon: CalendarDaysIconSolid },
-    { href: "/business", label: "Business", Icon: ShoppingBagIcon, ActiveIcon: ShoppingBagIconSolid },
     { href: "/account", label: "Account", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
 ];
 
@@ -46,8 +46,8 @@ export function MobileBottomNav() {
                             key={href}
                             href={href}
                             className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive
-                                    ? "text-accent"
-                                    : "text-slate-400 active:text-slate-200"
+                                ? "text-accent"
+                                : "text-slate-400 active:text-slate-200"
                                 }`}
                         >
                             <IconComponent className="h-6 w-6" />
