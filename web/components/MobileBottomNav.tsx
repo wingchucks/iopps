@@ -4,25 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     HomeIcon,
-    BriefcaseIcon,
-    UserGroupIcon,
-    CalendarDaysIcon,
+    VideoCameraIcon,
+    MapIcon,
     UserCircleIcon,
+    UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import {
     HomeIcon as HomeIconSolid,
-    BriefcaseIcon as BriefcaseIconSolid,
-    UserGroupIcon as UserGroupIconSolid,
-    CalendarDaysIcon as CalendarDaysIconSolid,
+    VideoCameraIcon as VideoCameraIconSolid,
+    MapIcon as MapIconSolid,
     UserCircleIcon as UserCircleIconSolid,
+    UserGroupIcon as UserGroupIconSolid,
 } from "@heroicons/react/24/solid";
 
 const navItems = [
-    { href: "/feed", label: "Feed", Icon: HomeIcon, ActiveIcon: HomeIconSolid }, // Feed acts as Home
-    { href: "/careers", label: "Careers", Icon: BriefcaseIcon, ActiveIcon: BriefcaseIconSolid },
-    { href: "/network", label: "Network", Icon: UserGroupIcon, ActiveIcon: UserGroupIconSolid }, // Swapped Business for Network
-    { href: "/community", label: "Events", Icon: CalendarDaysIcon, ActiveIcon: CalendarDaysIconSolid },
-    { href: "/account", label: "Account", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
+    { href: "/radar", label: "Radar", Icon: HomeIcon, ActiveIcon: HomeIconSolid },
+    { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
+    { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
+    { href: "/passport", label: "Passport", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
+    { href: "/network", label: "Groups", Icon: UserGroupIcon, ActiveIcon: UserGroupIconSolid },
 ];
 
 export function MobileBottomNav() {

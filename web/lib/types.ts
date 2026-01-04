@@ -3,6 +3,25 @@ import type { Timestamp } from "firebase/firestore";
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "pending" | "approved" | "rejected";
 
+export type OpportunityType = 'job' | 'event' | 'scholarship' | 'training';
+
+export interface Opportunity {
+  id: string;
+  type: OpportunityType;
+  title: string;
+  organizationName: string;
+  organizationId: string;
+  location: string;
+  postedAt: Date | Timestamp;
+  deadline?: Date | Timestamp | string;
+  tags: string[];
+  imageUrl?: string;
+  matchScore?: number; // 0-100
+  trcAligned?: boolean;
+  isNew?: boolean; // Added in last 24h
+  originalObject: JobPosting | PowwowEvent | Conference | Scholarship; // Underlying data
+}
+
 // Job Categories
 export const JOB_CATEGORIES = [
   "Technology",
@@ -119,6 +138,13 @@ export type IndustryType =
   | 'transportation'
   | 'other';
 
+export interface TRCAlignment {
+  hasIndigenousHiringStrategy: boolean;
+  leadershipTrainingComplete: boolean;
+  isIndigenousOwned: boolean;
+  commitmentStatement: string; // Max 140 chars
+}
+
 export interface SocialLinks {
   linkedin?: string;
   twitter?: string;
@@ -161,6 +187,8 @@ export interface EmployerProfile {
   capabilities?: OrganizationCapability[];
   // Education Mode settings
   educationSettings?: EducationSettings;
+  // TRC Alignment
+  trcAlignment?: TRCAlignment;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -219,7 +247,9 @@ export interface JobPosting {
   category?: JobCategory;
   locationType?: LocationType;
   applicationMethod?: ApplicationMethod;
+  applicationMethod?: ApplicationMethod;
   featured?: boolean;
+  trcAlignment?: TRCAlignment;
 }
 
 // Conference sub-types

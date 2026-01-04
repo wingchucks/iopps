@@ -1,47 +1,21 @@
 {
-  "name": "IOPPS - Indigenous Jobs",
+  "name": "IOPPS - Indigenous Opportunities",
   "short_name": "IOPPS",
-  "description": "Empowering Indigenous success across Canada through jobs, conferences, scholarships, and more.",
-  "start_url": "/",
-  "scope": "/",
+  "description": "Connect with Indigenous jobs, events, scholarships, and businesses.",
+  "start_url": "/radar",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#0F172A",
-  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#14B8A6",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "/logo.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "categories": ["business", "education", "social"],
-  "screenshots": [],
-  "shortcuts": [
-    {
-      "name": "Browse Jobs",
-      "short_name": "Jobs",
-      "url": "/jobs",
-      "description": "Search Indigenous job opportunities"
-    },
-    {
-      "name": "Conferences",
-      "short_name": "Events",
-      "url": "/conferences",
-      "description": "Discover upcoming Indigenous conferences"
-    },
-    {
-      "name": "Scholarships",
-      "short_name": "Scholarships",
-      "url": "/scholarships",
-      "description": "Find Indigenous scholarships"
+      "type": "image/png"
     }
   ]
 }
