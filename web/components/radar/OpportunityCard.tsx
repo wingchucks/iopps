@@ -11,7 +11,7 @@ interface OpportunityCardProps {
 }
 
 export function OpportunityCard({ opportunity }: OpportunityCardProps) {
-    const { type, title, organizationName, location, postedAt, tags, imageUrl, trcAligned, matchScore } = opportunity;
+    const { type, title, organizationName, location, postedAt, tags, imageUrl, trcAligned, matchScore, salary, connectionCount } = opportunity;
 
     const TypeIcon = {
         job: BriefcaseIcon,
@@ -92,12 +92,34 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
+                    {/* Salary Tag for Jobs */}
+                    {salary && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-teal-400 border border-slate-700 font-mono">
+                            {salary}
+                        </span>
+                    )}
                     {tags.slice(0, 3).map((tag, i) => (
                         <span key={i} className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">
                             {tag}
                         </span>
                     ))}
                 </div>
+
+                {/* Connection Trust Signal */}
+                {connectionCount && connectionCount > 0 && (
+                    <div className="mb-3 flex items-center gap-[-4px]">
+                        <div className="flex -space-x-1.5 overflow-hidden">
+                            {/* Mock Avatars */}
+                            {[...Array(Math.min(3, connectionCount))].map((_, i) => (
+                                <div key={i} className={`inline-block h-4 w-4 rounded-full ring-2 ring-slate-900 ${['bg-orange-400', 'bg-blue-400', 'bg-purple-400'][i % 3]
+                                    }`} />
+                            ))}
+                        </div>
+                        <span className="ml-2 text-[10px] text-teal-500 font-medium">
+                            {connectionCount} {type === 'event' ? 'attending' : 'work here'}
+                        </span>
+                    </div>
+                )}
 
                 {/* Actions / TRC */}
                 <div className="flex items-center justify-between pt-3 border-t border-slate-800">

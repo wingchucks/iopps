@@ -9,6 +9,15 @@ export function RadarFeed() {
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [activeFilter, setActiveFilter] = useState("Hot");
+
+    const filters = [
+        { label: "Hot", icon: "🔥", color: "text-orange-500 bg-orange-500/10 border-orange-500/20" },
+        { label: "Community", icon: "🐮", color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
+        { label: "Opportunities", icon: "💼", color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+        { label: "Wins", icon: "🎉", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+    ];
+
     useEffect(() => {
         async function fetchRadar() {
             // Mocking fetch logic for MVP until firestore/radar export exists
@@ -19,12 +28,14 @@ export function RadarFeed() {
                 {
                     id: "1",
                     type: "job",
-                    title: "Senior React Native Developer",
-                    organizationName: "Tech North Solutions",
+                    title: "Marketing Coordinator",
+                    organizationName: "SaskTel",
                     organizationId: "org1",
-                    location: "Remote / Winnipeg, MB",
+                    location: "Saskatoon, SK",
                     postedAt: new Date(Date.now() - 3600000), // 1 hour ago
-                    tags: ["Tech", "Remote", "Senior"],
+                    tags: ["Full-time", "Marketing"],
+                    salary: "$55k - $65k",
+                    connectionCount: 4,
                     matchScore: 95,
                     trcAligned: true,
                     originalObject: {} as JobPosting,
@@ -32,12 +43,13 @@ export function RadarFeed() {
                 {
                     id: "2",
                     type: "event",
-                    title: "Summer Solstice Pow Wow",
-                    organizationName: "Rolling River First Nation",
+                    title: "Saskatoon Pow Wow 2025",
+                    organizationName: "SaskTel Centre",
                     organizationId: "org2",
-                    location: "Rolling River, MB",
+                    location: "Saskatoon, SK",
                     postedAt: new Date(Date.now() - 86400000), // 1 day ago
                     tags: ["Cultural", "Live Music", "Family"],
+                    connectionCount: 34,
                     matchScore: 88,
                     imageUrl: "https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
                     originalObject: {} as PowwowEvent,
@@ -53,6 +65,20 @@ export function RadarFeed() {
                     tags: ["Education", "Environment", "$5000"],
                     matchScore: 72,
                     originalObject: {} as Scholarship,
+                },
+                {
+                    id: "4",
+                    type: "job",
+                    title: "Project Manager",
+                    organizationName: "Nutrien",
+                    organizationId: "org4",
+                    location: "Saskatoon, SK",
+                    postedAt: new Date(Date.now() - 200000000),
+                    tags: ["Full-time", "Management"],
+                    salary: "$70k - $85k",
+                    connectionCount: 7,
+                    matchScore: 82,
+                    originalObject: {} as JobPosting,
                 }
             ];
 
@@ -74,9 +100,24 @@ export function RadarFeed() {
     return (
         <div className="space-y-4 pb-20">
             {/* Daily Drop Header */}
-            <div className="mb-6">
-                <h2 className="text-xl font-bold text-white mb-2">Daily Drop 💧</h2>
-                <p className="text-slate-400 text-sm">Fresh opportunities selected for you.</p>
+            {/* Daily Drop Header */}
+            <div className="mb-4">
+                {/* Filter Pills */}
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    {filters.map((filter) => (
+                        <button
+                            key={filter.label}
+                            onClick={() => setActiveFilter(filter.label)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${activeFilter === filter.label
+                                ? filter.color + " shadow-lg shadow-black/20"
+                                : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                                }`}
+                        >
+                            <span>{filter.icon}</span>
+                            {filter.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
