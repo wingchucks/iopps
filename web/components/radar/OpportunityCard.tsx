@@ -35,8 +35,8 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         return formatDistanceToNow(d, { addSuffix: true });
     };
 
-    const { user } = useAuth();
-    const isEmployer = user?.role === 'employer';
+    const { user, role } = useAuth();
+    const isEmployer = role === 'employer';
 
     const getDetailLink = () => {
         switch (type) {
