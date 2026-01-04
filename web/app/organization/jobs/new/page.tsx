@@ -45,6 +45,11 @@ function NewJobPageContent() {
     driversLicense: false,
     closingDate: "",
     jobVideoUrl: "",
+    // TRC Fields
+    trcIndigenousHiring: false,
+    trcLeadershipTraining: false,
+    trcIndigenousOwned: false,
+    trcCommitmentStatement: "",
   });
 
   // Load duplicate data from sessionStorage if duplicating
@@ -198,6 +203,12 @@ function NewJobPageContent() {
         closingDate: formData.closingDate,
         quickApplyEnabled: true, // Always enable Quick Apply as the only application method
         ...(jobVideo && { jobVideo }),
+        trcAlignment: {
+          hasIndigenousHiringStrategy: formData.trcIndigenousHiring,
+          leadershipTrainingComplete: formData.trcLeadershipTraining,
+          isIndigenousOwned: formData.trcIndigenousOwned,
+          commitmentStatement: formData.trcCommitmentStatement,
+        }
       };
 
       // Payment Logic (Shared with Wizard)
@@ -212,7 +223,7 @@ function NewJobPageContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => {});
+        }).catch(() => { });
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
         return;
       }
@@ -225,7 +236,7 @@ function NewJobPageContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => {});
+        }).catch(() => { });
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
         return;
       }
@@ -354,6 +365,49 @@ function NewJobPageContent() {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date</label>
                     <input type="date" name="closingDate" value={formData.closingDate} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
                   </div>
+                </div>
+              </div>
+            </section>
+
+            {/* TRC #92 Alignment (New) */}
+            <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="p-2 bg-amber-500/20 rounded-lg text-2xl">🪶</div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-100">Respect & Reconciliation</h2>
+                  <p className="text-sm text-slate-400">
+                    How does your organization align with <a href="https://www.reconciliationeducation.ca/what-are-truth-and-reconciliation-commission-94-calls-to-action" target="_blank" className="text-amber-500 hover:underline">TRC Call to Action #92</a>? (Optional)
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="trcIndigenousHiring" checked={formData.trcIndigenousHiring} onChange={handleChange} className="h-5 w-5 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                    <span className="text-sm text-slate-300">We have an active Indigenous Hiring Strategy</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="trcLeadershipTraining" checked={formData.trcLeadershipTraining} onChange={handleChange} className="h-5 w-5 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                    <span className="text-sm text-slate-300">Leadership team has completed Cultural Safety Training</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="trcIndigenousOwned" checked={formData.trcIndigenousOwned} onChange={handleChange} className="h-5 w-5 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                    <span className="text-sm text-slate-300">We are an Indigenous-Owned Business</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Commitment Statement (Max 140 chars)</label>
+                  <input
+                    name="trcCommitmentStatement"
+                    value={formData.trcCommitmentStatement}
+                    onChange={handleChange}
+                    maxLength={140}
+                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"
+                    placeholder="e.g. We are committed to building meaningful partnerships..."
+                  />
+                  <div className="text-right text-xs text-slate-500 mt-1">{formData.trcCommitmentStatement.length}/140</div>
                 </div>
               </div>
             </section>
@@ -570,7 +624,7 @@ function NewJobPageContent() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

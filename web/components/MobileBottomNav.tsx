@@ -4,25 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     HomeIcon,
-    BriefcaseIcon,
-    ShoppingBagIcon,
-    CalendarDaysIcon,
+    VideoCameraIcon,
+    MapIcon,
     UserCircleIcon,
+    UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import {
     HomeIcon as HomeIconSolid,
-    BriefcaseIcon as BriefcaseIconSolid,
-    ShoppingBagIcon as ShoppingBagIconSolid,
-    CalendarDaysIcon as CalendarDaysIconSolid,
+    VideoCameraIcon as VideoCameraIconSolid,
+    MapIcon as MapIconSolid,
     UserCircleIcon as UserCircleIconSolid,
+    UserGroupIcon as UserGroupIconSolid,
 } from "@heroicons/react/24/solid";
 
 const navItems = [
-    { href: "/", label: "Home", Icon: HomeIcon, ActiveIcon: HomeIconSolid },
-    { href: "/careers", label: "Careers", Icon: BriefcaseIcon, ActiveIcon: BriefcaseIconSolid },
-    { href: "/community", label: "Events", Icon: CalendarDaysIcon, ActiveIcon: CalendarDaysIconSolid },
-    { href: "/business", label: "Business", Icon: ShoppingBagIcon, ActiveIcon: ShoppingBagIconSolid },
-    { href: "/account", label: "Account", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
+    { href: "/radar", label: "Radar", Icon: HomeIcon, ActiveIcon: HomeIconSolid },
+    { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
+    { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
+    { href: "/passport", label: "Passport", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
+    { href: "/network", label: "Groups", Icon: UserGroupIcon, ActiveIcon: UserGroupIconSolid },
 ];
 
 export function MobileBottomNav() {
@@ -46,8 +46,8 @@ export function MobileBottomNav() {
                             key={href}
                             href={href}
                             className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive
-                                    ? "text-accent"
-                                    : "text-slate-400 active:text-slate-200"
+                                ? "text-accent"
+                                : "text-slate-400 active:text-slate-200"
                                 }`}
                         >
                             <IconComponent className="h-6 w-6" />

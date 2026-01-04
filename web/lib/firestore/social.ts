@@ -295,6 +295,21 @@ export async function getSuggestedConnections(userId: string) {
         .filter(m => m.userId !== userId); // Filter self
 }
 
+export async function getSuggestedOrganizations(limitCount: number = 5) {
+    const firestore = getDb();
+    const orgsRef = collection(firestore, "organizations");
+
+    // Simple fetch for now. In reality, filter by user interest or randomness.
+    const q = query(orgsRef, limit(limitCount));
+    const snapshot = await getDocs(q);
+
+    // We assume organization documents exist. 
+    // Types need to be imported or casted. Assuming 'Organization' type exists in types.ts
+    // If not, we return basic data or I should check types.ts
+    // I recall types.ts was viewed earlier.
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
 // ============================================
 // SHARING
 // ============================================
@@ -317,6 +332,55 @@ export async function shareEntity(
         type: entityType,
         visibility: 'public',
         referenceId: entityReferenceId,
-        referenceData: entityData
     });
 }
+
+// ============================================
+// FOLLOWING (Organizations/Mentors)
+// ============================================
+
+export async function followOrganization(userId: string, orgId: string) {
+    const firestore = getDb();
+    // Use a subcollection on the organization for followers
+    // This allows easy counting and checking
+    const followRef = doc(firestore, "organizations", orgId, "followers", userId);
+
+    await setDoc(followRef, {
+        userId,
+        createdAt: serverTimestamp()
+    });
+
+    // Optional: Increment follower count on organization doc (if we have a field for it)
+    const orgRef = doc(firestore, "organizations", orgId);
+    await updateDoc(orgRef, {
+        followersCount: increment(1)
+    }).catch(() => {
+        // Ignore error if specific field doesn't exist yet, or handle gracefully
+        // Ideally we ensure the Organization type has this field
+    });
+
+    return true;
+}
+
+export async function unfollowOrganization(userId: string, orgId: string) {
+    const firestore = getDb();
+    const followRef = doc(firestore, "organizations", orgId, "followers", userId);
+
+    await deleteDoc(followRef);
+
+    // Decrement follower count
+    const orgRef = doc(firestore, "organizations", orgId);
+    await updateDoc(orgRef, {
+        followersCount: increment(-1)
+    }).catch(() => { });
+
+    return true;
+}
+
+export async function getOrganizationFollowStatus(userId: string, orgId: string): Promise<boolean> {
+    const firestore = getDb();
+    const followRef = doc(firestore, "organizations", orgId, "followers", userId);
+    const snap = await getDoc(followRef);
+    return snap.exists();
+}
+

@@ -64,141 +64,56 @@ function EducationContent() {
       </OceanWaveHero>
 
       <PageShell>
-        {/* Four Cards Section */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
-          {/* Find Schools Card */}
-          <Link
-            href="/education/schools"
-            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-          >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-              <span className="text-2xl">🏫</span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Find Schools</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Discover Indigenous-serving institutions and colleges across North America.
-            </p>
-            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-              Browse Schools →
-            </span>
-          </Link>
-
-          {/* Explore Programs Card */}
-          <Link
-            href="/education/programs"
-            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-          >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-              <span className="text-2xl">📚</span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Explore Programs</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Find degrees, certificates, and courses that match your goals.
-            </p>
-            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-              View Programs →
-            </span>
-          </Link>
-
-          {/* Scholarships Card */}
-          <Link
-            href="/education/scholarships"
-            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-          >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-              <span className="text-2xl">🎓</span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Scholarships</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Access funding opportunities specifically for Indigenous students.
-            </p>
-            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-              Find Funding →
-            </span>
-          </Link>
-
-          {/* Events Card */}
-          <Link
-            href="/education/events"
-            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-          >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-              <span className="text-2xl">📅</span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Events</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Open houses, info sessions, and campus tours from schools.
-            </p>
-            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-              View Events →
-            </span>
-          </Link>
+        {/* Tab Pills */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex rounded-full bg-slate-900/50 p-1 border border-slate-800 backdrop-blur-sm">
+            <button className="px-6 py-2 rounded-full text-sm font-semibold bg-[#14B8A6] text-white shadow-lg">
+              Programs
+            </button>
+            <button className="px-6 py-2 rounded-full text-sm font-medium text-slate-400 hover:text-white transition-colors">
+              Schools
+            </button>
+            <button className="px-6 py-2 rounded-full text-sm font-medium text-slate-400 hover:text-white transition-colors">
+              Scholarships
+            </button>
+          </div>
         </div>
 
-        {/* Featured Schools Section */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Featured Schools</h2>
-            <Link
-              href="/education/schools"
-              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
-            >
-              View All Schools →
-            </Link>
-          </div>
+        {/* Scholarship Deadline Alert (Img 0 Style) */}
+        {scholarships.length > 0 && (
+          <div className="mb-8 rounded-2xl bg-gradient-to-r from-amber-500/90 to-orange-500/90 p-5 shadow-lg border border-amber-400/50 relative overflow-hidden group hover:-translate-y-0.5 transition-all">
+            <div className="absolute top-0 right-0 p-3 opacity-10">
+              <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2V8h2v6z" /></svg>
+            </div>
 
-          {loading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-48" />
-              ))}
-            </div>
-          ) : schools.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {schools.map((school) => (
-                <Link
-                  key={school.id}
-                  href={`/education/schools/${school.slug || school.id}`}
-                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
-                      <span className="text-xl">🏫</span>
-                    </div>
-                    {school.verification?.isVerified && (
-                      <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6]">
-                        Verified
-                      </span>
-                    )}
+            <div className="relative flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shadow-inner">
+                  ⚠️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="text-lg font-bold text-white tracking-tight">Scholarship Deadline Soon</h3>
+                    <span className="rounded-md bg-black/20 px-2 py-0.5 text-xs font-bold text-white/90">
+                      Apply Now
+                    </span>
                   </div>
-                  <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
-                    {school.name}
-                  </h3>
-                  <p className="text-sm text-slate-400">
-                    {school.headOffice?.city}, {school.headOffice?.province}
+                  <p className="text-white/90 font-medium">
+                    {scholarships[0].title} • <span className="font-bold">${scholarships[0].amount}</span>
                   </p>
-                </Link>
-              ))}
+                </div>
+              </div>
+              <button className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-              <p className="text-slate-400">Schools coming soon!</p>
-            </div>
-          )}
-        </section>
+          </div>
+        )}
 
         {/* Featured Programs Section */}
         <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Featured Programs</h2>
-            <Link
-              href="/education/programs"
-              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
-            >
-              View All Programs →
-            </Link>
-          </div>
-
           {loading ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
@@ -211,25 +126,64 @@ function EducationContent() {
                 <Link
                   key={program.id}
                   href={`/education/programs/${program.slug || program.id}`}
-                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group relative flex flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:shadow-lg hover:shadow-[#14B8A6]/5"
                 >
+                  {/* Header */}
                   <div className="flex justify-between items-start mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
-                      <span className="text-xl">📚</span>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-2xl group-hover:scale-110 transition-transform duration-300">
+                      🎓
                     </div>
-                    <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 capitalize">
-                      {program.level}
-                    </span>
+                    {/* Connection Signal */}
+                    <div className="flex items-center gap-1.5 rounded-full bg-slate-800/80 px-2.5 py-1 backdrop-blur-sm border border-slate-700">
+                      <div className="flex -space-x-1.5">
+                        {[...Array(2)].map((_, i) => (
+                          <div key={i} className={`inline-block h-4 w-4 rounded-full ring-1 ring-slate-800 ${['bg-emerald-400', 'bg-blue-400'][i % 2]
+                            }`} />
+                        ))}
+                      </div>
+                      <span className="text-[10px] font-medium text-slate-300">8 connections attended</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-[#14B8A6] font-semibold mb-1">
-                    {program.schoolName}
-                  </p>
-                  <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
-                    {program.name}
-                  </h3>
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                    {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
-                    <span className="capitalize">📍 {program.deliveryMethod}</span>
+
+                  {/* Content */}
+                  <div className="mb-4">
+                    <h3 className="font-bold text-xl text-white mb-1 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+                      {program.name}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <span className="font-medium text-slate-300">{program.schoolName}</span>
+                      <span>•</span>
+                      <span>{program.credential || 'Diploma'}</span>
+                      <span>•</span>
+                      <span>{program.duration?.value ? `${program.duration.value} ${program.duration.unit}` : '2 years'}</span>
+                    </div>
+                  </div>
+
+                  {/* Insight Bar (Img 0 "From your Nation") */}
+                  <div className="mt-auto mb-5">
+                    <div className="relative h-9 w-full overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/50">
+                      {/* Progress Fill */}
+                      <div className="absolute top-0 left-0 h-full w-[65%] bg-[#14B8A6]/10" />
+                      <div className="absolute inset-0 flex items-center px-3">
+                        <span className="flex h-2 w-2 rounded-full bg-[#14B8A6] mr-2 shadow-[0_0_8px_rgba(20,184,166,0.5)] animate-pulse" />
+                        <span className="text-xs font-semibold text-[#14B8A6]">
+                          <span className="font-bold text-white">23</span> from your Nation graduated
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between border-t border-slate-800 pt-4 mt-2">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
+                      <svg className="w-4 h-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.013 8.013 0 01-5.626-2.32C4.246 18.765 4.246 12 7.374 5.679A8.013 8.013 0 0113 3c4.418 0 8 3.582 8 9z" />
+                      </svg>
+                      Ask a Student
+                    </div>
+                    <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 transition-transform">
+                      View Program →
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -237,72 +191,6 @@ function EducationContent() {
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
               <p className="text-slate-400">Programs coming soon!</p>
-            </div>
-          )}
-        </section>
-
-        {/* Scholarships Section */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Available Scholarships</h2>
-            <Link
-              href="/education/scholarships"
-              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
-            >
-              View All Scholarships →
-            </Link>
-          </div>
-
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-24" />
-              ))}
-            </div>
-          ) : scholarships.length > 0 ? (
-            <div className="space-y-4">
-              {scholarships.map((scholarship) => (
-                <Link
-                  key={scholarship.id}
-                  href={`/education/scholarships/${scholarship.id}`}
-                  className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
-                >
-                  <div className="flex items-center gap-5">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
-                      <span className="text-2xl">🎓</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
-                          {scholarship.title}
-                        </span>
-                        {scholarship.amount && (
-                          <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6]">
-                            ${scholarship.amount}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-                        <span className="text-[#14B8A6] font-medium">{scholarship.employerName}</span>
-                        {scholarship.deadline && (
-                          <span>📅 Deadline: {new Date(
-                            typeof scholarship.deadline === 'object' && 'seconds' in scholarship.deadline
-                              ? scholarship.deadline.seconds * 1000
-                              : scholarship.deadline
-                          ).toLocaleDateString()}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
-                    Learn More →
-                  </button>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-              <p className="text-slate-400">Scholarships coming soon!</p>
             </div>
           )}
         </section>
