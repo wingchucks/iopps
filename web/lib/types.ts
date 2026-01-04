@@ -24,6 +24,17 @@ export interface Opportunity {
   originalObject: JobPosting | PowwowEvent | Conference | Scholarship; // Underlying data
 }
 
+// ============================================
+// SOCIAL FEED (COMMUNITY CONTENT)
+// ============================================
+
+// Union type for the Unified Feed (Forward declaration)
+export type FeedItem =
+  | { type: 'opportunity'; data: Opportunity }
+  | { type: 'post'; data: Post };
+
+// ============================================
+
 // Job Categories
 export const JOB_CATEGORIES = [
   "Technology",

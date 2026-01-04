@@ -4,6 +4,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { RadarFeed } from "@/components/radar/RadarFeed";
+import CreatePostFab from "@/components/radar/CreatePostFab";
 
 export default function RadarPage() {
     const { user, loading } = useAuth();
@@ -30,6 +31,7 @@ export default function RadarPage() {
             </div>
 
             <RadarFeed />
+            <CreatePostFab />
         </div>
     );
 }
