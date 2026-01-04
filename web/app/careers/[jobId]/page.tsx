@@ -38,35 +38,67 @@ function serializeForClient(obj: any): any {
   return obj;
 }
 
+// Helper to convert timestamp to Date for expiration check
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a job has expired
+function isJobExpired(job: any): boolean {
+  const now = new Date();
+
+  const closingDate = toDate(job.closingDate);
+  if (closingDate && closingDate < now) return true;
+
+  const expiresAt = toDate(job.expiresAt);
+  if (expiresAt && expiresAt < now) return true;
+
+  return false;
+}
+
 // Fetch job data server-side
-async function getJobData(jobId: string): Promise<any | null> {
+async function getJobData(jobId: string): Promise<{ data: any | null; expired: boolean }> {
   try {
     if (!db) {
       console.error("Firebase Admin not initialized");
-      return null;
+      return { data: null, expired: false };
     }
     const docRef = db.collection("jobs").doc(jobId);
     const docSnap = await docRef.get();
-    if (!docSnap.exists) return null;
+    if (!docSnap.exists) return { data: null, expired: false };
 
     const data = docSnap.data();
+
+    // Check if job is inactive or expired
+    if (data?.active === false || isJobExpired(data)) {
+      return { data: null, expired: true };
+    }
+
     // Serialize the entire object to make it safe for client components
-    return serializeForClient({ id: docSnap.id, ...data });
+    return { data: serializeForClient({ id: docSnap.id, ...data }), expired: false };
   } catch (error) {
     console.error("Error fetching job:", error);
-    return null;
+    return { data: null, expired: false };
   }
 }
 
 // Generate dynamic metadata for social sharing
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { jobId } = await params;
-  const job = await getJobData(jobId);
+  const { data: job, expired } = await getJobData(jobId);
 
   if (!job) {
     return {
-      title: "Job Not Found | IOPPS",
-      description: "This job posting could not be found.",
+      title: expired ? "Job Expired | IOPPS" : "Job Not Found | IOPPS",
+      description: expired
+        ? "This job posting has expired or is no longer accepting applications."
+        : "This job posting could not be found.",
     };
   }
 
@@ -118,12 +150,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function JobDetailPage({ params }: PageProps) {
   const { jobId } = await params;
-  const job = await getJobData(jobId);
+  const { data: job, expired } = await getJobData(jobId);
 
   return (
     <JobDetailClient
       job={job as JobPosting | null}
-      error={!job ? "Job not found" : undefined}
+      error={!job ? (expired ? "This job posting has expired" : "Job not found") : undefined}
     />
   );
 }

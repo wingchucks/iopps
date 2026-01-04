@@ -40,6 +40,7 @@ export {
   toggleSavedJob,
   listSavedJobs,
   listSavedJobIds,
+  isJobExpired,
 } from "./jobs";
 
 // Applications
@@ -72,6 +73,7 @@ export {
   listSavedConferences,
   listSavedConferenceIds,
   createConferenceRegistration,
+  isConferenceExpired,
 } from "./conferences";
 export type { SavedConference } from "./conferences";
 
@@ -93,6 +95,7 @@ export {
   listUpcomingDeadlineScholarships,
   listScholarshipsForProgram,
   createExtendedScholarship,
+  isScholarshipExpired,
 } from "./scholarships";
 export type { ExtendedScholarshipInput } from "./scholarships";
 
@@ -107,6 +110,7 @@ export {
   createPowwowRegistration,
   listMemberPowwowRegistrations,
   listPowwowRegistrants,
+  isPowwowExpired,
 } from "./powwows";
 
 // Vendors
@@ -201,6 +205,7 @@ export {
   unsaveTrainingProgram,
   isTrainingSaved,
   listSavedTraining,
+  isTrainingProgramExpired,
 } from "./training";
 export type { ListTrainingProgramsOptions } from "./training";
 

@@ -69,18 +69,56 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
   }, [user, role]);
 
   if (error || !job) {
+    const isExpired = error?.toLowerCase().includes("expired");
     return (
       <PageShell>
         <div className="mx-auto max-w-4xl py-12 text-center">
+          <div className="inline-flex items-center justify-center rounded-full bg-slate-800 p-6 mb-6">
+            <svg
+              className="h-12 w-12 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {isExpired ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              )}
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-slate-200">
-            {error || "Job not found"}
+            {isExpired ? "Job No Longer Available" : "Job Not Found"}
           </h1>
-          <Link
-            href="/jobs-training/jobs"
-            className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
-          >
-            Back to Jobs
-          </Link>
+          <p className="mt-3 text-slate-400 max-w-md mx-auto">
+            {isExpired
+              ? "This job posting has expired or is no longer accepting applications. Check out other opportunities below."
+              : "Sorry, we couldn't find the job you're looking for. It may have been removed or the link is incorrect."}
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+            <Link
+              href="/careers/jobs"
+              className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+            >
+              Browse All Jobs
+            </Link>
+            <Link
+              href="/careers"
+              className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+            >
+              Back to Careers
+            </Link>
+          </div>
         </div>
       </PageShell>
     );

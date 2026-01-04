@@ -20,6 +20,25 @@ import {
 import type { Conference, ConferenceRegistration } from "@/lib/types";
 import { MOCK_CONFERENCES } from "../mockData";
 
+// Helper to convert various timestamp formats to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a conference has ended based on endDate
+export function isConferenceExpired(conference: Conference): boolean {
+  const now = new Date();
+  const endDate = toDate(conference.endDate);
+  if (endDate && endDate < now) return true;
+  return false;
+}
+
 type ConferenceInput = Omit<
   Conference,
   "id" | "createdAt" | "active" | "employerId"
@@ -38,16 +57,27 @@ export async function createConference(input: ConferenceInput): Promise<string> 
   return docRef.id;
 }
 
-export async function listConferences(): Promise<Conference[]> {
+export async function listConferences(options: { includeExpired?: boolean } = {}): Promise<Conference[]> {
   try {
     const firestore = checkFirebase();
     if (!firestore) {
-      return MOCK_CONFERENCES;
+      let conferences = [...MOCK_CONFERENCES];
+      if (!options.includeExpired) {
+        conferences = conferences.filter(c => c.active !== false && !isConferenceExpired(c));
+      }
+      return conferences;
     }
     const ref = collection(firestore, conferencesCollection);
-    const q = query(ref, orderBy("startDate", "asc"));
+    const q = query(ref, where("active", "==", true), orderBy("startDate", "asc"));
     const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => docSnap.data() as Conference);
+    let conferences = snap.docs.map((docSnap) => docSnap.data() as Conference);
+
+    // Client-side filtering for expired conferences (safety net)
+    if (!options.includeExpired) {
+      conferences = conferences.filter(c => !isConferenceExpired(c));
+    }
+
+    return conferences;
   } catch {
     return [];
   }

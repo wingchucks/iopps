@@ -26,6 +26,30 @@ import {
 import type { JobPosting, SavedJob, JobVideo } from "@/lib/types";
 import { MOCK_JOBS } from "../mockData";
 
+// Helper to convert various timestamp formats to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a job has expired based on closingDate or expiresAt
+export function isJobExpired(job: JobPosting): boolean {
+  const now = new Date();
+
+  const closingDate = toDate(job.closingDate);
+  if (closingDate && closingDate < now) return true;
+
+  const expiresAt = toDate(job.expiresAt);
+  if (expiresAt && expiresAt < now) return true;
+
+  return false;
+}
+
 type JobInput = Omit<
   JobPosting,
   "id" | "createdAt" | "active" | "employerId"
@@ -81,7 +105,7 @@ export async function listJobPostingsPaginated(
       let jobs = [...MOCK_JOBS];
 
       if (filters.activeOnly !== false) {
-        jobs = jobs.filter(j => j.active);
+        jobs = jobs.filter(j => j.active && !isJobExpired(j));
       }
       if (filters.employmentType) {
         jobs = jobs.filter(j => j.employmentType === filters.employmentType);
@@ -127,13 +151,18 @@ export async function listJobPostingsPaginated(
     const docs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
     const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
 
-    const jobs = docs.map((docSnapshot) => {
+    let jobs = docs.map((docSnapshot) => {
       const data = docSnapshot.data() as JobPosting;
       return {
         ...data,
         id: docSnapshot.id,
       };
     });
+
+    // Client-side filtering for expired jobs (safety net for jobs not yet processed by cron)
+    if (filters.activeOnly !== false) {
+      jobs = jobs.filter((job) => !isJobExpired(job));
+    }
 
     return { jobs, lastDoc, hasMore };
   } catch {
