@@ -1,6 +1,7 @@
 "use client";
 
 import { Opportunity } from "@/lib/types";
+import { useAuth } from "@/components/AuthProvider";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,11 +35,25 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         return formatDistanceToNow(d, { addSuffix: true });
     };
 
+    const { user } = useAuth();
+    const isEmployer = user?.role === 'employer';
+
+    const getDetailLink = () => {
+        switch (type) {
+            case 'job': return `/careers/${opportunity.id}`;
+            case 'scholarship': return `/education/scholarships/${opportunity.id}`;
+            case 'event': return `/conferences/${opportunity.id}`; // or /events
+            default: return '#';
+        }
+    };
+
     return (
         <div className="group relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all active:scale-[0.98]">
-            {/* Match Score Badge (if high) */}
-            {matchScore && matchScore > 80 && (
-                <div className="absolute top-3 right-3 z-10">
+            <Link href={getDetailLink()} className="absolute inset-0 z-0" />
+
+            {/* Match Score Badge (Only for Community Members) */}
+            {!isEmployer && matchScore && matchScore > 80 && (
+                <div className="absolute top-3 right-3 z-10 pointer-events-none">
                     <div className="flex items-center gap-1 rounded-full bg-emerald-500/20 backdrop-blur-md px-2 py-0.5 border border-emerald-500/30">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span className="text-[10px] font-bold text-emerald-300">{matchScore}% Match</span>
@@ -53,7 +68,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
 
                     {/* Type Badge on Image */}
-                    <div className="absolute bottom-3 left-3">
+                    <div className="absolute bottom-3 left-3 z-10">
                         <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium border backdrop-blur-md shadow-sm ${typeColor}`}>
                             <TypeIcon className="h-3 w-3" />
                             {typeLabel}
@@ -61,7 +76,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
                     </div>
                 </div>
             ) : (
-                <div className="p-4 pb-0 flex items-start justify-between">
+                <div className="p-4 pb-0 flex items-start justify-between relative z-10">
                     <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium border ${typeColor}`}>
                         <TypeIcon className="h-3 w-3" />
                         {typeLabel}
@@ -71,7 +86,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
             )}
 
             {/* Content */}
-            <div className="p-4 pt-3">
+            <div className="p-4 pt-3 relative z-10 pointer-events-none">
                 {imageUrl && (
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-slate-400">{organizationName}</span>
@@ -105,8 +120,8 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
                     ))}
                 </div>
 
-                {/* Connection Trust Signal */}
-                {connectionCount && connectionCount > 0 && (
+                {/* Connection Trust Signal (Only for Community) */}
+                {!isEmployer && connectionCount && connectionCount > 0 && (
                     <div className="mb-3 flex items-center gap-[-4px]">
                         <div className="flex -space-x-1.5 overflow-hidden">
                             {/* Mock Avatars */}
@@ -132,9 +147,10 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
                         )}
                     </div>
 
-                    <button className="text-sm font-semibold text-teal-400 hover:text-teal-300">
-                        View Details →
-                    </button>
+                    <span className={`text-sm font-semibold hover:underline pointer-events-auto z-20 ${isEmployer ? 'text-slate-400' : 'text-teal-400 hover:text-teal-300'
+                        }`}>
+                        {isEmployer ? 'View Market Intel' : 'View Details →'}
+                    </span>
                 </div>
             </div>
         </div>

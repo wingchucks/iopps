@@ -273,6 +273,19 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
                   </Link>
                 </div>
               </div>
+            ) : role === 'employer' ? (
+              <div className="mt-8 rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-800">
+                  <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-200">Employer View</h3>
+                <p className="mt-2 text-slate-400">
+                  You are viewing this content as an Organization. <br />
+                  Switch to a personal "Community Member" account to apply.
+                </p>
+              </div>
             ) : (
               <div className="mt-8 rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8 text-center">
                 <p className="text-slate-400">
