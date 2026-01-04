@@ -80,7 +80,7 @@ export default function JobAlertsTab() {
 
         try {
             setProcessing(true);
-            const newAlert = await createJobAlert({
+            const alertData = {
                 memberId: user.uid,
                 alertName: alertName || undefined,
                 keyword: keyword || undefined,
@@ -90,7 +90,16 @@ export default function JobAlertsTab() {
                 indigenousOnly: indigenousOnly || undefined,
                 frequency,
                 active: true,
-            });
+            };
+            const newAlertId = await createJobAlert(alertData);
+
+            // Construct the alert object for local state
+            const newAlert: JobAlert = {
+                id: newAlertId,
+                ...alertData,
+                createdAt: null,
+                updatedAt: null,
+            };
 
             setAlerts([newAlert, ...alerts]);
             resetForm();
