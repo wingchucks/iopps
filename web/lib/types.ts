@@ -19,6 +19,8 @@ export interface Opportunity {
   matchScore?: number; // 0-100
   trcAligned?: boolean;
   isNew?: boolean; // Added in last 24h
+  salary?: string; // e.g. "$55k - $65k"
+  connectionCount?: number; // e.g. 4 connections work here
   originalObject: JobPosting | PowwowEvent | Conference | Scholarship; // Underlying data
 }
 
