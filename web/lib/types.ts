@@ -247,7 +247,7 @@ export interface JobPosting {
   category?: JobCategory;
   locationType?: LocationType;
   applicationMethod?: ApplicationMethod;
-  applicationMethod?: ApplicationMethod;
+
   featured?: boolean;
   trcAlignment?: TRCAlignment;
 }
