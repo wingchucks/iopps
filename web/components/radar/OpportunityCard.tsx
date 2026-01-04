@@ -28,6 +28,12 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         training: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     }[type];
 
+    const formattedDate = (date: any) => {
+        if (!date) return "";
+        const d = date.toDate ? date.toDate() : new Date(date);
+        return formatDistanceToNow(d, { addSuffix: true });
+    };
+
     return (
         <div className="group relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all active:scale-[0.98]">
             {/* Match Score Badge (if high) */}
@@ -60,7 +66,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
                         <TypeIcon className="h-3 w-3" />
                         {typeLabel}
                     </span>
-                    <span className="text-xs text-slate-500">{formatDistanceToNow(postedAt, { addSuffix: true })}</span>
+                    <span className="text-xs text-slate-500">{formattedDate(postedAt)}</span>
                 </div>
             )}
 
@@ -69,7 +75,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
                 {imageUrl && (
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-slate-400">{organizationName}</span>
-                        <span className="text-xs text-slate-500">{formatDistanceToNow(postedAt, { addSuffix: true })}</span>
+                        <span className="text-xs text-slate-500">{formattedDate(postedAt)}</span>
                     </div>
                 )}
                 {!imageUrl && (
