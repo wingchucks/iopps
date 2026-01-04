@@ -13,17 +13,47 @@ interface PowwowDetailClientProps {
 
 export default function PowwowDetailClient({ powwow, error }: PowwowDetailClientProps) {
   if (error || !powwow) {
+    const isEnded = error?.toLowerCase().includes("ended");
     return (
       <PageShell>
         <div className="mx-auto max-w-4xl py-12 text-center">
+          <div className="inline-flex items-center justify-center rounded-full bg-slate-800 p-6 mb-6">
+            <svg
+              className="h-12 w-12 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              {isEnded ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              )}
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-slate-200">
-            {error || "Event not found"}
+            {isEnded ? "Event Has Ended" : "Event Not Found"}
           </h1>
+          <p className="mt-3 text-slate-400 max-w-md mx-auto">
+            {isEnded
+              ? "This pow wow or cultural event has concluded. Check out other upcoming events below."
+              : "Sorry, we couldn't find the event you're looking for. It may have been removed."}
+          </p>
           <Link
             href="/community"
             className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
-            Back to Pow Wows & Events
+            Browse Upcoming Events
           </Link>
         </div>
       </PageShell>

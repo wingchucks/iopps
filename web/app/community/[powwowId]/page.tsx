@@ -20,36 +20,54 @@ function toDate(timestamp: any): Date | null {
   return null;
 }
 
+// Check if a pow wow has ended based on endDate
+function isPowwowExpired(powwow: any): boolean {
+  const now = new Date();
+  const endDate = toDate(powwow.endDate);
+  if (endDate && endDate < now) return true;
+  return false;
+}
+
 interface PageProps {
   params: Promise<{ powwowId: string }>;
 }
 
 // Fetch pow wow data server-side
-async function getPowwowData(powwowId: string): Promise<PowwowEvent | null> {
+async function getPowwowData(powwowId: string): Promise<{ data: PowwowEvent | null; expired: boolean }> {
   try {
     if (!db) {
       console.error("Firebase Admin not initialized");
-      return null;
+      return { data: null, expired: false };
     }
     const docRef = db.collection("powwows").doc(powwowId);
     const docSnap = await docRef.get();
-    if (!docSnap.exists) return null;
-    return { id: docSnap.id, ...docSnap.data() } as PowwowEvent;
+    if (!docSnap.exists) return { data: null, expired: false };
+
+    const data = { id: docSnap.id, ...docSnap.data() } as PowwowEvent;
+
+    // Check if pow wow is inactive or has ended
+    if (data.active === false || isPowwowExpired(data)) {
+      return { data: null, expired: true };
+    }
+
+    return { data, expired: false };
   } catch (error) {
     console.error("Error fetching pow wow:", error);
-    return null;
+    return { data: null, expired: false };
   }
 }
 
 // Generate dynamic metadata for social sharing
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { powwowId } = await params;
-  const powwow = await getPowwowData(powwowId);
+  const { data: powwow, expired } = await getPowwowData(powwowId);
 
   if (!powwow) {
     return {
-      title: "Event Not Found | IOPPS",
-      description: "This event could not be found.",
+      title: expired ? "Event Has Ended | IOPPS" : "Event Not Found | IOPPS",
+      description: expired
+        ? "This pow wow or cultural event has ended."
+        : "This event could not be found.",
     };
   }
 
@@ -110,7 +128,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PowwowDetailPage({ params }: PageProps) {
   const { powwowId } = await params;
-  const powwow = await getPowwowData(powwowId);
+  const { data: powwow, expired } = await getPowwowData(powwowId);
 
   // Serialize Firestore Timestamps for client component
   const serializedPowwow = powwow
@@ -159,7 +177,7 @@ export default async function PowwowDetailPage({ params }: PageProps) {
       )}
       <PowwowDetailClient
         powwow={serializedPowwow as PowwowEvent | null}
-        error={!powwow ? "Event not found" : undefined}
+        error={!powwow ? (expired ? "This event has ended" : "Event not found") : undefined}
       />
     </>
   );

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { useAuth } from "@/components/AuthProvider";
-import { getConference, toggleSavedConference, listSavedConferenceIds } from "@/lib/firestore";
+import { getConference, toggleSavedConference, listSavedConferenceIds, isConferenceExpired } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import {
   ConferenceHero,
@@ -31,7 +31,12 @@ export default function ConferenceDetailPage() {
       try {
         const data = await getConference(conferenceId);
         if (data) {
-          setConference(data);
+          // Check if conference is inactive or has ended
+          if (data.active === false || isConferenceExpired(data)) {
+            setError("This conference has ended");
+          } else {
+            setConference(data);
+          }
         } else {
           setError("Conference not found");
         }
@@ -106,6 +111,7 @@ export default function ConferenceDetailPage() {
   }
 
   if (error || !conference) {
+    const isEnded = error?.toLowerCase().includes("ended");
     return (
       <PageShell>
         <div className="mx-auto max-w-4xl py-12 text-center">
@@ -116,18 +122,29 @@ export default function ConferenceDetailPage() {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
+              {isEnded ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              )}
             </svg>
             <h1 className="mt-6 text-2xl font-bold text-slate-200">
-              {error || "Conference not found"}
+              {isEnded ? "Conference Has Ended" : "Conference Not Found"}
             </h1>
             <p className="mt-2 text-slate-400">
-              The conference you're looking for might have ended or been removed.
+              {isEnded
+                ? "This conference has concluded. Check out upcoming conferences below."
+                : "The conference you're looking for might have been removed."}
             </p>
             <Link
               href="/conferences"
@@ -146,7 +163,7 @@ export default function ConferenceDetailPage() {
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
-              Browse All Conferences
+              Browse Upcoming Conferences
             </Link>
           </div>
         </div>

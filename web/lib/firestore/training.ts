@@ -25,6 +25,29 @@ import type {
   SavedTraining,
 } from "@/lib/types";
 
+// Helper to convert various timestamp formats to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a training program has ended (respects 'ongoing' flag)
+export function isTrainingProgramExpired(program: TrainingProgram): boolean {
+  // Ongoing programs never expire based on end date
+  if (program.ongoing) return false;
+
+  const now = new Date();
+  const endDate = toDate(program.endDate);
+  if (endDate && endDate < now) return true;
+
+  return false;
+}
+
 // ============================================
 // TRAINING PROGRAMS
 // ============================================
@@ -86,10 +109,18 @@ export async function listTrainingPrograms(
   const q = query(colRef, ...constraints);
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => ({
+  let programs = snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   })) as TrainingProgram[];
+
+  // Client-side filtering for expired programs (safety net)
+  // Only filter out expired programs when not viewing organization-specific listings
+  if (options.activeOnly !== false && !options.organizationId) {
+    programs = programs.filter(p => !isTrainingProgramExpired(p));
+  }
+
+  return programs;
 }
 
 /**

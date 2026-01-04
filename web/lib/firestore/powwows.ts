@@ -18,6 +18,25 @@ import {
 } from "./shared";
 import type { PowwowEvent, PowwowRegistration } from "@/lib/types";
 
+// Helper to convert various timestamp formats to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a pow wow has ended based on endDate
+export function isPowwowExpired(powwow: PowwowEvent): boolean {
+  const now = new Date();
+  const endDate = toDate(powwow.endDate);
+  if (endDate && endDate < now) return true;
+  return false;
+}
+
 type PowwowInput = Omit<
   PowwowEvent,
   "id" | "createdAt" | "active"
@@ -38,16 +57,23 @@ export async function createPowwowEvent(
   return docRef.id;
 }
 
-export async function listPowwowEvents(): Promise<PowwowEvent[]> {
+export async function listPowwowEvents(options: { includeExpired?: boolean } = {}): Promise<PowwowEvent[]> {
   try {
     const firestore = checkFirebase();
     if (!firestore) {
       return [];
     }
     const ref = collection(firestore, powwowsCollection);
-    const q = query(ref, orderBy("createdAt", "desc"));
+    const q = query(ref, where("active", "==", true), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => docSnap.data() as PowwowEvent);
+    let powwows = snap.docs.map((docSnap) => docSnap.data() as PowwowEvent);
+
+    // Client-side filtering for expired pow wows (safety net)
+    if (!options.includeExpired) {
+      powwows = powwows.filter(p => !isPowwowExpired(p));
+    }
+
+    return powwows;
   } catch {
     return [];
   }
