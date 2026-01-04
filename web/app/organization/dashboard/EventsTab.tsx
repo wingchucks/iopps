@@ -23,10 +23,81 @@ import {
   VideoCameraIcon,
   BuildingOfficeIcon,
   FireIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 
 type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
+type DateStatus = "ended" | "happening" | "upcoming";
+
+// Helper to convert Firestore Timestamp to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === "object" && "_seconds" in timestamp) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  if (typeof timestamp === "object" && "seconds" in timestamp) {
+    return new Date(timestamp.seconds * 1000);
+  }
+  if (timestamp.toDate && typeof timestamp.toDate === "function") {
+    return timestamp.toDate();
+  }
+  if (typeof timestamp === "string") {
+    return new Date(timestamp);
+  }
+  return null;
+}
+
+// Determine the date-based status of an event
+function getEventDateStatus(startDate: any, endDate: any): DateStatus | null {
+  const now = new Date();
+  const start = toDate(startDate);
+  const end = toDate(endDate);
+
+  // If we have an end date, use it to determine if event has ended
+  if (end) {
+    if (end < now) return "ended";
+    if (start && start <= now && end >= now) return "happening";
+    if (start && start > now) return "upcoming";
+    // If only end date and it's in the future
+    if (!start && end >= now) return "upcoming";
+  }
+
+  // If we only have a start date
+  if (start) {
+    // Assume event lasts one day if no end date
+    const eventEndOfDay = new Date(start);
+    eventEndOfDay.setHours(23, 59, 59, 999);
+
+    if (eventEndOfDay < now) return "ended";
+    if (start <= now && eventEndOfDay >= now) return "happening";
+    if (start > now) return "upcoming";
+  }
+
+  return null;
+}
+
+// Get display configuration for date status
+function getDateStatusDisplay(status: DateStatus): { label: string; className: string } {
+  switch (status) {
+    case "ended":
+      return {
+        label: "Ended",
+        className: "bg-slate-600/20 text-slate-400",
+      };
+    case "happening":
+      return {
+        label: "Happening Now",
+        className: "bg-amber-500/20 text-amber-400 animate-pulse",
+      };
+    case "upcoming":
+      return {
+        label: "Upcoming",
+        className: "bg-blue-500/20 text-blue-400",
+      };
+  }
+}
 
 export default function EventsTab() {
   const { user } = useAuth();
@@ -297,6 +368,20 @@ export default function EventsTab() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Date-based status badge */}
+                      {(() => {
+                        const dateStatus = getEventDateStatus(event.startDate, event.endDate);
+                        if (dateStatus) {
+                          const display = getDateStatusDisplay(dateStatus);
+                          return (
+                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${display.className}`}>
+                              {display.label}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                      {/* Active/Inactive status badge */}
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${
                           event.active !== false
@@ -304,7 +389,7 @@ export default function EventsTab() {
                             : "bg-slate-700 text-slate-400"
                         }`}
                       >
-                        {event.active !== false ? "Active" : "Inactive"}
+                        {event.active !== false ? "Active" : "Paused"}
                       </span>
                     </div>
                   </div>
@@ -401,6 +486,20 @@ export default function EventsTab() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Date-based status badge */}
+                      {(() => {
+                        const dateStatus = getEventDateStatus(conf.startDate, conf.endDate);
+                        if (dateStatus) {
+                          const display = getDateStatusDisplay(dateStatus);
+                          return (
+                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${display.className}`}>
+                              {display.label}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                      {/* Active/Inactive status badge */}
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${
                           conf.active !== false
@@ -408,7 +507,7 @@ export default function EventsTab() {
                             : "bg-slate-700 text-slate-400"
                         }`}
                       >
-                        {conf.active !== false ? "Active" : "Inactive"}
+                        {conf.active !== false ? "Active" : "Paused"}
                       </span>
                     </div>
                   </div>
