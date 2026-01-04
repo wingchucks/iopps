@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
-import { getActiveVendors } from '@/lib/firebase/shop';
+import { getActiveVendors, getFeaturedVendors } from '@/lib/firebase/shop';
 import { listServices } from '@/lib/firestore';
 import type { Vendor, Service, NorthAmericanRegion } from '@/lib/types';
 import { NORTH_AMERICAN_REGIONS } from '@/lib/types';
@@ -59,10 +59,17 @@ export default function BusinessDirectoryPage() {
 
       // Load vendors (products)
       if (businessType === 'all' || businessType === 'products') {
-        const vendors = await getActiveVendors({
+        let vendors = await getActiveVendors({
           region: region || undefined,
           search: search || undefined,
         });
+
+        // Fallback to featured vendors if no active vendors found and no filters applied
+        if (vendors.length === 0 && !region && !search) {
+          const featuredVendors = await getFeaturedVendors(20);
+          vendors = featuredVendors;
+        }
+
         vendors.forEach((vendor: Vendor) => {
           results.push({
             id: vendor.id,
