@@ -5,7 +5,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { BriefcaseIcon, AcademicCapIcon, CalendarDaysIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
+import { BriefcaseIcon, AcademicCapIcon, CalendarDaysIcon, VideoCameraIcon, BuildingStorefrontIcon } from "@heroicons/react/24/outline";
 
 interface OpportunityCardProps {
     opportunity: Opportunity;
@@ -19,6 +19,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         scholarship: AcademicCapIcon,
         event: CalendarDaysIcon,
         training: VideoCameraIcon,
+        business: BuildingStorefrontIcon,
     }[type] || BriefcaseIcon;
 
     const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
@@ -27,6 +28,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         scholarship: "text-purple-400 bg-purple-500/10 border-purple-500/20",
         event: "text-amber-400 bg-amber-500/10 border-amber-500/20",
         training: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+        business: "text-pink-400 bg-pink-500/10 border-pink-500/20",
     }[type];
 
     const formattedDate = (date: any) => {

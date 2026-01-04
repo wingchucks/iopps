@@ -3,7 +3,7 @@ import type { Timestamp } from "firebase/firestore";
 export type UserRole = "community" | "employer" | "moderator" | "admin";
 export type EmployerStatus = "pending" | "approved" | "rejected";
 
-export type OpportunityType = 'job' | 'event' | 'scholarship' | 'training';
+export type OpportunityType = 'job' | 'event' | 'scholarship' | 'training' | 'business';
 
 export interface Opportunity {
   id: string;

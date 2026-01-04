@@ -25,21 +25,51 @@ export function RadarFeed() {
 
             // Placeholder data generation
             const mockOpportunities: Opportunity[] = [
+                // JOBS
                 {
                     id: "1",
                     type: "job",
-                    title: "Marketing Coordinator",
+                    title: "Senior Project Manager",
                     organizationName: "SaskTel",
                     organizationId: "org1",
                     location: "Saskatoon, SK",
                     postedAt: new Date(Date.now() - 3600000), // 1 hour ago
-                    tags: ["Full-time", "Marketing"],
-                    salary: "$55k - $65k",
+                    tags: ["Full-time", "Management", "100% Remote"],
+                    salary: "$85k - $110k",
                     connectionCount: 4,
-                    matchScore: 95,
+                    matchScore: 98,
                     trcAligned: true,
                     originalObject: {} as JobPosting,
                 },
+                {
+                    id: "4",
+                    type: "job",
+                    title: "Community Engagement Lead",
+                    organizationName: "Nutrien",
+                    organizationId: "org4",
+                    location: "Saskatoon, SK",
+                    postedAt: new Date(Date.now() - 7200000), // 2 hours ago
+                    tags: ["Community", "Relations"],
+                    salary: "$75k - $90k",
+                    connectionCount: 12,
+                    matchScore: 85,
+                    originalObject: {} as JobPosting,
+                },
+                {
+                    id: "j3",
+                    type: "job",
+                    title: "Frontend Developer (React)",
+                    organizationName: "Vendasta",
+                    organizationId: "org7",
+                    location: "Saskatoon, SK",
+                    postedAt: new Date(Date.now() - 86400000 * 2),
+                    tags: ["Tech", "Remote Hybrid"],
+                    salary: "$70k - $95k",
+                    matchScore: 60,
+                    originalObject: {} as JobPosting,
+                },
+
+                // EVENTS
                 {
                     id: "2",
                     type: "event",
@@ -47,13 +77,29 @@ export function RadarFeed() {
                     organizationName: "SaskTel Centre",
                     organizationId: "org2",
                     location: "Saskatoon, SK",
-                    postedAt: new Date(Date.now() - 86400000), // 1 day ago
+                    postedAt: new Date(Date.now() - 86400000),
                     tags: ["Cultural", "Live Music", "Family"],
                     connectionCount: 34,
-                    matchScore: 88,
+                    matchScore: 92,
                     imageUrl: "https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
                     originalObject: {} as PowwowEvent,
                 },
+                {
+                    id: "e2",
+                    type: "event",
+                    title: "Indigenous Tech Summit",
+                    organizationName: "First Nations Tech Council",
+                    organizationId: "org9",
+                    location: "Vancouver, BC",
+                    postedAt: new Date(Date.now() - 86400000 * 4),
+                    tags: ["Tech", "Networking", "Innovation"],
+                    connectionCount: 8,
+                    matchScore: 78,
+                    imageUrl: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+                    originalObject: {} as PowwowEvent,
+                },
+
+                // EDUCATION
                 {
                     id: "3",
                     type: "scholarship",
@@ -61,25 +107,64 @@ export function RadarFeed() {
                     organizationName: "Clean Energy Canada",
                     organizationId: "org3",
                     location: "National",
-                    postedAt: new Date(Date.now() - 172800000), // 2 days ago
+                    postedAt: new Date(Date.now() - 172800000),
                     tags: ["Education", "Environment", "$5000"],
                     matchScore: 72,
                     originalObject: {} as Scholarship,
                 },
                 {
-                    id: "4",
-                    type: "job",
-                    title: "Project Manager",
-                    organizationName: "Nutrien",
-                    organizationId: "org4",
-                    location: "Saskatoon, SK",
-                    postedAt: new Date(Date.now() - 200000000),
-                    tags: ["Full-time", "Management"],
-                    salary: "$70k - $85k",
-                    connectionCount: 7,
-                    matchScore: 82,
-                    originalObject: {} as JobPosting,
-                }
+                    id: "s2",
+                    type: "scholarship",
+                    title: "MBA Indigenous Leadership Award",
+                    organizationName: "Edwards School of Business",
+                    organizationId: "org5",
+                    location: "University of Saskatchewan",
+                    postedAt: new Date(Date.now() - 86400000 * 5),
+                    tags: ["Masters", "Business", "$15,000"],
+                    matchScore: 45,
+                    originalObject: {} as Scholarship,
+                },
+
+                // TRAINING
+                {
+                    id: "t1",
+                    type: "training",
+                    title: "Intro to Python Programming",
+                    organizationName: "ComIT",
+                    organizationId: "org6",
+                    location: "Online",
+                    postedAt: new Date(Date.now() - 86400000 * 1),
+                    tags: ["Free", "Coding", "Beginner"],
+                    matchScore: 88,
+                    imageUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+                } as any, // casting as any temporarily for training type
+
+                // BUSINESS 
+                {
+                    id: "b1",
+                    type: "business",
+                    title: "Birch & Bear Co.",
+                    organizationName: "Clothing & Apparel",
+                    organizationId: "org8",
+                    location: "Winnipeg, MB",
+                    postedAt: new Date(Date.now() - 86400000 * 3),
+                    tags: ["Indigenous Owned", "Retail", "Sustainable"],
+                    matchScore: 99,
+                    imageUrl: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60",
+                    originalObject: {} as any,
+                },
+                {
+                    id: "b2",
+                    type: "business",
+                    title: "Red River Consulting",
+                    organizationName: "Professional Services",
+                    organizationId: "org10",
+                    location: "Remote / National",
+                    postedAt: new Date(Date.now() - 86400000 * 6),
+                    tags: ["Consulting", "Strategy", "HR"],
+                    matchScore: 75,
+                    originalObject: {} as any,
+                },
             ];
 
             setOpportunities(mockOpportunities);
@@ -105,7 +190,7 @@ export function RadarFeed() {
         if (activeTab === "All") return true;
         if (activeTab === "Careers") return opp.type === "job";
         if (activeTab === "Education") return opp.type === "scholarship" || opp.type === "training";
-        if (activeTab === "Business") return false; // No mock business items yet
+        if (activeTab === "Business") return opp.type === "business";
         if (activeTab === "Events") return opp.type === "event";
         return true;
     });
@@ -120,8 +205,8 @@ export function RadarFeed() {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab
-                                    ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-teal-500/20"
-                                    : "bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700"
+                                ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-teal-500/20"
+                                : "bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700"
                                 }`}
                         >
                             {tab}

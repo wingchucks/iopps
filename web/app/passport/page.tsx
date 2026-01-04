@@ -4,6 +4,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import OverviewTab, { ApplicationWithJob } from "../member/dashboard/OverviewTab";
+import MemberProfileView from "../member/dashboard/MemberProfileView";
 import {
     getMemberProfile,
     listMemberApplications,
@@ -110,7 +111,7 @@ export default function PassportPage() {
                 <p className="text-slate-400">Your career journey and tools.</p>
             </div>
 
-            <OverviewTab
+            {/* <OverviewTab
                 profile={profile}
                 profileCompletion={profileCompletion}
                 stats={recentStats}
@@ -122,7 +123,8 @@ export default function PassportPage() {
                     else if (tab === 'profile') router.push('/member/dashboard?tab=profile');
                     else console.log("Navigate to", tab);
                 }}
-            />
+            /> */}
+            <MemberProfileView profile={profile} />
         </div>
     );
 }
