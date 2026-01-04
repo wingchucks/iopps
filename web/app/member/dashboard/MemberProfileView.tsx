@@ -14,7 +14,7 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
     const displayProfile = {
         displayName: profile?.displayName || "Sarah Bear",
         indigenousAffiliation: profile?.indigenousAffiliation || "Nehiyaw / Cree",
-        headline: profile?.headline || "Project Manager & Community Builder",
+        headline: profile?.tagline || "Project Manager & Community Builder",
         photoURL: profile?.photoURL || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
         location: profile?.location || "Saskatoon, SK",
         level: 5,
@@ -122,7 +122,7 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
                         <div key={item.id} className="relative">
                             {/* Timeline Node */}
                             <div className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-900 shadow-xl ${item.type === 'win' ? 'bg-amber-500 text-white' :
-                                    item.type === 'milestone' ? 'bg-teal-500 text-white' : 'bg-slate-700 text-slate-300'
+                                item.type === 'milestone' ? 'bg-teal-500 text-white' : 'bg-slate-700 text-slate-300'
                                 }`}>
                                 {item.type === 'win' && <TrophyIcon className="h-3 w-3" />}
                                 {item.type === 'milestone' && <CheckCircleIcon className="h-3 w-3" />}
