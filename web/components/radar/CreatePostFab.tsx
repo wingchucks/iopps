@@ -3,9 +3,19 @@
 import { useState } from "react";
 import { PlusIcon, PencilSquareIcon, TrophyIcon, QuestionMarkCircleIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { AnimatePresence, motion } from "framer-motion";
+import CelebrateWinModal from "./CelebrateWinModal";
 
 export default function CreatePostFab() {
+    // State for the FAB menu (open/closed)
     const [isOpen, setIsOpen] = useState(false);
+
+    // State for which modal is active
+    const [activeModal, setActiveModal] = useState<string | null>(null);
+
+    const handleSelect = (id: string) => {
+        setIsOpen(false);
+        setActiveModal(id);
+    };
 
     // Menu items with their specific styling/icons
     const menuItems = [
@@ -58,7 +68,7 @@ export default function CreatePostFab() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 20, scale: 0.8 }}
                                     transition={{ duration: 0.2, delay: item.delay }}
-                                    onClick={() => console.log(`Selected: ${item.id}`)}
+                                    onClick={() => handleSelect(item.id)}
                                     className="group flex items-center gap-3 pr-1"
                                 >
                                     <span className="rounded-lg bg-slate-800/90 px-3 py-1.5 text-sm font-semibold text-white shadow-lg backdrop-blur sm:block">
@@ -89,6 +99,11 @@ export default function CreatePostFab() {
                     )}
                 </motion.button>
             </div>
+
+            <CelebrateWinModal
+                isOpen={activeModal === 'win'}
+                onClose={() => setActiveModal(null)}
+            />
         </div>
     );
 }
