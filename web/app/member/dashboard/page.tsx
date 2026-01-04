@@ -41,8 +41,9 @@ export default function MemberDashboard() {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
 
-  // Check if user is a community member - must be explicitly "community" role
-  const isCommunityMember = role === "community";
+  // Check if user is a community member - anyone who is NOT employer/admin/moderator
+  // This aligns with the SiteHeader logic for showing "My Dashboard" link
+  const isCommunityMember = role !== null && role !== "employer" && role !== "admin" && role !== "moderator";
 
   // Load all data
   useEffect(() => {

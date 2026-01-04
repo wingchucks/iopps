@@ -15,6 +15,9 @@ export default function ScholarshipDetailPage() {
   const scholarshipId = params.scholarshipId as string;
   const { user, role } = useAuth();
 
+  // Check if user is a community member (not employer/admin/moderator)
+  const isCommunityMember = role !== null && role !== "employer" && role !== "admin" && role !== "moderator";
+
   const [scholarship, setScholarship] = useState<Scholarship | null>(null);
   const [memberProfile, setMemberProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +51,7 @@ export default function ScholarshipDetailPage() {
   // Load member profile for community members
   useEffect(() => {
     const loadProfile = async () => {
-      if (user && role === "community") {
+      if (user && isCommunityMember) {
         try {
           const profile = await getMemberProfile(user.uid);
           if (profile) {
@@ -60,11 +63,11 @@ export default function ScholarshipDetailPage() {
       }
     };
     loadProfile();
-  }, [user, role]);
+  }, [user, isCommunityMember]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || role !== "community" || !scholarship) return;
+    if (!user || !isCommunityMember || !scholarship) return;
 
     setSubmitting(true);
     setError(null);
@@ -230,7 +233,7 @@ export default function ScholarshipDetailPage() {
         </div>
 
         {/* Application Section */}
-        {role === "community" && user ? (
+        {isCommunityMember && user ? (
           <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
             <h2 className="text-xl font-bold text-slate-200">
               Apply for this {scholarship.type}
