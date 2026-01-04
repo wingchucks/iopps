@@ -91,8 +91,8 @@ function EmployerDashboardContent() {
           ))}
         </div>
 
-        {/* Tab Content */}
-        <div className="min-h-[600px]">
+        {/* Tab Content - key ensures React properly unmounts/remounts components on tab change */}
+        <div className="min-h-[600px]" key={activeTab}>
           {activeTab === "overview" && <OverviewTab />}
           {activeTab === "careers" && <CareersTab />}
           {activeTab === "education" && <EducationTab />}
