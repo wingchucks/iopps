@@ -51,10 +51,13 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
     }
   }, [job?.id]);
 
+  // Check if user is a community member (not employer/admin/moderator)
+  const isCommunityMember = role !== null && role !== "employer" && role !== "admin" && role !== "moderator";
+
   // Load member profile for community members
   useEffect(() => {
     const loadProfile = async () => {
-      if (user && role === "community") {
+      if (user && isCommunityMember) {
         try {
           const profile = await getMemberProfile(user.uid);
           if (profile) {
@@ -66,7 +69,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
       }
     };
     loadProfile();
-  }, [user, role]);
+  }, [user, isCommunityMember]);
 
   if (error || !job) {
     const isExpired = error?.toLowerCase().includes("expired");
@@ -226,7 +229,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             )}
 
             {/* Application Section */}
-            {role === "community" && user ? (
+            {isCommunityMember && user ? (
               <div className="mt-8 rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8" id="apply">
                 <h2 className="text-xl font-bold text-slate-200 text-center mb-6">
                   Apply for this position
