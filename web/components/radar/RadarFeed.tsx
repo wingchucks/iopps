@@ -97,38 +97,72 @@ export function RadarFeed() {
         );
     }
 
+    const [activeTab, setActiveTab] = useState("All");
+
+    const tabs = ["All", "Careers", "Education", "Business", "Events"];
+
+    const filteredOpportunities = opportunities.filter(opp => {
+        if (activeTab === "All") return true;
+        if (activeTab === "Careers") return opp.type === "job";
+        if (activeTab === "Education") return opp.type === "scholarship" || opp.type === "training";
+        if (activeTab === "Business") return false; // No mock business items yet
+        if (activeTab === "Events") return opp.type === "event";
+        return true;
+    });
+
     return (
         <div className="space-y-4 pb-20">
-            {/* Daily Drop Header */}
-            {/* Daily Drop Header */}
-            <div className="mb-4">
-                {/* Filter Pills */}
-                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                    {filters.map((filter) => (
+            {/* Sticky Header with Tabs */}
+            <div className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md pt-2 pb-2 -mx-4 px-4 border-b border-slate-800/50">
+                <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                    {tabs.map((tab) => (
                         <button
-                            key={filter.label}
-                            onClick={() => setActiveFilter(filter.label)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${activeFilter === filter.label
-                                ? filter.color + " shadow-lg shadow-black/20"
-                                : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab
+                                    ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-teal-500/20"
+                                    : "bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700"
                                 }`}
                         >
-                            <span>{filter.icon}</span>
-                            {filter.label}
+                            {tab}
                         </button>
                     ))}
                 </div>
+
+                {/* Secondary Filter Pills (optional, kept as per user pref) */}
+                {activeTab === 'All' && (
+                    <div className="flex gap-2 overflow-x-auto pb-1 mt-2 no-scrollbar">
+                        {filters.map((filter) => (
+                            <button
+                                key={filter.label}
+                                onClick={() => setActiveFilter(filter.label)}
+                                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${activeFilter === filter.label
+                                    ? filter.color + " shadow-lg shadow-black/20"
+                                    : "bg-slate-900/50 text-slate-500 border border-slate-800/50"
+                                    }`}
+                            >
+                                <span>{filter.icon}</span>
+                                {filter.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-                {opportunities.map((opp) => (
-                    <OpportunityCard key={opp.id} opportunity={opp} />
-                ))}
+                {filteredOpportunities.length > 0 ? (
+                    filteredOpportunities.map((opp) => (
+                        <OpportunityCard key={opp.id} opportunity={opp} />
+                    ))
+                ) : (
+                    <div className="text-center py-12">
+                        <p className="text-slate-500">No {activeTab.toLowerCase()} items found yet.</p>
+                    </div>
+                )}
             </div>
 
             <div className="text-center py-8">
                 <p className="text-slate-500 text-sm">That's all for now.</p>
-                <button className="mt-2 text-teal-400 text-sm font-medium">Refine Tags</button>
             </div>
         </div>
     );
