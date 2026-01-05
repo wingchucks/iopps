@@ -9,8 +9,6 @@ import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
-  { href: "/feed", label: "Feed" },
-  { href: "/network", label: "Network" },
   { href: "/careers", label: "Careers" },
   { href: "/education", label: "Education" },
   { href: "/business", label: "Business" },
