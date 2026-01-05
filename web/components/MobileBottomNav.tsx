@@ -3,26 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-    HomeIcon,
+
     VideoCameraIcon,
     MapIcon,
     UserCircleIcon,
-    UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import {
-    HomeIcon as HomeIconSolid,
     VideoCameraIcon as VideoCameraIconSolid,
     MapIcon as MapIconSolid,
     UserCircleIcon as UserCircleIconSolid,
-    UserGroupIcon as UserGroupIconSolid,
 } from "@heroicons/react/24/solid";
 
 const navItems = [
-    { href: "/radar", label: "Radar", Icon: HomeIcon, ActiveIcon: HomeIconSolid },
     { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
     { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
     { href: "/passport", label: "Passport", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
-    { href: "/network", label: "Groups", Icon: UserGroupIcon, ActiveIcon: UserGroupIconSolid },
 ];
 
 export function MobileBottomNav() {
