@@ -3,8 +3,8 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import OverviewTab, { ApplicationWithJob } from "../member/dashboard/OverviewTab";
-import MemberProfileView from "../member/dashboard/MemberProfileView";
+import OverviewTab, { ApplicationWithJob } from "@/app/member/dashboard/OverviewTab";
+import MemberProfileView from "@/app/member/dashboard/MemberProfileView";
 import {
     getMemberProfile,
     listMemberApplications,
