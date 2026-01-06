@@ -100,7 +100,7 @@ function EmployerDashboardContent() {
           {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "messages" && <MessagesTab />}
           {activeTab === "videos" && <VideosTab />}
-          {activeTab === "business" && <BusinessTab />}
+          {activeTab === "business" && <BusinessTab onNavigate={(section) => setActiveTab(section as TabType)} />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab mode="employer" />}
         </div>

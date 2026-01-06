@@ -24,7 +24,11 @@ import ShopTab from "./ShopTab";
 
 type BusinessType = "shop" | "services" | "funding";
 
-export default function BusinessTab() {
+interface BusinessTabProps {
+  onNavigate?: (tab: string) => void;
+}
+
+export default function BusinessTab({ onNavigate }: BusinessTabProps) {
   const { user } = useAuth();
   const [businessType, setBusinessType] = useState<BusinessType>("shop");
   const [services, setServices] = useState<Service[]>([]);
@@ -134,7 +138,7 @@ export default function BusinessTab() {
         </div>
 
         {/* Render existing ShopTab */}
-        <ShopTab />
+        <ShopTab onNavigate={onNavigate} />
       </div>
     );
   }
