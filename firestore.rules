@@ -246,7 +246,7 @@ service cloud.firestore {
       // Restrict creation to employers (or admins), must set their own employerId
       allow create: if (isEmployer() && request.resource.data.employerId == request.auth.uid) || isAdminOrModerator();
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
-      allow delete: if isAdminOrModerator();
+      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
     
     // ===========================================================================
@@ -259,7 +259,7 @@ service cloud.firestore {
       // Vendors can only create listings for themselves (vendorId must match their userId)
       allow create: if isSignedIn() && request.resource.data.vendorId == request.auth.uid;
       allow update: if isOwner(resource.data.vendorId) || isAdminOrModerator();
-      allow delete: if isAdminOrModerator();
+      allow delete: if isOwner(resource.data.vendorId) || isAdminOrModerator();
     }
 
     // ===========================================================================
@@ -408,7 +408,7 @@ service cloud.firestore {
       // Only employers can create live streams (must be owner)
       allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
-      allow delete: if isAdminOrModerator();
+      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
     
     // ===========================================================================

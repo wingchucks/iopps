@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -27,6 +28,7 @@ function NewJobPageContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [aiGenerating, setAiGenerating] = useState(false);
 
   // Form Data
@@ -127,11 +129,71 @@ function NewJobPageContent() {
   // Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    // Clear validation error when field is edited
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
     if (type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Validation
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Job Title validation
+    if (!formData.title.trim()) {
+      errors.title = "Job title is required";
+    } else if (formData.title.trim().length < 3) {
+      errors.title = "Job title must be at least 3 characters";
+    } else if (formData.title.trim().length > 100) {
+      errors.title = "Job title must be less than 100 characters";
+    } else if (/https?:\/\//i.test(formData.title)) {
+      errors.title = "Job title cannot contain URLs";
+    } else if (formData.title === formData.title.toUpperCase() && formData.title.length > 10) {
+      errors.title = "Please avoid using all capital letters";
+    }
+
+    // Location validation
+    if (!formData.location.trim()) {
+      errors.location = "Location is required";
+    } else if (formData.location.trim().length < 2) {
+      errors.location = "Please enter a valid location";
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      errors.description = "Job description is required";
+    } else if (formData.description.trim().length < 50) {
+      errors.description = `Description must be at least 50 characters (currently ${formData.description.trim().length})`;
+    }
+
+    // Closing Date validation
+    if (!formData.closingDate) {
+      errors.closingDate = "Closing date is required";
+    } else {
+      const closingDate = new Date(formData.closingDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (closingDate < today) {
+        errors.closingDate = "Closing date must be in the future";
+      }
+    }
+
+    // Employment type validation (should always be set but double-check)
+    if (!formData.employmentType) {
+      errors.employmentType = "Employment type is required";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const generateWithAI = async () => {
@@ -166,6 +228,18 @@ function NewJobPageContent() {
 
   const handlePostJob = async (productType: "SINGLE" | "FEATURED" | "SUBSCRIPTION" | "FREE_POSTING") => {
     if (!user) return;
+
+    // Validate form before submission
+    if (!validateForm()) {
+      setError("Please fix the errors below before posting.");
+      // Scroll to first error
+      const firstErrorField = document.querySelector('[data-error="true"]');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -340,14 +414,16 @@ function NewJobPageContent() {
             <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Core Details</h2>
               <div className="space-y-4">
-                <div>
+                <div data-error={!!validationErrors.title}>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Job Title *</label>
-                  <input name="title" value={formData.title} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="e.g. Community Coordinator" />
+                  <input name="title" value={formData.title} onChange={handleChange} className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-slate-100 focus:outline-none ${validationErrors.title ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`} placeholder="e.g. Community Coordinator" />
+                  {validationErrors.title && <p className="mt-1 text-sm text-red-400">{validationErrors.title}</p>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div data-error={!!validationErrors.location}>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
-                    <input name="location" value={formData.location} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="City, Prov" />
+                    <input name="location" value={formData.location} onChange={handleChange} className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-slate-100 focus:outline-none ${validationErrors.location ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`} placeholder="City, Prov" />
+                    {validationErrors.location && <p className="mt-1 text-sm text-red-400">{validationErrors.location}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Employment Type</label>
@@ -361,9 +437,25 @@ function NewJobPageContent() {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Salary Range</label>
                     <input name="salaryRange" value={formData.salaryRange} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="e.g. $50k - $70k" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date</label>
-                    <input type="date" name="closingDate" value={formData.closingDate} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
+                  <div data-error={!!validationErrors.closingDate}>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date *</label>
+                    <DatePicker
+                      value={formData.closingDate}
+                      onChange={(date) => {
+                        if (validationErrors.closingDate) {
+                          setValidationErrors(prev => {
+                            const updated = { ...prev };
+                            delete updated.closingDate;
+                            return updated;
+                          });
+                        }
+                        setFormData(prev => ({ ...prev, closingDate: date }));
+                      }}
+                      placeholder="Select closing date"
+                      minDate={new Date()}
+                      error={!!validationErrors.closingDate}
+                    />
+                    {validationErrors.closingDate && <p className="mt-1 text-sm text-red-400">{validationErrors.closingDate}</p>}
                   </div>
                 </div>
               </div>
@@ -421,9 +513,10 @@ function NewJobPageContent() {
                 </button>
               </div>
               <div className="space-y-4">
-                <div>
+                <div data-error={!!validationErrors.description}>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Job Description *</label>
-                  <textarea name="description" rows={6} value={formData.description} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="Role overview..." />
+                  <textarea name="description" rows={6} value={formData.description} onChange={handleChange} className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-slate-100 focus:outline-none ${validationErrors.description ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`} placeholder="Role overview..." />
+                  {validationErrors.description && <p className="mt-1 text-sm text-red-400">{validationErrors.description}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Responsibilities (One per line)</label>
@@ -509,14 +602,16 @@ function NewJobPageContent() {
                   <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
                     {submitting ? "Posting..." : "Post Free (Admin)"}
                   </button>
-                ) : subscription && subscription.remainingCredits > 0 ? (
+                ) : subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0) ? (
                   <>
                     <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
                       <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
-                      <div className="text-xs text-slate-400">1 Credit will be deducted</div>
+                      <div className="text-xs text-slate-400">
+                        {subscription.unlimitedPosts ? "Unlimited job postings" : "1 Credit will be deducted"}
+                      </div>
                     </div>
                     <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
-                      {submitting ? "Posting..." : "Post using Credit"}
+                      {submitting ? "Posting..." : subscription.unlimitedPosts ? "Post Job" : "Post using Credit"}
                     </button>
                   </>
                 ) : (
