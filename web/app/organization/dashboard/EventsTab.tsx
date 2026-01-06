@@ -177,12 +177,29 @@ export default function EventsTab() {
     if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
       return;
     }
+    if (!user) return;
+
     try {
-      await deletePowwow(eventId);
+      // Use server-side API to delete (bypasses Firestore rules)
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/events/powwow/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ powwowId: eventId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete pow wow");
+      }
+
       await loadData();
     } catch (err) {
       console.error("Error deleting event:", err);
-      alert("Failed to delete event");
+      alert(err instanceof Error ? err.message : "Failed to delete event");
     }
   };
 
