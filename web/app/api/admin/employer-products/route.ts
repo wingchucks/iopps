@@ -200,18 +200,48 @@ export async function POST(req: NextRequest) {
     const productsRef = db!.collection("employers").doc(employerId).collection("products");
     const docRef = await productsRef.add(productData);
 
-    // Update employer's freePostingEnabled for backward compatibility
+    // Update employer profile for backward compatibility with UI
+    const employerUpdates: Record<string, unknown> = {
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    // Set freePostingEnabled for admin grants
     if (
       paymentMethod === "free_grant" &&
       (config.category === "job" || config.category === "subscription")
     ) {
-      await db!.collection("employers").doc(employerId).update({
-        freePostingEnabled: true,
-        freePostingReason: grantReason || "Admin granted product",
-        freePostingGrantedAt: FieldValue.serverTimestamp(),
-        freePostingGrantedBy: authResult.adminId,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      employerUpdates.freePostingEnabled = true;
+      employerUpdates.freePostingReason = grantReason || "Admin granted product";
+      employerUpdates.freePostingGrantedAt = FieldValue.serverTimestamp();
+      employerUpdates.freePostingGrantedBy = authResult.adminId;
+    }
+
+    // For subscription products (TIER1, TIER2), populate the subscription field
+    // This ensures the job posting page and subscription page properly recognize
+    // the employer as having an active subscription
+    if (config.category === "subscription") {
+      const isUnlimited = productType === "TIER2";
+      const jobCredits = isUnlimited ? 999999 : (stats.jobsRemaining as number || 15);
+      const featuredCredits = stats.featuredJobsRemaining as number || (isUnlimited ? 5 : 15);
+
+      employerUpdates.subscription = {
+        active: true,
+        tier: productType,
+        purchasedAt: Timestamp.fromDate(activatedDate),
+        expiresAt: Timestamp.fromDate(expiresDate),
+        paymentId: stripePaymentId || `admin-grant-${docRef.id}`,
+        amountPaid: productData.paidAmount,
+        jobCredits: jobCredits,
+        jobCreditsUsed: 0,
+        featuredJobCredits: featuredCredits,
+        featuredJobCreditsUsed: 0,
+        unlimitedPosts: isUnlimited,
+      };
+    }
+
+    // Apply updates to employer document
+    if (Object.keys(employerUpdates).length > 1) {
+      await db!.collection("employers").doc(employerId).update(employerUpdates);
     }
 
     // Create audit log

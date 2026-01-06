@@ -509,14 +509,16 @@ function NewJobPageContent() {
                   <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
                     {submitting ? "Posting..." : "Post Free (Admin)"}
                   </button>
-                ) : subscription && subscription.remainingCredits > 0 ? (
+                ) : subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0) ? (
                   <>
                     <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
                       <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
-                      <div className="text-xs text-slate-400">1 Credit will be deducted</div>
+                      <div className="text-xs text-slate-400">
+                        {subscription.unlimitedPosts ? "Unlimited job postings" : "1 Credit will be deducted"}
+                      </div>
                     </div>
                     <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
-                      {submitting ? "Posting..." : "Post using Credit"}
+                      {submitting ? "Posting..." : subscription.unlimitedPosts ? "Post Job" : "Post using Credit"}
                     </button>
                   </>
                 ) : (
