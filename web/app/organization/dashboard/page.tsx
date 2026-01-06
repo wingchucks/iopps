@@ -93,7 +93,7 @@ function EmployerDashboardContent() {
 
         {/* Tab Content - key ensures React properly unmounts/remounts components on tab change */}
         <div className="min-h-[600px]" key={activeTab}>
-          {activeTab === "overview" && <OverviewTab />}
+          {activeTab === "overview" && <OverviewTab onNavigate={(section) => setActiveTab(section as TabType)} />}
           {activeTab === "careers" && <CareersTab />}
           {activeTab === "education" && <EducationTab />}
           {activeTab === "events" && <EventsTab />}
