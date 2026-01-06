@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -363,7 +364,12 @@ function NewJobPageContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date</label>
-                    <input type="date" name="closingDate" value={formData.closingDate} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
+                    <DatePicker
+                      value={formData.closingDate}
+                      onChange={(date) => setFormData(prev => ({ ...prev, closingDate: date }))}
+                      placeholder="Select closing date"
+                      minDate={new Date()}
+                    />
                   </div>
                 </div>
               </div>
