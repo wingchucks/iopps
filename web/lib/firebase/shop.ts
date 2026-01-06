@@ -9,6 +9,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -63,8 +64,10 @@ export async function createVendor(
     updatedAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(collection(db, VENDORS_COLLECTION), vendor);
-  return docRef.id;
+  // Use setDoc with userId as document ID to match Firestore security rules
+  // which require vendorId == request.auth.uid for create operations
+  await setDoc(doc(db, VENDORS_COLLECTION, userId), vendor);
+  return userId;
 }
 
 export async function getVendor(vendorId: string): Promise<Vendor | null> {
@@ -507,6 +510,8 @@ export async function createDraftVendorForEmployer(
     updatedAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(collection(db, VENDORS_COLLECTION), vendor);
-  return docRef.id;
+  // Use setDoc with userId as document ID to match Firestore security rules
+  // which require vendorId == request.auth.uid for create operations
+  await setDoc(doc(db, VENDORS_COLLECTION, userId), vendor);
+  return userId;
 }
