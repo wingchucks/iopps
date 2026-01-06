@@ -24,6 +24,7 @@ interface DatePickerProps {
   minDate?: Date;
   className?: string;
   name?: string;
+  error?: boolean;
 }
 
 export function DatePicker({
@@ -33,6 +34,7 @@ export function DatePicker({
   minDate,
   className = "",
   name,
+  error = false,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(
@@ -136,7 +138,7 @@ export function DatePicker({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-left text-slate-100 focus:border-[#14B8A6] focus:outline-none flex items-center justify-between"
+        className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-left text-slate-100 focus:outline-none flex items-center justify-between ${error ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`}
       >
         <span className={selectedDate ? "text-slate-100" : "text-slate-500"}>
           {selectedDate ? format(selectedDate, "MMMM d, yyyy") : placeholder}
