@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   format,
   startOfMonth,
@@ -92,7 +92,7 @@ export function DatePicker({
     const startDate = startOfWeek(monthStart);
     const endDate = endOfWeek(monthEnd);
 
-    const days: JSX.Element[] = [];
+    const days: React.ReactElement[] = [];
     let day = startDate;
 
     while (day <= endDate) {
