@@ -55,12 +55,26 @@ export async function getEmployerProfile(
     if (!firestore) {
       return MOCK_EMPLOYERS.find(e => e.userId === userId || e.id === userId) || MOCK_EMPLOYERS[0];
     }
+
+    // First try: look up by document ID (the normal case where doc ID = userId)
     const ref = doc(firestore, employerCollection, userId);
     const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      return null;
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as EmployerProfile;
     }
-    return snap.data() as EmployerProfile;
+
+    // Second try: query by userId field (handles cases where doc ID differs from userId)
+    const q = query(
+      collection(firestore, employerCollection),
+      where("userId", "==", userId)
+    );
+    const querySnap = await getDocs(q);
+    if (!querySnap.empty) {
+      const docSnap = querySnap.docs[0];
+      return { id: docSnap.id, ...docSnap.data() } as EmployerProfile;
+    }
+
+    return null;
   } catch {
     return null;
   }

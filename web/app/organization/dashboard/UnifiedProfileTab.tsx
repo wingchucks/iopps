@@ -16,9 +16,6 @@ import {
   upsertEmployerProfile,
   updateEmployerLogo,
   updateEmployerBanner,
-  addEmployerInterview,
-  updateEmployerInterview,
-  deleteEmployerInterview,
 } from '@/lib/firestore';
 import {
   getVendorByUserId,
@@ -28,7 +25,7 @@ import {
 import { uploadProfileImage, uploadCoverImage } from '@/lib/firebase/storage';
 import { storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import type { EmployerProfile, Interview, IndustryType, Vendor, VendorCategory, NorthAmericanRegion } from '@/lib/types';
+import type { EmployerProfile, IndustryType, Vendor, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 import ProfileCompletenessScore from '@/components/ProfileCompletenessScore';
 import type { DashboardMode, DashboardSection } from '@/components/organization/dashboard';
@@ -47,9 +44,9 @@ interface UnifiedProfileTabProps {
  * - Contact & Social (email, phone, website, social links)
  * - Employer Settings (industry) - collapsed in vendor mode
  * - Vendor Settings (category, shipping) - collapsed in employer mode
- * - Interview Videos (employer mode only)
  *
  * Saves to BOTH employers and vendors collections to maintain sync
+ * Note: Interview/video management is handled in the Videos tab
  */
 export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
   const { user } = useAuth();
@@ -81,7 +78,6 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
 
   // Employer-specific fields
   const [industry, setIndustry] = useState<IndustryType | ''>('');
-  const [interviews, setInterviews] = useState<Interview[]>([]);
 
   // Vendor-specific fields
   const [vendorCategory, setVendorCategory] = useState<VendorCategory>('Art & Crafts');
@@ -92,14 +88,6 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-
-  // Interview modal state
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
-  const [interviewTitle, setInterviewTitle] = useState('');
-  const [interviewVideoUrl, setInterviewVideoUrl] = useState('');
-  const [interviewDescription, setInterviewDescription] = useState('');
-  const [interviewProvider, setInterviewProvider] = useState<'youtube' | 'vimeo' | 'custom'>('youtube');
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
@@ -126,7 +114,6 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
         setBannerUrl(employerData.bannerUrl || vendorData?.coverImageUrl || '');
         setContactEmail(employerData.contactEmail || vendorData?.email || '');
         setIndustry(employerData.industry || '');
-        setInterviews(employerData.interviews || []);
       }
 
       if (vendorData) {
@@ -305,66 +292,6 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
       alert('Failed to upload cover image. Please try again.');
     } finally {
       setUploadingBanner(false);
-    }
-  };
-
-  // Interview handlers
-  const openInterviewModal = (interview?: Interview) => {
-    if (interview) {
-      setEditingInterview(interview);
-      setInterviewTitle(interview.title || '');
-      setInterviewVideoUrl(interview.videoUrl || '');
-      setInterviewDescription(interview.description || '');
-      setInterviewProvider(interview.videoProvider || 'youtube');
-    } else {
-      setEditingInterview(null);
-      setInterviewTitle('');
-      setInterviewVideoUrl('');
-      setInterviewDescription('');
-      setInterviewProvider('youtube');
-    }
-    setShowInterviewModal(true);
-  };
-
-  const closeInterviewModal = () => {
-    setShowInterviewModal(false);
-    setEditingInterview(null);
-  };
-
-  const handleSaveInterview = async () => {
-    if (!user) return;
-    try {
-      if (editingInterview) {
-        await updateEmployerInterview(user.uid, editingInterview.id, {
-          title: interviewTitle,
-          videoUrl: interviewVideoUrl,
-          description: interviewDescription,
-          videoProvider: interviewProvider,
-        });
-      } else {
-        await addEmployerInterview(user.uid, {
-          title: interviewTitle,
-          videoUrl: interviewVideoUrl,
-          description: interviewDescription,
-          videoProvider: interviewProvider,
-        });
-      }
-      await loadData();
-      closeInterviewModal();
-    } catch (err) {
-      console.error('Error saving interview:', err);
-      alert('Failed to save interview');
-    }
-  };
-
-  const handleDeleteInterview = async (interviewId: string) => {
-    if (!user || !confirm('Are you sure you want to delete this interview?')) return;
-    try {
-      await deleteEmployerInterview(user.uid, interviewId);
-      await loadData();
-    } catch (err) {
-      console.error('Error deleting interview:', err);
-      alert('Failed to delete interview');
     }
   };
 
@@ -840,159 +767,6 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
           </button>
         </div>
       </form>
-
-      {/* Interview Videos Section (Employer mode) */}
-      {mode === 'employer' && (
-        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white">Interview Videos</h3>
-              <p className="mt-1 text-sm text-slate-400">
-                Showcase your organization culture with video interviews
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => openInterviewModal()}
-              className="rounded-xl bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-300 hover:bg-blue-500/30 transition-colors"
-            >
-              + Add Interview
-            </button>
-          </div>
-
-          {interviews.length === 0 ? (
-            <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-              <p className="text-slate-400">
-                No interview videos yet. Add videos to showcase your organization.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {interviews.map((interview) => (
-                <div
-                  key={interview.id}
-                  className="rounded-xl border border-slate-700 bg-slate-900/50 p-6"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-white">
-                        {interview.title || 'Untitled Interview'}
-                      </h4>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {interview.videoProvider} • {interview.viewsCount || 0} views
-                      </p>
-                      {interview.description && (
-                        <p className="mt-2 text-sm text-slate-300">{interview.description}</p>
-                      )}
-                      <a
-                        href={interview.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex text-sm text-blue-400 hover:text-blue-300"
-                      >
-                        Watch video →
-                      </a>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openInterviewModal(interview)}
-                        className="rounded-lg bg-blue-500/20 px-3 py-2 text-sm font-semibold text-blue-300 hover:bg-blue-500/30"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteInterview(interview.id)}
-                        className="rounded-lg bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/30"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Interview Modal */}
-      {showInterviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 p-8 shadow-2xl">
-            <h3 className="mb-6 text-2xl font-bold text-white">
-              {editingInterview ? 'Edit Interview' : 'Add Interview'}
-            </h3>
-
-            <div className="space-y-6">
-              <div>
-                <label className={labelClass}>Interview Title *</label>
-                <input
-                  type="text"
-                  value={interviewTitle}
-                  onChange={(e) => setInterviewTitle(e.target.value)}
-                  placeholder="e.g., CEO Introduction"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>Video Provider *</label>
-                <select
-                  value={interviewProvider}
-                  onChange={(e) => setInterviewProvider(e.target.value as 'youtube' | 'vimeo' | 'custom')}
-                  className={inputClass}
-                >
-                  <option value="youtube">YouTube</option>
-                  <option value="vimeo">Vimeo</option>
-                  <option value="custom">Custom URL</option>
-                </select>
-              </div>
-
-              <div>
-                <label className={labelClass}>Video URL *</label>
-                <input
-                  type="url"
-                  value={interviewVideoUrl}
-                  onChange={(e) => setInterviewVideoUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=..."
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>Description</label>
-                <textarea
-                  value={interviewDescription}
-                  onChange={(e) => setInterviewDescription(e.target.value)}
-                  placeholder="Brief description of the interview..."
-                  rows={4}
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleSaveInterview}
-                  disabled={!interviewTitle || !interviewVideoUrl}
-                  className="flex-1 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-500 disabled:opacity-50"
-                >
-                  {editingInterview ? 'Update Interview' : 'Add Interview'}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeInterviewModal}
-                  className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-300 hover:border-slate-600 hover:text-white"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
