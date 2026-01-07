@@ -48,6 +48,57 @@ export async function getActiveEmployerProducts(employerId: string): Promise<Emp
   } as EmployerProduct));
 }
 
+// Get active subscription product for an employer (TIER1 or TIER2)
+// Returns the subscription info needed for job posting
+export async function getActiveSubscriptionProduct(employerId: string): Promise<{
+  active: boolean;
+  tier: string;
+  remainingCredits: number;
+  unlimitedPosts: boolean;
+  expiresAt: Date;
+} | null> {
+  if (!db) return null;
+
+  try {
+    const productsRef = collection(db, "employers", employerId, "products");
+    const q = query(
+      productsRef,
+      where("status", "==", "active"),
+      where("category", "==", "subscription")
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return null;
+
+    // Find a non-expired subscription
+    const now = new Date();
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      const expiresAt = data.expiresAt?.toDate?.() || new Date(data.expiresAt);
+
+      if (expiresAt > now) {
+        const isUnlimited = data.productType === "TIER2";
+        const stats = data.stats || {};
+        const jobsRemaining = isUnlimited ? 999999 : (stats.jobsRemaining ?? 15);
+        const jobsPosted = stats.jobsPosted ?? 0;
+
+        return {
+          active: true,
+          tier: data.productType,
+          remainingCredits: jobsRemaining - jobsPosted,
+          unlimitedPosts: isUnlimited,
+          expiresAt,
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error getting active subscription product:", error);
+    return null;
+  }
+}
+
 // Get a single product
 export async function getEmployerProduct(
   employerId: string,

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
+import { getActiveSubscriptionProduct } from "@/lib/firestore/employer-products";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -104,6 +105,8 @@ function NewJobPageContent() {
           setOrganizationName(profile.organizationName);
           setFreePostingEnabled(!!profile.freePostingEnabled);
 
+          // First try: check subscription field on employer document
+          let subscriptionFound = false;
           if (profile.subscription?.active && profile.subscription.expiresAt) {
             const rawExpires = profile.subscription.expiresAt;
             const expiresAt = typeof (rawExpires as any).toDate === 'function' ? (rawExpires as any).toDate() : new Date(rawExpires as any);
@@ -113,6 +116,21 @@ function NewJobPageContent() {
                 tier: profile.subscription.tier,
                 remainingCredits: (profile.subscription.jobCredits || 0) - (profile.subscription.jobCreditsUsed || 0),
                 unlimitedPosts: profile.subscription.unlimitedPosts || false
+              });
+              subscriptionFound = true;
+            }
+          }
+
+          // Fallback: check products subcollection for active subscription
+          // This handles cases where the subscription field wasn't populated
+          if (!subscriptionFound && profile.id) {
+            const activeProduct = await getActiveSubscriptionProduct(profile.id);
+            if (activeProduct) {
+              setSubscription({
+                active: true,
+                tier: activeProduct.tier,
+                remainingCredits: activeProduct.remainingCredits,
+                unlimitedPosts: activeProduct.unlimitedPosts
               });
             }
           }
