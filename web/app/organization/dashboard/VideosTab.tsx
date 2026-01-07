@@ -320,6 +320,45 @@ export default function VideosTab() {
         <p className="mt-2 text-slate-400">
           Manage your company intro video, IOPPS interviews, and promotional videos
         </p>
+
+        {/* Video Types Explanation */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-emerald-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
+                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-emerald-300 text-sm">Company Intro</h4>
+            </div>
+            <p className="text-xs text-slate-400">Your featured video that appears prominently on your profile. First impression for candidates.</p>
+          </div>
+
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-purple-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
+                <svg className="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-purple-300 text-sm">Promotional Videos</h4>
+            </div>
+            <p className="text-xs text-slate-400">Additional videos showcasing team culture, office tours, employee testimonials, and more.</p>
+          </div>
+
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-teal-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/20">
+                <svg className="h-4 w-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-teal-300 text-sm">IOPPS Interviews</h4>
+            </div>
+            <p className="text-xs text-slate-400">Professional interviews conducted by IOPPS. Contact us to schedule yours!</p>
+          </div>
+        </div>
       </div>
 
       {/* Company Intro Video */}
@@ -399,6 +438,95 @@ export default function VideosTab() {
         )}
       </div>
 
+      {/* Promotional Videos */}
+      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-white">Promotional Videos</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Your own videos showcasing your organization, culture, and team
+            </p>
+          </div>
+          <button
+            onClick={() => openInterviewModal()}
+            className="rounded-xl bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+          >
+            + Add Video
+          </button>
+        </div>
+
+        {promoVideos.length === 0 ? (
+          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10">
+              <svg className="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="mt-4 text-slate-400">
+              Add videos to showcase your organization culture and team
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Use the &quot;+ Add Video&quot; button above to get started
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {promoVideos.map((video) => (
+              <div
+                key={video.id}
+                className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-purple-500/20">
+                      <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white">
+                        {video.title || "Untitled Video"}
+                      </h4>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {video.videoProvider} {video.viewsCount ? `| ${video.viewsCount} views` : ""}
+                      </p>
+                      {video.description && (
+                        <p className="mt-2 text-sm text-slate-300 line-clamp-2">
+                          {video.description}
+                        </p>
+                      )}
+                      <a
+                        href={video.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex text-sm text-purple-400 hover:text-purple-300"
+                      >
+                        Watch video
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openInterviewModal(video)}
+                      className="rounded-lg bg-purple-500/20 px-3 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteInterview(video.id)}
+                      className="rounded-lg bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 transition-all hover:bg-red-500/30"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* IOPPS Interviews */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <div className="mb-6">
@@ -460,98 +588,6 @@ export default function VideosTab() {
                         Watch video
                       </a>
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Promotional Videos */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-semibold text-white">Promotional Videos</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Your own videos showcasing your organization, culture, and team
-            </p>
-          </div>
-          <button
-            onClick={() => openInterviewModal()}
-            className="rounded-xl bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
-          >
-            + Add Video
-          </button>
-        </div>
-
-        {promoVideos.length === 0 ? (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10">
-              <svg className="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <p className="mt-4 text-slate-400">
-              Add videos to showcase your organization culture and team
-            </p>
-            <button
-              onClick={() => openInterviewModal()}
-              className="mt-4 rounded-xl bg-purple-500/20 px-6 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
-            >
-              Add Your First Video
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {promoVideos.map((video) => (
-              <div
-                key={video.id}
-                className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-purple-500/20">
-                      <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-white">
-                        {video.title || "Untitled Video"}
-                      </h4>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {video.videoProvider} {video.viewsCount ? `| ${video.viewsCount} views` : ""}
-                      </p>
-                      {video.description && (
-                        <p className="mt-2 text-sm text-slate-300 line-clamp-2">
-                          {video.description}
-                        </p>
-                      )}
-                      <a
-                        href={video.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex text-sm text-purple-400 hover:text-purple-300"
-                      >
-                        Watch video
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openInterviewModal(video)}
-                      className="rounded-lg bg-purple-500/20 px-3 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteInterview(video.id)}
-                      className="rounded-lg bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 transition-all hover:bg-red-500/30"
-                    >
-                      Delete
-                    </button>
                   </div>
                 </div>
               </div>
