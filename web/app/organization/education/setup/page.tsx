@@ -18,6 +18,7 @@ import {
   PhotoIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
+import UpgradeToEmployerCard from "@/components/UpgradeToEmployerCard";
 
 const PROVINCES = [
   { value: "AB", label: "Alberta" },
@@ -217,11 +218,25 @@ export default function SchoolSetupPage() {
 
   if (role !== "employer") {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
-          You need an employer account to create a school profile.
-        </p>
+      <div className="mx-auto max-w-4xl px-4 py-10 sm:py-16">
+        <div className="text-center mb-8">
+          <p className="text-xs uppercase tracking-[0.4em] text-violet-400 mb-3">
+            Education Partner
+          </p>
+          <h1 className="text-3xl font-bold text-white mb-3">
+            List Your School on IOPPS
+          </h1>
+          <p className="text-slate-400 max-w-xl mx-auto">
+            Connect with Indigenous students across Canada by listing your institution,
+            programs, and scholarships on IOPPS.
+          </p>
+        </div>
+        <UpgradeToEmployerCard
+          onSuccess={() => {
+            // After upgrade, the page will re-render and show the school setup form
+            window.location.reload();
+          }}
+        />
       </div>
     );
   }
