@@ -24,6 +24,8 @@ interface NotificationData {
   // Employer registration
   organizationName?: string;
   employerEmail?: string;
+  intent?: string;
+  status?: string;
   // Job posting
   jobTitle?: string;
   employerName?: string;
@@ -103,23 +105,38 @@ function buildEmail(data: NotificationData): {
 }
 
 function buildNewEmployerEmail(data: NotificationData) {
-  const subject = `New Employer Registration: ${data.organizationName}`;
+  const isPending = data.status === "pending";
+  const subject = isPending
+    ? `🔔 New Employer Application: ${data.organizationName} (Pending Approval)`
+    : `New Employer Registration: ${data.organizationName}`;
+
+  const intentLabels: Record<string, string> = {
+    post_jobs: "Post job opportunities",
+    list_school: "List a school or education institution",
+    list_business: "List a business on Shop Indigenous",
+    post_events: "Post conferences and events",
+    multiple: "Multiple activities",
+  };
+  const intentDisplay = data.intent ? intentLabels[data.intent] || data.intent : "Not specified";
+
   const html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px;">
   <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155;">
-    <h2 style="color: #14b8a6; margin-top: 0;">New Employer Registration</h2>
+    ${isPending ? '<div style="background: #f59e0b; color: #0f172a; padding: 8px 16px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-bottom: 16px;">⏳ Pending Approval</div>' : ''}
+    <h2 style="color: #14b8a6; margin-top: 0;">New Employer ${isPending ? 'Application' : 'Registration'}</h2>
     <p><strong>Organization:</strong> ${data.organizationName}</p>
     <p><strong>Email:</strong> ${data.employerEmail}</p>
+    ${data.intent ? `<p><strong>Intent:</strong> ${intentDisplay}</p>` : ''}
     <p style="margin-top: 24px;">
-      <a href="https://iopps.ca/dashboard/employers" style="display: inline-block; background: #14b8a6; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Review in Dashboard</a>
+      <a href="https://iopps.ca/admin/employers?status=pending" style="display: inline-block; background: #14b8a6; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">${isPending ? 'Review & Approve' : 'Review in Dashboard'}</a>
     </p>
   </div>
 </body>
 </html>`;
-  const text = `New Employer Registration\n\nOrganization: ${data.organizationName}\nEmail: ${data.employerEmail}\n\nReview: https://iopps.ca/dashboard/employers`;
+  const text = `New Employer ${isPending ? 'Application' : 'Registration'}\n\nOrganization: ${data.organizationName}\nEmail: ${data.employerEmail}${data.intent ? `\nIntent: ${intentDisplay}` : ''}${isPending ? '\nStatus: Pending Approval' : ''}\n\nReview: https://iopps.ca/admin/employers?status=pending`;
   return { subject, html, text };
 }
 
