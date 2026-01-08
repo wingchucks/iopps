@@ -7,14 +7,13 @@ import OverviewTab from "./OverviewTab";
 import CareersTab from "./CareersTab";
 import EducationTab from "./EducationTab";
 import EventsTab from "./EventsTab";
-import ApplicationsTab from "./ApplicationsTab";
 import ProfileTab from "./UnifiedProfileTab";
 import BillingTab from "./BillingTab";
 import VideosTab from "./VideosTab";
 import BusinessTab from "./BusinessTab";
 import MessagesTab from "./MessagesTab";
 
-type TabType = "overview" | "careers" | "education" | "events" | "applications" | "messages" | "videos" | "business" | "billing" | "profile";
+type TabType = "overview" | "careers" | "education" | "events" | "messages" | "videos" | "business" | "billing" | "profile";
 
 function EmployerDashboardContent() {
   const { user, role, loading } = useAuth();
@@ -25,11 +24,12 @@ function EmployerDashboardContent() {
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     // Handle legacy tab redirects
-    if (tabParam === "opportunities") {
+    if (tabParam === "opportunities" || tabParam === "applications") {
+      // Redirect old applications tab to careers (applications is now a sub-tab of careers)
       setActiveTab("careers");
     } else if (tabParam === "shop") {
       setActiveTab("business");
-    } else if (tabParam && ["overview", "careers", "education", "events", "applications", "messages", "videos", "business", "billing", "profile"].includes(tabParam)) {
+    } else if (tabParam && ["overview", "careers", "education", "events", "messages", "videos", "business", "billing", "profile"].includes(tabParam)) {
       setActiveTab(tabParam as TabType);
     }
   }, [searchParams]);
@@ -53,7 +53,6 @@ function EmployerDashboardContent() {
     { id: "careers" as TabType, label: "Careers", icon: "💼" },
     { id: "education" as TabType, label: "Education", icon: "🎓" },
     { id: "events" as TabType, label: "Events", icon: "🎪" },
-    { id: "applications" as TabType, label: "Applications", icon: "📝" },
     { id: "messages" as TabType, label: "Messages", icon: "💬" },
     { id: "videos" as TabType, label: "Videos", icon: "🎬" },
     { id: "business" as TabType, label: "Business", icon: "🏪" },
@@ -97,7 +96,6 @@ function EmployerDashboardContent() {
           {activeTab === "careers" && <CareersTab />}
           {activeTab === "education" && <EducationTab />}
           {activeTab === "events" && <EventsTab />}
-          {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "messages" && <MessagesTab />}
           {activeTab === "videos" && <VideosTab />}
           {activeTab === "business" && <BusinessTab onNavigate={(section) => setActiveTab(section as TabType)} />}
