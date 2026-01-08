@@ -80,10 +80,34 @@ export async function getEmployerProfile(
   }
 }
 
+// Helper to find employer document reference (handles doc ID mismatch)
+async function getEmployerDocRef(userId: string): Promise<{ ref: ReturnType<typeof doc>; exists: boolean }> {
+  const firestore = db!;
+
+  // First try: look up by document ID
+  const directRef = doc(firestore, employerCollection, userId);
+  const directSnap = await getDoc(directRef);
+  if (directSnap.exists()) {
+    return { ref: directRef, exists: true };
+  }
+
+  // Second try: query by userId field
+  const q = query(
+    collection(firestore, employerCollection),
+    where("userId", "==", userId)
+  );
+  const querySnap = await getDocs(q);
+  if (!querySnap.empty) {
+    return { ref: querySnap.docs[0].ref, exists: true };
+  }
+
+  // Not found - return direct ref for creating new document
+  return { ref: directRef, exists: false };
+}
+
 export async function updateEmployerLogo(userId: string, logoUrl: string) {
-  const ref = doc(db!, employerCollection, userId);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
+  const { ref, exists } = await getEmployerDocRef(userId);
+  if (exists) {
     await updateDoc(ref, {
       logoUrl,
       updatedAt: serverTimestamp(),
@@ -104,9 +128,8 @@ export async function updateEmployerLogo(userId: string, logoUrl: string) {
 }
 
 export async function updateEmployerBanner(userId: string, bannerUrl: string) {
-  const ref = doc(db!, employerCollection, userId);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
+  const { ref, exists } = await getEmployerDocRef(userId);
+  if (exists) {
     await updateDoc(ref, {
       bannerUrl,
       updatedAt: serverTimestamp(),
@@ -130,7 +153,7 @@ export async function upsertEmployerProfile(
   userId: string,
   data: Omit<EmployerProfile, "id" | "userId" | "createdAt" | "updatedAt">
 ) {
-  const ref = doc(db!, employerCollection, userId);
+  const firestore = db!;
   const base: Record<string, any> = {
     organizationName: data.organizationName,
     description: data.description ?? "",
@@ -148,22 +171,44 @@ export async function upsertEmployerProfile(
   if (data.contactEmail !== undefined) base.contactEmail = data.contactEmail;
   if (data.contactPhone !== undefined) base.contactPhone = data.contactPhone;
 
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    await updateDoc(ref, {
+  // First try: look up by document ID (the normal case where doc ID = userId)
+  const directRef = doc(firestore, employerCollection, userId);
+  const directSnap = await getDoc(directRef);
+
+  if (directSnap.exists()) {
+    await updateDoc(directRef, {
       ...base,
       updatedAt: serverTimestamp(),
     });
-  } else {
-    await setDoc(ref, {
-      id: userId,
-      userId,
-      ...base,
-      status: "pending",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+    return;
   }
+
+  // Second try: query by userId field (handles cases where doc ID differs from userId)
+  const q = query(
+    collection(firestore, employerCollection),
+    where("userId", "==", userId)
+  );
+  const querySnap = await getDocs(q);
+
+  if (!querySnap.empty) {
+    // Found existing document with different ID - update it
+    const existingDoc = querySnap.docs[0];
+    await updateDoc(existingDoc.ref, {
+      ...base,
+      updatedAt: serverTimestamp(),
+    });
+    return;
+  }
+
+  // No existing document found - create new one with userId as doc ID
+  await setDoc(directRef, {
+    id: userId,
+    userId,
+    ...base,
+    status: "pending",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function listEmployers(status?: EmployerStatus, includeDeleted = false): Promise<EmployerProfile[]> {
@@ -205,7 +250,11 @@ export async function updateEmployerStatus(
   approvedBy?: string,
   rejectionReason?: string
 ) {
-  const ref = doc(db!, employerCollection, userId);
+  const { ref, exists } = await getEmployerDocRef(userId);
+  if (!exists) {
+    throw new Error(`Employer profile not found for userId: ${userId}`);
+  }
+
   const updates: any = {
     status,
     updatedAt: serverTimestamp(),
