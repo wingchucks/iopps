@@ -29,6 +29,7 @@ import SavedItemsTab from "./SavedItemsTab";
 import JobAlertsTab from "./JobAlertsTab";
 import MessagesTab from "./MessagesTab";
 import TrainingTab from "./TrainingTab";
+import SettingsTab from "./SettingsTab";
 import ProfileWizard from "@/components/member/ProfileWizard";
 import OverviewTab, { ApplicationWithJob, TabType } from "./OverviewTab";
 
@@ -260,6 +261,15 @@ export default function MemberDashboard() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "settings"
+              ? "border-b-2 border-slate-400 text-slate-200"
+              : "text-slate-400 hover:text-slate-300"
+              }`}
+          >
+            Settings
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -287,6 +297,9 @@ export default function MemberDashboard() {
           )}
           {activeTab === "messages" && (
             <MessagesTab />
+          )}
+          {activeTab === "settings" && (
+            <SettingsTab />
           )}
         </div>
       </div>

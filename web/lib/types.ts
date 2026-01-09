@@ -502,6 +502,7 @@ export interface MemberProfile {
   avatarUrl?: string;
   photoURL?: string; // For compatibility with Firebase User
   tagline?: string;
+  bio?: string; // About me / personal summary
   location?: string;
   skills?: string[];
   experience?: WorkExperience[];
