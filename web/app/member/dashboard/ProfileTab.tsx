@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
+import type { WorkExperience, Education, PortfolioItem, MemberProfile } from "@/lib/types";
 
-export default function ProfileTab() {
+interface ProfileTabProps {
+  initialProfile?: MemberProfile | null;
+  onProfileUpdate?: (profile: MemberProfile) => void;
+}
+
+export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileTabProps) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Form states
   const [displayName, setDisplayName] = useState("");
@@ -34,33 +40,39 @@ export default function ProfileTab() {
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<PortfolioItem | null>(null);
 
-  // Load profile
+  // Initialize from prop or load from Firestore
+  const initializeFromProfile = useCallback((profile: MemberProfile | null) => {
+    if (profile) {
+      setDisplayName(profile.displayName || "");
+      setLocation(profile.location || "");
+      setSkills(profile.skills || []);
+      setExperience(profile.experience || []);
+      setEducation(profile.education || []);
+      setPortfolio(profile.portfolio || []);
+      setResumeUrl(profile.resumeUrl || "");
+      setIndigenousAffiliation(profile.indigenousAffiliation || "");
+      setMessagingHandle(profile.messagingHandle || "");
+      setAvailability(profile.availableForInterviews || "");
+    }
+  }, []);
+
+  // Load profile from prop or fetch
   useEffect(() => {
-    if (!user) return;
+    if (initialized) return;
 
-    const loadProfile = async () => {
-      try {
-        const profile = await getMemberProfile(user.uid);
-
-        if (profile) {
-          setDisplayName(profile.displayName || "");
-          setLocation(profile.location || "");
-          setSkills(profile.skills || []);
-          setExperience(profile.experience || []);
-          setEducation(profile.education || []);
-          setPortfolio(profile.portfolio || []);
-          setResumeUrl(profile.resumeUrl || "");
-          setIndigenousAffiliation(profile.indigenousAffiliation || "");
-          setMessagingHandle(profile.messagingHandle || "");
-          setAvailability(profile.availableForInterviews || "");
-        }
-      } catch (error) {
+    if (initialProfile) {
+      initializeFromProfile(initialProfile);
+      setInitialized(true);
+    } else if (user) {
+      getMemberProfile(user.uid).then((profile) => {
+        initializeFromProfile(profile);
+        setInitialized(true);
+      }).catch((error) => {
         console.error("Error loading profile:", error);
-      }
-    };
-
-    loadProfile();
-  }, [user]);
+        setInitialized(true);
+      });
+    }
+  }, [user, initialProfile, initialized, initializeFromProfile]);
 
   // Calculate profile completeness
   const profileCompletion = useMemo(() => {
@@ -85,7 +97,7 @@ export default function ProfileTab() {
 
     setSaving(true);
     try {
-      await upsertMemberProfile(user.uid, {
+      const updatedProfile = {
         displayName,
         location,
         skills,
@@ -96,7 +108,17 @@ export default function ProfileTab() {
         indigenousAffiliation,
         messagingHandle,
         availableForInterviews: availability,
-      });
+      };
+      await upsertMemberProfile(user.uid, updatedProfile);
+
+      // Notify parent of the update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
       alert("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -745,6 +767,15 @@ function ExperienceModal({
     }
   );
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.company && formData.position && formData.startDate) {
@@ -752,9 +783,24 @@ function ExperienceModal({
     }
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {experience ? "Edit" : "Add"} Work Experience
         </h3>
@@ -887,6 +933,15 @@ function EducationModal({
     }
   );
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.institution && formData.degree && formData.startDate) {
@@ -894,9 +949,24 @@ function EducationModal({
     }
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {education ? "Edit" : "Add"} Education
         </h3>
@@ -1027,6 +1097,15 @@ function PortfolioModal({
   );
   const [tagInput, setTagInput] = useState("");
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title && formData.description) {
@@ -1046,9 +1125,24 @@ function PortfolioModal({
     setFormData({ ...formData, tags: formData.tags?.filter((t) => t !== tag) });
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {item ? "Edit" : "Add"} Portfolio Item
         </h3>
