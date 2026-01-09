@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getJobPosting, listJobApplications } from "@/lib/firestore";
 import { JobPosting, JobApplication } from "@/lib/types";
 
-export default function EmployerJobDetailPage({ params }: { params: { jobId: string } }) {
+export default function EmployerJobDetailPage({ params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = use(params);
   const { user, role, loading } = useAuth();
-  const { jobId } = params;
 
   const [job, setJob] = useState<JobPosting | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
