@@ -153,7 +153,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
           value={totalViews}
           label="Total Views"
           className="bg-purple-500/10 border-purple-500/20 text-purple-400"
-          href="/organization/analytics"
+          onClick={() => handleNavigate("jobs")}
         />
         <StatCard
           icon={ChatBubbleLeftRightIcon}
