@@ -7,7 +7,7 @@ export type ApplicationWithJob = JobApplication & {
     job?: JobPosting | null;
 };
 
-export type TabType = "overview" | "profile" | "applications" | "saved" | "training" | "alerts" | "messages";
+export type TabType = "overview" | "profile" | "applications" | "saved" | "training" | "alerts" | "messages" | "settings";
 
 interface OverviewTabProps {
     profile: MemberProfile | null;
