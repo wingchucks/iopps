@@ -3,28 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-
     VideoCameraIcon,
-    MapIcon,
     UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
     VideoCameraIcon as VideoCameraIconSolid,
-    MapIcon as MapIconSolid,
     UserCircleIcon as UserCircleIconSolid,
 } from "@heroicons/react/24/solid";
 
 const navItems = [
     { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
-    { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
     { href: "/passport", label: "Passport", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
 ];
 
 export function MobileBottomNav() {
     const pathname = usePathname();
 
-    // Hide on certain pages
-    const hiddenPaths = ["/login", "/register", "/organization"];
+    // Hide on certain pages (auth pages, dashboards with their own navigation)
+    const hiddenPaths = ["/login", "/register", "/organization", "/member"];
     const shouldHide = hiddenPaths.some((path) => pathname.startsWith(path));
 
     if (shouldHide) return null;
