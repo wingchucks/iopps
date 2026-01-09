@@ -181,6 +181,40 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description || '') }}
               />
 
+              {/* Responsibilities */}
+              {job.responsibilities && job.responsibilities.length > 0 && (
+                <>
+                  <h3 className="mt-8 text-lg font-bold text-slate-200">
+                    Responsibilities
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-slate-300">
+                    {job.responsibilities.map((item, i) => (
+                      <li key={i} className="leading-relaxed flex items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#14B8A6]"></span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {/* Qualifications */}
+              {job.qualifications && job.qualifications.length > 0 && (
+                <>
+                  <h3 className="mt-8 text-lg font-bold text-slate-200">
+                    Qualifications
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-slate-300">
+                    {job.qualifications.map((item, i) => (
+                      <li key={i} className="leading-relaxed flex items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500"></span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
               {job.requirements && (
                 <>
                   <h3 className="mt-8 text-lg font-bold text-slate-200">
