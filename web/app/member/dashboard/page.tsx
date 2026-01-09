@@ -273,7 +273,7 @@ export default function MemberDashboard() {
               onNavigate={setActiveTab}
             />
           )}
-          {activeTab === "profile" && <ProfileTab />}
+          {activeTab === "profile" && <ProfileTab key={profile?.id} initialProfile={profile} onProfileUpdate={setProfile} />}
           {activeTab === "applications" && <ApplicationsTab />}
           {activeTab === "saved" && (
             <SavedItemsTab />
