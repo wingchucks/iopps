@@ -47,7 +47,7 @@ export default function StatCard({ icon: Icon, value, label, className = "", onC
 
   if (onClick) {
     return (
-      <button onClick={onClick} className={`${baseClasses} ${interactiveClasses} w-full text-left`}>
+      <button type="button" onClick={onClick} className={`${baseClasses} ${interactiveClasses} w-full text-left`}>
         {content}
       </button>
     );

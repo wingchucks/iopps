@@ -20,6 +20,21 @@ function EmployerDashboardContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
 
+  // Map DashboardSection values to TabType (they use different naming conventions)
+  const handleSectionNavigate = (section: string) => {
+    const sectionToTab: Record<string, TabType> = {
+      jobs: "careers",
+      applications: "careers",
+      training: "careers",
+      videos: "videos",
+      messages: "messages",
+      profile: "profile",
+      billing: "billing",
+    };
+    const targetTab = sectionToTab[section] || (section as TabType);
+    setActiveTab(targetTab);
+  };
+
   // Handle URL tab parameter for deep linking
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -92,25 +107,13 @@ function EmployerDashboardContent() {
 
         {/* Tab Content - key ensures React properly unmounts/remounts components on tab change */}
         <div className="min-h-[600px]" key={activeTab}>
-          {activeTab === "overview" && <OverviewTab onNavigate={(section) => {
-            // Map DashboardSection to TabType (they use different names)
-            const sectionToTab: Record<string, TabType> = {
-              jobs: "careers",
-              applications: "careers",
-              training: "careers",
-              videos: "videos",
-              messages: "messages",
-              profile: "profile",
-              billing: "billing",
-            };
-            setActiveTab(sectionToTab[section] || (section as TabType));
-          }} />}
+          {activeTab === "overview" && <OverviewTab onNavigate={handleSectionNavigate} />}
           {activeTab === "careers" && <CareersTab />}
           {activeTab === "education" && <EducationTab />}
           {activeTab === "events" && <EventsTab />}
           {activeTab === "messages" && <MessagesTab />}
           {activeTab === "videos" && <VideosTab />}
-          {activeTab === "business" && <BusinessTab onNavigate={(section) => setActiveTab(section as TabType)} />}
+          {activeTab === "business" && <BusinessTab onNavigate={handleSectionNavigate} />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab mode="employer" />}
         </div>
