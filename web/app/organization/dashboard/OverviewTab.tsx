@@ -139,7 +139,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
           value={activeJobs.length}
           label="Active Jobs"
           className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-          onClick={() => handleNavigate("careers")}
+          onClick={() => handleNavigate("jobs")}
         />
         <StatCard
           icon={UsersIcon}
