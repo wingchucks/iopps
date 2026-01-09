@@ -14,7 +14,7 @@ import {
   updateApplicationStatus,
 } from "@/lib/firestore";
 import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus } from "@/lib/types";
-import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 type CareerType = "jobs" | "training" | "applications";
 type StatusFilter = "all" | "active" | "paused";
@@ -202,6 +202,74 @@ export default function CareersTab() {
     return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
   };
 
+  // Export applications to CSV
+  const exportApplicationsToCSV = () => {
+    if (filteredApplications.length === 0) {
+      alert("No applications to export");
+      return;
+    }
+
+    // CSV headers
+    const headers = [
+      "Applicant Name",
+      "Email",
+      "Job Title",
+      "Status",
+      "Applied Date",
+      "Cover Letter",
+      "Resume URL",
+    ];
+
+    // Format date helper
+    const formatDate = (timestamp: any) => {
+      if (!timestamp) return "";
+      try {
+        const date = timestamp.toDate?.() || new Date(timestamp);
+        return date.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+      } catch {
+        return "";
+      }
+    };
+
+    // Escape CSV field (handle commas, quotes, newlines)
+    const escapeCSV = (field: string | undefined | null) => {
+      if (!field) return "";
+      const str = String(field);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    // Build CSV rows
+    const rows = filteredApplications.map((app) => {
+      const job = jobs.find((j) => j.id === app.jobId);
+      return [
+        escapeCSV(app.memberDisplayName || "Anonymous"),
+        escapeCSV(app.memberEmail),
+        escapeCSV(job?.title || "Unknown"),
+        escapeCSV(app.status || "submitted"),
+        formatDate(app.createdAt),
+        escapeCSV(app.coverLetter?.slice(0, 500)), // Truncate long cover letters
+        escapeCSV(app.resumeUrl),
+      ].join(",");
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `applications-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const getNewButtonConfig = () => {
     switch (careerType) {
       case "jobs":
@@ -366,6 +434,19 @@ export default function CareersTab() {
               <option value="rejected">Not selected</option>
               <option value="withdrawn">Withdrawn</option>
             </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              &nbsp;
+            </label>
+            <button
+              onClick={exportApplicationsToCSV}
+              disabled={filteredApplications.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export CSV
+            </button>
           </div>
         </div>
       )}
