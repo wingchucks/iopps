@@ -20,6 +20,7 @@ import { useAuth } from "@/components/AuthProvider";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import WelcomeWizard from "@/components/WelcomeWizard";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
+import ApplicationAnalytics from "@/components/organization/ApplicationAnalytics";
 import { StatCard, type DashboardSection } from "@/components/organization/dashboard";
 import {
   getEmployerProfile,
@@ -163,6 +164,9 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
           onClick={() => handleNavigate("messages")}
         />
       </div>
+
+      {/* Application Analytics */}
+      {applications.length > 0 && <ApplicationAnalytics />}
 
       {/* Organization Status Card */}
       {profile && (

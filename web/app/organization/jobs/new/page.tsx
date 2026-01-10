@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
+import { getEmployerProfile, createJobPosting, listEmployerTemplates, createJobTemplate, incrementTemplateUsage, templateToJobData } from "@/lib/firestore";
+import type { JobTemplate } from "@/lib/types";
 import { getActiveSubscriptionProduct } from "@/lib/firestore/employer-products";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -31,6 +32,13 @@ function NewJobPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [aiGenerating, setAiGenerating] = useState(false);
+
+  // Template State
+  const [templates, setTemplates] = useState<JobTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -88,6 +96,96 @@ function NewJobPageContent() {
       }
     }
   }, [isDuplicate]);
+
+  // Load employer templates
+  useEffect(() => {
+    const loadTemplates = async () => {
+      if (!user) return;
+      try {
+        const employerTemplates = await listEmployerTemplates(user.uid);
+        setTemplates(employerTemplates);
+      } catch (err) {
+        console.error("Failed to load templates:", err);
+      }
+    };
+    loadTemplates();
+  }, [user]);
+
+  // Apply selected template
+  const handleTemplateSelect = async (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) return;
+
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const templateData = templateToJobData(template);
+
+    setFormData(prev => ({
+      ...prev,
+      title: (templateData.title as string) || prev.title,
+      location: (templateData.location as string) || prev.location,
+      employmentType: (templateData.employmentType as string) || prev.employmentType,
+      remoteFlag: (templateData.remoteFlag as boolean) ?? prev.remoteFlag,
+      description: (templateData.description as string) || prev.description,
+      responsibilities: Array.isArray(templateData.responsibilities)
+        ? (templateData.responsibilities as string[]).join("\n")
+        : prev.responsibilities,
+      qualifications: Array.isArray(templateData.qualifications)
+        ? (templateData.qualifications as string[]).join("\n")
+        : prev.qualifications,
+      salaryRange: (templateData.salaryRange as string) || prev.salaryRange,
+      indigenousPreference: (templateData.indigenousPreference as boolean) ?? prev.indigenousPreference,
+      cpicRequired: (templateData.cpicRequired as boolean) ?? prev.cpicRequired,
+      willTrain: (templateData.willTrain as boolean) ?? prev.willTrain,
+      driversLicense: (templateData.driversLicense as boolean) ?? prev.driversLicense,
+    }));
+
+    // Track template usage
+    try {
+      await incrementTemplateUsage(templateId);
+    } catch (err) {
+      console.error("Failed to track template usage:", err);
+    }
+  };
+
+  // Save current form as template
+  const handleSaveAsTemplate = async () => {
+    if (!user || !templateName.trim()) return;
+    setSavingTemplate(true);
+
+    try {
+      await createJobTemplate({
+        employerId: user.uid,
+        name: templateName.trim(),
+        title: formData.title,
+        location: formData.location,
+        employmentType: formData.employmentType,
+        remoteFlag: formData.remoteFlag,
+        indigenousPreference: formData.indigenousPreference,
+        jobDescription: formData.description,
+        responsibilities: formData.responsibilities.split('\n').filter(r => r.trim()),
+        qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+        salaryRange: formData.salaryRange,
+        cpicRequired: formData.cpicRequired,
+        willTrain: formData.willTrain,
+        driversLicense: formData.driversLicense,
+        quickApplyEnabled: true,
+      });
+
+      // Reload templates
+      const employerTemplates = await listEmployerTemplates(user.uid);
+      setTemplates(employerTemplates);
+
+      setShowSaveTemplateModal(false);
+      setTemplateName("");
+    } catch (err) {
+      console.error("Failed to save template:", err);
+      alert("Failed to save template. Please try again.");
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
 
   const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
 
@@ -411,18 +509,135 @@ function NewJobPageContent() {
                 : "Create a new opportunity for the community."}
             </p>
           </div>
-          <Link
-            href="/organization/jobs/import"
-            className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-            Import form CSV
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowSaveTemplateModal(true)}
+              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              Save as Template
+            </button>
+            <Link
+              href="/organization/jobs/import"
+              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+              Import from CSV
+            </Link>
+          </div>
         </div>
       </div>
 
+      {/* Save Template Modal */}
+      {showSaveTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#08090C] p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">Save as Template</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Save the current job details as a reusable template for future postings.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-1">Template Name *</label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                placeholder="e.g. Senior Developer Role"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSaveTemplateModal(false);
+                  setTemplateName("");
+                }}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAsTemplate}
+                disabled={!templateName.trim() || savingTemplate}
+                className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingTemplate ? "Saving..." : "Save Template"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto mt-8 max-w-5xl px-4">
         {error && <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-red-200">{error}</div>}
+
+        {/* Template Selector */}
+        {templates.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-purple-500/30 bg-purple-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Start from a Template
+                </label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full rounded-lg border border-purple-500/30 bg-slate-900 px-4 py-2 text-slate-100 focus:border-purple-500 focus:outline-none"
+                >
+                  <option value="">Select a template...</option>
+                  {templates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} {template.usageCount ? `(used ${template.usageCount}x)` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedTemplateId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTemplateId("");
+                    setFormData({
+                      title: "",
+                      location: "",
+                      employmentType: "Full-time",
+                      remoteFlag: false,
+                      description: "",
+                      responsibilities: "",
+                      qualifications: "",
+                      salaryRange: "",
+                      indigenousPreference: true,
+                      cpicRequired: false,
+                      willTrain: false,
+                      driversLicense: false,
+                      closingDate: "",
+                      jobVideoUrl: "",
+                      trcIndigenousHiring: false,
+                      trcLeadershipTraining: false,
+                      trcIndigenousOwned: false,
+                      trcCommitmentStatement: "",
+                    });
+                  }}
+                  className="px-3 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Templates let you quickly fill in job details from previous postings. You can also save the current form as a new template.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Form */}

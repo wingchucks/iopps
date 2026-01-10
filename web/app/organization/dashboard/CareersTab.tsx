@@ -12,9 +12,11 @@ import {
   deleteJobPosting,
   deleteTrainingProgram,
   updateApplicationStatus,
+  addApplicantNote,
+  deleteApplicantNote,
 } from "@/lib/firestore";
-import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus } from "@/lib/types";
-import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus, ApplicantNote } from "@/lib/types";
+import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon, ChatBubbleLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 type CareerType = "jobs" | "training" | "applications";
 type StatusFilter = "all" | "active" | "paused";
@@ -33,6 +35,11 @@ export default function CareersTab() {
   // Application-specific filters
   const [appJobFilter, setAppJobFilter] = useState<string>("all");
   const [appStatusFilter, setAppStatusFilter] = useState<string>("all");
+
+  // Notes state
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [newNoteText, setNewNoteText] = useState<Record<string, string>>({});
+  const [addingNote, setAddingNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -187,6 +194,70 @@ export default function CareersTab() {
     }
   };
 
+  // Toggle notes section visibility
+  const toggleNotes = (applicationId: string) => {
+    setExpandedNotes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(applicationId)) {
+        newSet.delete(applicationId);
+      } else {
+        newSet.add(applicationId);
+      }
+      return newSet;
+    });
+  };
+
+  // Add a new note to an application
+  const handleAddNote = async (applicationId: string) => {
+    const noteText = newNoteText[applicationId]?.trim();
+    if (!noteText || !user) return;
+
+    setAddingNote(applicationId);
+    try {
+      await addApplicantNote(applicationId, {
+        content: noteText,
+        createdBy: user.uid,
+        createdByName: user.displayName || user.email || "Employer",
+      });
+      setNewNoteText((prev) => ({ ...prev, [applicationId]: "" }));
+      await loadData();
+    } catch (err) {
+      console.error("Error adding note:", err);
+      alert("Failed to add note");
+    } finally {
+      setAddingNote(null);
+    }
+  };
+
+  // Delete a note from an application
+  const handleDeleteNote = async (applicationId: string, noteId: string) => {
+    if (!confirm("Delete this note?")) return;
+
+    try {
+      await deleteApplicantNote(applicationId, noteId);
+      await loadData();
+    } catch (err) {
+      console.error("Error deleting note:", err);
+      alert("Failed to delete note");
+    }
+  };
+
+  // Format note timestamp
+  const formatNoteDate = (timestamp: any) => {
+    if (!timestamp) return "";
+    try {
+      const date = timestamp.toDate?.() || new Date(timestamp);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
     if (s === "hired")
@@ -200,6 +271,80 @@ export default function CareersTab() {
     if (s === "withdrawn")
       return "bg-orange-500/20 text-orange-300 border-orange-500/40";
     return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+  };
+
+  // Export applications to CSV
+  const exportApplicationsToCSV = () => {
+    if (filteredApplications.length === 0) {
+      alert("No applications to export");
+      return;
+    }
+
+    // CSV headers
+    const headers = [
+      "Applicant Name",
+      "Email",
+      "Job Title",
+      "Status",
+      "Applied Date",
+      "Cover Letter",
+      "Resume URL",
+      "Notes",
+    ];
+
+    // Format date helper
+    const formatDate = (timestamp: any) => {
+      if (!timestamp) return "";
+      try {
+        const date = timestamp.toDate?.() || new Date(timestamp);
+        return date.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+      } catch {
+        return "";
+      }
+    };
+
+    // Escape CSV field (handle commas, quotes, newlines)
+    const escapeCSV = (field: string | undefined | null) => {
+      if (!field) return "";
+      const str = String(field);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    // Build CSV rows
+    const rows = filteredApplications.map((app) => {
+      const job = jobs.find((j) => j.id === app.jobId);
+      // Combine all notes into a single cell
+      const notesText = app.employerNotes
+        ?.map((n) => `[${n.createdByName || "Employer"}]: ${n.content}`)
+        .join(" | ") || "";
+      return [
+        escapeCSV(app.memberDisplayName || "Anonymous"),
+        escapeCSV(app.memberEmail),
+        escapeCSV(job?.title || "Unknown"),
+        escapeCSV(app.status || "submitted"),
+        formatDate(app.createdAt),
+        escapeCSV(app.coverLetter?.slice(0, 500)), // Truncate long cover letters
+        escapeCSV(app.resumeUrl),
+        escapeCSV(notesText),
+      ].join(",");
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `applications-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const getNewButtonConfig = () => {
@@ -366,6 +511,19 @@ export default function CareersTab() {
               <option value="rejected">Not selected</option>
               <option value="withdrawn">Withdrawn</option>
             </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              &nbsp;
+            </label>
+            <button
+              onClick={exportApplicationsToCSV}
+              disabled={filteredApplications.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export CSV
+            </button>
           </div>
         </div>
       )}
@@ -705,7 +863,82 @@ export default function CareersTab() {
                             >
                               Email candidate
                             </a>
+                            <button
+                              onClick={() => toggleNotes(app.id)}
+                              className="inline-flex items-center gap-2 rounded-lg bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+                            >
+                              <ChatBubbleLeftIcon className="h-4 w-4" />
+                              Notes {app.employerNotes?.length ? `(${app.employerNotes.length})` : ""}
+                            </button>
                           </div>
+
+                          {/* Notes Section */}
+                          {expandedNotes.has(app.id) && (
+                            <div className="mt-4 rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+                              <h4 className="text-sm font-semibold text-purple-300 mb-3">
+                                Private Notes
+                              </h4>
+
+                              {/* Existing Notes */}
+                              {app.employerNotes && app.employerNotes.length > 0 ? (
+                                <div className="space-y-3 mb-4">
+                                  {app.employerNotes.map((note) => (
+                                    <div
+                                      key={note.id}
+                                      className="rounded-lg bg-slate-800/50 p-3 group"
+                                    >
+                                      <div className="flex justify-between items-start gap-2">
+                                        <p className="text-sm text-slate-300 whitespace-pre-wrap flex-1">
+                                          {note.content}
+                                        </p>
+                                        <button
+                                          onClick={() => handleDeleteNote(app.id, note.id)}
+                                          className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1"
+                                          title="Delete note"
+                                        >
+                                          <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                      <p className="text-xs text-slate-500 mt-2">
+                                        {note.createdByName || "You"} • {formatNoteDate(note.createdAt)}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-slate-500 mb-4">
+                                  No notes yet. Add a note to track this candidate.
+                                </p>
+                              )}
+
+                              {/* Add New Note */}
+                              <div className="flex gap-2">
+                                <textarea
+                                  value={newNoteText[app.id] || ""}
+                                  onChange={(e) =>
+                                    setNewNoteText((prev) => ({
+                                      ...prev,
+                                      [app.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Add a note about this candidate..."
+                                  rows={2}
+                                  className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                                />
+                                <button
+                                  onClick={() => handleAddNote(app.id)}
+                                  disabled={!newNoteText[app.id]?.trim() || addingNote === app.id}
+                                  className="self-end rounded-lg bg-purple-500 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {addingNote === app.id ? (
+                                    "..."
+                                  ) : (
+                                    <PlusIcon className="h-5 w-5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-col gap-3">

@@ -103,6 +103,26 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // JOB TEMPLATES (Employer Reusable Templates)
+    // ===========================================================================
+    match /jobTemplates/{templateId} {
+      // Employers can read their own templates
+      allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
+
+      // Admins can read all templates
+      allow read: if isAdminOrModerator();
+
+      // Employers can create templates for themselves
+      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
+
+      // Employers can update their own templates
+      allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
+
+      // Employers can delete their own templates
+      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
+    }
+
+    // ===========================================================================
     // APPLICATIONS
     // ===========================================================================
     match /applications/{applicationId} {

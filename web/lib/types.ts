@@ -202,8 +202,30 @@ export interface EmployerProfile {
   educationSettings?: EducationSettings;
   // TRC Alignment
   trcAlignment?: TRCAlignment;
+  // Indigenous Verification
+  indigenousVerification?: IndigenousVerification;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Indigenous Business Verification
+export type IndigenousVerificationStatus = "not_requested" | "pending" | "approved" | "rejected";
+
+export interface IndigenousVerification {
+  status: IndigenousVerificationStatus;
+  // For approved verifications
+  isIndigenousOwned?: boolean; // Majority Indigenous owned (51%+)
+  isIndigenousLed?: boolean; // Indigenous leadership/management
+  nationAffiliation?: string; // e.g., "Cree Nation", "Métis Nation"
+  certifications?: string[]; // e.g., "CCAB Certified", "CAMSC Certified"
+  // Request details
+  requestedAt?: Timestamp | null;
+  requestNotes?: string; // Notes from employer during request
+  // Review details
+  reviewedAt?: Timestamp | null;
+  reviewedBy?: string; // Admin who reviewed
+  reviewNotes?: string; // Internal admin notes
+  rejectionReason?: string;
 }
 
 export interface JobPosting {
@@ -263,6 +285,46 @@ export interface JobPosting {
 
   featured?: boolean;
   trcAlignment?: TRCAlignment;
+}
+
+// Job Templates (reusable templates for employers)
+export interface JobTemplate {
+  id: string;
+  employerId: string;
+  name: string; // Template name (e.g., "Senior Developer Role")
+  description?: string; // Optional description of what this template is for
+  // Job fields (subset of JobPosting)
+  title?: string;
+  location?: string;
+  employmentType?: string;
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  jobDescription?: string; // Using different name to avoid confusion with template description
+  responsibilities?: string[];
+  qualifications?: string[];
+  requirements?: string;
+  benefits?: string;
+  salaryRange?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    period?: SalaryPeriod;
+    disclosed?: boolean;
+  } | string;
+  category?: JobCategory;
+  locationType?: LocationType;
+  // Job Requirement Flags
+  cpicRequired?: boolean;
+  willTrain?: boolean;
+  driversLicense?: boolean;
+  // Quick Apply
+  quickApplyEnabled?: boolean;
+  applicationLink?: string;
+  applicationEmail?: string;
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  usageCount?: number; // How many times this template has been used
 }
 
 // Conference sub-types
@@ -433,6 +495,16 @@ export type ApplicationStatus =
   | "hired"
   | "withdrawn";
 
+// Applicant Notes (employer private notes on applications)
+export interface ApplicantNote {
+  id: string;
+  content: string;
+  createdBy: string; // User ID
+  createdByName?: string; // Denormalized display name
+  createdAt: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
 export interface JobApplication {
   id: string;
   jobId: string;
@@ -443,7 +515,10 @@ export interface JobApplication {
   status: ApplicationStatus;
   resumeUrl?: string;
   coverLetter?: string; // Legacy text field
-  note?: string;
+  note?: string; // Legacy single note
+
+  // Employer Notes (multiple timestamped notes)
+  employerNotes?: ApplicantNote[];
 
   // Modern Cover Letter Handling
   coverLetterType?: 'text' | 'file';

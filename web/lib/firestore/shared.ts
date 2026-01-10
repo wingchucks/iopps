@@ -53,6 +53,7 @@ export type { QueryDocumentSnapshot, DocumentData };
 export const employerCollection = "employers";
 export const memberCollection = "memberProfiles";
 export const jobsCollection = "jobs";
+export const jobTemplatesCollection = "jobTemplates";
 export const applicationsCollection = "applications";
 export const savedJobsCollection = "savedJobs";
 export const savedConferencesCollection = "savedConferences";
