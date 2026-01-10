@@ -52,6 +52,9 @@ export {
   listEmployerApplications,
   updateApplicationStatus,
   withdrawJobApplication,
+  addApplicantNote,
+  updateApplicantNote,
+  deleteApplicantNote,
 } from "./applications";
 
 // Members

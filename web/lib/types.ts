@@ -433,6 +433,16 @@ export type ApplicationStatus =
   | "hired"
   | "withdrawn";
 
+// Applicant Notes (employer private notes on applications)
+export interface ApplicantNote {
+  id: string;
+  content: string;
+  createdBy: string; // User ID
+  createdByName?: string; // Denormalized display name
+  createdAt: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
 export interface JobApplication {
   id: string;
   jobId: string;
@@ -443,7 +453,10 @@ export interface JobApplication {
   status: ApplicationStatus;
   resumeUrl?: string;
   coverLetter?: string; // Legacy text field
-  note?: string;
+  note?: string; // Legacy single note
+
+  // Employer Notes (multiple timestamped notes)
+  employerNotes?: ApplicantNote[];
 
   // Modern Cover Letter Handling
   coverLetterType?: 'text' | 'file';
