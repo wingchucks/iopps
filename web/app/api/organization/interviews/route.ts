@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     const memberDoc = await db.collection("members").doc(application?.userId).get();
     const member = memberDoc.data();
 
-    const interview: Omit<ScheduledInterview, "id"> = {
+    const interview = {
       applicationId,
       jobId: application?.jobId,
       employerId: userId,
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       location,
       meetingUrl,
       phoneNumber,
-      status: "scheduled",
+      status: "scheduled" as const,
       notes,
       interviewerName,
       interviewerEmail,
