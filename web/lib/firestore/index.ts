@@ -43,6 +43,17 @@ export {
   isJobExpired,
 } from "./jobs";
 
+// Job Templates
+export {
+  createJobTemplate,
+  getJobTemplate,
+  listEmployerTemplates,
+  updateJobTemplate,
+  deleteJobTemplate,
+  incrementTemplateUsage,
+  templateToJobData,
+} from "./jobTemplates";
+
 // Applications
 export {
   checkExistingApplication,

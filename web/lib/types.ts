@@ -265,6 +265,46 @@ export interface JobPosting {
   trcAlignment?: TRCAlignment;
 }
 
+// Job Templates (reusable templates for employers)
+export interface JobTemplate {
+  id: string;
+  employerId: string;
+  name: string; // Template name (e.g., "Senior Developer Role")
+  description?: string; // Optional description of what this template is for
+  // Job fields (subset of JobPosting)
+  title?: string;
+  location?: string;
+  employmentType?: string;
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  jobDescription?: string; // Using different name to avoid confusion with template description
+  responsibilities?: string[];
+  qualifications?: string[];
+  requirements?: string;
+  benefits?: string;
+  salaryRange?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    period?: SalaryPeriod;
+    disclosed?: boolean;
+  } | string;
+  category?: JobCategory;
+  locationType?: LocationType;
+  // Job Requirement Flags
+  cpicRequired?: boolean;
+  willTrain?: boolean;
+  driversLicense?: boolean;
+  // Quick Apply
+  quickApplyEnabled?: boolean;
+  applicationLink?: string;
+  applicationEmail?: string;
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  usageCount?: number; // How many times this template has been used
+}
+
 // Conference sub-types
 export interface ConferenceVenue {
   name: string;
