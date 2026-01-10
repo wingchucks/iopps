@@ -126,11 +126,16 @@ export default function IndigenousVerificationRequest({
               {verification?.requestedAt && (
                 <p className="text-xs text-slate-500 mt-2">
                   Submitted:{" "}
-                  {new Date(
-                    (verification.requestedAt as any)._seconds
-                      ? (verification.requestedAt as any)._seconds * 1000
-                      : verification.requestedAt
-                  ).toLocaleDateString()}
+                  {(() => {
+                    const ts = verification.requestedAt;
+                    if (ts && typeof ts === 'object' && 'toDate' in ts) {
+                      return (ts as { toDate: () => Date }).toDate().toLocaleDateString();
+                    }
+                    if (ts && typeof ts === 'object' && '_seconds' in ts) {
+                      return new Date((ts as { _seconds: number })._seconds * 1000).toLocaleDateString();
+                    }
+                    return new Date(ts as number).toLocaleDateString();
+                  })()}
                 </p>
               )}
             </div>
