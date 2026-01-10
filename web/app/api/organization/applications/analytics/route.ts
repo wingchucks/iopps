@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { auth, db } from "@/lib/firebase-admin";
 import type { ApplicationStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface ApplicationDoc {
   id: string;
@@ -42,6 +43,11 @@ interface AnalyticsResponse {
 
 export async function GET(request: NextRequest) {
   try {
+    // Verify server configuration
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+    }
+
     // Verify auth token
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -49,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     const employerId = decodedToken.uid;
 
     // Get query params for filtering
@@ -58,7 +64,7 @@ export async function GET(request: NextRequest) {
     const days = parseInt(searchParams.get("days") || "30", 10); // Default 30 days
 
     // Build query
-    let query = adminDb
+    let query = db
       .collection("applications")
       .where("employerId", "==", employerId);
 

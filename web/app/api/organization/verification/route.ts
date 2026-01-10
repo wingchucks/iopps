@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -7,16 +7,21 @@ export const dynamic = "force-dynamic";
 // GET - Get current verification status
 export async function GET(request: NextRequest) {
   try {
+    // Verify server configuration
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+    }
+
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     const employerId = decodedToken.uid;
 
-    const employerRef = adminDb.collection("employers").doc(employerId);
+    const employerRef = db.collection("employers").doc(employerId);
     const employerDoc = await employerRef.get();
 
     if (!employerDoc.exists) {
@@ -39,13 +44,18 @@ export async function GET(request: NextRequest) {
 // POST - Request verification
 export async function POST(request: NextRequest) {
   try {
+    // Verify server configuration
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+    }
+
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     const employerId = decodedToken.uid;
 
     const body = await request.json();
@@ -65,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const employerRef = adminDb.collection("employers").doc(employerId);
+    const employerRef = db.collection("employers").doc(employerId);
     const employerDoc = await employerRef.get();
 
     if (!employerDoc.exists) {
@@ -112,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     // Notify admin (optional - send email or create notification)
     try {
-      await adminDb.collection("notifications").add({
+      await db.collection("notifications").add({
         userId: "admin", // or specific admin user ID
         type: "verification_request",
         title: "New Indigenous Verification Request",
@@ -143,16 +153,21 @@ export async function POST(request: NextRequest) {
 // DELETE - Cancel pending verification request
 export async function DELETE(request: NextRequest) {
   try {
+    // Verify server configuration
+    if (!auth || !db) {
+      return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+    }
+
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     const employerId = decodedToken.uid;
 
-    const employerRef = adminDb.collection("employers").doc(employerId);
+    const employerRef = db.collection("employers").doc(employerId);
     const employerDoc = await employerRef.get();
 
     if (!employerDoc.exists) {
