@@ -170,7 +170,7 @@ export default function NotificationsTab() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-100 mb-2">Email Notifications</h2>
         <p className="text-slate-400">
-          Choose which emails you'd like to receive. Changes are saved automatically.
+          Choose which emails you would like to receive. Changes are saved automatically.
         </p>
       </div>
 
@@ -196,7 +196,7 @@ export default function NotificationsTab() {
 
       <div className="mt-8 p-4 rounded-xl bg-slate-800/30 border border-slate-700/30">
         <p className="text-sm text-slate-400">
-          You'll always receive essential notifications like security alerts and account-related emails regardless of these settings.
+          You will always receive essential notifications like security alerts and account-related emails regardless of these settings.
         </p>
       </div>
     </div>

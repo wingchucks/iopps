@@ -198,7 +198,7 @@ export default function ScheduleInterviewModal({
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
               />
               <p className="mt-1 text-xs text-slate-500">
-                The number where you'll call the candidate
+                The number where you will call the candidate
               </p>
             </div>
           )}
