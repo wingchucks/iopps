@@ -207,8 +207,72 @@ export interface EmployerProfile {
   // Team Access
   teamMembers?: TeamMember[];
   teamSettings?: TeamSettings;
+  // Notification Preferences
+  notificationPreferences?: EmployerNotificationPreferences;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Employer Notification Preferences
+export interface EmployerNotificationPreferences {
+  // Application notifications
+  newApplications: boolean; // Notify when someone applies
+  applicationStatusChanges: boolean; // Notify when application status changes
+
+  // Job notifications
+  jobExpiring: boolean; // Notify when a job is about to expire
+  scheduledJobPublished: boolean; // Notify when a scheduled job goes live
+
+  // Team notifications
+  teamInvitations: boolean; // Notify about team invitations
+  teamActivity: boolean; // Notify about team member activity
+
+  // Digest notifications
+  weeklyDigest: boolean; // Weekly summary of activity
+
+  // Marketing
+  marketingEmails: boolean; // Product updates, tips, etc.
+}
+
+// Scheduled Interview (for job application interviews)
+export type ScheduledInterviewType = "virtual" | "phone" | "in-person";
+export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled" | "no-show";
+
+export interface ScheduledInterview {
+  id: string;
+  applicationId: string;
+  jobId: string;
+  employerId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  // Scheduling details
+  scheduledAt: Timestamp | Date | string;
+  duration: number; // minutes (30, 45, 60, 90)
+  timezone?: string;
+  // Location/meeting details
+  type: ScheduledInterviewType;
+  location?: string; // Physical address for in-person, or meeting URL for virtual
+  meetingUrl?: string; // Video call link
+  phoneNumber?: string; // For phone interviews
+  // Status tracking
+  status: ScheduledInterviewStatus;
+  // Notes and follow-up
+  notes?: string; // Employer notes
+  interviewerName?: string;
+  interviewerEmail?: string;
+  // Calendar integration
+  calendarEventId?: string;
+  icsFileUrl?: string;
+  // Notifications
+  reminderSent?: boolean;
+  reminderSentAt?: Timestamp | null;
+  // Timestamps
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  cancelledAt?: Timestamp | null;
+  cancelReason?: string;
 }
 
 // Indigenous Business Verification

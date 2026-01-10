@@ -13,8 +13,9 @@ import VideosTab from "./VideosTab";
 import BusinessTab from "./BusinessTab";
 import MessagesTab from "./MessagesTab";
 import TeamTab from "./TeamTab";
+import NotificationsTab from "./NotificationsTab";
 
-type TabType = "overview" | "careers" | "education" | "events" | "messages" | "videos" | "business" | "team" | "billing" | "profile";
+type TabType = "overview" | "careers" | "education" | "events" | "messages" | "videos" | "business" | "team" | "notifications" | "billing" | "profile";
 
 function EmployerDashboardContent() {
   const { user, role, loading } = useAuth();
@@ -45,7 +46,7 @@ function EmployerDashboardContent() {
       setActiveTab("careers");
     } else if (tabParam === "shop") {
       setActiveTab("business");
-    } else if (tabParam && ["overview", "careers", "education", "events", "messages", "videos", "business", "team", "billing", "profile"].includes(tabParam)) {
+    } else if (tabParam && ["overview", "careers", "education", "events", "messages", "videos", "business", "team", "notifications", "billing", "profile"].includes(tabParam)) {
       setActiveTab(tabParam as TabType);
     }
   }, [searchParams]);
@@ -73,6 +74,7 @@ function EmployerDashboardContent() {
     { id: "videos" as TabType, label: "Videos", icon: "🎬" },
     { id: "business" as TabType, label: "Business", icon: "🏪" },
     { id: "team" as TabType, label: "Team", icon: "👥" },
+    { id: "notifications" as TabType, label: "Notifications", icon: "🔔" },
     { id: "billing" as TabType, label: "Billing", icon: "💳" },
     { id: "profile" as TabType, label: "Settings", icon: "⚙️" },
   ];
@@ -117,6 +119,7 @@ function EmployerDashboardContent() {
           {activeTab === "videos" && <VideosTab />}
           {activeTab === "business" && <BusinessTab onNavigate={handleSectionNavigate} />}
           {activeTab === "team" && <TeamTab />}
+          {activeTab === "notifications" && <NotificationsTab />}
           {activeTab === "billing" && <BillingTab />}
           {activeTab === "profile" && <ProfileTab mode="employer" />}
         </div>
