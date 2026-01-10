@@ -202,8 +202,30 @@ export interface EmployerProfile {
   educationSettings?: EducationSettings;
   // TRC Alignment
   trcAlignment?: TRCAlignment;
+  // Indigenous Verification
+  indigenousVerification?: IndigenousVerification;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Indigenous Business Verification
+export type IndigenousVerificationStatus = "not_requested" | "pending" | "approved" | "rejected";
+
+export interface IndigenousVerification {
+  status: IndigenousVerificationStatus;
+  // For approved verifications
+  isIndigenousOwned?: boolean; // Majority Indigenous owned (51%+)
+  isIndigenousLed?: boolean; // Indigenous leadership/management
+  nationAffiliation?: string; // e.g., "Cree Nation", "Métis Nation"
+  certifications?: string[]; // e.g., "CCAB Certified", "CAMSC Certified"
+  // Request details
+  requestedAt?: Timestamp | null;
+  requestNotes?: string; // Notes from employer during request
+  // Review details
+  reviewedAt?: Timestamp | null;
+  reviewedBy?: string; // Admin who reviewed
+  reviewNotes?: string; // Internal admin notes
+  rejectionReason?: string;
 }
 
 export interface JobPosting {

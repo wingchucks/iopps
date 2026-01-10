@@ -28,6 +28,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { EmployerProfile, IndustryType, Vendor, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 import ProfileCompletenessScore from '@/components/ProfileCompletenessScore';
+import IndigenousVerificationRequest from '@/components/organization/IndigenousVerificationRequest';
 import type { DashboardMode, DashboardSection } from '@/components/organization/dashboard';
 
 interface UnifiedProfileTabProps {
@@ -363,6 +364,18 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Indigenous Business Verification */}
+      {mode === 'employer' && (
+        <IndigenousVerificationRequest
+          verification={employerProfile?.indigenousVerification}
+          onUpdate={(verification) => {
+            if (employerProfile) {
+              setEmployerProfile({ ...employerProfile, indigenousVerification: verification });
+            }
+          }}
+        />
       )}
 
       {/* Main Profile Form */}
