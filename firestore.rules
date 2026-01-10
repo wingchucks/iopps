@@ -43,10 +43,24 @@ service cloud.firestore {
 
     function isAdminOrModerator() {
         return isSignedIn() && (
-            request.auth.token.admin == true || 
-            getUserData().role == 'admin' || 
+            request.auth.token.admin == true ||
+            getUserData().role == 'admin' ||
             getUserData().role == 'moderator'
         );
+    }
+
+    // Helper: Check if user is a team member of an employer organization
+    // Note: This checks if the user's ID is in the employer's teamMembers array
+    function isTeamMemberOf(employerId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/employers/$(employerId)) &&
+        get(/databases/$(database)/documents/employers/$(employerId)).data.teamMembers != null &&
+        request.auth.uid in get(/databases/$(database)/documents/employers/$(employerId)).data.teamMembers[*].id;
+    }
+
+    // Helper: Check if user is owner or team member
+    function isOwnerOrTeamMember(employerId) {
+      return isOwner(employerId) || isTeamMemberOf(employerId);
     }
     
     // ===========================================================================
@@ -63,17 +77,38 @@ service cloud.firestore {
     // EMPLOYERS COLLECTION
     // ===========================================================================
     match /employers/{employerId} {
-      // Public read for approved employers, owner can read own, admins can read all
-      allow read: if resource.data.status == 'approved' || isOwner(employerId) || isAdminOrModerator();
+      // Public read for approved employers, owner can read own, team members can read, admins can read all
+      allow read: if resource.data.status == 'approved' || isOwner(employerId) || isTeamMemberOf(employerId) || isAdminOrModerator();
 
       // Employers can create their own profile
       allow create: if isSignedIn() && request.auth.uid == employerId;
 
-      // Employers can update their own profile, admins can update any
+      // Employers and team admins can update, platform admins can update any
+      // Note: teamMembers array is managed via API routes with admin SDK
       allow update: if isOwner(employerId) || isAdminOrModerator();
 
       // Only admins can delete
       allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // TEAM INVITATIONS
+    // ===========================================================================
+    match /teamInvitations/{invitationId} {
+      // Invitees can read their pending invitations
+      allow read: if isSignedIn() && resource.data.invitedEmail == request.auth.token.email;
+
+      // Employer owners can read all invitations for their org
+      allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Invitations are created/managed via API routes with admin SDK
+      // Client-side creation is disabled for security
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     // ===========================================================================
@@ -92,14 +127,14 @@ service cloud.firestore {
           request.resource.data.active == false
         )
       );
-      // Job update rules: Only approved employers can publish (set active: true)
+      // Job update rules: Owner, team members, or approved employers can update
       allow update: if isAdminOrModerator() || (
-        isOwner(resource.data.employerId) && (
+        isOwnerOrTeamMember(resource.data.employerId) && (
           isApprovedEmployer() ||
           request.resource.data.active == false
         )
       );
-      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
+      allow delete: if isOwnerOrTeamMember(resource.data.employerId) || isAdminOrModerator();
     }
 
     // ===========================================================================
@@ -126,14 +161,22 @@ service cloud.firestore {
     // APPLICATIONS
     // ===========================================================================
     match /applications/{applicationId} {
+        // Applicants, employers, and team members can read applications
         allow read: if isSignedIn() && (
             resource.data.userId == request.auth.uid ||
             resource.data.employerId == request.auth.uid ||
+            isTeamMemberOf(resource.data.employerId) ||
             isAdminOrModerator()
         );
         // Users can only create applications for themselves
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.employerId == request.auth.uid || isAdminOrModerator());
+        // Applicants, employers, and team members can update applications
+        allow update: if isSignedIn() && (
+            resource.data.userId == request.auth.uid ||
+            resource.data.employerId == request.auth.uid ||
+            isTeamMemberOf(resource.data.employerId) ||
+            isAdminOrModerator()
+        );
         allow delete: if isAdmin();
     }
 

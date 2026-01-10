@@ -204,6 +204,9 @@ export interface EmployerProfile {
   trcAlignment?: TRCAlignment;
   // Indigenous Verification
   indigenousVerification?: IndigenousVerification;
+  // Team Access
+  teamMembers?: TeamMember[];
+  teamSettings?: TeamSettings;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -226,6 +229,42 @@ export interface IndigenousVerification {
   reviewedBy?: string; // Admin who reviewed
   reviewNotes?: string; // Internal admin notes
   rejectionReason?: string;
+}
+
+// Team Access Types
+export type TeamRole = "admin" | "editor" | "viewer";
+
+export interface TeamMember {
+  id: string; // User's Firebase UID
+  email: string;
+  displayName?: string;
+  role: TeamRole;
+  addedBy: string; // UID of who invited this member
+  addedAt: Timestamp | null;
+  lastAccessedAt?: Timestamp | null;
+}
+
+export type TeamInvitationStatus = "pending" | "accepted" | "declined" | "expired";
+
+export interface TeamInvitation {
+  id: string;
+  employerId: string;
+  organizationName: string; // Denormalized for display
+  invitedEmail: string;
+  invitedBy: string; // UID
+  invitedByName?: string; // Denormalized for display
+  role: TeamRole;
+  status: TeamInvitationStatus;
+  token: string; // Secret token for email invitation links
+  expiresAt: Timestamp | null;
+  createdAt: Timestamp | null;
+  acceptedAt?: Timestamp | null;
+}
+
+export interface TeamSettings {
+  allowInvitations: boolean;
+  defaultRole: TeamRole;
+  maxTeamSize?: number; // Optional limit
 }
 
 export interface JobPosting {

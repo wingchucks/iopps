@@ -360,3 +360,26 @@ export {
   getSuggestedConnections,
   shareEntity,
 } from "./social";
+
+// ============================================
+// TEAM ACCESS
+// ============================================
+export {
+  // Team members
+  getTeamMembers,
+  addTeamMember,
+  removeTeamMember,
+  updateTeamMemberRole,
+  isUserTeamMember,
+  getEmployerIdForUser,
+  // Team invitations
+  createInvitation,
+  getInvitation,
+  getInvitationByToken,
+  getPendingInvitationsForEmail,
+  getInvitationsForEmployer,
+  acceptInvitation,
+  declineInvitation,
+  revokeInvitation,
+  resendInvitation,
+} from "./team";
