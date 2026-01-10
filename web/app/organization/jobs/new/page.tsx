@@ -55,6 +55,7 @@ function NewJobPageContent() {
     willTrain: false,
     driversLicense: false,
     closingDate: "",
+    scheduledPublishAt: "", // For scheduling job to publish later
     jobVideoUrl: "",
     // TRC Fields
     trcIndigenousHiring: false,
@@ -391,6 +392,7 @@ function NewJobPageContent() {
         qualifications: formData.qualifications.split('\n'),
         salaryRange: formData.salaryRange,
         closingDate: formData.closingDate,
+        ...(formData.scheduledPublishAt && { scheduledPublishAt: new Date(formData.scheduledPublishAt) }),
         quickApplyEnabled: true, // Always enable Quick Apply as the only application method
         ...(jobVideo && { jobVideo }),
         trcAlignment: {
@@ -401,33 +403,40 @@ function NewJobPageContent() {
         }
       };
 
+      // Check if job is scheduled for later
+      const isScheduled = !!formData.scheduledPublishAt;
+
       // Payment Logic (Shared with Wizard)
       if (productType === "SUBSCRIPTION") {
         if (subscription && !subscription.unlimitedPosts && subscription.remainingCredits <= 0) {
           throw new Error("No credits remaining.");
         }
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
-        // Notify admin of new job posting
-        fetch("/api/admin/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => { });
-        router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
+        const id = await createJobPosting({ ...jobPayload, active: !isScheduled, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
+        // Notify admin of new job posting (only if published immediately)
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
 
       if (productType === "FREE_POSTING") {
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
-        // Notify admin of new job posting
-        fetch("/api/admin/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => { });
-        router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
+        const id = await createJobPosting({ ...jobPayload, active: !isScheduled, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
+        // Notify admin of new job posting (only if published immediately)
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
 

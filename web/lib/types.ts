@@ -310,6 +310,9 @@ export interface JobPosting {
   productType?: string;
   amountPaid?: number;
   expiresAt?: Timestamp | Date | string | null;
+  // Scheduled publishing
+  scheduledPublishAt?: Timestamp | Date | string | null; // When to auto-publish
+  publishedAt?: Timestamp | Date | null; // When job was actually published
   // RSS Import fields
   importedFrom?: string; // RSS feed ID this job came from
   originalUrl?: string; // Original job listing URL
