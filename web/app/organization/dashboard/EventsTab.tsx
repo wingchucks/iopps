@@ -219,9 +219,9 @@ export default function EventsTab() {
   const getNewButtonConfig = () => {
     switch (eventType) {
       case "powwows":
-        return { href: "/organization/events/new", label: "Pow Wow", modal: true };
+        return { href: "/organization/events/new", label: "Event", modal: true };
       case "conferences":
-        return { href: "/organization/conferences/new", label: "Conference", modal: false };
+        return { href: "/organization/conferences/new", label: "Event", modal: false };
     }
   };
 

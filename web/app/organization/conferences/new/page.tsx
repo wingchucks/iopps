@@ -1,16 +1,14 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createConference, getEmployerProfile, updateConference } from "@/lib/firestore";
-import ConferencePricingSelector from "@/components/ConferencePricingSelector";
 import { PosterUploader } from "@/components/PosterUploader";
 import type { ConferenceExtractedData } from "@/lib/googleAi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import { isPillarPaymentRequired } from "@/lib/platformSettings";
 import { toast } from "react-hot-toast";
 
 export default function NewConferencePage() {
@@ -28,20 +26,6 @@ export default function NewConferencePage() {
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
   const [posterFile, setPosterFile] = useState<File | null>(null);
-
-  // Step management
-  const [step, setStep] = useState<"form" | "pricing">("form");
-  const [conferenceId, setConferenceId] = useState<string | null>(null);
-  const [paymentRequired, setPaymentRequired] = useState(true);
-
-  // Check if payment is required for conferences
-  useEffect(() => {
-    async function checkPayment() {
-      const required = await isPillarPaymentRequired("conferences");
-      setPaymentRequired(required);
-    }
-    checkPayment();
-  }, []);
 
   // Handle data extracted from poster
   const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
@@ -134,7 +118,7 @@ export default function NewConferencePage() {
         setOrgName(organizerName);
       }
 
-      // 1. Create conference to get ID
+      // 1. Create conference (free posting - active immediately)
       const newConferenceId = await createConference({
         employerId: user.uid,
         employerName: organizerName,
@@ -145,7 +129,7 @@ export default function NewConferencePage() {
         endDate,
         registrationLink,
         cost,
-        active: false, // Start inactive until pricing selected
+        active: true, // Free posting - active immediately
       });
 
       // 2. Upload poster if exists
@@ -169,15 +153,9 @@ export default function NewConferencePage() {
         }
       }
 
-      // If payment is required, go to pricing step
-      if (paymentRequired) {
-        setConferenceId(newConferenceId);
-        setStep("pricing");
-      } else {
-        // Free posting - stays inactive pending admin approval
-        toast.success("Conference submitted for review!");
-        router.push(`/organization/conferences/${newConferenceId}/edit`);
-      }
+      // Free posting - conference is active immediately
+      toast.success("Conference created successfully!");
+      router.push(`/organization/conferences/${newConferenceId}/edit`);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not create conference.");
@@ -185,18 +163,6 @@ export default function NewConferencePage() {
       setSaving(false);
     }
   };
-
-  // Pricing step
-  if (step === "pricing" && conferenceId && user) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <ConferencePricingSelector
-          conferenceId={conferenceId}
-          userId={user.uid}
-        />
-      </div>
-    );
-  }
 
   // Form step
   return (
@@ -334,7 +300,7 @@ export default function NewConferencePage() {
           disabled={saving}
           className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
         >
-          {saving ? "Creating..." : "Continue to Pricing"}
+          {saving ? "Creating..." : "Create Conference"}
         </button>
       </form>
     </div>
