@@ -19,7 +19,7 @@ import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus, Ap
 import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon, ChatBubbleLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 type CareerType = "jobs" | "training" | "applications";
-type StatusFilter = "all" | "active" | "paused";
+type StatusFilter = "all" | "active" | "paused" | "scheduled";
 
 export default function CareersTab() {
   const { user } = useAuth();
@@ -65,10 +65,18 @@ export default function CareersTab() {
     }
   };
 
+  // Helper to check if a job is scheduled
+  const isScheduledJob = (job: JobPosting) => {
+    return job.scheduledPublishAt && job.active === false;
+  };
+
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
+      // Handle status filters
       if (statusFilter === "active" && job.active === false) return false;
-      if (statusFilter === "paused" && job.active !== false) return false;
+      if (statusFilter === "paused" && (job.active !== false || isScheduledJob(job))) return false;
+      if (statusFilter === "scheduled" && !isScheduledJob(job)) return false;
+
       if (
         keyword &&
         !`${job.title} ${job.description}`
@@ -447,6 +455,7 @@ export default function CareersTab() {
               <option value="all">All</option>
               <option value="active">Active only</option>
               <option value="paused">Paused only</option>
+              <option value="scheduled">Scheduled</option>
             </select>
           </div>
           {newButtonConfig && (
@@ -572,7 +581,11 @@ export default function CareersTab() {
                           <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300">
                             {job.employmentType}
                           </span>
-                          {job.active === false ? (
+                          {isScheduledJob(job) ? (
+                            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
+                              ⏰ Scheduled
+                            </span>
+                          ) : job.active === false ? (
                             <span className="rounded-full border border-slate-600 bg-slate-700/30 px-3 py-1 text-xs font-medium text-slate-400">
                               Paused
                             </span>
@@ -595,6 +608,15 @@ export default function CareersTab() {
                         <span>Location: {job.location || "Remote"}</span>
                         <span>Views: {job.viewsCount || 0}</span>
                         <span>Applications: {job.applicationsCount || 0}</span>
+                        {isScheduledJob(job) && job.scheduledPublishAt && (
+                          <span className="text-amber-400">
+                            Publishes: {new Date(
+                              typeof job.scheduledPublishAt === 'object' && 'toDate' in job.scheduledPublishAt
+                                ? job.scheduledPublishAt.toDate()
+                                : job.scheduledPublishAt
+                            ).toLocaleString()}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

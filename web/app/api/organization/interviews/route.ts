@@ -1,10 +1,302 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { Resend } from "resend";
 import type { ScheduledInterview, ScheduledInterviewType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+const FROM_EMAIL = process.env.NOTIFICATION_FROM_EMAIL || "IOPPS <notifications@iopps.ca>";
+
+// Generate ICS calendar content for email attachment
+function generateICSContent(interview: {
+  id: string;
+  jobTitle: string;
+  scheduledAt: Date;
+  duration: number;
+  type: ScheduledInterviewType;
+  meetingUrl?: string;
+  phoneNumber?: string;
+  location?: string;
+  interviewerName?: string;
+  notes?: string;
+}): string {
+  const startDate = interview.scheduledAt;
+  const endDate = new Date(startDate.getTime() + interview.duration * 60 * 1000);
+
+  const formatDate = (date: Date) =>
+    date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+  const location = interview.type === "virtual"
+    ? interview.meetingUrl || "Virtual Meeting"
+    : interview.type === "phone"
+    ? `Phone: ${interview.phoneNumber || "TBD"}`
+    : interview.location || "TBD";
+
+  const description = [
+    `Interview for: ${interview.jobTitle}`,
+    interview.interviewerName ? `Interviewer: ${interview.interviewerName}` : "",
+    interview.notes ? `Notes: ${interview.notes}` : "",
+    interview.meetingUrl ? `Meeting URL: ${interview.meetingUrl}` : "",
+  ]
+    .filter(Boolean)
+    .join("\\n");
+
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//IOPPS//Interview Scheduler//EN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:${interview.id}@iopps.ca
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${formatDate(startDate)}
+DTEND:${formatDate(endDate)}
+SUMMARY:Interview - ${interview.jobTitle}
+DESCRIPTION:${description}
+LOCATION:${location}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+}
+
+// Send interview invitation email with calendar attachment
+async function sendInterviewInviteEmail(
+  candidateEmail: string,
+  candidateName: string,
+  interview: {
+    id: string;
+    jobTitle: string;
+    scheduledAt: Date;
+    duration: number;
+    type: ScheduledInterviewType;
+    meetingUrl?: string;
+    phoneNumber?: string;
+    location?: string;
+    interviewerName?: string;
+    interviewerEmail?: string;
+    notes?: string;
+  },
+  employerName: string
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.log("[Interview Email] Skipped - RESEND_API_KEY not configured");
+    return;
+  }
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const icsContent = generateICSContent(interview);
+
+    const formattedDate = interview.scheduledAt.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = interview.scheduledAt.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    const typeLabel = interview.type === "virtual" ? "Video Call" : interview.type === "phone" ? "Phone Call" : "In-Person";
+    const locationInfo = interview.type === "virtual" && interview.meetingUrl
+      ? `<a href="${interview.meetingUrl}" style="color: #14b8a6;">${interview.meetingUrl}</a>`
+      : interview.type === "phone" && interview.phoneNumber
+      ? `Phone: ${interview.phoneNumber}`
+      : interview.type === "in-person" && interview.location
+      ? interview.location
+      : "Details to be confirmed";
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155;">
+    <div style="background: #14b8a6; color: #0f172a; padding: 8px 16px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-bottom: 16px;">📅 Interview Scheduled</div>
+    <h2 style="color: #14b8a6; margin-top: 0;">Interview Invitation</h2>
+    <p>Hi ${candidateName},</p>
+    <p>Great news! ${employerName} has scheduled an interview with you for the position of <strong>${interview.jobTitle}</strong>.</p>
+
+    <div style="background: #0f172a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 12px 0;"><strong style="color: #94a3b8;">Date:</strong> ${formattedDate}</p>
+      <p style="margin: 0 0 12px 0;"><strong style="color: #94a3b8;">Time:</strong> ${formattedTime}</p>
+      <p style="margin: 0 0 12px 0;"><strong style="color: #94a3b8;">Duration:</strong> ${interview.duration} minutes</p>
+      <p style="margin: 0 0 12px 0;"><strong style="color: #94a3b8;">Format:</strong> ${typeLabel}</p>
+      <p style="margin: 0;"><strong style="color: #94a3b8;">Location:</strong> ${locationInfo}</p>
+      ${interview.interviewerName ? `<p style="margin: 12px 0 0 0;"><strong style="color: #94a3b8;">Interviewer:</strong> ${interview.interviewerName}</p>` : ""}
+    </div>
+
+    ${interview.notes ? `<div style="background: #374151; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #14b8a6;"><p style="margin: 0 0 8px 0; font-weight: 600; color: #14b8a6;">Notes from the employer:</p><p style="margin: 0;">${interview.notes}</p></div>` : ""}
+
+    <p style="color: #94a3b8; font-size: 14px;">A calendar invitation is attached to this email. Add it to your calendar to receive reminders.</p>
+
+    <p style="margin-top: 24px;">
+      <a href="https://iopps.ca/member/dashboard?tab=applications" style="display: inline-block; background: #14b8a6; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View in Dashboard</a>
+    </p>
+
+    <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Good luck with your interview! 🍀</p>
+  </div>
+</body>
+</html>`;
+
+    const text = `Interview Scheduled\n\nHi ${candidateName},\n\n${employerName} has scheduled an interview with you for ${interview.jobTitle}.\n\nDate: ${formattedDate}\nTime: ${formattedTime}\nDuration: ${interview.duration} minutes\nFormat: ${typeLabel}\n${interview.notes ? `\nNotes: ${interview.notes}` : ""}\n\nView in Dashboard: https://iopps.ca/member/dashboard?tab=applications`;
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [candidateEmail],
+      subject: `📅 Interview Scheduled: ${interview.jobTitle} at ${employerName}`,
+      html,
+      text,
+      attachments: [
+        {
+          filename: "interview-invite.ics",
+          content: Buffer.from(icsContent).toString("base64"),
+        },
+      ],
+    });
+
+    console.log(`[Interview Email] Sent invitation to ${candidateEmail}`);
+  } catch (error) {
+    console.error("[Interview Email] Failed to send:", error);
+  }
+}
+
+// Send interview cancellation email
+async function sendInterviewCancelledEmail(
+  candidateEmail: string,
+  candidateName: string,
+  jobTitle: string,
+  cancelReason?: string
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155;">
+    <div style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-bottom: 16px;">Interview Cancelled</div>
+    <h2 style="color: #f87171; margin-top: 0;">Interview Cancelled</h2>
+    <p>Hi ${candidateName},</p>
+    <p>We regret to inform you that your scheduled interview for <strong>${jobTitle}</strong> has been cancelled.</p>
+    ${cancelReason ? `<div style="background: #374151; padding: 16px; border-radius: 8px; margin: 16px 0;"><p style="margin: 0 0 8px 0; font-weight: 600; color: #94a3b8;">Reason:</p><p style="margin: 0;">${cancelReason}</p></div>` : ""}
+    <p style="color: #94a3b8;">The employer may reach out to reschedule. In the meantime, you can view your applications in your dashboard.</p>
+    <p style="margin-top: 24px;">
+      <a href="https://iopps.ca/member/dashboard?tab=applications" style="display: inline-block; background: #14b8a6; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View Applications</a>
+    </p>
+  </div>
+</body>
+</html>`;
+
+    const text = `Interview Cancelled\n\nHi ${candidateName},\n\nYour scheduled interview for ${jobTitle} has been cancelled.${cancelReason ? `\n\nReason: ${cancelReason}` : ""}\n\nView Applications: https://iopps.ca/member/dashboard?tab=applications`;
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [candidateEmail],
+      subject: `Interview Cancelled: ${jobTitle}`,
+      html,
+      text,
+    });
+
+    console.log(`[Interview Email] Sent cancellation to ${candidateEmail}`);
+  } catch (error) {
+    console.error("[Interview Email] Failed to send cancellation:", error);
+  }
+}
+
+// Send interview rescheduled email with new calendar invite
+async function sendInterviewRescheduledEmail(
+  candidateEmail: string,
+  candidateName: string,
+  interview: {
+    id: string;
+    jobTitle: string;
+    scheduledAt: Date;
+    duration: number;
+    type: ScheduledInterviewType;
+    meetingUrl?: string;
+    phoneNumber?: string;
+    location?: string;
+    interviewerName?: string;
+    notes?: string;
+  },
+  employerName: string
+): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const icsContent = generateICSContent(interview);
+
+    const formattedDate = interview.scheduledAt.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = interview.scheduledAt.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    const typeLabel = interview.type === "virtual" ? "Video Call" : interview.type === "phone" ? "Phone Call" : "In-Person";
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155;">
+    <div style="background: #f59e0b; color: #0f172a; padding: 8px 16px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-bottom: 16px;">📅 Interview Rescheduled</div>
+    <h2 style="color: #f59e0b; margin-top: 0;">Interview Rescheduled</h2>
+    <p>Hi ${candidateName},</p>
+    <p>Your interview for <strong>${interview.jobTitle}</strong> at ${employerName} has been rescheduled.</p>
+
+    <div style="background: #0f172a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0 0 12px 0;"><strong style="color: #f59e0b;">NEW DATE:</strong> ${formattedDate}</p>
+      <p style="margin: 0 0 12px 0;"><strong style="color: #f59e0b;">NEW TIME:</strong> ${formattedTime}</p>
+      <p style="margin: 0 0 12px 0;"><strong style="color: #94a3b8;">Duration:</strong> ${interview.duration} minutes</p>
+      <p style="margin: 0;"><strong style="color: #94a3b8;">Format:</strong> ${typeLabel}</p>
+    </div>
+
+    <p style="color: #94a3b8; font-size: 14px;">An updated calendar invitation is attached. Please add it to your calendar.</p>
+
+    <p style="margin-top: 24px;">
+      <a href="https://iopps.ca/member/dashboard?tab=applications" style="display: inline-block; background: #14b8a6; color: #0f172a; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View in Dashboard</a>
+    </p>
+  </div>
+</body>
+</html>`;
+
+    const text = `Interview Rescheduled\n\nHi ${candidateName},\n\nYour interview for ${interview.jobTitle} at ${employerName} has been rescheduled.\n\nNEW DATE: ${formattedDate}\nNEW TIME: ${formattedTime}\nDuration: ${interview.duration} minutes\n\nView in Dashboard: https://iopps.ca/member/dashboard?tab=applications`;
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [candidateEmail],
+      subject: `📅 Interview Rescheduled: ${interview.jobTitle}`,
+      html,
+      text,
+      attachments: [
+        {
+          filename: "interview-invite-updated.ics",
+          content: Buffer.from(icsContent).toString("base64"),
+        },
+      ],
+    });
+
+    console.log(`[Interview Email] Sent reschedule notification to ${candidateEmail}`);
+  } catch (error) {
+    console.error("[Interview Email] Failed to send reschedule:", error);
+  }
+}
 
 // GET - List interviews for employer
 export async function GET(request: NextRequest) {
@@ -170,6 +462,30 @@ export async function POST(request: NextRequest) {
       createdAt: FieldValue.serverTimestamp(),
     });
 
+    // Send email with calendar invite to candidate
+    const employerData = employerDoc.data();
+    const candidateEmail = member?.email || application?.memberEmail || application?.email;
+    if (candidateEmail) {
+      await sendInterviewInviteEmail(
+        candidateEmail,
+        interview.candidateName,
+        {
+          id: docRef.id,
+          jobTitle: interview.jobTitle,
+          scheduledAt: new Date(scheduledAt),
+          duration: interview.duration,
+          type: interview.type,
+          meetingUrl,
+          phoneNumber,
+          location,
+          interviewerName,
+          interviewerEmail,
+          notes,
+        },
+        employerData?.organizationName || employerData?.companyName || "Employer"
+      );
+    }
+
     return NextResponse.json({
       success: true,
       interview: {
@@ -267,6 +583,16 @@ export async function PUT(request: NextRequest) {
         },
         createdAt: FieldValue.serverTimestamp(),
       });
+
+      // Send cancellation email
+      if (interview?.candidateEmail) {
+        await sendInterviewCancelledEmail(
+          interview.candidateEmail,
+          interview.candidateName || "Candidate",
+          interview.jobTitle || "Position",
+          updates.cancelReason
+        );
+      }
     }
 
     // Handle rescheduling
@@ -286,6 +612,31 @@ export async function PUT(request: NextRequest) {
         },
         createdAt: FieldValue.serverTimestamp(),
       });
+
+      // Send reschedule email with new calendar invite
+      if (interview?.candidateEmail) {
+        // Get employer info for the email
+        const employerDoc = await db.collection("employers").doc(userId).get();
+        const employerData = employerDoc.data();
+
+        await sendInterviewRescheduledEmail(
+          interview.candidateEmail,
+          interview.candidateName || "Candidate",
+          {
+            id: interviewId,
+            jobTitle: interview.jobTitle || "Position",
+            scheduledAt: new Date(updates.scheduledAt),
+            duration: updates.duration || interview.duration || 30,
+            type: updates.type || interview.type || "virtual",
+            meetingUrl: updates.meetingUrl || interview.meetingUrl,
+            phoneNumber: updates.phoneNumber || interview.phoneNumber,
+            location: updates.location || interview.location,
+            interviewerName: updates.interviewerName || interview.interviewerName,
+            notes: updates.notes || interview.notes,
+          },
+          employerData?.organizationName || employerData?.companyName || "Employer"
+        );
+      }
     }
 
     await db.collection("scheduledInterviews").doc(interviewId).update(updateData);
