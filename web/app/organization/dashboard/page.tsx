@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { redirect, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { DashboardLayout, type SidebarSection } from "@/components/ui";
 import OverviewTab from "./OverviewTab";
 import CareersTab from "./CareersTab";
 import EducationTab from "./EducationTab";
@@ -65,66 +66,74 @@ function EmployerDashboardContent() {
     redirect("/login");
   }
 
-  const tabs = [
-    { id: "overview" as TabType, label: "Overview", icon: "📊" },
-    { id: "careers" as TabType, label: "Careers", icon: "💼" },
-    { id: "education" as TabType, label: "Education", icon: "🎓" },
-    { id: "events" as TabType, label: "Events", icon: "🎪" },
-    { id: "messages" as TabType, label: "Messages", icon: "💬" },
-    { id: "videos" as TabType, label: "Videos", icon: "🎬" },
-    { id: "business" as TabType, label: "Business", icon: "🏪" },
-    { id: "team" as TabType, label: "Team", icon: "👥" },
-    { id: "notifications" as TabType, label: "Notifications", icon: "🔔" },
-    { id: "billing" as TabType, label: "Billing", icon: "💳" },
-    { id: "profile" as TabType, label: "Settings", icon: "⚙️" },
+  // Sidebar sections with grouped navigation
+  const sidebarSections: SidebarSection[] = [
+    {
+      title: "Manage",
+      items: [
+        { id: "overview", label: "Overview", icon: "📊" },
+        { id: "careers", label: "Careers", icon: "💼" },
+        { id: "events", label: "Events", icon: "🎪" },
+        { id: "education", label: "Education", icon: "🎓" },
+        { id: "business", label: "Business", icon: "🏪" },
+        { id: "videos", label: "Videos", icon: "🎬" },
+      ],
+    },
+    {
+      title: "Communicate",
+      items: [
+        { id: "messages", label: "Messages", icon: "💬" },
+        { id: "team", label: "Team", icon: "👥" },
+      ],
+    },
+    {
+      title: "Account",
+      items: [
+        { id: "notifications", label: "Notifications", icon: "🔔" },
+        { id: "billing", label: "Billing", icon: "💳" },
+        { id: "profile", label: "Settings", icon: "⚙️" },
+      ],
+    },
   ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white sm:text-4xl">
-            Organization Dashboard
-          </h1>
-          <p className="mt-2 text-slate-400">
-            Manage careers, events, business listings, and your organization profile
-          </p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-800 pb-px">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${activeTab === tab.id
-                ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-                }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content - key ensures React properly unmounts/remounts components on tab change */}
-        <div className="min-h-[600px]" key={activeTab}>
-          {activeTab === "overview" && <OverviewTab onNavigate={handleSectionNavigate} />}
-          {activeTab === "careers" && <CareersTab />}
-          {activeTab === "education" && <EducationTab />}
-          {activeTab === "events" && <EventsTab />}
-          {activeTab === "messages" && <MessagesTab />}
-          {activeTab === "videos" && <VideosTab />}
-          {activeTab === "business" && <BusinessTab onNavigate={handleSectionNavigate} />}
-          {activeTab === "team" && <TeamTab />}
-          {activeTab === "notifications" && <NotificationsTab />}
-          {activeTab === "billing" && <BillingTab />}
-          {activeTab === "profile" && <ProfileTab mode="employer" />}
-        </div>
+  // Sidebar header with organization name placeholder
+  const sidebarHeader = (
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold flex-shrink-0">
+        O
       </div>
+      <span className="text-sm font-semibold text-slate-200 truncate">
+        Organization
+      </span>
     </div>
+  );
+
+  return (
+    <DashboardLayout
+      sections={sidebarSections}
+      activeItem={activeTab}
+      onItemClick={(id) => setActiveTab(id as TabType)}
+      header={sidebarHeader}
+      title="Organization Dashboard"
+      subtitle="Manage careers, events, business listings, and your organization profile"
+      storageKey="organization"
+      mobilePrimaryCount={4}
+    >
+      {/* Tab Content - key ensures React properly unmounts/remounts components on tab change */}
+      <div className="min-h-[600px]" key={activeTab}>
+        {activeTab === "overview" && <OverviewTab onNavigate={handleSectionNavigate} />}
+        {activeTab === "careers" && <CareersTab />}
+        {activeTab === "education" && <EducationTab />}
+        {activeTab === "events" && <EventsTab />}
+        {activeTab === "messages" && <MessagesTab />}
+        {activeTab === "videos" && <VideosTab />}
+        {activeTab === "business" && <BusinessTab onNavigate={handleSectionNavigate} />}
+        {activeTab === "team" && <TeamTab />}
+        {activeTab === "notifications" && <NotificationsTab />}
+        {activeTab === "billing" && <BillingTab />}
+        {activeTab === "profile" && <ProfileTab mode="employer" />}
+      </div>
+    </DashboardLayout>
   );
 }
 

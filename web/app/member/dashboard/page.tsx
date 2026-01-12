@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import Link from "next/link";
+import { DashboardLayout, type SidebarSection } from "@/components/ui";
 import {
   getMemberProfile,
   listMemberApplications,
@@ -20,8 +21,6 @@ import type {
   Scholarship
 } from "@/lib/types";
 
-
-
 // Import the profile component content
 import ProfileTab from "./ProfileTab";
 import ApplicationsTab from "./ApplicationsTab";
@@ -32,8 +31,6 @@ import TrainingTab from "./TrainingTab";
 import SettingsTab from "./SettingsTab";
 import ProfileWizard from "@/components/member/ProfileWizard";
 import OverviewTab, { ApplicationWithJob, TabType } from "./OverviewTab";
-
-
 
 export default function MemberDashboard() {
   const { user, role, loading } = useAuth();
@@ -177,103 +174,59 @@ export default function MemberDashboard() {
     );
   }
 
+  // Sidebar sections with grouped navigation
+  const sidebarSections: SidebarSection[] = [
+    {
+      title: "Discover",
+      items: [
+        { id: "overview", label: "Overview", icon: "📊" },
+        { id: "training", label: "Training", icon: "📚" },
+      ],
+    },
+    {
+      title: "My Stuff",
+      items: [
+        { id: "applications", label: "Applications", icon: "📝", badge: recentStats.totalApplications || undefined },
+        { id: "saved", label: "Saved", icon: "❤️" },
+        { id: "alerts", label: "Job Alerts", icon: "🔔" },
+      ],
+    },
+    {
+      title: "Account",
+      items: [
+        { id: "messages", label: "Messages", icon: "💬", badge: unreadMessageCount || undefined },
+        { id: "profile", label: "Profile", icon: "👤" },
+        { id: "settings", label: "Settings", icon: "⚙️" },
+      ],
+    },
+  ];
+
+  // Sidebar header with member info
+  const sidebarHeader = (
+    <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold flex-shrink-0">
+        {profile?.displayName?.charAt(0)?.toUpperCase() || "M"}
+      </div>
+      <span className="text-sm font-semibold text-slate-200 truncate">
+        {profile?.displayName || "Member"}
+      </span>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">My Dashboard</h1>
-          <p className="mt-2 text-slate-400">Manage your profile, applications, and saved items</p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-800 pb-px">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "overview"
-              ? "border-b-2 border-emerald-500 text-emerald-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "profile"
-              ? "border-b-2 border-emerald-500 text-emerald-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Profile
-          </button>
-          <button
-            onClick={() => setActiveTab("applications")}
-            className={`relative whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "applications"
-              ? "border-b-2 border-emerald-500 text-emerald-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Applications
-            {recentStats.totalApplications > 0 && (
-              <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400">
-                {recentStats.totalApplications}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("saved")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "saved"
-              ? "border-b-2 border-emerald-500 text-emerald-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Saved Items
-          </button>
-          <button
-            onClick={() => setActiveTab("training")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "training"
-              ? "border-b-2 border-amber-500 text-amber-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Training
-          </button>
-          <button
-            onClick={() => setActiveTab("alerts")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "alerts"
-              ? "border-b-2 border-emerald-500 text-emerald-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Job Alerts
-          </button>
-          <button
-            onClick={() => setActiveTab("messages")}
-            className={`relative whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "messages"
-              ? "border-b-2 border-emerald-500 text-emerald-400"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Messages
-            {unreadMessageCount > 0 && (
-              <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-400">
-                {unreadMessageCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`whitespace-nowrap px-6 py-3 text-sm font-semibold transition ${activeTab === "settings"
-              ? "border-b-2 border-slate-400 text-slate-200"
-              : "text-slate-400 hover:text-slate-300"
-              }`}
-          >
-            Settings
-          </button>
-        </div>
-
+    <>
+      <DashboardLayout
+        sections={sidebarSections}
+        activeItem={activeTab}
+        onItemClick={(id) => setActiveTab(id as TabType)}
+        header={sidebarHeader}
+        title="My Dashboard"
+        subtitle="Manage your profile, applications, and saved items"
+        storageKey="member"
+        mobilePrimaryCount={4}
+      >
         {/* Tab Content */}
-        <div>
+        <div key={activeTab}>
           {activeTab === "overview" && (
             <OverviewTab
               profile={profile}
@@ -285,31 +238,18 @@ export default function MemberDashboard() {
           )}
           {activeTab === "profile" && <ProfileTab key={profile?.id} initialProfile={profile} onProfileUpdate={setProfile} />}
           {activeTab === "applications" && <ApplicationsTab />}
-          {activeTab === "saved" && (
-            <SavedItemsTab />
-          )}
-          {activeTab === "training" && (
-            <TrainingTab />
-          )}
-
-          {activeTab === "alerts" && (
-            <JobAlertsTab />
-          )}
-          {activeTab === "messages" && (
-            <MessagesTab />
-          )}
-          {activeTab === "settings" && (
-            <SettingsTab />
-          )}
+          {activeTab === "saved" && <SavedItemsTab />}
+          {activeTab === "training" && <TrainingTab />}
+          {activeTab === "alerts" && <JobAlertsTab />}
+          {activeTab === "messages" && <MessagesTab />}
+          {activeTab === "settings" && <SettingsTab />}
         </div>
-      </div>
+      </DashboardLayout>
       <ProfileWizard
         isOpen={showWizard}
         onClose={handleWizardDismiss}
         onComplete={handleWizardComplete}
       />
-    </div>
+    </>
   );
 }
-
-
