@@ -204,8 +204,75 @@ export interface EmployerProfile {
   trcAlignment?: TRCAlignment;
   // Indigenous Verification
   indigenousVerification?: IndigenousVerification;
+  // Team Access
+  teamMembers?: TeamMember[];
+  teamSettings?: TeamSettings;
+  // Notification Preferences
+  notificationPreferences?: EmployerNotificationPreferences;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Employer Notification Preferences
+export interface EmployerNotificationPreferences {
+  // Application notifications
+  newApplications: boolean; // Notify when someone applies
+  applicationStatusChanges: boolean; // Notify when application status changes
+
+  // Job notifications
+  jobExpiring: boolean; // Notify when a job is about to expire
+  scheduledJobPublished: boolean; // Notify when a scheduled job goes live
+
+  // Team notifications
+  teamInvitations: boolean; // Notify about team invitations
+  teamActivity: boolean; // Notify about team member activity
+
+  // Digest notifications
+  weeklyDigest: boolean; // Weekly summary of activity
+
+  // Marketing
+  marketingEmails: boolean; // Product updates, tips, etc.
+}
+
+// Scheduled Interview (for job application interviews)
+export type ScheduledInterviewType = "virtual" | "phone" | "in-person";
+export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled" | "no-show";
+
+export interface ScheduledInterview {
+  id: string;
+  applicationId: string;
+  jobId: string;
+  employerId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  // Scheduling details
+  scheduledAt: Timestamp | Date | string;
+  duration: number; // minutes (30, 45, 60, 90)
+  timezone?: string;
+  // Location/meeting details
+  type: ScheduledInterviewType;
+  location?: string; // Physical address for in-person, or meeting URL for virtual
+  meetingUrl?: string; // Video call link
+  phoneNumber?: string; // For phone interviews
+  // Status tracking
+  status: ScheduledInterviewStatus;
+  // Notes and follow-up
+  notes?: string; // Employer notes
+  interviewerName?: string;
+  interviewerEmail?: string;
+  // Calendar integration
+  calendarEventId?: string;
+  icsFileUrl?: string;
+  // Notifications
+  reminderSent?: boolean;
+  reminderSentAt?: Timestamp | null;
+  // Timestamps
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  cancelledAt?: Timestamp | null;
+  cancelReason?: string;
 }
 
 // Indigenous Business Verification
@@ -226,6 +293,42 @@ export interface IndigenousVerification {
   reviewedBy?: string; // Admin who reviewed
   reviewNotes?: string; // Internal admin notes
   rejectionReason?: string;
+}
+
+// Team Access Types
+export type TeamRole = "admin" | "editor" | "viewer";
+
+export interface TeamMember {
+  id: string; // User's Firebase UID
+  email: string;
+  displayName?: string;
+  role: TeamRole;
+  addedBy: string; // UID of who invited this member
+  addedAt: Timestamp | null;
+  lastAccessedAt?: Timestamp | null;
+}
+
+export type TeamInvitationStatus = "pending" | "accepted" | "declined" | "expired";
+
+export interface TeamInvitation {
+  id: string;
+  employerId: string;
+  organizationName: string; // Denormalized for display
+  invitedEmail: string;
+  invitedBy: string; // UID
+  invitedByName?: string; // Denormalized for display
+  role: TeamRole;
+  status: TeamInvitationStatus;
+  token: string; // Secret token for email invitation links
+  expiresAt: Timestamp | null;
+  createdAt: Timestamp | null;
+  acceptedAt?: Timestamp | null;
+}
+
+export interface TeamSettings {
+  allowInvitations: boolean;
+  defaultRole: TeamRole;
+  maxTeamSize?: number; // Optional limit
 }
 
 export interface JobPosting {
@@ -271,6 +374,9 @@ export interface JobPosting {
   productType?: string;
   amountPaid?: number;
   expiresAt?: Timestamp | Date | string | null;
+  // Scheduled publishing
+  scheduledPublishAt?: Timestamp | Date | string | null; // When to auto-publish
+  publishedAt?: Timestamp | Date | null; // When job was actually published
   // RSS Import fields
   importedFrom?: string; // RSS feed ID this job came from
   originalUrl?: string; // Original job listing URL

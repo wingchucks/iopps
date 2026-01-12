@@ -55,6 +55,7 @@ function NewJobPageContent() {
     willTrain: false,
     driversLicense: false,
     closingDate: "",
+    scheduledPublishAt: "", // For scheduling job to publish later
     jobVideoUrl: "",
     // TRC Fields
     trcIndigenousHiring: false,
@@ -391,6 +392,7 @@ function NewJobPageContent() {
         qualifications: formData.qualifications.split('\n'),
         salaryRange: formData.salaryRange,
         closingDate: formData.closingDate,
+        ...(formData.scheduledPublishAt && { scheduledPublishAt: new Date(formData.scheduledPublishAt) }),
         quickApplyEnabled: true, // Always enable Quick Apply as the only application method
         ...(jobVideo && { jobVideo }),
         trcAlignment: {
@@ -401,33 +403,40 @@ function NewJobPageContent() {
         }
       };
 
+      // Check if job is scheduled for later
+      const isScheduled = !!formData.scheduledPublishAt;
+
       // Payment Logic (Shared with Wizard)
       if (productType === "SUBSCRIPTION") {
         if (subscription && !subscription.unlimitedPosts && subscription.remainingCredits <= 0) {
           throw new Error("No credits remaining.");
         }
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
-        // Notify admin of new job posting
-        fetch("/api/admin/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => { });
-        router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
+        const id = await createJobPosting({ ...jobPayload, active: !isScheduled, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
+        // Notify admin of new job posting (only if published immediately)
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
 
       if (productType === "FREE_POSTING") {
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
-        // Notify admin of new job posting
-        fetch("/api/admin/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => { });
-        router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
+        const id = await createJobPosting({ ...jobPayload, active: !isScheduled, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
+        // Notify admin of new job posting (only if published immediately)
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
 
@@ -620,6 +629,7 @@ function NewJobPageContent() {
                       willTrain: false,
                       driversLicense: false,
                       closingDate: "",
+                      scheduledPublishAt: "",
                       jobVideoUrl: "",
                       trcIndigenousHiring: false,
                       trcLeadershipTraining: false,
@@ -691,6 +701,72 @@ function NewJobPageContent() {
                     {validationErrors.closingDate && <p className="mt-1 text-sm text-red-400">{validationErrors.closingDate}</p>}
                   </div>
                 </div>
+              </div>
+            </section>
+
+            {/* Scheduled Publishing */}
+            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-slate-100">Scheduled Publishing</h2>
+                  <p className="text-sm text-slate-400">
+                    Schedule this job to automatically go live at a future date and time.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.scheduledPublishAt}
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        setFormData(prev => ({ ...prev, scheduledPublishAt: "" }));
+                      } else {
+                        // Set default to tomorrow at 9 AM
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        tomorrow.setHours(9, 0, 0, 0);
+                        setFormData(prev => ({ ...prev, scheduledPublishAt: tomorrow.toISOString().slice(0, 16) }));
+                      }
+                    }}
+                    className="h-5 w-5 rounded border-slate-700 bg-slate-900 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
+                  <span className="text-sm text-slate-300">Schedule this job to publish later</span>
+                </label>
+
+                {!!formData.scheduledPublishAt && (
+                  <div className="pl-8 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Publish Date & Time</label>
+                      <input
+                        type="datetime-local"
+                        value={formData.scheduledPublishAt}
+                        onChange={(e) => setFormData(prev => ({ ...prev, scheduledPublishAt: e.target.value }))}
+                        min={new Date().toISOString().slice(0, 16)}
+                        className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                      />
+                      <p className="mt-2 text-xs text-slate-500">
+                        The job will remain hidden until this date, then automatically become visible to job seekers.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30">
+                      <div className="flex items-center gap-2 text-[#14B8A6]">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-sm font-medium">
+                          Scheduled for: {new Date(formData.scheduledPublishAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
