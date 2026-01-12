@@ -23,7 +23,7 @@ const typeConfig: Record<string, { color: string; gradient: string; label: strin
   job: {
     color: '#F59E0B',
     gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-    label: 'Job',
+    label: 'Job Opportunity',
   },
   scholarship: {
     color: '#EC4899',
@@ -40,10 +40,40 @@ const typeConfig: Record<string, { color: string; gradient: string; label: strin
     gradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
     label: 'Event',
   },
+  powwow: {
+    color: '#F97316',
+    gradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+    label: 'Pow Wow',
+  },
   employer: {
     color: '#06B6D4',
     gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
     label: 'Employer',
+  },
+  school: {
+    color: '#8B5CF6',
+    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    label: 'School',
+  },
+  program: {
+    color: '#6366F1',
+    gradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+    label: 'Program',
+  },
+  grant: {
+    color: '#10B981',
+    gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    label: 'Grant',
+  },
+  live: {
+    color: '#EF4444',
+    gradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+    label: 'Live',
+  },
+  training: {
+    color: '#8B5CF6',
+    gradient: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+    label: 'Training',
   },
   default: {
     color: '#14B8A6',
@@ -282,7 +312,7 @@ export async function GET(request: NextRequest) {
                 color: '#64748B',
               }}
             >
-              Indigenous Opportunities & Business Directory
+              Empowering Indigenous Success
             </span>
             <span
               style={{
