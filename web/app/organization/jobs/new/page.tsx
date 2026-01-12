@@ -629,6 +629,7 @@ function NewJobPageContent() {
                       willTrain: false,
                       driversLicense: false,
                       closingDate: "",
+                      scheduledPublishAt: "",
                       jobVideoUrl: "",
                       trcIndigenousHiring: false,
                       trcLeadershipTraining: false,
