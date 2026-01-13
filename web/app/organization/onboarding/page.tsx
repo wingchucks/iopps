@@ -310,9 +310,15 @@ export default function OnboardingPage() {
       });
 
       const data = await response.json();
+      console.log('Publish API response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to publish');
+      }
+
+      if (!data.slug) {
+        console.error('API returned no slug:', data);
+        throw new Error('Publishing succeeded but no slug was returned');
       }
 
       // Build updated profile from API response and form data
