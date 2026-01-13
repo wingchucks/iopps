@@ -282,7 +282,17 @@ function EducationContent() {
                     </p>
                     <div className="mt-auto flex items-center justify-between border-t border-slate-800 pt-4">
                       <span className="text-xs text-slate-500">
-                        {scholarship.deadline ? `Deadline: ${new Date(scholarship.deadline).toLocaleDateString()}` : 'Open'}
+                        {scholarship.deadline
+                          ? `Deadline: ${
+                              scholarship.deadline instanceof Date
+                                ? scholarship.deadline.toLocaleDateString()
+                                : typeof scholarship.deadline === 'string'
+                                  ? new Date(scholarship.deadline).toLocaleDateString()
+                                  : 'toDate' in scholarship.deadline
+                                    ? scholarship.deadline.toDate().toLocaleDateString()
+                                    : 'Open'
+                            }`
+                          : 'Open'}
                       </span>
                       <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 transition-transform">
                         Apply →
