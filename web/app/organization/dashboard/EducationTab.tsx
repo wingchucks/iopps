@@ -33,11 +33,20 @@ import {
 
 type EducationType = "school" | "programs" | "scholarships" | "inquiries" | "events";
 
-export default function EducationTab() {
+interface EducationTabProps {
+  initialView?: EducationType;
+}
+
+export default function EducationTab({ initialView = "school" }: EducationTabProps) {
   const { user } = useAuth();
-  const [educationType, setEducationType] = useState<EducationType>("school");
+  const [educationType, setEducationType] = useState<EducationType>(initialView);
   const [school, setSchool] = useState<School | null>(null);
   const [programs, setPrograms] = useState<EducationProgram[]>([]);
+
+  // Sync state if prop changes (for sidebar navigation)
+  useEffect(() => {
+    setEducationType(initialView);
+  }, [initialView]);
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [inquiries, setInquiries] = useState<StudentInquiry[]>([]);
   const [events, setEvents] = useState<EducationEvent[]>([]);
@@ -149,8 +158,8 @@ export default function EducationTab() {
         <button
           onClick={() => setEducationType("school")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "school"
-              ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
             }`}
         >
           <BuildingLibraryIcon className="h-4 w-4" />
@@ -159,8 +168,8 @@ export default function EducationTab() {
         <button
           onClick={() => setEducationType("programs")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "programs"
-              ? "border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
             }`}
         >
           <BookOpenIcon className="h-4 w-4" />
@@ -169,8 +178,8 @@ export default function EducationTab() {
         <button
           onClick={() => setEducationType("scholarships")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "scholarships"
-              ? "border-b-2 border-amber-500 bg-amber-500/10 text-amber-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-amber-500 bg-amber-500/10 text-amber-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
             }`}
         >
           <BanknotesIcon className="h-4 w-4" />
@@ -179,8 +188,8 @@ export default function EducationTab() {
         <button
           onClick={() => setEducationType("inquiries")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "inquiries"
-              ? "border-b-2 border-blue-500 bg-blue-500/10 text-blue-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-blue-500 bg-blue-500/10 text-blue-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
             }`}
         >
           <EnvelopeIcon className="h-4 w-4" />
@@ -194,8 +203,8 @@ export default function EducationTab() {
         <button
           onClick={() => setEducationType("events")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "events"
-              ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
             }`}
         >
           <CalendarDaysIcon className="h-4 w-4" />
@@ -394,8 +403,8 @@ export default function EducationTab() {
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${program.isPublished
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-slate-700 text-slate-400"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "bg-slate-700 text-slate-400"
                         }`}
                     >
                       {program.isPublished ? "Published" : "Draft"}
@@ -497,10 +506,10 @@ export default function EducationTab() {
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${scholarship.status === "active"
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : scholarship.status === "upcoming"
-                            ? "bg-amber-500/20 text-amber-400"
-                            : "bg-slate-700 text-slate-400"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : scholarship.status === "upcoming"
+                          ? "bg-amber-500/20 text-amber-400"
+                          : "bg-slate-700 text-slate-400"
                         }`}
                     >
                       {scholarship.status === "active"
@@ -558,8 +567,8 @@ export default function EducationTab() {
                 <div
                   key={inquiry.id}
                   className={`rounded-2xl border bg-slate-800/50 p-6 transition-colors ${inquiry.status === "new"
-                      ? "border-blue-500/50"
-                      : "border-slate-700 hover:border-slate-600"
+                    ? "border-blue-500/50"
+                    : "border-slate-700 hover:border-slate-600"
                     }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -570,10 +579,10 @@ export default function EducationTab() {
                         </h3>
                         <span
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${inquiry.status === "new"
-                              ? "bg-blue-500/20 text-blue-400"
-                              : inquiry.status === "replied"
-                                ? "bg-emerald-500/20 text-emerald-400"
-                                : "bg-slate-700 text-slate-400"
+                            ? "bg-blue-500/20 text-blue-400"
+                            : inquiry.status === "replied"
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-slate-700 text-slate-400"
                             }`}
                         >
                           {inquiry.status === "new"

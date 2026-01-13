@@ -14,6 +14,7 @@ import {
   db,
   scholarshipsCollection,
   scholarshipApplicationsCollection,
+  documentId,
   checkFirebase,
 } from "./shared";
 import type { Scholarship, ScholarshipApplication, ApplicationStatus } from "@/lib/types";
@@ -327,4 +328,36 @@ export async function createExtendedScholarship(
     id: docRef.id,
   });
   return docRef.id;
+}
+// Batch fetch scholarships by IDs
+export async function getScholarshipsByIds(ids: string[]): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore || ids.length === 0) return [];
+
+    const scholarships: Scholarship[] = [];
+    const chunks = [];
+
+    // Firestore 'in' query supports max 10 to 30 items. Batching by 10.
+    for (let i = 0; i < ids.length; i += 10) {
+      chunks.push(ids.slice(i, i + 10));
+    }
+
+    const ref = collection(firestore, scholarshipsCollection);
+
+    for (const chunk of chunks) {
+      if (chunk.length > 0) {
+        const q = query(ref, where(documentId(), "in", chunk));
+        const snap = await getDocs(q);
+        snap.docs.forEach((d) => {
+          scholarships.push({ id: d.id, ...d.data() } as Scholarship);
+        });
+      }
+    }
+
+    return scholarships;
+  } catch (error) {
+    console.error("Error fetching scholarships by IDs:", error);
+    return [];
+  }
 }

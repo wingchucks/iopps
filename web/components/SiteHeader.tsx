@@ -13,9 +13,9 @@ const navLinks = [
   { href: "/education", label: "Education" },
   { href: "/business", label: "Business" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/community", label: "Events" }, // Renamed from Community
+  { href: "/community", label: "Connect" }, // Renamed from Events/Community
   { href: "/live", label: "Live" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/map", label: "Map" },
 ];
 
 export default function SiteHeader() {

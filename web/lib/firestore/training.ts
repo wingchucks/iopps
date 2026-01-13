@@ -462,3 +462,9 @@ export async function listSavedTraining(
 
   return Promise.all(programPromises);
 }
+export function getSavedTrainingQuery(memberId: string) {
+  return query(
+    collection(db!, savedTrainingCollection),
+    where("memberId", "==", memberId)
+  );
+}

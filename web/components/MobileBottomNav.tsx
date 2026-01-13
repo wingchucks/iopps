@@ -17,7 +17,7 @@ import {
 const navItems = [
     { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
     { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
-    { href: "/passport", label: "Passport", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
+    { href: "/member/dashboard", label: "Dashboard", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
 ];
 
 export function MobileBottomNav() {

@@ -1,124 +1,188 @@
-"use client";
+'use client';
 
-import { useState, useEffect, Suspense } from "react";
-import { redirect, useSearchParams } from "next/navigation";
-import { useAuth } from "@/components/AuthProvider";
-import OverviewTab from "./OverviewTab";
-import CareersTab from "./CareersTab";
-import EducationTab from "./EducationTab";
-import EventsTab from "./EventsTab";
-import ApplicationsTab from "./ApplicationsTab";
-import ProfileTab from "./UnifiedProfileTab";
-import BillingTab from "./BillingTab";
-import VideosTab from "./VideosTab";
-import BusinessTab from "./BusinessTab";
-import MessagesTab from "./MessagesTab";
+import { useState, useEffect, Suspense } from 'react';
+import { useAuth } from '@/components/AuthProvider';
+import { useRouter, useSearchParams } from 'next/navigation';
+import DashboardLayout from '@/components/organization/dashboard/DashboardLayout';
+import DashboardSidebar, {
+  type DashboardMode,
+  type DashboardSection
+} from '@/components/organization/dashboard/DashboardSidebar';
 
-type TabType = "overview" | "careers" | "education" | "events" | "applications" | "messages" | "videos" | "business" | "billing" | "profile";
+// Tab Components
+import OverviewTab from './OverviewTab';
+import CareersTab from './CareersTab';
+import EducationTab from './EducationTab';
+import ApplicationsTab from './ApplicationsTab';
+import MessagesTab from './MessagesTab';
+import VideosTab from './VideosTab';
+import BusinessTab from './BusinessTab';
+import BillingTab from './BillingTab';
+import ProfileTab from './UnifiedProfileTab';
+import VendorOverviewTab from './VendorOverviewTab';
 
-function EmployerDashboardContent() {
-  const { user, role, loading } = useAuth();
+// Data Fetching
+import { getEmployerProfile, getUnreadMessageCount } from '@/lib/firestore';
+import type { EmployerProfile } from '@/lib/types';
+
+// Hooks
+import { useDashboardBadges } from '@/hooks/useDashboardBadges';
+
+function OrganizationDashboardContent() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
 
-  // Handle URL tab parameter for deep linking
+  // State
+  const [profile, setProfile] = useState<EmployerProfile | null>(null);
+  const [mode, setMode] = useState<DashboardMode>('employer');
+  const [activeSection, setActiveSection] = useState<DashboardSection>('overview');
+
+  // Real-time Badges
+  const { badges } = useDashboardBadges(user, 'employer');
+
+  // Initialize from URL params depending on searchParams changes
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    // Handle legacy tab redirects
-    if (tabParam === "opportunities") {
-      setActiveTab("careers");
-    } else if (tabParam === "shop") {
-      setActiveTab("business");
-    } else if (tabParam && ["overview", "careers", "education", "events", "applications", "messages", "videos", "business", "billing", "profile"].includes(tabParam)) {
-      setActiveTab(tabParam as TabType);
+    const tabParam = searchParams.get('tab') as DashboardSection | null;
+    const modeParam = searchParams.get('mode') as DashboardMode | null;
+
+    if (tabParam) {
+      setActiveSection(tabParam);
+    }
+    if (modeParam && (modeParam === 'employer' || modeParam === 'vendor')) {
+      setMode(modeParam);
     }
   }, [searchParams]);
 
+  // Load Profile Data
+  useEffect(() => {
+    async function loadProfile() {
+      if (!user) return;
+      try {
+        const profileData = await getEmployerProfile(user.uid);
+        setProfile(profileData);
+      } catch (err) {
+        console.error("Error loading profile:", err);
+      }
+    }
+    if (user && !loading) {
+      loadProfile();
+    }
+  }, [user, loading]);
+
+  // Handlers
+  const handleModeChange = (newMode: DashboardMode) => {
+    setMode(newMode);
+    setActiveSection('overview');
+
+    const params = new URLSearchParams(searchParams);
+    params.set('mode', newMode);
+    params.set('tab', 'overview');
+    router.push(`/organization/dashboard?${params.toString()}`);
+  };
+
+  const handleSectionChange = (section: DashboardSection) => {
+    setActiveSection(section);
+
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', section);
+    params.set('mode', mode);
+    router.push(`/organization/dashboard?${params.toString()}`);
+  };
+
+  const renderContent = () => {
+    switch (activeSection) {
+      // --- Employer Mode ---
+      case 'overview':
+        return mode === 'employer' ? <OverviewTab /> : <VendorOverviewTab />;
+
+      // Talent & Hiring
+      case 'jobs':
+        return <CareersTab />;
+      case 'applications':
+        return <ApplicationsTab />;
+      case 'videos':
+        return <VideosTab />;
+
+      // Education Provider
+      case 'school':
+        return <EducationTab initialView="school" />;
+      case 'programs':
+        return <EducationTab initialView="programs" />;
+      case 'scholarships':
+        return <EducationTab initialView="scholarships" />;
+      case 'events':
+        return <EducationTab initialView="events" />;
+      case 'student-inquiries':
+        return <EducationTab initialView="inquiries" />;
+
+      // --- Vendor Mode ---
+      // Marketplace
+      case 'products':
+        return <BusinessTab initialView="shop" />;
+      case 'services':
+        return <BusinessTab initialView="services" />;
+      case 'shop-inquiries':
+        return <BusinessTab initialView="shop" />;
+
+      // Growth
+      case 'funding':
+        return <BusinessTab initialView="funding" />;
+
+      // --- Shared ---
+      case 'messages':
+        return <MessagesTab />;
+      case 'billing':
+        return <BillingTab />;
+      case 'profile':
+        return <ProfileTab mode={mode} />;
+
+      default:
+        return mode === 'employer' ? <OverviewTab /> : <VendorOverviewTab />;
+    }
+  };
+
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
-        <p className="text-slate-400">Loading your dashboard...</p>
+      <div className="flex h-screen items-center justify-center bg-[#020617]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
       </div>
     );
   }
 
-  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
-
-  if (!user || (role !== "employer" && !isSuperAdmin)) {
-    redirect("/login");
-  }
-
-  const tabs = [
-    { id: "overview" as TabType, label: "Overview", icon: "📊" },
-    { id: "careers" as TabType, label: "Careers", icon: "💼" },
-    { id: "education" as TabType, label: "Education", icon: "🎓" },
-    { id: "events" as TabType, label: "Events", icon: "🎪" },
-    { id: "applications" as TabType, label: "Applications", icon: "📝" },
-    { id: "messages" as TabType, label: "Messages", icon: "💬" },
-    { id: "videos" as TabType, label: "Videos", icon: "🎬" },
-    { id: "business" as TabType, label: "Business", icon: "🏪" },
-    { id: "billing" as TabType, label: "Billing", icon: "💳" },
-    { id: "profile" as TabType, label: "Settings", icon: "⚙️" },
-  ];
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white sm:text-4xl">
-            Organization Dashboard
-          </h1>
-          <p className="mt-2 text-slate-400">
-            Manage careers, events, business listings, and your organization profile
-          </p>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-800 pb-px">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${activeTab === tab.id
-                ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-                }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content - key ensures React properly unmounts/remounts components on tab change */}
-        <div className="min-h-[600px]" key={activeTab}>
-          {activeTab === "overview" && <OverviewTab />}
-          {activeTab === "careers" && <CareersTab />}
-          {activeTab === "education" && <EducationTab />}
-          {activeTab === "events" && <EventsTab />}
-          {activeTab === "applications" && <ApplicationsTab />}
-          {activeTab === "messages" && <MessagesTab />}
-          {activeTab === "videos" && <VideosTab />}
-          {activeTab === "business" && <BusinessTab />}
-          {activeTab === "billing" && <BillingTab />}
-          {activeTab === "profile" && <ProfileTab mode="employer" />}
-        </div>
-      </div>
-    </div>
+    <DashboardLayout
+      sidebar={
+        <DashboardSidebar
+          profile={profile}
+          mode={mode}
+          activeSection={activeSection}
+          onModeChange={handleModeChange}
+          onSectionChange={handleSectionChange}
+          badges={badges}
+        />
+      }
+      mode={mode}
+      activeSection={activeSection}
+      onModeChange={handleModeChange}
+      onSectionChange={handleSectionChange}
+      badges={badges}
+    >
+      {renderContent()}
+    </DashboardLayout>
   );
 }
 
-export default function EmployerDashboard() {
+export default function OrganizationDashboard() {
   return (
-    <Suspense
-      fallback={
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
-          <p className="text-slate-400">Loading your dashboard...</p>
-        </div>
-      }
-    >
-      <EmployerDashboardContent />
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-slate-950">
+        <p className="text-slate-400">Loading dashboard...</p>
+      </div>
+    }>
+      <OrganizationDashboardContent />
     </Suspense>
   );
 }

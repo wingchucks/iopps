@@ -209,3 +209,13 @@ export async function withdrawJobApplication(applicationId: string) {
     updatedAt: serverTimestamp(),
   });
 }
+export function getOrganizationApplicationsQuery(employerId: string) {
+  return query(
+    collection(db!, applicationsCollection),
+    where("employerId", "==", employerId),
+    where("status", "==", "submitted") // Optional: filter by submitted if only unread/new matters, but usually total applications is shown or we filter locally. The badge in sidebar typically shows total or new. The variable name often implies total or "actionable". Let's return all for now or perhaps focus on active ones. Sidebar usually counts "Applications" as access to the list. If it's a notification badge, it should be "unread" or "new".
+    // Re-reading requirements: "Applications count for Organizations". Usually this means total or new.
+    // DashboardSidebar.tsx uses `badges.applications`.
+    // Let's return a query for ALL applications to this employer so the UI can count them.
+  );
+}

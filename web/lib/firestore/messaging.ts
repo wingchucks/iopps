@@ -216,3 +216,11 @@ export async function archiveConversation(conversationId: string): Promise<void>
     updatedAt: serverTimestamp(),
   });
 }
+export function getUnreadMessagesQuery(userId: string, userType: "employer" | "member") {
+  const userField = userType === "employer" ? "employerId" : "memberId";
+  return query(
+    collection(db!, conversationsCollection),
+    where(userField, "==", userId),
+    where("status", "==", "active")
+  );
+}

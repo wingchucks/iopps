@@ -48,6 +48,7 @@ const socialLinks = [
 ];
 
 const footerLinks = [
+  { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
   { href: "/privacy", label: "Privacy Policy" },

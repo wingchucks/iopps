@@ -4,7 +4,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import OverviewTab, { ApplicationWithJob } from "../member/dashboard/OverviewTab";
-import MemberProfileView from "../member/dashboard/MemberProfileView";
+// import MemberProfileView from "../member/dashboard/MemberProfileView";
 import {
     getMemberProfile,
     listMemberApplications,
@@ -124,7 +124,7 @@ export default function PassportPage() {
                     else console.log("Navigate to", tab);
                 }}
             /> */}
-            <MemberProfileView profile={profile} />
+            {/* <MemberProfileView profile={profile} /> */}
         </div>
     );
 }

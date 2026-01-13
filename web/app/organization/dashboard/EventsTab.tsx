@@ -25,6 +25,7 @@ import {
   FireIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import { POWWOW_EVENT_TYPES, PowwowEventType } from "@/lib/types";
 
 type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
@@ -202,7 +203,7 @@ export default function EventsTab() {
   const getNewButtonConfig = () => {
     switch (eventType) {
       case "powwows":
-        return { href: "/organization/events/new", label: "Pow Wow", modal: true };
+        return { href: "/organization/events/new", label: "Event", modal: true };
       case "conferences":
         return { href: "/organization/conferences/new", label: "Conference", modal: false };
     }
@@ -219,7 +220,7 @@ export default function EventsTab() {
           <div>
             <h2 className="text-2xl font-bold text-white">Events</h2>
             <p className="mt-1 text-slate-400">
-              Manage conferences, pow wows, and cultural events
+              Manage conferences, pow wows, sports, and cultural events
             </p>
           </div>
         </div>
@@ -229,22 +230,20 @@ export default function EventsTab() {
       <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
         <button
           onClick={() => setEventType("powwows")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            eventType === "powwows"
-              ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${eventType === "powwows"
+            ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            }`}
         >
           <FireIcon className="h-4 w-4" />
-          Pow Wows ({powwows.length})
+          Community Events ({powwows.length})
         </button>
         <button
           onClick={() => setEventType("conferences")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            eventType === "conferences"
-              ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${eventType === "conferences"
+            ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            }`}
         >
           <BuildingOfficeIcon className="h-4 w-4" />
           Conferences ({conferences.length})
@@ -258,7 +257,7 @@ export default function EventsTab() {
             <label className="sr-only">Search</label>
             <input
               type="text"
-              placeholder={`Search ${eventType === "powwows" ? "pow wows" : "conferences"}...`}
+              placeholder={`Search ${eventType === "powwows" ? "events" : "conferences"}...`}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
@@ -307,12 +306,12 @@ export default function EventsTab() {
             <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
               <FireIcon className="mx-auto h-12 w-12 text-slate-600" />
               <h3 className="mt-4 text-lg font-semibold text-white">
-                {keyword || statusFilter !== "all" ? "No pow wows found" : "No pow wows yet"}
+                {keyword || statusFilter !== "all" ? "No events found" : "No events yet"}
               </h3>
               <p className="mt-2 text-slate-400">
                 {keyword || statusFilter !== "all"
                   ? "Try adjusting your search or filter"
-                  : "Create your first pow wow event to share with the community."}
+                  : "Create your first event to share with the community."}
               </p>
               {!keyword && statusFilter === "all" && (
                 <button
@@ -320,7 +319,7 @@ export default function EventsTab() {
                   className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white"
                 >
                   <PlusIcon className="h-5 w-5" />
-                  Create your first pow wow
+                  Create your first event
                 </button>
               )}
             </div>
@@ -337,6 +336,11 @@ export default function EventsTab() {
                         <h3 className="text-lg font-semibold text-white truncate">
                           {event.name}
                         </h3>
+                        {event.eventType && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
+                            {event.eventType}
+                          </span>
+                        )}
                         {event.livestream && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
                             <VideoCameraIcon className="h-3 w-3" />
@@ -383,11 +387,10 @@ export default function EventsTab() {
                       })()}
                       {/* Active/Inactive status badge */}
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          event.active !== false
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-slate-700 text-slate-400"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${event.active !== false
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-slate-700 text-slate-400"
+                          }`}
                       >
                         {event.active !== false ? "Active" : "Paused"}
                       </span>
@@ -501,11 +504,10 @@ export default function EventsTab() {
                       })()}
                       {/* Active/Inactive status badge */}
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          conf.active !== false
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-slate-700 text-slate-400"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${conf.active !== false
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-slate-700 text-slate-400"
+                          }`}
                       >
                         {conf.active !== false ? "Active" : "Paused"}
                       </span>
@@ -561,6 +563,7 @@ function CreateEventModal({
   onCreated: () => void;
 }) {
   const { user } = useAuth();
+  const [eventType, setEventType] = useState<PowwowEventType | "">("");
   const [name, setName] = useState("");
   const [host, setHost] = useState("");
   const [description, setDescription] = useState("");
@@ -585,6 +588,18 @@ function CreateEventModal({
     if (data.dateRange) setDateRange(data.dateRange);
     if (data.registrationStatus) setRegistrationStatus(data.registrationStatus);
     if (data.livestream !== undefined) setLivestream(data.livestream);
+
+    // Auto-detect type if possible
+    const lowerName = data.name?.toLowerCase() || "";
+    const lowerDesc = data.description?.toLowerCase() || "";
+
+    if (lowerName.includes("pow") || lowerDesc.includes("pow")) {
+      setEventType("Pow Wow");
+    } else if (lowerName.includes("sport") || lowerName.includes("tournament") || lowerName.includes("game") || lowerDesc.includes("tournament")) {
+      setEventType("Sports");
+    } else if (lowerName.includes("cultural") || lowerName.includes("gathering") || lowerDesc.includes("cultural")) {
+      setEventType("Cultural Gathering");
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -598,6 +613,7 @@ function CreateEventModal({
       await createPowwowEvent({
         employerId: user.uid,
         name,
+        eventType: eventType || undefined,
         host: host || undefined,
         description,
         location,
@@ -623,9 +639,9 @@ function CreateEventModal({
         {/* Modal Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-700 bg-slate-900">
           <div>
-            <h3 className="text-xl font-bold text-white">Create Pow Wow Event</h3>
+            <h3 className="text-xl font-bold text-white">Create Event</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Share pow wow gatherings and cultural events
+              Share pow wows, sports events, and cultural gatherings
             </p>
           </div>
           <button
@@ -660,7 +676,7 @@ function CreateEventModal({
                 </button>
               </div>
               <p className="mb-4 text-sm text-slate-400">
-                Upload a pow wow poster or flyer and our AI will automatically extract the event details.
+                Upload an event poster or flyer and our AI will automatically extract the event details.
               </p>
               <PosterUploader
                 eventType="powwow"
@@ -678,14 +694,29 @@ function CreateEventModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
-                Pow Wow Name *
+                Event Type *
+              </label>
+              <select
+                required
+                value={eventType}
+                onChange={(e) => setEventType(e.target.value as PowwowEventType)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none mb-4"
+              >
+                <option value="">Select event type...</option>
+                {POWWOW_EVENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                Event Name *
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Annual Traditional Pow Wow"
+                placeholder="e.g., Annual Traditional Pow Wow or Sports Tournament"
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
@@ -712,7 +743,7 @@ function CreateEventModal({
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the pow wow, activities, categories, and what attendees can expect..."
+                placeholder="Describe the event, activities, categories, and what attendees can expect..."
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>

@@ -178,7 +178,7 @@ export async function analyzePosterImage(
   }
 
   const prompts: Record<PosterAnalysisType, string> = {
-    powwow: `You are an expert at reading and extracting information from Pow Wow event posters and flyers. Analyze this image and extract all relevant information.
+    powwow: `You are an expert at reading and extracting information from community event, sports tournament, and Pow Wow posters. Analyze this image and extract all relevant information.
 
 Extract the following information if available:
 - Event name/title

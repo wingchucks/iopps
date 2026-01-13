@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
   /* Strict Mode for better debugging */
   reactStrictMode: true,
 
+
+
   /* Headers for security and caching */
   async headers() {
     return [

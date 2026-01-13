@@ -86,7 +86,7 @@ export default function RegisterPage() {
           userEmail: cred.user.email,
           userName: displayName.trim(),
         }),
-      }).catch(() => {});
+      }).catch(() => { });
 
       // Auto-create vendor profile for employers
       if (role === "employer") {
@@ -108,7 +108,7 @@ export default function RegisterPage() {
         setSuccess(true);
       } catch (verifyError) {
         console.error("Email verification error:", verifyError);
-        router.push(role === "employer" ? "/organization/dashboard" : "/jobs");
+        router.push(role === "employer" ? "/organization/dashboard" : "/member/dashboard");
       }
     } catch (err) {
       console.error(err);
@@ -144,7 +144,7 @@ export default function RegisterPage() {
         setShowRoleSelector(true);
         setGoogleLoading(false);
       } else {
-        router.push("/jobs");
+        router.push("/member/dashboard");
       }
     } catch (err) {
       console.error(err);
@@ -185,7 +185,7 @@ export default function RegisterPage() {
           userEmail: auth.currentUser.email,
           userName: auth.currentUser.displayName || "Google User",
         }),
-      }).catch(() => {});
+      }).catch(() => { });
 
       // Auto-create vendor profile for employers
       if (selectedRole === "employer") {
@@ -201,7 +201,7 @@ export default function RegisterPage() {
         }
       }
 
-      router.push(selectedRole === "employer" ? "/organization/dashboard" : "/jobs");
+      router.push(selectedRole === "employer" ? "/organization/dashboard" : "/member/dashboard");
     } catch (err) {
       console.error(err);
       setError("Failed to update role. Please try again.");

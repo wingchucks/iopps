@@ -67,14 +67,6 @@ export const metadata: Metadata = {
     description:
       "Canada's Indigenous opportunity hub. Find jobs, pow wows, conferences, scholarships, and Indigenous-owned businesses. Empowering Indigenous success.",
     siteName: "IOPPS.ca",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "IOPPS.ca - Empowering Indigenous Success",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",

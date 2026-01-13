@@ -32,7 +32,7 @@ export function PosterUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const eventTypeLabels: Record<PosterAnalysisType, string> = {
-    powwow: "Pow Wow",
+    powwow: "Event",
     conference: "Conference",
     scholarship: "Scholarship",
   };

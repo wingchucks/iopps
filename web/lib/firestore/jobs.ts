@@ -355,3 +355,9 @@ export async function listSavedJobIds(memberId: string): Promise<string[]> {
     return data.jobId;
   });
 }
+export function getSavedJobsQuery(memberId: string) {
+  return query(
+    collection(db!, savedJobsCollection),
+    where("memberId", "==", memberId)
+  );
+}
