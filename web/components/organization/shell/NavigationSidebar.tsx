@@ -139,7 +139,7 @@ export default function NavigationSidebar({
         {/* Core Navigation */}
         <div className="space-y-1">
           <NavItem
-            href="/organization/dashboard"
+            href="/organization"
             label="Home"
             icon={HomeIcon}
             active={currentPath === '/organization/dashboard' || currentPath === '/organization'}

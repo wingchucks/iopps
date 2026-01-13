@@ -77,11 +77,11 @@ export default function MobileNavBar({
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 safe-area-pb">
       <div className="flex items-center h-16 px-2">
         <NavItem
-          href="/organization/dashboard"
+          href="/organization"
           label="Home"
           icon={HomeIcon}
           iconSolid={HomeIconSolid}
-          active={isActive('/organization/dashboard')}
+          active={isActive('/organization')}
         />
         <NavItem
           href="/organization/inbox"

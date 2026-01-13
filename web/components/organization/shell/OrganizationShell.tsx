@@ -77,7 +77,7 @@ export default function OrganizationShell({
             <Bars3Icon className="w-6 h-6" />
           </button>
 
-          <Link href="/organization/dashboard" className="flex items-center gap-2">
+          <Link href="/organization" className="flex items-center gap-2">
             {profile.logoUrl ? (
               <Image
                 src={profile.logoUrl}
