@@ -315,8 +315,20 @@ export default function OnboardingPage() {
         throw new Error(data.error || 'Failed to publish');
       }
 
-      // Fetch the updated profile
-      const updatedProfile = await getOrganizationProfile(data.profileId || user.uid);
+      // Build updated profile from API response and form data
+      const updatedProfile: OrganizationProfile = {
+        id: data.profileId,
+        slug: data.slug,
+        organizationName: formData.organizationName,
+        orgType: formData.orgType,
+        province: formData.province,
+        city: formData.city,
+        logoUrl: formData.logoUrl,
+        enabledModules: formData.enabledModules,
+        publicationStatus: 'PUBLISHED',
+        directoryVisible: true,
+        ...(existingProfile || {}),
+      } as OrganizationProfile;
 
       // Move to success step
       setStep(4);
