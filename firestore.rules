@@ -107,23 +107,23 @@ service cloud.firestore {
     // ===========================================================================
     match /applications/{applicationId} {
         allow read: if isSignedIn() && (
-            resource.data.userId == request.auth.uid ||
+            resource.data.memberId == request.auth.uid ||
             resource.data.employerId == request.auth.uid ||
             isAdminOrModerator()
         );
         // Users can only create applications for themselves
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.employerId == request.auth.uid || isAdminOrModerator());
+        allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+        allow update: if isSignedIn() && (resource.data.memberId == request.auth.uid || resource.data.employerId == request.auth.uid || isAdminOrModerator());
         allow delete: if isAdmin();
     }
 
     match /savedJobs/{savedId} {
         // Users can only read their own saved jobs
-        allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
         // Users can only create saved jobs for themselves
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
         // Users can only update/delete their own saved jobs
-        allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
     }
 
     // ===========================================================================
@@ -137,13 +137,35 @@ service cloud.firestore {
     }
     
     // ===========================================================================
+    // SCHOLARSHIP APPLICATIONS
+    // ===========================================================================
+    match /scholarshipApplications/{applicationId} {
+      allow read: if isSignedIn() && (
+        resource.data.memberId == request.auth.uid ||
+        resource.data.employerId == request.auth.uid ||
+        isAdminOrModerator()
+      );
+      // Members can create applications for themselves
+      allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+      
+      // Updates: Members can withdraw, Employers can update status
+      allow update: if isSignedIn() && (
+        resource.data.memberId == request.auth.uid ||
+        resource.data.employerId == request.auth.uid ||
+        isAdminOrModerator()
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
     // SCHOLARSHIPS
     // ===========================================================================
     match /scholarships/{scholarshipId} {
-      allow read: if true;
-      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
-      allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
-      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
+        allow read: if true;
+        allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
+        allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
+        allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
 
     // ===========================================================================
