@@ -77,15 +77,23 @@ service cloud.firestore {
     // EMPLOYERS COLLECTION
     // ===========================================================================
     match /employers/{employerId} {
+      // Helper to check if user owns this employer doc (by ID or userId field)
+      function isEmployerOwner() {
+        return isSignedIn() && (
+          request.auth.uid == employerId ||
+          resource.data.userId == request.auth.uid
+        );
+      }
+
       // Public read for approved employers, owner can read own, team members can read, admins can read all
-      allow read: if resource.data.status == 'approved' || isOwner(employerId) || isTeamMemberOf(employerId) || isAdminOrModerator();
+      allow read: if resource.data.status == 'approved' || isEmployerOwner() || isTeamMemberOf(employerId) || isAdminOrModerator();
 
       // Employers can create their own profile
       allow create: if isSignedIn() && request.auth.uid == employerId;
 
       // Employers and team admins can update, platform admins can update any
       // Note: teamMembers array is managed via API routes with admin SDK
-      allow update: if isOwner(employerId) || isAdminOrModerator();
+      allow update: if isEmployerOwner() || isAdminOrModerator();
 
       // Only admins can delete
       allow delete: if isAdmin();
@@ -923,6 +931,20 @@ service cloud.firestore {
 
       // Only admins can delete
       allow delete: if isAdmin();
+    }
+    // ===========================================================================
+    // DIRECTORY INDEX
+    // ===========================================================================
+    match /directory_index/{orgId} {
+      // Public read for all directory entries (they are filtered by visibility on write)
+      allow read: if true;
+
+      // Owners can write their own entry (orgId matches auth.uid or orgId field)
+      // Admins can manage all
+      allow write: if isSignedIn() && (
+        request.auth.uid == orgId ||
+        request.resource.data.orgId == request.auth.uid
+      ) || isAdminOrModerator();
     }
   }
 }

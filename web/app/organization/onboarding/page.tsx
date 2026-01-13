@@ -285,9 +285,11 @@ export default function OnboardingPage() {
     setError('');
     try {
       let profile: OrganizationProfile;
+      // Use existing profile ID if available, otherwise use user.uid
+      const profileId = existingProfile?.id || user.uid;
 
       if (existingProfile) {
-        await updateOrganizationProfile(user.uid, {
+        await updateOrganizationProfile(profileId, {
           organizationName: formData.organizationName,
           orgType: formData.orgType,
           province: formData.province,
@@ -309,11 +311,11 @@ export default function OnboardingPage() {
         });
       }
 
-      // Publish the profile
-      await publishOrganizationProfile(user.uid);
+      // Publish the profile using the correct ID
+      await publishOrganizationProfile(profileId);
 
       // Update directory index
-      const updatedProfile = await getOrganizationProfile(user.uid);
+      const updatedProfile = await getOrganizationProfile(profileId);
       if (updatedProfile) {
         await upsertDirectoryEntry(updatedProfile);
       }
