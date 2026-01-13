@@ -316,7 +316,9 @@ export default function OnboardingPage() {
       }
 
       // Build updated profile from API response and form data
+      // Spread existingProfile first so API response values take precedence
       const updatedProfile: OrganizationProfile = {
+        ...(existingProfile || {}),
         id: data.profileId,
         slug: data.slug,
         organizationName: formData.organizationName,
@@ -327,7 +329,6 @@ export default function OnboardingPage() {
         enabledModules: formData.enabledModules,
         publicationStatus: 'PUBLISHED',
         directoryVisible: true,
-        ...(existingProfile || {}),
       } as OrganizationProfile;
 
       // Move to success step
