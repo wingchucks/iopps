@@ -202,8 +202,133 @@ export interface EmployerProfile {
   educationSettings?: EducationSettings;
   // TRC Alignment
   trcAlignment?: TRCAlignment;
+  // Indigenous Verification
+  indigenousVerification?: IndigenousVerification;
+  // Team Access
+  teamMembers?: TeamMember[];
+  teamSettings?: TeamSettings;
+  // Notification Preferences
+  notificationPreferences?: EmployerNotificationPreferences;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Employer Notification Preferences
+export interface EmployerNotificationPreferences {
+  // Application notifications
+  newApplications: boolean; // Notify when someone applies
+  applicationStatusChanges: boolean; // Notify when application status changes
+
+  // Job notifications
+  jobExpiring: boolean; // Notify when a job is about to expire
+  scheduledJobPublished: boolean; // Notify when a scheduled job goes live
+
+  // Team notifications
+  teamInvitations: boolean; // Notify about team invitations
+  teamActivity: boolean; // Notify about team member activity
+
+  // Digest notifications
+  weeklyDigest: boolean; // Weekly summary of activity
+
+  // Marketing
+  marketingEmails: boolean; // Product updates, tips, etc.
+}
+
+// Scheduled Interview (for job application interviews)
+export type ScheduledInterviewType = "virtual" | "phone" | "in-person";
+export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled" | "no-show";
+
+export interface ScheduledInterview {
+  id: string;
+  applicationId: string;
+  jobId: string;
+  employerId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  // Scheduling details
+  scheduledAt: Timestamp | Date | string;
+  duration: number; // minutes (30, 45, 60, 90)
+  timezone?: string;
+  // Location/meeting details
+  type: ScheduledInterviewType;
+  location?: string; // Physical address for in-person, or meeting URL for virtual
+  meetingUrl?: string; // Video call link
+  phoneNumber?: string; // For phone interviews
+  // Status tracking
+  status: ScheduledInterviewStatus;
+  // Notes and follow-up
+  notes?: string; // Employer notes
+  interviewerName?: string;
+  interviewerEmail?: string;
+  // Calendar integration
+  calendarEventId?: string;
+  icsFileUrl?: string;
+  // Notifications
+  reminderSent?: boolean;
+  reminderSentAt?: Timestamp | null;
+  // Timestamps
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  cancelledAt?: Timestamp | null;
+  cancelReason?: string;
+}
+
+// Indigenous Business Verification
+export type IndigenousVerificationStatus = "not_requested" | "pending" | "approved" | "rejected";
+
+export interface IndigenousVerification {
+  status: IndigenousVerificationStatus;
+  // For approved verifications
+  isIndigenousOwned?: boolean; // Majority Indigenous owned (51%+)
+  isIndigenousLed?: boolean; // Indigenous leadership/management
+  nationAffiliation?: string; // e.g., "Cree Nation", "Métis Nation"
+  certifications?: string[]; // e.g., "CCAB Certified", "CAMSC Certified"
+  // Request details
+  requestedAt?: Timestamp | null;
+  requestNotes?: string; // Notes from employer during request
+  // Review details
+  reviewedAt?: Timestamp | null;
+  reviewedBy?: string; // Admin who reviewed
+  reviewNotes?: string; // Internal admin notes
+  rejectionReason?: string;
+}
+
+// Team Access Types
+export type TeamRole = "admin" | "editor" | "viewer";
+
+export interface TeamMember {
+  id: string; // User's Firebase UID
+  email: string;
+  displayName?: string;
+  role: TeamRole;
+  addedBy: string; // UID of who invited this member
+  addedAt: Timestamp | null;
+  lastAccessedAt?: Timestamp | null;
+}
+
+export type TeamInvitationStatus = "pending" | "accepted" | "declined" | "expired";
+
+export interface TeamInvitation {
+  id: string;
+  employerId: string;
+  organizationName: string; // Denormalized for display
+  invitedEmail: string;
+  invitedBy: string; // UID
+  invitedByName?: string; // Denormalized for display
+  role: TeamRole;
+  status: TeamInvitationStatus;
+  token: string; // Secret token for email invitation links
+  expiresAt: Timestamp | null;
+  createdAt: Timestamp | null;
+  acceptedAt?: Timestamp | null;
+}
+
+export interface TeamSettings {
+  allowInvitations: boolean;
+  defaultRole: TeamRole;
+  maxTeamSize?: number; // Optional limit
 }
 
 export interface JobPosting {
@@ -249,6 +374,9 @@ export interface JobPosting {
   productType?: string;
   amountPaid?: number;
   expiresAt?: Timestamp | Date | string | null;
+  // Scheduled publishing
+  scheduledPublishAt?: Timestamp | Date | string | null; // When to auto-publish
+  publishedAt?: Timestamp | Date | null; // When job was actually published
   // RSS Import fields
   importedFrom?: string; // RSS feed ID this job came from
   originalUrl?: string; // Original job listing URL
@@ -263,6 +391,46 @@ export interface JobPosting {
 
   featured?: boolean;
   trcAlignment?: TRCAlignment;
+}
+
+// Job Templates (reusable templates for employers)
+export interface JobTemplate {
+  id: string;
+  employerId: string;
+  name: string; // Template name (e.g., "Senior Developer Role")
+  description?: string; // Optional description of what this template is for
+  // Job fields (subset of JobPosting)
+  title?: string;
+  location?: string;
+  employmentType?: string;
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  jobDescription?: string; // Using different name to avoid confusion with template description
+  responsibilities?: string[];
+  qualifications?: string[];
+  requirements?: string;
+  benefits?: string;
+  salaryRange?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    period?: SalaryPeriod;
+    disclosed?: boolean;
+  } | string;
+  category?: JobCategory;
+  locationType?: LocationType;
+  // Job Requirement Flags
+  cpicRequired?: boolean;
+  willTrain?: boolean;
+  driversLicense?: boolean;
+  // Quick Apply
+  quickApplyEnabled?: boolean;
+  applicationLink?: string;
+  applicationEmail?: string;
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  usageCount?: number; // How many times this template has been used
 }
 
 // Conference sub-types
@@ -433,6 +601,16 @@ export type ApplicationStatus =
   | "hired"
   | "withdrawn";
 
+// Applicant Notes (employer private notes on applications)
+export interface ApplicantNote {
+  id: string;
+  content: string;
+  createdBy: string; // User ID
+  createdByName?: string; // Denormalized display name
+  createdAt: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
 export interface JobApplication {
   id: string;
   jobId: string;
@@ -443,7 +621,10 @@ export interface JobApplication {
   status: ApplicationStatus;
   resumeUrl?: string;
   coverLetter?: string; // Legacy text field
-  note?: string;
+  note?: string; // Legacy single note
+
+  // Employer Notes (multiple timestamped notes)
+  employerNotes?: ApplicantNote[];
 
   // Modern Cover Letter Handling
   coverLetterType?: 'text' | 'file';
@@ -502,6 +683,7 @@ export interface MemberProfile {
   avatarUrl?: string;
   photoURL?: string; // For compatibility with Firebase User
   tagline?: string;
+  bio?: string; // About me / personal summary
   location?: string;
   skills?: string[];
   experience?: WorkExperience[];

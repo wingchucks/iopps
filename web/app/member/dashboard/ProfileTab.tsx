@@ -1,20 +1,30 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
+import type { WorkExperience, Education, PortfolioItem, MemberProfile } from "@/lib/types";
 
-export default function ProfileTab() {
+interface ProfileTabProps {
+  initialProfile?: MemberProfile | null;
+  onProfileUpdate?: (profile: MemberProfile) => void;
+}
+
+export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileTabProps) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Form states
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
@@ -34,38 +44,48 @@ export default function ProfileTab() {
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<PortfolioItem | null>(null);
 
-  // Load profile
+  // Initialize from prop or load from Firestore
+  const initializeFromProfile = useCallback((profile: MemberProfile | null) => {
+    if (profile) {
+      setDisplayName(profile.displayName || "");
+      setAvatarUrl(profile.avatarUrl || profile.photoURL || "");
+      setBio(profile.bio || "");
+      setLocation(profile.location || "");
+      setSkills(profile.skills || []);
+      setExperience(profile.experience || []);
+      setEducation(profile.education || []);
+      setPortfolio(profile.portfolio || []);
+      setResumeUrl(profile.resumeUrl || "");
+      setIndigenousAffiliation(profile.indigenousAffiliation || "");
+      setMessagingHandle(profile.messagingHandle || "");
+      setAvailability(profile.availableForInterviews || "");
+    }
+  }, []);
+
+  // Load profile from prop or fetch
   useEffect(() => {
-    if (!user) return;
+    if (initialized) return;
 
-    const loadProfile = async () => {
-      try {
-        const profile = await getMemberProfile(user.uid);
-
-        if (profile) {
-          setDisplayName(profile.displayName || "");
-          setLocation(profile.location || "");
-          setSkills(profile.skills || []);
-          setExperience(profile.experience || []);
-          setEducation(profile.education || []);
-          setPortfolio(profile.portfolio || []);
-          setResumeUrl(profile.resumeUrl || "");
-          setIndigenousAffiliation(profile.indigenousAffiliation || "");
-          setMessagingHandle(profile.messagingHandle || "");
-          setAvailability(profile.availableForInterviews || "");
-        }
-      } catch (error) {
+    if (initialProfile) {
+      initializeFromProfile(initialProfile);
+      setInitialized(true);
+    } else if (user) {
+      getMemberProfile(user.uid).then((profile) => {
+        initializeFromProfile(profile);
+        setInitialized(true);
+      }).catch((error) => {
         console.error("Error loading profile:", error);
-      }
-    };
-
-    loadProfile();
-  }, [user]);
+        setInitialized(true);
+      });
+    }
+  }, [user, initialProfile, initialized, initializeFromProfile]);
 
   // Calculate profile completeness
   const profileCompletion = useMemo(() => {
     const fields = [
       displayName,
+      avatarUrl,
+      bio,
       location,
       skills.length > 0 ? "skills" : "",
       experience.length > 0 ? "experience" : "",
@@ -77,7 +97,7 @@ export default function ProfileTab() {
     ];
     const filled = fields.filter((field) => field && field.toString().trim().length > 0).length;
     return Math.round((filled / fields.length) * 100) || 0;
-  }, [availability, displayName, education, experience, indigenousAffiliation, location, messagingHandle, resumeUrl, skills]);
+  }, [availability, avatarUrl, bio, displayName, education, experience, indigenousAffiliation, location, messagingHandle, resumeUrl, skills]);
 
   // Save profile
   const handleSave = async () => {
@@ -85,8 +105,10 @@ export default function ProfileTab() {
 
     setSaving(true);
     try {
-      await upsertMemberProfile(user.uid, {
+      const updatedProfile = {
         displayName,
+        avatarUrl,
+        bio,
         location,
         skills,
         experience,
@@ -96,7 +118,17 @@ export default function ProfileTab() {
         indigenousAffiliation,
         messagingHandle,
         availableForInterviews: availability,
-      });
+      };
+      await upsertMemberProfile(user.uid, updatedProfile);
+
+      // Notify parent of the update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
       alert("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -177,6 +209,92 @@ export default function ProfileTab() {
     } catch (error) {
       console.error("Error deleting resume:", error);
       alert("Error deleting resume. Please try again.");
+    }
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please upload a JPG, PNG, GIF, or WebP image");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      // Upload new photo
+      const photoRef = ref(storage!, `users/${user.uid}/avatar/profile.${file.name.split('.').pop()}`);
+      await uploadBytes(photoRef, file);
+      const url = await getDownloadURL(photoRef);
+      setAvatarUrl(url);
+
+      // Auto-save avatar URL to profile
+      await upsertMemberProfile(user.uid, {
+        avatarUrl: url,
+      });
+
+      // Notify parent of update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
+      alert("Profile photo uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Error uploading photo. Please try again.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Handle photo delete
+  const handlePhotoDelete = async () => {
+    if (!user || !avatarUrl || !confirm("Are you sure you want to delete your profile photo?")) return;
+
+    try {
+      // Try to delete from storage
+      try {
+        const urlParts = avatarUrl.split('/');
+        const fileName = decodeURIComponent(urlParts[urlParts.length - 1].split('?')[0]);
+        const photoRef = ref(storage!, `users/${user.uid}/avatar/${fileName}`);
+        await deleteObject(photoRef);
+      } catch {
+        // Photo might not exist in storage or different path
+        console.log("Could not delete from storage, continuing...");
+      }
+
+      // Update profile to remove avatar URL
+      await upsertMemberProfile(user.uid, {
+        avatarUrl: "",
+      });
+
+      setAvatarUrl("");
+
+      // Notify parent of update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
+      alert("Profile photo deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      alert("Error deleting photo. Please try again.");
     }
   };
 
@@ -305,6 +423,69 @@ export default function ProfileTab() {
         )}
       </div>
 
+      {/* Profile Photo */}
+      <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
+        <h3 className="mb-6 text-xl font-bold text-white">Profile Photo</h3>
+        <div className="flex items-center gap-6">
+          {/* Photo Preview */}
+          <div className="relative">
+            {avatarUrl ? (
+              <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-500/30">
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-emerald-500/30 bg-slate-900/50">
+                <svg className="h-10 w-10 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            )}
+            {uploadingPhoto && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              </div>
+            )}
+          </div>
+
+          {/* Upload/Delete Actions */}
+          <div className="flex-1">
+            <p className="mb-3 text-sm text-slate-400">
+              Upload a professional photo. JPG, PNG, GIF or WebP (max 5MB)
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50"
+              >
+                {uploadingPhoto ? "Uploading..." : avatarUrl ? "Change Photo" : "Upload Photo"}
+              </button>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handlePhotoDelete}
+                  className="rounded-xl border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          onChange={handlePhotoUpload}
+          className="hidden"
+        />
+      </section>
+
       {/* Basic Information */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <h3 className="mb-6 text-xl font-bold text-white">Basic Information</h3>
@@ -318,6 +499,19 @@ export default function ProfileTab() {
               className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               placeholder="Your full name"
             />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-300">About Me</label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={4}
+              maxLength={500}
+              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              placeholder="Write a brief introduction about yourself, your background, and what you're looking for..."
+            />
+            <p className="mt-1 text-xs text-slate-500">{bio.length}/500 characters</p>
           </div>
 
           <div>
@@ -745,6 +939,15 @@ function ExperienceModal({
     }
   );
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.company && formData.position && formData.startDate) {
@@ -752,9 +955,24 @@ function ExperienceModal({
     }
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {experience ? "Edit" : "Add"} Work Experience
         </h3>
@@ -887,6 +1105,15 @@ function EducationModal({
     }
   );
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.institution && formData.degree && formData.startDate) {
@@ -894,9 +1121,24 @@ function EducationModal({
     }
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {education ? "Edit" : "Add"} Education
         </h3>
@@ -1027,6 +1269,15 @@ function PortfolioModal({
   );
   const [tagInput, setTagInput] = useState("");
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title && formData.description) {
@@ -1046,9 +1297,24 @@ function PortfolioModal({
     setFormData({ ...formData, tags: formData.tags?.filter((t) => t !== tag) });
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {item ? "Edit" : "Add"} Portfolio Item
         </h3>

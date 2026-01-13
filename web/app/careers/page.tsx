@@ -84,7 +84,7 @@ function CareersContent() {
         eyebrow="Careers"
         title={
           <>
-            Find Your Path.
+            Find Your Path.{" "}
             <br />
             Build Your Future.
           </>

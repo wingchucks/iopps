@@ -158,8 +158,8 @@ export async function sendConnectionRequest(requesterId: string, recipientId: st
 
     // Fetch profiles for denormalization
     const [requesterSnap, recipientSnap] = await Promise.all([
-        getDoc(doc(firestore, "members", requesterId)),
-        getDoc(doc(firestore, "members", recipientId))
+        getDoc(doc(firestore, "memberProfiles", requesterId)),
+        getDoc(doc(firestore, "memberProfiles", recipientId))
     ]);
 
     const requesterData = requesterSnap.exists() ? requesterSnap.data() as MemberProfile : null;
@@ -284,29 +284,28 @@ export async function getSuggestedConnections(userId: string) {
     // For now, this is a "dumb" suggestion - just return some recent users who aren't me
     // In a real app, we'd filter by industry/skills and exclude existing connections
     // TODO: Enhance with Algolia or more complex queries
-    const usersRef = collection(firestore, "users"); // Assuming 'users' collection exists, or we use member profiles
-    const membersRef = collection(firestore, "members");
+    const membersRef = collection(firestore, "memberProfiles");
 
     const q = query(membersRef, limit(5)); // Just grab 5 random members for demo
     const snapshot = await getDocs(q);
 
     return snapshot.docs
-        .map(doc => doc.data() as MemberProfile)
-        .filter(m => m.userId !== userId); // Filter self
+        .map(doc => ({ ...doc.data(), id: doc.id } as MemberProfile))
+        .filter(m => m.id !== userId); // Filter self
 }
 
 export async function getSuggestedOrganizations(limitCount: number = 5) {
     const firestore = getDb();
-    const orgsRef = collection(firestore, "organizations");
+    const employersRef = collection(firestore, "employers");
 
-    // Simple fetch for now. In reality, filter by user interest or randomness.
-    const q = query(orgsRef, limit(limitCount));
+    // Simple fetch for now - get approved employers only
+    const q = query(
+        employersRef,
+        where("status", "==", "approved"),
+        limit(limitCount)
+    );
     const snapshot = await getDocs(q);
 
-    // We assume organization documents exist. 
-    // Types need to be imported or casted. Assuming 'Organization' type exists in types.ts
-    // If not, we return basic data or I should check types.ts
-    // I recall types.ts was viewed earlier.
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 

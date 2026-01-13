@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, redirect } from 'next/navigation';
 import DashboardLayout from '@/components/organization/dashboard/DashboardLayout';
 import DashboardSidebar, {
   type DashboardMode,
@@ -13,7 +13,7 @@ import DashboardSidebar, {
 import OverviewTab from './OverviewTab';
 import CareersTab from './CareersTab';
 import EducationTab from './EducationTab';
-import ApplicationsTab from './ApplicationsTab';
+// ApplicationsTab removed - integrated into CareersTab/EducationTab
 import MessagesTab from './MessagesTab';
 import VideosTab from './VideosTab';
 import BusinessTab from './BusinessTab';
@@ -29,7 +29,7 @@ import type { EmployerProfile } from '@/lib/types';
 import { useDashboardBadges } from '@/hooks/useDashboardBadges';
 
 function OrganizationDashboardContent() {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -98,9 +98,9 @@ function OrganizationDashboardContent() {
 
       // Talent & Hiring
       case 'jobs':
-        return <CareersTab />;
+        return <CareersTab key="jobs" initialView="jobs" />;
       case 'applications':
-        return <ApplicationsTab />;
+        return <CareersTab key="apps" initialView="applications" />;
       case 'videos':
         return <VideosTab />;
 
@@ -150,7 +150,12 @@ function OrganizationDashboardContent() {
     );
   }
 
-  if (!user) return null;
+  // Role Protection
+  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
+  if (!user || (role !== "employer" && !isSuperAdmin)) {
+    if (!user) return null; // AuthProvider usually handles this
+    redirect("/login");
+  }
 
   return (
     <DashboardLayout

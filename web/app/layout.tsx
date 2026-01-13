@@ -67,6 +67,7 @@ export const metadata: Metadata = {
     description:
       "Canada's Indigenous opportunity hub. Find jobs, pow wows, conferences, scholarships, and Indigenous-owned businesses. Empowering Indigenous success.",
     siteName: "IOPPS.ca",
+
   },
   twitter: {
     card: "summary_large_image",
@@ -74,7 +75,7 @@ export const metadata: Metadata = {
     description:
       "Canada's Indigenous opportunity hub. Find jobs, pow wows, conferences, scholarships, and Indigenous-owned businesses.",
     creator: "@ioppsca",
-    images: ["/og-image.png"],
+    images: ["/og/default.png"],
   },
   robots: {
     index: true,
@@ -86,6 +87,11 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
+  },
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
   },
 };
 

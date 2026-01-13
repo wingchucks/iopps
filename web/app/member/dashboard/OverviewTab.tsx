@@ -7,7 +7,7 @@ export type ApplicationWithJob = JobApplication & {
     job?: JobPosting | null;
 };
 
-export type TabType = "overview" | "profile" | "applications" | "saved" | "training" | "alerts" | "messages";
+export type TabType = "overview" | "profile" | "applications" | "saved" | "training" | "alerts" | "messages" | "settings";
 
 interface OverviewTabProps {
     profile: MemberProfile | null;
@@ -30,30 +30,45 @@ export default function OverviewTab({
             <div className="lg:col-span-2 space-y-6">
                 {/* Welcome & Stats Row */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-5 shadow-lg shadow-emerald-900/10">
-                        <p className="text-sm font-medium text-emerald-400">Total Applications</p>
+                    <button
+                        onClick={() => onNavigate("applications")}
+                        className="group rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-5 shadow-lg shadow-emerald-900/10 text-left transition-all hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-900/20"
+                    >
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-emerald-400">Total Applications</p>
+                            <span className="text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100">→</span>
+                        </div>
                         <div className="mt-2 flex items-baseline gap-2">
                             <span className="text-3xl font-bold text-white">{stats.totalApplications}</span>
                             {stats.recentApplications > 0 && (
                                 <span className="text-xs text-emerald-300">+{stats.recentApplications} new</span>
                             )}
                         </div>
-                    </div>
-                    <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-5 shadow-lg shadow-blue-900/10">
-                        <p className="text-sm font-medium text-blue-400">Profile Views</p>
+                    </button>
+                    <div
+                        className="group relative rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-5 shadow-lg shadow-blue-900/10 cursor-help"
+                        title="Profile views tracking coming soon"
+                    >
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-blue-400">Profile Views</p>
+                            <span className="text-blue-400 text-xs opacity-60">Coming soon</span>
+                        </div>
                         <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-3xl font-bold text-white">12</span>
-                            <span className="rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px] text-blue-300">
-                                +3 this week
-                            </span>
+                            <span className="text-3xl font-bold text-white">--</span>
                         </div>
                     </div>
-                    <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5 shadow-lg shadow-amber-900/10">
-                        <p className="text-sm font-medium text-amber-400">New Matches</p>
-                        <div className="mt-2 flex items-baseline gap-2">
-                            <span className="text-3xl font-bold text-white">3</span>
+                    <Link
+                        href="/careers"
+                        className="group rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-5 shadow-lg shadow-amber-900/10 transition-all hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-900/20"
+                    >
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-amber-400">Find Jobs</p>
+                            <span className="text-amber-400 opacity-0 transition-opacity group-hover:opacity-100">→</span>
                         </div>
-                    </div>
+                        <div className="mt-2 flex items-baseline gap-2">
+                            <span className="text-lg font-medium text-white">Browse opportunities</span>
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Application Tracker */}

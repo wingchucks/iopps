@@ -43,10 +43,24 @@ service cloud.firestore {
 
     function isAdminOrModerator() {
         return isSignedIn() && (
-            request.auth.token.admin == true || 
-            getUserData().role == 'admin' || 
+            request.auth.token.admin == true ||
+            getUserData().role == 'admin' ||
             getUserData().role == 'moderator'
         );
+    }
+
+      // Note: This checks if the user's ID is in the employer's teamMembers array
+    function isTeamMemberOf(employerId) {
+       return false; // TEMPORARILY DISABLED: Syntax error with [*] operator
+       // return isSignedIn() &&
+       //   exists(/databases/$(database)/documents/employers/$(employerId)) &&
+       //   get(/databases/$(database)/documents/employers/$(employerId)).data.teamMembers != null &&
+       //   request.auth.uid in get(/databases/$(database)/documents/employers/$(employerId)).data.teamMembers[*].id;
+    }
+
+    // Helper: Check if user is owner or team member
+    function isOwnerOrTeamMember(employerId) {
+      return isOwner(employerId) || isTeamMemberOf(employerId);
     }
     
     // ===========================================================================
@@ -63,17 +77,38 @@ service cloud.firestore {
     // EMPLOYERS COLLECTION
     // ===========================================================================
     match /employers/{employerId} {
-      // Public read for approved employers, owner can read own, admins can read all
-      allow read: if resource.data.status == 'approved' || isOwner(employerId) || isAdminOrModerator();
+      // Public read for approved employers, owner can read own, team members can read, admins can read all
+      allow read: if resource.data.status == 'approved' || isOwner(employerId) || isTeamMemberOf(employerId) || isAdminOrModerator();
 
       // Employers can create their own profile
       allow create: if isSignedIn() && request.auth.uid == employerId;
 
-      // Employers can update their own profile, admins can update any
+      // Employers and team admins can update, platform admins can update any
+      // Note: teamMembers array is managed via API routes with admin SDK
       allow update: if isOwner(employerId) || isAdminOrModerator();
 
       // Only admins can delete
       allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // TEAM INVITATIONS
+    // ===========================================================================
+    match /teamInvitations/{invitationId} {
+      // Invitees can read their pending invitations
+      allow read: if isSignedIn() && resource.data.invitedEmail == request.auth.token.email;
+
+      // Employer owners can read all invitations for their org
+      allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Invitations are created/managed via API routes with admin SDK
+      // Client-side creation is disabled for security
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
     // ===========================================================================
@@ -92,13 +127,33 @@ service cloud.firestore {
           request.resource.data.active == false
         )
       );
-      // Job update rules: Only approved employers can publish (set active: true)
+      // Job update rules: Owner, team members, or approved employers can update
       allow update: if isAdminOrModerator() || (
-        isOwner(resource.data.employerId) && (
+        isOwnerOrTeamMember(resource.data.employerId) && (
           isApprovedEmployer() ||
           request.resource.data.active == false
         )
       );
+      allow delete: if isOwnerOrTeamMember(resource.data.employerId) || isAdminOrModerator();
+    }
+
+    // ===========================================================================
+    // JOB TEMPLATES (Employer Reusable Templates)
+    // ===========================================================================
+    match /jobTemplates/{templateId} {
+      // Employers can read their own templates
+      allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
+
+      // Admins can read all templates
+      allow read: if isAdminOrModerator();
+
+      // Employers can create templates for themselves
+      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
+
+      // Employers can update their own templates
+      allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
+
+      // Employers can delete their own templates
       allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
 
@@ -106,9 +161,11 @@ service cloud.firestore {
     // APPLICATIONS
     // ===========================================================================
     match /applications/{applicationId} {
+        // Applicants, employers, and team members can read applications
         allow read: if isSignedIn() && (
             resource.data.memberId == request.auth.uid ||
             resource.data.employerId == request.auth.uid ||
+            isTeamMemberOf(resource.data.employerId) ||
             isAdminOrModerator()
         );
         // Users can only create applications for themselves
@@ -268,7 +325,7 @@ service cloud.firestore {
       // Restrict creation to employers (or admins), must set their own employerId
       allow create: if (isEmployer() && request.resource.data.employerId == request.auth.uid) || isAdminOrModerator();
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
-      allow delete: if isAdminOrModerator();
+      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
     
     // ===========================================================================
@@ -281,7 +338,7 @@ service cloud.firestore {
       // Vendors can only create listings for themselves (vendorId must match their userId)
       allow create: if isSignedIn() && request.resource.data.vendorId == request.auth.uid;
       allow update: if isOwner(resource.data.vendorId) || isAdminOrModerator();
-      allow delete: if isAdminOrModerator();
+      allow delete: if isOwner(resource.data.vendorId) || isAdminOrModerator();
     }
 
     // ===========================================================================
@@ -430,7 +487,7 @@ service cloud.firestore {
       // Only employers can create live streams (must be owner)
       allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
-      allow delete: if isAdminOrModerator();
+      allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
     
     // ===========================================================================
@@ -567,6 +624,24 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // SCHEDULED INTERVIEWS
+    // ===========================================================================
+    match /scheduledInterviews/{interviewId} {
+      // Employers can read their own interviews
+      allow read: if isSignedIn() && (
+        resource.data.employerId == request.auth.uid ||
+        resource.data.candidateId == request.auth.uid ||
+        isTeamMemberOf(resource.data.employerId)
+      );
+
+      // Only server-side (admin SDK) can create/update/delete interviews
+      // This is handled through API routes for proper validation
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ===========================================================================
     // EMAIL PREFERENCES
     // ===========================================================================
     match /emailPreferences/{userId} {
@@ -593,13 +668,81 @@ service cloud.firestore {
     // MEMBER PROFILES (Job Seekers)
     // ===========================================================================
     match /memberProfiles/{userId} {
-      // Users can read their own profile
-      // Employers can read profiles (for talent search feature)
-      // Admins can read all
-      allow read: if isOwner(userId) || isEmployer() || isAdminOrModerator();
+      // All signed-in users can read profiles (for networking/connections)
+      // This enables the Network page and peer discovery features
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isOwner(userId) || isAdminOrModerator();
       allow delete: if isAdmin();
+    }
+
+    // ===========================================================================
+    // CONNECTIONS (Peer Networking)
+    // ===========================================================================
+    match /connections/{connectionId} {
+      // Participants can read connections they're part of
+      allow read: if isSignedIn() && (
+        resource.data.requesterId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid
+      );
+
+      // Admins can read all connections
+      allow read: if isAdminOrModerator();
+
+      // Users can create connection requests (must be the requester)
+      allow create: if isSignedIn() && request.resource.data.requesterId == request.auth.uid;
+
+      // Participants can update (accept/decline)
+      allow update: if isSignedIn() && (
+        resource.data.requesterId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid
+      );
+
+      // Participants can delete their connections
+      allow delete: if isSignedIn() && (
+        resource.data.requesterId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid
+      );
+    }
+
+    // ===========================================================================
+    // POSTS (Social Feed)
+    // ===========================================================================
+    match /posts/{postId} {
+      // Public posts are readable by anyone, private posts by author only
+      allow read: if resource.data.visibility == "public" ||
+        (isSignedIn() && resource.data.authorId == request.auth.uid) ||
+        isAdminOrModerator();
+
+      // Authenticated users can create posts (must be author)
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+
+      // Authors can update their own posts
+      allow update: if isSignedIn() && resource.data.authorId == request.auth.uid;
+
+      // Authors can delete their own posts, admins can delete any
+      allow delete: if isSignedIn() && (
+        resource.data.authorId == request.auth.uid ||
+        isAdminOrModerator()
+      );
+
+      // Subcollection: likes
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.auth.uid == likeId;
+        allow delete: if isSignedIn() && request.auth.uid == likeId;
+      }
+
+      // Subcollection: comments
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+        allow update: if isSignedIn() && resource.data.authorId == request.auth.uid;
+        allow delete: if isSignedIn() && (
+          resource.data.authorId == request.auth.uid ||
+          isAdminOrModerator()
+        );
+      }
     }
 
     // ===========================================================================

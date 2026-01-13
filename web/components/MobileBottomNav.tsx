@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-
     VideoCameraIcon,
-    MapIcon,
     UserCircleIcon,
+    MapIcon,
 } from "@heroicons/react/24/outline";
 import {
     VideoCameraIcon as VideoCameraIconSolid,
-    MapIcon as MapIconSolid,
     UserCircleIcon as UserCircleIconSolid,
+    MapIcon as MapIconSolid,
 } from "@heroicons/react/24/solid";
 
 const navItems = [
@@ -23,8 +22,8 @@ const navItems = [
 export function MobileBottomNav() {
     const pathname = usePathname();
 
-    // Hide on certain pages
-    const hiddenPaths = ["/login", "/register", "/organization"];
+    // Hide on certain pages (auth pages, dashboards with their own navigation)
+    const hiddenPaths = ["/login", "/register", "/organization", "/member"];
     const shouldHide = hiddenPaths.some((path) => pathname.startsWith(path));
 
     if (shouldHide) return null;

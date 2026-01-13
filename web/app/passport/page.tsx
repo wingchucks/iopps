@@ -3,8 +3,8 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import OverviewTab, { ApplicationWithJob } from "../member/dashboard/OverviewTab";
-// import MemberProfileView from "../member/dashboard/MemberProfileView";
+import OverviewTab, { ApplicationWithJob } from "@/app/member/dashboard/OverviewTab";
+import MemberProfileView from "@/app/member/dashboard/MemberProfileView";
 import {
     getMemberProfile,
     listMemberApplications,
@@ -18,7 +18,7 @@ import type {
 } from "@/lib/types";
 
 export default function PassportPage() {
-    const { user, loading } = useAuth();
+    const { user, role, loading } = useAuth();
     const router = useRouter();
 
     const [profile, setProfile] = useState<MemberProfile | null>(null);
@@ -32,7 +32,15 @@ export default function PassportPage() {
             return;
         }
 
-        if (user) {
+        // Redirect employers to their organization dashboard
+        if (!loading && user && role === "employer") {
+            router.replace("/organization/dashboard");
+            return;
+        }
+
+        // Only load member data if we're sure the user is not an employer
+        // Wait for role to be determined before loading data
+        if (user && role && role !== "employer") {
             const loadData = async () => {
                 try {
                     const [profileData, apps, scholarshipApps] = await Promise.all([
@@ -63,7 +71,7 @@ export default function PassportPage() {
             };
             loadData();
         }
-    }, [user, loading, router]);
+    }, [user, role, loading, router]);
 
 
     // Calculate profile completeness
@@ -102,7 +110,11 @@ export default function PassportPage() {
     }, [applications, scholarshipApplications, profileCompletion]);
 
 
-    if (loading || dataLoading) return <div className="p-10 text-center text-slate-500">Loading Passport...</div>;
+    // Show loading while auth is loading, role is being determined, or data is being fetched
+    // Also show loading if employer is being redirected (role === "employer")
+    if (loading || !role || dataLoading || role === "employer") {
+        return <div className="p-10 text-center text-slate-500">Loading Passport...</div>;
+    }
 
     return (
         <div className="container max-w-4xl py-6 pb-24">

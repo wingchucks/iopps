@@ -57,6 +57,20 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
         }
     }, [memberProfile]);
 
+    // Handle Escape key to close modal
+    useEffect(() => {
+        if (!showModal) return;
+
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && !applying) {
+                setShowModal(false);
+            }
+        };
+
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [showModal, applying]);
+
     if (!user) {
         return null;
     }
@@ -137,7 +151,14 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
             </button>
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !applying) {
+                            setShowModal(false);
+                        }
+                    }}
+                >
                     <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl my-8">
                         {success ? (
                             <div className="text-center py-8">

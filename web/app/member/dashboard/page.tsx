@@ -142,6 +142,7 @@ function MemberDashboardContent() {
     return null; // AuthProvider handles redirect
   }
 
+
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':

@@ -7,25 +7,43 @@ import { useAuth } from "@/components/AuthProvider";
 import {
   listEmployerJobs,
   listOrganizationTrainingPrograms,
+  listEmployerApplications,
   updateJobStatus,
   deleteJobPosting,
   deleteTrainingProgram,
+  updateApplicationStatus,
+  addApplicantNote,
+  deleteApplicantNote,
 } from "@/lib/firestore";
-import type { JobPosting, TrainingProgram } from "@/lib/types";
-import { AcademicCapIcon, BriefcaseIcon } from "@heroicons/react/24/outline";
+import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus, ApplicantNote } from "@/lib/types";
+import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon, ChatBubbleLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
-type CareerType = "jobs" | "training";
-type StatusFilter = "all" | "active" | "paused";
+type CareerType = "jobs" | "training" | "applications";
+type StatusFilter = "all" | "active" | "paused" | "scheduled";
 
-export default function CareersTab() {
+interface CareersTabProps {
+  initialView?: CareerType;
+}
+
+export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
   const { user } = useAuth();
   const router = useRouter();
-  const [careerType, setCareerType] = useState<CareerType>("jobs");
+  const [careerType, setCareerType] = useState<CareerType>(initialView);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([]);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Application-specific filters
+  const [appJobFilter, setAppJobFilter] = useState<string>("all");
+  const [appStatusFilter, setAppStatusFilter] = useState<string>("all");
+
+  // Notes state
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [newNoteText, setNewNoteText] = useState<Record<string, string>>({});
+  const [addingNote, setAddingNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -36,12 +54,14 @@ export default function CareersTab() {
     if (!user) return;
     setLoading(true);
     try {
-      const [jobsData, trainingData] = await Promise.all([
+      const [jobsData, trainingData, appsData] = await Promise.all([
         listEmployerJobs(user.uid),
         listOrganizationTrainingPrograms(user.uid),
+        listEmployerApplications(user.uid),
       ]);
       setJobs(jobsData);
       setTrainingPrograms(trainingData);
+      setApplications(appsData);
     } catch (err) {
       console.error("Error loading careers data:", err);
     } finally {
@@ -49,10 +69,18 @@ export default function CareersTab() {
     }
   };
 
+  // Helper to check if a job is scheduled
+  const isScheduledJob = (job: JobPosting) => {
+    return job.scheduledPublishAt && job.active === false;
+  };
+
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
+      // Handle status filters
       if (statusFilter === "active" && job.active === false) return false;
-      if (statusFilter === "paused" && job.active !== false) return false;
+      if (statusFilter === "paused" && (job.active !== false || isScheduledJob(job))) return false;
+      if (statusFilter === "scheduled" && !isScheduledJob(job)) return false;
+
       if (
         keyword &&
         !`${job.title} ${job.description}`
@@ -80,6 +108,33 @@ export default function CareersTab() {
       return true;
     });
   }, [trainingPrograms, keyword, statusFilter]);
+
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      if (appJobFilter !== "all" && app.jobId !== appJobFilter) return false;
+      if (appStatusFilter !== "all" && app.status !== appStatusFilter) return false;
+      if (
+        keyword &&
+        !`${app.memberDisplayName} ${app.memberEmail}`
+          .toLowerCase()
+          .includes(keyword.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [applications, appJobFilter, keyword, appStatusFilter]);
+
+  const applicationCounts = useMemo(() => {
+    return {
+      total: applications.length,
+      submitted: applications.filter((a) => a.status === "submitted").length,
+      inReview: applications.filter((a) => a.status === "reviewed").length,
+      shortlisted: applications.filter((a) => a.status === "shortlisted").length,
+      hired: applications.filter((a) => a.status === "hired").length,
+      rejected: applications.filter((a) => a.status === "rejected").length,
+    };
+  }, [applications]);
 
   const handleToggleJobStatus = async (jobId: string, currentStatus: boolean) => {
     try {
@@ -138,16 +193,187 @@ export default function CareersTab() {
     }
   };
 
+  const handleApplicationStatusChange = async (
+    applicationId: string,
+    newStatus: ApplicationStatus
+  ) => {
+    try {
+      await updateApplicationStatus(applicationId, newStatus);
+      await loadData();
+    } catch (err) {
+      console.error("Error updating application status:", err);
+      alert("Failed to update application status");
+    }
+  };
+
+  // Toggle notes section visibility
+  const toggleNotes = (applicationId: string) => {
+    setExpandedNotes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(applicationId)) {
+        newSet.delete(applicationId);
+      } else {
+        newSet.add(applicationId);
+      }
+      return newSet;
+    });
+  };
+
+  // Add a new note to an application
+  const handleAddNote = async (applicationId: string) => {
+    const noteText = newNoteText[applicationId]?.trim();
+    if (!noteText || !user) return;
+
+    setAddingNote(applicationId);
+    try {
+      await addApplicantNote(applicationId, {
+        content: noteText,
+        createdBy: user.uid,
+        createdByName: user.displayName || user.email || "Employer",
+      });
+      setNewNoteText((prev) => ({ ...prev, [applicationId]: "" }));
+      await loadData();
+    } catch (err) {
+      console.error("Error adding note:", err);
+      alert("Failed to add note");
+    } finally {
+      setAddingNote(null);
+    }
+  };
+
+  // Delete a note from an application
+  const handleDeleteNote = async (applicationId: string, noteId: string) => {
+    if (!confirm("Delete this note?")) return;
+
+    try {
+      await deleteApplicantNote(applicationId, noteId);
+      await loadData();
+    } catch (err) {
+      console.error("Error deleting note:", err);
+      alert("Failed to delete note");
+    }
+  };
+
+  // Format note timestamp
+  const formatNoteDate = (timestamp: any) => {
+    if (!timestamp) return "";
+    try {
+      const date = timestamp.toDate?.() || new Date(timestamp);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === "hired")
+      return "bg-green-500/20 text-green-300 border-green-500/40";
+    if (s === "shortlisted")
+      return "bg-yellow-500/20 text-yellow-300 border-yellow-500/40";
+    if (s === "reviewed" || s === "reviewing")
+      return "bg-blue-500/20 text-blue-300 border-blue-500/40";
+    if (s === "rejected")
+      return "bg-slate-500/20 text-slate-400 border-slate-500/40";
+    if (s === "withdrawn")
+      return "bg-orange-500/20 text-orange-300 border-orange-500/40";
+    return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+  };
+
+  // Export applications to CSV
+  const exportApplicationsToCSV = () => {
+    if (filteredApplications.length === 0) {
+      alert("No applications to export");
+      return;
+    }
+
+    // CSV headers
+    const headers = [
+      "Applicant Name",
+      "Email",
+      "Job Title",
+      "Status",
+      "Applied Date",
+      "Cover Letter",
+      "Resume URL",
+      "Notes",
+    ];
+
+    // Format date helper
+    const formatDate = (timestamp: any) => {
+      if (!timestamp) return "";
+      try {
+        const date = timestamp.toDate?.() || new Date(timestamp);
+        return date.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+      } catch {
+        return "";
+      }
+    };
+
+    // Escape CSV field (handle commas, quotes, newlines)
+    const escapeCSV = (field: string | undefined | null) => {
+      if (!field) return "";
+      const str = String(field);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    // Build CSV rows
+    const rows = filteredApplications.map((app) => {
+      const job = jobs.find((j) => j.id === app.jobId);
+      // Combine all notes into a single cell
+      const notesText = app.employerNotes
+        ?.map((n) => `[${n.createdByName || "Employer"}]: ${n.content}`)
+        .join(" | ") || "";
+      return [
+        escapeCSV(app.memberDisplayName || "Anonymous"),
+        escapeCSV(app.memberEmail),
+        escapeCSV(job?.title || "Unknown"),
+        escapeCSV(app.status || "submitted"),
+        formatDate(app.createdAt),
+        escapeCSV(app.coverLetter?.slice(0, 500)), // Truncate long cover letters
+        escapeCSV(app.resumeUrl),
+        escapeCSV(notesText),
+      ].join(",");
+    });
+
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `applications-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const getNewButtonConfig = () => {
     switch (careerType) {
       case "jobs":
         return { href: "/organization/jobs/new", label: "Job" };
       case "training":
         return { href: "/organization/training/new", label: "Training Program" };
+      case "applications":
+        return null; // No "new" button for applications
     }
   };
 
   const newButtonConfig = getNewButtonConfig();
+
+  // Count pending applications (submitted status)
+  const pendingApplicationsCount = applicationCounts.submitted;
 
   return (
     <div className="space-y-6">
@@ -158,7 +384,7 @@ export default function CareersTab() {
           <div>
             <h2 className="text-2xl font-bold text-white">Careers</h2>
             <p className="mt-1 text-slate-400">
-              Manage job postings and training programs
+              Manage job postings, training programs, and applications
             </p>
           </div>
         </div>
@@ -168,65 +394,149 @@ export default function CareersTab() {
       <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
         <button
           onClick={() => setCareerType("jobs")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            careerType === "jobs"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${careerType === "jobs"
               ? "border-b-2 border-blue-500 bg-blue-500/10 text-blue-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <BriefcaseIcon className="h-4 w-4" />
           Jobs ({jobs.length})
         </button>
         <button
           onClick={() => setCareerType("training")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            careerType === "training"
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${careerType === "training"
               ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
               : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+            }`}
         >
           <AcademicCapIcon className="h-4 w-4" />
           Training ({trainingPrograms.length})
         </button>
+        <button
+          onClick={() => setCareerType("applications")}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${careerType === "applications"
+              ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
+              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            }`}
+        >
+          <UserGroupIcon className="h-4 w-4" />
+          Applications ({applications.length})
+          {pendingApplicationsCount > 0 && (
+            <span className="ml-1 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">
+              {pendingApplicationsCount}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex-1">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Search
-          </label>
-          <input
-            type="text"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder={`Search ${careerType}...`}
-            className="w-full rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
+      {/* Filters for Jobs/Training */}
+      {(careerType === "jobs" || careerType === "training") && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex-1">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Search
+            </label>
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder={`Search ${careerType}...`}
+              className="w-full rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Filter by status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="all">All</option>
+              <option value="active">Active only</option>
+              <option value="paused">Paused only</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+          </div>
+          {newButtonConfig && (
+            <div>
+              <Link
+                href={newButtonConfig.href}
+                className="inline-flex rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/50"
+              >
+                + New {newButtonConfig.label}
+              </Link>
+            </div>
+          )}
         </div>
-        <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Filter by status
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            <option value="all">All</option>
-            <option value="active">Active only</option>
-            <option value="paused">Paused only</option>
-          </select>
+      )}
+
+      {/* Filters for Applications */}
+      {careerType === "applications" && (
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+          <div className="flex-1">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Search candidates
+            </label>
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Filter by job
+            </label>
+            <select
+              value={appJobFilter}
+              onChange={(e) => setAppJobFilter(e.target.value)}
+              className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            >
+              <option value="all">All jobs</option>
+              {jobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Filter by status
+            </label>
+            <select
+              value={appStatusFilter}
+              onChange={(e) => setAppStatusFilter(e.target.value)}
+              className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            >
+              <option value="all">All statuses</option>
+              <option value="submitted">Submitted</option>
+              <option value="reviewed">In review</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Not selected</option>
+              <option value="withdrawn">Withdrawn</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              &nbsp;
+            </label>
+            <button
+              onClick={exportApplicationsToCSV}
+              disabled={filteredApplications.length === 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              Export CSV
+            </button>
+          </div>
         </div>
-        <div>
-          <Link
-            href={newButtonConfig.href}
-            className="inline-flex rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:shadow-blue-500/50"
-          >
-            + New {newButtonConfig.label}
-          </Link>
-        </div>
-      </div>
+      )}
 
       {/* Jobs List */}
       {careerType === "jobs" && (
@@ -272,7 +582,11 @@ export default function CareersTab() {
                           <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300">
                             {job.employmentType}
                           </span>
-                          {job.active === false ? (
+                          {isScheduledJob(job) ? (
+                            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
+                              ⏰ Scheduled
+                            </span>
+                          ) : job.active === false ? (
                             <span className="rounded-full border border-slate-600 bg-slate-700/30 px-3 py-1 text-xs font-medium text-slate-400">
                               Paused
                             </span>
@@ -295,6 +609,15 @@ export default function CareersTab() {
                         <span>Location: {job.location || "Remote"}</span>
                         <span>Views: {job.viewsCount || 0}</span>
                         <span>Applications: {job.applicationsCount || 0}</span>
+                        {isScheduledJob(job) && job.scheduledPublishAt && (
+                          <span className="text-amber-400">
+                            Publishes: {new Date(
+                              typeof job.scheduledPublishAt === 'object' && 'toDate' in job.scheduledPublishAt
+                                ? job.scheduledPublishAt.toDate()
+                                : job.scheduledPublishAt
+                            ).toLocaleString()}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -306,12 +629,15 @@ export default function CareersTab() {
                     >
                       Edit
                     </Link>
-                    <Link
-                      href={`/organization/jobs/${job.id}/applications`}
+                    <button
+                      onClick={() => {
+                        setAppJobFilter(job.id);
+                        setCareerType("applications");
+                      }}
                       className="rounded-lg bg-indigo-500/20 px-4 py-2 text-sm font-semibold text-indigo-300 transition-all hover:bg-indigo-500/30"
                     >
                       View applications
-                    </Link>
+                    </button>
                     <button
                       onClick={() => handleDuplicateJob(job)}
                       className="rounded-lg bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
@@ -461,6 +787,216 @@ export default function CareersTab() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Applications List */}
+      {careerType === "applications" && (
+        <>
+          {/* Application Stats */}
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="rounded-2xl bg-slate-800/50 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Total</p>
+              <p className="mt-1 text-2xl font-bold text-white">{applicationCounts.total}</p>
+            </div>
+            <div className="rounded-2xl bg-emerald-500/10 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">New</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-400">{applicationCounts.submitted}</p>
+            </div>
+            <div className="rounded-2xl bg-blue-500/10 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">In Review</p>
+              <p className="mt-1 text-2xl font-bold text-blue-400">{applicationCounts.inReview}</p>
+            </div>
+            <div className="rounded-2xl bg-yellow-500/10 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Shortlisted</p>
+              <p className="mt-1 text-2xl font-bold text-yellow-400">{applicationCounts.shortlisted}</p>
+            </div>
+            <div className="rounded-2xl bg-green-500/10 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Hired</p>
+              <p className="mt-1 text-2xl font-bold text-green-400">{applicationCounts.hired}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-700/50 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Rejected</p>
+              <p className="mt-1 text-2xl font-bold text-slate-400">{applicationCounts.rejected}</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
+            {loading ? (
+              <p className="text-center text-slate-400">Loading applications...</p>
+            ) : filteredApplications.length === 0 ? (
+              <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+                <UserGroupIcon className="mx-auto h-12 w-12 text-slate-600" />
+                <p className="mt-4 text-slate-300">
+                  {applications.length === 0
+                    ? "No applications received yet. Applications will appear here as candidates apply to your jobs."
+                    : "No applications match your filters."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredApplications.map((app) => {
+                  const job = jobs.find((j) => j.id === app.jobId);
+                  return (
+                    <article
+                      key={app.id}
+                      className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="text-lg font-semibold text-white">
+                                {app.memberDisplayName || "Anonymous"}
+                              </h3>
+                              <p className="mt-1 text-sm text-slate-400">
+                                {app.memberEmail}
+                              </p>
+                              <p className="mt-2 text-sm text-emerald-400">
+                                Applied to: {job?.title || "Unknown job"}
+                              </p>
+                            </div>
+                          </div>
+
+                          {app.coverLetter && (
+                            <div className="mt-4">
+                              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                                Cover Letter
+                              </p>
+                              <p className="mt-2 text-sm text-slate-300">
+                                {app.coverLetter.slice(0, 200)}
+                                {app.coverLetter.length > 200 ? "..." : ""}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            {app.resumeUrl && (
+                              <Link
+                                href={app.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30"
+                              >
+                                View resume
+                              </Link>
+                            )}
+                            <a
+                              href={`mailto:${app.memberEmail}`}
+                              className="inline-flex items-center gap-2 rounded-lg bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-300 transition-all hover:bg-blue-500/30"
+                            >
+                              Email candidate
+                            </a>
+                            <button
+                              onClick={() => toggleNotes(app.id)}
+                              className="inline-flex items-center gap-2 rounded-lg bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+                            >
+                              <ChatBubbleLeftIcon className="h-4 w-4" />
+                              Notes {app.employerNotes?.length ? `(${app.employerNotes.length})` : ""}
+                            </button>
+                          </div>
+
+                          {/* Notes Section */}
+                          {expandedNotes.has(app.id) && (
+                            <div className="mt-4 rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+                              <h4 className="text-sm font-semibold text-purple-300 mb-3">
+                                Private Notes
+                              </h4>
+
+                              {/* Existing Notes */}
+                              {app.employerNotes && app.employerNotes.length > 0 ? (
+                                <div className="space-y-3 mb-4">
+                                  {app.employerNotes.map((note) => (
+                                    <div
+                                      key={note.id}
+                                      className="rounded-lg bg-slate-800/50 p-3 group"
+                                    >
+                                      <div className="flex justify-between items-start gap-2">
+                                        <p className="text-sm text-slate-300 whitespace-pre-wrap flex-1">
+                                          {note.content}
+                                        </p>
+                                        <button
+                                          onClick={() => handleDeleteNote(app.id, note.id)}
+                                          className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1"
+                                          title="Delete note"
+                                        >
+                                          <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                      <p className="text-xs text-slate-500 mt-2">
+                                        {note.createdByName || "You"} • {formatNoteDate(note.createdAt)}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-slate-500 mb-4">
+                                  No notes yet. Add a note to track this candidate.
+                                </p>
+                              )}
+
+                              {/* Add New Note */}
+                              <div className="flex gap-2">
+                                <textarea
+                                  value={newNoteText[app.id] || ""}
+                                  onChange={(e) =>
+                                    setNewNoteText((prev) => ({
+                                      ...prev,
+                                      [app.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Add a note about this candidate..."
+                                  rows={2}
+                                  className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                                />
+                                <button
+                                  onClick={() => handleAddNote(app.id)}
+                                  disabled={!newNoteText[app.id]?.trim() || addingNote === app.id}
+                                  className="self-end rounded-lg bg-purple-500 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {addingNote === app.id ? (
+                                    "..."
+                                  ) : (
+                                    <PlusIcon className="h-5 w-5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-medium ${getStatusColor(
+                              app.status || "submitted"
+                            )}`}
+                          >
+                            {app.status || "submitted"}
+                          </span>
+                          <select
+                            value={app.status || "submitted"}
+                            onChange={(e) =>
+                              handleApplicationStatusChange(
+                                app.id,
+                                e.target.value as ApplicationStatus
+                              )
+                            }
+                            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100 transition-all hover:border-emerald-500/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          >
+                            <option value="submitted">Submitted</option>
+                            <option value="reviewed">In review</option>
+                            <option value="shortlisted">Shortlisted</option>
+                            <option value="hired">Hired</option>
+                            <option value="rejected">Not selected</option>
+                          </select>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

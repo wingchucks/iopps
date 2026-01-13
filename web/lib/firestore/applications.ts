@@ -16,7 +16,8 @@ import {
   applicationsCollection,
   jobsCollection,
 } from "./shared";
-import type { JobApplication, ApplicationStatus } from "@/lib/types";
+import type { JobApplication, ApplicationStatus, ApplicantNote } from "@/lib/types";
+import { arrayUnion, arrayRemove } from "firebase/firestore";
 import { createNotification } from "./notifications";
 
 type ApplicationInput = {
@@ -213,9 +214,81 @@ export function getOrganizationApplicationsQuery(employerId: string) {
   return query(
     collection(db!, applicationsCollection),
     where("employerId", "==", employerId),
-    where("status", "==", "submitted") // Optional: filter by submitted if only unread/new matters, but usually total applications is shown or we filter locally. The badge in sidebar typically shows total or new. The variable name often implies total or "actionable". Let's return all for now or perhaps focus on active ones. Sidebar usually counts "Applications" as access to the list. If it's a notification badge, it should be "unread" or "new".
-    // Re-reading requirements: "Applications count for Organizations". Usually this means total or new.
-    // DashboardSidebar.tsx uses `badges.applications`.
-    // Let's return a query for ALL applications to this employer so the UI can count them.
+    where("status", "==", "submitted")
   );
+}
+
+// ============================================
+// APPLICANT NOTES
+// ============================================
+
+export async function addApplicantNote(
+  applicationId: string,
+  note: { content: string; createdBy: string; createdByName?: string }
+): Promise<ApplicantNote> {
+  const noteId = `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const newNote: ApplicantNote = {
+    id: noteId,
+    content: note.content,
+    createdBy: note.createdBy,
+    createdByName: note.createdByName,
+    createdAt: null, // Will be set by serverTimestamp in the update
+  };
+
+  const ref = doc(db!, applicationsCollection, applicationId);
+
+  // We need to manually set the timestamp since arrayUnion doesn't support serverTimestamp
+  const noteWithTimestamp = {
+    ...newNote,
+    createdAt: new Date(),
+  };
+
+  await updateDoc(ref, {
+    employerNotes: arrayUnion(noteWithTimestamp),
+    updatedAt: serverTimestamp(),
+  });
+
+  return noteWithTimestamp as unknown as ApplicantNote;
+}
+
+export async function updateApplicantNote(
+  applicationId: string,
+  noteId: string,
+  content: string
+): Promise<void> {
+  const ref = doc(db!, applicationsCollection, applicationId);
+  const snap = await getDoc(ref);
+  const data = snap.data() as JobApplication;
+
+  if (!data.employerNotes) return;
+
+  const updatedNotes = data.employerNotes.map((note) =>
+    note.id === noteId
+      ? { ...note, content, updatedAt: new Date() }
+      : note
+  );
+
+  await updateDoc(ref, {
+    employerNotes: updatedNotes,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteApplicantNote(
+  applicationId: string,
+  noteId: string
+): Promise<void> {
+  const ref = doc(db!, applicationsCollection, applicationId);
+  const snap = await getDoc(ref);
+  const data = snap.data() as JobApplication;
+
+  if (!data.employerNotes) return;
+
+  const noteToRemove = data.employerNotes.find((note) => note.id === noteId);
+  if (!noteToRemove) return;
+
+  await updateDoc(ref, {
+    employerNotes: arrayRemove(noteToRemove),
+    updatedAt: serverTimestamp(),
+  });
 }

@@ -20,6 +20,7 @@ import { useAuth } from "@/components/AuthProvider";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import WelcomeWizard from "@/components/WelcomeWizard";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
+import ApplicationAnalytics from "@/components/organization/ApplicationAnalytics";
 import { StatCard, type DashboardSection } from "@/components/organization/dashboard";
 import {
   getEmployerProfile,
@@ -134,11 +135,38 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={BriefcaseIcon} value={activeJobs.length} label="Active Jobs" className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400" />
-        <StatCard icon={UsersIcon} value={pendingApplications.length} label="New Applications" className="bg-blue-500/10 border-blue-500/20 text-blue-400" />
-        <StatCard icon={EyeIcon} value={totalViews} label="Total Views" className="bg-purple-500/10 border-purple-500/20 text-purple-400" />
-        <StatCard icon={ChatBubbleLeftRightIcon} value={unreadMessages} label="Unread Messages" className="bg-amber-500/10 border-amber-500/20 text-amber-400" />
+        <StatCard
+          icon={BriefcaseIcon}
+          value={activeJobs.length}
+          label="Active Jobs"
+          className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          onClick={() => handleNavigate("jobs")}
+        />
+        <StatCard
+          icon={UsersIcon}
+          value={pendingApplications.length}
+          label="New Applications"
+          className="bg-blue-500/10 border-blue-500/20 text-blue-400"
+          onClick={() => handleNavigate("applications")}
+        />
+        <StatCard
+          icon={EyeIcon}
+          value={totalViews}
+          label="Total Views"
+          className="bg-purple-500/10 border-purple-500/20 text-purple-400"
+          onClick={() => handleNavigate("jobs")}
+        />
+        <StatCard
+          icon={ChatBubbleLeftRightIcon}
+          value={unreadMessages}
+          label="Unread Messages"
+          className="bg-amber-500/10 border-amber-500/20 text-amber-400"
+          onClick={() => handleNavigate("messages")}
+        />
       </div>
+
+      {/* Application Analytics */}
+      {applications.length > 0 && <ApplicationAnalytics />}
 
       {/* Organization Status Card */}
       {profile && (

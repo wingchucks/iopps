@@ -26,9 +26,10 @@ type BusinessType = "shop" | "services" | "funding";
 
 interface BusinessTabProps {
   initialView?: BusinessType;
+  onNavigate?: (tab: string) => void;
 }
 
-export default function BusinessTab({ initialView = "shop" }: BusinessTabProps) {
+export default function BusinessTab({ initialView = "shop", onNavigate }: BusinessTabProps) {
   const { user } = useAuth();
   const [businessType, setBusinessType] = useState<BusinessType>(initialView);
   const [services, setServices] = useState<Service[]>([]);
@@ -143,7 +144,7 @@ export default function BusinessTab({ initialView = "shop" }: BusinessTabProps) 
         </div>
 
         {/* Render existing ShopTab */}
-        <ShopTab />
+        <ShopTab onNavigate={onNavigate} />
       </div>
     );
   }

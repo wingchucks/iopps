@@ -43,6 +43,17 @@ export {
   isJobExpired,
 } from "./jobs";
 
+// Job Templates
+export {
+  createJobTemplate,
+  getJobTemplate,
+  listEmployerTemplates,
+  updateJobTemplate,
+  deleteJobTemplate,
+  incrementTemplateUsage,
+  templateToJobData,
+} from "./jobTemplates";
+
 // Applications
 export {
   checkExistingApplication,
@@ -52,6 +63,9 @@ export {
   listEmployerApplications,
   updateApplicationStatus,
   withdrawJobApplication,
+  addApplicantNote,
+  updateApplicantNote,
+  deleteApplicantNote,
 } from "./applications";
 
 // Members
@@ -346,3 +360,26 @@ export {
   getSuggestedConnections,
   shareEntity,
 } from "./social";
+
+// ============================================
+// TEAM ACCESS
+// ============================================
+export {
+  // Team members
+  getTeamMembers,
+  addTeamMember,
+  removeTeamMember,
+  updateTeamMemberRole,
+  isUserTeamMember,
+  getEmployerIdForUser,
+  // Team invitations
+  createInvitation,
+  getInvitation,
+  getInvitationByToken,
+  getPendingInvitationsForEmail,
+  getInvitationsForEmployer,
+  acceptInvitation,
+  declineInvitation,
+  revokeInvitation,
+  resendInvitation,
+} from "./team";

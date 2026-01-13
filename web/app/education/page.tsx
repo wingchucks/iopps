@@ -209,7 +209,7 @@ function EducationContent() {
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/organization/dashboard?tab=education"
+                  href="/organization/education/setup"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                 >
                   List Your School

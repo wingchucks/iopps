@@ -44,8 +44,10 @@ export interface ImageMetadata {
 // CONSTANTS
 // ============================================================================
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB for images
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"];
 
 const IMAGE_PATHS: Record<ImageType, string> = {
   profile: "vendors/profile",
@@ -525,4 +527,113 @@ export async function compressImage(
     img.onerror = () => reject(new Error("Failed to load image"));
     img.src = URL.createObjectURL(file);
   });
+}
+
+// ============================================================================
+// VIDEO UPLOAD OPERATIONS
+// ============================================================================
+
+/**
+ * Validate video file
+ */
+export function validateVideo(file: File): { valid: boolean; error?: string } {
+  if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+    return {
+      valid: false,
+      error: "Invalid file type. Please upload an MP4, WebM, MOV, AVI, or MPEG video.",
+    };
+  }
+
+  if (file.size > MAX_VIDEO_SIZE) {
+    return {
+      valid: false,
+      error: `File too large. Maximum size is ${MAX_VIDEO_SIZE / 1024 / 1024}MB.`,
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Upload a company intro video
+ */
+export async function uploadCompanyVideo(
+  file: File,
+  employerId: string,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<UploadResult> {
+  // Validate file
+  const validation = validateVideo(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  const storageInstance = checkStorage();
+
+  const extension = file.name.split(".").pop() || "mp4";
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  const filename = `${employerId}_${timestamp}_${random}.${extension}`;
+  const path = `employer-videos/${employerId}/${filename}`;
+  const storageRef = ref(storageInstance, path);
+
+  // Create upload task
+  const uploadTask = uploadBytesResumable(storageRef, file, {
+    contentType: file.type,
+    customMetadata: {
+      employerId,
+      originalName: file.name,
+      uploadType: "company-intro",
+    },
+  });
+
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      "state_changed",
+      (snapshot: UploadTaskSnapshot) => {
+        const progress: UploadProgress = {
+          progress: (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+          bytesTransferred: snapshot.bytesTransferred,
+          totalBytes: snapshot.totalBytes,
+          state:
+            snapshot.state === "running"
+              ? "running"
+              : snapshot.state === "paused"
+              ? "paused"
+              : snapshot.state === "success"
+              ? "success"
+              : snapshot.state === "canceled"
+              ? "canceled"
+              : "error",
+        };
+        onProgress?.(progress);
+      },
+      (error) => {
+        reject(new Error(`Upload failed: ${error.message}`));
+      },
+      async () => {
+        try {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve({
+            url,
+            path,
+            filename,
+          });
+        } catch (error) {
+          reject(new Error("Failed to get download URL"));
+        }
+      }
+    );
+  });
+}
+
+/**
+ * Format file size for display
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
