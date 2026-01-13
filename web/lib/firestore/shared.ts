@@ -101,6 +101,9 @@ export const outboundClicksCollection = "outbound_clicks";
 export const profileViewsCollection = "profile_views";
 export const analyticsEventsCollection = "analytics_events";
 
+// Universal Organization Directory collections
+export const directoryIndexCollection = "directory_index";
+
 // Helper to check if Firebase is available
 export function checkFirebase() {
   if (!db) {
