@@ -651,10 +651,10 @@ export default function OnboardingPage() {
                     </Link>
                   ) : (
                     <Link
-                      href="/business/directory"
+                      href="/businesses"
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
                     >
-                      Browse Directory
+                      Browse Organizations
                       <ArrowRightIcon className="h-4 w-4" />
                     </Link>
                   )}
