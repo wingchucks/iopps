@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
         logoUrl: logoUrl || "",
         links: { website: website || "" },
         enabledModules: enabledModules || [],
+        status: "approved", // Required for public read access
         publicationStatus: "PUBLISHED",
         directoryVisible: true,
         publishedAt: now,
