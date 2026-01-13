@@ -239,7 +239,13 @@ function EducationContent() {
                       {school.description || 'Indigenous education institution'}
                     </p>
                     <div className="mt-auto flex items-center justify-between border-t border-slate-800 pt-4">
-                      <span className="text-xs text-slate-500">{school.location || 'Canada'}</span>
+                      <span className="text-xs text-slate-500">
+                        {typeof school.location === 'string'
+                          ? school.location
+                          : school.location?.city && school.location?.province
+                            ? `${school.location.city}, ${school.location.province}`
+                            : school.location?.province || school.location?.city || 'Canada'}
+                      </span>
                       <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 transition-transform">
                         View School →
                       </span>
