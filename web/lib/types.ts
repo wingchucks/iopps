@@ -196,8 +196,12 @@ export interface EmployerProfile {
   freePostingGrantedBy?: string;
   // Enhanced free posting grant
   freePostingGrant?: FreePostingGrant;
-  // Organization Capabilities (for multi-mode dashboard)
+  // Organization Capabilities (legacy - for multi-mode dashboard)
   capabilities?: OrganizationCapability[];
+  // NEW: Module-based dashboard system
+  enabledModules?: OrganizationModule[];
+  moduleSettings?: ModuleSettings;
+  lastActiveModule?: OrganizationModule;
   // Education Mode settings
   educationSettings?: EducationSettings;
   // TRC Alignment
@@ -1566,11 +1570,147 @@ export interface Service {
 }
 
 // ============================================
-// EDUCATION PILLAR - Schools, Programs, Events
+// ORGANIZATION MODULES (Dashboard Overhaul)
 // ============================================
 
-// Organization capabilities (for mode switching in dashboard)
+// Organization capabilities (legacy - for backward compatibility)
 export type OrganizationCapability = "employer" | "vendor" | "education";
+
+// New module system (replaces binary employer/vendor mode)
+export type OrganizationModule = 'hire' | 'sell' | 'educate' | 'host' | 'funding';
+
+export const ORGANIZATION_MODULES = ['hire', 'sell', 'educate', 'host', 'funding'] as const;
+
+export interface ModuleSettings {
+  hire?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+  sell?: {
+    enabled: boolean;
+    setupComplete: boolean;
+    vendorId?: string;
+  };
+  educate?: {
+    enabled: boolean;
+    setupComplete: boolean;
+    schoolId?: string;
+  };
+  host?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+  funding?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+}
+
+// Unified Inbox Types
+export type InboxItemType = 'candidate_message' | 'customer_inquiry' | 'student_inquiry' | 'system';
+
+export interface UnifiedInboxItem {
+  id: string;
+  type: InboxItemType;
+  sourceId: string; // conversationId or inquiryId
+  senderName: string;
+  senderEmail?: string;
+  senderAvatarUrl?: string;
+  subject?: string;
+  preview: string;
+  isRead: boolean;
+  status: 'new' | 'read' | 'replied' | 'archived';
+  relatedEntity?: {
+    type: 'job' | 'program' | 'product' | 'service' | 'scholarship';
+    id: string;
+    title: string;
+  };
+  createdAt: Timestamp | null;
+  lastActivityAt?: Timestamp | null;
+}
+
+// Analytics Event Types
+export type AnalyticsEventType =
+  | 'profile_view'
+  | 'outbound_link_click'
+  | 'inquiry_submitted'
+  | 'application_submitted'
+  | 'entity_created'
+  | 'entity_published';
+
+export type OutboundLinkType = 'website' | 'instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'booking' | 'phone' | 'email' | 'other';
+
+export interface OutboundClickEvent {
+  id: string;
+  organizationId: string;
+  vendorId?: string;
+  offeringId?: string;
+  linkType: OutboundLinkType;
+  targetUrl: string;
+  visitorId?: string;
+  sessionId?: string;
+  referrer?: string;
+  createdAt: Timestamp | null;
+}
+
+export interface ClickStats {
+  total: number;
+  byLinkType: Record<OutboundLinkType, number>;
+  byDay: { date: string; count: number }[];
+}
+
+export interface ViewStats {
+  total: number;
+  byDay: { date: string; count: number }[];
+}
+
+// Unified Offering Type (wraps products and services)
+export type OfferingType = 'product' | 'service';
+
+export interface UnifiedOffering {
+  id: string;
+  type: OfferingType;
+  userId: string;
+  vendorId?: string;
+
+  // Common fields
+  name: string;
+  slug?: string;
+  description: string;
+  category: string;
+
+  // Pricing
+  price?: number;
+  priceDisplay?: string;
+
+  // Media
+  imageUrl?: string;
+  images?: string[];
+
+  // Availability
+  active: boolean;
+  featured: boolean;
+
+  // Service-specific
+  servesRemote?: boolean;
+  bookingUrl?: string;
+
+  // Product-specific
+  inStock?: boolean;
+  madeToOrder?: boolean;
+
+  // Analytics
+  viewCount: number;
+  contactClicks: number;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// ============================================
+// EDUCATION PILLAR - Schools, Programs, Events
+// ============================================
 
 // School types
 export const SCHOOL_TYPES = [

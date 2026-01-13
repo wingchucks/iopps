@@ -383,3 +383,47 @@ export {
   revokeInvitation,
   resendInvitation,
 } from "./team";
+
+// ============================================
+// ORGANIZATION MODULES (Dashboard Overhaul)
+// ============================================
+
+// Module Management
+export {
+  getEnabledModules,
+  detectModulesFromData,
+  enableModule,
+  disableModule,
+  setLastActiveModule,
+  getModuleSettings,
+  updateModuleSettings,
+  initializeModules,
+} from "./modules";
+
+// Unified Inbox
+export {
+  getUnifiedInbox,
+  getUnifiedUnreadCount,
+  markInboxItemRead,
+  archiveInboxItem,
+  getInboxCounts,
+} from "./inbox";
+
+// Analytics & Tracking
+export {
+  trackOutboundClick,
+  trackProfileView,
+  getOutboundClickStats,
+  getProfileViewStats,
+  getAnalyticsSummary,
+  getRecentOutboundClicks,
+} from "./analytics";
+
+// Unified Offerings
+export {
+  listUserOfferings,
+  listUserOfferingsByType,
+  getOfferingCounts,
+  getOffering,
+  getActiveOfferingCounts,
+} from "./offerings";
