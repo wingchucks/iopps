@@ -129,6 +129,7 @@ export default function OnboardingPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [existingProfile, setExistingProfile] = useState<OrganizationProfile | null>(null);
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
     organizationName: '',
@@ -159,7 +160,9 @@ export default function OnboardingPage() {
         });
 
         // If already published and has a slug, skip to success
-        if ((profile as OrganizationProfile).publicationStatus === 'PUBLISHED' && (profile as OrganizationProfile).slug) {
+        const profileSlug = (profile as OrganizationProfile).slug;
+        if ((profile as OrganizationProfile).publicationStatus === 'PUBLISHED' && profileSlug) {
+          setPublishedSlug(profileSlug);
           setStep(4);
         }
         // If published but missing slug, stay on step 3 so user can re-publish to generate slug
@@ -338,6 +341,7 @@ export default function OnboardingPage() {
       } as OrganizationProfile;
 
       // Move to success step
+      setPublishedSlug(data.slug);
       setStep(4);
       setExistingProfile(updatedProfile);
     } catch (err) {
@@ -638,7 +642,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                   <Link
-                    href={`/businesses/${existingProfile?.slug}`}
+                    href={`/businesses/${publishedSlug || existingProfile?.slug}`}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
                   >
                     View Public Profile
