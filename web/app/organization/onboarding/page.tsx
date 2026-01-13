@@ -183,8 +183,8 @@ export default function OnboardingPage() {
     setUploading(true);
     setError('');
     try {
-      const logoUrl = await uploadImage(file, user.uid, 'profile', { maxWidth: 400, maxHeight: 400 });
-      setFormData((prev) => ({ ...prev, logoUrl }));
+      const result = await uploadImage(file, user.uid, 'profile');
+      setFormData((prev) => ({ ...prev, logoUrl: result.url }));
     } catch (err) {
       setError('Failed to upload logo. Please try again.');
     } finally {
