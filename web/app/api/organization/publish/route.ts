@@ -165,7 +165,15 @@ export async function POST(req: NextRequest) {
 
     await db.collection("directory_index").doc(existingId).set(directoryEntry);
 
-    console.log(`[PUBLISH] User ${userId} published organization "${organizationName}" (${existingId})`);
+    // Ensure slug is never undefined
+    if (!slug) {
+      console.error(`[PUBLISH] ERROR: slug is undefined for user ${userId}, org "${organizationName}"`);
+      slug = generateUniqueSlug(organizationName);
+      // Update the employer doc with the generated slug
+      await employerRef.update({ slug });
+    }
+
+    console.log(`[PUBLISH] User ${userId} published organization "${organizationName}" (${existingId}) with slug "${slug}"`);
 
     return NextResponse.json({
       success: true,
