@@ -27,10 +27,9 @@ import { uploadImage } from '@/lib/firebase/storage';
 import {
   createOrganizationProfile,
   updateOrganizationProfile,
-  publishOrganizationProfile,
   getOrganizationProfile,
 } from '@/lib/firestore/organizations';
-import { upsertDirectoryEntry } from '@/lib/firestore/directory';
+import { getAuth } from 'firebase/auth';
 import type { OrgType, OrganizationModule, OrganizationProfile } from '@/lib/types';
 import { ORG_TYPE_LABELS, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 
@@ -284,41 +283,40 @@ export default function OnboardingPage() {
     setLoading(true);
     setError('');
     try {
-      let profile: OrganizationProfile;
-      // Use existing profile ID if available, otherwise use user.uid
-      const profileId = existingProfile?.id || user.uid;
+      // Get the current user's ID token for API authentication
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Not authenticated');
+      }
+      const idToken = await currentUser.getIdToken();
 
-      if (existingProfile) {
-        await updateOrganizationProfile(profileId, {
+      // Call the server-side publish API
+      const response = await fetch('/api/organization/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
           organizationName: formData.organizationName,
           orgType: formData.orgType,
           province: formData.province,
           city: formData.city,
           logoUrl: formData.logoUrl,
-          links: { website: formData.website },
+          website: formData.website,
           enabledModules: formData.enabledModules,
-        });
-        profile = { ...existingProfile, ...formData } as OrganizationProfile;
-      } else {
-        profile = await createOrganizationProfile(user.uid, {
-          organizationName: formData.organizationName,
-          orgType: formData.orgType,
-          province: formData.province || undefined,
-          city: formData.city || undefined,
-          logoUrl: formData.logoUrl || undefined,
-          website: formData.website || undefined,
-          enabledModules: formData.enabledModules,
-        });
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to publish');
       }
 
-      // Publish the profile using the correct ID
-      await publishOrganizationProfile(profileId);
-
-      // Update directory index
-      const updatedProfile = await getOrganizationProfile(profileId);
-      if (updatedProfile) {
-        await upsertDirectoryEntry(updatedProfile);
-      }
+      // Fetch the updated profile
+      const updatedProfile = await getOrganizationProfile(data.profileId || user.uid);
 
       // Move to success step
       setStep(4);
