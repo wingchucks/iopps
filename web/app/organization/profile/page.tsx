@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { auth } from '@/lib/firebase';
 import { getEmployerProfile } from '@/lib/firestore';
-import type { EmployerProfile } from '@/lib/types';
+import type { EmployerProfile, OrganizationProfile } from '@/lib/types';
 import {
   EyeIcon,
   PencilIcon,
@@ -15,10 +15,13 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
+// Profile may have OrganizationProfile fields if published
+type ProfileWithOrgFields = EmployerProfile & Partial<Pick<OrganizationProfile, 'publicationStatus' | 'slug' | 'directoryVisible'>>;
+
 export default function OrganizationProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<EmployerProfile | null>(null);
+  const [profile, setProfile] = useState<ProfileWithOrgFields | null>(null);
 
   useEffect(() => {
     if (!auth) {
@@ -34,7 +37,8 @@ export default function OrganizationProfilePage() {
 
       try {
         const employerProfile = await getEmployerProfile(user.uid);
-        setProfile(employerProfile);
+        // Cast to include potential organization profile fields from published profiles
+        setProfile(employerProfile as ProfileWithOrgFields | null);
       } catch (error) {
         console.error('Error loading profile:', error);
       } finally {
