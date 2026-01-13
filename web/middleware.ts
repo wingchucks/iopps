@@ -1,32 +1,76 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Legacy URL redirects - maps old dashboard tabs to new routes
+const TAB_REDIRECTS: Record<string, string> = {
+  jobs: '/organization/hire/jobs',
+  applications: '/organization/hire/applications',
+  videos: '/organization/hire/interviews',
+  school: '/organization/educate/profile',
+  programs: '/organization/educate/programs',
+  scholarships: '/organization/educate/scholarships',
+  events: '/organization/host/events',
+  'student-inquiries': '/organization/educate/inquiries',
+  products: '/organization/sell/offerings',
+  services: '/organization/sell/offerings',
+  'shop-inquiries': '/organization/inbox?filter=customers',
+  funding: '/organization/funding/opportunities',
+  messages: '/organization/inbox',
+  billing: '/organization/billing',
+  profile: '/organization/settings',
+  team: '/organization/team',
+};
+
+// Mode-based redirects
+const MODE_REDIRECTS: Record<string, string> = {
+  vendor: '/organization/sell/profile',
+  employer: '/organization/hire/jobs',
+};
+
+// Standalone page redirects
+const PAGE_REDIRECTS: Record<string, string> = {
+  '/organization/subscription': '/organization/billing',
+  '/organization/shop/dashboard': '/organization/sell/profile',
+  '/organization/dashboard': '/organization', // Base dashboard redirect
+};
+
 export async function middleware(request: NextRequest) {
-    const path = request.nextUrl.pathname;
+  const path = request.nextUrl.pathname;
+  const searchParams = request.nextUrl.searchParams;
 
-    // Define protected routes
-    const isEmployerRoute = path.startsWith('/organization');
-    const isMemberRoute = path.startsWith('/member');
+  // Handle legacy dashboard tab redirects
+  if (path === '/organization/dashboard') {
+    const tab = searchParams.get('tab');
+    const mode = searchParams.get('mode');
 
-    // Check for session cookie (Firebase Auth cookie)
-    // Note: Client-side SDK handles auth state, but middleware can check for a session cookie 
-    // if you implement server-side session management. 
-    // Without server-side sessions, middleware can't verify auth state easily.
-    // Assuming we use a cookie named 'session' or similar from a custom auth flow, or just relying on client-side checks for now.
-    // NEXT.JS MIDDLEWARE LIMITATION: Cannot verify Firebase ID Token directly without edge-compatible library or cookie.
+    // Tab-based redirect takes priority
+    if (tab && TAB_REDIRECTS[tab]) {
+      const redirectUrl = new URL(TAB_REDIRECTS[tab], request.url);
+      return NextResponse.redirect(redirectUrl, { status: 301 });
+    }
 
-    // STRATEGY: 
-    // Since we are likely using client-side auth (onAuthStateChanged), 
-    // this middleware is a placeholder or "soft" check. 
-    // Real protection happens in Firestore Rules (backend) and Components (client-side redirects).
+    // Mode-based redirect
+    if (mode && MODE_REDIRECTS[mode]) {
+      const redirectUrl = new URL(MODE_REDIRECTS[mode], request.url);
+      return NextResponse.redirect(redirectUrl, { status: 301 });
+    }
 
-    // However, we can check for a 'token' cookie if your app sets one. 
-    // If no cookie mechanism exists yet, this middleware might be limited.
+    // Default: redirect to new home dashboard
+    const redirectUrl = new URL('/organization', request.url);
+    return NextResponse.redirect(redirectUrl, { status: 301 });
+  }
 
-    // For now, let's just log or pass through until creating a full session cookie handler.
-    // If we want to strictly protect, we'd need to set a cookie on login.
+  // Handle standalone page redirects
+  if (PAGE_REDIRECTS[path]) {
+    const redirectUrl = new URL(PAGE_REDIRECTS[path], request.url);
+    return NextResponse.redirect(redirectUrl, { status: 301 });
+  }
 
-    return NextResponse.next();
+  // Protected routes checks (placeholder - actual auth happens client-side)
+  // Note: Client-side SDK handles auth state via onAuthStateChanged.
+  // Real protection happens in Firestore Rules (backend) and Components (client-side redirects).
+
+  return NextResponse.next();
 }
 
 export const config = {
