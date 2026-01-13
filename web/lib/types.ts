@@ -2454,3 +2454,165 @@ export interface Activity {
   content?: string;
   createdAt: Timestamp;
 }
+
+// ============================================
+// UNIVERSAL ORGANIZATION PROFILE
+// ============================================
+
+// Organization types - what kind of entity is this?
+export const ORG_TYPES = [
+  'EMPLOYER',
+  'INDIGENOUS_BUSINESS',
+  'SCHOOL',
+  'NONPROFIT',
+  'GOVERNMENT',
+  'OTHER',
+] as const;
+
+export type OrgType = typeof ORG_TYPES[number];
+
+export const ORG_TYPE_LABELS: Record<OrgType, string> = {
+  EMPLOYER: 'Employer',
+  INDIGENOUS_BUSINESS: 'Indigenous Business',
+  SCHOOL: 'School / College',
+  NONPROFIT: 'Non-Profit',
+  GOVERNMENT: 'Government',
+  OTHER: 'Organization',
+};
+
+// Organization publication status
+export type OrganizationStatus = 'DRAFT' | 'PUBLISHED';
+
+// Extended social links with all platforms
+export interface ExtendedSocialLinks {
+  website?: string;
+  email?: string;
+  phone?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  linkedin?: string;
+  twitter?: string;
+  youtube?: string;
+}
+
+// Primary CTA type for directory cards (computed from enabled modules)
+export type PrimaryCTAType = 'JOBS' | 'OFFERINGS' | 'PROGRAMS' | 'EVENTS' | 'FUNDING' | 'WEBSITE';
+
+// Universal Organization Profile - extends EmployerProfile with directory-specific fields
+export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'> {
+  // New universal fields
+  slug: string;
+  orgType: OrgType;
+
+  // Publication status
+  publicationStatus: OrganizationStatus;
+  directoryVisible: boolean;
+  publishedAt?: Timestamp | null;
+
+  // Enhanced location
+  province?: string;
+  city?: string;
+  nation?: string; // Indigenous nation/community
+  community?: string; // Specific community
+
+  // Enhanced content
+  tagline?: string;
+  story?: string; // Longer narrative content
+
+  // Categories/tags for filtering
+  categories?: string[];
+  tags?: string[];
+
+  // Extended social links
+  links?: ExtendedSocialLinks;
+
+  // Keep legacy socialLinks for backward compatibility
+  socialLinks?: SocialLinks;
+}
+
+// Directory Index Entry - denormalized for fast queries
+export interface DirectoryEntry {
+  id: string;
+  orgId: string;
+
+  // Basic info for display
+  name: string;
+  slug: string;
+  orgType: OrgType;
+  tagline?: string;
+
+  // Location
+  province?: string;
+  city?: string;
+
+  // Categorization
+  categories?: string[];
+  tags?: string[];
+
+  // Modules enabled
+  enabledModules: OrganizationModule[];
+
+  // Computed primary CTA
+  primaryCTAType: PrimaryCTAType;
+
+  // Media
+  logoUrl?: string;
+
+  // Indigenous-specific
+  isIndigenousOwned?: boolean;
+  nation?: string;
+
+  // Content counts for filtering/display
+  counts: {
+    jobsCount: number;
+    programsCount: number;
+    scholarshipsCount: number;
+    offeringsCount: number;
+    eventsCount: number;
+    fundingCount: number;
+  };
+
+  // Status
+  directoryVisible: boolean;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Profile view analytics event
+export interface ProfileViewEvent {
+  id: string;
+  organizationId: string;
+  slug: string;
+  visitorId?: string;
+  sessionId?: string;
+  referrer?: string;
+  userAgent?: string;
+  createdAt: Timestamp | null;
+}
+
+// Filter options for directory
+export interface DirectoryFilters {
+  search?: string;
+  orgType?: OrgType | OrgType[];
+  province?: string;
+  city?: string;
+  categories?: string[];
+  tags?: string[];
+  modules?: OrganizationModule[];
+  isIndigenousOwned?: boolean;
+}
+
+// Sort options for directory
+export type DirectorySortOption = 'name_asc' | 'name_desc' | 'newest' | 'oldest';
+
+// Paginated directory results
+export interface DirectoryResults {
+  entries: DirectoryEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}

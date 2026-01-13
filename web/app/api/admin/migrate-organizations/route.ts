@@ -1,0 +1,328 @@
+import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { verifyIdToken, getCustomClaims } from "@/lib/firebase/admin";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  query,
+  where,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { generateSlug, generateUniqueSlug } from "@/lib/firestore/organizations";
+import { upsertDirectoryEntry } from "@/lib/firestore/directory";
+import type {
+  EmployerProfile,
+  OrganizationProfile,
+  OrgType,
+  OrganizationStatus,
+  Vendor,
+  School,
+  OrganizationModule,
+} from "@/lib/types";
+
+// POST: Run migration for all existing employers/vendors/schools
+export async function POST(request: Request) {
+  try {
+    // Verify admin access
+    const headersList = await headers();
+    const authHeader = headersList.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.split("Bearer ")[1];
+    const decodedToken = await verifyIdToken(token);
+    if (!decodedToken) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const claims = await getCustomClaims(decodedToken.uid);
+    if (claims?.role !== "admin") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ error: "Database not available" }, { status: 500 });
+    }
+
+    const results = {
+      employers: { processed: 0, migrated: 0, skipped: 0, errors: [] as string[] },
+      vendors: { processed: 0, linked: 0, errors: [] as string[] },
+      schools: { processed: 0, linked: 0, errors: [] as string[] },
+      directory: { indexed: 0, errors: [] as string[] },
+    };
+
+    // --- MIGRATE EMPLOYERS ---
+    const employersSnap = await getDocs(collection(db, "employers"));
+
+    for (const docSnap of employersSnap.docs) {
+      results.employers.processed++;
+      const employerId = docSnap.id;
+      const data = docSnap.data() as EmployerProfile;
+
+      try {
+        // Check if already migrated (has slug)
+        if ((data as any).slug) {
+          results.employers.skipped++;
+          continue;
+        }
+
+        // Generate slug
+        let slug = generateSlug(data.organizationName || "organization");
+        const existingWithSlug = await getDocs(
+          query(collection(db, "employers"), where("slug", "==", slug))
+        );
+        if (!existingWithSlug.empty && existingWithSlug.docs[0].id !== employerId) {
+          slug = generateUniqueSlug(data.organizationName || "organization");
+        }
+
+        // Parse location into province/city
+        let province = "";
+        let city = "";
+        if (data.location) {
+          const parts = data.location.split(",").map((s) => s.trim());
+          if (parts.length >= 2) {
+            city = parts[0];
+            province = parts[1];
+          } else {
+            province = parts[0];
+          }
+        }
+
+        // Determine org type
+        let orgType: OrgType = "EMPLOYER";
+        if (data.indigenousVerification?.isIndigenousOwned || data.trcAlignment?.isIndigenousOwned) {
+          orgType = "INDIGENOUS_BUSINESS";
+        }
+
+        // Build links from existing fields
+        const links = {
+          website: data.website || "",
+          email: data.contactEmail || "",
+          phone: data.contactPhone || "",
+          linkedin: data.socialLinks?.linkedin || "",
+          twitter: data.socialLinks?.twitter || "",
+          facebook: data.socialLinks?.facebook || "",
+          instagram: data.socialLinks?.instagram || "",
+        };
+
+        // Determine publication status
+        const publicationStatus: OrganizationStatus =
+          data.status === "approved" ? "PUBLISHED" : "DRAFT";
+        const directoryVisible = publicationStatus === "PUBLISHED";
+
+        // Detect enabled modules from existing data
+        const enabledModules: OrganizationModule[] = data.enabledModules || [];
+
+        // Update the employer document
+        const ref = doc(db, "employers", employerId);
+        await updateDoc(ref, {
+          slug,
+          orgType,
+          province,
+          city,
+          links,
+          publicationStatus,
+          directoryVisible,
+          publishedAt: publicationStatus === "PUBLISHED" ? serverTimestamp() : null,
+          updatedAt: serverTimestamp(),
+        });
+
+        results.employers.migrated++;
+
+        // Index in directory if published
+        if (publicationStatus === "PUBLISHED") {
+          const updatedDoc = await getDoc(ref);
+          if (updatedDoc.exists()) {
+            const updatedProfile = {
+              id: updatedDoc.id,
+              ...updatedDoc.data(),
+            } as OrganizationProfile;
+            await upsertDirectoryEntry(updatedProfile);
+            results.directory.indexed++;
+          }
+        }
+      } catch (err) {
+        results.employers.errors.push(
+          `${employerId}: ${err instanceof Error ? err.message : "Unknown error"}`
+        );
+      }
+    }
+
+    // --- LINK VENDORS TO EMPLOYERS ---
+    const vendorsSnap = await getDocs(collection(db, "vendors"));
+
+    for (const docSnap of vendorsSnap.docs) {
+      results.vendors.processed++;
+      const vendor = { id: docSnap.id, ...docSnap.data() } as Vendor;
+
+      try {
+        // Find the employer with this userId
+        const employerQuery = query(
+          collection(db, "employers"),
+          where("userId", "==", vendor.userId)
+        );
+        const employerSnap = await getDocs(employerQuery);
+
+        if (!employerSnap.empty) {
+          const employerDoc = employerSnap.docs[0];
+          const employerData = employerDoc.data();
+
+          // Update employer with sell module and vendorId
+          const enabledModules = employerData.enabledModules || [];
+          if (!enabledModules.includes("sell")) {
+            enabledModules.push("sell");
+          }
+
+          await updateDoc(doc(db, "employers", employerDoc.id), {
+            enabledModules,
+            moduleSettings: {
+              ...(employerData.moduleSettings || {}),
+              sell: {
+                enabled: true,
+                setupComplete: true,
+                vendorId: vendor.id,
+              },
+            },
+            // If vendor is active, update org type to Indigenous Business
+            ...(vendor.status === "active" && !employerData.orgType
+              ? { orgType: "INDIGENOUS_BUSINESS" }
+              : {}),
+            updatedAt: serverTimestamp(),
+          });
+
+          results.vendors.linked++;
+        }
+      } catch (err) {
+        results.vendors.errors.push(
+          `${vendor.id}: ${err instanceof Error ? err.message : "Unknown error"}`
+        );
+      }
+    }
+
+    // --- LINK SCHOOLS TO EMPLOYERS ---
+    const schoolsSnap = await getDocs(collection(db, "schools"));
+
+    for (const docSnap of schoolsSnap.docs) {
+      results.schools.processed++;
+      const school = { id: docSnap.id, ...docSnap.data() } as School;
+
+      try {
+        // Find the employer with this ID
+        const employerRef = doc(db, "employers", school.employerId);
+        const employerSnap = await getDoc(employerRef);
+
+        if (employerSnap.exists()) {
+          const employerData = employerSnap.data();
+
+          // Update employer with educate module and schoolId
+          const enabledModules = employerData.enabledModules || [];
+          if (!enabledModules.includes("educate")) {
+            enabledModules.push("educate");
+          }
+
+          await updateDoc(employerRef, {
+            enabledModules,
+            moduleSettings: {
+              ...(employerData.moduleSettings || {}),
+              educate: {
+                enabled: true,
+                setupComplete: true,
+                schoolId: school.id,
+              },
+            },
+            // Update org type to School if not already set
+            ...(employerData.orgType !== "SCHOOL" && !employerData.orgType
+              ? { orgType: "SCHOOL" }
+              : {}),
+            updatedAt: serverTimestamp(),
+          });
+
+          results.schools.linked++;
+        }
+      } catch (err) {
+        results.schools.errors.push(
+          `${school.id}: ${err instanceof Error ? err.message : "Unknown error"}`
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      results,
+      message: `Migration complete. Employers: ${results.employers.migrated} migrated, ${results.employers.skipped} skipped. Directory: ${results.directory.indexed} indexed.`,
+    });
+  } catch (error) {
+    console.error("Migration error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Migration failed" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET: Check migration status
+export async function GET(request: Request) {
+  try {
+    // Verify admin access
+    const headersList = await headers();
+    const authHeader = headersList.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.split("Bearer ")[1];
+    const decodedToken = await verifyIdToken(token);
+    if (!decodedToken) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const claims = await getCustomClaims(decodedToken.uid);
+    if (claims?.role !== "admin") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ error: "Database not available" }, { status: 500 });
+    }
+
+    // Count employers with and without slug
+    const employersSnap = await getDocs(collection(db, "employers"));
+    let migratedCount = 0;
+    let notMigratedCount = 0;
+
+    employersSnap.docs.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data.slug) {
+        migratedCount++;
+      } else {
+        notMigratedCount++;
+      }
+    });
+
+    // Count directory entries
+    const directorySnap = await getDocs(collection(db, "directory_index"));
+
+    return NextResponse.json({
+      employers: {
+        total: employersSnap.size,
+        migrated: migratedCount,
+        needsMigration: notMigratedCount,
+      },
+      directory: {
+        indexed: directorySnap.size,
+      },
+    });
+  } catch (error) {
+    console.error("Status check error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Status check failed" },
+      { status: 500 }
+    );
+  }
+}

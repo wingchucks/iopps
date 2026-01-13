@@ -262,3 +262,109 @@ export async function getRecentOutboundClicks(
     return [];
   }
 }
+
+/**
+ * Track a profile view with additional metadata (for public org pages)
+ */
+export async function trackOrganizationProfileView(params: {
+  organizationId: string;
+  slug: string;
+  visitorId?: string;
+  referrer?: string;
+  userAgent?: string;
+}): Promise<string | null> {
+  const firestore = checkFirebase();
+  if (!firestore) return null;
+
+  try {
+    const docRef = await addDoc(collection(firestore, profileViewsCollection), {
+      organizationId: params.organizationId,
+      slug: params.slug,
+      visitorId: params.visitorId || null,
+      referrer: params.referrer || null,
+      userAgent: params.userAgent || null,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error tracking organization profile view:", error);
+    return null;
+  }
+}
+
+/**
+ * Track outbound link click with all metadata
+ */
+export async function trackOrganizationOutboundClick(params: {
+  organizationId: string;
+  linkType: OutboundLinkType;
+  targetUrl: string;
+  slug?: string;
+  vendorId?: string;
+  offeringId?: string;
+  visitorId?: string;
+  referrer?: string;
+}): Promise<string | null> {
+  const firestore = checkFirebase();
+  if (!firestore) return null;
+
+  try {
+    const docRef = await addDoc(collection(firestore, outboundClicksCollection), {
+      organizationId: params.organizationId,
+      linkType: params.linkType,
+      targetUrl: params.targetUrl,
+      slug: params.slug || null,
+      vendorId: params.vendorId || null,
+      offeringId: params.offeringId || null,
+      visitorId: params.visitorId || null,
+      referrer: params.referrer || null,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error tracking organization outbound click:", error);
+    return null;
+  }
+}
+
+/**
+ * Get total profile view count for an organization
+ */
+export async function getTotalProfileViews(organizationId: string): Promise<number> {
+  const firestore = checkFirebase();
+  if (!firestore) return 0;
+
+  try {
+    const viewsQuery = query(
+      collection(firestore, profileViewsCollection),
+      where("organizationId", "==", organizationId)
+    );
+
+    const snap = await getDocs(viewsQuery);
+    return snap.size;
+  } catch (error) {
+    console.error("Error getting total profile views:", error);
+    return 0;
+  }
+}
+
+/**
+ * Get total outbound click count for an organization
+ */
+export async function getTotalOutboundClicks(organizationId: string): Promise<number> {
+  const firestore = checkFirebase();
+  if (!firestore) return 0;
+
+  try {
+    const clicksQuery = query(
+      collection(firestore, outboundClicksCollection),
+      where("organizationId", "==", organizationId)
+    );
+
+    const snap = await getDocs(clicksQuery);
+    return snap.size;
+  } catch (error) {
+    console.error("Error getting total outbound clicks:", error);
+    return 0;
+  }
+}
