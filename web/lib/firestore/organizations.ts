@@ -310,6 +310,7 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
     collection(firestore, employerCollection),
     where("slug", "==", slug),
     where("publicationStatus", "==", "PUBLISHED"),
+    where("status", "==", "approved"), // Required by Firestore security rules
     limit(1)
   );
   const snap = await getDocs(q);
@@ -331,6 +332,7 @@ export async function listPublishedOrganizations(
   const q = query(
     collection(firestore, employerCollection),
     where("publicationStatus", "==", "PUBLISHED"),
+    where("status", "==", "approved"), // Required by Firestore security rules
     where("directoryVisible", "==", true),
     orderBy("organizationName", "asc"),
     limit(limitCount)
