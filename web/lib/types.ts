@@ -196,8 +196,12 @@ export interface EmployerProfile {
   freePostingGrantedBy?: string;
   // Enhanced free posting grant
   freePostingGrant?: FreePostingGrant;
-  // Organization Capabilities (for multi-mode dashboard)
+  // Organization Capabilities (legacy - for multi-mode dashboard)
   capabilities?: OrganizationCapability[];
+  // NEW: Module-based dashboard system
+  enabledModules?: OrganizationModule[];
+  moduleSettings?: ModuleSettings;
+  lastActiveModule?: OrganizationModule;
   // Education Mode settings
   educationSettings?: EducationSettings;
   // TRC Alignment
@@ -1566,11 +1570,147 @@ export interface Service {
 }
 
 // ============================================
-// EDUCATION PILLAR - Schools, Programs, Events
+// ORGANIZATION MODULES (Dashboard Overhaul)
 // ============================================
 
-// Organization capabilities (for mode switching in dashboard)
+// Organization capabilities (legacy - for backward compatibility)
 export type OrganizationCapability = "employer" | "vendor" | "education";
+
+// New module system (replaces binary employer/vendor mode)
+export type OrganizationModule = 'hire' | 'sell' | 'educate' | 'host' | 'funding';
+
+export const ORGANIZATION_MODULES = ['hire', 'sell', 'educate', 'host', 'funding'] as const;
+
+export interface ModuleSettings {
+  hire?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+  sell?: {
+    enabled: boolean;
+    setupComplete: boolean;
+    vendorId?: string;
+  };
+  educate?: {
+    enabled: boolean;
+    setupComplete: boolean;
+    schoolId?: string;
+  };
+  host?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+  funding?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+}
+
+// Unified Inbox Types
+export type InboxItemType = 'candidate_message' | 'customer_inquiry' | 'student_inquiry' | 'system';
+
+export interface UnifiedInboxItem {
+  id: string;
+  type: InboxItemType;
+  sourceId: string; // conversationId or inquiryId
+  senderName: string;
+  senderEmail?: string;
+  senderAvatarUrl?: string;
+  subject?: string;
+  preview: string;
+  isRead: boolean;
+  status: 'new' | 'read' | 'replied' | 'archived';
+  relatedEntity?: {
+    type: 'job' | 'program' | 'product' | 'service' | 'scholarship';
+    id: string;
+    title: string;
+  };
+  createdAt: Timestamp | null;
+  lastActivityAt?: Timestamp | null;
+}
+
+// Analytics Event Types
+export type AnalyticsEventType =
+  | 'profile_view'
+  | 'outbound_link_click'
+  | 'inquiry_submitted'
+  | 'application_submitted'
+  | 'entity_created'
+  | 'entity_published';
+
+export type OutboundLinkType = 'website' | 'instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'booking' | 'phone' | 'email' | 'other';
+
+export interface OutboundClickEvent {
+  id: string;
+  organizationId: string;
+  vendorId?: string;
+  offeringId?: string;
+  linkType: OutboundLinkType;
+  targetUrl: string;
+  visitorId?: string;
+  sessionId?: string;
+  referrer?: string;
+  createdAt: Timestamp | null;
+}
+
+export interface ClickStats {
+  total: number;
+  byLinkType: Record<OutboundLinkType, number>;
+  byDay: { date: string; count: number }[];
+}
+
+export interface ViewStats {
+  total: number;
+  byDay: { date: string; count: number }[];
+}
+
+// Unified Offering Type (wraps products and services)
+export type OfferingType = 'product' | 'service';
+
+export interface UnifiedOffering {
+  id: string;
+  type: OfferingType;
+  userId: string;
+  vendorId?: string;
+
+  // Common fields
+  name: string;
+  slug?: string;
+  description: string;
+  category: string;
+
+  // Pricing
+  price?: number;
+  priceDisplay?: string;
+
+  // Media
+  imageUrl?: string;
+  images?: string[];
+
+  // Availability
+  active: boolean;
+  featured: boolean;
+
+  // Service-specific
+  servesRemote?: boolean;
+  bookingUrl?: string;
+
+  // Product-specific
+  inStock?: boolean;
+  madeToOrder?: boolean;
+
+  // Analytics
+  viewCount: number;
+  contactClicks: number;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// ============================================
+// EDUCATION PILLAR - Schools, Programs, Events
+// ============================================
 
 // School types
 export const SCHOOL_TYPES = [
@@ -2313,4 +2453,166 @@ export interface Activity {
   referenceId: string;
   content?: string;
   createdAt: Timestamp;
+}
+
+// ============================================
+// UNIVERSAL ORGANIZATION PROFILE
+// ============================================
+
+// Organization types - what kind of entity is this?
+export const ORG_TYPES = [
+  'EMPLOYER',
+  'INDIGENOUS_BUSINESS',
+  'SCHOOL',
+  'NONPROFIT',
+  'GOVERNMENT',
+  'OTHER',
+] as const;
+
+export type OrgType = typeof ORG_TYPES[number];
+
+export const ORG_TYPE_LABELS: Record<OrgType, string> = {
+  EMPLOYER: 'Employer',
+  INDIGENOUS_BUSINESS: 'Indigenous Business',
+  SCHOOL: 'School / College',
+  NONPROFIT: 'Non-Profit',
+  GOVERNMENT: 'Government',
+  OTHER: 'Organization',
+};
+
+// Organization publication status
+export type OrganizationStatus = 'DRAFT' | 'PUBLISHED';
+
+// Extended social links with all platforms
+export interface ExtendedSocialLinks {
+  website?: string;
+  email?: string;
+  phone?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  linkedin?: string;
+  twitter?: string;
+  youtube?: string;
+}
+
+// Primary CTA type for directory cards (computed from enabled modules)
+export type PrimaryCTAType = 'JOBS' | 'OFFERINGS' | 'PROGRAMS' | 'EVENTS' | 'FUNDING' | 'WEBSITE';
+
+// Universal Organization Profile - extends EmployerProfile with directory-specific fields
+export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'> {
+  // New universal fields
+  slug: string;
+  orgType: OrgType;
+
+  // Publication status
+  publicationStatus: OrganizationStatus;
+  directoryVisible: boolean;
+  publishedAt?: Timestamp | null;
+
+  // Enhanced location
+  province?: string;
+  city?: string;
+  nation?: string; // Indigenous nation/community
+  community?: string; // Specific community
+
+  // Enhanced content
+  tagline?: string;
+  story?: string; // Longer narrative content
+
+  // Categories/tags for filtering
+  categories?: string[];
+  tags?: string[];
+
+  // Extended social links
+  links?: ExtendedSocialLinks;
+
+  // Keep legacy socialLinks for backward compatibility
+  socialLinks?: SocialLinks;
+}
+
+// Directory Index Entry - denormalized for fast queries
+export interface DirectoryEntry {
+  id: string;
+  orgId: string;
+
+  // Basic info for display
+  name: string;
+  slug: string;
+  orgType: OrgType;
+  tagline?: string;
+
+  // Location
+  province?: string;
+  city?: string;
+
+  // Categorization
+  categories?: string[];
+  tags?: string[];
+
+  // Modules enabled
+  enabledModules: OrganizationModule[];
+
+  // Computed primary CTA
+  primaryCTAType: PrimaryCTAType;
+
+  // Media
+  logoUrl?: string;
+
+  // Indigenous-specific
+  isIndigenousOwned?: boolean;
+  nation?: string;
+
+  // Content counts for filtering/display
+  counts: {
+    jobsCount: number;
+    programsCount: number;
+    scholarshipsCount: number;
+    offeringsCount: number;
+    eventsCount: number;
+    fundingCount: number;
+  };
+
+  // Status
+  directoryVisible: boolean;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Profile view analytics event
+export interface ProfileViewEvent {
+  id: string;
+  organizationId: string;
+  slug: string;
+  visitorId?: string;
+  sessionId?: string;
+  referrer?: string;
+  userAgent?: string;
+  createdAt: Timestamp | null;
+}
+
+// Filter options for directory
+export interface DirectoryFilters {
+  search?: string;
+  orgType?: OrgType | OrgType[];
+  province?: string;
+  city?: string;
+  categories?: string[];
+  tags?: string[];
+  modules?: OrganizationModule[];
+  isIndigenousOwned?: boolean;
+}
+
+// Sort options for directory
+export type DirectorySortOption = 'name_asc' | 'name_desc' | 'newest' | 'oldest';
+
+// Paginated directory results
+export interface DirectoryResults {
+  entries: DirectoryEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
