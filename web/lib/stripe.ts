@@ -37,7 +37,7 @@ export type JobPostingProductType = keyof typeof JOB_POSTING_PRODUCTS;
 // Organization subscription tiers (annual plans)
 export const SUBSCRIPTION_PRODUCTS = {
     TIER1: {
-        name: "Tier 1 – Basic Visibility",
+        name: "Growth",
         price: 125000, // $1,250.00
         duration: 365, // days (1 year)
         featured: false,
@@ -56,7 +56,7 @@ export const SUBSCRIPTION_PRODUCTS = {
         ],
     },
     TIER2: {
-        name: "Tier 2 – Unlimited + Shop",
+        name: "Unlimited",
         price: 250000, // $2,500.00
         duration: 365, // days (1 year)
         featured: true,

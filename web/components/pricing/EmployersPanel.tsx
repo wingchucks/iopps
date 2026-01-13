@@ -74,7 +74,7 @@ export default function EmployersPanel() {
       )}
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Single Job Post */}
+        {/* Single Job Post - Starter option */}
         <PricingCard
           title="Single Job Post"
           price={`$${JOB_POSTING_PRODUCTS.SINGLE.price / 100}`}
@@ -90,33 +90,7 @@ export default function EmployersPanel() {
           helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
         />
 
-        {/* Tier 2 - Recommended */}
-        <PricingCard
-          title={SUBSCRIPTION_PRODUCTS.TIER2.name}
-          price={`$${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}`}
-          period="/ year"
-          badge="RECOMMENDED"
-          highlighted={true}
-          features={SUBSCRIPTION_PRODUCTS.TIER2.features}
-          buttonText={
-            role === "community"
-              ? "Employer Account Required"
-              : loadingTier === "TIER2"
-              ? "Processing..."
-              : "Subscribe Now"
-          }
-          buttonAction={role === "community" ? undefined : () => handleSubscriptionCheckout("TIER2")}
-          loading={loadingTier === "TIER2"}
-          requiresAuth
-          disabled={role === "community"}
-          helperText={
-            role === "community"
-              ? "Need to hire? Create an employer account."
-              : undefined
-          }
-        />
-
-        {/* Tier 1 */}
+        {/* Growth Plan - $1,250/year */}
         <PricingCard
           title={SUBSCRIPTION_PRODUCTS.TIER1.name}
           price={`$${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}`}
@@ -131,6 +105,32 @@ export default function EmployersPanel() {
           }
           buttonAction={role === "community" ? undefined : () => handleSubscriptionCheckout("TIER1")}
           loading={loadingTier === "TIER1"}
+          requiresAuth
+          disabled={role === "community"}
+          helperText={
+            role === "community"
+              ? "Need to hire? Create an employer account."
+              : undefined
+          }
+        />
+
+        {/* Unlimited Plan - $2,500/year - Recommended */}
+        <PricingCard
+          title={SUBSCRIPTION_PRODUCTS.TIER2.name}
+          price={`$${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}`}
+          period="/ year"
+          badge="BEST VALUE"
+          highlighted={true}
+          features={SUBSCRIPTION_PRODUCTS.TIER2.features}
+          buttonText={
+            role === "community"
+              ? "Employer Account Required"
+              : loadingTier === "TIER2"
+              ? "Processing..."
+              : "Subscribe Now"
+          }
+          buttonAction={role === "community" ? undefined : () => handleSubscriptionCheckout("TIER2")}
+          loading={loadingTier === "TIER2"}
           requiresAuth
           disabled={role === "community"}
           helperText={

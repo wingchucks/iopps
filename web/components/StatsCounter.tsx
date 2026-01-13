@@ -95,13 +95,14 @@ export function StatsCounter() {
 
     if (!isVisible) return null;
 
+    // Filter out stats that are 0 to avoid showing misleading "0+" values
     const statItems: StatItem[] = stats
         ? [
             { label: "Jobs", value: stats.jobs, suffix: "+" },
             { label: "Conferences", value: stats.conferences, suffix: "+" },
             { label: "Scholarships", value: stats.scholarships, suffix: "+" },
             { label: "Indigenous Vendors", value: stats.vendors, suffix: "+" },
-        ]
+        ].filter(stat => stat.value > 0)
         : [];
 
     return (

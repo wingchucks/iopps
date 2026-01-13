@@ -122,10 +122,14 @@ export default function JobsPage() {
             <select
               value={employmentType}
               onChange={(e) => setEmploymentType(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none cursor-pointer"
             >
               {EMPLOYMENT_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
+                <option
+                  key={type.value}
+                  value={type.value}
+                  className="bg-slate-900 text-white py-2"
+                >
                   {type.label}
                 </option>
               ))}

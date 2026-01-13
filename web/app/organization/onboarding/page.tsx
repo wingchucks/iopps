@@ -174,7 +174,8 @@ export default function OnboardingPage() {
   // Redirect if not employer
   useEffect(() => {
     if (!authLoading && (!user || (role !== 'employer' && role !== 'admin'))) {
-      router.push('/auth/signup?role=employer');
+      // If not logged in, redirect to login. If logged in but wrong role, redirect to register
+      router.push(user ? '/register?role=employer' : '/login');
     }
   }, [user, role, authLoading, router]);
 

@@ -224,8 +224,8 @@ export default function OrganizationDashboardHome() {
 
   if (enabledModules.includes('hire')) {
     visibleStats.push(
-      { label: 'Active Jobs', value: stats.activeJobs, icon: BriefcaseIcon, href: '/organization/hire/jobs', color: 'blue' },
-      { label: 'New Applications', value: stats.newApplications, icon: DocumentTextIcon, href: '/organization/hire/applications', color: 'blue' }
+      { label: 'Active Jobs', value: stats.activeJobs, icon: BriefcaseIcon, href: '/organization/jobs', color: 'blue' },
+      { label: 'New Applications', value: stats.newApplications, icon: DocumentTextIcon, href: '/organization/applications', color: 'blue' }
     );
   }
 
@@ -257,7 +257,7 @@ export default function OrganizationDashboardHome() {
 
   // Module-specific actions
   if (enabledModules.includes('hire') && stats.activeJobs === 0) {
-    actions.push({ title: 'Post your first job', description: 'Start attracting Indigenous talent', href: '/organization/hire/jobs/new', icon: BriefcaseIcon });
+    actions.push({ title: 'Post your first job', description: 'Start attracting Indigenous talent', href: '/organization/jobs/new', icon: BriefcaseIcon });
   }
 
   if (enabledModules.includes('sell') && stats.offerings === 0) {
@@ -265,7 +265,7 @@ export default function OrganizationDashboardHome() {
   }
 
   if (enabledModules.includes('host')) {
-    actions.push({ title: 'Create an event', description: 'Host conferences or gatherings', href: '/organization/host/conferences/new', icon: CalendarDaysIcon });
+    actions.push({ title: 'Create an event', description: 'Host conferences or gatherings', href: '/organization/conferences/new', icon: CalendarDaysIcon });
   }
 
   if (enabledModules.includes('funding')) {

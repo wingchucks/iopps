@@ -9,13 +9,17 @@ import type { Vendor } from "@/lib/types";
 import OceanWaveHero from "@/components/OceanWaveHero";
 import { useAuth } from "@/components/AuthProvider";
 
+type BusinessTab = 'shop' | 'grants' | 'services';
+
 export default function MarketplacePage() {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const [featuredVendors, setFeaturedVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<BusinessTab>('shop');
 
   // Only show business listing CTAs to employers/admins (not community members)
   const canListBusiness = role === "employer" || role === "admin";
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     (async () => {
@@ -37,13 +41,34 @@ export default function MarketplacePage() {
         <div className="mx-auto max-w-6xl px-4 py-4">
           {/* Tab Pills */}
           <div className="flex gap-2 mb-4">
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-teal-500/20 text-teal-400 border border-teal-500/30">
+            <button
+              onClick={() => setActiveTab('shop')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === 'shop'
+                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                  : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
               Shop
             </button>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors">
+            <button
+              onClick={() => setActiveTab('grants')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === 'grants'
+                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                  : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
               Grants
             </button>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors">
+            <button
+              onClick={() => setActiveTab('services')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === 'services'
+                  ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                  : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
               Services
             </button>
           </div>
@@ -51,8 +76,11 @@ export default function MarketplacePage() {
       </div>
 
       <PageShell>
-        {/* Business of the Day Showcase */}
-        {(featuredVendors.length > 0 || loading) && (
+        {/* Tab Content */}
+        {activeTab === 'shop' ? (
+          <>
+            {/* Business of the Day Showcase */}
+            {(featuredVendors.length > 0 || loading) && (
           <section className="mb-8">
             <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900 border border-teal-500/20 p-6">
               {/* Badge */}
@@ -109,55 +137,57 @@ export default function MarketplacePage() {
           </div>
         </section>
 
-        {/* Vendors your connections support */}
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-slate-400 mb-4">Vendors your connections support</h2>
+        {/* Vendors your connections support - only show when authenticated */}
+        {isAuthenticated && featuredVendors.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-sm font-semibold text-slate-400 mb-4">Vendors your connections support</h2>
 
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-24" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {featuredVendors.slice(0, 3).map((vendor) => (
-                <Link
-                  key={vendor.id}
-                  href={`/business/${vendor.slug}`}
-                  className="block rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-xl shrink-0">
-                      🧵
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-white">{vendor.businessName}</h3>
-                      <p className="text-sm text-slate-400 line-clamp-1">{vendor.tagline}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {vendor.nation && (
-                          <span className="text-xs text-teal-400">🪶 {vendor.nation}</span>
-                        )}
-                        <span className="text-xs text-amber-400">⭐ 4.8</span>
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-24" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {featuredVendors.slice(0, 3).map((vendor) => (
+                  <Link
+                    key={vendor.id}
+                    href={`/business/${vendor.slug}`}
+                    className="block rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-xl shrink-0">
+                        🧵
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-white">{vendor.businessName}</h3>
+                        <p className="text-sm text-slate-400 line-clamp-1">{vendor.tagline}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {vendor.nation && (
+                            <span className="text-xs text-teal-400">🪶 {vendor.nation}</span>
+                          )}
+                          <span className="text-xs text-amber-400">⭐ 4.8</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Connection Signal */}
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-800/50 p-2">
-                    <div className="flex -space-x-1.5">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className={`inline-block h-5 w-5 rounded-full ring-2 ring-slate-900 ${['bg-orange-400', 'bg-blue-400', 'bg-purple-400'][i % 3]
-                          }`} />
-                      ))}
+                    {/* Connection Signal */}
+                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-800/50 p-2">
+                      <div className="flex -space-x-1.5">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className={`inline-block h-5 w-5 rounded-full ring-2 ring-slate-900 ${['bg-orange-400', 'bg-blue-400', 'bg-purple-400'][i % 3]
+                            }`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-teal-400 font-medium">6 connections purchased from here</span>
                     </div>
-                    <span className="text-xs text-teal-400 font-medium">6 connections purchased from here</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Featured Businesses Section */}
         {(featuredVendors.length > 0 || loading) && (
@@ -185,6 +215,34 @@ export default function MarketplacePage() {
                 ))}
               </div>
             )}
+          </section>
+        )}
+          </>
+        ) : activeTab === 'grants' ? (
+          // Grants Tab Content
+          <section className="mb-12">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Grants & Funding</h2>
+              <p className="text-slate-400">Discover funding opportunities for Indigenous businesses</p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+              <div className="text-4xl mb-4">💰</div>
+              <p className="text-slate-400 mb-4">Grants and funding opportunities coming soon!</p>
+              <p className="text-sm text-slate-500">We're working on connecting Indigenous businesses with funding resources.</p>
+            </div>
+          </section>
+        ) : (
+          // Services Tab Content
+          <section className="mb-12">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Professional Services</h2>
+              <p className="text-slate-400">Find Indigenous-owned service providers</p>
+            </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+              <div className="text-4xl mb-4">🛠️</div>
+              <p className="text-slate-400 mb-4">Services directory coming soon!</p>
+              <p className="text-sm text-slate-500">Browse professional services from Indigenous business owners.</p>
+            </div>
           </section>
         )}
 
