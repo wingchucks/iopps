@@ -134,14 +134,9 @@ export default function EmployerAnalyticsPage() {
       // Applications by month
       const applicationsByMonth = aggregateByMonth(applications, "createdAt");
 
-      // Get platform average (simplified - just use all jobs for comparison)
-      const allJobsRef = collection(db!, "jobs");
-      const allJobsSnap = await getDocs(allJobsRef);
-      const allApplicationsRef = collection(db!, "applications");
-      const allApplicationsSnap = await getDocs(allApplicationsRef);
-      const platformAvgApplicationsPerJob = allJobsSnap.size > 0
-        ? Math.round((allApplicationsSnap.size / allJobsSnap.size) * 10) / 10
-        : 0;
+      // Platform average not available client-side (would require admin access to all data)
+      // Using employer's own average as reference point
+      const platformAvgApplicationsPerJob = avgApplicationsPerJob;
 
       setAnalytics({
         totalJobs,

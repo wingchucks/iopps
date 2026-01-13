@@ -113,13 +113,17 @@ export async function detectModulesFromData(userId: string): Promise<Organizatio
     }
 
     // Check FUNDING - has business grants
-    const grantsQuery = query(
-      collection(firestore, businessGrantsCollection),
-      where("createdBy", "==", userId)
-    );
-    const grantsSnap = await getDocs(grantsQuery);
-    if (!grantsSnap.empty) {
-      modules.push('funding');
+    try {
+      const grantsQuery = query(
+        collection(firestore, businessGrantsCollection),
+        where("createdBy", "==", userId)
+      );
+      const grantsSnap = await getDocs(grantsQuery);
+      if (!grantsSnap.empty) {
+        modules.push('funding');
+      }
+    } catch {
+      // business_grants collection may not have security rules yet - skip silently
     }
 
     return modules;
