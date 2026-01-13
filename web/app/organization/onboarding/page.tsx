@@ -158,11 +158,11 @@ export default function OnboardingPage() {
           enabledModules: profile.enabledModules || [],
         });
 
-        // If already published, redirect to profile
-        if ((profile as OrganizationProfile).publicationStatus === 'PUBLISHED') {
-          // Skip to step 4 to show success or allow edits
+        // If already published and has a slug, skip to success
+        if ((profile as OrganizationProfile).publicationStatus === 'PUBLISHED' && (profile as OrganizationProfile).slug) {
           setStep(4);
         }
+        // If published but missing slug, stay on step 3 so user can re-publish to generate slug
       }
     }
     checkExistingProfile();
