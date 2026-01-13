@@ -641,13 +641,23 @@ export default function OnboardingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                  <Link
-                    href={`/businesses/${publishedSlug || existingProfile?.slug}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
-                  >
-                    View Public Profile
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
+                  {(publishedSlug || existingProfile?.slug) ? (
+                    <Link
+                      href={`/businesses/${publishedSlug || existingProfile?.slug}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
+                    >
+                      View Public Profile
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/business/directory"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
+                    >
+                      Browse Directory
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  )}
                   <Link
                     href="/organization/dashboard"
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-700 px-6 py-3 font-semibold text-white hover:bg-slate-600 transition-colors"
