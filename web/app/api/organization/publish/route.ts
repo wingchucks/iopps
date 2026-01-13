@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
 
       await employerRef.update({
         organizationName,
+        slug, // Ensure slug is saved
         orgType,
         province: province || "",
         city: city || "",
