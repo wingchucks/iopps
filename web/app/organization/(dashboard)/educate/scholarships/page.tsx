@@ -9,7 +9,6 @@ import {
   SparklesIcon,
   PlusIcon,
   PencilIcon,
-  EyeIcon,
   CheckCircleIcon,
   XCircleIcon,
   CurrencyDollarIcon,
@@ -146,13 +145,8 @@ export default function EducateScholarshipsPage() {
                       href={`/organization/scholarships/${scholarship.id}`}
                       className="font-semibold text-slate-200 hover:text-accent transition-colors truncate"
                     >
-                      {scholarship.name}
+                      {scholarship.title}
                     </Link>
-                    {scholarship.featured && (
-                      <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-amber-900/30 text-amber-400">
-                        Featured
-                      </span>
-                    )}
                   </div>
                   {scholarship.amount && (
                     <p className="text-sm text-accent font-medium flex items-center gap-1">
@@ -166,16 +160,14 @@ export default function EducateScholarshipsPage() {
                     {scholarship.description}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <EyeIcon className="w-3.5 h-3.5" />
-                      {scholarship.viewsCount || 0} views
-                    </span>
                     {scholarship.deadline && (
                       <span className="flex items-center gap-1">
                         <ClockIcon className="w-3.5 h-3.5" />
                         Deadline: {format(
                           scholarship.deadline instanceof Date
                             ? scholarship.deadline
+                            : typeof scholarship.deadline === 'string'
+                            ? new Date(scholarship.deadline)
                             : scholarship.deadline.toDate(),
                           'MMM d, yyyy'
                         )}

@@ -17,6 +17,18 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { format, isPast, isFuture } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper to parse date fields that can be Timestamp | string | null
+function parseDate(date: Timestamp | string | null | undefined): Date | null {
+  if (!date) return null;
+  if (date instanceof Date) return date;
+  if (typeof date === 'string') return new Date(date);
+  if (date && typeof (date as Timestamp).toDate === 'function') {
+    return (date as Timestamp).toDate();
+  }
+  return null;
+}
 
 export default function HostConferencesPage() {
   const { user } = useAuth();
@@ -42,9 +54,7 @@ export default function HostConferencesPage() {
   }, [user]);
 
   const filteredConferences = conferences.filter(conference => {
-    const startDate = conference.startDate instanceof Date
-      ? conference.startDate
-      : conference.startDate?.toDate();
+    const startDate = parseDate(conference.startDate);
 
     if (!startDate) return filter === 'all';
     if (filter === 'upcoming') return isFuture(startDate);
@@ -53,12 +63,12 @@ export default function HostConferencesPage() {
   });
 
   const upcomingCount = conferences.filter(c => {
-    const startDate = c.startDate instanceof Date ? c.startDate : c.startDate?.toDate();
+    const startDate = parseDate(c.startDate);
     return startDate && isFuture(startDate);
   }).length;
 
   const pastCount = conferences.filter(c => {
-    const startDate = c.startDate instanceof Date ? c.startDate : c.startDate?.toDate();
+    const startDate = parseDate(c.startDate);
     return startDate && isPast(startDate);
   }).length;
 
@@ -148,9 +158,7 @@ export default function HostConferencesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredConferences.map(conference => {
-            const startDate = conference.startDate instanceof Date
-              ? conference.startDate
-              : conference.startDate?.toDate();
+            const startDate = parseDate(conference.startDate);
             const isUpcoming = startDate && isFuture(startDate);
 
             return (
@@ -160,9 +168,9 @@ export default function HostConferencesPage() {
               >
                 {/* Image */}
                 <div className="aspect-video bg-slate-900 relative">
-                  {conference.bannerUrl ? (
+                  {(conference.bannerImageUrl || conference.imageUrl) ? (
                     <img
-                      src={conference.bannerUrl}
+                      src={conference.bannerImageUrl || conference.imageUrl}
                       alt={conference.title}
                       className="w-full h-full object-cover"
                     />

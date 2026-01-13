@@ -4,14 +4,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { listSchoolInquiries, getSchoolByEmployerId } from '@/lib/firestore';
-import type { SchoolInquiry } from '@/lib/types';
+import type { StudentInquiry as BaseStudentInquiry } from '@/lib/types';
 
-// Map SchoolInquiry to StudentInquiry shape for component
-type StudentInquiry = SchoolInquiry & {
-  type: 'program' | 'scholarship' | 'general';
-  studentName?: string;
-  studentEmail?: string;
+// Extended type for display purposes
+type DisplayInquiry = BaseStudentInquiry & {
+  displayType: 'program' | 'scholarship' | 'general';
+  displayName?: string;
+  displayEmail?: string;
   relatedEntityTitle?: string;
+  isRead: boolean;
 };
 import {
   ChatBubbleLeftRightIcon,
@@ -24,7 +25,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 export default function EducateInquiriesPage() {
   const { user } = useAuth();
-  const [inquiries, setInquiries] = useState<StudentInquiry[]>([]);
+  const [inquiries, setInquiries] = useState<DisplayInquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'programs' | 'scholarships' | 'general'>('all');
 
@@ -37,13 +38,14 @@ export default function EducateInquiriesPage() {
         const school = await getSchoolByEmployerId(user.uid);
         if (school) {
           const rawInquiries = await listSchoolInquiries(school.id);
-          // Map to StudentInquiry shape
-          const mappedInquiries: StudentInquiry[] = rawInquiries.map(inq => ({
+          // Map to DisplayInquiry shape
+          const mappedInquiries: DisplayInquiry[] = rawInquiries.map(inq => ({
             ...inq,
-            type: (inq.inquiryType as 'program' | 'scholarship' | 'general') || 'general',
-            studentName: inq.senderName,
-            studentEmail: inq.senderEmail,
-            relatedEntityTitle: inq.programName || inq.scholarshipName,
+            displayType: inq.programId ? 'program' : 'general',
+            displayName: inq.studentName || inq.memberName,
+            displayEmail: inq.studentEmail || inq.memberEmail,
+            relatedEntityTitle: inq.subject,
+            isRead: inq.status !== 'new',
           }));
           setInquiries(mappedInquiries);
         }
@@ -58,15 +60,15 @@ export default function EducateInquiriesPage() {
   }, [user]);
 
   const filteredInquiries = inquiries.filter(inquiry => {
-    if (filter === 'programs') return inquiry.type === 'program';
-    if (filter === 'scholarships') return inquiry.type === 'scholarship';
-    if (filter === 'general') return inquiry.type === 'general';
+    if (filter === 'programs') return inquiry.displayType === 'program';
+    if (filter === 'scholarships') return inquiry.displayType === 'scholarship';
+    if (filter === 'general') return inquiry.displayType === 'general';
     return true;
   });
 
-  const programCount = inquiries.filter(i => i.type === 'program').length;
-  const scholarshipCount = inquiries.filter(i => i.type === 'scholarship').length;
-  const generalCount = inquiries.filter(i => i.type === 'general').length;
+  const programCount = inquiries.filter(i => i.displayType === 'program').length;
+  const scholarshipCount = inquiries.filter(i => i.displayType === 'scholarship').length;
+  const generalCount = inquiries.filter(i => i.displayType === 'general').length;
   const unreadCount = inquiries.filter(i => !i.isRead).length;
 
   if (loading) {
@@ -171,7 +173,7 @@ export default function EducateInquiriesPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-slate-200">
-                        {inquiry.studentName || 'Anonymous Student'}
+                        {inquiry.displayName || 'Anonymous Student'}
                       </p>
                       {!inquiry.isRead && (
                         <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-accent/20 text-accent">
@@ -189,20 +191,20 @@ export default function EducateInquiriesPage() {
                     </p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                       <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${
-                        inquiry.type === 'program'
+                        inquiry.displayType === 'program'
                           ? 'bg-blue-900/30 text-blue-400'
-                          : inquiry.type === 'scholarship'
+                          : inquiry.displayType === 'scholarship'
                           ? 'bg-purple-900/30 text-purple-400'
                           : 'bg-slate-800 text-slate-400'
                       }`}>
-                        {inquiry.type === 'program' && <BookOpenIcon className="w-3 h-3" />}
-                        {inquiry.type === 'scholarship' && <AcademicCapIcon className="w-3 h-3" />}
-                        {inquiry.type.charAt(0).toUpperCase() + inquiry.type.slice(1)}
+                        {inquiry.displayType === 'program' && <BookOpenIcon className="w-3 h-3" />}
+                        {inquiry.displayType === 'scholarship' && <AcademicCapIcon className="w-3 h-3" />}
+                        {inquiry.displayType.charAt(0).toUpperCase() + inquiry.displayType.slice(1)}
                       </span>
-                      {inquiry.studentEmail && (
+                      {inquiry.displayEmail && (
                         <span className="flex items-center gap-1">
                           <EnvelopeIcon className="w-3.5 h-3.5" />
-                          {inquiry.studentEmail}
+                          {inquiry.displayEmail}
                         </span>
                       )}
                       <span>

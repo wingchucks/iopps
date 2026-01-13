@@ -21,6 +21,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!auth) {
+      router.push('/login?redirect=/organization/dashboard');
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         router.push('/login?redirect=/organization/dashboard');

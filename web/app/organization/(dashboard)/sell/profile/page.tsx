@@ -74,12 +74,14 @@ export default function SellProfilePage() {
     );
   }
 
+  const isActive = vendor.status === 'active';
+
   const completionItems = [
     { label: 'Business name', done: !!vendor.businessName },
     { label: 'Logo', done: !!vendor.logoUrl },
-    { label: 'Banner image', done: !!vendor.bannerUrl },
+    { label: 'Cover image', done: !!vendor.coverImageUrl },
     { label: 'Description', done: !!vendor.description },
-    { label: 'Location', done: !!vendor.city || !!vendor.province },
+    { label: 'Location', done: !!vendor.location || !!vendor.region },
     { label: 'Website', done: !!vendor.website },
   ];
 
@@ -119,7 +121,7 @@ export default function SellProfilePage() {
       </div>
 
       {/* Status Banner */}
-      {!vendor.active && (
+      {!isActive && (
         <div className="bg-amber-900/20 border border-amber-800/30 rounded-xl p-4 flex items-start gap-3">
           <ExclamationTriangleIcon className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
@@ -140,9 +142,9 @@ export default function SellProfilePage() {
         <div className="lg:col-span-2 bg-card border border-card-border rounded-2xl overflow-hidden">
           {/* Banner */}
           <div className="aspect-[3/1] bg-slate-900 relative">
-            {vendor.bannerUrl ? (
+            {vendor.coverImageUrl ? (
               <img
-                src={vendor.bannerUrl}
+                src={vendor.coverImageUrl}
                 alt="Banner"
                 className="w-full h-full object-cover"
               />
@@ -175,7 +177,7 @@ export default function SellProfilePage() {
                 <h2 className="text-xl font-bold text-slate-50">
                   {vendor.businessName}
                 </h2>
-                {vendor.active && (
+                {isActive && (
                   <span className="px-2 py-0.5 text-xs font-medium rounded bg-green-900/30 text-green-400">
                     Active
                   </span>
@@ -186,9 +188,9 @@ export default function SellProfilePage() {
                 <p className="text-slate-400 mt-1">{vendor.tagline}</p>
               )}
 
-              {(vendor.city || vendor.province) && (
+              {(vendor.location || vendor.region) && (
                 <p className="text-sm text-slate-500 mt-2">
-                  {[vendor.city, vendor.province].filter(Boolean).join(', ')}
+                  {[vendor.location, vendor.region].filter(Boolean).join(', ')}
                 </p>
               )}
 

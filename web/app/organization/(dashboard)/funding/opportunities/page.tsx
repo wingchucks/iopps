@@ -16,6 +16,18 @@ import {
   CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import { format, isPast, isFuture } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper to parse deadline to Date
+function parseDeadline(deadline: Timestamp | Date | string | null | undefined): Date | null {
+  if (!deadline) return null;
+  if (deadline instanceof Date) return deadline;
+  if (typeof deadline === 'string') return new Date(deadline);
+  if (deadline && typeof (deadline as Timestamp).toDate === 'function') {
+    return (deadline as Timestamp).toDate();
+  }
+  return null;
+}
 
 export default function FundingOpportunitiesPage() {
   const { user } = useAuth();
@@ -41,23 +53,22 @@ export default function FundingOpportunitiesPage() {
   }, [user]);
 
   const filteredGrants = grants.filter(grant => {
-    const deadline = grant.deadline instanceof Date
-      ? grant.deadline
-      : grant.deadline?.toDate();
+    const deadline = parseDeadline(grant.deadline);
+    const isActive = grant.status === 'active' && (!deadline || isFuture(deadline));
 
-    if (filter === 'active') return grant.active && (!deadline || isFuture(deadline));
-    if (filter === 'closed') return !grant.active || (deadline && isPast(deadline));
+    if (filter === 'active') return isActive;
+    if (filter === 'closed') return !isActive;
     return true;
   });
 
   const activeCount = grants.filter(g => {
-    const deadline = g.deadline instanceof Date ? g.deadline : g.deadline?.toDate();
-    return g.active && (!deadline || isFuture(deadline));
+    const deadline = parseDeadline(g.deadline);
+    return g.status === 'active' && (!deadline || isFuture(deadline));
   }).length;
 
   const closedCount = grants.filter(g => {
-    const deadline = g.deadline instanceof Date ? g.deadline : g.deadline?.toDate();
-    return !g.active || (deadline && isPast(deadline));
+    const deadline = parseDeadline(g.deadline);
+    return g.status !== 'active' || (deadline && isPast(deadline));
   }).length;
 
   if (loading) {
@@ -153,10 +164,13 @@ export default function FundingOpportunitiesPage() {
       ) : (
         <div className="space-y-3">
           {filteredGrants.map(grant => {
-            const deadline = grant.deadline instanceof Date
-              ? grant.deadline
-              : grant.deadline?.toDate();
-            const isActive = grant.active && (!deadline || isFuture(deadline));
+            const deadline = parseDeadline(grant.deadline);
+            const isActive = grant.status === 'active' && (!deadline || isFuture(deadline));
+
+            // Format the amount display
+            const amountDisplay = grant.amount?.display
+              || (grant.amount?.max ? `Up to $${grant.amount.max.toLocaleString()}` : null)
+              || (grant.amount?.min ? `From $${grant.amount.min.toLocaleString()}` : null);
 
             return (
               <div
@@ -179,17 +193,15 @@ export default function FundingOpportunitiesPage() {
                       )}
                     </div>
 
-                    {grant.fundingAmount && (
+                    {amountDisplay && (
                       <p className="text-sm text-pink-400 font-medium flex items-center gap-1">
                         <CurrencyDollarIcon className="w-4 h-4" />
-                        {typeof grant.fundingAmount === 'number'
-                          ? `Up to $${grant.fundingAmount.toLocaleString()}`
-                          : grant.fundingAmount}
+                        {amountDisplay}
                       </p>
                     )}
 
                     <p className="text-sm text-slate-500">
-                      {grant.fundingType || 'Grant'} • {grant.organization || 'Various'}
+                      {grant.grantType || 'Grant'} &bull; {grant.provider || 'Various'}
                     </p>
 
                     <p className="text-sm text-slate-500 line-clamp-1 mt-1">
@@ -199,7 +211,7 @@ export default function FundingOpportunitiesPage() {
                     <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
                         <EyeIcon className="w-3.5 h-3.5" />
-                        {grant.viewsCount || 0} views
+                        {grant.viewCount || 0} views
                       </span>
                       {deadline && (
                         <span className="flex items-center gap-1">

@@ -163,11 +163,11 @@ export default function TeamPage() {
   }, [user]);
 
   const handleInvite = async () => {
-    if (!profile || !inviteEmail.trim()) return;
+    if (!profile || !inviteEmail.trim() || !user) return;
 
     setInviting(true);
     try {
-      await createInvitation(profile.id, profile.organizationName, inviteEmail.trim(), inviteRole);
+      await createInvitation(profile.id, profile.organizationName, inviteEmail.trim(), inviteRole, user.uid);
 
       // Reload invitations
       const updatedInvitations = await getInvitationsForEmployer(profile.id);

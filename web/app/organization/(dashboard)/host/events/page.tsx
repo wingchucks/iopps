@@ -4,21 +4,32 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { listEmployerPowwows } from '@/lib/firestore';
-import type { PowWow } from '@/lib/types';
+import type { PowwowEvent } from '@/lib/types';
 import {
   SparklesIcon,
   PlusIcon,
   PencilIcon,
-  EyeIcon,
   CalendarDaysIcon,
   MapPinIcon,
   MusicalNoteIcon,
 } from '@heroicons/react/24/outline';
 import { format, isPast, isFuture } from 'date-fns';
+import { Timestamp } from 'firebase/firestore';
+
+// Helper to parse date fields that can be Timestamp | string | null
+function parseDate(date: Timestamp | string | null | undefined): Date | null {
+  if (!date) return null;
+  if (date instanceof Date) return date;
+  if (typeof date === 'string') return new Date(date);
+  if (date && typeof (date as Timestamp).toDate === 'function') {
+    return (date as Timestamp).toDate();
+  }
+  return null;
+}
 
 export default function HostEventsPage() {
   const { user } = useAuth();
-  const [events, setEvents] = useState<PowWow[]>([]);
+  const [events, setEvents] = useState<PowwowEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
@@ -40,9 +51,7 @@ export default function HostEventsPage() {
   }, [user]);
 
   const filteredEvents = events.filter(event => {
-    const startDate = event.startDate instanceof Date
-      ? event.startDate
-      : event.startDate?.toDate();
+    const startDate = parseDate(event.startDate);
 
     if (!startDate) return filter === 'all';
     if (filter === 'upcoming') return isFuture(startDate);
@@ -51,12 +60,12 @@ export default function HostEventsPage() {
   });
 
   const upcomingCount = events.filter(e => {
-    const startDate = e.startDate instanceof Date ? e.startDate : e.startDate?.toDate();
+    const startDate = parseDate(e.startDate);
     return startDate && isFuture(startDate);
   }).length;
 
   const pastCount = events.filter(e => {
-    const startDate = e.startDate instanceof Date ? e.startDate : e.startDate?.toDate();
+    const startDate = parseDate(e.startDate);
     return startDate && isPast(startDate);
   }).length;
 
@@ -146,10 +155,9 @@ export default function HostEventsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredEvents.map(event => {
-            const startDate = event.startDate instanceof Date
-              ? event.startDate
-              : event.startDate?.toDate();
+            const startDate = parseDate(event.startDate);
             const isUpcoming = startDate && isFuture(startDate);
+            const isPowWow = event.eventType === 'Pow Wow';
 
             return (
               <div
@@ -161,7 +169,7 @@ export default function HostEventsPage() {
                   {event.imageUrl ? (
                     <img
                       src={event.imageUrl}
-                      alt={event.title}
+                      alt={event.name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -172,11 +180,11 @@ export default function HostEventsPage() {
 
                   {/* Type Badge */}
                   <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-medium rounded ${
-                    event.type === 'pow_wow'
+                    isPowWow
                       ? 'bg-purple-900/80 text-purple-300'
                       : 'bg-slate-800/80 text-slate-300'
                   }`}>
-                    {event.type === 'pow_wow' ? 'Pow Wow' : 'Event'}
+                    {isPowWow ? 'Pow Wow' : (event.eventType || 'Event')}
                   </span>
 
                   {/* Status Badge */}
@@ -196,7 +204,7 @@ export default function HostEventsPage() {
                       href={`/organization/events/${event.id}`}
                       className="font-semibold text-slate-200 hover:text-accent transition-colors line-clamp-1"
                     >
-                      {event.title}
+                      {event.name}
                     </Link>
                     {event.featured && (
                       <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-amber-900/30 text-amber-400 flex-shrink-0">
@@ -220,11 +228,7 @@ export default function HostEventsPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <EyeIcon className="w-3.5 h-3.5" />
-                      {event.viewsCount || 0} views
-                    </span>
+                  <div className="flex items-center justify-end text-xs text-slate-500">
                     <Link
                       href={`/organization/events/${event.id}/edit`}
                       className="flex items-center gap-1 text-accent hover:underline"

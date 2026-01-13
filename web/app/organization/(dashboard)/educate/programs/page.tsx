@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { listSchoolPrograms } from '@/lib/firestore';
-import type { Program } from '@/lib/types';
+import type { EducationProgram } from '@/lib/types';
 import {
   BookOpenIcon,
   PlusIcon,
@@ -15,9 +15,16 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline';
 
+// Helper to format duration
+function formatDuration(duration?: { value: number; unit: string }): string {
+  if (!duration) return 'Duration varies';
+  const plural = duration.value !== 1 ? 's' : '';
+  return `${duration.value} ${duration.unit}${plural}`;
+}
+
 export default function EducateProgramsPage() {
   const { user } = useAuth();
-  const [programs, setPrograms] = useState<Program[]>([]);
+  const [programs, setPrograms] = useState<EducationProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -39,13 +46,13 @@ export default function EducateProgramsPage() {
   }, [user]);
 
   const filteredPrograms = programs.filter(program => {
-    if (filter === 'active') return program.active;
-    if (filter === 'inactive') return !program.active;
+    if (filter === 'active') return program.isPublished;
+    if (filter === 'inactive') return !program.isPublished;
     return true;
   });
 
-  const activeCount = programs.filter(p => p.active).length;
-  const inactiveCount = programs.filter(p => !p.active).length;
+  const activeCount = programs.filter(p => p.isPublished).length;
+  const inactiveCount = programs.filter(p => !p.isPublished).length;
 
   if (loading) {
     return (
@@ -153,7 +160,7 @@ export default function EducateProgramsPage() {
                     )}
                   </div>
                   <p className="text-sm text-slate-500">
-                    {program.type} • {program.duration || 'Duration varies'}
+                    {program.level} • {formatDuration(program.duration)}
                   </p>
                   <p className="text-sm text-slate-500 line-clamp-1 mt-1">
                     {program.description}
@@ -161,27 +168,27 @@ export default function EducateProgramsPage() {
                   <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <EyeIcon className="w-3.5 h-3.5" />
-                      {program.viewsCount || 0} views
+                      {program.viewsCount || program.viewCount || 0} views
                     </span>
-                    {program.applicationDeadline && (
+                    {program.intakeDates?.[0]?.applicationDeadline && (
                       <span className="flex items-center gap-1">
                         <ClockIcon className="w-3.5 h-3.5" />
-                        Deadline: {new Date(program.applicationDeadline).toLocaleDateString()}
+                        Deadline: {new Date(String(program.intakeDates[0].applicationDeadline)).toLocaleDateString()}
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {program.active ? (
+                  {program.isPublished ? (
                     <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-900/30 text-green-400">
                       <CheckCircleIcon className="w-3.5 h-3.5" />
-                      Active
+                      Published
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-slate-800 text-slate-400">
                       <XCircleIcon className="w-3.5 h-3.5" />
-                      Inactive
+                      Draft
                     </span>
                   )}
 

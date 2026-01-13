@@ -74,11 +74,14 @@ export default function EducateProfilePage() {
     );
   }
 
+  const schoolCity = school.headOffice?.city || school.location?.city;
+  const schoolProvince = school.headOffice?.province || school.location?.province;
+
   const completionItems = [
     { label: 'School name', done: !!school.name },
     { label: 'Logo', done: !!school.logoUrl },
     { label: 'Description', done: !!school.description },
-    { label: 'Location', done: !!school.city || !!school.province },
+    { label: 'Location', done: !!schoolCity || !!schoolProvince },
     { label: 'Website', done: !!school.website },
   ];
 
@@ -156,7 +159,7 @@ export default function EducateProfilePage() {
                 <h2 className="text-xl font-bold text-slate-50">
                   {school.name}
                 </h2>
-                {school.verified && (
+                {school.isVerified && (
                   <CheckCircleIcon className="w-5 h-5 text-accent" />
                 )}
               </div>
@@ -165,10 +168,10 @@ export default function EducateProfilePage() {
                 <p className="text-slate-400 mt-1 capitalize">{school.type}</p>
               )}
 
-              {(school.city || school.province) && (
+              {(schoolCity || schoolProvince) && (
                 <p className="text-sm text-slate-500 mt-2 flex items-center gap-1">
                   <MapPinIcon className="w-4 h-4" />
-                  {[school.city, school.province].filter(Boolean).join(', ')}
+                  {[schoolCity, schoolProvince].filter(Boolean).join(', ')}
                 </p>
               )}
 
