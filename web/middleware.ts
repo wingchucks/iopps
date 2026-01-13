@@ -31,7 +31,6 @@ const MODE_REDIRECTS: Record<string, string> = {
 const PAGE_REDIRECTS: Record<string, string> = {
   '/organization/subscription': '/organization/billing',
   '/organization/shop/dashboard': '/organization/sell/profile',
-  '/organization/dashboard': '/organization', // Base dashboard redirect
 };
 
 export async function middleware(request: NextRequest) {
@@ -55,9 +54,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl, { status: 301 });
     }
 
-    // Default: redirect to new home dashboard
-    const redirectUrl = new URL('/organization', request.url);
-    return NextResponse.redirect(redirectUrl, { status: 301 });
+    // No tab/mode specified - continue to the dashboard page
+    return NextResponse.next();
   }
 
   // Handle standalone page redirects
