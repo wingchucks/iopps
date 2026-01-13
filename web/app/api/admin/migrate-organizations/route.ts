@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { verifyIdToken, getCustomClaims } from "@/lib/firebase/admin";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  query,
-  where,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db as adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { generateSlug, generateUniqueSlug } from "@/lib/firestore/organizations";
 import { upsertDirectoryEntry } from "@/lib/firestore/directory";
 import type {
@@ -36,17 +25,19 @@ export async function POST(request: Request) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await verifyIdToken(token);
-    if (!decodedToken) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    if (!auth) {
+      return NextResponse.json({ error: "Auth not initialized" }, { status: 500 });
     }
 
-    const claims = await getCustomClaims(decodedToken.uid);
-    if (claims?.role !== "admin") {
+    const decodedToken = await auth.verifyIdToken(token);
+    const userRecord = await auth.getUser(decodedToken.uid);
+    const role = userRecord.customClaims?.role;
+
+    if (role !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json({ error: "Database not available" }, { status: 500 });
     }
 
@@ -58,7 +49,7 @@ export async function POST(request: Request) {
     };
 
     // --- MIGRATE EMPLOYERS ---
-    const employersSnap = await getDocs(collection(db, "employers"));
+    const employersSnap = await adminDb.collection("employers").get();
 
     for (const docSnap of employersSnap.docs) {
       results.employers.processed++;
@@ -74,9 +65,10 @@ export async function POST(request: Request) {
 
         // Generate slug
         let slug = generateSlug(data.organizationName || "organization");
-        const existingWithSlug = await getDocs(
-          query(collection(db, "employers"), where("slug", "==", slug))
-        );
+        const existingWithSlug = await adminDb
+          .collection("employers")
+          .where("slug", "==", slug)
+          .get();
         if (!existingWithSlug.empty && existingWithSlug.docs[0].id !== employerId) {
           slug = generateUniqueSlug(data.organizationName || "organization");
         }
@@ -120,8 +112,8 @@ export async function POST(request: Request) {
         const enabledModules: OrganizationModule[] = data.enabledModules || [];
 
         // Update the employer document
-        const ref = doc(db, "employers", employerId);
-        await updateDoc(ref, {
+        const ref = adminDb.collection("employers").doc(employerId);
+        await ref.update({
           slug,
           orgType,
           province,
@@ -129,16 +121,16 @@ export async function POST(request: Request) {
           links,
           publicationStatus,
           directoryVisible,
-          publishedAt: publicationStatus === "PUBLISHED" ? serverTimestamp() : null,
-          updatedAt: serverTimestamp(),
+          publishedAt: publicationStatus === "PUBLISHED" ? FieldValue.serverTimestamp() : null,
+          updatedAt: FieldValue.serverTimestamp(),
         });
 
         results.employers.migrated++;
 
         // Index in directory if published
         if (publicationStatus === "PUBLISHED") {
-          const updatedDoc = await getDoc(ref);
-          if (updatedDoc.exists()) {
+          const updatedDoc = await ref.get();
+          if (updatedDoc.exists) {
             const updatedProfile = {
               id: updatedDoc.id,
               ...updatedDoc.data(),
@@ -155,7 +147,7 @@ export async function POST(request: Request) {
     }
 
     // --- LINK VENDORS TO EMPLOYERS ---
-    const vendorsSnap = await getDocs(collection(db, "vendors"));
+    const vendorsSnap = await adminDb.collection("vendors").get();
 
     for (const docSnap of vendorsSnap.docs) {
       results.vendors.processed++;
@@ -163,11 +155,10 @@ export async function POST(request: Request) {
 
       try {
         // Find the employer with this userId
-        const employerQuery = query(
-          collection(db, "employers"),
-          where("userId", "==", vendor.userId)
-        );
-        const employerSnap = await getDocs(employerQuery);
+        const employerSnap = await adminDb
+          .collection("employers")
+          .where("userId", "==", vendor.userId)
+          .get();
 
         if (!employerSnap.empty) {
           const employerDoc = employerSnap.docs[0];
@@ -179,7 +170,7 @@ export async function POST(request: Request) {
             enabledModules.push("sell");
           }
 
-          await updateDoc(doc(db, "employers", employerDoc.id), {
+          await adminDb.collection("employers").doc(employerDoc.id).update({
             enabledModules,
             moduleSettings: {
               ...(employerData.moduleSettings || {}),
@@ -193,7 +184,7 @@ export async function POST(request: Request) {
             ...(vendor.status === "active" && !employerData.orgType
               ? { orgType: "INDIGENOUS_BUSINESS" }
               : {}),
-            updatedAt: serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           });
 
           results.vendors.linked++;
@@ -206,7 +197,7 @@ export async function POST(request: Request) {
     }
 
     // --- LINK SCHOOLS TO EMPLOYERS ---
-    const schoolsSnap = await getDocs(collection(db, "schools"));
+    const schoolsSnap = await adminDb.collection("schools").get();
 
     for (const docSnap of schoolsSnap.docs) {
       results.schools.processed++;
@@ -214,11 +205,11 @@ export async function POST(request: Request) {
 
       try {
         // Find the employer with this ID
-        const employerRef = doc(db, "employers", school.employerId);
-        const employerSnap = await getDoc(employerRef);
+        const employerRef = adminDb.collection("employers").doc(school.employerId);
+        const employerSnap = await employerRef.get();
 
-        if (employerSnap.exists()) {
-          const employerData = employerSnap.data();
+        if (employerSnap.exists) {
+          const employerData = employerSnap.data()!;
 
           // Update employer with educate module and schoolId
           const enabledModules = employerData.enabledModules || [];
@@ -226,7 +217,7 @@ export async function POST(request: Request) {
             enabledModules.push("educate");
           }
 
-          await updateDoc(employerRef, {
+          await employerRef.update({
             enabledModules,
             moduleSettings: {
               ...(employerData.moduleSettings || {}),
@@ -240,7 +231,7 @@ export async function POST(request: Request) {
             ...(employerData.orgType !== "SCHOOL" && !employerData.orgType
               ? { orgType: "SCHOOL" }
               : {}),
-            updatedAt: serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           });
 
           results.schools.linked++;
@@ -277,22 +268,24 @@ export async function GET(request: Request) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await verifyIdToken(token);
-    if (!decodedToken) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    if (!auth) {
+      return NextResponse.json({ error: "Auth not initialized" }, { status: 500 });
     }
 
-    const claims = await getCustomClaims(decodedToken.uid);
-    if (claims?.role !== "admin") {
+    const decodedToken = await auth.verifyIdToken(token);
+    const userRecord = await auth.getUser(decodedToken.uid);
+    const role = userRecord.customClaims?.role;
+
+    if (role !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    if (!db) {
+    if (!adminDb) {
       return NextResponse.json({ error: "Database not available" }, { status: 500 });
     }
 
     // Count employers with and without slug
-    const employersSnap = await getDocs(collection(db, "employers"));
+    const employersSnap = await adminDb.collection("employers").get();
     let migratedCount = 0;
     let notMigratedCount = 0;
 
@@ -306,7 +299,7 @@ export async function GET(request: Request) {
     });
 
     // Count directory entries
-    const directorySnap = await getDocs(collection(db, "directory_index"));
+    const directorySnap = await adminDb.collection("directory_index").get();
 
     return NextResponse.json({
       employers: {
