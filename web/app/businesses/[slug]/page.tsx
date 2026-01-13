@@ -35,6 +35,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function OrganizationProfilePage({ params }: Props) {
   const { slug } = await params;
 
+  // Handle invalid slugs
+  if (!slug || slug === 'undefined' || slug === 'null') {
+    notFound();
+  }
+
   // Try to get published profile first
   let org = await getPublicOrganizationBySlug(slug);
 
