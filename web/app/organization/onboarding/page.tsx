@@ -159,13 +159,13 @@ export default function OnboardingPage() {
           enabledModules: profile.enabledModules || [],
         });
 
-        // If already published and has a slug, skip to success
+        // Always start at step 3 to ensure re-publish generates slug
+        // User can click publish to get a fresh slug
         const profileSlug = (profile as OrganizationProfile).slug;
-        if ((profile as OrganizationProfile).publicationStatus === 'PUBLISHED' && profileSlug) {
+        if (profileSlug) {
           setPublishedSlug(profileSlug);
-          setStep(4);
         }
-        // If published but missing slug, stay on step 3 so user can re-publish to generate slug
+        // Don't auto-skip to step 4 - let user go through publish flow
       }
     }
     checkExistingProfile();
