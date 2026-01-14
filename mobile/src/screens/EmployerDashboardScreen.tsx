@@ -15,6 +15,7 @@ import {
   getEmployerStats,
   getEmployerJobs,
   getEmployerApplications,
+  getEmployerProfile,
   formatTimestamp,
 } from "../lib/firestore";
 import type { JobPosting, JobApplication } from "../types";
@@ -22,11 +23,18 @@ import { logger } from "../lib/logger";
 
 const WEB_DASHBOARD_URL = "https://iopps.ca/organization/dashboard";
 
+interface EmployerProfile {
+  id: string;
+  status?: "pending" | "approved" | "rejected";
+  organizationName?: string;
+}
+
 export default function EmployerDashboardScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
   const [stats, setStats] = useState({
     totalJobs: 0,
     activeJobs: 0,
@@ -40,6 +48,11 @@ export default function EmployerDashboardScreen() {
   const loadData = async () => {
     if (!user) return;
     try {
+      // First fetch employer profile to check status
+      const profile = await getEmployerProfile(user.uid);
+      setEmployerProfile(profile);
+
+      // Only fetch stats/data if not pending (to avoid unnecessary API calls)
       const [statsData, jobs, applications] = await Promise.all([
         getEmployerStats(user.uid),
         getEmployerJobs(user.uid),
@@ -93,6 +106,9 @@ export default function EmployerDashboardScreen() {
     );
   }
 
+  // Check if employer account is pending approval
+  const isPending = employerProfile?.status === "pending";
+
   return (
     <ScrollView
       style={styles.container}
@@ -105,11 +121,26 @@ export default function EmployerDashboardScreen() {
         />
       }
     >
+      {/* Pending Approval Banner */}
+      {isPending && (
+        <View style={styles.pendingBanner}>
+          <Text style={styles.pendingIcon}>⏳</Text>
+          <View style={styles.pendingContent}>
+            <Text style={styles.pendingTitle}>Account Pending Approval</Text>
+            <Text style={styles.pendingText}>
+              Your employer account is being reviewed. You'll receive an email once approved. In the meantime, you can complete your organization profile on the web.
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Employer Dashboard</Text>
         <Text style={styles.subtitle}>
-          Manage your opportunities and track applications
+          {isPending
+            ? "Complete your profile while waiting for approval"
+            : "Manage your opportunities and track applications"}
         </Text>
       </View>
 
@@ -335,6 +366,35 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: "#94A3B8",
+  },
+  pendingBanner: {
+    flexDirection: "row",
+    backgroundColor: "#F59E0B20",
+    borderWidth: 1,
+    borderColor: "#F59E0B40",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  pendingIcon: {
+    fontSize: 24,
+    marginRight: 12,
+    marginTop: 2,
+  },
+  pendingContent: {
+    flex: 1,
+  },
+  pendingTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#F59E0B",
+    marginBottom: 4,
+  },
+  pendingText: {
+    fontSize: 13,
+    color: "#FCD34D",
+    lineHeight: 18,
   },
   statsGrid: {
     flexDirection: "row",
