@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import {
   User,
   onAuthStateChanged,
@@ -8,9 +8,8 @@ import {
   GoogleAuthProvider,
   signInWithCredential,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { auth, db } from "../lib/firebase";
+import { auth } from "../lib/firebase";
 import {
   registerForPushNotificationsAsync,
   savePushToken,
@@ -18,6 +17,14 @@ import {
 } from "../lib/notifications";
 import { authLogger } from "../lib/logger";
 import * as WebBrowser from "expo-web-browser";
+import {
+  AccountState,
+  resolveAccountState,
+  canAccessEmployerDashboard,
+  isEmployerPending,
+  isEmployerApproved,
+} from "../services/accountState";
+import type { EmployerProfile, UserProfile } from "../types";
 
 // Required for web browser auth sessions to complete properly
 WebBrowser.maybeCompleteAuthSession();
@@ -27,11 +34,21 @@ interface AuthContextType {
   role: string | null;
   loading: boolean;
   expoPushToken: string | null;
+  // New account state fields
+  accountState: AccountState;
+  userProfile: UserProfile | null;
+  employerProfile: EmployerProfile | null;
+  // Helper functions
+  canAccessEmployerDashboard: boolean;
+  isEmployerPending: boolean;
+  isEmployerApproved: boolean;
+  // Actions
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: (idToken: string) => Promise<void>;
   signOut: () => Promise<void>;
   registerPushNotifications: () => Promise<boolean>;
+  refreshAccountState: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,11 +56,20 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   loading: true,
   expoPushToken: null,
+  // New defaults
+  accountState: AccountState.COMMUNITY,
+  userProfile: null,
+  employerProfile: null,
+  canAccessEmployerDashboard: false,
+  isEmployerPending: false,
+  isEmployerApproved: false,
+  // Actions
   signIn: async () => {},
   signUp: async () => {},
   signInWithGoogle: async () => {},
   signOut: async () => {},
   registerPushNotifications: async () => false,
+  refreshAccountState: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -51,6 +77,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+
+  // New account state fields
+  const [accountState, setAccountState] = useState<AccountState>(AccountState.COMMUNITY);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
+
   const previousUserId = useRef<string | null>(null);
 
   // Register push notifications for a user
@@ -71,6 +103,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Fetch and resolve account state
+  const fetchAccountState = useCallback(async (uid: string) => {
+    try {
+      const result = await resolveAccountState(uid);
+      setAccountState(result.state);
+      setUserProfile(result.userProfile);
+      setEmployerProfile(result.employerProfile);
+      setRole(result.role);
+      authLogger.debug(`[AuthContext] Account state resolved: ${result.state}, role: ${result.role}`);
+    } catch (error) {
+      authLogger.error("Error resolving account state", error);
+      setAccountState(AccountState.COMMUNITY);
+      setRole("user");
+    }
+  }, []);
+
+  // Allow manual refresh of account state (e.g., after employer approval)
+  const refreshAccountState = useCallback(async () => {
+    if (user) {
+      await fetchAccountState(user.uid);
+    }
+  }, [user, fetchAccountState]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       // Handle sign out - remove push token for previous user
@@ -89,18 +144,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Store user ID for later cleanup
         previousUserId.current = firebaseUser.uid;
 
-        // Fetch user role from Firestore
-        try {
-          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (userDoc.exists()) {
-            setRole(userDoc.data().role || "user");
-          } else {
-            setRole("user");
-          }
-        } catch (error) {
-          authLogger.error("Error fetching user role", error);
-          setRole("user");
-        }
+        // Fetch complete account state (includes role, employer profile, etc.)
+        await fetchAccountState(firebaseUser.uid);
 
         // Register for push notifications automatically
         try {
@@ -113,7 +158,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           authLogger.error("Error registering push notifications", error);
         }
       } else {
+        // Reset all state on sign out
         setRole(null);
+        setAccountState(AccountState.COMMUNITY);
+        setUserProfile(null);
+        setEmployerProfile(null);
         previousUserId.current = null;
       }
 
@@ -121,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [fetchAccountState]);
 
   const signIn = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
@@ -162,11 +211,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
         loading,
         expoPushToken,
+        // New account state fields
+        accountState,
+        userProfile,
+        employerProfile,
+        canAccessEmployerDashboard: canAccessEmployerDashboard(accountState),
+        isEmployerPending: isEmployerPending(accountState),
+        isEmployerApproved: isEmployerApproved(accountState),
+        // Actions
         signIn,
         signUp,
         signInWithGoogle,
         signOut,
         registerPushNotifications,
+        refreshAccountState,
       }}
     >
       {children}

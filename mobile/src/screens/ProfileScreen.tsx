@@ -12,6 +12,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile } from "../lib/firestore";
+import { AccountState } from "../services/accountState";
 import type { UserProfile } from "../types";
 import { logger } from "../lib/logger";
 
@@ -20,7 +21,16 @@ const HELP_SUPPORT_URL = "https://iopps.ca/contact";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
-  const { user, role, signOut } = useAuth();
+  const {
+    user,
+    role,
+    signOut,
+    accountState,
+    employerProfile,
+    canAccessEmployerDashboard,
+    isEmployerPending,
+    refreshAccountState,
+  } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   // Reload profile when screen comes into focus
@@ -28,8 +38,10 @@ export default function ProfileScreen() {
     useCallback(() => {
       if (user) {
         loadProfile();
+        // Also refresh account state in case employer was approved
+        refreshAccountState();
       }
-    }, [user])
+    }, [user, refreshAccountState])
   );
 
   const loadProfile = async () => {
@@ -89,14 +101,54 @@ export default function ProfileScreen() {
     );
   }
 
-  const displayName = profile?.displayName || user.email?.split("@")[0] || "User";
+  const displayName = profile?.displayName || employerProfile?.organizationName || user.email?.split("@")[0] || "User";
   const avatarLetter = displayName.charAt(0).toUpperCase();
+
+  // Determine the role badge text based on account state
+  const getRoleBadgeText = () => {
+    switch (accountState) {
+      case AccountState.EMPLOYER_APPROVED:
+        return "Employer";
+      case AccountState.EMPLOYER_PENDING:
+        return "Employer (Pending)";
+      case AccountState.VENDOR:
+        return "Vendor";
+      case AccountState.ADMIN:
+        return "Admin";
+      default:
+        return "Community Member";
+    }
+  };
+
+  // Get badge style based on account state
+  const getRoleBadgeStyle = () => {
+    if (isEmployerPending) {
+      return [styles.roleBadge, styles.roleBadgePending];
+    }
+    return styles.roleBadge;
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Pending Employer Banner */}
+      {isEmployerPending && (
+        <View style={styles.pendingBanner}>
+          <Text style={styles.pendingBannerIcon}>⏳</Text>
+          <View style={styles.pendingBannerContent}>
+            <Text style={styles.pendingBannerTitle}>Application Pending</Text>
+            <Text style={styles.pendingBannerText}>
+              Your employer account is being reviewed. You can set up your organization profile while we review your application.
+            </Text>
+          </View>
+        </View>
+      )}
+
       <View style={styles.header}>
-        {profile?.photoURL ? (
-          <Image source={{ uri: profile.photoURL }} style={styles.avatarImage} />
+        {profile?.photoURL || employerProfile?.logoUrl ? (
+          <Image
+            source={{ uri: profile?.photoURL || employerProfile?.logoUrl }}
+            style={styles.avatarImage}
+          />
         ) : (
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{avatarLetter}</Text>
@@ -107,24 +159,32 @@ export default function ProfileScreen() {
         {profile?.location && (
           <Text style={styles.location}>📍 {profile.location}</Text>
         )}
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{role || "User"}</Text>
+        <View style={getRoleBadgeStyle()}>
+          <Text style={[styles.roleText, isEmployerPending && styles.roleTextPending]}>
+            {getRoleBadgeText()}
+          </Text>
         </View>
       </View>
 
-      {/* Role-based Dashboard Access */}
-      {(role === "employer" || role === "admin") && (
+      {/* Employer Dashboard Access - Show for pending AND approved employers */}
+      {canAccessEmployerDashboard && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Employer Dashboard</Text>
           <TouchableOpacity
-            style={styles.dashboardCard}
+            style={[styles.dashboardCard, isEmployerPending && styles.dashboardCardPending]}
             onPress={() => (navigation as any).navigate("EmployerDashboard")}
           >
             <View style={styles.dashboardCardContent}>
               <Text style={styles.dashboardIcon}>🏢</Text>
               <View style={styles.dashboardTextContainer}>
-                <Text style={styles.dashboardTitle}>Employer Dashboard</Text>
-                <Text style={styles.dashboardSubtitle}>Manage jobs, applications & more</Text>
+                <Text style={styles.dashboardTitle}>
+                  {isEmployerPending ? "Employer Dashboard" : "Employer Dashboard"}
+                </Text>
+                <Text style={styles.dashboardSubtitle}>
+                  {isEmployerPending
+                    ? "Set up your organization profile"
+                    : "Manage jobs, applications & more"}
+                </Text>
               </View>
             </View>
             <Text style={styles.menuArrow}>›</Text>
@@ -132,6 +192,7 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {/* Vendor Dashboard - Only for vendors and admins */}
       {(role === "vendor" || role === "admin") && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Vendor Dashboard</Text>
@@ -151,45 +212,75 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
+      {/* Community Member Features - Only show for community members (not employers) */}
+      {accountState === AccountState.COMMUNITY && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => (navigation as any).navigate("EditProfile")}
-        >
-          <Text style={styles.menuItemIcon}>✏️</Text>
-          <Text style={styles.menuItemText}>Edit Profile</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (navigation as any).navigate("EditProfile")}
+          >
+            <Text style={styles.menuItemIcon}>✏️</Text>
+            <Text style={styles.menuItemText}>Edit Profile</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => (navigation as any).navigate("SavedJobs")}
-        >
-          <Text style={styles.menuItemIcon}>🔖</Text>
-          <Text style={styles.menuItemText}>Saved Jobs</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (navigation as any).navigate("SavedJobs")}
+          >
+            <Text style={styles.menuItemIcon}>🔖</Text>
+            <Text style={styles.menuItemText}>Saved Jobs</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => (navigation as any).navigate("Applications")}
-        >
-          <Text style={styles.menuItemIcon}>📋</Text>
-          <Text style={styles.menuItemText}>My Applications</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (navigation as any).navigate("Applications")}
+          >
+            <Text style={styles.menuItemIcon}>📋</Text>
+            <Text style={styles.menuItemText}>My Applications</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => (navigation as any).navigate("JobAlerts")}
-        >
-          <Text style={styles.menuItemIcon}>🔔</Text>
-          <Text style={styles.menuItemText}>Job Alerts</Text>
-          <Text style={styles.menuArrow}>›</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (navigation as any).navigate("JobAlerts")}
+          >
+            <Text style={styles.menuItemIcon}>🔔</Text>
+            <Text style={styles.menuItemText}>Job Alerts</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Employer-specific menu items */}
+      {canAccessEmployerDashboard && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Organization</Text>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => Linking.openURL("https://iopps.ca/organization/profile")}
+          >
+            <Text style={styles.menuItemIcon}>🏢</Text>
+            <Text style={styles.menuItemText}>Edit Organization Profile</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          {!isEmployerPending && (
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => Linking.openURL("https://iopps.ca/organization/jobs/new")}
+            >
+              <Text style={styles.menuItemIcon}>📝</Text>
+              <Text style={styles.menuItemText}>Post a Job</Text>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
@@ -293,6 +384,34 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+  // Pending Employer Banner
+  pendingBanner: {
+    flexDirection: "row",
+    backgroundColor: "#F59E0B20",
+    borderWidth: 1,
+    borderColor: "#F59E0B40",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  pendingBannerIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  pendingBannerContent: {
+    flex: 1,
+  },
+  pendingBannerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FCD34D",
+    marginBottom: 4,
+  },
+  pendingBannerText: {
+    fontSize: 14,
+    color: "#FDE68A",
+    lineHeight: 20,
+  },
   header: {
     alignItems: "center",
     paddingVertical: 24,
@@ -344,11 +463,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  roleBadgePending: {
+    backgroundColor: "#F59E0B20",
+    borderWidth: 1,
+    borderColor: "#F59E0B40",
+  },
   roleText: {
     fontSize: 12,
     color: "#14B8A6",
     fontWeight: "600",
     textTransform: "capitalize",
+  },
+  roleTextPending: {
+    color: "#FCD34D",
   },
   section: {
     marginBottom: 24,
@@ -390,6 +517,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#14B8A640",
+  },
+  dashboardCardPending: {
+    backgroundColor: "#F59E0B15",
+    borderColor: "#F59E0B30",
   },
   dashboardCardContent: {
     flex: 1,
