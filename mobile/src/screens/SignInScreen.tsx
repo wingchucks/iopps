@@ -18,7 +18,9 @@ import {
   isErrorWithCode,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import { db, auth } from "../lib/firebase";
 
 // Google logo icon component
 function GoogleIcon() {
@@ -51,6 +53,32 @@ interface SignInScreenProps {
   navigation: any;
 }
 
+// Helper function to get user role and navigate accordingly
+async function navigateByRole(userId: string, navigation: any) {
+  try {
+    const userDoc = await getDoc(doc(db, "users", userId));
+    if (userDoc.exists()) {
+      const role = userDoc.data()?.role;
+      if (role === "employer" || role === "admin" || role === "moderator") {
+        // Navigate to employer dashboard for employer/admin users
+        navigation.reset({
+          index: 0,
+          routes: [
+            { name: "MainTabs" },
+            { name: "EmployerDashboard" },
+          ],
+        });
+        return;
+      }
+    }
+    // Default: go back to previous screen (community flow)
+    navigation.goBack();
+  } catch (error) {
+    console.error("Error checking user role:", error);
+    navigation.goBack();
+  }
+}
+
 export default function SignInScreen({ navigation }: SignInScreenProps) {
   const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
@@ -76,7 +104,13 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
         const idToken = response.data.idToken;
         if (idToken) {
           await signInWithGoogle(idToken);
-          navigation.goBack();
+          // Navigate based on user role
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            await navigateByRole(currentUser.uid, navigation);
+          } else {
+            navigation.goBack();
+          }
         } else {
           Alert.alert("Sign In Failed", "Could not get authentication token.");
         }
@@ -112,7 +146,13 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      navigation.goBack();
+      // Navigate based on user role
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await navigateByRole(currentUser.uid, navigation);
+      } else {
+        navigation.goBack();
+      }
     } catch (error: any) {
       let message = "Failed to sign in";
       if (error.code === "auth/invalid-credential") {
