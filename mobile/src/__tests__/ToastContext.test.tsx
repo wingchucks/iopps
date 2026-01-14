@@ -66,87 +66,93 @@ describe('ToastContext', () => {
   });
 
   describe('showToast', () => {
-    it('shows success toast', async () => {
+    it('shows success toast', () => {
       const { getByTestId, getByText } = render(
         <ToastProvider>
           <TestToastConsumer />
         </ToastProvider>
       );
 
-      await act(async () => {
+      act(() => {
         fireEvent.press(getByTestId('show-success'));
+        jest.runAllTimers();
       });
 
       expect(getByText('Success message')).toBeTruthy();
     });
 
-    it('shows error toast', async () => {
+    it('shows error toast', () => {
       const { getByTestId, getByText } = render(
         <ToastProvider>
           <TestToastConsumer />
         </ToastProvider>
       );
 
-      await act(async () => {
+      act(() => {
         fireEvent.press(getByTestId('show-error'));
+        jest.runAllTimers();
       });
 
       expect(getByText('Error message')).toBeTruthy();
     });
 
-    it('shows warning toast', async () => {
+    it('shows warning toast', () => {
       const { getByTestId, getByText } = render(
         <ToastProvider>
           <TestToastConsumer />
         </ToastProvider>
       );
 
-      await act(async () => {
+      act(() => {
         fireEvent.press(getByTestId('show-warning'));
+        jest.runAllTimers();
       });
 
       expect(getByText('Warning message')).toBeTruthy();
     });
 
-    it('shows info toast', async () => {
+    it('shows info toast', () => {
       const { getByTestId, getByText } = render(
         <ToastProvider>
           <TestToastConsumer />
         </ToastProvider>
       );
 
-      await act(async () => {
+      act(() => {
         fireEvent.press(getByTestId('show-info'));
+        jest.runAllTimers();
       });
 
       expect(getByText('Info message')).toBeTruthy();
     });
 
-    it('shows toast with action button', async () => {
+    it('shows toast with action button', () => {
       const { getByTestId, getByText } = render(
         <ToastProvider>
           <TestToastConsumer />
         </ToastProvider>
       );
 
-      await act(async () => {
+      act(() => {
         fireEvent.press(getByTestId('show-with-action'));
+        jest.runAllTimers();
       });
 
       expect(getByText('Action message')).toBeTruthy();
       expect(getByText('Retry')).toBeTruthy();
     });
 
-    it('shows multiple toasts', async () => {
+    it('shows multiple toasts', () => {
       const { getByTestId, getByText } = render(
         <ToastProvider>
           <TestToastConsumer />
         </ToastProvider>
       );
 
-      await act(async () => {
+      act(() => {
         fireEvent.press(getByTestId('show-success'));
         fireEvent.press(getByTestId('show-error'));
+        jest.runAllTimers();
       });
 
       expect(getByText('Success message')).toBeTruthy();

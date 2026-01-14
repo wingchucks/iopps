@@ -1,3 +1,6 @@
+// Use the real implementation, not the mock
+jest.unmock('../services/accountState');
+
 import {
   AccountState,
   determineAccountState,
