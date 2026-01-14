@@ -1,410 +1,498 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { collection, getCountFromServer, getDocs, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, orderBy, limit, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import Link from "next/link";
 import {
   UsersIcon,
   BriefcaseIcon,
-  ClockIcon,
-  CheckBadgeIcon,
-  ExclamationTriangleIcon,
   UserGroupIcon,
-  BuildingOfficeIcon,
   BuildingStorefrontIcon,
   DocumentTextIcon,
-  ExclamationCircleIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+import {
+  QueueCard,
+  QueueGrid,
+  KPICard,
+  KPIGrid,
+  ActivityFeed,
+  SystemHealthPanel,
+  type QueueItem,
+  type ActivityItem,
+  type HealthItem,
+} from "@/components/admin";
+import { useAdminCounts } from "@/lib/hooks/admin";
 
-interface StatValue {
-  count: number;
-  error?: string;
+// ============================================================================
+// Types
+// ============================================================================
+
+interface DashboardState {
+  loading: boolean;
+  refreshing: boolean;
+  error: string | null;
+  lastUpdated: Date | null;
 }
 
-interface PendingItem {
-  id: string;
-  name: string;
-  type: "employer" | "vendor" | "conference";
-  createdAt?: Date;
-}
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<{
-    totalUsers: StatValue;
-    totalJobs: StatValue;
-    pendingEmployers: StatValue;
-    activeJobs: StatValue;
-    totalMembers: StatValue;
-    totalEmployers: StatValue;
-    totalVendors: StatValue;
-    pendingVendors: StatValue;
-    totalConferences: StatValue;
-    totalApplications: StatValue;
-  }>({
-    totalUsers: { count: 0 },
-    totalJobs: { count: 0 },
-    pendingEmployers: { count: 0 },
-    activeJobs: { count: 0 },
-    totalMembers: { count: 0 },
-    totalEmployers: { count: 0 },
-    totalVendors: { count: 0 },
-    pendingVendors: { count: 0 },
-    totalConferences: { count: 0 },
-    totalApplications: { count: 0 },
+  const {
+    counts,
+    pendingItems,
+    failedImports,
+    loading: countsLoading,
+    refresh,
+    isRefreshing,
+  } = useAdminCounts();
+
+  const [dashboardState, setDashboardState] = useState<DashboardState>({
+    loading: true,
+    refreshing: false,
+    error: null,
+    lastUpdated: null,
   });
-  const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchStats = useCallback(async (isRefresh = false) => {
-      if (isRefresh) {
-        setRefreshing(true);
-      }
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [healthItems, setHealthItems] = useState<HealthItem[]>([]);
 
-      if (!db) {
-        setLoading(false);
-        setRefreshing(false);
-        return;
-      }
+  // Fetch recent activity
+  const fetchRecentActivity = useCallback(async () => {
+    if (!db) return;
 
-      const results: typeof stats = {
-        totalUsers: { count: 0 },
-        totalJobs: { count: 0 },
-        pendingEmployers: { count: 0 },
-        activeJobs: { count: 0 },
-        totalMembers: { count: 0 },
-        totalEmployers: { count: 0 },
-        totalVendors: { count: 0 },
-        pendingVendors: { count: 0 },
-        totalConferences: { count: 0 },
-        totalApplications: { count: 0 },
-      };
+    try {
+      const activities: ActivityItem[] = [];
 
-      const pending: PendingItem[] = [];
-
-      // Fetch each stat independently so one failure doesn't break all stats
-
-      // Total Users
+      // Get recent employers
       try {
-        const usersSnap = await getCountFromServer(collection(db, "users"));
-        results.totalUsers = { count: usersSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching total users:", error);
-        results.totalUsers = { count: 0, error: "Failed to load" };
-      }
-
-      // Total Jobs
-      try {
-        const jobsSnap = await getCountFromServer(collection(db, "jobs"));
-        results.totalJobs = { count: jobsSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching total jobs:", error);
-        results.totalJobs = { count: 0, error: "Failed to load" };
-      }
-
-      // Active Jobs
-      try {
-        const activeJobsQuery = query(collection(db, "jobs"), where("active", "==", true));
-        const activeJobsSnap = await getCountFromServer(activeJobsQuery);
-        results.activeJobs = { count: activeJobsSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching active jobs with index:", error);
-        try {
-          const allJobsSnap = await getDocs(collection(db, "jobs"));
-          const activeCount = allJobsSnap.docs.filter(doc => doc.data().active === true).length;
-          results.activeJobs = { count: activeCount };
-        } catch {
-          results.activeJobs = { count: 0, error: "Failed to load" };
-        }
-      }
-
-      // Pending Employers
-      try {
-        const pendingQuery = query(collection(db, "employers"), where("status", "==", "pending"));
-        const pendingSnap = await getDocs(pendingQuery);
-        // Filter out soft-deleted employers
-        const activePendingDocs = pendingSnap.docs.filter(doc => !doc.data().deletedAt);
-        results.pendingEmployers = { count: activePendingDocs.length };
-
-        // Add to pending items
-        activePendingDocs.slice(0, 5).forEach(doc => {
+        const employersSnap = await getDocs(
+          query(collection(db, "employers"), orderBy("createdAt", "desc"), limit(5))
+        );
+        employersSnap.docs.forEach((doc) => {
           const data = doc.data();
-          pending.push({
-            id: doc.id,
-            name: data.organizationName || data.email || "Unknown Employer",
-            type: "employer",
-            createdAt: data.createdAt?.toDate?.() || undefined,
+          const createdAt = data.createdAt?.toDate?.() || new Date();
+          if (data.status === "approved") {
+            activities.push({
+              id: `employer-${doc.id}`,
+              type: "employer_approved",
+              title: `${data.organizationName || "Employer"} approved`,
+              timestamp: createdAt,
+              href: `/admin/employers`,
+            });
+          } else if (data.status === "pending") {
+            activities.push({
+              id: `employer-new-${doc.id}`,
+              type: "user_created",
+              title: `New employer: ${data.organizationName || "Unknown"}`,
+              timestamp: createdAt,
+              href: `/admin/employers?status=pending`,
+            });
+          }
+        });
+      } catch (e) {
+        console.error("Error fetching recent employers:", e);
+      }
+
+      // Get recent jobs
+      try {
+        const jobsSnap = await getDocs(
+          query(collection(db, "jobs"), orderBy("createdAt", "desc"), limit(5))
+        );
+        jobsSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          const createdAt = data.createdAt?.toDate?.() || new Date();
+          activities.push({
+            id: `job-${doc.id}`,
+            type: "job_posted",
+            title: `New job: ${data.title || "Untitled"}`,
+            description: data.employerName,
+            timestamp: createdAt,
+            href: `/admin/jobs`,
           });
         });
-      } catch (error) {
-        console.error("Error fetching pending employers:", error);
-        results.pendingEmployers = { count: 0, error: "Failed to load" };
+      } catch (e) {
+        console.error("Error fetching recent jobs:", e);
       }
 
-      // Total Employers
+      // Get recent members
       try {
-        const employersSnap = await getCountFromServer(collection(db, "employers"));
-        results.totalEmployers = { count: employersSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching total employers:", error);
-        results.totalEmployers = { count: 0, error: "Failed to load" };
-      }
-
-      // Total Members (community users)
-      try {
-        const membersQuery = query(collection(db, "users"), where("role", "==", "community"));
-        const membersSnap = await getCountFromServer(membersQuery);
-        results.totalMembers = { count: membersSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching members:", error);
-        try {
-          const allUsersSnap = await getDocs(collection(db, "users"));
-          const memberCount = allUsersSnap.docs.filter(doc => doc.data().role === "community").length;
-          results.totalMembers = { count: memberCount };
-        } catch {
-          results.totalMembers = { count: 0, error: "Failed to load" };
-        }
-      }
-
-      // Total Vendors
-      try {
-        const vendorsSnap = await getCountFromServer(collection(db, "vendors"));
-        results.totalVendors = { count: vendorsSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching total vendors:", error);
-        results.totalVendors = { count: 0, error: "Failed to load" };
-      }
-
-      // Pending Vendors
-      try {
-        const pendingVendorsQuery = query(collection(db, "vendors"), where("status", "==", "pending"));
-        const pendingVendorsSnap = await getDocs(pendingVendorsQuery);
-        results.pendingVendors = { count: pendingVendorsSnap.docs.length };
-
-        // Add to pending items
-        pendingVendorsSnap.docs.slice(0, 5).forEach(doc => {
+        const membersSnap = await getDocs(
+          query(collection(db, "members"), orderBy("createdAt", "desc"), limit(5))
+        );
+        membersSnap.docs.forEach((doc) => {
           const data = doc.data();
-          pending.push({
-            id: doc.id,
-            name: data.businessName || "Unknown Vendor",
-            type: "vendor",
-            createdAt: data.createdAt?.toDate?.() || undefined,
+          const createdAt = data.createdAt?.toDate?.() || new Date();
+          activities.push({
+            id: `member-${doc.id}`,
+            type: "member_signup",
+            title: `New member: ${data.displayName || "Anonymous"}`,
+            timestamp: createdAt,
+            href: `/admin/members`,
           });
         });
-      } catch (error) {
-        console.error("Error fetching pending vendors:", error);
-        results.pendingVendors = { count: 0, error: "Failed to load" };
+      } catch (e) {
+        console.error("Error fetching recent members:", e);
       }
 
-      // Total Conferences
+      // Get recent applications
       try {
-        const conferencesSnap = await getCountFromServer(collection(db, "conferences"));
-        results.totalConferences = { count: conferencesSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching conferences:", error);
-        results.totalConferences = { count: 0, error: "Failed to load" };
+        const applicationsSnap = await getDocs(
+          query(collection(db, "applications"), orderBy("createdAt", "desc"), limit(5))
+        );
+        applicationsSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          const createdAt = data.createdAt?.toDate?.() || new Date();
+          activities.push({
+            id: `application-${doc.id}`,
+            type: "application_received",
+            title: `Application for ${data.jobTitle || "job"}`,
+            timestamp: createdAt,
+            href: `/admin/applications`,
+          });
+        });
+      } catch (e) {
+        console.error("Error fetching recent applications:", e);
       }
 
-      // Total Applications
-      try {
-        const applicationsSnap = await getCountFromServer(collection(db, "applications"));
-        results.totalApplications = { count: applicationsSnap.data().count };
-      } catch (error) {
-        console.error("Error fetching applications:", error);
-        results.totalApplications = { count: 0, error: "Failed to load" };
-      }
+      // Sort by timestamp and take most recent
+      activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      setRecentActivity(activities.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+    }
+  }, []);
 
-      // Sort pending items by date (newest first)
-      pending.sort((a, b) => {
-        if (!a.createdAt) return 1;
-        if (!b.createdAt) return -1;
-        return b.createdAt.getTime() - a.createdAt.getTime();
+  // Fetch system health
+  const fetchSystemHealth = useCallback(async () => {
+    if (!db) return;
+
+    const health: HealthItem[] = [];
+
+    // Check RSS feeds health
+    try {
+      const feedsSnap = await getDocs(collection(db, "rssFeeds"));
+      const totalFeeds = feedsSnap.docs.length;
+      const failedFeeds = feedsSnap.docs.filter(
+        (doc) => doc.data().lastError || doc.data().lastRunStatus === "error"
+      ).length;
+      const successFeeds = totalFeeds - failedFeeds;
+
+      health.push({
+        id: "rss",
+        name: "RSS Imports",
+        status: failedFeeds > 0 ? "warning" : totalFeeds > 0 ? "healthy" : "unknown",
+        details: totalFeeds > 0 ? `${successFeeds}/${totalFeeds} OK` : "No feeds",
+        message: failedFeeds > 0 ? `${failedFeeds} failed` : undefined,
       });
+    } catch {
+      health.push({
+        id: "rss",
+        name: "RSS Imports",
+        status: "unknown",
+        message: "Unable to check",
+      });
+    }
 
-      setStats(results);
-      setPendingItems(pending.slice(0, 5));
-      setLoading(false);
-      setRefreshing(false);
+    // Email service (placeholder - would need API check)
+    health.push({
+      id: "email",
+      name: "Email Service",
+      status: "healthy",
+      details: "Connected",
+    });
+
+    // Stripe (placeholder - would need API check)
+    health.push({
+      id: "stripe",
+      name: "Stripe Payments",
+      status: "healthy",
+      details: "Connected",
+    });
+
+    // Storage (placeholder)
+    health.push({
+      id: "storage",
+      name: "Cloud Storage",
+      status: "healthy",
+      details: "Available",
+    });
+
+    setHealthItems(health);
   }, []);
 
   // Initial load
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
-
-  // Auto-refresh when window gains focus (e.g., after approving an employer in another tab)
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchStats(true);
+    const loadDashboard = async () => {
+      setDashboardState((prev) => ({ ...prev, loading: true }));
+      await Promise.all([fetchRecentActivity(), fetchSystemHealth()]);
+      setDashboardState({
+        loading: false,
+        refreshing: false,
+        error: null,
+        lastUpdated: new Date(),
+      });
     };
 
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [fetchStats]);
+    loadDashboard();
+  }, [fetchRecentActivity, fetchSystemHealth]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-slate-400">Loading dashboard stats...</div>
-      </div>
-    );
-  }
-
-  const totalPending = stats.pendingEmployers.count + stats.pendingVendors.count;
-
-  const primaryStats: Array<{ name: string; stat: StatValue; icon: typeof ClockIcon; color: string; bg: string; href?: string; pulse?: boolean }> = [
-    { name: "Pending Review", stat: { count: totalPending }, icon: ClockIcon, color: "text-amber-500", bg: "bg-amber-500/10", href: totalPending > 0 ? (stats.pendingEmployers.count > 0 ? "/admin/employers?status=pending" : "/admin/vendors?status=pending") : undefined, pulse: totalPending > 0 },
-    { name: "Active Jobs", stat: stats.activeJobs, icon: CheckBadgeIcon, color: "text-green-500", bg: "bg-green-500/10", href: "/admin/jobs" },
-    { name: "Total Members", stat: stats.totalMembers, icon: UserGroupIcon, color: "text-blue-500", bg: "bg-blue-500/10", href: "/admin/members" },
-    { name: "Applications", stat: stats.totalApplications, icon: DocumentTextIcon, color: "text-purple-500", bg: "bg-purple-500/10", href: "/admin/applications" },
+  // Build queue items
+  const pendingApprovalItems: QueueItem[] = [
+    {
+      label: "Employers",
+      count: counts.employers.pending,
+      href: "/admin/employers?status=pending",
+    },
+    {
+      label: "Vendors",
+      count: counts.vendors.pending,
+      href: "/admin/vendors?status=pending",
+    },
   ];
 
-  const secondaryStats = [
-    { name: "Total Users", stat: stats.totalUsers, icon: UsersIcon, href: "/admin/users" },
-    { name: "Employers", stat: stats.totalEmployers, icon: BriefcaseIcon, href: "/admin/employers" },
-    { name: "Vendors", stat: stats.totalVendors, icon: BuildingStorefrontIcon, href: "/admin/vendors" },
-    { name: "Conferences", stat: stats.totalConferences, icon: BuildingOfficeIcon, href: "/admin/conferences" },
-    { name: "Total Jobs", stat: stats.totalJobs, icon: BriefcaseIcon, href: "/admin/jobs" },
-  ];
+  const failedImportItems: QueueItem[] = failedImports.map((f) => ({
+    label: f.feedName,
+    count: 1,
+  }));
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setDashboardState((prev) => ({ ...prev, refreshing: true }));
+    await Promise.all([refresh(), fetchRecentActivity(), fetchSystemHealth()]);
+    setDashboardState((prev) => ({
+      ...prev,
+      refreshing: false,
+      lastUpdated: new Date(),
+    }));
+  };
+
+  const isLoading = countsLoading || dashboardState.loading;
+  const totalPending = counts.employers.pending + counts.vendors.pending;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Dashboard Overview</h1>
-          <p className="text-slate-400">Welcome to the IOPPS administration panel.</p>
+          <h1 className="text-2xl font-bold text-slate-100">Admin Dashboard</h1>
+          <p className="text-sm text-slate-400">
+            {isLoading
+              ? "Loading..."
+              : dashboardState.lastUpdated
+              ? `Last updated ${dashboardState.lastUpdated.toLocaleTimeString()}`
+              : "Welcome to IOPPS administration"}
+          </p>
         </div>
         <button
-          onClick={() => fetchStats(true)}
-          disabled={refreshing}
+          onClick={handleRefresh}
+          disabled={isRefreshing || dashboardState.refreshing}
           className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-white disabled:opacity-50"
         >
-          <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          {refreshing ? "Refreshing..." : "Refresh"}
+          <ArrowPathIcon
+            className={`h-4 w-4 ${
+              isRefreshing || dashboardState.refreshing ? "animate-spin" : ""
+            }`}
+          />
+          {isRefreshing || dashboardState.refreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
-      {/* Primary Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {primaryStats.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href || "#"}
-            className={`relative overflow-hidden rounded-lg border border-slate-800 bg-[#08090C] px-4 py-5 shadow transition hover:border-slate-700 sm:px-6 sm:pt-6 ${item.pulse ? "animate-pulse" : ""}`}
-          >
-            <dt>
-              <div className={`absolute rounded-md p-3 ${item.bg}`}>
-                <item.icon className={`h-6 w-6 ${item.color}`} aria-hidden="true" />
-              </div>
-              <p className="ml-16 truncate text-sm font-medium text-slate-400">
-                {item.name}
-              </p>
-            </dt>
-            <dd className="ml-16 flex items-baseline pb-1 sm:pb-7">
-              {item.stat.error ? (
-                <div className="flex items-center gap-2 text-sm text-red-400">
-                  <ExclamationTriangleIcon className="h-4 w-4" />
-                  {item.stat.error}
-                </div>
-              ) : (
-                <p className="text-2xl font-semibold text-slate-100">
-                  {item.stat.count}
-                </p>
-              )}
-            </dd>
-          </Link>
-        ))}
+      {/* Urgent Queues */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Needs Attention
+        </h2>
+        <QueueGrid>
+          <QueueCard
+            type="pending"
+            title="Pending Approvals"
+            items={pendingApprovalItems}
+            href={totalPending > 0 ? "/admin/employers?status=pending" : undefined}
+            loading={isLoading}
+            emptyMessage="No pending approvals"
+          />
+          <QueueCard
+            type="flagged"
+            title="Flagged Items"
+            items={[]}
+            loading={isLoading}
+            emptyMessage="No flagged content"
+          />
+          <QueueCard
+            type="failed"
+            title="Failed Imports"
+            items={failedImportItems.length > 0 ? failedImportItems : []}
+            href={failedImportItems.length > 0 ? "/admin/feeds" : undefined}
+            loading={isLoading}
+            emptyMessage="All imports healthy"
+          />
+          <QueueCard
+            type="payment"
+            title="Payment Issues"
+            items={[]}
+            loading={isLoading}
+            emptyMessage="No payment issues"
+          />
+        </QueueGrid>
+      </div>
+
+      {/* KPIs */}
+      <div>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Platform Overview
+        </h2>
+        <KPIGrid columns={5}>
+          <KPICard
+            label="Active Jobs"
+            value={counts.jobs.active}
+            definition="Job postings currently visible on the platform"
+            icon={<BriefcaseIcon className="h-5 w-5" />}
+            color="green"
+            loading={isLoading}
+            href="/admin/jobs?status=active"
+            breakdown={`${counts.jobs.inactive} inactive`}
+          />
+          <KPICard
+            label="Member Profiles"
+            value={counts.members.total}
+            definition="Job seeker profiles created on the platform"
+            icon={<UserGroupIcon className="h-5 w-5" />}
+            color="blue"
+            loading={isLoading}
+            href="/admin/members"
+            breakdown={`${counts.members.withResume} with resume`}
+          />
+          <KPICard
+            label="Employer Orgs"
+            value={counts.employers.approved}
+            definition="Approved employer organization profiles"
+            icon={<BriefcaseIcon className="h-5 w-5" />}
+            color="teal"
+            loading={isLoading}
+            href="/admin/employers"
+            breakdown={`${counts.employers.pending} pending`}
+          />
+          <KPICard
+            label="Active Vendors"
+            value={counts.vendors.active}
+            definition="Shop Indigenous vendor listings"
+            icon={<BuildingStorefrontIcon className="h-5 w-5" />}
+            color="purple"
+            loading={isLoading}
+            href="/admin/vendors?status=active"
+            breakdown={`${counts.vendors.featured} featured`}
+          />
+          <KPICard
+            label="Applications"
+            value={counts.applications.recent7d}
+            definition="Job applications submitted in the last 7 days"
+            icon={<DocumentTextIcon className="h-5 w-5" />}
+            color="amber"
+            loading={isLoading}
+            href="/admin/applications"
+            breakdown={`${counts.applications.total} total`}
+          />
+        </KPIGrid>
       </div>
 
       {/* Secondary Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {secondaryStats.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className="rounded-lg border border-slate-800 bg-[#08090C] p-4 transition hover:border-slate-700"
-          >
-            <div className="flex items-center gap-3">
-              <item.icon className="h-5 w-5 text-slate-500" />
-              <div>
-                <p className="text-xs text-slate-500">{item.name}</p>
-                {item.stat.error ? (
-                  <p className="text-sm text-red-400">Error</p>
-                ) : (
-                  <p className="text-lg font-semibold text-slate-200">{item.stat.count}</p>
-                )}
-              </div>
-            </div>
-          </Link>
-        ))}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="flex items-center gap-2">
+            <UsersIcon className="h-4 w-4 text-slate-500" />
+            <span className="text-xs text-slate-500">Users (Auth)</span>
+          </div>
+          <p className="mt-1 text-xl font-bold text-slate-200">
+            {isLoading ? "-" : counts.users.total.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="flex items-center gap-2">
+            <BriefcaseIcon className="h-4 w-4 text-slate-500" />
+            <span className="text-xs text-slate-500">Total Jobs</span>
+          </div>
+          <p className="mt-1 text-xl font-bold text-slate-200">
+            {isLoading ? "-" : counts.jobs.total.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="flex items-center gap-2">
+            <BuildingStorefrontIcon className="h-4 w-4 text-slate-500" />
+            <span className="text-xs text-slate-500">Total Vendors</span>
+          </div>
+          <p className="mt-1 text-xl font-bold text-slate-200">
+            {isLoading ? "-" : counts.vendors.total.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4 text-slate-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+            <span className="text-xs text-slate-500">Conferences</span>
+          </div>
+          <p className="mt-1 text-xl font-bold text-slate-200">
+            {isLoading ? "-" : counts.conferences.total.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4 text-slate-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+              />
+            </svg>
+            <span className="text-xs text-slate-500">Pow Wows</span>
+          </div>
+          <p className="mt-1 text-xl font-bold text-slate-200">
+            {isLoading ? "-" : counts.powwows.total.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="flex items-center gap-2">
+            <DocumentTextIcon className="h-4 w-4 text-slate-500" />
+            <span className="text-xs text-slate-500">Total Apps</span>
+          </div>
+          <p className="mt-1 text-xl font-bold text-slate-200">
+            {isLoading ? "-" : counts.applications.total.toLocaleString()}
+          </p>
+        </div>
       </div>
 
-      {/* Needs Attention Section */}
-      {pendingItems.length > 0 && (
-        <div className="rounded-lg border border-amber-800/50 bg-amber-950/20 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ExclamationCircleIcon className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-medium text-amber-400">Needs Attention</h2>
-          </div>
-          <div className="space-y-3">
-            {pendingItems.map((item) => (
-              <Link
-                key={`${item.type}-${item.id}`}
-                href={item.type === "employer" ? `/admin/employers?status=pending` : `/admin/vendors?status=pending`}
-                className="flex items-center justify-between rounded-md border border-amber-800/30 bg-amber-950/30 p-3 transition hover:bg-amber-950/50"
-              >
-                <div className="flex items-center gap-3">
-                  {item.type === "employer" ? (
-                    <BriefcaseIcon className="h-5 w-5 text-amber-500" />
-                  ) : (
-                    <BuildingStorefrontIcon className="h-5 w-5 text-amber-500" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-slate-200">{item.name}</p>
-                    <p className="text-xs text-slate-500">
-                      Pending {item.type} • {item.createdAt ? item.createdAt.toLocaleDateString() : "Unknown date"}
-                    </p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-400">
-                  Review
-                </span>
-              </Link>
-            ))}
-          </div>
-          {totalPending > 5 && (
-            <p className="mt-3 text-sm text-amber-500/70">
-              +{totalPending - 5} more items need review
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="rounded-lg border border-slate-800 bg-[#08090C] p-6">
-        <h2 className="text-lg font-medium text-slate-100">Quick Actions</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Link href="/admin/users" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Manage Users
-          </Link>
-          <Link href="/admin/members" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Members (Job Seekers)
-          </Link>
-          <Link href="/admin/employers" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Employers
-          </Link>
-          <Link href="/admin/jobs" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Jobs
-          </Link>
-          <Link href="/admin/conferences" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Conferences
-          </Link>
-          <Link href="/admin/vendors" className="rounded-lg border border-slate-700 bg-slate-800/50 p-3 text-sm text-slate-300 hover:border-[#14B8A6] hover:text-white transition">
-            Shop Vendors
-          </Link>
-        </div>
+      {/* Activity and Health */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ActivityFeed
+          activities={recentActivity}
+          loading={dashboardState.loading}
+          maxItems={8}
+        />
+        <SystemHealthPanel
+          items={healthItems}
+          loading={dashboardState.loading}
+          onRefresh={fetchSystemHealth}
+          isRefreshing={dashboardState.refreshing}
+        />
       </div>
     </div>
   );

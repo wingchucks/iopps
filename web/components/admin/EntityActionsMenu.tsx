@@ -1,0 +1,372 @@
+"use client";
+
+import { useState, useRef, useEffect, ReactNode, Fragment } from "react";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface ActionItem {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  onClick: () => void;
+  variant?: "default" | "danger" | "success" | "warning";
+  disabled?: boolean;
+  hidden?: boolean;
+  loading?: boolean;
+}
+
+export interface ActionGroup {
+  id: string;
+  items: ActionItem[];
+}
+
+export interface EntityActionsMenuProps {
+  /** Primary action - displayed as a button before the menu */
+  primaryAction?: ActionItem;
+  /** Secondary actions - displayed in the dropdown menu */
+  actions: (ActionItem | ActionGroup)[];
+  /** Processing state - disables all actions */
+  processing?: boolean;
+  /** Menu alignment */
+  align?: "left" | "right";
+  /** Button size */
+  size?: "sm" | "md";
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function isActionGroup(item: ActionItem | ActionGroup): item is ActionGroup {
+  return "items" in item;
+}
+
+const variantStyles = {
+  default: "text-slate-300 hover:bg-slate-700 hover:text-white",
+  danger: "text-red-400 hover:bg-red-500/10 hover:text-red-300",
+  success: "text-green-400 hover:bg-green-500/10 hover:text-green-300",
+  warning: "text-amber-400 hover:bg-amber-500/10 hover:text-amber-300",
+};
+
+const buttonVariantStyles = {
+  default: "border-slate-700 text-slate-300 hover:border-teal-500 hover:text-teal-400",
+  danger: "border-red-800 text-red-400 hover:border-red-500 hover:bg-red-500/10",
+  success: "border-green-800 text-green-400 hover:border-green-500 hover:bg-green-500/10",
+  warning: "border-amber-800 text-amber-400 hover:border-amber-500 hover:bg-amber-500/10",
+};
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export function EntityActionsMenu({
+  primaryAction,
+  actions,
+  processing = false,
+  align = "right",
+  size = "sm",
+}: EntityActionsMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close menu on escape
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [isOpen]);
+
+  // Filter out hidden actions
+  const visibleActions = actions.filter((action) => {
+    if (isActionGroup(action)) {
+      return action.items.some((item) => !item.hidden);
+    }
+    return !action.hidden;
+  });
+
+  if (visibleActions.length === 0 && !primaryAction) {
+    return null;
+  }
+
+  const sizeClasses = {
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-4 py-2 text-sm",
+  };
+
+  const iconSizeClasses = {
+    sm: "h-3.5 w-3.5",
+    md: "h-4 w-4",
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      {/* Primary Action Button */}
+      {primaryAction && !primaryAction.hidden && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            primaryAction.onClick();
+          }}
+          disabled={processing || primaryAction.disabled || primaryAction.loading}
+          className={`inline-flex items-center gap-1.5 rounded-md border font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+            sizeClasses[size]
+          } ${buttonVariantStyles[primaryAction.variant || "default"]}`}
+        >
+          {primaryAction.icon && (
+            <span className={iconSizeClasses[size]}>{primaryAction.icon}</span>
+          )}
+          {primaryAction.loading ? "..." : primaryAction.label}
+        </button>
+      )}
+
+      {/* Dropdown Menu */}
+      {visibleActions.length > 0 && (
+        <div className="relative">
+          <button
+            ref={buttonRef}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
+            disabled={processing}
+            className={`inline-flex items-center justify-center rounded-md border border-slate-700 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 ${
+              size === "sm" ? "p-1.5" : "p-2"
+            }`}
+            aria-label="Actions menu"
+            aria-haspopup="true"
+            aria-expanded={isOpen}
+          >
+            <EllipsisVerticalIcon className={iconSizeClasses[size]} />
+          </button>
+
+          {isOpen && (
+            <div
+              ref={menuRef}
+              className={`absolute top-full z-50 mt-1 min-w-[160px] rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl ${
+                align === "right" ? "right-0" : "left-0"
+              }`}
+              role="menu"
+            >
+              {visibleActions.map((actionOrGroup, index) => {
+                if (isActionGroup(actionOrGroup)) {
+                  const visibleGroupItems = actionOrGroup.items.filter((item) => !item.hidden);
+                  if (visibleGroupItems.length === 0) return null;
+
+                  return (
+                    <Fragment key={actionOrGroup.id}>
+                      {index > 0 && (
+                        <div className="my-1 border-t border-slate-700" />
+                      )}
+                      {visibleGroupItems.map((item) => (
+                        <ActionMenuItem
+                          key={item.id}
+                          item={item}
+                          processing={processing}
+                          size={size}
+                          onClose={() => setIsOpen(false)}
+                        />
+                      ))}
+                    </Fragment>
+                  );
+                }
+
+                return (
+                  <ActionMenuItem
+                    key={actionOrGroup.id}
+                    item={actionOrGroup}
+                    processing={processing}
+                    size={size}
+                    onClose={() => setIsOpen(false)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Action Menu Item
+// ============================================================================
+
+interface ActionMenuItemProps {
+  item: ActionItem;
+  processing: boolean;
+  size: "sm" | "md";
+  onClose: () => void;
+}
+
+function ActionMenuItem({ item, processing, size, onClose }: ActionMenuItemProps) {
+  if (item.hidden) return null;
+
+  const iconSizeClasses = {
+    sm: "h-3.5 w-3.5",
+    md: "h-4 w-4",
+  };
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!item.disabled && !item.loading) {
+          item.onClick();
+          onClose();
+        }
+      }}
+      disabled={processing || item.disabled || item.loading}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        variantStyles[item.variant || "default"]
+      }`}
+      role="menuitem"
+    >
+      {item.icon && <span className={iconSizeClasses[size]}>{item.icon}</span>}
+      <span>{item.loading ? "Processing..." : item.label}</span>
+    </button>
+  );
+}
+
+// ============================================================================
+// Convenience Wrappers
+// ============================================================================
+
+/** Pre-configured menu for entity moderation (employers, vendors) */
+export interface ModerationActionsProps {
+  status: "pending" | "approved" | "rejected" | "active" | "suspended";
+  onView: () => void;
+  onEdit?: () => void;
+  onApprove?: () => void;
+  onReject?: () => void;
+  onActivate?: () => void;
+  onDeactivate?: () => void;
+  onDelete?: () => void;
+  processing?: boolean;
+}
+
+export function ModerationActionsMenu({
+  status,
+  onView,
+  onEdit,
+  onApprove,
+  onReject,
+  onActivate,
+  onDeactivate,
+  onDelete,
+  processing,
+}: ModerationActionsProps) {
+  const actions: (ActionItem | ActionGroup)[] = [];
+
+  // Edit action
+  if (onEdit) {
+    actions.push({
+      id: "edit",
+      label: "Edit",
+      onClick: onEdit,
+    });
+  }
+
+  // Status actions
+  const statusActions: ActionItem[] = [];
+
+  if (status === "pending") {
+    if (onApprove) {
+      statusActions.push({
+        id: "approve",
+        label: "Approve",
+        variant: "success",
+        onClick: onApprove,
+      });
+    }
+    if (onReject) {
+      statusActions.push({
+        id: "reject",
+        label: "Reject",
+        variant: "danger",
+        onClick: onReject,
+      });
+    }
+  }
+
+  if (status === "approved" || status === "active") {
+    if (onDeactivate) {
+      statusActions.push({
+        id: "deactivate",
+        label: "Deactivate",
+        variant: "warning",
+        onClick: onDeactivate,
+      });
+    }
+  }
+
+  if (status === "rejected" || status === "suspended") {
+    if (onActivate) {
+      statusActions.push({
+        id: "activate",
+        label: "Activate",
+        variant: "success",
+        onClick: onActivate,
+      });
+    }
+  }
+
+  if (statusActions.length > 0) {
+    actions.push({ id: "status-group", items: statusActions });
+  }
+
+  // Danger zone
+  if (onDelete) {
+    actions.push({
+      id: "danger-group",
+      items: [
+        {
+          id: "delete",
+          label: "Delete",
+          variant: "danger",
+          onClick: onDelete,
+        },
+      ],
+    });
+  }
+
+  return (
+    <EntityActionsMenu
+      primaryAction={{
+        id: "view",
+        label: "View",
+        onClick: onView,
+      }}
+      actions={actions}
+      processing={processing}
+    />
+  );
+}
