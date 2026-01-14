@@ -82,11 +82,10 @@ export default function ModuleSwitcher({
                     onModuleSelect(module);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                    isActive
-                      ? 'bg-accent/10 text-accent'
-                      : 'text-slate-300 hover:bg-slate-800'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive
+                    ? 'bg-accent/10 text-accent'
+                    : 'text-slate-300 hover:bg-slate-800'
+                    }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-accent' : info.color}`} />
                   <span className="text-sm font-medium">{info.name}</span>
@@ -127,11 +126,10 @@ export default function ModuleSwitcher({
           <button
             key={module}
             onClick={() => onModuleSelect(module)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-              isActive
-                ? 'bg-accent/20 text-accent border border-accent/30'
-                : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-slate-300'
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isActive
+              ? 'bg-accent/20 text-accent border border-accent/30'
+              : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-slate-300'
+              }`}
           >
             <Icon className={`w-4 h-4 ${isActive ? '' : info.color}`} />
             {info.name}

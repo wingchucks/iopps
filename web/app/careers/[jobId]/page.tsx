@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import { db } from "@/lib/firebase-admin";
 import JobDetailClient from "./JobDetailClient";
 import type { JobPosting } from "@/lib/types";
@@ -89,23 +90,21 @@ async function getJobData(jobId: string): Promise<{ data: any | null; expired: b
 }
 
 // Generate dynamic metadata for social sharing
+// Generate dynamic metadata for social sharing
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { jobId } = await params;
   const { data: job, expired } = await getJobData(jobId);
 
   if (!job) {
-    return {
+    return buildMetadata({
       title: expired ? "Job Expired | IOPPS" : "Job Not Found | IOPPS",
       description: expired
         ? "This job posting has expired or is no longer accepting applications."
         : "This job posting could not be found.",
-    };
+    });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca";
   const title = `${job.title} at ${job.employerName || "Company"} | IOPPS`;
-  const description = job.description?.replace(/<[^>]*>/g, '').slice(0, 160) || `${job.title} - Job Opportunity`;
-  const url = `${siteUrl}/jobs-training/${jobId}`;
 
   // Build location and job type info for subtitle
   const subtitleParts = [];
@@ -114,38 +113,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (job.remoteFlag) subtitleParts.push("Remote");
   const subtitle = subtitleParts.join(" • ") || "Job Opportunity";
 
-  // Generate dynamic OG image URL
-  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(job.title)}&type=job&subtitle=${encodeURIComponent(subtitle)}${job.companyLogoUrl ? `&image=${encodeURIComponent(job.companyLogoUrl)}` : ''}`;
-
+  const description = job.description?.replace(/<[^>]*>/g, '').slice(0, 160) || `${job.title} - Job Opportunity`;
   const fullDescription = subtitle
     ? `${subtitle} — ${description}`
     : description;
 
-  return {
+  // Generate dynamic OG image URL
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca";
+  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(job.title)}&type=job&subtitle=${encodeURIComponent(subtitle)}${job.companyLogoUrl ? `&image=${encodeURIComponent(job.companyLogoUrl)}` : ''}`;
+
+  return buildMetadata({
     title,
     description: fullDescription,
-    openGraph: {
-      title: `${job.title} at ${job.employerName || "Company"}`,
-      description: fullDescription,
-      url,
-      siteName: "IOPPS - Indigenous Opportunities",
-      type: "website",
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${job.title} at ${job.employerName || "Company"}`,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${job.title} at ${job.employerName || "Company"}`,
-      description: fullDescription,
-      images: [ogImageUrl],
-    },
-  };
+    image: ogImageUrl,
+    path: `/careers/${jobId}`,
+    publishedTime: job.createdAt?._seconds ? new Date(job.createdAt._seconds * 1000).toISOString() : undefined
+  });
 }
 
 export default async function JobDetailPage({ params }: PageProps) {

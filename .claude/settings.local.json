@@ -1,7 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "Bash(JobBillingContent.tsx)"
+      "Bash(JobBillingContent.tsx)",
+      "Bash(npx vercel:*)",
+      "Bash(git restore:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(vercel logs:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "WebFetch(domain:iopps.ca)",
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(git diff:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
