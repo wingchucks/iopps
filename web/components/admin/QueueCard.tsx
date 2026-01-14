@@ -147,6 +147,7 @@ export function QueueCard({
             >
               <Icon
                 className={`h-5 w-5 ${hasItems ? config.iconClass : "text-slate-500"}`}
+                aria-hidden="true"
               />
             </div>
             <div>
@@ -161,7 +162,7 @@ export function QueueCard({
             </div>
           </div>
           {href && (
-            <ArrowRightIcon className="h-4 w-4 text-slate-600" />
+            <ArrowRightIcon className="h-4 w-4 text-slate-600" aria-hidden="true" />
           )}
         </div>
 

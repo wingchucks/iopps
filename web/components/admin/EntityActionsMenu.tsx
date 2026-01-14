@@ -92,17 +92,44 @@ export function EntityActionsMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close menu on escape
+  // Keyboard navigation: escape to close, arrow keys to navigate
   useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsOpen(false);
+        buttonRef.current?.focus();
+        return;
+      }
+
+      // Arrow key navigation within menu
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const menuItems = menuRef.current?.querySelectorAll('[role="menuitem"]');
+        if (!menuItems || menuItems.length === 0) return;
+
+        const currentIndex = Array.from(menuItems).findIndex(
+          (item) => item === document.activeElement
+        );
+
+        let nextIndex: number;
+        if (event.key === "ArrowDown") {
+          nextIndex = currentIndex < menuItems.length - 1 ? currentIndex + 1 : 0;
+        } else {
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : menuItems.length - 1;
+        }
+
+        (menuItems[nextIndex] as HTMLElement).focus();
       }
     }
 
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
+      document.addEventListener("keydown", handleKeyDown);
+      // Focus first menu item when menu opens
+      setTimeout(() => {
+        const firstItem = menuRef.current?.querySelector('[role="menuitem"]') as HTMLElement;
+        firstItem?.focus();
+      }, 0);
+      return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [isOpen]);
 
@@ -166,7 +193,7 @@ export function EntityActionsMenu({
             aria-haspopup="true"
             aria-expanded={isOpen}
           >
-            <EllipsisVerticalIcon className={iconSizeClasses[size]} />
+            <EllipsisVerticalIcon className={iconSizeClasses[size]} aria-hidden="true" />
           </button>
 
           {isOpen && (

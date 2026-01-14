@@ -121,16 +121,19 @@ function Tooltip({ content, children }: TooltipProps) {
       className="relative inline-flex"
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
+      onFocus={() => setIsVisible(true)}
+      onBlur={() => setIsVisible(false)}
     >
       {children}
       {isVisible && (
         <div
           ref={tooltipRef}
+          role="tooltip"
           className="absolute z-50 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300 shadow-lg whitespace-nowrap"
           style={{ top: position.top, left: position.left }}
         >
           {content}
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-700" />
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-700" aria-hidden="true" />
         </div>
       )}
     </div>
@@ -222,7 +225,13 @@ export function KPICard({
             <span className="text-sm font-medium text-slate-400">{label}</span>
             {definition && (
               <Tooltip content={definition}>
-                <InformationCircleIcon className="h-4 w-4 text-slate-600 hover:text-slate-400 cursor-help" />
+                <button
+                  type="button"
+                  className="focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-slate-900 rounded"
+                  aria-label={`Information: ${definition}`}
+                >
+                  <InformationCircleIcon className="h-4 w-4 text-slate-600 hover:text-slate-400 cursor-help" aria-hidden="true" />
+                </button>
               </Tooltip>
             )}
           </div>
@@ -241,11 +250,11 @@ export function KPICard({
         {change && (
           <div className="flex items-center gap-1 text-sm">
             {change.direction === "up" ? (
-              <ArrowTrendingUpIcon className="h-4 w-4 text-green-400" />
+              <ArrowTrendingUpIcon className="h-4 w-4 text-green-400" aria-hidden="true" />
             ) : change.direction === "down" ? (
-              <ArrowTrendingDownIcon className="h-4 w-4 text-red-400" />
+              <ArrowTrendingDownIcon className="h-4 w-4 text-red-400" aria-hidden="true" />
             ) : (
-              <MinusIcon className="h-4 w-4 text-slate-500" />
+              <MinusIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />
             )}
             <span
               className={

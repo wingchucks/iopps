@@ -173,7 +173,7 @@ export function AdminDataTable<T extends { id: string }>({
             <tr className="border-b border-slate-800 bg-slate-950/60">
               {/* Selection checkbox column */}
               {selectable && (
-                <th className="w-12 px-6 py-4">
+                <th scope="col" className="w-12 px-6 py-4">
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -181,6 +181,7 @@ export function AdminDataTable<T extends { id: string }>({
                       if (el) el.indeterminate = someSelected;
                     }}
                     onChange={handleSelectAllClick}
+                    aria-label={allSelected ? "Deselect all rows" : "Select all rows"}
                     className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
                   />
                 </th>
@@ -190,6 +191,7 @@ export function AdminDataTable<T extends { id: string }>({
               {columns.map((column) => (
                 <th
                   key={column.id}
+                  scope="col"
                   className={`px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 ${getAlignmentClass(
                     column.align
                   )} ${column.headerClassName || ""}`}
@@ -199,6 +201,7 @@ export function AdminDataTable<T extends { id: string }>({
                     <button
                       onClick={() => onSort(column.id)}
                       className="inline-flex items-center hover:text-slate-200 transition-colors"
+                      aria-label={`Sort by ${column.header}${sortField === column.id ? (sortDirection === "asc" ? ", currently ascending" : ", currently descending") : ""}`}
                     >
                       {column.header}
                       {getSortIcon(column.id)}
@@ -211,7 +214,7 @@ export function AdminDataTable<T extends { id: string }>({
 
               {/* Actions column */}
               {renderActions && (
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Actions
                 </th>
               )}
@@ -253,6 +256,7 @@ export function AdminDataTable<T extends { id: string }>({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onSelectChange?.(row.id)}
+                          aria-label={isSelected ? "Deselect this row" : "Select this row"}
                           className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
                         />
                       </td>

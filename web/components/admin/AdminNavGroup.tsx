@@ -56,6 +56,7 @@ function NavItemRow({ item, isActive }: NavItemRowProps) {
           className={`h-5 w-5 flex-shrink-0 ${
             isActive ? "text-teal-400" : "text-slate-500 group-hover:text-slate-400"
           }`}
+          aria-hidden="true"
         />
         <span>{item.name}</span>
       </div>
@@ -100,12 +101,15 @@ export function AdminNavGroup({
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-400"
+          aria-expanded={effectiveOpen}
+          aria-label={`${label} navigation group`}
         >
           <span>{label}</span>
           <ChevronDownIcon
             className={`h-4 w-4 transition-transform ${
               effectiveOpen ? "rotate-0" : "-rotate-90"
             }`}
+            aria-hidden="true"
           />
         </button>
       ) : (
