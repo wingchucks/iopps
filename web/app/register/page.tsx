@@ -21,8 +21,48 @@ import {
   EmployerIcon,
 } from "@/components/auth";
 import { createDraftVendorForEmployer } from "@/lib/firebase/shop";
+import { createPendingEmployerProfile } from "@/lib/firestore";
+import {
+  BriefcaseIcon,
+  BuildingStorefrontIcon,
+  CalendarDaysIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 
 type UserRole = "community" | "employer";
+type EmployerIntent = "post_jobs" | "list_business" | "post_events" | "multiple";
+
+const INTENT_OPTIONS: {
+  id: EmployerIntent;
+  title: string;
+  description: string;
+  icon: typeof BriefcaseIcon;
+}[] = [
+  {
+    id: "post_jobs",
+    title: "Post Jobs",
+    description: "Hire talent from Indigenous communities",
+    icon: BriefcaseIcon,
+  },
+  {
+    id: "list_business",
+    title: "List Business",
+    description: "Join the Shop Indigenous directory",
+    icon: BuildingStorefrontIcon,
+  },
+  {
+    id: "post_events",
+    title: "Post Events",
+    description: "Promote conferences & pow wows",
+    icon: CalendarDaysIcon,
+  },
+  {
+    id: "multiple",
+    title: "Multiple",
+    description: "I want to do several of these",
+    icon: SparklesIcon,
+  },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,11 +72,30 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<UserRole | null>(null);
+  const [employerIntent, setEmployerIntent] = useState<EmployerIntent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [showIntentSelector, setShowIntentSelector] = useState(false);
+  const [pendingGoogleRole, setPendingGoogleRole] = useState<UserRole | null>(null);
+
+  // Helper to send notification with retry
+  const notifyWithRetry = async (data: Record<string, unknown>, retries = 2) => {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const res = await fetch("/api/admin/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (res.ok) return;
+      } catch (e) {
+        if (i === retries) console.error("Failed to notify admin after retries", e);
+      }
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -49,6 +108,11 @@ export default function RegisterPage() {
 
     if (!role) {
       setError("Please choose whether you're a community member or an employer.");
+      return;
+    }
+
+    if (role === "employer" && !employerIntent) {
+      setError("Please select what you'd like to do on IOPPS.");
       return;
     }
 
@@ -77,19 +141,21 @@ export default function RegisterPage() {
         createdAt: serverTimestamp(),
       });
 
-      // Notify admin of new user signup
-      fetch("/api/admin/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "new_user",
-          userEmail: cred.user.email,
-          userName: displayName.trim(),
-        }),
-      }).catch(() => { });
-
-      // Auto-create vendor profile for employers
+      // Handle employer-specific setup
       if (role === "employer") {
+        // Create pending employer profile for admin approval
+        try {
+          await createPendingEmployerProfile(cred.user.uid, {
+            organizationName: displayName.trim(),
+            email: cred.user.email || email,
+            intent: employerIntent || undefined,
+          });
+        } catch (profileErr) {
+          console.error("Failed to create employer profile:", profileErr);
+          // Don't fail registration if profile creation fails
+        }
+
+        // Auto-create draft vendor profile
         try {
           await createDraftVendorForEmployer(
             cred.user.uid,
@@ -98,8 +164,23 @@ export default function RegisterPage() {
           );
         } catch (vendorErr) {
           console.error("Failed to create vendor profile:", vendorErr);
-          // Don't fail registration if vendor creation fails
         }
+
+        // Notify admin of new employer (with approval action)
+        notifyWithRetry({
+          type: "new_employer",
+          organizationName: displayName.trim(),
+          employerEmail: cred.user.email,
+          intent: employerIntent,
+          status: "pending",
+        });
+      } else {
+        // Notify admin of new community member
+        notifyWithRetry({
+          type: "new_user",
+          userEmail: cred.user.email,
+          userName: displayName.trim(),
+        });
       }
 
       // Send email verification
@@ -167,6 +248,24 @@ export default function RegisterPage() {
   };
 
   const handleRoleSelection = async (selectedRole: UserRole) => {
+    if (selectedRole === "employer") {
+      // For employers, show intent selector first
+      setPendingGoogleRole(selectedRole);
+      setShowRoleSelector(false);
+      setShowIntentSelector(true);
+      return;
+    }
+
+    // For community members, complete registration immediately
+    await completeGoogleRegistration(selectedRole);
+  };
+
+  const handleIntentSelection = async (intent: EmployerIntent) => {
+    setEmployerIntent(intent);
+    await completeGoogleRegistration("employer", intent);
+  };
+
+  const completeGoogleRegistration = async (selectedRole: UserRole, intent?: EmployerIntent) => {
     if (!auth || !db || !auth.currentUser) return;
 
     try {
@@ -176,19 +275,20 @@ export default function RegisterPage() {
         { merge: true }
       );
 
-      // Notify admin of new user signup (Google)
-      fetch("/api/admin/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "new_user",
-          userEmail: auth.currentUser.email,
-          userName: auth.currentUser.displayName || "Google User",
-        }),
-      }).catch(() => { });
-
-      // Auto-create vendor profile for employers
+      // Handle employer-specific setup
       if (selectedRole === "employer") {
+        // Create pending employer profile for admin approval
+        try {
+          await createPendingEmployerProfile(auth.currentUser.uid, {
+            organizationName: auth.currentUser.displayName || "Google User",
+            email: auth.currentUser.email || "",
+            intent: intent || undefined,
+          });
+        } catch (profileErr) {
+          console.error("Failed to create employer profile:", profileErr);
+        }
+
+        // Auto-create draft vendor profile
         try {
           await createDraftVendorForEmployer(
             auth.currentUser.uid,
@@ -197,8 +297,23 @@ export default function RegisterPage() {
           );
         } catch (vendorErr) {
           console.error("Failed to create vendor profile:", vendorErr);
-          // Don't fail role selection if vendor creation fails
         }
+
+        // Notify admin of new employer (with approval action)
+        notifyWithRetry({
+          type: "new_employer",
+          organizationName: auth.currentUser.displayName || "Google User",
+          employerEmail: auth.currentUser.email,
+          intent: intent,
+          status: "pending",
+        });
+      } else {
+        // Notify admin of new community member
+        notifyWithRetry({
+          type: "new_user",
+          userEmail: auth.currentUser.email,
+          userName: auth.currentUser.displayName || "Google User",
+        });
       }
 
       router.push(selectedRole === "employer" ? "/organization/dashboard" : "/member/dashboard");
@@ -206,6 +321,7 @@ export default function RegisterPage() {
       console.error(err);
       setError("Failed to update role. Please try again.");
       setShowRoleSelector(false);
+      setShowIntentSelector(false);
     }
   };
 
@@ -238,6 +354,47 @@ export default function RegisterPage() {
                 onClick={() => handleRoleSelection("employer")}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Intent Selector Modal for Google Sign-In (Employers) */}
+      {showIntentSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/50 animate-fade-in">
+            <h2 className="text-xl font-semibold text-slate-50">
+              What would you like to do on IOPPS?
+            </h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Help us customize your experience
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {INTENT_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleIntentSelection(option.id)}
+                  className="flex items-start gap-3 rounded-xl border border-slate-700 bg-slate-800/50 p-4 text-left transition hover:border-teal-500/50 hover:bg-slate-800"
+                >
+                  <option.icon className="h-6 w-6 flex-shrink-0 text-teal-400" />
+                  <div>
+                    <p className="font-medium text-slate-200">{option.title}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{option.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                setShowIntentSelector(false);
+                setShowRoleSelector(true);
+                setPendingGoogleRole(null);
+              }}
+              className="mt-4 text-sm text-slate-500 hover:text-slate-300"
+            >
+              ← Back to role selection
+            </button>
           </div>
         </div>
       )}
@@ -278,6 +435,7 @@ export default function RegisterPage() {
                   setConfirmPassword("");
                   setDisplayName("");
                   setRole(null);
+                  setEmployerIntent(null);
                 }}
                 className="underline hover:text-green-100"
               >
@@ -343,7 +501,10 @@ export default function RegisterPage() {
                     title="Community Member"
                     description="Find jobs, save opportunities, and explore events."
                     selected={role === "community"}
-                    onClick={() => setRole("community")}
+                    onClick={() => {
+                      setRole("community");
+                      setEmployerIntent(null);
+                    }}
                   />
                   <RoleCard
                     icon={<EmployerIcon />}
@@ -354,6 +515,39 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
+
+              {/* Intent Selection for Employers */}
+              {role === "employer" && (
+                <div className="animate-fade-in">
+                  <p className="block text-sm font-medium text-slate-200 mb-3">
+                    What would you like to do on IOPPS?
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {INTENT_OPTIONS.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => setEmployerIntent(option.id)}
+                        className={`flex items-start gap-3 rounded-xl border p-3 text-left transition ${
+                          employerIntent === option.id
+                            ? "border-teal-500 bg-teal-500/10"
+                            : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                        }`}
+                      >
+                        <option.icon className={`h-5 w-5 flex-shrink-0 ${
+                          employerIntent === option.id ? "text-teal-400" : "text-slate-500"
+                        }`} />
+                        <div>
+                          <p className={`text-sm font-medium ${
+                            employerIntent === option.id ? "text-teal-400" : "text-slate-300"
+                          }`}>{option.title}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"

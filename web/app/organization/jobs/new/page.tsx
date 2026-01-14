@@ -27,6 +27,7 @@ function NewJobPageContent() {
   const [organizationName, setOrganizationName] = useState("");
   const [subscription, setSubscription] = useState<SubscriptionInfo>(null);
   const [freePostingEnabled, setFreePostingEnabled] = useState(false);
+  const [employerStatus, setEmployerStatus] = useState<string>("approved");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +204,7 @@ function NewJobPageContent() {
         if (profile) {
           setOrganizationName(profile.organizationName);
           setFreePostingEnabled(!!profile.freePostingEnabled);
+          setEmployerStatus(profile.status || "approved");
 
           // First try: check subscription field on employer document
           let subscriptionFound = false;
@@ -400,11 +402,16 @@ function NewJobPageContent() {
           leadershipTrainingComplete: formData.trcLeadershipTraining,
           isIndigenousOwned: formData.trcIndigenousOwned,
           commitmentStatement: formData.trcCommitmentStatement,
-        }
+        },
+        // Flag jobs from pending employers so they can be activated on approval
+        ...(employerStatus === "pending" && { pendingEmployerApproval: true }),
       };
 
       // Check if job is scheduled for later
       const isScheduled = !!formData.scheduledPublishAt;
+
+      // Jobs from pending employers should not be activated until approved
+      const isPendingEmployer = employerStatus === "pending";
 
       // Payment Logic (Shared with Wizard)
       if (productType === "SUBSCRIPTION") {
@@ -412,7 +419,9 @@ function NewJobPageContent() {
           throw new Error("No credits remaining.");
         }
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: !isScheduled, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
+        // Jobs from pending employers stay inactive until employer is approved
+        const shouldBeActive = !isScheduled && !isPendingEmployer;
+        const id = await createJobPosting({ ...jobPayload, active: shouldBeActive, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
         // Notify admin of new job posting (only if published immediately)
         if (!isScheduled) {
           fetch("/api/admin/notify", {
@@ -427,7 +436,9 @@ function NewJobPageContent() {
 
       if (productType === "FREE_POSTING") {
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: !isScheduled, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
+        // Jobs from pending employers stay inactive until employer is approved
+        const shouldBeActive = !isScheduled && !isPendingEmployer;
+        const id = await createJobPosting({ ...jobPayload, active: shouldBeActive, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
         // Notify admin of new job posting (only if published immediately)
         if (!isScheduled) {
           fetch("/api/admin/notify", {
@@ -505,6 +516,27 @@ function NewJobPageContent() {
 
   return (
     <div className="min-h-screen bg-[#020306] pb-20">
+      {/* Pending Employer Banner */}
+      {employerStatus === "pending" && (
+        <div className="border-b border-amber-500/30 bg-amber-500/5">
+          <div className="mx-auto max-w-5xl px-4 py-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-amber-200">Your account is pending approval</p>
+                <p className="text-sm text-amber-300/80 mt-0.5">
+                  You can create jobs, but they won&apos;t be visible to job seekers until your organization is approved. We&apos;ll notify you by email once approved.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-slate-800 bg-[#08090C] py-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">

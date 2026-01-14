@@ -7,6 +7,7 @@ export {
   updateEmployerLogo,
   updateEmployerBanner,
   upsertEmployerProfile,
+  createPendingEmployerProfile,
   listEmployers,
   updateEmployerStatus,
   grantEmployerFreePosting,
@@ -41,6 +42,7 @@ export {
   listSavedJobs,
   listSavedJobIds,
   isJobExpired,
+  clearPendingEmployerApprovalFlag,
 } from "./jobs";
 
 // Job Templates

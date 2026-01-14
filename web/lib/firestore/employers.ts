@@ -211,6 +211,49 @@ export async function upsertEmployerProfile(
   });
 }
 
+/**
+ * Create a pending employer profile during registration.
+ * This is called immediately when a user signs up as an employer,
+ * so they appear in the admin pending queue right away.
+ */
+export async function createPendingEmployerProfile(
+  userId: string,
+  data: {
+    organizationName: string;
+    email: string;
+    intent?: string;
+  }
+): Promise<void> {
+  const firestore = checkFirebase();
+  if (!firestore) {
+    console.log("[createPendingEmployerProfile] Skipped - offline mode");
+    return;
+  }
+
+  // Check if employer profile already exists
+  const existingProfile = await getEmployerProfile(userId);
+  if (existingProfile) {
+    console.log("[createPendingEmployerProfile] Profile already exists for:", userId);
+    return;
+  }
+
+  const ref = doc(firestore, employerCollection, userId);
+  await setDoc(ref, {
+    id: userId,
+    userId,
+    organizationName: data.organizationName,
+    contactEmail: data.email,
+    intent: data.intent || null,
+    status: "pending" as EmployerStatus,
+    description: "",
+    website: "",
+    location: "",
+    logoUrl: "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function listEmployers(status?: EmployerStatus, includeDeleted = false): Promise<EmployerProfile[]> {
   try {
     const firestore = checkFirebase();

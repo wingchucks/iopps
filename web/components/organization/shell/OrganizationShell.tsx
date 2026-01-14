@@ -8,7 +8,7 @@ import type { EmployerProfile, OrganizationModule } from '@/lib/types';
 import NavigationSidebar from './NavigationSidebar';
 import MobileNavBar from './MobileNavBar';
 import ModuleSwitcher from './ModuleSwitcher';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 interface OrganizationShellProps {
   children: React.ReactNode;
@@ -172,6 +172,21 @@ export default function OrganizationShell({
 
           {/* Page Content */}
           <div className="p-4 lg:p-6 pt-20 lg:pt-6 pb-24 lg:pb-6">
+            {/* Pending Approval Banner */}
+            {profile.status === 'pending' && (
+              <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 lg:p-6">
+                <div className="flex items-start gap-3">
+                  <ClockIcon className="h-6 w-6 lg:h-8 lg:w-8 text-amber-400 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold text-amber-200">Pending Approval</h3>
+                    <p className="text-sm text-amber-300/80 mt-1">
+                      Your organization is being reviewed. You can explore the dashboard and create jobs,
+                      but they won&apos;t be visible to job seekers until your account is approved.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             {children}
           </div>
         </main>

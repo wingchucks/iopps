@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid, updateEmployerCarouselFeature } from "@/lib/firestore";
+import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid, updateEmployerCarouselFeature, clearPendingEmployerApprovalFlag } from "@/lib/firestore";
 import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -112,6 +112,13 @@ export default function AdminEmployersPage() {
     setProcessingId(employerId);
     try {
       await updateEmployerStatus(employerId, "approved", user.uid);
+
+      // Clear the pendingEmployerApproval flag from any jobs created while pending
+      // This allows the employer to publish their jobs
+      const jobsCleared = await clearPendingEmployerApprovalFlag(employerId);
+      if (jobsCleared > 0) {
+        console.log(`Cleared pending flag from ${jobsCleared} job(s) for employer ${employerId}`);
+      }
 
       // Send approval email to employer (fire and forget)
       if (employerEmail) {

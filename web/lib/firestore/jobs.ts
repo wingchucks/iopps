@@ -71,6 +71,40 @@ export async function createJobPosting(data: JobInput): Promise<string> {
   return docRef.id;
 }
 
+/**
+ * Clear the pendingEmployerApproval flag from jobs when an employer is approved.
+ * This allows the employer to activate their jobs.
+ * Note: Does NOT automatically activate jobs - employer decides when to publish.
+ */
+export async function clearPendingEmployerApprovalFlag(employerId: string): Promise<number> {
+  const firestore = checkFirebase();
+  if (!firestore) return 0;
+
+  try {
+    const jobsRef = collection(firestore, jobsCollection);
+    const q = query(
+      jobsRef,
+      where("employerId", "==", employerId),
+      where("pendingEmployerApproval", "==", true)
+    );
+
+    const snapshot = await getDocs(q);
+    let count = 0;
+
+    for (const docSnapshot of snapshot.docs) {
+      await updateDoc(docSnapshot.ref, {
+        pendingEmployerApproval: false,
+      });
+      count++;
+    }
+
+    return count;
+  } catch (error) {
+    console.error("[clearPendingEmployerApprovalFlag] Error:", error);
+    return 0;
+  }
+}
+
 type JobFilters = {
   employmentType?: string;
   remoteOnly?: boolean;
