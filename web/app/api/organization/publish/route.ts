@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
       // Update existing profile
       const existingData = employerDoc.data();
       slug = existingData?.slug || generateUniqueSlug(organizationName);
+      const currentStatus = existingData?.status || "pending";
 
       await employerRef.update({
         organizationName,
@@ -100,9 +101,10 @@ export async function POST(req: NextRequest) {
         logoUrl: logoUrl || "",
         links: { website: website || "" },
         enabledModules: enabledModules || [],
-        status: "approved", // Required for public read access
+        // Don't auto-approve - preserve current status (requires admin approval)
+        // Profile will be publicly visible only after admin approves
         publicationStatus: "PUBLISHED",
-        directoryVisible: true,
+        directoryVisible: currentStatus === "approved", // Only visible if already approved
         publishedAt: now,
         updatedAt: now,
       });
@@ -123,8 +125,8 @@ export async function POST(req: NextRequest) {
         links: { website: website || "" },
         enabledModules: enabledModules || [],
         publicationStatus: "PUBLISHED",
-        directoryVisible: true,
-        status: "approved",
+        directoryVisible: false, // Not visible until admin approves
+        status: "pending", // Requires admin approval
         publishedAt: now,
         createdAt: now,
         updatedAt: now,

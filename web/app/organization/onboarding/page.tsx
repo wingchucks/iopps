@@ -631,42 +631,82 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div className="space-y-6 text-center">
             {isPublished ? (
-              <>
-                <div className="mx-auto h-20 w-20 rounded-full bg-teal-500/10 flex items-center justify-center">
-                  <SparklesIcon className="h-10 w-10 text-teal-500" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-white">You&apos;re Live!</h1>
-                  <p className="mt-2 text-slate-400">
-                    Your profile is now visible in the Businesses directory
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                  {(publishedSlug || existingProfile?.slug) ? (
+              existingProfile?.status === 'approved' ? (
+                // Approved employer - profile is live
+                <>
+                  <div className="mx-auto h-20 w-20 rounded-full bg-teal-500/10 flex items-center justify-center">
+                    <SparklesIcon className="h-10 w-10 text-teal-500" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-white">You&apos;re Live!</h1>
+                    <p className="mt-2 text-slate-400">
+                      Your profile is now visible in the Businesses directory
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                    {(publishedSlug || existingProfile?.slug) ? (
+                      <Link
+                        href={`/businesses/${publishedSlug || existingProfile?.slug}`}
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
+                      >
+                        View Public Profile
+                        <ArrowRightIcon className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/businesses"
+                        className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
+                      >
+                        Browse Organizations
+                        <ArrowRightIcon className="h-4 w-4" />
+                      </Link>
+                    )}
                     <Link
-                      href={`/businesses/${publishedSlug || existingProfile?.slug}`}
+                      href="/organization/dashboard"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-700 px-6 py-3 font-semibold text-white hover:bg-slate-600 transition-colors"
+                    >
+                      Go to Dashboard
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                // Pending employer - profile submitted but awaiting approval
+                <>
+                  <div className="mx-auto h-20 w-20 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <SparklesIcon className="h-10 w-10 text-amber-500" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-white">Profile Submitted!</h1>
+                    <p className="mt-2 text-slate-400">
+                      Your profile is being reviewed by our team. Once approved, it will be visible in the directory.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-left">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-amber-200">Pending Approval</p>
+                        <p className="text-sm text-amber-300/80 mt-1">
+                          We review new organizations to ensure quality. You&apos;ll receive an email once your profile is approved.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                    <Link
+                      href="/organization/dashboard"
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
                     >
-                      View Public Profile
+                      Go to Dashboard
                       <ArrowRightIcon className="h-4 w-4" />
                     </Link>
-                  ) : (
-                    <Link
-                      href="/businesses"
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
-                    >
-                      Browse Organizations
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  )}
-                  <Link
-                    href="/organization/dashboard"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-700 px-6 py-3 font-semibold text-white hover:bg-slate-600 transition-colors"
-                  >
-                    Go to Dashboard
-                  </Link>
-                </div>
-              </>
+                  </div>
+                </>
+              )
             ) : (
               <>
                 <div className="mx-auto h-20 w-20 rounded-full bg-teal-500/10 flex items-center justify-center">
