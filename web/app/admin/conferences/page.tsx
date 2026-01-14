@@ -16,7 +16,15 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Conference } from "@/lib/types";
-import { AdminLoadingState, AdminEmptyState, StatusBadge } from "@/components/admin";
+import {
+  AdminLoadingState,
+  AdminEmptyState,
+  StatusBadge,
+  EntityActionsMenu,
+  ConfirmationModal,
+  type ActionItem,
+  type ActionGroup,
+} from "@/components/admin";
 import {
   CurrencyDollarIcon,
   StarIcon,
@@ -42,6 +50,31 @@ function AdminConferencesContent() {
     statusFilter === "paid" ? "paid" : "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: "danger" | "warning" | "success" | "info";
+    confirmText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    variant: "danger",
+    confirmText: "Confirm",
+    onConfirm: () => {},
+  });
+
+  const openConfirmModal = (config: Omit<typeof confirmModal, "isOpen">) => {
+    setConfirmModal({ ...config, isOpen: true });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -124,12 +157,6 @@ function AdminConferencesContent() {
 
   async function deleteConference(conferenceId: string, conferenceTitle: string) {
     if (!user) return;
-
-    const confirmed = confirm(
-      `Are you sure you want to delete the conference "${conferenceTitle}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) return;
 
     try {
       setProcessing(conferenceId);
@@ -415,7 +442,7 @@ function AdminConferencesContent() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/conferences/${conference.id}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
@@ -423,47 +450,53 @@ function AdminConferencesContent() {
                         View
                       </Link>
 
-                      <Link
-                        href={`/admin/conferences/${conference.id}/edit`}
-                        className="rounded-md border border-blue-500 px-4 py-2 text-sm font-semibold text-blue-400 transition hover:bg-blue-500/10 text-center"
-                      >
-                        Edit
-                      </Link>
-
-                      <Link
-                        href={`/admin/employers/${conference.employerId}/products`}
-                        className="rounded-md border border-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-400 transition hover:bg-emerald-500/10 text-center flex items-center justify-center gap-1"
-                      >
-                        <CurrencyDollarIcon className="h-4 w-4" />
-                        Products
-                      </Link>
-
-                      <button
-                        onClick={() =>
-                          toggleConferenceStatus(conference.id, isActive)
-                        }
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                            ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                            : "bg-green-600 text-white hover:bg-green-500"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : isActive
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          deleteConference(conference.id, conference.title)
-                        }
-                        disabled={isProcessing}
-                        className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
+                      <EntityActionsMenu
+                        actions={[
+                          {
+                            id: `edit-${conference.id}`,
+                            label: "Edit",
+                            href: `/admin/conferences/${conference.id}/edit`,
+                          },
+                          {
+                            id: `products-${conference.id}`,
+                            label: "Manage Products",
+                            href: `/admin/employers/${conference.employerId}/products`,
+                          },
+                          {
+                            id: `status-${conference.id}`,
+                            items: [
+                              {
+                                id: `toggle-${conference.id}`,
+                                label: isActive ? "Deactivate" : "Activate",
+                                onClick: () => toggleConferenceStatus(conference.id, isActive),
+                                variant: isActive ? "warning" : "success",
+                                disabled: isProcessing,
+                              },
+                            ],
+                          },
+                          {
+                            id: `danger-${conference.id}`,
+                            items: [
+                              {
+                                id: `delete-${conference.id}`,
+                                label: "Delete",
+                                onClick: () => {
+                                  openConfirmModal({
+                                    title: "Delete Conference",
+                                    message: `Are you sure you want to delete "${conference.title}"? This action cannot be undone.`,
+                                    variant: "danger",
+                                    confirmText: "Delete",
+                                    onConfirm: () => deleteConference(conference.id, conference.title),
+                                  });
+                                },
+                                variant: "danger",
+                                disabled: isProcessing,
+                              },
+                            ],
+                          },
+                        ]}
+                        processing={isProcessing}
+                      />
                     </div>
                   </div>
                 </div>
@@ -472,6 +505,20 @@ function AdminConferencesContent() {
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={() => {
+          confirmModal.onConfirm();
+          closeConfirmModal();
+        }}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        confirmText={confirmModal.confirmText}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, ReactNode, Fragment } from "react";
+import Link from "next/link";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 
 // ============================================================================
@@ -11,7 +12,8 @@ export interface ActionItem {
   id: string;
   label: string;
   icon?: ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   variant?: "default" | "danger" | "success" | "warning";
   disabled?: boolean;
   hidden?: boolean;
@@ -133,7 +135,7 @@ export function EntityActionsMenu({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            primaryAction.onClick();
+            primaryAction.onClick?.();
           }}
           disabled={processing || primaryAction.disabled || primaryAction.loading}
           className={`inline-flex items-center gap-1.5 rounded-md border font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -235,23 +237,49 @@ function ActionMenuItem({ item, processing, size, onClose }: ActionMenuItemProps
     md: "h-4 w-4",
   };
 
+  const className = `flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+    variantStyles[item.variant || "default"]
+  }`;
+
+  const content = (
+    <>
+      {item.icon && <span className={iconSizeClasses[size]}>{item.icon}</span>}
+      <span>{item.loading ? "Processing..." : item.label}</span>
+    </>
+  );
+
+  // If href is provided, render as a Link
+  if (item.href) {
+    return (
+      <Link
+        href={item.href}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className={className}
+        role="menuitem"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  // Otherwise render as a button
   return (
     <button
       onClick={(e) => {
         e.stopPropagation();
-        if (!item.disabled && !item.loading) {
+        if (!item.disabled && !item.loading && item.onClick) {
           item.onClick();
           onClose();
         }
       }}
       disabled={processing || item.disabled || item.loading}
-      className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        variantStyles[item.variant || "default"]
-      }`}
+      className={className}
       role="menuitem"
     >
-      {item.icon && <span className={iconSizeClasses[size]}>{item.icon}</span>}
-      <span>{item.loading ? "Processing..." : item.label}</span>
+      {content}
     </button>
   );
 }
