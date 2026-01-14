@@ -137,11 +137,9 @@ function CreateDropdown() {
   }, []);
 
   const createOptions = [
-    { label: "Job", href: "/admin/jobs/new", icon: DocumentTextIcon },
-    { label: "Employer", href: "/admin/employers/new", icon: BriefcaseIcon },
-    { label: "Conference", href: "/admin/conferences/new", icon: BuildingOfficeIcon },
-    { label: "Pow Wow", href: "/admin/powwows/new", icon: SparklesIcon },
-    { label: "Vendor", href: "/admin/vendors/new", icon: BuildingStorefrontIcon },
+    { label: "Job", href: "/organization/jobs/new", icon: DocumentTextIcon },
+    { label: "Conference", href: "/organization/conferences/new", icon: BuildingOfficeIcon },
+    { label: "Pow Wow", href: "/organization/powwows/new", icon: SparklesIcon },
   ];
 
   return (
