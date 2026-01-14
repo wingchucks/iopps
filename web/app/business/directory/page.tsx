@@ -90,29 +90,34 @@ export default function BusinessDirectoryPage() {
         });
       }
 
-      // Load services
+      // Load services (wrapped in try/catch to not break vendors if services query fails)
       if (businessType === 'all' || businessType === 'services') {
-        const services = await listServices({
-          region: region || undefined,
-          search: search || undefined,
-        });
-        services.forEach((service: Service) => {
-          results.push({
-            id: service.id,
-            type: 'service',
-            name: service.businessName,
-            tagline: service.tagline,
-            category: service.category,
-            location: service.location,
-            region: service.region,
-            logoUrl: service.logoUrl,
-            coverImageUrl: service.coverImageUrl,
-            featured: service.featured,
-            verified: service.verified,
-            nation: service.nation,
-            servesRemote: service.servesRemote,
+        try {
+          const services = await listServices({
+            region: region || undefined,
+            search: search || undefined,
           });
-        });
+          services.forEach((service: Service) => {
+            results.push({
+              id: service.id,
+              type: 'service',
+              name: service.businessName,
+              tagline: service.tagline,
+              category: service.category,
+              location: service.location,
+              region: service.region,
+              logoUrl: service.logoUrl,
+              coverImageUrl: service.coverImageUrl,
+              featured: service.featured,
+              verified: service.verified,
+              nation: service.nation,
+              servesRemote: service.servesRemote,
+            });
+          });
+        } catch (servicesError) {
+          console.error('Failed to load services:', servicesError);
+          // Continue with vendors only
+        }
       }
 
       // Sort: featured first, then alphabetically
