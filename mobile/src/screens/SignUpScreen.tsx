@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from "react-native";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { sendEmailVerification } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
 
@@ -52,9 +53,20 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
           role: "user",
           createdAt: serverTimestamp(),
         });
+
+        // Send email verification
+        try {
+          await sendEmailVerification(auth.currentUser);
+        } catch (verifyError) {
+          console.error("Failed to send verification email:", verifyError);
+        }
       }
 
-      navigation.goBack();
+      Alert.alert(
+        "Account Created",
+        "We've sent a verification email to your address. Please verify your email to access all features.",
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
     } catch (error: any) {
       let message = "Failed to create account";
       if (error.code === "auth/email-already-in-use") {

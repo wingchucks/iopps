@@ -51,6 +51,7 @@ import NotificationsScreen from "./src/screens/NotificationsScreen";
 import EmployerDashboardScreen from "./src/screens/EmployerDashboardScreen";
 import EmployerApplicationsScreen from "./src/screens/EmployerApplicationsScreen";
 import EmployerJobsScreen from "./src/screens/EmployerJobsScreen";
+import ApplicationDetailScreen from "./src/screens/ApplicationDetailScreen";
 import VendorDashboardScreen from "./src/screens/VendorDashboardScreen";
 
 // Tab icon components with badge support
@@ -138,6 +139,7 @@ const linking: LinkingOptions<any> = {
       Conversation: "conversation/:conversationId",
       Notifications: "notifications",
       Applications: "applications",
+      ApplicationDetail: "application/:applicationId",
       SavedJobs: "saved-jobs",
       JobAlerts: "job-alerts",
       EditProfile: "edit-profile",
@@ -404,6 +406,14 @@ function RootNavigator() {
         options={{
           title: "My Job Postings",
           headerBackTitle: "Dashboard",
+        }}
+      />
+      <Stack.Screen
+        name="ApplicationDetail"
+        component={ApplicationDetailScreen}
+        options={{
+          title: "Application Details",
+          headerBackTitle: "Back",
         }}
       />
 

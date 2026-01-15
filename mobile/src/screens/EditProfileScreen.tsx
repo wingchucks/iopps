@@ -41,6 +41,32 @@ export default function EditProfileScreen() {
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
   const [resumeName, setResumeName] = useState<string | null>(null);
 
+  // Validation constants
+  const MAX_DISPLAY_NAME = 50;
+  const MAX_PHONE = 20;
+  const MAX_LOCATION = 100;
+  const MAX_BIO = 500;
+  const MAX_URL = 200;
+
+  // URL validation helper
+  const isValidUrl = (url: string): boolean => {
+    if (!url.trim()) return true; // Empty is valid (optional field)
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
+  // Phone validation helper (accepts various formats)
+  const isValidPhone = (phoneNum: string): boolean => {
+    if (!phoneNum.trim()) return true; // Empty is valid (optional field)
+    // Accept digits, spaces, dashes, parentheses, and + for international
+    const phoneRegex = /^[+]?[\d\s()-]{7,20}$/;
+    return phoneRegex.test(phoneNum);
+  };
+
   useEffect(() => {
     loadProfile();
   }, [user]);
@@ -140,6 +166,38 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!user) return;
+
+    // Validate inputs
+    const errors: string[] = [];
+
+    if (displayName.length > MAX_DISPLAY_NAME) {
+      errors.push(`Display name must be ${MAX_DISPLAY_NAME} characters or less`);
+    }
+
+    if (!isValidPhone(phone)) {
+      errors.push("Please enter a valid phone number");
+    }
+
+    if (location.length > MAX_LOCATION) {
+      errors.push(`Location must be ${MAX_LOCATION} characters or less`);
+    }
+
+    if (bio.length > MAX_BIO) {
+      errors.push(`Bio must be ${MAX_BIO} characters or less`);
+    }
+
+    if (linkedIn.trim() && !isValidUrl(linkedIn)) {
+      errors.push("Please enter a valid LinkedIn URL (e.g., https://linkedin.com/in/yourprofile)");
+    }
+
+    if (website.trim() && !isValidUrl(website)) {
+      errors.push("Please enter a valid website URL (e.g., https://yourwebsite.com)");
+    }
+
+    if (errors.length > 0) {
+      Alert.alert("Validation Error", errors.join("\n\n"));
+      return;
+    }
 
     setSaving(true);
     try {
@@ -265,7 +323,9 @@ export default function EditProfileScreen() {
             placeholder="Enter your name"
             placeholderTextColor="#64748B"
             autoCapitalize="words"
+            maxLength={MAX_DISPLAY_NAME}
           />
+          <Text style={styles.charCount}>{displayName.length}/{MAX_DISPLAY_NAME}</Text>
         </View>
 
         {/* Phone */}
@@ -278,6 +338,7 @@ export default function EditProfileScreen() {
             placeholder="(555) 555-5555"
             placeholderTextColor="#64748B"
             keyboardType="phone-pad"
+            maxLength={MAX_PHONE}
           />
         </View>
 
@@ -290,6 +351,7 @@ export default function EditProfileScreen() {
             onChangeText={setLocation}
             placeholder="City, Province"
             placeholderTextColor="#64748B"
+            maxLength={MAX_LOCATION}
           />
         </View>
 
@@ -305,8 +367,11 @@ export default function EditProfileScreen() {
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            maxLength={MAX_BIO}
           />
-          <Text style={styles.charCount}>{bio.length}/500</Text>
+          <Text style={[styles.charCount, bio.length >= MAX_BIO && styles.charCountLimit]}>
+            {bio.length}/{MAX_BIO}
+          </Text>
         </View>
 
         {/* Resume Upload */}
@@ -340,7 +405,9 @@ export default function EditProfileScreen() {
             placeholderTextColor="#64748B"
             keyboardType="url"
             autoCapitalize="none"
+            maxLength={MAX_URL}
           />
+          <Text style={styles.fieldHint}>Include full URL with https://</Text>
         </View>
 
         {/* Website */}
@@ -354,7 +421,9 @@ export default function EditProfileScreen() {
             placeholderTextColor="#64748B"
             keyboardType="url"
             autoCapitalize="none"
+            maxLength={MAX_URL}
           />
+          <Text style={styles.fieldHint}>Include full URL with https://</Text>
         </View>
 
         {/* Action Buttons */}
@@ -530,6 +599,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
     marginTop: 4,
+  },
+  charCountLimit: {
+    color: "#F59E0B",
   },
 
 

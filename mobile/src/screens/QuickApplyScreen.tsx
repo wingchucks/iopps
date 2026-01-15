@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import {
   collection,
@@ -24,7 +25,9 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../lib/firebase";
+import { getUserProfile } from "../lib/firestore";
 import { logger } from "../lib/logger";
+import type { UserProfile } from "../types";
 
 interface QuickApplyScreenProps {
   route: any;
@@ -36,6 +39,26 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
   const { user } = useAuth();
   const [coverLetter, setCoverLetter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) {
+        setProfileLoading(false);
+        return;
+      }
+      try {
+        const data = await getUserProfile(user.uid);
+        setProfile(data);
+      } catch (error) {
+        logger.error("Error loading profile for Quick Apply:", error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    loadProfile();
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!user) {
@@ -85,8 +108,11 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
         memberId: user.uid,
         employerId,
         memberEmail: user.email || "",
-        memberDisplayName: user.displayName || "",
+        memberDisplayName: profile?.displayName || user.displayName || "",
+        memberPhone: profile?.phone || "",
         coverLetter: coverLetter.trim(),
+        resumeUrl: profile?.resumeUrl || null,
+        resumeName: profile?.resumeName || null,
         status: "submitted",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -117,6 +143,15 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
     }
   };
 
+  if (profileLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#14B8A6" />
+        <Text style={styles.loadingText}>Loading your profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
@@ -133,6 +168,39 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
             editable={false}
             placeholderTextColor="#64748B"
           />
+        </View>
+
+        {/* Resume Section */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Resume</Text>
+          {profile?.resumeUrl ? (
+            <View style={styles.resumeAttached}>
+              <Text style={styles.resumeIcon}>📄</Text>
+              <View style={styles.resumeInfo}>
+                <Text style={styles.resumeName} numberOfLines={1}>
+                  {profile.resumeName || "Resume attached"}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => profile.resumeUrl && Linking.openURL(profile.resumeUrl)}
+                >
+                  <Text style={styles.resumeViewLink}>View resume</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.resumeCheckmark}>✓</Text>
+            </View>
+          ) : (
+            <View style={styles.noResume}>
+              <Text style={styles.noResumeIcon}>📎</Text>
+              <View style={styles.noResumeContent}>
+                <Text style={styles.noResumeText}>No resume on file</Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("EditProfile" as never)}
+                >
+                  <Text style={styles.addResumeLink}>Add resume in profile →</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
 
         <View style={styles.inputGroup}>
@@ -170,12 +238,14 @@ export default function QuickApplyScreen({ route, navigation }: QuickApplyScreen
         </TouchableOpacity>
       </View>
 
-      <View style={styles.infoBox}>
-        <Text style={styles.infoText}>
-          Note: For the best results, attach your resume and provide a detailed
-          cover letter explaining your qualifications and interest in this position.
-        </Text>
-      </View>
+      {!profile?.resumeUrl && (
+        <View style={styles.warningBox}>
+          <Text style={styles.warningIcon}>⚠️</Text>
+          <Text style={styles.warningText}>
+            Applications with a resume are more likely to get responses. Consider adding one to your profile.
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -187,6 +257,17 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#94A3B8",
+    marginTop: 12,
+    fontSize: 14,
   },
   header: {
     marginBottom: 24,
@@ -250,16 +331,80 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
-  infoBox: {
-    backgroundColor: "#1E293B",
-    padding: 16,
+  // Resume section styles
+  resumeAttached: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#14B8A620",
+    borderWidth: 1,
+    borderColor: "#14B8A640",
     borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#14B8A6",
+    padding: 16,
   },
-  infoText: {
+  resumeIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  resumeInfo: {
+    flex: 1,
+  },
+  resumeName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#F8FAFC",
+    marginBottom: 2,
+  },
+  resumeViewLink: {
     fontSize: 13,
-    color: "#CBD5E1",
+    color: "#14B8A6",
+  },
+  resumeCheckmark: {
+    fontSize: 18,
+    color: "#14B8A6",
+  },
+  noResume: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E293B",
+    borderWidth: 1,
+    borderColor: "#334155",
+    borderRadius: 12,
+    padding: 16,
+  },
+  noResumeIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  noResumeContent: {
+    flex: 1,
+  },
+  noResumeText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    marginBottom: 2,
+  },
+  addResumeLink: {
+    fontSize: 13,
+    color: "#14B8A6",
+    fontWeight: "500",
+  },
+  warningBox: {
+    flexDirection: "row",
+    backgroundColor: "#F59E0B20",
+    borderWidth: 1,
+    borderColor: "#F59E0B40",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+  },
+  warningIcon: {
+    fontSize: 16,
+    marginRight: 12,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#FDE68A",
     lineHeight: 20,
   },
 });

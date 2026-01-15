@@ -116,7 +116,15 @@ export default function EmployerApplicationsScreen() {
   ];
 
   const renderApplication = ({ item }: { item: JobApplication }) => (
-    <View style={styles.applicationCard}>
+    <TouchableOpacity
+      style={styles.applicationCard}
+      onPress={() =>
+        (navigation as any).navigate("ApplicationDetail", {
+          applicationId: item.id,
+        })
+      }
+      activeOpacity={0.7}
+    >
       <View style={styles.applicationHeader}>
         <View style={styles.applicantInfo}>
           <View style={styles.avatar}>
@@ -234,7 +242,7 @@ export default function EmployerApplicationsScreen() {
           <Text style={styles.actionButtonText}>Message</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {

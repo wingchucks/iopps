@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   Linking,
+  RefreshControl,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
@@ -32,6 +33,8 @@ export default function ProfileScreen() {
     refreshAccountState,
   } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   // Reload profile when screen comes into focus
   useFocusEffect(
@@ -46,11 +49,23 @@ export default function ProfileScreen() {
 
   const loadProfile = async () => {
     if (!user) return;
+    setLoadError(false);
     try {
       const data = await getUserProfile(user.uid);
       setProfile(data);
     } catch (error) {
       logger.error("Error loading profile:", error);
+      setLoadError(true);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadProfile();
+      await refreshAccountState();
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -86,6 +101,9 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.signInButton}
             onPress={() => (navigation as any).navigate("SignIn")}
+            accessibilityLabel="Sign in to your account"
+            accessibilityRole="button"
+            testID="profile-signin-button"
           >
             <Text style={styles.signInButtonText}>Sign In</Text>
           </TouchableOpacity>
@@ -93,6 +111,9 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.signUpButton}
             onPress={() => (navigation as any).navigate("SignUp")}
+            accessibilityLabel="Create a new account"
+            accessibilityRole="button"
+            testID="profile-signup-button"
           >
             <Text style={styles.signUpButtonText}>Create Account</Text>
           </TouchableOpacity>
@@ -129,7 +150,29 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor="#14B8A6"
+          colors={["#14B8A6"]}
+        />
+      }
+    >
+      {/* Error Banner */}
+      {loadError && (
+        <TouchableOpacity style={styles.errorBanner} onPress={handleRefresh}>
+          <Text style={styles.errorBannerIcon}>⚠️</Text>
+          <View style={styles.errorBannerContent}>
+            <Text style={styles.errorBannerTitle}>Failed to load profile</Text>
+            <Text style={styles.errorBannerText}>Tap to retry</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Pending Employer Banner */}
       {isEmployerPending && (
         <View style={styles.pendingBanner}>
@@ -154,10 +197,10 @@ export default function ProfileScreen() {
             <Text style={styles.avatarText}>{avatarLetter}</Text>
           </View>
         )}
-        <Text style={styles.displayName}>{displayName}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+        <Text style={styles.displayName} numberOfLines={1} ellipsizeMode="tail">{displayName}</Text>
+        <Text style={styles.email} numberOfLines={1} ellipsizeMode="middle">{user.email}</Text>
         {profile?.location && (
-          <Text style={styles.location}>📍 {profile.location}</Text>
+          <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">📍 {profile.location}</Text>
         )}
         <View style={getRoleBadgeStyle()}>
           <Text style={[styles.roleText, isEmployerPending && styles.roleTextPending]}>
@@ -220,6 +263,9 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => (navigation as any).navigate("EditProfile")}
+            accessibilityLabel="Edit Profile"
+            accessibilityRole="button"
+            testID="profile-edit-button"
           >
             <Text style={styles.menuItemIcon}>✏️</Text>
             <Text style={styles.menuItemText}>Edit Profile</Text>
@@ -229,6 +275,9 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => (navigation as any).navigate("SavedJobs")}
+            accessibilityLabel="Saved Jobs"
+            accessibilityRole="button"
+            testID="profile-saved-jobs"
           >
             <Text style={styles.menuItemIcon}>🔖</Text>
             <Text style={styles.menuItemText}>Saved Jobs</Text>
@@ -238,6 +287,9 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => (navigation as any).navigate("Applications")}
+            accessibilityLabel="My Applications"
+            accessibilityRole="button"
+            testID="profile-applications"
           >
             <Text style={styles.menuItemIcon}>📋</Text>
             <Text style={styles.menuItemText}>My Applications</Text>
@@ -247,6 +299,9 @@ export default function ProfileScreen() {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => (navigation as any).navigate("JobAlerts")}
+            accessibilityLabel="Job Alerts"
+            accessibilityRole="button"
+            testID="profile-job-alerts"
           >
             <Text style={styles.menuItemIcon}>🔔</Text>
             <Text style={styles.menuItemText}>Job Alerts</Text>
@@ -313,11 +368,17 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+      <TouchableOpacity
+        style={styles.signOutButton}
+        onPress={handleSignOut}
+        accessibilityLabel="Sign out of your account"
+        accessibilityRole="button"
+        testID="profile-signout-button"
+      >
         <Text style={styles.signOutButtonText}>Sign Out</Text>
       </TouchableOpacity>
 
-      <Text style={styles.version}>IOPPS Mobile v1.2.0</Text>
+      <Text style={styles.version} accessibilityLabel="App version 1.2.0">IOPPS Mobile v1.2.0</Text>
     </ScrollView>
   );
 }
@@ -561,5 +622,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#475569",
     textAlign: "center",
+  },
+  // Error Banner
+  errorBanner: {
+    flexDirection: "row",
+    backgroundColor: "#EF444420",
+    borderWidth: 1,
+    borderColor: "#EF444440",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  errorBannerIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  errorBannerContent: {
+    flex: 1,
+  },
+  errorBannerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FCA5A5",
+    marginBottom: 4,
+  },
+  errorBannerText: {
+    fontSize: 14,
+    color: "#FCA5A5",
   },
 });
