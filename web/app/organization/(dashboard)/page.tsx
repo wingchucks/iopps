@@ -249,10 +249,10 @@ export default function OrganizationDashboardHome() {
 
   // Profile completion actions
   if (!profile?.logoUrl) {
-    actions.push({ title: 'Add your logo', description: 'Help people recognize your organization', href: '/organization/profile', icon: EyeIcon });
+    actions.push({ title: 'Add your logo', description: 'Help people recognize your organization', href: '/organization/onboarding', icon: EyeIcon });
   }
   if (!profile?.description) {
-    actions.push({ title: 'Complete your profile', description: 'Tell your story to potential connections', href: '/organization/profile', icon: DocumentTextIcon });
+    actions.push({ title: 'Complete your profile', description: 'Tell your story to potential connections', href: '/organization/onboarding', icon: DocumentTextIcon });
   }
 
   // Module-specific actions

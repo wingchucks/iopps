@@ -249,7 +249,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             </button>
             {canEdit && (
               <Link
-                href="/organization/profile"
+                href="/organization/onboarding"
                 className="flex items-center gap-1.5 rounded-full bg-teal-500 px-3 py-1.5 text-sm text-white hover:bg-teal-600 transition-colors"
               >
                 <PencilIcon className="h-4 w-4" />
