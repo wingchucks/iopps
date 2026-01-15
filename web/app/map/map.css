@@ -18,3 +18,126 @@
 .dark .leaflet-control-attribution a {
   color: #ccc;
 }
+
+/* Custom Popup Styles */
+.map-popup .leaflet-popup-content-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.map-popup .leaflet-popup-content {
+  margin: 16px;
+  min-width: 240px;
+  max-width: 300px;
+}
+
+.map-popup .leaflet-popup-tip {
+  background: white;
+}
+
+.map-popup .leaflet-popup-close-button {
+  color: #64748b;
+  font-size: 20px;
+  padding: 8px;
+  top: 4px;
+  right: 4px;
+}
+
+.map-popup .leaflet-popup-close-button:hover {
+  color: #1e293b;
+}
+
+/* Custom Marker Styles */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-marker svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: transform 0.15s ease;
+}
+
+.custom-marker:hover svg {
+  transform: scale(1.1);
+}
+
+/* Cluster Styles */
+.marker-cluster-custom {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* User Location Marker */
+.user-location-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Control buttons positioning */
+.leaflet-bottom.leaflet-left {
+  bottom: 20px;
+  left: 10px;
+}
+
+/* Hide scrollbar for mobile filters */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Attribution styling */
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.8) !important;
+  padding: 2px 6px;
+}
+
+/* Zoom controls */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-control-zoom a {
+  background: white !important;
+  color: #374151 !important;
+  border: none !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-size: 18px !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #f3f4f6 !important;
+}
+
+.leaflet-control-zoom-in {
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.leaflet-control-zoom-out {
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .map-popup .leaflet-popup-content {
+    margin: 12px;
+    min-width: 200px;
+    max-width: 260px;
+  }
+
+  .leaflet-control-zoom a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+  }
+}
