@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type {
@@ -35,7 +35,23 @@ const defaultCounts = {
   } as Record<MapContentType, number>,
 };
 
-export default function MapPage() {
+// Loading fallback for Suspense
+function MapLoading() {
+  return (
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-slate-900">
+      <div className="border-b border-slate-800 bg-slate-900 px-6 py-4">
+        <h1 className="text-xl font-bold text-white">Opportunity Map</h1>
+        <p className="text-sm text-slate-400">Loading...</p>
+      </div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      </div>
+    </div>
+  );
+}
+
+// Inner component that uses useSearchParams
+function MapPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -68,19 +84,6 @@ export default function MapPage() {
       setError("Failed to load opportunities. Please try again later.");
     } finally {
       setLoading(false);
-    }
-  }, []);
-
-  // Initial load - fetch all, use cached counts for filter display
-  const fetchAllCounts = useCallback(async () => {
-    try {
-      const response = await fetch("/api/map/opportunities");
-      if (response.ok) {
-        const data: MapOpportunitiesResponse = await response.json();
-        setCounts(data.counts);
-      }
-    } catch (err) {
-      console.error("Error fetching counts:", err);
     }
   }, []);
 
@@ -168,5 +171,14 @@ export default function MapPage() {
         />
       </div>
     </div>
+  );
+}
+
+// Export wrapped in Suspense boundary for useSearchParams
+export default function MapPage() {
+  return (
+    <Suspense fallback={<MapLoading />}>
+      <MapPageContent />
+    </Suspense>
   );
 }
