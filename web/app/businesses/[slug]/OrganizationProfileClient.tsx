@@ -88,6 +88,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const { user, role, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [copied, setCopied] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Check if current user is owner or admin
   const isOwner = user?.uid === org.userId;
@@ -101,9 +102,22 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   useEffect(() => {
     if (!loading && isPrivateProfile && !canEdit) {
       // User logged out or doesn't have access - redirect to businesses list
+      setIsRedirecting(true);
       router.replace('/businesses');
     }
   }, [loading, isPrivateProfile, canEdit, router]);
+
+  // Show nothing while redirecting or if user doesn't have access to private profile
+  if (isRedirecting || (!loading && isPrivateProfile && !canEdit)) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-teal-500 border-r-transparent"></div>
+          <p className="mt-4 text-slate-400">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Determine which tabs should be shown
   const enabledModules = org.enabledModules || [];
