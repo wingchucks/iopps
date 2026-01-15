@@ -314,7 +314,7 @@ function GlobalSearchContent() {
                   {results.powwows.map((powwow) => (
                     <Link
                       key={powwow.id}
-                      href={`/community/powwows/${powwow.id}`}
+                      href={`/community/${powwow.id}`}
                       className="block rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30 transition-all hover:-translate-y-1 hover:border-[#14B8A6]/70"
                     >
                       <h3 className="text-xl font-semibold text-white">

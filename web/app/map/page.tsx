@@ -141,7 +141,7 @@ export default function MapPage() {
                             location: powwow.location,
                             lat: coords.lat,
                             lng: coords.lng,
-                            url: `/community/powwows/${powwow.id}`,
+                            url: `/community/${powwow.id}`,
                         });
                     }
                 });
