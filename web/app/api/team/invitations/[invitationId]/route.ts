@@ -6,6 +6,9 @@ import type { TeamMember } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// Token must be a 64-character hexadecimal string
+const TOKEN_REGEX = /^[a-f0-9]{64}$/i;
+
 // POST - Accept or decline invitation
 export async function POST(
   request: NextRequest,
@@ -23,8 +26,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const token = authHeader.split("Bearer ")[1];
-    const decodedToken = await auth.verifyIdToken(token);
+    const authToken = authHeader.split("Bearer ")[1];
+    const decodedToken = await auth.verifyIdToken(authToken);
     const userId = decodedToken.uid;
     const userEmail = decodedToken.email;
     const displayName = decodedToken.name;
@@ -34,7 +37,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { action } = body; // "accept" or "decline"
+    const { action, token: inviteToken } = body; // action: "accept" or "decline", token: optional invite token
 
     if (!action || !["accept", "decline"].includes(action)) {
       return NextResponse.json(
@@ -52,6 +55,16 @@ export async function POST(
     }
 
     const invitation = invitationDoc.data();
+
+    // Validate token if provided (adds extra security layer)
+    if (inviteToken) {
+      if (!TOKEN_REGEX.test(inviteToken)) {
+        return NextResponse.json({ error: "Invalid token format" }, { status: 400 });
+      }
+      if (invitation?.token !== inviteToken) {
+        return NextResponse.json({ error: "Invalid invitation token" }, { status: 403 });
+      }
+    }
 
     // Verify invitation is for this user
     if (invitation?.invitedEmail.toLowerCase() !== userEmail.toLowerCase()) {

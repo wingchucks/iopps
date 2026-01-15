@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
       const existingData = employerDoc.data();
       slug = existingData?.slug || generateUniqueSlug(organizationName);
       const currentStatus = existingData?.status || "pending";
+      const isApproved = currentStatus === "approved";
 
       await employerRef.update({
         organizationName,
@@ -101,11 +102,11 @@ export async function POST(req: NextRequest) {
         logoUrl: logoUrl || "",
         links: { website: website || "" },
         enabledModules: enabledModules || [],
-        // Don't auto-approve - preserve current status (requires admin approval)
-        // Profile will be publicly visible only after admin approves
-        publicationStatus: "PUBLISHED",
-        directoryVisible: currentStatus === "approved", // Only visible if already approved
-        publishedAt: now,
+        // Only set PUBLISHED status if employer is already approved
+        // Unapproved employers stay in DRAFT/PENDING status until admin approval
+        publicationStatus: isApproved ? "PUBLISHED" : "PENDING_APPROVAL",
+        directoryVisible: isApproved, // Only visible if already approved
+        publishedAt: isApproved ? now : existingData?.publishedAt || null,
         updatedAt: now,
       });
     } else {
@@ -124,14 +125,19 @@ export async function POST(req: NextRequest) {
         logoUrl: logoUrl || "",
         links: { website: website || "" },
         enabledModules: enabledModules || [],
-        publicationStatus: "PUBLISHED",
+        publicationStatus: "PENDING_APPROVAL", // New profiles require admin approval
         directoryVisible: false, // Not visible until admin approves
         status: "pending", // Requires admin approval
-        publishedAt: now,
+        publishedAt: null, // Only set after admin approval
         createdAt: now,
         updatedAt: now,
       });
     }
+
+    // Determine if employer is approved for directory visibility
+    const isApproved = employerDoc.exists
+      ? (employerDoc.data()?.status || "pending") === "approved"
+      : false;
 
     // Update directory index
     const directoryEntry = {
@@ -154,7 +160,7 @@ export async function POST(req: NextRequest) {
         : "WEBSITE",
       logoUrl: logoUrl || null,
       isIndigenousOwned: orgType === "INDIGENOUS_BUSINESS",
-      directoryVisible: true,
+      directoryVisible: isApproved, // Only visible if employer is approved
       counts: {
         jobsCount: 0,
         programsCount: 0,

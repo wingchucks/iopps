@@ -134,7 +134,9 @@ async function VendorPage({ params, searchParams }: Props) {
 
   // Only increment view count for active vendors (not previews)
   if (vendor.status === 'active') {
-    incrementVendorViews(vendor.id).catch(() => { });
+    incrementVendorViews(vendor.id).catch((err) => {
+      console.warn("Failed to track vendor view:", err);
+    });
   }
 
   // Get vendor products

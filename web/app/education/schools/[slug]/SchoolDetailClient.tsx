@@ -33,10 +33,12 @@ export default function SchoolDetailClient({
   const scholarships = initialScholarships;
   const events = initialEvents;
 
-  // Track views
+  // Track views (non-critical, log errors but don't fail)
   useEffect(() => {
     if (school?.id) {
-      incrementSchoolViews(school.id).catch(() => { });
+      incrementSchoolViews(school.id).catch((err) => {
+        console.warn("Failed to track school view:", err);
+      });
     }
   }, [school?.id]);
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
 import type { ApplicationStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +9,15 @@ export const runtime = "nodejs";
 
 // POST - Bulk update application statuses
 export async function POST(request: NextRequest) {
+  // Rate limiting for bulk operations
+  const rateLimitResult = rateLimiters.bulk(request);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: rateLimitResult.retryAfter },
+      { status: 429, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
+
   try {
     if (!auth || !db) {
       return NextResponse.json({ error: "Server configuration error" }, { status: 503 });

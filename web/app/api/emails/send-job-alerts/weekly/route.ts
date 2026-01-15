@@ -27,6 +27,18 @@ export async function GET(request: NextRequest) {
     body: JSON.stringify({ frequency: "weekly" }),
   });
 
-  const data = await response.json();
+  // Handle JSON parse errors gracefully
+  let data;
+  try {
+    const text = await response.text();
+    data = text ? JSON.parse(text) : { error: "Empty response" };
+  } catch (parseError) {
+    console.error("Failed to parse job alerts response:", parseError);
+    return NextResponse.json(
+      { error: "Failed to parse response from job alerts handler" },
+      { status: 502 }
+    );
+  }
+
   return NextResponse.json(data, { status: response.status });
 }

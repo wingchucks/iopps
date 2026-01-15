@@ -32,8 +32,10 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
     async function loadRelatedData() {
       if (!program) return;
 
-      // Track view
-      incrementProgramViews(program.id).catch(() => {});
+      // Track view (non-critical, log errors but don't fail)
+      incrementProgramViews(program.id).catch((err) => {
+        console.warn("Failed to track program view:", err);
+      });
 
       // Load school
       if (program.schoolId) {

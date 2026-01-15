@@ -32,12 +32,14 @@ export default function ContactPage() {
         message,
       });
 
-      // Notify admin of new contact form submission
+      // Notify admin of new contact form submission (non-critical)
       fetch("/api/admin/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "new_contact", contactName: name, contactEmail: email, subject, message }),
-      }).catch(() => {});
+      }).catch((err) => {
+        console.warn("Failed to send admin notification:", err);
+      });
 
       setSuccess(true);
       setName("");

@@ -15,8 +15,10 @@ interface GrantDetailClientProps {
 export default function GrantDetailClient({ grant, error }: GrantDetailClientProps) {
   useEffect(() => {
     if (grant) {
-      // Track view
-      incrementGrantViews(grant.id).catch(() => {});
+      // Track view (non-critical, log errors but don't fail)
+      incrementGrantViews(grant.id).catch((err) => {
+        console.warn("Failed to track grant view:", err);
+      });
     }
   }, [grant]);
 

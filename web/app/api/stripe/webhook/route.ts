@@ -6,7 +6,7 @@ import { notifyAdmin } from "@/lib/admin-notifications";
 // Mark this route as dynamic to prevent static analysis
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 30; // 30 second timeout
+export const maxDuration = 60; // 60 second timeout for complex webhook operations
 
 //  Lazy-load firebase-admin to prevent build-time initialization errors
 function getFirebaseAdmin() {

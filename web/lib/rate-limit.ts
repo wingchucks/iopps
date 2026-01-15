@@ -144,6 +144,9 @@ export const rateLimiters = {
 
   // File upload: 10 uploads per hour
   upload: createRateLimiter({ windowMs: 3600000, maxRequests: 10 }),
+
+  // Bulk operations: 5 requests per minute (to prevent abuse)
+  bulk: createRateLimiter({ windowMs: 60000, maxRequests: 5 }),
 };
 
 /**
