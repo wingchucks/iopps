@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -83,7 +84,8 @@ const ORG_TYPE_ICONS: Record<OrgType, typeof BuildingOffice2Icon> = {
 };
 
 export function OrganizationProfileClient({ organization: org }: Props) {
-  const { user, role } = useAuth();
+  const router = useRouter();
+  const { user, role, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [copied, setCopied] = useState(false);
 
@@ -91,6 +93,17 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const isOwner = user?.uid === org.userId;
   const isAdmin = role === 'admin';
   const canEdit = isOwner || isAdmin;
+
+  // Check if profile requires authentication to view
+  const isPrivateProfile = org.publicationStatus !== 'PUBLISHED' || org.status !== 'approved';
+
+  // Redirect if user logs out while viewing a private profile
+  useEffect(() => {
+    if (!loading && isPrivateProfile && !canEdit) {
+      // User logged out or doesn't have access - redirect to businesses list
+      router.replace('/businesses');
+    }
+  }, [loading, isPrivateProfile, canEdit, router]);
 
   // Determine which tabs should be shown
   const enabledModules = org.enabledModules || [];
