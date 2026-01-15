@@ -9,6 +9,7 @@ import type { JobTemplate } from "@/lib/types";
 import { getActiveSubscriptionProduct } from "@/lib/firestore/employer-products";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
 import { DatePicker } from "@/components/ui/date-picker";
+import toast from "react-hot-toast";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -183,7 +184,7 @@ function NewJobPageContent() {
       setTemplateName("");
     } catch (err) {
       console.error("Failed to save template:", err);
-      alert("Failed to save template. Please try again.");
+      toast.error("Failed to save template. Please try again.");
     } finally {
       setSavingTemplate(false);
     }
@@ -316,7 +317,7 @@ function NewJobPageContent() {
   };
 
   const generateWithAI = async () => {
-    if (!formData.title) return alert("Please enter a job title first.");
+    if (!formData.title) return toast.error("Please enter a job title first.");
     setAiGenerating(true);
     try {
       const response = await fetch("/api/ai/job-description", {
@@ -339,7 +340,7 @@ function NewJobPageContent() {
         qualifications: Array.isArray(data.qualifications) ? data.qualifications.join("\n") : prev.qualifications,
       }));
     } catch (e) {
-      alert("Failed to generate description. Please try again.");
+      toast.error("Failed to generate description. Please try again.");
     } finally {
       setAiGenerating(false);
     }

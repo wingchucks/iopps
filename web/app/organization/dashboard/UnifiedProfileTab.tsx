@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import {
   PhotoIcon,
   XMarkIcon,
@@ -163,7 +164,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
     if (!user) return;
 
     if (!organizationName.trim()) {
-      alert('Organization/Business name is required.');
+      toast.error('Organization/Business name is required.');
       return;
     }
 
@@ -209,12 +210,12 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
         await createVendor(user.uid, vendorData);
       }
 
-      alert('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
       await loadData();
     } catch (err: unknown) {
       console.error('Error saving profile:', err);
       const message = err instanceof Error ? err.message : 'Unknown error';
-      alert(`Failed to save profile: ${message}`);
+      toast.error(`Failed to save profile: ${message}`);
     } finally {
       setSaving(false);
     }
@@ -226,18 +227,18 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
 
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please upload a PNG, JPG, GIF, or WebP image.');
+      toast.error('Please upload a PNG, JPG, GIF, or WebP image.');
       return;
     }
 
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert('Please upload an image smaller than 5MB.');
+      toast.error('Please upload an image smaller than 5MB.');
       return;
     }
 
     if (!storage) {
-      alert('Storage service is not available.');
+      toast.error('Storage service is not available.');
       return;
     }
 
@@ -249,10 +250,10 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
       const url = await getDownloadURL(storageRef);
       setLogoUrl(url);
       await updateEmployerLogo(user.uid, url);
-      alert('Logo uploaded successfully!');
+      toast.success('Logo uploaded successfully!');
     } catch (err: unknown) {
       console.error('Error uploading logo:', err);
-      alert('Failed to upload logo. Please try again.');
+      toast.error('Failed to upload logo. Please try again.');
     } finally {
       setUploadingLogo(false);
     }
@@ -264,18 +265,18 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
 
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please upload a PNG, JPG, GIF, or WebP image.');
+      toast.error('Please upload a PNG, JPG, GIF, or WebP image.');
       return;
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert('Please upload an image smaller than 10MB.');
+      toast.error('Please upload an image smaller than 10MB.');
       return;
     }
 
     if (!storage) {
-      alert('Storage service is not available.');
+      toast.error('Storage service is not available.');
       return;
     }
 
@@ -287,10 +288,10 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
       const url = await getDownloadURL(storageRef);
       setBannerUrl(url);
       await updateEmployerBanner(user.uid, url);
-      alert('Cover image uploaded successfully!');
+      toast.success('Cover image uploaded successfully!');
     } catch (err: unknown) {
       console.error('Error uploading banner:', err);
-      alert('Failed to upload cover image. Please try again.');
+      toast.error('Failed to upload cover image. Please try again.');
     } finally {
       setUploadingBanner(false);
     }

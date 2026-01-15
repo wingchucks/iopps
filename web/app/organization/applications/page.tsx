@@ -17,6 +17,7 @@ import type {
   JobApplication,
   JobPosting,
 } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function ApplicationsInboxPage() {
   const { user, role, loading } = useAuth();
@@ -161,7 +162,7 @@ export default function ApplicationsInboxPage() {
       router.push(`/organization/messages?id=${conversation.id}`);
     } catch (err) {
       console.error("Error starting conversation:", err);
-      alert("Failed to start conversation. Please try again.");
+      toast.error("Failed to start conversation. Please try again.");
     }
   };
 
@@ -233,7 +234,7 @@ export default function ApplicationsInboxPage() {
       : filteredApps;
 
     if (appsToExport.length === 0) {
-      alert("No applications to export");
+      toast.error("No applications to export");
       return;
     }
 

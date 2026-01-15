@@ -26,6 +26,7 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { POWWOW_EVENT_TYPES, PowwowEventType } from "@/lib/types";
+import toast from "react-hot-toast";
 
 type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
@@ -170,7 +171,7 @@ export default function EventsTab() {
       await loadData();
     } catch (err) {
       console.error("Error toggling event status:", err);
-      alert("Failed to update event status");
+      toast.error("Failed to update event status");
     }
   };
 
@@ -200,7 +201,7 @@ export default function EventsTab() {
       await loadData();
     } catch (err) {
       console.error("Error deleting event:", err);
-      alert(err instanceof Error ? err.message : "Failed to delete event");
+      toast.error(err instanceof Error ? err.message : "Failed to delete event");
     }
   };
 
@@ -213,7 +214,7 @@ export default function EventsTab() {
       await loadData();
     } catch (err) {
       console.error("Error deleting conference:", err);
-      alert("Failed to delete conference");
+      toast.error("Failed to delete conference");
     }
   };
 

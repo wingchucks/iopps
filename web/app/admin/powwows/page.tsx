@@ -25,6 +25,7 @@ import {
 import { db } from "@/lib/firebase";
 import { uploadPowwowImage } from "@/lib/firebase/storage";
 import type { PowwowEvent } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface PowwowWithEmployer extends PowwowEvent {
   employerName?: string;
@@ -161,7 +162,7 @@ function AdminPowwowsContent() {
       );
     } catch (error) {
       console.error("Error toggling pow wow status:", error);
-      alert("Failed to update pow wow status. Please try again.");
+      toast.error("Failed to update pow wow status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -179,7 +180,7 @@ function AdminPowwowsContent() {
       setPowwows((prev) => prev.filter((powwow) => powwow.id !== powwowId));
     } catch (error) {
       console.error("Error deleting pow wow:", error);
-      alert("Failed to delete pow wow. Please try again.");
+      toast.error("Failed to delete pow wow. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -274,7 +275,7 @@ function AdminPowwowsContent() {
     } catch (error) {
       console.error("Error uploading image:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to upload image: ${errorMessage}`);
+      toast.error(`Failed to upload image: ${errorMessage}`);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -309,10 +310,10 @@ function AdminPowwowsContent() {
       );
 
       closeEditModal();
-      alert("Pow wow updated successfully!");
+      toast.success("Pow wow updated successfully!");
     } catch (error) {
       console.error("Error saving pow wow:", error);
-      alert("Failed to save changes. Please try again.");
+      toast.error("Failed to save changes. Please try again.");
     } finally {
       setSaving(false);
     }

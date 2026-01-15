@@ -30,6 +30,7 @@ import {
   StarIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface ConferenceWithEmployer extends Conference {
   employerLogoUrl?: string;
@@ -149,7 +150,7 @@ function AdminConferencesContent() {
       );
     } catch (error) {
       console.error("Error toggling conference status:", error);
-      alert("Failed to update conference status. Please try again.");
+      toast.error("Failed to update conference status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -167,7 +168,7 @@ function AdminConferencesContent() {
       setConferences((prev) => prev.filter((conf) => conf.id !== conferenceId));
     } catch (error) {
       console.error("Error deleting conference:", error);
-      alert("Failed to delete conference. Please try again.");
+      toast.error("Failed to delete conference. Please try again.");
     } finally {
       setProcessing(null);
     }

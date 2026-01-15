@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
@@ -129,10 +130,10 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
         }
       }
 
-      alert("Profile saved successfully!");
+      toast.success("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
-      alert("Error saving profile. Please try again.");
+      toast.error("Error saving profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -146,13 +147,13 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
     // Validate file type
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a PDF or Word document");
+      toast.error("Please upload a PDF or Word document");
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -179,10 +180,10 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
         resumeUrl: url,
       });
 
-      alert("Resume uploaded and saved successfully!");
+      toast.success("Resume uploaded and saved successfully!");
     } catch (error) {
       console.error("Error uploading resume:", error);
-      alert("Error uploading resume. Please try again.");
+      toast.error("Error uploading resume. Please try again.");
     } finally {
       setUploadingResume(false);
     }
@@ -205,10 +206,10 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
       });
 
       setResumeUrl("");
-      alert("Resume deleted successfully!");
+      toast.success("Resume deleted successfully!");
     } catch (error) {
       console.error("Error deleting resume:", error);
-      alert("Error deleting resume. Please try again.");
+      toast.error("Error deleting resume. Please try again.");
     }
   };
 
@@ -220,13 +221,13 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, GIF, or WebP image");
+      toast.error("Please upload a JPG, PNG, GIF, or WebP image");
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size must be less than 5MB");
+      toast.error("Image size must be less than 5MB");
       return;
     }
 
@@ -251,10 +252,10 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
         }
       }
 
-      alert("Profile photo uploaded successfully!");
+      toast.success("Profile photo uploaded successfully!");
     } catch (error) {
       console.error("Error uploading photo:", error);
-      alert("Error uploading photo. Please try again.");
+      toast.error("Error uploading photo. Please try again.");
     } finally {
       setUploadingPhoto(false);
     }
@@ -291,10 +292,10 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
         }
       }
 
-      alert("Profile photo deleted successfully!");
+      toast.success("Profile photo deleted successfully!");
     } catch (error) {
       console.error("Error deleting photo:", error);
-      alert("Error deleting photo. Please try again.");
+      toast.error("Error deleting photo. Please try again.");
     }
   };
 

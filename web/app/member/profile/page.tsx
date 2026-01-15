@@ -6,6 +6,7 @@ import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function MemberProfilePage() {
   const { user, role, loading } = useAuth();
@@ -103,10 +104,10 @@ export default function MemberProfilePage() {
         quickApplyEnabled,
         defaultCoverLetter,
       });
-      alert("Profile saved successfully!");
+      toast.success("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
-      alert("Error saving profile. Please try again.");
+      toast.error("Error saving profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -120,13 +121,13 @@ export default function MemberProfilePage() {
     // Validate file type
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a PDF or Word document");
+      toast.error("Please upload a PDF or Word document");
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -153,10 +154,10 @@ export default function MemberProfilePage() {
         resumeUrl: url,
       });
 
-      alert("Resume uploaded and saved successfully!");
+      toast.success("Resume uploaded and saved successfully!");
     } catch (error) {
       console.error("Error uploading resume:", error);
-      alert("Error uploading resume. Please try again.");
+      toast.error("Error uploading resume. Please try again.");
     } finally {
       setUploadingResume(false);
     }
@@ -179,10 +180,10 @@ export default function MemberProfilePage() {
       });
 
       setResumeUrl("");
-      alert("Resume deleted successfully!");
+      toast.success("Resume deleted successfully!");
     } catch (error) {
       console.error("Error deleting resume:", error);
-      alert("Error deleting resume. Please try again.");
+      toast.error("Error deleting resume. Please try again.");
     }
   };
 

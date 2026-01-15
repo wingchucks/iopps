@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -64,7 +65,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
             onComplete();
         } catch (error) {
             console.error("Error saving profile:", error);
-            alert("Error saving profile. Please try again.");
+            toast.error("Error saving profile. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -89,7 +90,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
         if (!file || !user) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            alert("File size must be less than 5MB");
+            toast.error("File size must be less than 5MB");
             return;
         }
 
@@ -101,7 +102,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
             setResumeUrl(url);
         } catch (error) {
             console.error("Error uploading resume:", error);
-            alert("Error uploading resume.");
+            toast.error("Error uploading resume.");
         } finally {
             setUploadingResume(false);
         }

@@ -30,6 +30,7 @@ import {
   MapPinIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface MemberWithUser extends MemberProfile {
   email?: string;
@@ -150,7 +151,7 @@ function AdminMembersContent() {
       );
     } catch (error) {
       console.error("Error toggling member status:", error);
-      alert("Failed to update member status. Please try again.");
+      toast.error("Failed to update member status. Please try again.");
     } finally {
       setProcessing(null);
     }

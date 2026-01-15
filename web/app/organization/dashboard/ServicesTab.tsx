@@ -17,6 +17,7 @@ import {
     WrenchScrewdriverIcon,
     XMarkIcon
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 export default function ServicesTab() {
     const { user } = useAuth();
@@ -110,7 +111,7 @@ export default function ServicesTab() {
             setShowModal(false);
         } catch (err) {
             console.error("Failed to save service", err);
-            alert("Failed to save. Please try again.");
+            toast.error("Failed to save. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -123,7 +124,7 @@ export default function ServicesTab() {
             setServices(prev => prev.filter(s => s.id !== id));
         } catch (err) {
             console.error("Failed to delete", err);
-            alert("Failed to delete.");
+            toast.error("Failed to delete.");
         }
     };
 

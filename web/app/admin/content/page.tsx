@@ -9,6 +9,7 @@ import {
     updateContactSubmissionStatus,
 } from "@/lib/firestore";
 import type { ContactSubmission } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function AdminContentPage() {
     const { user, role, loading: authLoading } = useAuth();
@@ -52,7 +53,7 @@ export default function AdminContentPage() {
             );
         } catch (error) {
             console.error("Error updating status:", error);
-            alert("Failed to update status");
+            toast.error("Failed to update status");
         } finally {
             setProcessing(null);
         }

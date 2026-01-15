@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getMemberJobAlerts, deleteJobAlert, updateJobAlert, createJobAlert } from "@/lib/firestore";
 import type { JobAlert, JobAlertFrequency } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function JobAlertsTab() {
     const { user } = useAuth();
@@ -74,7 +75,7 @@ export default function JobAlertsTab() {
 
         // Validate that at least one filter is set
         if (!keyword && !location && !employmentType && !remoteOnly && !indigenousOnly) {
-            alert("Please set at least one filter for your job alert.");
+            toast.error("Please set at least one filter for your job alert.");
             return;
         }
 
@@ -105,7 +106,7 @@ export default function JobAlertsTab() {
             resetForm();
         } catch (error) {
             console.error("Error creating alert:", error);
-            alert("Failed to create job alert. Please try again.");
+            toast.error("Failed to create job alert. Please try again.");
         } finally {
             setProcessing(false);
         }

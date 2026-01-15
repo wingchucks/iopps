@@ -30,6 +30,7 @@ import {
   UserGroupIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 type EducationType = "school" | "programs" | "scholarships" | "inquiries" | "events";
 
@@ -111,7 +112,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
       await loadData();
     } catch (err) {
       console.error("Error deleting program:", err);
-      alert("Failed to delete program");
+      toast.error("Failed to delete program");
     }
   };
 
@@ -124,7 +125,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
       await loadData();
     } catch (err) {
       console.error("Error deleting scholarship:", err);
-      alert("Failed to delete scholarship");
+      toast.error("Failed to delete scholarship");
     }
   };
 
@@ -134,7 +135,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
       await loadData();
     } catch (err) {
       console.error("Error updating inquiry status:", err);
-      alert("Failed to update inquiry status");
+      toast.error("Failed to update inquiry status");
     }
   };
 

@@ -24,6 +24,7 @@ import {
   ClockIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 export default function OrganizationEducationEventsPage() {
   const { user, role, loading } = useAuth();
@@ -71,7 +72,7 @@ export default function OrganizationEducationEventsPage() {
       setEvents((prev) => prev.filter((e) => e.id !== eventId));
     } catch (err) {
       console.error("Error deleting event:", err);
-      alert("Failed to delete event");
+      toast.error("Failed to delete event");
     } finally {
       setDeleting(null);
     }

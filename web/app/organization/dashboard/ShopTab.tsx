@@ -23,6 +23,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { getVendorByUserId, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct, validateVendorForPublish, type PublishValidation } from '@/lib/firebase/shop';
 import { uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct } from '@/lib/types';
+import toast from "react-hot-toast";
 
 type SubTab = 'overview' | 'products' | 'subscription';
 
@@ -107,7 +108,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
       await updateVendor(vendor.id, { status: 'pending' });
       await loadVendor();
       setShowPublishErrors(false);
-      alert('Your listing has been submitted for review! We\'ll notify you once it\'s approved.');
+      toast.success('Your listing has been submitted for review! We\'ll notify you once it\'s approved.');
     } catch (error) {
       console.error('Error submitting for review:', error);
     } finally {
@@ -129,7 +130,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
       setEditingProduct(null);
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Failed to save product. Please try again.');
+      toast.error('Failed to save product. Please try again.');
     }
   };
 
@@ -141,7 +142,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
       await loadVendor();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      toast.error('Failed to delete product. Please try again.');
     }
   };
 
@@ -701,7 +702,7 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
       }
     } catch (error) {
       console.error('Subscription error:', error);
-      alert('Failed to start checkout. Please try again.');
+      toast.error('Failed to start checkout. Please try again.');
     } finally {
       setLoading(false);
       setSelectedPlan(null);
@@ -862,7 +863,7 @@ function ProductModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.description) {
-      alert('Please fill in the required fields.');
+      toast.error('Please fill in the required fields.');
       return;
     }
 
@@ -884,7 +885,7 @@ function ProductModal({
       setFormData({ ...formData, imageUrl: result.url });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
+      toast.error('Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
     }

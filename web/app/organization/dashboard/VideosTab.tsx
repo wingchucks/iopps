@@ -12,6 +12,7 @@ import {
 } from "@/lib/firestore";
 import { uploadCompanyVideo, validateVideo, formatFileSize, type UploadProgress } from "@/lib/firebase/storage";
 import type { EmployerProfile, Interview, CompanyVideo } from "@/lib/types";
+import toast from "react-hot-toast";
 
 // Helper to detect video provider from URL
 function detectVideoProvider(url: string): { provider: "youtube" | "vimeo" | "custom"; videoId?: string } {
@@ -221,7 +222,7 @@ export default function VideosTab() {
       await loadProfile();
     } catch (err) {
       console.error("Error removing intro:", err);
-      alert("Failed to remove company intro video");
+      toast.error("Failed to remove company intro video");
     } finally {
       setSaving(false);
     }
@@ -285,7 +286,7 @@ export default function VideosTab() {
       closeInterviewModal();
     } catch (err) {
       console.error("Error saving video:", err);
-      alert("Failed to save video");
+      toast.error("Failed to save video");
     } finally {
       setSaving(false);
     }
@@ -298,7 +299,7 @@ export default function VideosTab() {
       await loadProfile();
     } catch (err) {
       console.error("Error deleting video:", err);
-      alert("Failed to delete video");
+      toast.error("Failed to delete video");
     }
   };
 

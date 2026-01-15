@@ -24,6 +24,7 @@ import {
 } from '@/lib/firebase/shop';
 import { uploadGalleryImage } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct } from '@/lib/types';
+import toast from "react-hot-toast";
 
 /**
  * ProductsTab - Vendor product management
@@ -82,7 +83,7 @@ export default function ProductsTab() {
       setEditingProduct(null);
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Failed to save product. Please try again.');
+      toast.error('Failed to save product. Please try again.');
     }
   };
 
@@ -94,7 +95,7 @@ export default function ProductsTab() {
       await loadData();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      toast.error('Failed to delete product. Please try again.');
     }
   };
 
@@ -292,7 +293,7 @@ function ProductModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.description) {
-      alert('Please fill in the required fields.');
+      toast.error('Please fill in the required fields.');
       return;
     }
 
@@ -314,7 +315,7 @@ function ProductModal({
       setFormData({ ...formData, imageUrl: result.url });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
+      toast.error('Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
     }

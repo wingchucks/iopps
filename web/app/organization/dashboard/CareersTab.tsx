@@ -17,6 +17,7 @@ import {
 } from "@/lib/firestore";
 import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus, ApplicantNote } from "@/lib/types";
 import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon, ChatBubbleLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 type CareerType = "jobs" | "training" | "applications";
 type StatusFilter = "all" | "active" | "paused" | "scheduled";
@@ -142,7 +143,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       await loadData();
     } catch (err) {
       console.error("Error toggling job status:", err);
-      alert("Failed to update job status");
+      toast.error("Failed to update job status");
     }
   };
 
@@ -155,7 +156,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       await loadData();
     } catch (err) {
       console.error("Error deleting job:", err);
-      alert("Failed to delete job");
+      toast.error("Failed to delete job");
     }
   };
 
@@ -189,7 +190,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       await loadData();
     } catch (err) {
       console.error("Error deleting training program:", err);
-      alert("Failed to delete training program");
+      toast.error("Failed to delete training program");
     }
   };
 
@@ -202,7 +203,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       await loadData();
     } catch (err) {
       console.error("Error updating application status:", err);
-      alert("Failed to update application status");
+      toast.error("Failed to update application status");
     }
   };
 
@@ -235,7 +236,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       await loadData();
     } catch (err) {
       console.error("Error adding note:", err);
-      alert("Failed to add note");
+      toast.error("Failed to add note");
     } finally {
       setAddingNote(null);
     }
@@ -250,7 +251,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       await loadData();
     } catch (err) {
       console.error("Error deleting note:", err);
-      alert("Failed to delete note");
+      toast.error("Failed to delete note");
     }
   };
 
@@ -288,7 +289,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
   // Export applications to CSV
   const exportApplicationsToCSV = () => {
     if (filteredApplications.length === 0) {
-      alert("No applications to export");
+      toast.error("No applications to export");
       return;
     }
 

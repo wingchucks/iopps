@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Scholarship } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface ScholarshipWithEmployer extends Scholarship {
   employerLogoUrl?: string;
@@ -114,7 +115,7 @@ function AdminScholarshipsContent() {
       );
     } catch (error) {
       console.error("Error toggling scholarship status:", error);
-      alert("Failed to update scholarship status. Please try again.");
+      toast.error("Failed to update scholarship status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -140,7 +141,7 @@ function AdminScholarshipsContent() {
       );
     } catch (error) {
       console.error("Error deleting scholarship:", error);
-      alert("Failed to delete scholarship. Please try again.");
+      toast.error("Failed to delete scholarship. Please try again.");
     } finally {
       setProcessing(null);
     }

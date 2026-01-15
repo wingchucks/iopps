@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { JobAlert, JobAlertFrequency } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function MemberAlertsPage() {
   const { user, role, loading: authLoading } = useAuth();
@@ -124,7 +125,7 @@ export default function MemberAlertsPage() {
       !minSalary &&
       !maxSalary
     ) {
-      alert("Please set at least one filter for your job alert.");
+      toast.error("Please set at least one filter for your job alert.");
       return;
     }
 
@@ -182,7 +183,7 @@ export default function MemberAlertsPage() {
       resetForm();
     } catch (error) {
       console.error("Error saving alert:", error);
-      alert("Failed to save job alert. Please try again.");
+      toast.error("Failed to save job alert. Please try again.");
     } finally {
       setProcessing(false);
     }
@@ -202,7 +203,7 @@ export default function MemberAlertsPage() {
       );
     } catch (error) {
       console.error("Error toggling alert status:", error);
-      alert("Failed to update alert status. Please try again.");
+      toast.error("Failed to update alert status. Please try again.");
     }
   }
 
@@ -221,7 +222,7 @@ export default function MemberAlertsPage() {
       setAlerts((prev) => prev.filter((a) => a.id !== alertId));
     } catch (error) {
       console.error("Error deleting alert:", error);
-      alert("Failed to delete alert. Please try again.");
+      toast.error("Failed to delete alert. Please try again.");
     }
   }
 

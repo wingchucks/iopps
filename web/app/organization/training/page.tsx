@@ -18,6 +18,7 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { TRAINING_PRODUCTS, TrainingProductType } from "@/lib/stripe";
+import toast from "react-hot-toast";
 
 export default function OrganizationTrainingPage() {
   const { user, role, loading } = useAuth();
@@ -58,7 +59,7 @@ export default function OrganizationTrainingPage() {
       setPrograms((prev) => prev.filter((p) => p.id !== programId));
     } catch (err) {
       console.error("Error deleting training program:", err);
-      alert("Failed to delete training program");
+      toast.error("Failed to delete training program");
     } finally {
       setDeleting(null);
     }
@@ -88,7 +89,7 @@ export default function OrganizationTrainingPage() {
       window.location.href = data.url;
     } catch (err) {
       console.error("Error creating checkout:", err);
-      alert(err instanceof Error ? err.message : "Failed to start checkout");
+      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
       setPurchasing(false);
     }
   };

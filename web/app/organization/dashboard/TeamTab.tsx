@@ -13,6 +13,7 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import type { TeamMember, TeamInvitation, TeamRole } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface TeamData {
   members: TeamMember[];
@@ -117,7 +118,7 @@ export default function TeamTab() {
 
       fetchTeam();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to remove member");
+      toast.error(err instanceof Error ? err.message : "Failed to remove member");
     } finally {
       setActionLoading(null);
     }
@@ -142,7 +143,7 @@ export default function TeamTab() {
 
       fetchTeam();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update role");
+      toast.error(err instanceof Error ? err.message : "Failed to update role");
     } finally {
       setActionLoading(null);
     }
@@ -168,7 +169,7 @@ export default function TeamTab() {
 
       fetchTeam();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to revoke invitation");
+      toast.error(err instanceof Error ? err.message : "Failed to revoke invitation");
     } finally {
       setActionLoading(null);
     }
@@ -190,9 +191,9 @@ export default function TeamTab() {
         throw new Error("Failed to resend invitation");
       }
 
-      alert("Invitation resent successfully");
+      toast.success("Invitation resent successfully");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to resend invitation");
+      toast.error(err instanceof Error ? err.message : "Failed to resend invitation");
     } finally {
       setActionLoading(null);
     }

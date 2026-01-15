@@ -18,6 +18,7 @@ import {
   EyeIcon,
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 // Import existing ShopTab as a sub-component
 import ShopTab from "./ShopTab";
@@ -97,7 +98,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
       await loadServices();
     } catch (err) {
       console.error("Error deleting service:", err);
-      alert("Failed to delete service");
+      toast.error("Failed to delete service");
     }
   };
 
@@ -110,7 +111,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
       await loadGrants();
     } catch (err) {
       console.error("Error deleting grant:", err);
-      alert("Failed to delete grant");
+      toast.error("Failed to delete grant");
     }
   };
 

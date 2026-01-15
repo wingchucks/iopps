@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -349,7 +350,7 @@ function LiveStreamsContent() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText("nathan.arias@iopps.ca");
-                    alert("Email copied to clipboard!");
+                    toast.success("Email copied to clipboard!");
                   }}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 text-lg font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                 >

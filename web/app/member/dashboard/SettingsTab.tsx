@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import toast from "react-hot-toast";
 
 interface NotificationSettings {
   jobAlerts: boolean;
@@ -35,7 +36,7 @@ export default function SettingsTab() {
       setTimeout(() => setResetEmailSent(false), 5000);
     } catch (error) {
       console.error("Error sending password reset email:", error);
-      alert("Error sending password reset email. Please try again.");
+      toast.error("Error sending password reset email. Please try again.");
     }
   };
 
@@ -53,10 +54,10 @@ export default function SettingsTab() {
     try {
       // TODO: Save to Firestore emailPreferences collection
       await new Promise((resolve) => setTimeout(resolve, 500));
-      alert("Settings saved successfully!");
+      toast.success("Settings saved successfully!");
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("Error saving settings. Please try again.");
+      toast.error("Error saving settings. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -213,7 +214,7 @@ export default function SettingsTab() {
           Once you delete your account, there is no going back. Please be certain.
         </p>
         <button
-          onClick={() => alert("Please contact support@iopps.com to delete your account.")}
+          onClick={() => toast.error("Please contact support@iopps.com to delete your account.")}
           className="rounded-xl border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10"
         >
           Delete Account

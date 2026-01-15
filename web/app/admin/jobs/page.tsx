@@ -32,6 +32,7 @@ import {
   CalendarDaysIcon,
   BriefcaseIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface JobWithEmployer extends JobPosting {
   employerLogoUrl?: string;
@@ -143,7 +144,7 @@ function AdminJobsContent() {
       );
     } catch (error) {
       console.error("Error toggling job status:", error);
-      alert("Failed to update job status. Please try again.");
+      toast.error("Failed to update job status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -167,7 +168,7 @@ function AdminJobsContent() {
       setTotalJobs((prev) => prev - 1);
     } catch (error) {
       console.error("Error deleting job:", error);
-      alert("Failed to delete job. Please try again.");
+      toast.error("Failed to delete job. Please try again.");
     } finally {
       setProcessing(null);
     }

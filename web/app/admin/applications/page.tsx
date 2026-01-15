@@ -15,6 +15,7 @@ import {
 import { db } from "@/lib/firebase";
 import type { JobApplication, ApplicationStatus } from "@/lib/types";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin";
+import toast from "react-hot-toast";
 
 interface ApplicationWithDetails extends JobApplication {
   jobTitle?: string;
@@ -106,7 +107,7 @@ function AdminApplicationsContent() {
       setApplications((prev) => prev.filter((app) => app.id !== applicationId));
     } catch (error) {
       console.error("Error deleting application:", error);
-      alert("Failed to delete application. Please try again.");
+      toast.error("Failed to delete application. Please try again.");
     } finally {
       setProcessing(null);
     }

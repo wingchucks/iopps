@@ -33,6 +33,7 @@ import {
   GiftIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 function AdminVendorsContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -141,7 +142,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error toggling vendor status:", error);
-      alert("Failed to update vendor status. Please try again.");
+      toast.error("Failed to update vendor status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -166,7 +167,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error approving vendor:", error);
-      alert("Failed to approve vendor. Please try again.");
+      toast.error("Failed to approve vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -191,7 +192,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error rejecting vendor:", error);
-      alert("Failed to reject vendor. Please try again.");
+      toast.error("Failed to reject vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -218,7 +219,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error toggling featured status:", error);
-      alert("Failed to update featured status. Please try again.");
+      toast.error("Failed to update featured status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -236,7 +237,7 @@ function AdminVendorsContent() {
       setVendors((prev) => prev.filter((vendor) => vendor.id !== vendorId));
     } catch (error) {
       console.error("Error deleting vendor:", error);
-      alert("Failed to delete vendor. Please try again.");
+      toast.error("Failed to delete vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -264,7 +265,7 @@ function AdminVendorsContent() {
         );
       } catch (error) {
         console.error("Error revoking free listing:", error);
-        alert("Failed to revoke free listing. Please try again.");
+        toast.error("Failed to revoke free listing. Please try again.");
       } finally {
         setProcessing(null);
       }
@@ -292,7 +293,7 @@ function AdminVendorsContent() {
       setFreeListingReason("");
     } catch (error) {
       console.error("Error granting free listing:", error);
-      alert("Failed to grant free listing. Please try again.");
+      toast.error("Failed to grant free listing. Please try again.");
     } finally {
       setProcessing(null);
     }

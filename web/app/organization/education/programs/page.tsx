@@ -24,6 +24,7 @@ import {
   StarIcon,
   CheckBadgeIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 export default function OrganizationEducationProgramsPage() {
   const { user, role, loading } = useAuth();
@@ -71,7 +72,7 @@ export default function OrganizationEducationProgramsPage() {
       setPrograms((prev) => prev.filter((p) => p.id !== programId));
     } catch (err) {
       console.error("Error deleting program:", err);
-      alert("Failed to delete program");
+      toast.error("Failed to delete program");
     } finally {
       setDeleting(null);
     }
