@@ -22,7 +22,10 @@ async function getRedirectPath(userId: string): Promise<string> {
     const userDoc = await getDoc(doc(db, "users", userId));
     if (userDoc.exists()) {
       const role = userDoc.data()?.role;
-      if (role === "employer" || role === "admin" || role === "moderator") {
+      if (role === "admin" || role === "moderator") {
+        return "/admin";
+      }
+      if (role === "employer") {
         return "/organization/dashboard";
       }
     }
