@@ -251,7 +251,7 @@ export default function MemberAlertsPage() {
           <div className="flex items-center justify-between">
             <div>
               <Link
-                href="/member"
+                href="/member/dashboard"
                 className="text-sm text-slate-400 hover:text-[#14B8A6]"
               >
                 ← Member Dashboard
