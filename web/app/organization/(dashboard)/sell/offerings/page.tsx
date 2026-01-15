@@ -65,7 +65,7 @@ export default function SellOfferingsPage() {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/organization/shop/add-product"
+            href="/organization/shop/dashboard"
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
           >
             <CubeIcon className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function SellOfferingsPage() {
           </p>
           <div className="flex justify-center gap-3">
             <Link
-              href="/organization/shop/add-product"
+              href="/organization/shop/dashboard"
               className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
             >
               <PlusIcon className="w-4 h-4" />
@@ -204,9 +204,7 @@ export default function SellOfferingsPage() {
                     {offering.viewCount} views
                   </span>
                   <Link
-                    href={offering.type === 'product'
-                      ? `/organization/shop/edit-product/${offering.id}`
-                      : `/organization/services/${offering.id}/edit`}
+                    href="/organization/shop/dashboard"
                     className="flex items-center gap-1 text-accent hover:underline"
                   >
                     <PencilIcon className="w-3.5 h-3.5" />

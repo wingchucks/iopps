@@ -143,7 +143,7 @@ export default function HireJobsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Link
-                      href={`/organization/hire/jobs/${job.id}`}
+                      href={`/organization/jobs/${job.id}`}
                       className="font-semibold text-slate-200 hover:text-accent transition-colors truncate"
                     >
                       {job.title}

@@ -128,7 +128,7 @@ export default function HireApplicationsPage() {
             return (
               <Link
                 key={app.id}
-                href={`/organization/hire/applications/${app.id}`}
+                href="/organization/applications"
                 className="block bg-card border border-card-border rounded-xl p-4 hover:border-slate-700 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
