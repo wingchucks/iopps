@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPublicOrganizationBySlug, getOrganizationBySlug } from '@/lib/firestore/organizations';
 import { OrganizationProfileClient } from './OrganizationProfileClient';
-import type { OrganizationProfile } from '@/lib/types';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -10,7 +9,20 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const org = await getOrganizationBySlug(slug);
+
+  // Try public profile first, then fall back to any accessible profile
+  let org = await getPublicOrganizationBySlug(slug);
+
+  if (!org) {
+    try {
+      org = await getOrganizationBySlug(slug);
+    } catch {
+      // Permission denied - return generic metadata
+      return {
+        title: 'Organization Profile | IOPPS',
+      };
+    }
+  }
 
   if (!org) {
     return {
@@ -44,8 +56,20 @@ export default async function OrganizationProfilePage({ params }: Props) {
   let org = await getPublicOrganizationBySlug(slug);
 
   // If not found as published, try to get any profile (for preview/owner view)
+  // This will only succeed if the user is the owner or an admin (per Firestore rules)
   if (!org) {
-    org = await getOrganizationBySlug(slug);
+    try {
+      org = await getOrganizationBySlug(slug);
+    } catch {
+      // Permission denied - profile exists but user can't access it
+      // Re-throw so error boundary can show appropriate message
+      const permissionError = new Error(
+        'Permission denied: This profile is not publicly available'
+      );
+      permissionError.name = 'PermissionError';
+      throw permissionError;
+    }
+
     if (!org) {
       notFound();
     }
