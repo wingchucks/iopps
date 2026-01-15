@@ -361,7 +361,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           </p>
         </div>
         <Link
-          href={`/jobs-training/${jobId}`}
+          href={`/careers/${jobId}`}
           target="_blank"
           className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6] transition-colors whitespace-nowrap"
         >

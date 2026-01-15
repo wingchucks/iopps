@@ -268,7 +268,7 @@ export default function MemberApplicationsPage() {
               <p className="mt-4 text-slate-400">No applications yet</p>
               <p className="mt-1 text-sm text-slate-500">Start applying to jobs to track your progress.</p>
               <Link
-                href="/jobs"
+                href="/careers"
                 className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-2.5 font-semibold text-slate-900 hover:bg-[#16cdb8]"
               >
                 Browse Jobs
@@ -291,7 +291,7 @@ export default function MemberApplicationsPage() {
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex-1">
                       <Link
-                        href={`/jobs-training/${app.jobId}`}
+                        href={`/careers/${app.jobId}`}
                         className="inline-flex text-lg font-semibold text-slate-50 hover:text-[#14B8A6]"
                       >
                         {app.job?.title ?? "Job"}

@@ -11,7 +11,7 @@ export default function JobHeader({ job, employerId }: JobHeaderProps) {
         <div className="mb-8">
             {/* Breadcrumb */}
             <nav className="mb-4 flex items-center text-sm text-slate-400">
-                <Link href="/jobs" className="hover:text-[#14B8A6] transition-colors">
+                <Link href="/careers" className="hover:text-[#14B8A6] transition-colors">
                     Jobs
                 </Link>
                 <svg className="mx-2 h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -361,7 +361,7 @@ function AdminJobsContent() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/jobs-training/${job.id}`}
+                            href={`/careers/${job.id}`}
                             className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
                             title="View"
                           >

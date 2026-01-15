@@ -177,7 +177,7 @@ function GlobalSearchContent() {
                   {results.jobs.map((job) => (
                     <Link
                       key={job.id}
-                      href={`/jobs-training/${job.id}`}
+                      href={`/careers/${job.id}`}
                       className="block rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/30 transition-all hover:-translate-y-1 hover:border-[#14B8A6]/70"
                     >
                       <div className="flex items-start justify-between gap-4">

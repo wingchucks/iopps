@@ -346,7 +346,7 @@ function AdminApplicationsContent() {
                     {/* Actions */}
                     <div className="flex gap-2 lg:flex-col">
                       <Link
-                        href={`/jobs-training/${application.jobId}`}
+                        href={`/careers/${application.jobId}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View Job

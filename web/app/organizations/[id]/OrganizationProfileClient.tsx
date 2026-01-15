@@ -372,7 +372,7 @@ export default function OrganizationProfileClient({
                   {jobs.map((job) => (
                     <Link
                       key={job.id}
-                      href={`/jobs-training/${job.id}`}
+                      href={`/careers/${job.id}`}
                       className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-[#14B8A6]/50 transition-colors"
                     >
                       <div className="flex items-center gap-5">
@@ -432,7 +432,7 @@ export default function OrganizationProfileClient({
                     return (
                       <Link
                         key={program.id}
-                        href={`/jobs-training/programs/${program.id}`}
+                        href={`/careers/programs/${program.id}`}
                         className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-slate-700 transition-colors"
                       >
                         <div className="flex justify-between items-start mb-4">

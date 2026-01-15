@@ -245,7 +245,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
-              href="/jobs"
+              href="/careers"
               className="rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#14B8A6]/90"
             >
               Browse Jobs
@@ -467,7 +467,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
             {jobs.map((job) => (
               <Link
                 key={job.id}
-                href={`/jobs-training/${job.id}`}
+                href={`/careers/${job.id}`}
                 className="block rounded-lg border border-slate-700 bg-slate-800/50 p-6 hover:border-[#14B8A6]/50 hover:bg-slate-800/70 transition-all"
               >
                 <div className="flex items-start justify-between gap-4">

@@ -290,7 +290,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                         View Dashboard
                                     </button>
                                     <Link
-                                        href="/jobs"
+                                        href="/careers"
                                         onClick={onComplete}
                                         className="flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-4 font-semibold text-white shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/40 transition-all"
                                     >

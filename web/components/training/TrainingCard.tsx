@@ -71,7 +71,7 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
                     </div>
                 )}
 
-                <Link href={`/jobs-training/training/${program.id}`} className="mb-3 block">
+                <Link href={`/careers/training/${program.id}`} className="mb-3 block">
                     <h3 className="text-xl font-bold text-white group-hover:text-teal-300 transition-colors line-clamp-2">
                         {program.title}
                     </h3>
@@ -114,13 +114,13 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
 
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/jobs-training"
+                            href="/careers"
                             className="text-xs font-semibold text-blue-400 hover:text-blue-300"
                         >
                             Find Jobs
                         </Link>
                         <Link
-                            href={`/jobs-training/training/${program.id}`}
+                            href={`/careers/training/${program.id}`}
                             className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-teal-600 text-white text-sm font-medium transition-colors"
                         >
                             View Details

@@ -78,7 +78,7 @@ export default function MessagesTab() {
             will appear here.
           </p>
           <Link
-            href="/jobs"
+            href="/careers"
             className="mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-lg hover:shadow-emerald-500/30"
           >
             Browse Jobs

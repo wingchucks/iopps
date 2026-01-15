@@ -265,7 +265,7 @@ function EducationContent() {
                 {scholarships.map((scholarship) => (
                   <Link
                     key={scholarship.id}
-                    href={`/careers/scholarships/${scholarship.id}`}
+                    href={`/education/scholarships/${scholarship.id}`}
                     className="group relative flex flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:shadow-lg hover:shadow-[#14B8A6]/5"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-2xl group-hover:scale-110 transition-transform duration-300 mb-4">
