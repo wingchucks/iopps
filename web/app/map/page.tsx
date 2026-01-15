@@ -59,7 +59,7 @@ export default function MapPage() {
                             location: job.location,
                             lat: coords.lat,
                             lng: coords.lng,
-                            url: `/organization/jobs/${job.id}`,
+                            url: `/careers/${job.id}`,
                         });
                     }
                 });
