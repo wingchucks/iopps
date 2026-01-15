@@ -426,7 +426,7 @@ function OverviewTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
               title="Add a description"
               description="Tell visitors about your organization, mission, and what makes you unique."
               ctaText="Add Description"
-              ctaHref="/organization/profile"
+              ctaHref="/organization/dashboard"
             />
           ) : null}
         </section>
@@ -444,7 +444,7 @@ function OverviewTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
                 title="Share your story"
                 description="Share your organization's journey, values, and connection to community."
                 ctaText="Add Story"
-                ctaHref="/organization/profile"
+                ctaHref="/organization/dashboard"
               />
             ) : null}
           </section>
