@@ -15,8 +15,8 @@ export default async function Image() {
     return new ImageResponse(
         (
             <OgImageTemplate
-                title="Indigenous Careers"
-                subtitle="Find meaningful work and training opportunities with Indigenous-focused employers."
+                title="Careers"
+                subtitle="Find work and training with employers"
                 type="Careers"
             />
         ),
