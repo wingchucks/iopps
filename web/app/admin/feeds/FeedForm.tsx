@@ -2,6 +2,45 @@
 
 import type { EmployerProfile } from "@/lib/types";
 
+// Field mapping select component (defined outside to avoid recreation on each render)
+interface FieldMappingSelectProps {
+    label: string;
+    field: keyof FieldMappings;
+    required?: boolean;
+    fieldMappings: FieldMappings;
+    availableFields: string[];
+    onUpdateMapping: (field: keyof FieldMappings, value: string) => void;
+}
+
+function FieldMappingSelect({
+    label,
+    field,
+    required = false,
+    fieldMappings,
+    availableFields,
+    onUpdateMapping,
+}: FieldMappingSelectProps) {
+    return (
+        <div>
+            <label className="block text-sm font-medium text-slate-200">
+                {label} {required && <span className="text-red-400">*</span>}
+            </label>
+            <select
+                value={fieldMappings[field] || ""}
+                onChange={(e) => onUpdateMapping(field, e.target.value)}
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+                <option value="">Select field</option>
+                {availableFields.map((f) => (
+                    <option key={f} value={f}>
+                        {f}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+}
+
 interface FieldMappings {
     jobIdOrUrl?: string;
     title?: string;
@@ -110,34 +149,6 @@ export default function FeedForm({
             setFieldMappings(newMappings);
         }
     };
-
-    const FieldMappingSelect = ({
-        label,
-        field,
-        required = false
-    }: {
-        label: string;
-        field: keyof FieldMappings;
-        required?: boolean;
-    }) => (
-        <div>
-            <label className="block text-sm font-medium text-slate-200">
-                {label} {required && <span className="text-red-400">*</span>}
-            </label>
-            <select
-                value={fieldMappings[field] || ""}
-                onChange={(e) => updateMapping(field, e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-            >
-                <option value="">Select field</option>
-                {availableFields.map((f) => (
-                    <option key={f} value={f}>
-                        {f}
-                    </option>
-                ))}
-            </select>
-        </div>
-    );
 
     return (
         <>
@@ -399,37 +410,37 @@ export default function FeedForm({
                     <>
                         {/* Core Job Fields */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <FieldMappingSelect label="Job Id or URL" field="jobIdOrUrl" required />
-                            <FieldMappingSelect label="Job Title" field="title" required />
-                            <FieldMappingSelect label="Job Description" field="description" />
-                            <FieldMappingSelect label="Job Type" field="jobType" />
-                            <FieldMappingSelect label="Categories" field="category" />
-                            <FieldMappingSelect label="Experience" field="experience" />
-                            <FieldMappingSelect label="Apply URL" field="applyUrl" />
-                            <FieldMappingSelect label="Expiration Date" field="expirationDate" />
-                            <FieldMappingSelect label="Featured" field="featured" />
+                            <FieldMappingSelect label="Job Id or URL" field="jobIdOrUrl" required fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Job Title" field="title" required fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Job Description" field="description" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Job Type" field="jobType" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Categories" field="category" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Experience" field="experience" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Apply URL" field="applyUrl" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Expiration Date" field="expirationDate" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Featured" field="featured" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                         </div>
 
                         {/* Location Fields */}
                         <h4 className="text-sm font-medium text-slate-300 mb-3">Location Fields</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <FieldMappingSelect label="City or Location" field="location" />
-                            <FieldMappingSelect label="State" field="state" />
-                            <FieldMappingSelect label="Country" field="country" />
-                            <FieldMappingSelect label="Zip Code" field="zipCode" />
-                            <FieldMappingSelect label="Remote" field="remote" />
+                            <FieldMappingSelect label="City or Location" field="location" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="State" field="state" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Country" field="country" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Zip Code" field="zipCode" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Remote" field="remote" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                         </div>
 
                         {/* Salary Fields */}
                         <h4 className="text-sm font-medium text-slate-300 mb-3">Salary Fields</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FieldMappingSelect label="Salary string" field="salaryString" />
+                            <FieldMappingSelect label="Salary string" field="salaryString" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                             <div className="md:col-span-2 flex items-center">
                                 <span className="text-slate-500 text-sm">OR</span>
                             </div>
-                            <FieldMappingSelect label="Salary From" field="salaryFrom" />
-                            <FieldMappingSelect label="Salary To" field="salaryTo" />
-                            <FieldMappingSelect label="Salary Period" field="salaryPeriod" />
+                            <FieldMappingSelect label="Salary From" field="salaryFrom" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Salary To" field="salaryTo" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
+                            <FieldMappingSelect label="Salary Period" field="salaryPeriod" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                         </div>
                     </>
                 )}

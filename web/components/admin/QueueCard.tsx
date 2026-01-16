@@ -120,73 +120,73 @@ export function QueueCard({
     return <QueueCardSkeleton />;
   }
 
-  const CardWrapper = href
-    ? ({ children }: { children: ReactNode }) => (
-        <Link href={href} className="block">
-          {children}
-        </Link>
-      )
-    : ({ children }: { children: ReactNode }) => <>{children}</>;
-
-  return (
-    <CardWrapper>
-      <div
-        className={`rounded-xl border p-5 transition-colors ${config.bgClass} ${
-          config.borderClass
-        } ${href ? "cursor-pointer" : ""}`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                hasItems && config.pulseOnItems
-                  ? `${config.bgClass} animate-pulse`
-                  : "bg-slate-800"
-              }`}
-            >
-              <Icon
-                className={`h-5 w-5 ${hasItems ? config.iconClass : "text-slate-500"}`}
-                aria-hidden="true"
-              />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
-              {hasItems ? (
-                <p className={`text-xs ${config.countClass}`}>
-                  {totalCount} item{totalCount !== 1 ? "s" : ""} need attention
-                </p>
-              ) : (
-                <p className="text-xs text-slate-500">{emptyMessage}</p>
-              )}
-            </div>
+  const cardContent = (
+    <div
+      className={`rounded-xl border p-5 transition-colors ${config.bgClass} ${
+        config.borderClass
+      } ${href ? "cursor-pointer" : ""}`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+              hasItems && config.pulseOnItems
+                ? `${config.bgClass} animate-pulse`
+                : "bg-slate-800"
+            }`}
+          >
+            <Icon
+              className={`h-5 w-5 ${hasItems ? config.iconClass : "text-slate-500"}`}
+              aria-hidden="true"
+            />
           </div>
-          {href && (
-            <ArrowRightIcon className="h-4 w-4 text-slate-600" aria-hidden="true" />
-          )}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+            {hasItems ? (
+              <p className={`text-xs ${config.countClass}`}>
+                {totalCount} item{totalCount !== 1 ? "s" : ""} need attention
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">{emptyMessage}</p>
+            )}
+          </div>
         </div>
-
-        {/* Items */}
-        {hasItems && (
-          <div className="mt-4 space-y-2">
-            {items
-              .filter((item) => item.count > 0)
-              .map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-slate-400">{item.label}</span>
-                  <span className={`font-semibold ${config.countClass}`}>
-                    {item.count}
-                  </span>
-                </div>
-              ))}
-          </div>
+        {href && (
+          <ArrowRightIcon className="h-4 w-4 text-slate-600" aria-hidden="true" />
         )}
       </div>
-    </CardWrapper>
+
+      {/* Items */}
+      {hasItems && (
+        <div className="mt-4 space-y-2">
+          {items
+            .filter((item) => item.count > 0)
+            .map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="text-slate-400">{item.label}</span>
+                <span className={`font-semibold ${config.countClass}`}>
+                  {item.count}
+                </span>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 }
 
 // ============================================================================
