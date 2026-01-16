@@ -96,6 +96,9 @@ export const CANADIAN_CITIES: Record<string, Coordinates> = {
     "Onion Lake, SK": { lat: 53.7333, lng: -109.9833 },
     "Lac La Ronge, SK": { lat: 55.1667, lng: -105.0667 },
     "Beardy's and Okemasis, SK": { lat: 52.7167, lng: -106.1000 },
+    "Red Pheasant, SK": { lat: 52.7917, lng: -108.3167 },
+    "Red Pheasant First Nation, SK": { lat: 52.7917, lng: -108.3167 },
+
 
     // ============================================
     // MANITOBA

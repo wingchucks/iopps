@@ -60,10 +60,10 @@ function transformToOpportunities(): Promise<MapOpportunity[]> {
             salary: typeof job.salaryRange === 'string' ? job.salaryRange : undefined,
             deadline: job.closingDate
               ? new Date(
-                  typeof job.closingDate === "object" && "toDate" in job.closingDate
-                    ? job.closingDate.toDate()
-                    : job.closingDate
-                ).toLocaleDateString()
+                typeof job.closingDate === "object" && "toDate" in job.closingDate
+                  ? job.closingDate.toDate()
+                  : job.closingDate
+              ).toLocaleDateString()
               : undefined,
           },
         });
@@ -88,10 +88,10 @@ function transformToOpportunities(): Promise<MapOpportunity[]> {
           meta: {
             date: conf.startDate
               ? new Date(
-                  typeof conf.startDate === "object" && "toDate" in conf.startDate
-                    ? conf.startDate.toDate()
-                    : conf.startDate
-                ).toLocaleDateString()
+                typeof conf.startDate === "object" && "toDate" in conf.startDate
+                  ? conf.startDate.toDate()
+                  : conf.startDate
+              ).toLocaleDateString()
               : undefined,
             venue: conf.venue?.name,
           },
@@ -171,10 +171,10 @@ function transformToOpportunities(): Promise<MapOpportunity[]> {
           meta: {
             date: powwow.startDate
               ? new Date(
-                  typeof powwow.startDate === "object" && "toDate" in powwow.startDate
-                    ? powwow.startDate.toDate()
-                    : powwow.startDate
-                ).toLocaleDateString()
+                typeof powwow.startDate === "object" && "toDate" in powwow.startDate
+                  ? powwow.startDate.toDate()
+                  : powwow.startDate
+              ).toLocaleDateString()
               : undefined,
             region: powwow.region,
           },
@@ -207,7 +207,7 @@ function transformToOpportunities(): Promise<MapOpportunity[]> {
           organization: "Indigenous Business",
           location: locString,
           coordinates: coords,
-          url: `/business/directory/${vendor.slug}`,
+          url: `/business/${vendor.slug}`,
           featured: vendor.featured || false,
           meta: {
             vendorType: vendor.category,
