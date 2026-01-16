@@ -461,6 +461,7 @@ export default function RegisterPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Your name or organization"
+                autoComplete="name"
               />
 
               <AuthInput
@@ -470,6 +471,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+                autoComplete="email"
               />
 
               <AuthInput
@@ -480,6 +482,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 hint="Must be at least 6 characters"
+                autoComplete="new-password"
               />
 
               <AuthInput
@@ -489,6 +492,7 @@ export default function RegisterPage() {
                 minLength={6}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
               />
 
               <div>

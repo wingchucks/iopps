@@ -141,6 +141,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          autoComplete="email"
         />
 
         <AuthInput
@@ -149,6 +150,7 @@ export default function LoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           rightElement={
             <Link
               href="/forgot-password"

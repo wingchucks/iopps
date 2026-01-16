@@ -946,5 +946,73 @@ service cloud.firestore {
         request.resource.data.orgId == request.auth.uid
       ) || isAdminOrModerator();
     }
+
+    // ===========================================================================
+    // ANALYTICS - OUTBOUND CLICKS
+    // ===========================================================================
+    match /outbound_clicks/{clickId} {
+      // Organization owners can read their own analytics
+      allow read: if isSignedIn() && resource.data.organizationId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Anyone can create click events (public analytics tracking)
+      allow create: if true;
+
+      // No updates or deletes from client
+      allow update, delete: if false;
+    }
+
+    // ===========================================================================
+    // ANALYTICS - PROFILE VIEWS
+    // ===========================================================================
+    match /profile_views/{viewId} {
+      // Organization owners can read their own analytics
+      allow read: if isSignedIn() && resource.data.organizationId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Anyone can create view events (public analytics tracking)
+      allow create: if true;
+
+      // No updates or deletes from client
+      allow update, delete: if false;
+    }
+
+    // ===========================================================================
+    // ANALYTICS - SHOP INDIGENOUS EVENTS
+    // ===========================================================================
+    match /analyticsEvents/{eventId} {
+      // Vendor owners can read their own analytics
+      allow read: if isSignedIn() && resource.data.vendorId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Anyone can create analytics events (public tracking)
+      allow create: if true;
+
+      // No updates or deletes from client
+      allow update, delete: if false;
+    }
+
+    // ===========================================================================
+    // ANALYTICS - SHOP INDIGENOUS DAILY STATS
+    // ===========================================================================
+    match /dailyStats/{statId} {
+      // Vendor owners can read their own stats
+      allow read: if isSignedIn() && resource.data.vendorId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Anyone can create/update daily stats (aggregated from events)
+      allow create, update: if true;
+
+      // No deletes from client
+      allow delete: if false;
+    }
   }
 }
