@@ -70,19 +70,6 @@ export default function AdminEmployersPage() {
     jobs: Array<{ id: string; title: string; employerId: string; reason: string }>;
   } | null>(null);
 
-  // Check admin access
-  if (!loading && role !== "admin" && role !== "moderator") {
-    return (
-      <div className="rounded-lg border border-red-800 bg-red-950/20 p-8 text-center">
-        <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
-        <h2 className="mt-4 text-xl font-bold text-red-400">Unauthorized Access</h2>
-        <p className="mt-2 text-slate-400">
-          You do not have permission to access this page. Admin access required.
-        </p>
-      </div>
-    );
-  }
-
   const fetchEmployers = async () => {
     setLoading(true);
     try {
@@ -535,6 +522,19 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       </span>
     );
   };
+
+  // Check admin access (after all hooks)
+  if (!loading && role !== "admin" && role !== "moderator") {
+    return (
+      <div className="rounded-lg border border-red-800 bg-red-950/20 p-8 text-center">
+        <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
+        <h2 className="mt-4 text-xl font-bold text-red-400">Unauthorized Access</h2>
+        <p className="mt-2 text-slate-400">
+          You do not have permission to access this page. Admin access required.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

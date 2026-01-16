@@ -98,27 +98,6 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   // Check if profile requires authentication to view
   const isPrivateProfile = org.publicationStatus !== 'PUBLISHED' || org.status !== 'approved';
 
-  // Redirect if user logs out while viewing a private profile
-  useEffect(() => {
-    if (!loading && isPrivateProfile && !canEdit) {
-      // User logged out or doesn't have access - redirect to businesses list
-      setIsRedirecting(true);
-      router.replace('/businesses');
-    }
-  }, [loading, isPrivateProfile, canEdit, router]);
-
-  // Show nothing while redirecting or if user doesn't have access to private profile
-  if (isRedirecting || (!loading && isPrivateProfile && !canEdit)) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-teal-500 border-r-transparent"></div>
-          <p className="mt-4 text-slate-400">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Determine which tabs should be shown
   const enabledModules = org.enabledModules || [];
 
@@ -151,6 +130,20 @@ export function OrganizationProfileClient({ organization: org }: Props) {
     return tabs;
   }, [enabledModules]);
 
+  // Track page view
+  useEffect(() => {
+    // TODO: Implement analytics tracking
+  }, [org.id]);
+
+  // Redirect if user logs out while viewing a private profile
+  useEffect(() => {
+    if (!loading && isPrivateProfile && !canEdit) {
+      // User logged out or doesn't have access - redirect to businesses list
+      setIsRedirecting(true);
+      router.replace('/businesses');
+    }
+  }, [loading, isPrivateProfile, canEdit, router]);
+
   // Handle share
   const handleShare = async () => {
     const url = window.location.href;
@@ -166,15 +159,22 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (err) {
+    } catch {
       // User cancelled share
     }
   };
 
-  // Track page view
-  useEffect(() => {
-    // TODO: Implement analytics tracking
-  }, [org.id]);
+  // Show nothing while redirecting or if user doesn't have access to private profile
+  if (isRedirecting || (!loading && isPrivateProfile && !canEdit)) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-teal-500 border-r-transparent"></div>
+          <p className="mt-4 text-slate-400">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
 
   const Icon = ORG_TYPE_ICONS[org.orgType || 'EMPLOYER'];
   const links = org.links || {};

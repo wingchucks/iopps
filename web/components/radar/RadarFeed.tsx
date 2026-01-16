@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 export function RadarFeed() {
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState("All");
 
     const [activeFilter, setActiveFilter] = useState("Hot");
 
@@ -174,6 +175,8 @@ export function RadarFeed() {
         fetchRadar();
     }, []);
 
+    const tabs = ["All", "Careers", "Education", "Business", "Events"];
+
     if (loading) {
         return (
             <div className="flex justify-center py-20">
@@ -181,10 +184,6 @@ export function RadarFeed() {
             </div>
         );
     }
-
-    const [activeTab, setActiveTab] = useState("All");
-
-    const tabs = ["All", "Careers", "Education", "Business", "Events"];
 
     const filteredOpportunities = opportunities.filter(opp => {
         if (activeTab === "All") return true;
