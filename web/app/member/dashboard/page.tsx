@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MemberDashboardLayout from '@/components/member/dashboard/MemberDashboardLayout';
 import MemberSidebar from '@/components/member/dashboard/MemberSidebar';
@@ -130,16 +131,13 @@ function MemberDashboardContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (loading || (loadingData && !profile)) {
+  // Show loading while fetching dashboard data (auth is handled by ProtectedRoute)
+  if (loadingData && !profile) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-950">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
       </div>
     );
-  }
-
-  if (!user) {
-    return null; // AuthProvider handles redirect
   }
 
 
@@ -224,12 +222,14 @@ function MemberDashboardContent() {
 
 export default function MemberDashboard() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-slate-950">
-        <p className="text-slate-400">Loading dashboard...</p>
-      </div>
-    }>
-      <MemberDashboardContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={
+        <div className="flex h-screen items-center justify-center bg-slate-950">
+          <p className="text-slate-400">Loading dashboard...</p>
+        </div>
+      }>
+        <MemberDashboardContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

@@ -2,32 +2,14 @@
 
 import { Feed } from "@/components/social/Feed";
 import { useAuth } from "@/components/AuthProvider";
-import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import OceanWaveHero from "@/components/OceanWaveHero";
 
-export default function FeedPage() {
-    const { user, loading } = useAuth();
-    const router = useRouter();
+function FeedContent() {
+    const { user } = useAuth();
 
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push("/login?redirect=/feed");
-        }
-    }, [user, loading, router]);
-
-    if (loading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-slate-950">
-                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
-            </div>
-        );
-    }
-
-    if (!user) {
-        return null; // Redirecting
-    }
+    // user is guaranteed to exist here due to ProtectedRoute wrapper
+    if (!user) return null;
 
     return (
         <div className="min-h-screen bg-slate-950 pb-20">
@@ -111,5 +93,13 @@ export default function FeedPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function FeedPage() {
+    return (
+        <ProtectedRoute>
+            <FeedContent />
+        </ProtectedRoute>
     );
 }
