@@ -41,10 +41,12 @@ export default function HostConferencesPage() {
       if (!user) return;
 
       try {
+        console.log('[HostConferences] Loading conferences for user:', user.uid);
         const conferencesList = await listEmployerConferences(user.uid);
+        console.log('[HostConferences] Found conferences:', conferencesList.length);
         setConferences(conferencesList);
       } catch (error) {
-        console.error('Error loading conferences:', error);
+        console.error('[HostConferences] Error loading conferences:', error);
       } finally {
         setLoading(false);
       }
@@ -145,15 +147,6 @@ export default function HostConferencesPage() {
               ? 'Create your first conference to bring together the Indigenous community.'
               : `You don't have any ${filter} conferences at the moment.`}
           </p>
-          {filter === 'all' && (
-            <Link
-              href="/organization/conferences/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
-            >
-              <PlusIcon className="w-4 h-4" />
-              Create Your First Conference
-            </Link>
-          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
