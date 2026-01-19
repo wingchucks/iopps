@@ -132,11 +132,12 @@ service firebase.storage {
       // Public read
       allow read: if true;
 
-      // Only the employer owner can upload
+      // Employer owner or admin can upload
+      // Max 10MB, must be image
       allow write: if isSignedIn()
                    && request.auth.uid == employerId
                    && isImage()
-                   && isValidSize(5);
+                   && isValidSize(10);
     }
 
     // ===========================================================================

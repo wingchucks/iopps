@@ -196,7 +196,7 @@ service cloud.firestore {
     // ===========================================================================
     match /conferences/{conferenceId} {
       allow read: if true;
-      allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
+      allow create: if (isEmployer() && request.resource.data.employerId == request.auth.uid) || isAdminOrModerator();
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
       allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
