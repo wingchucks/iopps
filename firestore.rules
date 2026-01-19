@@ -196,7 +196,12 @@ service cloud.firestore {
     // ===========================================================================
     match /conferences/{conferenceId} {
       allow read: if true;
-      allow create: if (isEmployer() && request.resource.data.employerId == request.auth.uid) || isAdminOrModerator();
+      // Allow employers to create their own conferences, or admins/moderators to create any
+      // Also allow any signed-in user to create if they're setting themselves as employerId
+      allow create: if isSignedIn() && (
+        request.resource.data.employerId == request.auth.uid ||
+        isAdminOrModerator()
+      );
       allow update: if isOwner(resource.data.employerId) || isAdminOrModerator();
       allow delete: if isOwner(resource.data.employerId) || isAdminOrModerator();
     }
