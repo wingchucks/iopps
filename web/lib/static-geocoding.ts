@@ -312,20 +312,29 @@ export const CANADIAN_CITIES: Record<string, Coordinates> = {
     "Gjoa Haven, NU": { lat: 68.6356, lng: -95.8783 },
 };
 
-// Province/Territory abbreviation mappings
+// Province/Territory abbreviation mappings (includes common variations)
 export const PROVINCE_ABBREVIATIONS: Record<string, string> = {
     "BC": "British Columbia",
     "AB": "Alberta",
+    "ALTA": "Alberta",
     "SK": "Saskatchewan",
+    "SASK": "Saskatchewan",
     "MB": "Manitoba",
+    "MAN": "Manitoba",
     "ON": "Ontario",
+    "ONT": "Ontario",
     "QC": "Quebec",
+    "QUE": "Quebec",
+    "PQ": "Quebec",
     "NB": "New Brunswick",
     "NS": "Nova Scotia",
     "PE": "Prince Edward Island",
+    "PEI": "Prince Edward Island",
     "NL": "Newfoundland and Labrador",
+    "NF": "Newfoundland and Labrador",
     "YT": "Yukon",
     "NT": "Northwest Territories",
+    "NWT": "Northwest Territories",
     "NU": "Nunavut",
 };
 
@@ -388,28 +397,53 @@ export function geocodeLocation(location: string): Coordinates | null {
         const city = parts[0];
         const province = parts[1].toUpperCase();
 
-        // Try with full province name
+        // Try with the province abbreviation/variation provided
         const fullProvince = PROVINCE_ABBREVIATIONS[province];
         if (fullProvince) {
+            // Try the original key format
             const tryKey = `${city}, ${province}`;
             if (lowerMap.has(tryKey.toLowerCase())) {
                 return lowerMap.get(tryKey.toLowerCase())!;
             }
+
+            // Try with standard 2-letter abbreviation
+            // Find the standard abbreviation for this province
+            const standardAbbr = Object.entries(PROVINCE_ABBREVIATIONS)
+                .find(([abbr, name]) => name === fullProvince && abbr.length === 2)?.[0];
+
+            if (standardAbbr) {
+                const standardKey = `${city}, ${standardAbbr}`;
+                if (lowerMap.has(standardKey.toLowerCase())) {
+                    return lowerMap.get(standardKey.toLowerCase())!;
+                }
+            }
+        }
+
+        // 5b. Try matching just the city name when province doesn't match
+        const cityLower = city.toLowerCase();
+        for (const [key, coords] of Object.entries(CANADIAN_CITIES)) {
+            const keyCityName = key.split(',')[0].trim().toLowerCase();
+            if (keyCityName === cityLower) {
+                return coords;
+            }
         }
     }
 
-    // 6. Fuzzy match - find cities that start with the search term
+    // 6. Fuzzy match - find cities that start with the search term (city name only)
+    const searchCity = normalized.split(',')[0].trim().toLowerCase();
     for (const [key, coords] of Object.entries(CANADIAN_CITIES)) {
         const cityName = key.split(',')[0].trim().toLowerCase();
-        if (cityName.startsWith(normalizedLower)) {
+        if (cityName.startsWith(searchCity) || searchCity.startsWith(cityName)) {
             return coords;
         }
     }
 
-    // 7. Try matching province/region as fallback
+    // 7. Try matching province/region as fallback (only exact word matches)
     for (const [abbr, fullName] of Object.entries(PROVINCE_ABBREVIATIONS)) {
-        if (normalizedLower.includes(abbr.toLowerCase()) ||
-            normalizedLower.includes(fullName.toLowerCase())) {
+        // Only match if the abbreviation appears as a whole word (not substring)
+        const abbrRegex = new RegExp(`\\b${abbr}\\b`, 'i');
+        const nameRegex = new RegExp(`\\b${fullName}\\b`, 'i');
+        if (abbrRegex.test(normalized) || nameRegex.test(normalized)) {
             return PROVINCE_CENTERS[fullName] || null;
         }
     }
