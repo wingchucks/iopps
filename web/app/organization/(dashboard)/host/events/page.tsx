@@ -142,15 +142,6 @@ export default function HostEventsPage() {
               ? 'Create your first event to share cultural gatherings with the community.'
               : `You don't have any ${filter} events at the moment.`}
           </p>
-          {filter === 'all' && (
-            <Link
-              href="/organization/events/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
-            >
-              <PlusIcon className="w-4 h-4" />
-              Create Your First Event
-            </Link>
-          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
