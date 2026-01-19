@@ -433,6 +433,9 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
     conference.cost.toLowerCase().includes("free") ||
     conference.cost.toLowerCase().includes("no cost");
 
+  const hasBannerImage = conference.bannerImageUrl || (conference.galleryImageUrls && conference.galleryImageUrls.length > 0);
+  const bannerImage = conference.bannerImageUrl || conference.galleryImageUrls?.[0];
+
   return (
     <Link
       href={`/conferences/${conference.id}`}
@@ -441,39 +444,86 @@ function ConferenceCard({ conference, featured = false }: { conference: Conferen
           : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
         }`}
     >
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-6">
-        {/* Featured Badge */}
-        {featured && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
-            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            Featured
+      {/* Header with optional banner image */}
+      <div className="relative">
+        {hasBannerImage ? (
+          <div className="relative aspect-[16/9] w-full overflow-hidden">
+            <Image
+              src={bannerImage!}
+              alt={conference.title}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            {/* Overlay gradient for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
+
+            {/* Featured Badge */}
+            {featured && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                Featured
+              </div>
+            )}
+
+            {/* Date and Cost overlaid on image */}
+            <div className="absolute bottom-3 left-4 right-4">
+              {startDate && (
+                <div className="flex items-center gap-2 text-white">
+                  <CalendarDaysIcon className="h-4 w-4" />
+                  <span className="text-sm font-medium drop-shadow-md">
+                    {startDate}
+                    {endDate && endDate !== startDate && ` - ${endDate}`}
+                  </span>
+                </div>
+              )}
+              <div className="mt-2">
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm ${isFree
+                    ? "bg-[#14B8A6]/80 text-white"
+                    : "bg-[#14B8A6]/80 text-white"
+                  }`}>
+                  <TicketIcon className="h-3 w-3" />
+                  {isFree ? "Free" : conference.cost}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-6">
+            {/* Featured Badge */}
+            {featured && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
+                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                Featured
+              </div>
+            )}
+
+            {/* Date */}
+            {startDate && (
+              <div className="flex items-center gap-2 text-[#14B8A6]">
+                <CalendarDaysIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">
+                  {startDate}
+                  {endDate && endDate !== startDate && ` - ${endDate}`}
+                </span>
+              </div>
+            )}
+
+            {/* Cost Badge */}
+            <div className="mt-3">
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${isFree
+                  ? "bg-[#14B8A6]/20 text-[#14B8A6]"
+                  : "bg-[#14B8A6]/20 text-[#14B8A6]"
+                }`}>
+                <TicketIcon className="h-3 w-3" />
+                {isFree ? "Free" : conference.cost}
+              </span>
+            </div>
           </div>
         )}
-
-        {/* Date */}
-        {startDate && (
-          <div className="flex items-center gap-2 text-[#14B8A6]">
-            <CalendarDaysIcon className="h-5 w-5" />
-            <span className="text-sm font-medium">
-              {startDate}
-              {endDate && endDate !== startDate && ` - ${endDate}`}
-            </span>
-          </div>
-        )}
-
-        {/* Cost Badge */}
-        <div className="mt-3">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${isFree
-              ? "bg-[#14B8A6]/20 text-[#14B8A6]"
-              : "bg-[#14B8A6]/20 text-[#14B8A6]"
-            }`}>
-            <TicketIcon className="h-3 w-3" />
-            {isFree ? "Free" : conference.cost}
-          </span>
-        </div>
       </div>
 
       {/* Content */}
