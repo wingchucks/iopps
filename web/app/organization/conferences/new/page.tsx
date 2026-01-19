@@ -6,8 +6,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createConference, getEmployerProfile, updateConference } from "@/lib/firestore";
-import { PosterUploader } from "@/components/PosterUploader";
-import type { ConferenceExtractedData } from "@/lib/googleAi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { toast } from "react-hot-toast";
@@ -25,22 +23,9 @@ export default function NewConferencePage() {
   const [orgName, setOrgName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUploader, setShowUploader] = useState(true);
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const manualFileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle data extracted from poster
-  const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
-    if (data.title) setTitle(data.title);
-    if (data.description) setDescription(data.description);
-    if (data.location) setLocation(data.location);
-    if (data.startDate) setStartDate(data.startDate);
-    if (data.endDate) setEndDate(data.endDate);
-    if (data.registrationUrl) setRegistrationLink(data.registrationUrl);
-    if (data.cost) setCost(data.cost);
-    if (data.organizerName) setOrgName(data.organizerName);
-  };
 
   const handlePosterSelect = (file: File) => {
     setPosterFile(file);
@@ -217,34 +202,6 @@ export default function NewConferencePage() {
         <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           {error}
         </p>
-      )}
-
-      {/* AI Poster Uploader */}
-      {showUploader && (
-        <div className="mt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Quick Fill with AI
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowUploader(false)}
-              className="text-sm text-slate-400 hover:text-white"
-            >
-              Skip this step
-            </button>
-          </div>
-          <PosterUploader
-            eventType="conference"
-            onDataExtracted={handlePosterDataExtracted as any}
-            onFileSelect={handlePosterSelect}
-          />
-          <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-sm text-slate-500">or fill manually below</span>
-            <div className="h-px flex-1 bg-slate-800" />
-          </div>
-        </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
