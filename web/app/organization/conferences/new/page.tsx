@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { createConference, getEmployerProfile, updateConference } from "@/lib/firestore";
@@ -26,6 +27,8 @@ export default function NewConferencePage() {
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
   const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const manualFileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle data extracted from poster
   const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
@@ -41,6 +44,42 @@ export default function NewConferencePage() {
 
   const handlePosterSelect = (file: File) => {
     setPosterFile(file);
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPosterPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle manual file selection (when AI uploader is skipped)
+  const handleManualFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      setError("Please upload a valid image (JPEG, PNG, WebP, or GIF)");
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image is too large. Maximum size is 10MB.");
+      return;
+    }
+
+    setError(null);
+    handlePosterSelect(file);
+  };
+
+  const clearPoster = () => {
+    setPosterFile(null);
+    setPosterPreview(null);
+    if (manualFileInputRef.current) {
+      manualFileInputRef.current.value = "";
+    }
   };
 
   if (loading) {
@@ -292,6 +331,69 @@ export default function NewConferencePage() {
             onChange={(e) => setCost(e.target.value)}
             placeholder="Free / $150 early bird"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+          />
+        </div>
+
+        {/* Manual Poster Upload (shown when AI uploader is skipped or as alternative) */}
+        <div>
+          <label className="block text-sm font-medium text-slate-200">
+            Event poster or banner image
+          </label>
+          <p className="mt-1 text-xs text-slate-400">
+            Upload an image for your conference (optional)
+          </p>
+
+          {posterPreview ? (
+            <div className="mt-2 relative">
+              <div className="relative aspect-[16/9] max-w-md overflow-hidden rounded-lg border border-slate-700">
+                <Image
+                  src={posterPreview}
+                  alt="Poster preview"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={clearPoster}
+                className="mt-2 text-sm text-red-400 hover:text-red-300"
+              >
+                Remove image
+              </button>
+            </div>
+          ) : (
+            <div
+              onClick={() => manualFileInputRef.current?.click()}
+              className="mt-2 cursor-pointer rounded-lg border-2 border-dashed border-slate-700 p-6 text-center transition-colors hover:border-emerald-500/50 hover:bg-slate-900/50"
+            >
+              <svg
+                className="mx-auto h-10 w-10 text-slate-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <p className="mt-2 text-sm text-slate-400">
+                Click to upload an image
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                JPEG, PNG, WebP, or GIF (max 10MB)
+              </p>
+            </div>
+          )}
+
+          <input
+            ref={manualFileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleManualFileSelect}
+            className="hidden"
           />
         </div>
 
