@@ -269,6 +269,33 @@ export async function GET(request: NextRequest) {
       cache = { data: opportunities, time: Date.now() };
     }
 
+    // Calculate counts BEFORE applying category/type filters
+    // so all categories show accurate totals in the UI
+    const allOpportunitiesForCounts = [...opportunities];
+    const counts = {
+      total: 0,
+      byCategory: {
+        jobs: 0,
+        events: 0,
+        businesses: 0,
+        education: 0,
+      } as Record<MapCategory, number>,
+      byType: {
+        job: 0,
+        conference: 0,
+        school: 0,
+        training: 0,
+        powwow: 0,
+        vendor: 0,
+      } as Record<MapContentType, number>,
+    };
+
+    allOpportunitiesForCounts.forEach((o) => {
+      counts.byCategory[o.category]++;
+      counts.byType[o.type]++;
+    });
+    counts.total = allOpportunitiesForCounts.length;
+
     // Apply filters
 
     // Type filter
@@ -322,30 +349,6 @@ export async function GET(request: NextRequest) {
         distance: o.distance,
       }));
     }
-
-    // Calculate counts
-    const counts = {
-      total: opportunities.length,
-      byCategory: {
-        jobs: 0,
-        events: 0,
-        businesses: 0,
-        education: 0,
-      } as Record<MapCategory, number>,
-      byType: {
-        job: 0,
-        conference: 0,
-        school: 0,
-        training: 0,
-        powwow: 0,
-        vendor: 0,
-      } as Record<MapContentType, number>,
-    };
-
-    opportunities.forEach((o) => {
-      counts.byCategory[o.category]++;
-      counts.byType[o.type]++;
-    });
 
     const response: MapOpportunitiesResponse = {
       opportunities,
