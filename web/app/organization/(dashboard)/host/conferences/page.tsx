@@ -38,20 +38,20 @@ export default function HostConferencesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
-  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
-
   useEffect(() => {
     async function loadConferences() {
       if (!user) return;
 
       try {
         let conferencesList;
+        const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
+
         if (isSuperAdmin) {
           // Super admin sees all conferences
-          console.log('[HostConferences] Loading ALL conferences for super admin');
+          console.log('[HostConferences] Loading ALL conferences for super admin:', user.email);
           conferencesList = await listConferences({ includeExpired: true });
         } else {
-          console.log('[HostConferences] Loading conferences for user:', user.uid);
+          console.log('[HostConferences] Loading conferences for user:', user.uid, user.email);
           conferencesList = await listEmployerConferences(user.uid);
         }
         console.log('[HostConferences] Found conferences:', conferencesList.length);
@@ -64,7 +64,7 @@ export default function HostConferencesPage() {
     }
 
     loadConferences();
-  }, [user, isSuperAdmin]);
+  }, [user]);
 
   const filteredConferences = conferences.filter(conference => {
     const startDate = parseDate(conference.startDate);
