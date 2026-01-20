@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -19,6 +19,8 @@ import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus, Ap
 import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon, ChatBubbleLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
+import { useKeyboardShortcuts, type KeyboardShortcut } from "@/hooks/useKeyboardShortcuts";
+import { KeyboardShortcutsHelp } from "@/components/ui/KeyboardShortcutsHelp";
 
 type CareerType = "jobs" | "training" | "applications";
 type StatusFilter = "all" | "active" | "paused" | "scheduled";
@@ -47,6 +49,33 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [newNoteText, setNewNoteText] = useState<Record<string, string>>({});
   const [addingNote, setAddingNote] = useState<string | null>(null);
+
+  // Search ref for keyboard shortcut
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcuts
+  const handleNewItem = useCallback(() => {
+    if (careerType === "jobs") {
+      router.push("/organization/jobs/new");
+    } else if (careerType === "training") {
+      router.push("/organization/training/new");
+    }
+  }, [careerType, router]);
+
+  const shortcuts: KeyboardShortcut[] = useMemo(() => [
+    {
+      key: "n",
+      action: handleNewItem,
+      description: careerType === "jobs" ? "New job posting" : "New training program",
+    },
+    {
+      key: "/",
+      action: () => searchInputRef.current?.focus(),
+      description: "Focus search",
+    },
+  ], [careerType, handleNewItem]);
+
+  useKeyboardShortcuts({ shortcuts });
 
   useEffect(() => {
     if (!user) return;
@@ -449,10 +478,11 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
               Search
             </label>
             <input
+              ref={searchInputRef}
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder={`Search ${careerType}...`}
+              placeholder={`Search ${careerType}... (Press / to focus)`}
               className="w-full rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
@@ -1013,6 +1043,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
 
       {/* Confirmation Dialog */}
       <ConfirmDialog />
+      <KeyboardShortcutsHelp shortcuts={shortcuts} />
     </div>
   );
 }

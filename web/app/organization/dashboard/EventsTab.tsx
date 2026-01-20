@@ -29,6 +29,7 @@ import {
 import { POWWOW_EVENT_TYPES, PowwowEventType } from "@/lib/types";
 import toast from "react-hot-toast";
 import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
+import { AddToCalendarButton } from "@/components/ui/AddToCalendarButton";
 
 type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
@@ -451,13 +452,23 @@ export default function EventsTab() {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-700 pt-4">
                     <Link
                       href={`/community/${event.id}`}
                       className="rounded-lg px-3 py-1.5 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors"
                     >
                       View public page
                     </Link>
+                    {event.startDate && (
+                      <AddToCalendarButton
+                        title={event.name}
+                        description={event.description}
+                        location={event.location}
+                        startDate={event.startDate}
+                        endDate={event.endDate}
+                        size="sm"
+                      />
+                    )}
                     <button
                       onClick={() => handleDuplicatePowwow(event)}
                       className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
@@ -575,7 +586,7 @@ export default function EventsTab() {
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-700 pt-4">
                     <Link
                       href={`/organization/conferences/${conf.id}/edit`}
                       className="rounded-lg px-3 py-1.5 text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
@@ -588,6 +599,16 @@ export default function EventsTab() {
                     >
                       View public page
                     </Link>
+                    {conf.startDate && (
+                      <AddToCalendarButton
+                        title={conf.title}
+                        description={conf.description}
+                        location={conf.location}
+                        startDate={conf.startDate}
+                        endDate={conf.endDate}
+                        size="sm"
+                      />
+                    )}
                     <button
                       onClick={() => handleDuplicateConference(conf)}
                       className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-1"

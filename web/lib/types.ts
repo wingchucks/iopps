@@ -227,12 +227,33 @@ export interface EmployerNotificationPreferences {
   jobExpiring: boolean; // Notify when a job is about to expire
   scheduledJobPublished: boolean; // Notify when a scheduled job goes live
 
+  // Training program notifications
+  trainingProgramExpiring?: boolean; // Notify when a training program is about to expire
+  trainingProgramPublished?: boolean; // Notify when a scheduled training goes live
+  trainingRegistrations?: boolean; // Notify about new registrations
+
+  // Event notifications
+  eventReminders?: boolean; // Remind about upcoming events
+  eventPublished?: boolean; // Notify when scheduled events go live
+  eventRegistrations?: boolean; // Notify about event registrations
+
+  // Product/Service notifications
+  productServiceExpiring?: boolean; // Notify when listings are about to expire
+  productServicePublished?: boolean; // Notify when scheduled listings go live
+  productServiceInquiries?: boolean; // Notify about product/service inquiries
+
+  // Scholarship/Grant notifications
+  scholarshipGrantExpiring?: boolean; // Notify when opportunities are about to expire
+  scholarshipGrantPublished?: boolean; // Notify when scheduled items go live
+  scholarshipApplications?: boolean; // Notify about scholarship applications
+
   // Team notifications
   teamInvitations: boolean; // Notify about team invitations
   teamActivity: boolean; // Notify about team member activity
 
   // Digest notifications
   weeklyDigest: boolean; // Weekly summary of activity
+  dailyActivitySummary?: boolean; // Daily summary of team activity
 
   // Marketing
   marketingEmails: boolean; // Product updates, tips, etc.
@@ -2453,6 +2474,54 @@ export interface Activity {
   referenceId: string;
   content?: string;
   createdAt: Timestamp;
+}
+
+// ============================================
+// TEAM ACTIVITY LOG
+// ============================================
+
+export const TEAM_ACTIVITY_ACTIONS = [
+  'created',
+  'updated',
+  'deleted',
+  'published',
+  'unpublished',
+  'duplicated',
+  'archived',
+] as const;
+
+export type TeamActivityAction = typeof TEAM_ACTIVITY_ACTIONS[number];
+
+export const TEAM_ACTIVITY_RESOURCES = [
+  'job',
+  'training_program',
+  'event',
+  'conference',
+  'product',
+  'service',
+  'scholarship',
+  'grant',
+  'team_member',
+  'settings',
+] as const;
+
+export type TeamActivityResource = typeof TEAM_ACTIVITY_RESOURCES[number];
+
+export interface TeamActivityLog {
+  id: string;
+  organizationId: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userAvatarUrl?: string;
+  action: TeamActivityAction;
+  resource: TeamActivityResource;
+  resourceId: string;
+  resourceTitle: string;
+  details?: Record<string, unknown>; // Additional context (e.g., what fields changed)
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: Timestamp | null;
 }
 
 // ============================================

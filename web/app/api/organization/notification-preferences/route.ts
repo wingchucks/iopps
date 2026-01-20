@@ -7,13 +7,35 @@ export const runtime = "nodejs";
 
 // Default preferences for new employers
 const defaultPreferences: EmployerNotificationPreferences = {
+  // Applications
   newApplications: true,
   applicationStatusChanges: true,
+  // Jobs
   jobExpiring: true,
   scheduledJobPublished: true,
+  // Training
+  trainingProgramExpiring: true,
+  trainingProgramPublished: true,
+  trainingRegistrations: true,
+  // Events
+  eventReminders: true,
+  eventPublished: true,
+  eventRegistrations: true,
+  // Products/Services
+  productServiceExpiring: true,
+  productServicePublished: true,
+  productServiceInquiries: true,
+  // Scholarships/Grants
+  scholarshipGrantExpiring: true,
+  scholarshipGrantPublished: true,
+  scholarshipApplications: true,
+  // Team
   teamInvitations: true,
   teamActivity: false,
+  // Digests
   weeklyDigest: true,
+  dailyActivitySummary: false,
+  // Marketing
   marketingEmails: false,
 };
 
@@ -85,13 +107,35 @@ export async function PUT(request: NextRequest) {
     // Validate all fields are booleans
     const validatedPreferences: Partial<EmployerNotificationPreferences> = {};
     const validKeys: (keyof EmployerNotificationPreferences)[] = [
+      // Applications
       "newApplications",
       "applicationStatusChanges",
+      // Jobs
       "jobExpiring",
       "scheduledJobPublished",
+      // Training
+      "trainingProgramExpiring",
+      "trainingProgramPublished",
+      "trainingRegistrations",
+      // Events
+      "eventReminders",
+      "eventPublished",
+      "eventRegistrations",
+      // Products/Services
+      "productServiceExpiring",
+      "productServicePublished",
+      "productServiceInquiries",
+      // Scholarships/Grants
+      "scholarshipGrantExpiring",
+      "scholarshipGrantPublished",
+      "scholarshipApplications",
+      // Team
       "teamInvitations",
       "teamActivity",
+      // Digests
       "weeklyDigest",
+      "dailyActivitySummary",
+      // Marketing
       "marketingEmails",
     ];
 

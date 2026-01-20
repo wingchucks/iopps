@@ -36,6 +36,78 @@ const jobSettings: NotificationSetting[] = [
   },
 ];
 
+const trainingSettings: NotificationSetting[] = [
+  {
+    key: "trainingProgramExpiring",
+    label: "Training Program Expiring",
+    description: "Get reminded before a training program expires",
+  },
+  {
+    key: "trainingProgramPublished",
+    label: "Scheduled Training Published",
+    description: "Get notified when a scheduled training goes live",
+  },
+  {
+    key: "trainingRegistrations",
+    label: "Training Registrations",
+    description: "Get notified about new training program registrations",
+  },
+];
+
+const eventSettings: NotificationSetting[] = [
+  {
+    key: "eventReminders",
+    label: "Event Reminders",
+    description: "Get reminded about your upcoming events",
+  },
+  {
+    key: "eventPublished",
+    label: "Scheduled Event Published",
+    description: "Get notified when a scheduled event goes live",
+  },
+  {
+    key: "eventRegistrations",
+    label: "Event Registrations",
+    description: "Get notified about new event registrations",
+  },
+];
+
+const productServiceSettings: NotificationSetting[] = [
+  {
+    key: "productServiceExpiring",
+    label: "Listing Expiring Soon",
+    description: "Get reminded before product or service listings expire",
+  },
+  {
+    key: "productServicePublished",
+    label: "Scheduled Listing Published",
+    description: "Get notified when scheduled products/services go live",
+  },
+  {
+    key: "productServiceInquiries",
+    label: "Product/Service Inquiries",
+    description: "Get notified about inquiries on your listings",
+  },
+];
+
+const scholarshipGrantSettings: NotificationSetting[] = [
+  {
+    key: "scholarshipGrantExpiring",
+    label: "Opportunity Expiring Soon",
+    description: "Get reminded before scholarships or grants expire",
+  },
+  {
+    key: "scholarshipGrantPublished",
+    label: "Scheduled Opportunity Published",
+    description: "Get notified when scheduled scholarships/grants go live",
+  },
+  {
+    key: "scholarshipApplications",
+    label: "Scholarship Applications",
+    description: "Get notified about scholarship applications",
+  },
+];
+
 const teamSettings: NotificationSetting[] = [
   {
     key: "teamInvitations",
@@ -50,6 +122,11 @@ const teamSettings: NotificationSetting[] = [
 ];
 
 const digestSettings: NotificationSetting[] = [
+  {
+    key: "dailyActivitySummary",
+    label: "Daily Activity Summary",
+    description: "Receive a daily summary of team activity",
+  },
   {
     key: "weeklyDigest",
     label: "Weekly Digest",
@@ -191,6 +268,10 @@ export default function NotificationsTab() {
 
       {renderSection("Applications", applicationSettings)}
       {renderSection("Job Postings", jobSettings)}
+      {renderSection("Training Programs", trainingSettings)}
+      {renderSection("Events", eventSettings)}
+      {renderSection("Products & Services", productServiceSettings)}
+      {renderSection("Scholarships & Grants", scholarshipGrantSettings)}
       {renderSection("Team", teamSettings)}
       {renderSection("Digests & Updates", digestSettings)}
 
