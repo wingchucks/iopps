@@ -295,6 +295,15 @@ export default function OnboardingPage() {
       }
       const idToken = await currentUser.getIdToken();
 
+      // Debug: Log what we're about to send
+      console.log('[Onboarding] Publishing with data:', {
+        organizationName: formData.organizationName,
+        orgType: formData.orgType,
+        province: formData.province,
+        city: formData.city,
+        userId: currentUser.uid,
+      });
+
       // Call the server-side publish API
       const response = await fetch('/api/organization/publish', {
         method: 'POST',

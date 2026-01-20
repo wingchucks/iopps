@@ -55,7 +55,16 @@ export async function POST(req: NextRequest) {
       enabledModules,
     } = body;
 
+    console.log(`[PUBLISH] Received request for user ${userId}:`, {
+      organizationName,
+      orgType,
+      province,
+      city,
+      hasLogo: !!logoUrl,
+    });
+
     if (!organizationName || !orgType) {
+      console.log(`[PUBLISH] Missing required fields - organizationName: "${organizationName}", orgType: "${orgType}"`);
       return NextResponse.json(
         { error: "Missing required fields: organizationName and orgType" },
         { status: 400 }
@@ -117,7 +126,10 @@ export async function POST(req: NextRequest) {
         updatedAt: now,
       });
 
-      console.log(`[PUBLISH] Successfully updated profile for ${userId}, new name: "${organizationName}"`);
+      // Verify the update by reading the document back
+      const verifyDoc = await employerRef.get();
+      const verifyData = verifyDoc.data();
+      console.log(`[PUBLISH] Verified after update - stored name: "${verifyData?.organizationName}"`);
     } else {
       // Create new profile
       slug = generateUniqueSlug(organizationName);
