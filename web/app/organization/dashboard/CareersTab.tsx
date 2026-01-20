@@ -18,6 +18,7 @@ import {
 import type { JobPosting, TrainingProgram, JobApplication, ApplicationStatus, ApplicantNote } from "@/lib/types";
 import { AcademicCapIcon, BriefcaseIcon, UserGroupIcon, ArrowDownTrayIcon, ChatBubbleLeftIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
+import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
 
 type CareerType = "jobs" | "training" | "applications";
 type StatusFilter = "all" | "active" | "paused" | "scheduled";
@@ -29,6 +30,7 @@ interface CareersTabProps {
 export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [careerType, setCareerType] = useState<CareerType>(initialView);
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([]);
@@ -148,12 +150,13 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
   };
 
   const handleDeleteJob = async (jobId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm(deleteConfirmOptions(title, "Job"));
+    if (!confirmed) return;
+
     try {
       await deleteJobPosting(jobId);
       await loadData();
+      toast.success("Job deleted successfully");
     } catch (err) {
       console.error("Error deleting job:", err);
       toast.error("Failed to delete job");
@@ -182,12 +185,13 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
   };
 
   const handleDeleteTrainingProgram = async (programId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm(deleteConfirmOptions(title, "Training Program"));
+    if (!confirmed) return;
+
     try {
       await deleteTrainingProgram(programId);
       await loadData();
+      toast.success("Training program deleted successfully");
     } catch (err) {
       console.error("Error deleting training program:", err);
       toast.error("Failed to delete training program");
@@ -244,11 +248,18 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
 
   // Delete a note from an application
   const handleDeleteNote = async (applicationId: string, noteId: string) => {
-    if (!confirm("Delete this note?")) return;
+    const confirmed = await confirm({
+      title: "Delete Note",
+      message: "Are you sure you want to delete this note?",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!confirmed) return;
 
     try {
       await deleteApplicantNote(applicationId, noteId);
       await loadData();
+      toast.success("Note deleted");
     } catch (err) {
       console.error("Error deleting note:", err);
       toast.error("Failed to delete note");
@@ -999,6 +1010,9 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
           </div>
         </>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }

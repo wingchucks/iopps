@@ -10,6 +10,7 @@ import { RichTextEditor } from "@/components/forms/RichTextEditor";
 import { SalaryRangeInput } from "@/components/forms/SalaryRangeInput";
 import { LocationTypeSelector } from "@/components/forms/LocationTypeSelector";
 import { CategorySelect, EmploymentTypeSelect } from "@/components/forms/CategorySelect";
+import { ConfirmationModal } from "@/components/admin/ConfirmationModal";
 
 // Helper to detect video provider from URL
 function detectVideoProvider(url: string): { provider: "youtube" | "vimeo" | "custom"; videoId?: string } {
@@ -375,34 +376,24 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         </div>
       )}
 
-      {showDeleteConfirm && (
-        <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
-          <p className="text-sm font-semibold text-amber-100">
-            Are you sure you want to delete this job posting?
-          </p>
-          <p className="mt-1 text-xs text-amber-200">
-            This action cannot be undone. All applications will remain accessible in your dashboard.
-          </p>
-          <div className="mt-3 flex gap-3">
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="rounded-md bg-red-600 px-3 py-1 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-            >
-              {deleting ? "Deleting..." : "Delete job posting"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(false)}
-              disabled={deleting}
-              className="rounded-md border border-slate-700 px-3 py-1 text-sm text-slate-200 hover:border-slate-600 disabled:opacity-60"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Delete Job Posting"
+        message={
+          <>
+            Are you sure you want to delete <strong>&ldquo;{title}&rdquo;</strong>?
+            All applications will remain accessible in your dashboard.
+          </>
+        }
+        confirmText={deleting ? "Deleting..." : "Delete"}
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleting}
+        warningText="This action cannot be undone."
+      />
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         {/* Section 1: Basic Information */}

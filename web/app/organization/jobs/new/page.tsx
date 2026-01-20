@@ -9,7 +9,11 @@ import type { JobTemplate } from "@/lib/types";
 import { getActiveSubscriptionProduct } from "@/lib/firestore/employer-products";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
 import { DatePicker } from "@/components/ui/date-picker";
+import { FormProgressIndicator, useFormSectionTracker } from "@/components/ui/FormProgressIndicator";
+import { JobPreviewModal } from "@/components/organization/JobPreviewModal";
 import toast from "react-hot-toast";
+
+const DRAFT_STORAGE_KEY = "iopps_job_draft";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -41,6 +45,15 @@ function NewJobPageContent() {
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
+
+  // Draft & Preview State
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [showDraftRecovery, setShowDraftRecovery] = useState(false);
+
+  // Section tracking for progress indicator
+  const sectionIds = ["section-core", "section-schedule", "section-trc", "section-description", "section-application"];
+  const currentSection = useFormSectionTracker(sectionIds);
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -99,6 +112,86 @@ function NewJobPageContent() {
       }
     }
   }, [isDuplicate]);
+
+  // Check for saved draft on mount
+  useEffect(() => {
+    if (isDuplicate) return; // Don't show recovery if duplicating
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        // Only show recovery if draft is less than 7 days old
+        if (draft.savedAt && Date.now() - draft.savedAt < 7 * 24 * 60 * 60 * 1000) {
+          setShowDraftRecovery(true);
+        } else {
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+        }
+      } catch (e) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    }
+  }, [isDuplicate]);
+
+  // Auto-save draft every 30 seconds if form has content
+  useEffect(() => {
+    const hasContent = formData.title || formData.description || formData.location;
+    if (!hasContent) return;
+
+    const saveInterval = setInterval(() => {
+      saveDraft(true);
+    }, 30000);
+
+    return () => clearInterval(saveInterval);
+  }, [formData]);
+
+  // Save draft function
+  const saveDraft = (isAutoSave = false) => {
+    try {
+      localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({
+          formData,
+          savedAt: Date.now(),
+        })
+      );
+      setDraftSaved(true);
+      if (!isAutoSave) {
+        toast.success("Draft saved successfully");
+      }
+      // Reset the saved indicator after 3 seconds
+      setTimeout(() => setDraftSaved(false), 3000);
+    } catch (e) {
+      if (!isAutoSave) {
+        toast.error("Failed to save draft");
+      }
+    }
+  };
+
+  // Recover saved draft
+  const recoverDraft = () => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setFormData(draft.formData);
+        toast.success("Draft recovered successfully");
+      } catch (e) {
+        toast.error("Failed to recover draft");
+      }
+    }
+    setShowDraftRecovery(false);
+  };
+
+  // Discard saved draft
+  const discardDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setShowDraftRecovery(false);
+  };
+
+  // Clear draft on successful submission
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  };
 
   // Load employer templates
   useEffect(() => {
@@ -431,6 +524,7 @@ function NewJobPageContent() {
             body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
           }).catch(() => { });
         }
+        clearDraft();
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
@@ -448,6 +542,7 @@ function NewJobPageContent() {
             body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
           }).catch(() => { });
         }
+        clearDraft();
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
@@ -462,6 +557,7 @@ function NewJobPageContent() {
       });
       if (!res.ok) throw new Error("Checkout failed");
       const { url } = await res.json();
+      clearDraft();
       window.location.href = url;
 
     } catch (e: any) {
@@ -551,7 +647,32 @@ function NewJobPageContent() {
                 : "Create a new opportunity for the community."}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => saveDraft(false)}
+              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              {draftSaved ? (
+                <>
+                  <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Saved
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                  Save Draft
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPreviewModal(true)}
+              className="flex items-center gap-2 rounded-lg border border-teal-500/50 bg-teal-500/10 px-4 py-2 text-sm font-semibold text-teal-400 hover:bg-teal-500/20 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              Preview
+            </button>
             <button
               type="button"
               onClick={() => setShowSaveTemplateModal(true)}
@@ -613,6 +734,49 @@ function NewJobPageContent() {
           </div>
         </div>
       )}
+
+      {/* Draft Recovery Banner */}
+      {showDraftRecovery && (
+        <div className="border-b border-blue-500/30 bg-blue-500/5">
+          <div className="mx-auto max-w-5xl px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <svg className="h-5 w-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-blue-200">You have an unsaved draft</p>
+                  <p className="text-sm text-blue-300/80">Would you like to continue where you left off?</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={discardDraft}
+                  className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={recoverDraft}
+                  className="px-4 py-1.5 text-sm font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Recover Draft
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Job Preview Modal */}
+      <JobPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        jobData={{
+          ...formData,
+          organizationName,
+        }}
+      />
 
       <div className="mx-auto mt-8 max-w-5xl px-4">
         {error && <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-red-200">{error}</div>}
@@ -687,7 +851,7 @@ function NewJobPageContent() {
           <div className="lg:col-span-2 space-y-8">
 
             {/* Core Details */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+            <section id="section-core" className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Core Details</h2>
               <div className="space-y-4">
                 <div data-error={!!validationErrors.title}>
@@ -738,7 +902,7 @@ function NewJobPageContent() {
             </section>
 
             {/* Scheduled Publishing */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+            <section id="section-schedule" className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <div className="flex items-start gap-3 mb-4">
                 <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -804,7 +968,7 @@ function NewJobPageContent() {
             </section>
 
             {/* TRC #92 Alignment (New) */}
-            <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
+            <section id="section-trc" className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
               <div className="flex items-start gap-3 mb-4">
                 <div className="p-2 bg-amber-500/20 rounded-lg text-2xl">🪶</div>
                 <div>
@@ -847,7 +1011,7 @@ function NewJobPageContent() {
             </section>
 
             {/* Description & AI */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 relative">
+            <section id="section-description" className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 relative">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-slate-100">Description</h2>
                 <button onClick={generateWithAI} disabled={aiGenerating} className="text-xs font-bold text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-full hover:bg-amber-500/20 disabled:opacity-50">
@@ -872,7 +1036,7 @@ function NewJobPageContent() {
             </section>
 
             {/* Application Method - Quick Apply Only */}
-            <section className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6">
+            <section id="section-application" className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6">
               <div className="flex items-start gap-3 mb-4">
                 <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -900,6 +1064,18 @@ function NewJobPageContent() {
 
           {/* Sidebar / Sidebar Options */}
           <div className="space-y-6">
+            {/* Progress Indicator */}
+            <FormProgressIndicator
+              sections={[
+                { id: "section-core", label: "Core Details", isComplete: !!(formData.title && formData.location && formData.closingDate) },
+                { id: "section-schedule", label: "Schedule", isComplete: true }, // Optional section, always complete
+                { id: "section-trc", label: "Reconciliation", isComplete: true }, // Optional section
+                { id: "section-description", label: "Description", isComplete: !!formData.description && formData.description.length >= 50 },
+                { id: "section-application", label: "Application", isComplete: true }, // Always complete (Quick Apply is default)
+              ]}
+              currentSection={currentSection}
+            />
+
             {/* Attributes */}
             <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Job Attributes</h2>
