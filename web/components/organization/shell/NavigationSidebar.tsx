@@ -15,7 +15,6 @@ import {
   BriefcaseIcon,
   DocumentTextIcon,
   VideoCameraIcon,
-  MagnifyingGlassIcon,
   ShoppingBagIcon,
   CubeIcon,
   ChatBubbleLeftRightIcon,
@@ -222,13 +221,7 @@ export default function NavigationSidebar({
                   active={isActive('/organization/hire/interviews')}
                   onClick={onNavigate}
                 />
-                <NavItem
-                  href="/organization/hire/talent"
-                  label="Talent Search"
-                  icon={MagnifyingGlassIcon}
-                  active={isActive('/organization/hire/talent')}
-                  onClick={onNavigate}
-                />
+                {/* Talent Search hidden until feature is ready */}
               </NavGroup>
             )}
 
