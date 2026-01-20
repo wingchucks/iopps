@@ -185,7 +185,7 @@ export async function createService(input: CreateServiceInput): Promise<string> 
 
   const slug = generateUniqueSlug(input.title);
 
-  const serviceData: Omit<Service, "id"> = {
+  const serviceData: Record<string, unknown> = {
     userId: input.userId,
     vendorId: input.vendorId || "",
     businessName: input.businessName,
@@ -224,7 +224,12 @@ export async function createService(input: CreateServiceInput): Promise<string> 
     updatedAt: serverTimestamp() as any,
   };
 
-  const docRef = await addDoc(collection(db, servicesCollection), serviceData);
+  // Remove undefined values - Firestore doesn't accept undefined
+  const cleanedData = Object.fromEntries(
+    Object.entries(serviceData).filter(([_, v]) => v !== undefined)
+  );
+
+  const docRef = await addDoc(collection(db, servicesCollection), cleanedData);
   return docRef.id;
 }
 
