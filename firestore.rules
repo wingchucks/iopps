@@ -1019,5 +1019,33 @@ service cloud.firestore {
       // No deletes from client
       allow delete: if false;
     }
+
+    // ===========================================================================
+    // BUSINESS GRANTS (Funding Opportunities)
+    // ===========================================================================
+    match /business_grants/{grantId} {
+      // Public read for active grants
+      allow read: if resource.data.status == "active";
+
+      // Organization owners can read their own grants (any status)
+      allow read: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+
+      // Admins/moderators can read all
+      allow read: if isAdminOrModerator();
+
+      // Employers can create grants for themselves
+      allow create: if isEmployer() && request.resource.data.createdBy == request.auth.uid;
+
+      // Owners can update their own grants (cannot change featured/status)
+      allow update: if (
+        isSignedIn() &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.get('featured', false) == resource.data.get('featured', false)
+      ) || isAdminOrModerator();
+
+      // Only admins can delete
+      allow delete: if isAdminOrModerator();
+    }
   }
 }
