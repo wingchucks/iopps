@@ -92,6 +92,13 @@ export async function POST(req: NextRequest) {
       const currentStatus = existingData?.status || "pending";
       const isApproved = currentStatus === "approved";
 
+      console.log(`[PUBLISH] Updating existing profile for ${userId}:`, {
+        oldName: existingData?.organizationName,
+        newName: organizationName,
+        docId: existingId,
+        isApproved,
+      });
+
       await employerRef.update({
         organizationName,
         slug, // Ensure slug is saved
@@ -109,6 +116,8 @@ export async function POST(req: NextRequest) {
         publishedAt: isApproved ? now : existingData?.publishedAt || null,
         updatedAt: now,
       });
+
+      console.log(`[PUBLISH] Successfully updated profile for ${userId}, new name: "${organizationName}"`);
     } else {
       // Create new profile
       slug = generateUniqueSlug(organizationName);

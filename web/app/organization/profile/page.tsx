@@ -1,5 +1,8 @@
 'use client';
 
+// Note: This is a client component, so caching is handled differently
+// The getEmployerProfile call happens client-side and should always get fresh data
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';

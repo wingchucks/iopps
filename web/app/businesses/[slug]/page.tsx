@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation';
 import { getPublicOrganizationBySlug, getOrganizationBySlug } from '@/lib/firestore/organizations';
 import { OrganizationProfileClient } from './OrganizationProfileClient';
 
+// Disable caching for this page so profile updates show immediately
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
