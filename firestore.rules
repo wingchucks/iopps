@@ -97,6 +97,21 @@ service cloud.firestore {
 
       // Only admins can delete
       allow delete: if isAdmin();
+
+      // =========================================================================
+      // EMPLOYER PRODUCTS SUBCOLLECTION (Subscriptions, Job Credits, etc.)
+      // =========================================================================
+      match /products/{productId} {
+        // Employers can read their own products (for subscription checks, job credits)
+        allow read: if isSignedIn() && request.auth.uid == employerId;
+
+        // Admins can read all products
+        allow read: if isAdminOrModerator();
+
+        // Only server-side (admin SDK) or admins can create/update/delete products
+        // Products are managed through API routes and Stripe webhooks
+        allow create, update, delete: if isAdminOrModerator();
+      }
     }
 
     // ===========================================================================
