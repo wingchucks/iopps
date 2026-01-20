@@ -130,6 +130,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState('');
   const [existingProfile, setExistingProfile] = useState<OrganizationProfile | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+  const [justPublished, setJustPublished] = useState(false); // Track if we just published in this session
 
   const [formData, setFormData] = useState<FormData>({
     organizationName: '',
@@ -352,6 +353,7 @@ export default function OnboardingPage() {
 
       // Move to success step
       setPublishedSlug(data.slug);
+      setJustPublished(true); // Mark that we just published successfully
       setStep(4);
       setExistingProfile(updatedProfile);
     } catch (err) {
@@ -639,7 +641,7 @@ export default function OnboardingPage() {
         {/* Step 4: Publish / Success */}
         {step === 4 && (
           <div className="space-y-6 text-center">
-            {isPublished ? (
+            {justPublished ? (
               existingProfile?.status === 'approved' ? (
                 // Approved employer - profile is live
                 <>
@@ -722,9 +724,13 @@ export default function OnboardingPage() {
                   <RocketLaunchIcon className="h-10 w-10 text-teal-500" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">Ready to launch?</h1>
+                  <h1 className="text-2xl font-bold text-white">
+                    {isPublished ? 'Review your changes' : 'Ready to launch?'}
+                  </h1>
                   <p className="mt-2 text-slate-400">
-                    Publish your profile to appear in the Businesses directory
+                    {isPublished
+                      ? 'Confirm your updates to save them to your profile'
+                      : 'Publish your profile to appear in the Businesses directory'}
                   </p>
                 </div>
 
@@ -764,22 +770,24 @@ export default function OnboardingPage() {
                     {loading ? (
                       <>
                         <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
-                        Publishing...
+                        {isPublished ? 'Updating...' : 'Publishing...'}
                       </>
                     ) : (
                       <>
                         <RocketLaunchIcon className="h-5 w-5" />
-                        Publish Profile
+                        {isPublished ? 'Update Profile' : 'Publish Profile'}
                       </>
                     )}
                   </button>
-                  <button
-                    onClick={handleSaveDraft}
-                    disabled={loading}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-700 px-6 py-3 font-semibold text-white hover:bg-slate-600 transition-colors disabled:opacity-50"
-                  >
-                    Save as Draft
-                  </button>
+                  {!isPublished && (
+                    <button
+                      onClick={handleSaveDraft}
+                      disabled={loading}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-700 px-6 py-3 font-semibold text-white hover:bg-slate-600 transition-colors disabled:opacity-50"
+                    >
+                      Save as Draft
+                    </button>
+                  )}
                 </div>
               </>
             )}
