@@ -24,9 +24,11 @@ import {
   BuildingOfficeIcon,
   FireIcon,
   ClockIcon,
+  DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 import { POWWOW_EVENT_TYPES, PowwowEventType } from "@/lib/types";
 import toast from "react-hot-toast";
+import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
 
 type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
@@ -103,6 +105,7 @@ function getDateStatusDisplay(status: DateStatus): { label: string; className: s
 
 export default function EventsTab() {
   const { user } = useAuth();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [eventType, setEventType] = useState<EventType>("powwows");
   const [powwows, setPowwows] = useState<PowwowEvent[]>([]);
   const [conferences, setConferences] = useState<Conference[]>([]);
@@ -110,6 +113,7 @@ export default function EventsTab() {
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [duplicatePowwowData, setDuplicatePowwowData] = useState<Partial<PowwowEvent> | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -176,9 +180,8 @@ export default function EventsTab() {
   };
 
   const handleDeletePowwow = async (eventId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm(deleteConfirmOptions(name, "Event"));
+    if (!confirmed) return;
     if (!user) return;
 
     try {
@@ -199,6 +202,7 @@ export default function EventsTab() {
       }
 
       await loadData();
+      toast.success("Event deleted");
     } catch (err) {
       console.error("Error deleting event:", err);
       toast.error(err instanceof Error ? err.message : "Failed to delete event");
@@ -206,16 +210,49 @@ export default function EventsTab() {
   };
 
   const handleDeleteConference = async (confId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm(deleteConfirmOptions(title, "Conference"));
+    if (!confirmed) return;
+
     try {
       await deleteConference(confId);
       await loadData();
+      toast.success("Conference deleted");
     } catch (err) {
       console.error("Error deleting conference:", err);
       toast.error("Failed to delete conference");
     }
+  };
+
+  const handleDuplicatePowwow = (event: PowwowEvent) => {
+    setDuplicatePowwowData({
+      name: `${event.name} (Copy)`,
+      eventType: event.eventType,
+      host: event.host,
+      description: event.description,
+      location: event.location,
+      startDate: undefined, // Clear dates for duplicate
+      endDate: undefined,
+      dateRange: event.dateRange,
+      season: event.season,
+      registrationStatus: event.registrationStatus,
+      livestream: event.livestream,
+    });
+    setShowCreateModal(true);
+    toast.success("Duplicated! Edit and save as new event.");
+  };
+
+  const handleDuplicateConference = (conf: Conference) => {
+    // Store conference data in sessionStorage for the new conference page
+    sessionStorage.setItem('duplicateConferenceData', JSON.stringify({
+      title: `${conf.title} (Copy)`,
+      description: conf.description,
+      location: conf.location,
+      organizerName: conf.organizerName,
+      registrationUrl: conf.registrationUrl,
+      // Don't copy dates - they should be updated for the new event
+    }));
+    toast.success("Duplicated! Redirecting to create page...");
+    window.location.href = "/organization/conferences/new";
   };
 
   const getNewButtonConfig = () => {
@@ -422,6 +459,13 @@ export default function EventsTab() {
                       View public page
                     </Link>
                     <button
+                      onClick={() => handleDuplicatePowwow(event)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
+                    >
+                      <DocumentDuplicateIcon className="h-4 w-4" />
+                      Duplicate
+                    </button>
+                    <button
                       onClick={() => handleTogglePowwowStatus(event.id, event.active !== false)}
                       className="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
                     >
@@ -545,6 +589,13 @@ export default function EventsTab() {
                       View public page
                     </Link>
                     <button
+                      onClick={() => handleDuplicateConference(conf)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
+                    >
+                      <DocumentDuplicateIcon className="h-4 w-4" />
+                      Duplicate
+                    </button>
+                    <button
                       onClick={() => handleDeleteConference(conf.id, conf.title)}
                       className="rounded-lg px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                     >
@@ -561,40 +612,50 @@ export default function EventsTab() {
       {/* Create Event Modal */}
       {showCreateModal && (
         <CreateEventModal
-          onClose={() => setShowCreateModal(false)}
+          initialData={duplicatePowwowData}
+          onClose={() => {
+            setShowCreateModal(false);
+            setDuplicatePowwowData(null);
+          }}
           onCreated={() => {
             setShowCreateModal(false);
+            setDuplicatePowwowData(null);
             loadData();
           }}
         />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }
 
 // Create Event Modal Component
 function CreateEventModal({
+  initialData,
   onClose,
   onCreated,
 }: {
+  initialData?: Partial<PowwowEvent> | null;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const { user } = useAuth();
-  const [eventType, setEventType] = useState<PowwowEventType | "">("");
-  const [name, setName] = useState("");
-  const [host, setHost] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  const [eventType, setEventType] = useState<PowwowEventType | "">(initialData?.eventType || "");
+  const [name, setName] = useState(initialData?.name || "");
+  const [host, setHost] = useState(initialData?.host || "");
+  const [description, setDescription] = useState(initialData?.description || "");
+  const [location, setLocation] = useState(initialData?.location || "");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [dateRange, setDateRange] = useState("");
-  const [season, setSeason] = useState("");
-  const [registrationStatus, setRegistrationStatus] = useState("open");
-  const [livestream, setLivestream] = useState(false);
+  const [dateRange, setDateRange] = useState(initialData?.dateRange || "");
+  const [season, setSeason] = useState(initialData?.season || "");
+  const [registrationStatus, setRegistrationStatus] = useState(initialData?.registrationStatus || "open");
+  const [livestream, setLivestream] = useState(initialData?.livestream || false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUploader, setShowUploader] = useState(true);
+  const [showUploader, setShowUploader] = useState(!initialData); // Hide uploader if duplicating
 
   const handlePosterDataExtracted = (data: PowwowExtractedData) => {
     if (data.name) setName(data.name);

@@ -15,12 +15,16 @@ import {
     PencilSquareIcon,
     TrashIcon,
     WrenchScrewdriverIcon,
-    XMarkIcon
+    XMarkIcon,
+    DocumentDuplicateIcon
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
+import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
+import { RichTextEditor } from "@/components/forms/RichTextEditor";
 
 export default function ServicesTab() {
     const { user } = useAuth();
+    const { confirm, ConfirmDialog } = useConfirmDialog();
     const [loading, setLoading] = useState(true);
     const [services, setServices] = useState<Service[]>([]);
     const [employerId, setEmployerId] = useState<string | null>(null);
@@ -117,15 +121,32 @@ export default function ServicesTab() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this service?")) return;
+    const handleDelete = async (id: string, title: string) => {
+        const confirmed = await confirm(deleteConfirmOptions(title, "Service"));
+        if (!confirmed) return;
+
         try {
             await deleteService(id);
             setServices(prev => prev.filter(s => s.id !== id));
+            toast.success("Service deleted");
         } catch (err) {
             console.error("Failed to delete", err);
             toast.error("Failed to delete.");
         }
+    };
+
+    const handleDuplicate = (service: Service) => {
+        setEditingService(null);
+        setFormData({
+            title: `${service.title} (Copy)`,
+            description: service.description,
+            tagline: service.tagline,
+            category: service.category,
+            priceRange: service.priceRange,
+            serviceAreas: service.serviceAreas || []
+        });
+        setShowModal(true);
+        toast.success("Duplicated! Edit and save as new service.");
     };
 
     if (loading) return <div className="text-slate-400 p-4">Loading services...</div>;
@@ -161,23 +182,33 @@ export default function ServicesTab() {
                                     {service.category}
                                 </span>
                                 <div className="flex gap-2">
-                                    <button onClick={() => handleOpenModal(service)} className="text-slate-400 hover:text-white">
+                                    <button onClick={() => handleDuplicate(service)} className="text-slate-400 hover:text-blue-400" title="Duplicate">
+                                        <DocumentDuplicateIcon className="h-4 w-4" />
+                                    </button>
+                                    <button onClick={() => handleOpenModal(service)} className="text-slate-400 hover:text-white" title="Edit">
                                         <PencilSquareIcon className="h-4 w-4" />
                                     </button>
-                                    <button onClick={() => handleDelete(service.id)} className="text-slate-400 hover:text-red-400">
+                                    <button onClick={() => handleDelete(service.id, service.title)} className="text-slate-400 hover:text-red-400" title="Delete">
                                         <TrashIcon className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
                             <h3 className="font-semibold text-white mb-1 line-clamp-1">{service.title}</h3>
-                            <p className="text-sm text-slate-400 line-clamp-2 mb-4">{service.tagline}</p>
-                            <div className="text-xs text-slate-500">
+                            <p className="text-sm text-slate-400 line-clamp-2 mb-3">{service.tagline}</p>
+                            <div className="flex items-center justify-between text-xs text-slate-500">
                                 <p>{service.priceRange}</p>
+                                <div className="flex gap-3">
+                                    <span>{service.viewCount || 0} views</span>
+                                    <span>{service.contactClicks || 0} clicks</span>
+                                </div>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
+
+            {/* Confirmation Dialog */}
+            <ConfirmDialog />
 
             {/* Modal */}
             {showModal && (
@@ -212,12 +243,11 @@ export default function ServicesTab() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">Full Description</label>
-                                <textarea
-                                    required
-                                    rows={4}
-                                    className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                <RichTextEditor
+                                    value={formData.description || ""}
+                                    onChange={(html) => setFormData({ ...formData, description: html })}
+                                    placeholder="Describe your service in detail..."
+                                    minHeight="150px"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
