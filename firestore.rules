@@ -103,7 +103,11 @@ service cloud.firestore {
       // =========================================================================
       match /products/{productId} {
         // Employers can read their own products (for subscription checks, job credits)
-        allow read: if isSignedIn() && request.auth.uid == employerId;
+        // Check both: direct UID match OR userId field in parent employer doc
+        allow read: if isSignedIn() && (
+          request.auth.uid == employerId ||
+          get(/databases/$(database)/documents/employers/$(employerId)).data.userId == request.auth.uid
+        );
 
         // Admins can read all products
         allow read: if isAdminOrModerator();
