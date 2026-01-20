@@ -29,6 +29,7 @@ import {
   PencilSquareIcon,
   CurrencyDollarIcon,
   SparklesIcon,
+  KeyIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -297,6 +298,39 @@ export default function AdminEmployersPage() {
       showToast("error", error instanceof Error ? error.message : "Failed to delete employer");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleSendPasswordReset = async (email: string, employerName: string) => {
+    if (!user || !email) return;
+
+    setProcessingId(email);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/send-password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send password reset");
+      }
+
+      // Copy reset link to clipboard
+      if (data.resetLink) {
+        await navigator.clipboard.writeText(data.resetLink);
+        showToast("success", `Password reset link copied to clipboard for ${employerName}`);
+      } else {
+        showToast("success", `Password reset email sent to ${email}`);
+      }
+    } catch (error) {
+      console.error("Error sending password reset:", error);
+      showToast("error", error instanceof Error ? error.message : "Failed to send password reset");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -933,6 +967,21 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                                   label: "Reconsider",
                                   onClick: () => handleReconsider(employer.id, employer.organizationName),
                                   variant: "success",
+                                  disabled: !!processingId,
+                                },
+                              ],
+                            });
+                          }
+
+                          // Password reset action - available for all employers with email
+                          if (employer.contactEmail) {
+                            actions.push({
+                              id: `account-${employer.id}`,
+                              items: [
+                                {
+                                  id: `password-reset-${employer.id}`,
+                                  label: "Send Password Reset",
+                                  onClick: () => handleSendPasswordReset(employer.contactEmail!, employer.organizationName),
                                   disabled: !!processingId,
                                 },
                               ],
