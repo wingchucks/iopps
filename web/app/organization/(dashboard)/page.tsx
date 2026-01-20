@@ -35,9 +35,11 @@ interface StatCardProps {
   href?: string;
   trend?: { value: number; isPositive: boolean };
   color?: 'blue' | 'teal' | 'amber' | 'purple' | 'pink';
+  loading?: boolean;
+  error?: boolean;
 }
 
-function StatCard({ label, value, icon: Icon, href, color = 'teal' }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, href, color = 'teal', loading, error }: StatCardProps) {
   const colorClasses = {
     blue: 'from-blue-500/20 to-blue-600/5 border-blue-500/20 text-blue-400',
     teal: 'from-accent/20 to-teal-600/5 border-accent/20 text-accent',
@@ -46,12 +48,29 @@ function StatCard({ label, value, icon: Icon, href, color = 'teal' }: StatCardPr
     pink: 'from-pink-500/20 to-pink-600/5 border-pink-500/20 text-pink-400',
   };
 
+  const renderValue = () => {
+    if (loading) {
+      return (
+        <div className="h-9 flex items-center">
+          <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+    if (error) {
+      return <p className="text-lg text-slate-500">--</p>;
+    }
+    if (value === 0) {
+      return <p className="text-3xl font-bold text-slate-400">0</p>;
+    }
+    return <p className="text-3xl font-bold text-slate-50">{value}</p>;
+  };
+
   const content = (
     <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-2xl p-5 backdrop-blur-sm transition-all hover:scale-[1.02]`}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-slate-400 text-sm mb-1">{label}</p>
-          <p className="text-3xl font-bold text-slate-50">{value}</p>
+          {renderValue()}
         </div>
         <div className={`p-2 rounded-xl bg-slate-900/50 ${colorClasses[color].split(' ').pop()}`}>
           <Icon className="w-5 h-5" />
@@ -151,6 +170,20 @@ export default function OrganizationDashboardHome() {
     outboundClicks: 0,
     offerings: 0,
   });
+  const [statsLoading, setStatsLoading] = useState({
+    jobs: true,
+    applications: true,
+    messages: true,
+    analytics: true,
+    offerings: true,
+  });
+  const [statsError, setStatsError] = useState({
+    jobs: false,
+    applications: false,
+    messages: false,
+    analytics: false,
+    offerings: false,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -165,45 +198,72 @@ export default function OrganizationDashboardHome() {
 
         setProfile(employerProfile);
         setEnabledModules(modules);
+        setLoading(false);
 
-        // Load stats based on enabled modules
-        const statsPromises: Promise<void>[] = [];
-        const newStats = { ...stats };
-
+        // Load stats in parallel with individual error handling
         if (modules.includes('hire')) {
-          statsPromises.push(
-            listEmployerJobs(user.uid).then(jobs => {
-              newStats.activeJobs = jobs.filter(j => j.active).length;
-            }),
-            listEmployerApplications(user.uid).then(apps => {
-              newStats.newApplications = apps.filter(a => a.status === 'submitted').length;
+          listEmployerJobs(user.uid)
+            .then(jobs => {
+              setStats(prev => ({ ...prev, activeJobs: jobs.filter(j => j.active).length }));
+              setStatsLoading(prev => ({ ...prev, jobs: false }));
             })
-          );
+            .catch(() => {
+              setStatsError(prev => ({ ...prev, jobs: true }));
+              setStatsLoading(prev => ({ ...prev, jobs: false }));
+            });
+
+          listEmployerApplications(user.uid)
+            .then(apps => {
+              setStats(prev => ({ ...prev, newApplications: apps.filter(a => a.status === 'submitted').length }));
+              setStatsLoading(prev => ({ ...prev, applications: false }));
+            })
+            .catch(() => {
+              setStatsError(prev => ({ ...prev, applications: true }));
+              setStatsLoading(prev => ({ ...prev, applications: false }));
+            });
+        } else {
+          setStatsLoading(prev => ({ ...prev, jobs: false, applications: false }));
         }
 
-        statsPromises.push(
-          getUnifiedUnreadCount(user.uid).then(count => {
-            newStats.unreadMessages = count;
+        getUnifiedUnreadCount(user.uid)
+          .then(count => {
+            setStats(prev => ({ ...prev, unreadMessages: count }));
+            setStatsLoading(prev => ({ ...prev, messages: false }));
           })
-        );
+          .catch(() => {
+            setStatsError(prev => ({ ...prev, messages: true }));
+            setStatsLoading(prev => ({ ...prev, messages: false }));
+          });
 
         if (modules.includes('sell')) {
-          statsPromises.push(
-            getOfferingCounts(user.uid).then(counts => {
-              newStats.offerings = counts.total;
-            }),
-            getAnalyticsSummary(user.uid, 30).then(summary => {
-              newStats.profileViews = summary.profileViews.total;
-              newStats.outboundClicks = summary.outboundClicks.total;
+          getOfferingCounts(user.uid)
+            .then(counts => {
+              setStats(prev => ({ ...prev, offerings: counts.total }));
+              setStatsLoading(prev => ({ ...prev, offerings: false }));
             })
-          );
-        }
+            .catch(() => {
+              setStatsError(prev => ({ ...prev, offerings: true }));
+              setStatsLoading(prev => ({ ...prev, offerings: false }));
+            });
 
-        await Promise.all(statsPromises);
-        setStats(newStats);
+          getAnalyticsSummary(user.uid, 30)
+            .then(summary => {
+              setStats(prev => ({
+                ...prev,
+                profileViews: summary.profileViews.total,
+                outboundClicks: summary.outboundClicks.total,
+              }));
+              setStatsLoading(prev => ({ ...prev, analytics: false }));
+            })
+            .catch(() => {
+              setStatsError(prev => ({ ...prev, analytics: true }));
+              setStatsLoading(prev => ({ ...prev, analytics: false }));
+            });
+        } else {
+          setStatsLoading(prev => ({ ...prev, offerings: false, analytics: false }));
+        }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-      } finally {
         setLoading(false);
       }
     }
@@ -224,44 +284,69 @@ export default function OrganizationDashboardHome() {
 
   if (enabledModules.includes('hire')) {
     visibleStats.push(
-      { label: 'Active Jobs', value: stats.activeJobs, icon: BriefcaseIcon, href: '/organization/jobs', color: 'blue' },
-      { label: 'New Applications', value: stats.newApplications, icon: DocumentTextIcon, href: '/organization/applications', color: 'blue' }
+      { label: 'Active Jobs', value: stats.activeJobs, icon: BriefcaseIcon, href: '/organization/jobs', color: 'blue', loading: statsLoading.jobs, error: statsError.jobs },
+      { label: 'New Applications', value: stats.newApplications, icon: DocumentTextIcon, href: '/organization/applications', color: 'blue', loading: statsLoading.applications, error: statsError.applications }
     );
   }
 
   visibleStats.push(
-    { label: 'Unread Messages', value: stats.unreadMessages, icon: EnvelopeIcon, href: '/organization/inbox', color: 'teal' }
+    { label: 'Unread Messages', value: stats.unreadMessages, icon: EnvelopeIcon, href: '/organization/inbox', color: 'teal', loading: statsLoading.messages, error: statsError.messages }
   );
 
   if (enabledModules.includes('sell')) {
     visibleStats.push(
-      { label: 'Profile Views', value: stats.profileViews, icon: EyeIcon, href: '/organization/analytics', color: 'purple' },
-      { label: 'Link Clicks', value: stats.outboundClicks, icon: CursorArrowRaysIcon, href: '/organization/analytics', color: 'amber' },
-      { label: 'Offerings', value: stats.offerings, icon: ShoppingBagIcon, href: '/organization/sell/offerings', color: 'teal' }
+      { label: 'Profile Views', value: stats.profileViews, icon: EyeIcon, href: '/organization/analytics', color: 'purple', loading: statsLoading.analytics, error: statsError.analytics },
+      { label: 'Link Clicks', value: stats.outboundClicks, icon: CursorArrowRaysIcon, href: '/organization/analytics', color: 'amber', loading: statsLoading.analytics, error: statsError.analytics },
+      { label: 'Offerings', value: stats.offerings, icon: ShoppingBagIcon, href: '/organization/sell/offerings', color: 'teal', loading: statsLoading.offerings, error: statsError.offerings }
     );
   }
 
   // Limit to 4 stats
   const displayStats = visibleStats.slice(0, 4);
 
-  // Build action items based on profile completion and modules
+  // Build action items with completion status for progress tracking
   const actions: ActionCardProps[] = [];
 
-  // Profile completion actions
-  if (!profile?.logoUrl) {
-    actions.push({ title: 'Add your logo', description: 'Help people recognize your organization', href: '/organization/onboarding', icon: EyeIcon });
-  }
-  if (!profile?.description) {
-    actions.push({ title: 'Complete your profile', description: 'Tell your story to potential connections', href: '/organization/onboarding', icon: DocumentTextIcon });
+  // Profile completion actions - show completed items too for progress visibility
+  const hasLogo = !!profile?.logoUrl;
+  const hasDescription = !!profile?.description;
+
+  actions.push({
+    title: 'Add your logo',
+    description: hasLogo ? 'Logo uploaded' : 'Help people recognize your organization',
+    href: '/organization/onboarding',
+    icon: EyeIcon,
+    completed: hasLogo,
+  });
+  actions.push({
+    title: 'Complete your profile',
+    description: hasDescription ? 'Profile completed' : 'Tell your story to potential connections',
+    href: '/organization/onboarding',
+    icon: DocumentTextIcon,
+    completed: hasDescription,
+  });
+
+  // Module-specific actions with completion tracking
+  if (enabledModules.includes('hire')) {
+    const hasJobs = stats.activeJobs > 0;
+    actions.push({
+      title: 'Post your first job',
+      description: hasJobs ? `${stats.activeJobs} active job${stats.activeJobs > 1 ? 's' : ''}` : 'Start attracting Indigenous talent',
+      href: '/organization/jobs/new',
+      icon: BriefcaseIcon,
+      completed: hasJobs,
+    });
   }
 
-  // Module-specific actions
-  if (enabledModules.includes('hire') && stats.activeJobs === 0) {
-    actions.push({ title: 'Post your first job', description: 'Start attracting Indigenous talent', href: '/organization/jobs/new', icon: BriefcaseIcon });
-  }
-
-  if (enabledModules.includes('sell') && stats.offerings === 0) {
-    actions.push({ title: 'Add your first offering', description: 'Showcase your products or services', href: '/organization/sell/offerings', icon: ShoppingBagIcon });
+  if (enabledModules.includes('sell')) {
+    const hasOfferings = stats.offerings > 0;
+    actions.push({
+      title: 'Add your first offering',
+      description: hasOfferings ? `${stats.offerings} offering${stats.offerings > 1 ? 's' : ''} listed` : 'Showcase your products or services',
+      href: '/organization/sell/offerings',
+      icon: ShoppingBagIcon,
+      completed: hasOfferings,
+    });
   }
 
   if (enabledModules.includes('host')) {
@@ -271,6 +356,16 @@ export default function OrganizationDashboardHome() {
   if (enabledModules.includes('funding')) {
     actions.push({ title: 'Share a funding opportunity', description: 'Help Indigenous businesses grow', href: '/organization/funding/opportunities', icon: SparklesIcon });
   }
+
+  // Sort actions: incomplete first, then completed
+  actions.sort((a, b) => {
+    if (a.completed === b.completed) return 0;
+    return a.completed ? 1 : -1;
+  });
+
+  // Count completed for progress indicator
+  const completedCount = actions.filter(a => a.completed).length;
+  const totalActions = actions.length;
 
   // Modules that can be enabled
   const availableModules: OrganizationModule[] = ['hire', 'sell', 'educate', 'host', 'funding']
@@ -299,14 +394,30 @@ export default function OrganizationDashboardHome() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Next Best Actions */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-50 mb-4">Next Steps</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-50">Next Steps</h2>
+            {totalActions > 0 && (
+              <span className="text-sm text-slate-400">
+                {completedCount}/{totalActions} completed
+              </span>
+            )}
+          </div>
+          {/* Progress bar */}
+          {totalActions > 0 && (
+            <div className="w-full h-1.5 bg-slate-800 rounded-full mb-4 overflow-hidden">
+              <div
+                className="h-full bg-accent rounded-full transition-all duration-500"
+                style={{ width: `${(completedCount / totalActions) * 100}%` }}
+              />
+            </div>
+          )}
           <div className="space-y-3">
             {actions.slice(0, 5).map((action, index) => (
               <ActionCard key={index} {...action} />
             ))}
-            {actions.length === 0 && (
-              <p className="text-slate-500 text-center py-4">
-                You&apos;re all caught up! Great work.
+            {completedCount === totalActions && totalActions > 0 && (
+              <p className="text-accent text-center py-2 font-medium">
+                All steps completed! Great work.
               </p>
             )}
           </div>
