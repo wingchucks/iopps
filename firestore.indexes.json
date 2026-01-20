@@ -627,7 +627,7 @@
       ]
     },
     {
-      "collectionGroup": "outboundClicks",
+      "collectionGroup": "outbound_clicks",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -641,7 +641,7 @@
       ]
     },
     {
-      "collectionGroup": "profileViews",
+      "collectionGroup": "profile_views",
       "queryScope": "COLLECTION",
       "fields": [
         {
