@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
-import { listEmployerConferences } from '@/lib/firestore';
+import { listEmployerConferences, listConferences } from '@/lib/firestore';
+
+const SUPER_ADMIN_EMAIL = 'nathan.arias@iopps.ca';
 import type { Conference } from '@/lib/types';
 import {
   BuildingOffice2Icon,
@@ -36,13 +38,22 @@ export default function HostConferencesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+
   useEffect(() => {
     async function loadConferences() {
       if (!user) return;
 
       try {
-        console.log('[HostConferences] Loading conferences for user:', user.uid);
-        const conferencesList = await listEmployerConferences(user.uid);
+        let conferencesList;
+        if (isSuperAdmin) {
+          // Super admin sees all conferences
+          console.log('[HostConferences] Loading ALL conferences for super admin');
+          conferencesList = await listConferences({ includeExpired: true });
+        } else {
+          console.log('[HostConferences] Loading conferences for user:', user.uid);
+          conferencesList = await listEmployerConferences(user.uid);
+        }
         console.log('[HostConferences] Found conferences:', conferencesList.length);
         setConferences(conferencesList);
       } catch (error) {
@@ -53,7 +64,7 @@ export default function HostConferencesPage() {
     }
 
     loadConferences();
-  }, [user]);
+  }, [user, isSuperAdmin]);
 
   const filteredConferences = conferences.filter(conference => {
     const startDate = parseDate(conference.startDate);
