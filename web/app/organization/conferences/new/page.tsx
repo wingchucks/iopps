@@ -46,7 +46,7 @@ export default function NewConferencePage() {
         });
 
         toast.success("Conference draft created!");
-        router.replace(`/organization/conferences/${newConferenceId}/edit`);
+        router.replace(`/organization/conferences/${newConferenceId}/edit?new=true`);
       } catch (err) {
         console.error("Failed to create conference:", err);
         setError(err instanceof Error ? err.message : "Could not create conference.");

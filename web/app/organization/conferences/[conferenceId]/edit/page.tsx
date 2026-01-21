@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { getConference, updateConference } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
@@ -20,17 +20,22 @@ import { ProtocolsTab } from "@/components/conference-builder/ProtocolsTab";
 import { FAQTab } from "@/components/conference-builder/FAQTab";
 import { SettingsTab } from "@/components/conference-builder/SettingsTab";
 
-export default function EditConferencePage() {
+function EditConferenceContent() {
   const params = useParams<{ conferenceId: string }>();
   const conferenceId = params?.conferenceId;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, role, loading: authLoading } = useAuth();
+
+  // Check if this is a newly created conference (from /new page redirect)
+  const isNewlyCreated = searchParams.get("new") === "true";
 
   const [conference, setConference] = useState<Conference | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showNewBanner, setShowNewBanner] = useState(isNewlyCreated);
 
   useEffect(() => {
     if (!conferenceId) return;
@@ -89,8 +94,40 @@ export default function EditConferencePage() {
     );
   }
 
+  // Determine the display title - use a clearer message for new/untitled conferences
+  const displayTitle = conference.title && conference.title !== "Untitled Conference"
+    ? conference.title
+    : showNewBanner
+    ? "New Conference (Draft)"
+    : "Untitled Conference";
+
   return (
     <div className="flex h-screen flex-col bg-[#0B0C10]">
+      {/* New Conference Banner */}
+      {showNewBanner && (
+        <div className="flex items-center justify-between bg-teal-900/30 border-b border-teal-800/50 px-6 py-3">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-500/20 text-teal-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+            <p className="text-sm text-teal-200">
+              <span className="font-semibold">New conference created!</span>
+              {" "}Start by giving it a name and filling in the details below.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowNewBanner(false)}
+            className="text-teal-400 hover:text-teal-300 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="flex items-center justify-between border-b border-slate-800 bg-[#08090C] px-6 py-4">
         <div className="flex items-center gap-4">
@@ -102,7 +139,7 @@ export default function EditConferencePage() {
           </Link>
           <div>
             <h1 className="text-lg font-bold text-white leading-tight">
-              {conference.title || "Untitled Conference"}
+              {displayTitle}
             </h1>
             <p className="text-xs text-slate-500">
               {conference.startDate ? new Date(conference.startDate as string).toLocaleDateString() : 'Date TBD'}
@@ -151,5 +188,19 @@ export default function EditConferencePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function EditConferencePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#0B0C10] text-slate-400">
+          Loading builder...
+        </div>
+      }
+    >
+      <EditConferenceContent />
+    </Suspense>
   );
 }
