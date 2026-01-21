@@ -15,10 +15,8 @@ import {
   BriefcaseIcon,
   DocumentTextIcon,
   VideoCameraIcon,
-  ShoppingBagIcon,
   CubeIcon,
   ChatBubbleLeftRightIcon,
-  AcademicCapIcon,
   BookOpenIcon,
   BanknotesIcon,
   CalendarDaysIcon,
@@ -229,13 +227,6 @@ export default function NavigationSidebar({
             {enabledModules.includes('sell') && (
               <NavGroup title="Sell" color="teal">
                 <NavItem
-                  href="/organization/sell/profile"
-                  label="Shop Profile"
-                  icon={ShoppingBagIcon}
-                  active={isActive('/organization/sell/profile')}
-                  onClick={onNavigate}
-                />
-                <NavItem
                   href="/organization/sell/offerings"
                   label="Offerings"
                   icon={CubeIcon}
@@ -255,13 +246,6 @@ export default function NavigationSidebar({
             {/* EDUCATE Module */}
             {enabledModules.includes('educate') && (
               <NavGroup title="Educate" color="purple">
-                <NavItem
-                  href="/organization/educate/profile"
-                  label="School Profile"
-                  icon={AcademicCapIcon}
-                  active={isActive('/organization/educate/profile')}
-                  onClick={onNavigate}
-                />
                 <NavItem
                   href="/organization/educate/programs"
                   label="Programs"

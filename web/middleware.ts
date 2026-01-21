@@ -37,6 +37,14 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const searchParams = request.nextUrl.searchParams;
 
+  // Handle legacy /business/[slug] → /businesses/[slug] redirect (singular to plural)
+  const businessMatch = path.match(/^\/business\/([^/]+)$/);
+  if (businessMatch) {
+    const slug = businessMatch[1];
+    const redirectUrl = new URL(`/businesses/${slug}`, request.url);
+    return NextResponse.redirect(redirectUrl, { status: 301 });
+  }
+
   // Handle legacy dashboard tab redirects
   if (path === '/organization/dashboard') {
     const tab = searchParams.get('tab');
@@ -75,5 +83,6 @@ export const config = {
     matcher: [
         '/organization/:path*',
         '/member/:path*',
+        '/business/:path*',
     ],
 };

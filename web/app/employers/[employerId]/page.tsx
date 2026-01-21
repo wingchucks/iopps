@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/firebase-admin";
@@ -219,6 +219,15 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
   const { preview } = await searchParams;
   const isPreview = preview === "true";
   const { employer, jobs, status } = await getEmployerData(employerId, isPreview);
+
+  // Redirect to canonical /businesses/[slug] URL if employer has a slug
+  // This consolidates all public profile URLs to one canonical location
+  if (employer && (employer as any).slug) {
+    const redirectUrl = isPreview
+      ? `/businesses/${(employer as any).slug}?preview=true`
+      : `/businesses/${(employer as any).slug}`;
+    redirect(redirectUrl);
+  }
 
   // Show 404 only if employer doesn't exist
   if (status === "not_found") {

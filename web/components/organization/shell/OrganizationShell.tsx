@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { EmployerProfile, OrganizationModule } from '@/lib/types';
+import type { EmployerProfile, OrganizationModule, OrganizationProfile } from '@/lib/types';
 import NavigationSidebar from './NavigationSidebar';
 import MobileNavBar from './MobileNavBar';
 import ModuleSwitcher from './ModuleSwitcher';
@@ -12,7 +12,7 @@ import { Bars3Icon, XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 interface OrganizationShellProps {
   children: React.ReactNode;
-  profile: EmployerProfile;
+  profile: EmployerProfile | OrganizationProfile;
   enabledModules: OrganizationModule[];
   currentPath: string;
   userId: string;
@@ -161,7 +161,7 @@ export default function OrganizationShell({
 
             <div className="flex items-center gap-3">
               <Link
-                href={`/employers/${profile.id}`}
+                href={`/businesses/${(profile as OrganizationProfile).slug || profile.id}`}
                 target="_blank"
                 className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
               >

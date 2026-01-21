@@ -102,7 +102,7 @@ export default function SellProfilePage() {
         <div className="flex gap-2">
           {vendor.slug && (
             <Link
-              href={`/business/${vendor.slug}`}
+              href={`/businesses/${vendor.slug}`}
               target="_blank"
               className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
             >
@@ -111,7 +111,7 @@ export default function SellProfilePage() {
             </Link>
           )}
           <Link
-            href="/organization/shop/dashboard"
+            href="/organization/onboarding"
             className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
           >
             <PencilIcon className="w-4 h-4" />
@@ -254,7 +254,7 @@ export default function SellProfilePage() {
 
           {completionScore < 100 && (
             <Link
-              href="/organization/shop/dashboard"
+              href="/organization/onboarding"
               className="block text-center text-sm text-accent hover:underline mt-4"
             >
               Complete your profile

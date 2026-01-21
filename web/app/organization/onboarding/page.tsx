@@ -117,6 +117,8 @@ interface FormData {
   province: string;
   city: string;
   logoUrl: string;
+  coverImageUrl: string;
+  description: string;
   website: string;
   enabledModules: OrganizationModule[];
 }
@@ -127,6 +129,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [error, setError] = useState('');
   const [existingProfile, setExistingProfile] = useState<OrganizationProfile | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
@@ -138,6 +141,8 @@ export default function OnboardingPage() {
     province: '',
     city: '',
     logoUrl: '',
+    coverImageUrl: '',
+    description: '',
     website: '',
     enabledModules: [],
   });
@@ -156,6 +161,8 @@ export default function OnboardingPage() {
           province: (profile as OrganizationProfile).province || '',
           city: (profile as OrganizationProfile).city || '',
           logoUrl: profile.logoUrl || '',
+          coverImageUrl: (profile as any).coverImageUrl || (profile as any).bannerUrl || '',
+          description: (profile as any).description || '',
           website: (profile as OrganizationProfile).links?.website || profile.website || '',
           enabledModules: profile.enabledModules || [],
         });
@@ -193,6 +200,22 @@ export default function OnboardingPage() {
       setError('Failed to upload logo. Please try again.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingCover(true);
+    setError('');
+    try {
+      const result = await uploadImage(file, user.uid, 'cover');
+      setFormData((prev) => ({ ...prev, coverImageUrl: result.url }));
+    } catch (err) {
+      setError('Failed to upload cover image. Please try again.');
+    } finally {
+      setUploadingCover(false);
     }
   };
 
@@ -259,6 +282,8 @@ export default function OnboardingPage() {
           province: formData.province,
           city: formData.city,
           logoUrl: formData.logoUrl,
+          bannerUrl: formData.coverImageUrl,
+          description: formData.description,
           links: { website: formData.website },
           enabledModules: formData.enabledModules,
         });
@@ -269,6 +294,8 @@ export default function OnboardingPage() {
           province: formData.province || undefined,
           city: formData.city || undefined,
           logoUrl: formData.logoUrl || undefined,
+          bannerUrl: formData.coverImageUrl || undefined,
+          description: formData.description || undefined,
           website: formData.website || undefined,
           enabledModules: formData.enabledModules,
         });
@@ -318,6 +345,8 @@ export default function OnboardingPage() {
           province: formData.province,
           city: formData.city,
           logoUrl: formData.logoUrl,
+          bannerUrl: formData.coverImageUrl,
+          description: formData.description,
           website: formData.website,
           enabledModules: formData.enabledModules,
         }),
@@ -346,6 +375,8 @@ export default function OnboardingPage() {
         province: formData.province,
         city: formData.city,
         logoUrl: formData.logoUrl,
+        bannerUrl: formData.coverImageUrl,
+        description: formData.description,
         enabledModules: formData.enabledModules,
         publicationStatus: 'PUBLISHED',
         directoryVisible: true,
@@ -568,6 +599,66 @@ export default function OnboardingPage() {
                   <p className="mt-1 text-xs text-slate-500">PNG, JPG up to 2MB</p>
                 </div>
               </div>
+            </div>
+
+            {/* Cover Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Cover Image
+              </label>
+              <div className="space-y-3">
+                <div className="aspect-[3/1] w-full overflow-hidden rounded-xl bg-slate-900 border border-slate-700">
+                  {formData.coverImageUrl ? (
+                    <img
+                      src={formData.coverImageUrl}
+                      alt="Cover preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <PhotoIcon className="h-12 w-12 text-slate-600" />
+                    </div>
+                  )}
+                </div>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600 transition-colors">
+                  {uploadingCover ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <PhotoIcon className="h-4 w-4" />
+                      Upload Cover Image
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverImageUpload}
+                    className="hidden"
+                    disabled={uploadingCover}
+                  />
+                </label>
+                <p className="text-xs text-slate-500">Recommended: 1200×400px or 3:1 ratio</p>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Tell people about your organization..."
+                rows={4}
+                className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 resize-none"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                This will be shown on your public profile
+              </p>
             </div>
 
             {/* Website */}

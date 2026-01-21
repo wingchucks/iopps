@@ -136,6 +136,8 @@ export interface CreateOrganizationInput {
   province?: string;
   city?: string;
   logoUrl?: string;
+  bannerUrl?: string;
+  description?: string;
   website?: string;
   enabledModules?: OrganizationModule[];
 }
@@ -168,6 +170,8 @@ export async function createOrganizationProfile(
     city: input.city,
     location: input.city && input.province ? `${input.city}, ${input.province}` : input.province || input.city || "",
     logoUrl: input.logoUrl || "",
+    bannerUrl: input.bannerUrl || "",
+    description: input.description || "",
     publicationStatus: "DRAFT",
     directoryVisible: true,
     enabledModules: input.enabledModules || [],
