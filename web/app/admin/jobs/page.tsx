@@ -56,6 +56,8 @@ function AdminJobsContent() {
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [activeJobsCount, setActiveJobsCount] = useState(0);
+  const [inactiveJobsCount, setInactiveJobsCount] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -112,9 +114,13 @@ function AdminJobsContent() {
         setJobs((prev) => [...prev, ...newJobs]);
       } else {
         setJobs(newJobs);
-        // Get total count
+        // Get total count and status breakdown from ALL jobs
         const allJobsSnap = await getDocs(collection(db!, "jobs"));
-        setTotalJobs(allJobsSnap.size);
+        const allJobs = allJobsSnap.docs;
+        setTotalJobs(allJobs.length);
+        const activeCount = allJobs.filter((doc) => doc.data().active === true).length;
+        setActiveJobsCount(activeCount);
+        setInactiveJobsCount(allJobs.length - activeCount);
       }
 
       setLastDoc(jobsSnap.docs[jobsSnap.docs.length - 1] || null);
@@ -204,8 +210,9 @@ function AdminJobsContent() {
     );
   }
 
-  const activeCount = jobs.filter((j) => j.active === true).length;
-  const inactiveCount = jobs.filter((j) => j.active === false).length;
+  // Use accurate counts from all jobs (not just paginated)
+  const activeCount = activeJobsCount;
+  const inactiveCount = inactiveJobsCount;
 
   return (
     <div className="space-y-6">
