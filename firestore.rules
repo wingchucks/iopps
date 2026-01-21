@@ -31,12 +31,24 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Helper: Check if user is admin
-    function isAdmin() {
-      // For now, checking custom claim or hardcoded email/uid if needed.
-      // Assuming 'admin' field in user doc or custom claim 'admin'
+    // Helper: Check if user is admin (token-only - no circular dependency)
+    // Use this for rules that would otherwise create circular reads
+    function isAdminByToken() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function isAdminOrModeratorByToken() {
       return isSignedIn() && (
-        request.auth.token.admin == true || 
+        request.auth.token.admin == true ||
+        request.auth.token.moderator == true
+      );
+    }
+
+    // Helper: Check if user is admin (full check - may read user doc)
+    // Safe to use when not in users collection rules
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
         getUserData().role == 'admin'
       );
     }
@@ -44,6 +56,7 @@ service cloud.firestore {
     function isAdminOrModerator() {
         return isSignedIn() && (
             request.auth.token.admin == true ||
+            request.auth.token.moderator == true ||
             getUserData().role == 'admin' ||
             getUserData().role == 'moderator'
         );
@@ -65,12 +78,15 @@ service cloud.firestore {
     
     // ===========================================================================
     // USERS COLLECTION
+    // IMPORTANT: Use token-only checks here to avoid circular dependency
+    // (isAdmin/isAdminOrModerator call getUserData which reads this collection)
     // ===========================================================================
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdminOrModerator());
+      // Use token-only admin check to avoid circular dependency
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdminOrModeratorByToken());
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && (request.auth.uid == userId || isAdminOrModerator());
-      allow delete: if isAdmin();
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdminOrModeratorByToken());
+      allow delete: if isAdminByToken();
     }
 
     // ===========================================================================
@@ -85,8 +101,12 @@ service cloud.firestore {
         );
       }
 
-      // Public read for approved employers, owner can read own, team members can read, admins can read all
-      allow read: if resource.data.status == 'approved' || isEmployerOwner() || isTeamMemberOf(employerId) || isAdminOrModerator();
+      // Admin/moderator can read ALL employers (for dashboard queries)
+      // This rule comes first to allow list queries without resource.data checks
+      allow read: if isAdminOrModerator();
+
+      // Public read for approved employers, owner can read own, team members can read
+      allow read: if resource.data.status == 'approved' || isEmployerOwner() || isTeamMemberOf(employerId);
 
       // Employers can create their own profile
       allow create: if isSignedIn() && request.auth.uid == employerId;
@@ -188,12 +208,14 @@ service cloud.firestore {
     // APPLICATIONS
     // ===========================================================================
     match /applications/{applicationId} {
-        // Applicants, employers, and team members can read applications
+        // Admin/moderator can read ALL applications (for dashboard queries)
+        allow read: if isAdminOrModerator();
+
+        // Applicants, employers, and team members can read their own applications
         allow read: if isSignedIn() && (
             resource.data.memberId == request.auth.uid ||
             resource.data.employerId == request.auth.uid ||
-            isTeamMemberOf(resource.data.employerId) ||
-            isAdminOrModerator()
+            isTeamMemberOf(resource.data.employerId)
         );
         // Users can only create applications for themselves
         allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
@@ -261,14 +283,14 @@ service cloud.firestore {
     // TRAINING PROGRAMS
     // ===========================================================================
     match /training_programs/{programId} {
+      // Admins/moderators can read all (for dashboard queries - must come first)
+      allow read: if isAdminOrModerator();
+
       // Public read for approved/active programs
       allow read: if resource.data.status == 'approved' && resource.data.active == true;
 
       // Organization owner can read their own (any status)
       allow read: if isSignedIn() && resource.data.organizationId == request.auth.uid;
-
-      // Admins/moderators can read all
-      allow read: if isAdminOrModerator();
 
       // Employers can create programs for their organization
       allow create: if isEmployer() && request.resource.data.organizationId == request.auth.uid;
@@ -325,14 +347,14 @@ service cloud.firestore {
     // SERVICES (Indigenous Marketplace Professional Services)
     // ===========================================================================
     match /services/{serviceId} {
+      // Admins/moderators can read all (for dashboard queries - must come first)
+      allow read: if isAdminOrModerator();
+
       // Public read for active services
       allow read: if resource.data.status == 'active';
 
       // Vendor/owner can read their own (any status)
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-
-      // Admins/moderators can read all
-      allow read: if isAdminOrModerator();
 
       // Authenticated users can create services (userId must match)
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
@@ -791,14 +813,14 @@ service cloud.firestore {
     // EDUCATION PILLAR - SCHOOLS
     // ===========================================================================
     match /schools/{schoolId} {
+      // Admins/moderators can read all (for dashboard queries - must come first)
+      allow read: if isAdminOrModerator();
+
       // Public read for published schools
       allow read: if resource.data.isPublished == true;
 
       // Employer (owner) can read their own school (any status)
       allow read: if isSignedIn() && resource.data.employerId == request.auth.uid;
-
-      // Admins/moderators can read all
-      allow read: if isAdminOrModerator();
 
       // Employers can create schools for their organization
       allow create: if isEmployer() && request.resource.data.employerId == request.auth.uid;
@@ -814,6 +836,9 @@ service cloud.firestore {
     // EDUCATION PILLAR - EDUCATION PROGRAMS
     // ===========================================================================
     match /education_programs/{programId} {
+      // Admins/moderators can read all (for dashboard queries - must come first)
+      allow read: if isAdminOrModerator();
+
       // Public read for published programs
       allow read: if resource.data.isPublished == true;
 
@@ -822,9 +847,6 @@ service cloud.firestore {
       allow read: if isSignedIn() &&
         exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
         get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid;
-
-      // Admins/moderators can read all
-      allow read: if isAdminOrModerator();
 
       // School owners can create programs
       allow create: if isSignedIn() &&
@@ -846,6 +868,9 @@ service cloud.firestore {
     // EDUCATION PILLAR - EDUCATION EVENTS
     // ===========================================================================
     match /education_events/{eventId} {
+      // Admins/moderators can read all (for dashboard queries - must come first)
+      allow read: if isAdminOrModerator();
+
       // Public read for published events
       allow read: if resource.data.isPublished == true;
 
@@ -853,9 +878,6 @@ service cloud.firestore {
       allow read: if isSignedIn() &&
         exists(/databases/$(database)/documents/schools/$(resource.data.schoolId)) &&
         get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.employerId == request.auth.uid;
-
-      // Admins/moderators can read all
-      allow read: if isAdminOrModerator();
 
       // School owners can create events
       allow create: if isSignedIn() &&
@@ -1043,14 +1065,14 @@ service cloud.firestore {
     // BUSINESS GRANTS (Funding Opportunities)
     // ===========================================================================
     match /business_grants/{grantId} {
+      // Admins/moderators can read all (for dashboard queries - must come first)
+      allow read: if isAdminOrModerator();
+
       // Public read for active grants
       allow read: if resource.data.status == "active";
 
       // Organization owners can read their own grants (any status)
       allow read: if isSignedIn() && resource.data.createdBy == request.auth.uid;
-
-      // Admins/moderators can read all
-      allow read: if isAdminOrModerator();
 
       // Employers can create grants for themselves
       allow create: if isEmployer() && request.resource.data.createdBy == request.auth.uid;
