@@ -103,6 +103,16 @@ function EditConferenceContent() {
 
   return (
     <div className="flex h-screen flex-col bg-[#0B0C10]">
+      {/* Free Posting Info Banner */}
+      <div className="flex items-center justify-center bg-emerald-900/20 border-b border-emerald-800/30 px-6 py-2">
+        <div className="flex items-center gap-2 text-sm text-emerald-300">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Conference listings are <strong>FREE</strong> — no payment required</span>
+        </div>
+      </div>
+
       {/* New Conference Banner */}
       {showNewBanner && (
         <div className="flex items-center justify-between bg-teal-900/30 border-b border-teal-800/50 px-6 py-3">

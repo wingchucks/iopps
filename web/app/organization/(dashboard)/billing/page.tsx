@@ -27,9 +27,10 @@ interface PlanCardProps {
   expiresAt?: Date | null;
   upgradeHref: string;
   color: 'blue' | 'teal' | 'amber' | 'purple';
+  startingPrice?: string;
 }
 
-function PlanCard({ module, name, icon: Icon, status, details, expiresAt, upgradeHref, color }: PlanCardProps) {
+function PlanCard({ module, name, icon: Icon, status, details, expiresAt, upgradeHref, color, startingPrice }: PlanCardProps) {
   const colorClasses = {
     blue: 'border-blue-500/20 bg-blue-500/5',
     teal: 'border-accent/20 bg-accent/5',
@@ -90,7 +91,11 @@ function PlanCard({ module, name, icon: Icon, status, details, expiresAt, upgrad
         href={upgradeHref}
         className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors"
       >
-        {status === 'active' ? 'Manage' : 'Activate'}
+        {status === 'active' ? 'Manage' : (
+          <>
+            View Pricing{startingPrice && ` — ${startingPrice}`}
+          </>
+        )}
         <ArrowRightIcon className="w-4 h-4" />
       </Link>
     </div>
@@ -166,9 +171,9 @@ export default function BillingPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Billing & Plans</h1>
+        <h1 className="text-2xl font-bold text-slate-50">Pricing</h1>
         <p className="text-slate-400 mt-1">
-          Manage your subscriptions and payment methods
+          View pricing options and manage your subscriptions
         </p>
       </div>
 
@@ -201,7 +206,7 @@ export default function BillingPage() {
             <SparklesIcon className="w-10 h-10 text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400 mb-4">No active subscription</p>
             <Link
-              href="/pricing"
+              href="/pricing#employers"
               className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
             >
               View Pricing Plans
@@ -224,8 +229,9 @@ export default function BillingPage() {
               status={hireStatus}
               details={hireStatus === 'active' ? jobCreditsRemaining : 'Post jobs and find talent'}
               expiresAt={hireExpires}
-              upgradeHref="/pricing"
+              upgradeHref="/pricing#employers"
               color="blue"
+              startingPrice="from $125"
             />
           )}
 
@@ -238,8 +244,9 @@ export default function BillingPage() {
               status={sellStatus}
               details={sellStatus === 'active' ? 'Your business is visible' : 'Showcase your Indigenous business'}
               expiresAt={sellExpires}
-              upgradeHref="/pricing"
+              upgradeHref="/pricing#vendors"
               color="teal"
+              startingPrice="from $50/mo"
             />
           )}
 

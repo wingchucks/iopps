@@ -25,6 +25,7 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
   PlusIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
@@ -129,32 +130,198 @@ interface ModuleCardProps {
 }
 
 function ModuleCard({ module, enabled, onEnable }: ModuleCardProps) {
-  const moduleInfo: Record<OrganizationModule, { name: string; description: string; icon: React.ElementType; color: string }> = {
-    hire: { name: 'Hire', description: 'Post jobs and manage applications', icon: BriefcaseIcon, color: 'blue' },
-    sell: { name: 'Sell', description: 'Showcase your Indigenous business', icon: ShoppingBagIcon, color: 'teal' },
-    educate: { name: 'Educate', description: 'Manage programs and scholarships', icon: AcademicCapIcon, color: 'purple' },
-    host: { name: 'Host', description: 'Create conferences and events', icon: CalendarDaysIcon, color: 'amber' },
-    funding: { name: 'Funding Opportunities', description: 'Share funding for Indigenous businesses', icon: SparklesIcon, color: 'pink' },
+  // Intent-based module info with pricing and deep-links
+  const moduleInfo: Record<OrganizationModule, {
+    name: string;
+    intentLabel: string;
+    description: string;
+    price: string;
+    priceColor: 'emerald' | 'blue';
+    icon: React.ElementType;
+    color: string;
+    pricingLink: string;
+  }> = {
+    hire: {
+      name: 'Hire',
+      intentLabel: 'Hire Talent',
+      description: 'Post jobs and find Indigenous professionals',
+      price: 'from $125',
+      priceColor: 'blue',
+      icon: BriefcaseIcon,
+      color: 'blue',
+      pricingLink: '/pricing#employers',
+    },
+    sell: {
+      name: 'Sell',
+      intentLabel: 'Promote Business',
+      description: 'List in Shop Indigenous marketplace',
+      price: 'from $50/mo',
+      priceColor: 'blue',
+      icon: ShoppingBagIcon,
+      color: 'teal',
+      pricingLink: '/pricing#vendors',
+    },
+    educate: {
+      name: 'Educate',
+      intentLabel: 'Share Scholarships',
+      description: 'Manage programs and scholarships',
+      price: 'FREE',
+      priceColor: 'emerald',
+      icon: AcademicCapIcon,
+      color: 'purple',
+      pricingLink: '/pricing#education',
+    },
+    host: {
+      name: 'Host',
+      intentLabel: 'Host Event',
+      description: 'Create conferences and gatherings',
+      price: 'FREE',
+      priceColor: 'emerald',
+      icon: CalendarDaysIcon,
+      color: 'amber',
+      pricingLink: '/pricing#events',
+    },
+    funding: {
+      name: 'Funding',
+      intentLabel: 'Share Funding',
+      description: 'Post funding opportunities',
+      price: 'FREE',
+      priceColor: 'emerald',
+      icon: SparklesIcon,
+      color: 'pink',
+      pricingLink: '/pricing#employers',
+    },
   };
 
   const info = moduleInfo[module];
 
   if (enabled) return null;
 
+  const priceColorClasses = {
+    emerald: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  };
+
   return (
-    <button
-      onClick={onEnable}
-      className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/30 hover:border-slate-600 hover:bg-slate-900/50 transition-all text-left w-full"
-    >
+    <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/30 hover:border-slate-600 hover:bg-slate-900/50 transition-all">
       <div className="p-2 rounded-lg bg-slate-800">
         <info.icon className="w-5 h-5 text-slate-400" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-300">{info.name}</p>
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className="font-semibold text-slate-200">{info.intentLabel}</p>
+          <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${priceColorClasses[info.priceColor]}`}>
+            {info.price}
+          </span>
+        </div>
         <p className="text-sm text-slate-500">{info.description}</p>
       </div>
-      <PlusIcon className="w-5 h-5 text-slate-500" />
-    </button>
+      <div className="flex items-center gap-2">
+        <Link
+          href={info.pricingLink}
+          className="text-xs text-slate-400 hover:text-slate-300 transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Pricing
+        </Link>
+        <button
+          onClick={onEnable}
+          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+          title="Enable module"
+        >
+          <PlusIcon className="w-4 h-4 text-slate-400" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface YourPlanCardProps {
+  profile: EmployerProfile | null;
+  enabledModules: OrganizationModule[];
+}
+
+function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
+  const hasActiveSubscription = profile?.subscription?.active;
+  const subscriptionTier = profile?.subscription?.tier;
+
+  // Determine what's included
+  const freeFeatures = [];
+  const paidFeatures = [];
+
+  if (enabledModules.includes('host')) {
+    freeFeatures.push('Events & Conferences');
+  }
+  if (enabledModules.includes('funding')) {
+    freeFeatures.push('Funding Opportunities');
+  }
+  if (enabledModules.includes('educate')) {
+    freeFeatures.push('Education Programs');
+  }
+
+  if (enabledModules.includes('hire')) {
+    paidFeatures.push({ name: 'Job Postings', price: 'from $125' });
+  }
+  if (enabledModules.includes('sell')) {
+    paidFeatures.push({ name: 'Shop Indigenous', price: 'from $50/mo' });
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-accent/10 to-teal-600/5 border border-accent/20 rounded-2xl p-5">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-slate-900/50 text-accent">
+            <CreditCardIcon className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-50">Your Plan</h3>
+            <p className="text-sm text-slate-400">
+              {hasActiveSubscription
+                ? `${subscriptionTier === 'TIER2' ? 'Unlimited' : 'Growth'} Plan Active`
+                : 'No active subscription'}
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/organization/billing"
+          className="px-3 py-1.5 bg-accent text-slate-950 rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
+        >
+          {hasActiveSubscription ? 'Manage' : 'View Pricing'}
+        </Link>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-4">
+        {/* Free Features */}
+        {freeFeatures.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400 mb-2">Free</p>
+            <ul className="space-y-1">
+              {freeFeatures.map(feature => (
+                <li key={feature} className="text-sm text-slate-300 flex items-center gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Paid Features */}
+        {paidFeatures.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">Paid</p>
+            <ul className="space-y-1">
+              {paidFeatures.map(feature => (
+                <li key={feature.name} className="text-sm text-slate-300">
+                  <span>{feature.name}</span>
+                  <span className="text-slate-500 text-xs ml-1">({feature.price})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -326,12 +493,12 @@ export default function OrganizationDashboardHome() {
     completed: hasDescription,
   });
 
-  // Module-specific actions with completion tracking
+  // Module-specific actions with completion tracking and intent-based titles
   if (enabledModules.includes('hire')) {
     const hasJobs = stats.activeJobs > 0;
     actions.push({
-      title: 'Post your first job',
-      description: hasJobs ? `${stats.activeJobs} active job${stats.activeJobs > 1 ? 's' : ''}` : 'Start attracting Indigenous talent',
+      title: 'Hire Talent',
+      description: hasJobs ? `${stats.activeJobs} active job${stats.activeJobs > 1 ? 's' : ''}` : 'From $125 — Post jobs to find Indigenous professionals',
       href: '/organization/jobs/new',
       icon: BriefcaseIcon,
       completed: hasJobs,
@@ -341,8 +508,8 @@ export default function OrganizationDashboardHome() {
   if (enabledModules.includes('sell')) {
     const hasOfferings = stats.offerings > 0;
     actions.push({
-      title: 'Add your first offering',
-      description: hasOfferings ? `${stats.offerings} offering${stats.offerings > 1 ? 's' : ''} listed` : 'Showcase your products or services',
+      title: 'Promote Business',
+      description: hasOfferings ? `${stats.offerings} offering${stats.offerings > 1 ? 's' : ''} listed` : 'From $50/mo — List in Shop Indigenous marketplace',
       href: '/organization/sell/offerings',
       icon: ShoppingBagIcon,
       completed: hasOfferings,
@@ -350,11 +517,15 @@ export default function OrganizationDashboardHome() {
   }
 
   if (enabledModules.includes('host')) {
-    actions.push({ title: 'Create an event', description: 'Host conferences or gatherings', href: '/organization/conferences/new', icon: CalendarDaysIcon });
+    actions.push({ title: 'Host Event', description: 'FREE — Create conferences and community gatherings', href: '/organization/conferences/new', icon: CalendarDaysIcon });
   }
 
   if (enabledModules.includes('funding')) {
-    actions.push({ title: 'Share a funding opportunity', description: 'Help Indigenous businesses grow', href: '/organization/funding/opportunities', icon: SparklesIcon });
+    actions.push({ title: 'Share Funding', description: 'FREE — Post funding opportunities for the community', href: '/organization/funding/opportunities', icon: SparklesIcon });
+  }
+
+  if (enabledModules.includes('educate')) {
+    actions.push({ title: 'Share Scholarships', description: 'FREE — Post scholarships and education programs', href: '/organization/educate/scholarships', icon: AcademicCapIcon });
   }
 
   // Sort actions: incomplete first, then completed
@@ -389,6 +560,9 @@ export default function OrganizationDashboardHome() {
           <StatCard key={index} {...stat} />
         ))}
       </div>
+
+      {/* Your Plan Card */}
+      <YourPlanCard profile={profile} enabledModules={enabledModules} />
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -462,7 +636,7 @@ export default function OrganizationDashboardHome() {
                   className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 hover:bg-slate-900 transition-colors"
                 >
                   <SparklesIcon className="w-5 h-5 text-accent" />
-                  <span className="text-slate-200">Manage Plans</span>
+                  <span className="text-slate-200">View Pricing</span>
                 </Link>
               </>
             )}

@@ -98,9 +98,14 @@ export default function HostConferencesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Conferences</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-50">Conferences</h1>
+            <span className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Free to Post
+            </span>
+          </div>
           <p className="text-slate-400 mt-1">
-            Manage your conferences and summits
+            Manage your conferences and summits — all event listings are free
           </p>
         </div>
         <Link
@@ -108,7 +113,7 @@ export default function HostConferencesPage() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
         >
           <PlusIcon className="w-4 h-4" />
-          Create Conference
+          Create Conference — FREE
         </Link>
       </div>
 

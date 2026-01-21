@@ -50,6 +50,8 @@ function NewJobPageContent() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [showDraftRecovery, setShowDraftRecovery] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingModalDismissed, setPricingModalDismissed] = useState(false);
 
   // Section tracking for progress indicator
   const sectionIds = ["section-core", "section-schedule", "section-trc", "section-description", "section-application"];
@@ -131,6 +133,20 @@ function NewJobPageContent() {
       }
     }
   }, [isDuplicate]);
+
+  // Show pricing modal on first visit (only for non-subscribers without free posting)
+  useEffect(() => {
+    if (loading || pricingModalDismissed || isDuplicate) return;
+    // Only show if user doesn't have active subscription or free posting
+    const hasActiveSubscription = subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0);
+    if (!hasActiveSubscription && !freePostingEnabled) {
+      // Check if user has seen this modal before in this session
+      const hasSeenModal = sessionStorage.getItem('job_pricing_modal_seen');
+      if (!hasSeenModal) {
+        setShowPricingModal(true);
+      }
+    }
+  }, [loading, subscription, freePostingEnabled, pricingModalDismissed, isDuplicate]);
 
   // Auto-save draft every 30 seconds if form has content
   useEffect(() => {
@@ -778,6 +794,84 @@ function NewJobPageContent() {
         }}
       />
 
+      {/* Pricing Info Modal - Shows before user starts filling form */}
+      {showPricingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg mx-4 rounded-2xl border border-slate-800 bg-[#08090C] p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-blue-500/20 to-teal-500/20 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-100">Job Posting Pricing</h3>
+              <p className="text-sm text-slate-400 mt-2">
+                Reach thousands of Indigenous professionals across Canada
+              </p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {/* Single Post */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+                <div>
+                  <p className="font-semibold text-slate-200">Single Job Post</p>
+                  <p className="text-xs text-slate-500">30 days • Standard placement</p>
+                </div>
+                <span className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</span>
+              </div>
+
+              {/* Featured Post */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-amber-400">Featured Job</p>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-white px-1.5 py-0.5 rounded">Popular</span>
+                  </div>
+                  <p className="text-xs text-slate-500">45 days • Spotlight placement</p>
+                </div>
+                <span className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</span>
+              </div>
+
+              {/* Annual Plans */}
+              <div className="pt-2 border-t border-slate-800">
+                <p className="text-xs text-slate-500 mb-2">Or save with annual plans:</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-center">
+                    <p className="text-sm font-semibold text-teal-400">Growth</p>
+                    <p className="text-xs text-slate-500">15 jobs/year</p>
+                    <p className="text-sm font-bold text-white mt-1">${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}</p>
+                  </div>
+                  <div className="flex-1 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center">
+                    <p className="text-sm font-semibold text-purple-400">Unlimited</p>
+                    <p className="text-xs text-slate-500">Unlimited jobs</p>
+                    <p className="text-sm font-bold text-white mt-1">${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Link
+                href="/pricing"
+                className="flex-1 text-center px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 font-medium hover:bg-slate-800 transition-colors"
+              >
+                View Full Pricing
+              </Link>
+              <button
+                onClick={() => {
+                  setShowPricingModal(false);
+                  setPricingModalDismissed(true);
+                  sessionStorage.setItem('job_pricing_modal_seen', 'true');
+                }}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-teal-500 text-slate-950 font-semibold hover:bg-teal-400 transition-colors"
+              >
+                Continue to Post Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto mt-8 max-w-5xl px-4">
         {error && <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-red-200">{error}</div>}
 
@@ -1064,6 +1158,77 @@ function NewJobPageContent() {
 
           {/* Sidebar / Sidebar Options */}
           <div className="space-y-6">
+            {/* Publish Actions - Now at top for immediate pricing visibility */}
+            <section className="rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-500/5 to-slate-900 p-6 sticky top-6 z-10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-100">Pricing & Publish</h2>
+                <Link href="/pricing" className="text-xs text-teal-400 hover:underline">View all plans</Link>
+              </div>
+              <div className="space-y-4">
+                {freePostingEnabled ? (
+                  <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
+                    {submitting ? "Posting..." : "Post Free (Admin)"}
+                  </button>
+                ) : subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0) ? (
+                  <>
+                    <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
+                      <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
+                      <div className="text-xs text-slate-400">
+                        {subscription.unlimitedPosts ? "Unlimited job postings" : "1 Credit will be deducted"}
+                      </div>
+                    </div>
+                    <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
+                      {submitting ? "Posting..." : subscription.unlimitedPosts ? "Post Job" : "Post using Credit"}
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Quick Pricing Summary */}
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Pay Per Post</div>
+
+                    {/* Standard Post Option */}
+                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-slate-300 font-semibold">{JOB_POSTING_PRODUCTS.SINGLE.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.SINGLE.duration} days</div>
+                        </div>
+                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</div>
+                      </div>
+                      <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-slate-700 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 transition-colors">
+                        {submitting ? "Processing..." : "Pay & Post"}
+                      </button>
+                    </div>
+
+                    {/* Featured Post Option */}
+                    <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
+                      <div className="absolute -top-2 right-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Popular</span>
+                      </div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-amber-400 font-semibold">{JOB_POSTING_PRODUCTS.FEATURED.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.FEATURED.duration} days</div>
+                        </div>
+                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</div>
+                      </div>
+                      <button onClick={() => handlePostJob("FEATURED")} disabled={submitting} className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
+                        {submitting ? "Processing..." : "Pay & Post Featured"}
+                      </button>
+                    </div>
+
+                    {/* Subscription Upsell */}
+                    <div className="pt-2 border-t border-slate-800">
+                      <Link href="/organization/subscription" className="block text-center text-xs text-teal-400 hover:underline">
+                        Save with annual plans — from $1,250/year
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                <p className="text-center text-xs text-slate-500 mt-2">By posting, you agree to our Terms.</p>
+              </div>
+            </section>
+
             {/* Progress Indicator */}
             <FormProgressIndicator
               sections={[
@@ -1112,128 +1277,6 @@ function NewJobPageContent() {
               </div>
             </section>
 
-            {/* Publish Actions */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sticky top-6">
-              <h2 className="text-lg font-bold text-slate-100 mb-4">Publish</h2>
-              <div className="space-y-4">
-                {freePostingEnabled ? (
-                  <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
-                    {submitting ? "Posting..." : "Post Free (Admin)"}
-                  </button>
-                ) : subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0) ? (
-                  <>
-                    <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
-                      <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
-                      <div className="text-xs text-slate-400">
-                        {subscription.unlimitedPosts ? "Unlimited job postings" : "1 Credit will be deducted"}
-                      </div>
-                    </div>
-                    <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
-                      {submitting ? "Posting..." : subscription.unlimitedPosts ? "Post Job" : "Post using Credit"}
-                    </button>
-                  </>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Per-Post Options Header */}
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Pay Per Post</div>
-
-                    {/* Standard Post Option */}
-                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-slate-300 font-semibold">{JOB_POSTING_PRODUCTS.SINGLE.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.SINGLE.duration} days</div>
-                        </div>
-                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</div>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-3">{JOB_POSTING_PRODUCTS.SINGLE.description}</p>
-                      <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-slate-700 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 transition-colors">
-                        {submitting ? "Processing..." : "Pay & Post"}
-                      </button>
-                    </div>
-
-                    {/* Featured Post Option */}
-                    <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
-                      <div className="absolute -top-2 right-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Popular</span>
-                      </div>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-amber-400 font-semibold">{JOB_POSTING_PRODUCTS.FEATURED.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.FEATURED.duration} days</div>
-                        </div>
-                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</div>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-3">{JOB_POSTING_PRODUCTS.FEATURED.description}</p>
-                      <button onClick={() => handlePostJob("FEATURED")} disabled={submitting} className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
-                        {submitting ? "Processing..." : "Pay & Post Featured"}
-                      </button>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="relative py-3">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-700"></div>
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-[#08090C] px-3 text-xs text-slate-500">or save with a subscription</span>
-                      </div>
-                    </div>
-
-                    {/* Annual Subscriptions Header */}
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Annual Plans</div>
-
-                    {/* Tier 1 Subscription */}
-                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-teal-500/50 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-teal-400 font-semibold">{SUBSCRIPTION_PRODUCTS.TIER1.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">12 months</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-white">${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}</div>
-                          <div className="text-[10px] text-slate-500">/year</div>
-                        </div>
-                      </div>
-                      <ul className="text-xs text-slate-400 mb-3 space-y-1">
-                        <li>• 15 job postings per year</li>
-                        <li>• 15 featured listings included</li>
-                        <li>• Organization profile page</li>
-                      </ul>
-                      <Link href="/organization/subscription?plan=TIER1" className="block w-full rounded-lg bg-teal-500/20 border border-teal-500/30 py-2.5 text-sm font-semibold text-teal-400 hover:bg-teal-500/30 transition-colors text-center">
-                        Subscribe & Save
-                      </Link>
-                    </div>
-
-                    {/* Tier 2 Subscription */}
-                    <div className="rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-4 border border-purple-500/30 relative">
-                      <div className="absolute -top-2 right-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full">Best Value</span>
-                      </div>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-purple-400 font-semibold">{SUBSCRIPTION_PRODUCTS.TIER2.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">12 months</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-white">${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}</div>
-                          <div className="text-[10px] text-slate-500">/year</div>
-                        </div>
-                      </div>
-                      <ul className="text-xs text-slate-400 mb-3 space-y-1">
-                        <li>• Unlimited job postings</li>
-                        <li>• Rotating featured listings</li>
-                        <li>• Shop Indigenous listing included</li>
-                      </ul>
-                      <Link href="/organization/subscription?plan=TIER2" className="block w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-sm font-semibold text-white hover:from-purple-600 hover:to-pink-600 transition-colors text-center">
-                        Subscribe & Save
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                <p className="text-center text-xs text-slate-500 mt-2">By posting, you agree to our Terms.</p>
-              </div>
-            </section>
           </div>
         </div>
       </div>

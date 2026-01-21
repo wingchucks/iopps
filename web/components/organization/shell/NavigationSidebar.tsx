@@ -145,6 +145,13 @@ export default function NavigationSidebar({
             onClick={onNavigate}
           />
           <NavItem
+            href="/organization/billing"
+            label="Pricing"
+            icon={CreditCardIcon}
+            active={isActive('/organization/billing')}
+            onClick={onNavigate}
+          />
+          <NavItem
             href="/organization/profile"
             label="Public Profile"
             icon={UserCircleIcon}
@@ -164,13 +171,6 @@ export default function NavigationSidebar({
             label="Analytics"
             icon={ChartBarIcon}
             active={isActive('/organization/analytics')}
-            onClick={onNavigate}
-          />
-          <NavItem
-            href="/organization/billing"
-            label="Billing & Plans"
-            icon={CreditCardIcon}
-            active={isActive('/organization/billing')}
             onClick={onNavigate}
           />
           <NavItem
