@@ -310,7 +310,7 @@ export default function AdminDashboard() {
             type="pending"
             title="Pending Approvals"
             items={pendingApprovalItems}
-            href={totalPending > 0 ? "/admin/employers?status=pending" : undefined}
+            href="/admin/employers?status=pending"
             loading={isLoading}
             emptyMessage="No pending approvals"
           />
@@ -318,6 +318,7 @@ export default function AdminDashboard() {
             type="flagged"
             title="Flagged Items"
             items={[]}
+            href="/admin/jobs"
             loading={isLoading}
             emptyMessage="No flagged content"
           />
@@ -325,7 +326,7 @@ export default function AdminDashboard() {
             type="failed"
             title="Failed Imports"
             items={failedImportItems.length > 0 ? failedImportItems : []}
-            href={failedImportItems.length > 0 ? "/admin/feeds" : undefined}
+            href="/admin/feeds"
             loading={isLoading}
             emptyMessage="All imports healthy"
           />
@@ -333,6 +334,7 @@ export default function AdminDashboard() {
             type="payment"
             title="Payment Issues"
             items={[]}
+            href="/admin/employers"
             loading={isLoading}
             emptyMessage="No payment issues"
           />

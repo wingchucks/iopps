@@ -299,12 +299,16 @@ function AdminJobsContent() {
                   const isActive = job.active === true;
 
                   return (
-                    <tr key={job.id} className="text-sm hover:bg-slate-800/50">
+                    <tr key={job.id} className="text-sm hover:bg-slate-800/50 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}>
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
-                          <p className="font-medium text-slate-100 truncate">
+                          <Link
+                            href={`/admin/jobs/${job.id}/edit`}
+                            className="font-medium text-slate-100 truncate hover:text-[#14B8A6] transition-colors block"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {job.title}
-                          </p>
+                          </Link>
                           <p className="text-xs text-slate-500 mt-1">
                             {job.employmentType || "Full-time"}
                             {job.remoteFlag && " • Remote"}
@@ -358,12 +362,12 @@ function AdminJobsContent() {
                           <p>{job.applicationsCount || 0} applies</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/careers/${job.id}`}
                             className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
-                            title="View"
+                            title="View public page"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </Link>
