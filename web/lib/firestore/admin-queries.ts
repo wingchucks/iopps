@@ -32,7 +32,7 @@ import { db } from "@/lib/firebase";
 
 export type EntityType =
   | "users"
-  | "members"
+  | "memberProfiles"
   | "employers"
   | "vendors"
   | "jobs"
@@ -71,7 +71,7 @@ export interface AdminListResult<T> {
 
 export interface AdminCountsSnapshot {
   users: { total: number; byRole: Record<string, number> };
-  members: { total: number; withResume: number; withSkills: number };
+  memberProfiles: { total: number; withResume: number; withSkills: number };
   employers: { total: number; pending: number; approved: number; rejected: number };
   vendors: { total: number; pending: number; active: number; featured: number };
   jobs: { total: number; active: number; inactive: number };
@@ -156,7 +156,7 @@ export function buildAdminQuery(
 
   // Add soft-delete filter (only for entities that support it)
   // Note: Firestore doesn't support != null directly, so we check for specific collections
-  if (excludeDeleted && ["employers", "users", "members"].includes(entityType)) {
+  if (excludeDeleted && ["employers", "users", "memberProfiles"].includes(entityType)) {
     // We'll handle this in post-processing since Firestore doesn't support != null well
   }
 
@@ -214,7 +214,7 @@ export async function getAdminCount(
       let total = countSnapshot.data().count;
 
       // If excluding deleted, we need to fetch and filter (Firestore limitation)
-      if (excludeDeleted && ["employers", "users", "members"].includes(entityType)) {
+      if (excludeDeleted && ["employers", "users", "memberProfiles"].includes(entityType)) {
         const docsSnapshot = await getDocs(q);
         total = docsSnapshot.docs.filter((doc) => !doc.data().deletedAt).length;
       }
@@ -281,7 +281,7 @@ export async function getAdminCountsByStatus(
 export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
   const defaultCounts: AdminCountsSnapshot = {
     users: { total: 0, byRole: {} },
-    members: { total: 0, withResume: 0, withSkills: 0 },
+    memberProfiles: { total: 0, withResume: 0, withSkills: 0 },
     employers: { total: 0, pending: 0, approved: 0, rejected: 0 },
     vendors: { total: 0, pending: 0, active: 0, featured: 0 },
     jobs: { total: 0, active: 0, inactive: 0 },
@@ -296,7 +296,7 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
     // Fetch all collections in parallel
     const [
       usersSnap,
-      membersSnap,
+      memberProfilesSnap,
       employersSnap,
       vendorsSnap,
       jobsSnap,
@@ -305,7 +305,7 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
       powwowsSnap,
     ] = await Promise.all([
       getDocs(collection(db, "users")),
-      getDocs(collection(db, "members")),
+      getDocs(collection(db, "memberProfiles")),
       getDocs(collection(db, "employers")),
       getDocs(collection(db, "vendors")),
       getDocs(collection(db, "jobs")),
@@ -322,10 +322,10 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
       usersByRole[role] = (usersByRole[role] || 0) + 1;
     });
 
-    // Process members
-    const members = membersSnap.docs.filter((doc) => !doc.data().deletedAt);
-    const membersWithResume = members.filter((doc) => doc.data().resumeUrl).length;
-    const membersWithSkills = members.filter((doc) => {
+    // Process memberProfiles
+    const memberProfiles = memberProfilesSnap.docs.filter((doc) => !doc.data().deletedAt);
+    const memberProfilesWithResume = memberProfiles.filter((doc) => doc.data().resumeUrl).length;
+    const memberProfilesWithSkills = memberProfiles.filter((doc) => {
       const skills = doc.data().skills;
       return skills && Array.isArray(skills) && skills.length > 0;
     }).length;
@@ -379,7 +379,7 @@ export async function getAllAdminCounts(): Promise<AdminCountsSnapshot> {
 
     return {
       users: { total: users.length, byRole: usersByRole },
-      members: { total: members.length, withResume: membersWithResume, withSkills: membersWithSkills },
+      memberProfiles: { total: memberProfiles.length, withResume: memberProfilesWithResume, withSkills: memberProfilesWithSkills },
       employers: { total: employers.length, ...employersByStatus },
       vendors: { total: vendors.length, ...vendorsByStatus },
       jobs: { total: jobs.length, active: activeJobs, inactive: jobs.length - activeJobs },

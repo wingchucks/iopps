@@ -13,8 +13,8 @@ export default function NewConferencePage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
-  const canCreate = role === "employer" || isSuperAdmin;
+  const isAdminOrModerator = role === "admin" || role === "moderator";
+  const canCreate = role === "employer" || isAdminOrModerator;
 
   // Auto-create draft conference and redirect to edit page
   useEffect(() => {

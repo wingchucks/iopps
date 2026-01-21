@@ -42,8 +42,8 @@ export default function AdminEmployersPage() {
   const [allEmployers, setAllEmployers] = useState<EmployerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  // Default to "all" if coming from search, otherwise "pending"
-  const [filter, setFilter] = useState<EmployerStatus | "all">(initialSearch ? "all" : "pending");
+  // Default to "all" to show complete list on page load
+  const [filter, setFilter] = useState<EmployerStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [expandedId, setExpandedId] = useState<string | null>(null);

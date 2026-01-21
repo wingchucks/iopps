@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       // Get recent members
       try {
         const membersSnap = await getDocs(
-          query(collection(db, "members"), orderBy("createdAt", "desc"), limit(5))
+          query(collection(db, "memberProfiles"), orderBy("createdAt", "desc"), limit(5))
         );
         membersSnap.docs.forEach((doc) => {
           const data = doc.data();
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
           activities.push({
             id: `member-${doc.id}`,
             type: "member_signup",
-            title: `New member: ${data.displayName || "Anonymous"}`,
+            title: `New member: ${data.fullName || data.displayName || "Anonymous"}`,
             timestamp: createdAt,
             href: `/admin/members`,
           });
@@ -357,13 +357,13 @@ export default function AdminDashboard() {
           />
           <KPICard
             label="Member Profiles"
-            value={counts.members.total}
+            value={counts.memberProfiles.total}
             definition="Job seeker profiles created on the platform"
             icon={<UserGroupIcon className="h-5 w-5" />}
             color="blue"
             loading={isLoading}
             href="/admin/members"
-            breakdown={`${counts.members.withResume} with resume`}
+            breakdown={`${counts.memberProfiles.withResume} with resume`}
           />
           <KPICard
             label="Employer Orgs"

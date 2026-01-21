@@ -21,6 +21,8 @@ import {
   EnvelopeIcon,
   Bars3Icon,
   XMarkIcon,
+  AcademicCapIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
 import { useAdminCounts } from "@/lib/hooks/admin";
@@ -69,6 +71,7 @@ function useNavigationGroups(): NavGroup[] {
           badge: counts.employers.pending > 0 ? counts.employers.pending : undefined,
           badgeVariant: "warning" as const,
         },
+        { name: "Applications", href: "/admin/applications", icon: ClipboardDocumentListIcon },
       ],
       defaultOpen: true,
     },
@@ -76,6 +79,7 @@ function useNavigationGroups(): NavGroup[] {
       label: "Content",
       items: [
         { name: "Jobs", href: "/admin/jobs", icon: DocumentTextIcon },
+        { name: "Scholarships", href: "/admin/scholarships", icon: AcademicCapIcon },
         { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
         { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
       ],

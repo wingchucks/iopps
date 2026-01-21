@@ -33,7 +33,7 @@ export interface UseAdminCountsReturn extends AdminCountsState {
 
 const defaultCounts: AdminCountsSnapshot = {
   users: { total: 0, byRole: {} },
-  members: { total: 0, withResume: 0, withSkills: 0 },
+  memberProfiles: { total: 0, withResume: 0, withSkills: 0 },
   employers: { total: 0, pending: 0, approved: 0, rejected: 0 },
   vendors: { total: 0, pending: 0, active: 0, featured: 0 },
   jobs: { total: 0, active: 0, inactive: 0 },
