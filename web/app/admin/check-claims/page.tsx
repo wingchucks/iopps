@@ -184,9 +184,48 @@ export default function CheckClaimsPage() {
                 <h2 className="text-lg font-semibold text-amber-300 mb-3">How to Fix</h2>
                 <p className="text-slate-300 text-sm mb-3">
                   Your account is missing the <code className="bg-slate-800 px-1 rounded">admin: true</code> custom claim.
-                  To fix this, run the following in Firebase Admin SDK or Cloud Functions:
                 </p>
-                <pre className="text-sm text-slate-300 bg-slate-950 p-3 rounded-lg overflow-x-auto">
+
+                {/* Auto-fix button for super admin */}
+                {user?.email === "nathan.arias@iopps.ca" && (
+                  <div className="mb-4">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const token = await user.getIdToken();
+                          const response = await fetch("/api/admin/set-claims", {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({}),
+                          });
+                          const data = await response.json();
+                          if (response.ok) {
+                            alert("Claims updated! Click 'Refresh Claims' to verify.");
+                          } else {
+                            alert(`Error: ${data.error}`);
+                          }
+                        } catch (err) {
+                          alert(`Error: ${err instanceof Error ? err.message : "Unknown error"}`);
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-500 font-semibold"
+                    >
+                      Fix My Claims Automatically
+                    </button>
+                    <p className="text-xs text-amber-400 mt-2">
+                      This will set <code>admin: true</code> on your account. Click "Refresh Claims" after to verify.
+                    </p>
+                  </div>
+                )}
+
+                <details className="mt-4">
+                  <summary className="text-slate-400 cursor-pointer hover:text-slate-300">
+                    Manual fix instructions (Firebase Admin SDK)
+                  </summary>
+                  <pre className="text-sm text-slate-300 bg-slate-950 p-3 rounded-lg overflow-x-auto mt-2">
 {`// Using Firebase Admin SDK
 const admin = require('firebase-admin');
 
@@ -196,10 +235,8 @@ await admin.auth().setCustomUserClaims('${claims.uid}', {
 });
 
 // User needs to sign out and back in, or refresh their token`}
-                </pre>
-                <p className="text-slate-400 text-xs mt-3">
-                  After setting claims, click "Refresh Claims" above (this forces a token refresh).
-                </p>
+                  </pre>
+                </details>
               </div>
             )}
           </div>
