@@ -12,6 +12,7 @@ import {
   CalendarDaysIcon,
   MapPinIcon,
   MusicalNoteIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { format, isPast, isFuture } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
@@ -224,7 +225,15 @@ export default function HostEventsPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end text-xs text-slate-500">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <Link
+                      href={`/community/events/${event.id}`}
+                      target="_blank"
+                      className="flex items-center gap-1 text-slate-400 hover:text-accent transition-colors"
+                    >
+                      <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                      View Public
+                    </Link>
                     <Link
                       href={`/organization/events/${event.id}/edit`}
                       className="flex items-center gap-1 text-accent hover:underline"
