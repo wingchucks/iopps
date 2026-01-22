@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
       province,
       city,
       logoUrl,
+      bannerUrl,
+      description,
       website,
       enabledModules,
     } = body;
@@ -61,6 +63,8 @@ export async function POST(req: NextRequest) {
       province,
       city,
       hasLogo: !!logoUrl,
+      hasBanner: !!bannerUrl,
+      hasDescription: !!description,
     });
 
     if (!organizationName || !orgType) {
@@ -116,6 +120,8 @@ export async function POST(req: NextRequest) {
         city: city || "",
         location: city && province ? `${city}, ${province}` : province || city || "",
         logoUrl: logoUrl || "",
+        bannerUrl: bannerUrl || existingData?.bannerUrl || "",
+        description: description || existingData?.description || "",
         links: { website: website || "" },
         enabledModules: enabledModules || [],
         // Only set PUBLISHED status if employer is already approved
@@ -124,6 +130,8 @@ export async function POST(req: NextRequest) {
         directoryVisible: isApproved, // Only visible if already approved
         publishedAt: isApproved ? now : existingData?.publishedAt || null,
         updatedAt: now,
+        // Track cover photo updates for cache busting
+        ...(bannerUrl && bannerUrl !== existingData?.bannerUrl ? { bannerUpdatedAt: now } : {}),
       });
 
       // Verify the update by reading the document back
@@ -144,6 +152,8 @@ export async function POST(req: NextRequest) {
         city: city || "",
         location: city && province ? `${city}, ${province}` : province || city || "",
         logoUrl: logoUrl || "",
+        bannerUrl: bannerUrl || "",
+        description: description || "",
         links: { website: website || "" },
         enabledModules: enabledModules || [],
         publicationStatus: "PENDING_APPROVAL", // New profiles require admin approval
@@ -152,6 +162,8 @@ export async function POST(req: NextRequest) {
         publishedAt: null, // Only set after admin approval
         createdAt: now,
         updatedAt: now,
+        // Track cover photo updates for cache busting
+        ...(bannerUrl ? { bannerUpdatedAt: now } : {}),
       });
     }
 

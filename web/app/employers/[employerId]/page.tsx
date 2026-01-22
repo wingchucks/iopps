@@ -319,11 +319,12 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
       {employer.bannerUrl && (
         <div className="relative w-full h-48 md:h-64 rounded-t-lg overflow-hidden mb-0">
           <Image
-            src={employer.bannerUrl}
+            src={`${employer.bannerUrl}${employer.bannerUrl.includes('?') ? '&' : '?'}v=${(employer as any).bannerUpdatedAt?.seconds || Date.now()}`}
             alt={`${employer.organizationName} banner`}
             fill
             className="object-cover"
             priority
+            unoptimized
           />
         </div>
       )}

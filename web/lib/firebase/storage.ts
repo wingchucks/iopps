@@ -47,6 +47,7 @@ export interface ImageMetadata {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB for images
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const HEIC_TYPES = ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"];
 
 const IMAGE_PATHS: Record<ImageType, string> = {
@@ -84,17 +85,33 @@ function generateFilename(vendorId: string, originalName: string): string {
  * Validate image file
  */
 export function validateImage(file: File): { valid: boolean; error?: string } {
+  // Log file info for debugging (especially on mobile Safari)
+  console.log('[Storage] Validating image:', {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    sizeFormatted: formatFileSize(file.size),
+  });
+
+  // Check for HEIC/HEIF images (common on iPhone) - provide specific error message
+  if (HEIC_TYPES.includes(file.type) || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+    return {
+      valid: false,
+      error: "HEIC/HEIF images are not supported. Please convert to JPEG or PNG before uploading, or take a screenshot of the image.",
+    };
+  }
+
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error: "Invalid file type. Please upload a JPEG, PNG, WebP, or GIF image.",
+      error: `Invalid file type "${file.type || 'unknown'}". Please upload a JPEG, PNG, WebP, or GIF image.`,
     };
   }
 
   if (file.size > MAX_FILE_SIZE) {
     return {
       valid: false,
-      error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
+      error: `File too large (${formatFileSize(file.size)}). Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
     };
   }
 

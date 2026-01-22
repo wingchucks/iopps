@@ -196,8 +196,11 @@ export default function OnboardingPage() {
     try {
       const result = await uploadImage(file, user.uid, 'profile');
       setFormData((prev) => ({ ...prev, logoUrl: result.url }));
-    } catch (err) {
-      setError('Failed to upload logo. Please try again.');
+    } catch (err: any) {
+      // Show the specific error message from validation
+      const errorMessage = err?.message || 'Failed to upload logo. Please try again.';
+      setError(errorMessage);
+      console.error('[Onboarding] Logo upload failed:', err);
     } finally {
       setUploading(false);
     }
@@ -212,8 +215,11 @@ export default function OnboardingPage() {
     try {
       const result = await uploadImage(file, user.uid, 'cover');
       setFormData((prev) => ({ ...prev, coverImageUrl: result.url }));
-    } catch (err) {
-      setError('Failed to upload cover image. Please try again.');
+    } catch (err: any) {
+      // Show the specific error message from validation
+      const errorMessage = err?.message || 'Failed to upload cover image. Please try again.';
+      setError(errorMessage);
+      console.error('[Onboarding] Cover image upload failed:', err);
     } finally {
       setUploadingCover(false);
     }
@@ -855,13 +861,18 @@ export default function OnboardingPage() {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                   <button
                     onClick={handlePublish}
-                    disabled={loading}
+                    disabled={loading || uploading || uploadingCover}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
                   >
                     {loading ? (
                       <>
                         <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
                         {isPublished ? 'Updating...' : 'Publishing...'}
+                      </>
+                    ) : uploading || uploadingCover ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
+                        Uploading image...
                       </>
                     ) : (
                       <>
@@ -873,7 +884,7 @@ export default function OnboardingPage() {
                   {!isPublished && (
                     <button
                       onClick={handleSaveDraft}
-                      disabled={loading}
+                      disabled={loading || uploading || uploadingCover}
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-700 px-6 py-3 font-semibold text-white hover:bg-slate-600 transition-colors disabled:opacity-50"
                     >
                       Save as Draft

@@ -215,11 +215,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         <div className="relative h-48 sm:h-64 bg-gradient-to-br from-slate-700 to-slate-800">
           {org.bannerUrl && (
             <Image
-              src={org.bannerUrl}
+              src={`${org.bannerUrl}${org.bannerUrl.includes('?') ? '&' : '?'}v=${(org as any).bannerUpdatedAt?.seconds || Date.now()}`}
               alt=""
               fill
               className="object-cover"
               priority
+              unoptimized
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
