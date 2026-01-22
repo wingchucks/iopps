@@ -101,7 +101,7 @@ export function TrustedPartners() {
                   className="group relative flex-shrink-0 flex items-center justify-center
                     h-28 w-52 sm:h-36 sm:w-72
                     rounded-xl sm:rounded-2xl
-                    bg-white
+                    bg-slate-50 border border-slate-200
                     p-4 sm:p-6
                     shadow-lg shadow-black/10
                     transition-all duration-300 ease-out

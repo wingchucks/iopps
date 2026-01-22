@@ -72,12 +72,14 @@ export async function isSlugAvailable(slug: string, excludeOrgId?: string): Prom
 }
 
 /**
- * Get organization by slug
+ * Get organization by slug or document ID
+ * First tries lookup by slug field, then falls back to document ID
  */
 export async function getOrganizationBySlug(slug: string): Promise<OrganizationProfile | null> {
   const firestore = checkFirebase();
   if (!firestore) return null;
 
+  // First try: lookup by slug field
   const q = query(
     collection(firestore, employerCollection),
     where("slug", "==", slug),
@@ -85,9 +87,19 @@ export async function getOrganizationBySlug(slug: string): Promise<OrganizationP
   );
   const snap = await getDocs(q);
 
-  if (snap.empty) return null;
-  const docSnap = snap.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+  if (!snap.empty) {
+    const docSnap = snap.docs[0];
+    return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+  }
+
+  // Fallback: try lookup by document ID
+  const ref = doc(firestore, employerCollection, slug);
+  const docSnap = await getDoc(ref);
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+  }
+
+  return null;
 }
 
 // ============================================
@@ -307,12 +319,14 @@ export async function getOrganizationProfile(userId: string): Promise<Organizati
 }
 
 /**
- * Get public organization profile by slug (only returns published & visible)
+ * Get public organization profile by slug or document ID (only returns published & visible)
+ * First tries lookup by slug field, then falls back to document ID
  */
 export async function getPublicOrganizationBySlug(slug: string): Promise<OrganizationProfile | null> {
   const firestore = checkFirebase();
   if (!firestore) return null;
 
+  // First try: lookup by slug field
   const q = query(
     collection(firestore, employerCollection),
     where("slug", "==", slug),
@@ -322,9 +336,23 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
   );
   const snap = await getDocs(q);
 
-  if (snap.empty) return null;
-  const docSnap = snap.docs[0];
-  return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+  if (!snap.empty) {
+    const docSnap = snap.docs[0];
+    return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+  }
+
+  // Fallback: try lookup by document ID with same status checks
+  const ref = doc(firestore, employerCollection, slug);
+  const docSnap = await getDoc(ref);
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    // Verify the organization is published and approved
+    if (data.publicationStatus === "PUBLISHED" && data.status === "approved") {
+      return { id: docSnap.id, ...data } as OrganizationProfile;
+    }
+  }
+
+  return null;
 }
 
 /**
