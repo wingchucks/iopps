@@ -93,10 +93,16 @@ export async function getOrganizationBySlug(slug: string): Promise<OrganizationP
   }
 
   // Fallback: try lookup by document ID
-  const ref = doc(firestore, employerCollection, slug);
-  const docSnap = await getDoc(ref);
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+  // Wrapped in try-catch because Firestore security rules may block access
+  try {
+    const ref = doc(firestore, employerCollection, slug);
+    const docSnap = await getDoc(ref);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
+    }
+  } catch (error) {
+    // Permission denied or other error - document may exist but not accessible
+    console.log(`[getOrganizationBySlug] Fallback lookup failed for "${slug}":`, error);
   }
 
   return null;
@@ -342,14 +348,25 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
   }
 
   // Fallback: try lookup by document ID with same status checks
-  const ref = doc(firestore, employerCollection, slug);
-  const docSnap = await getDoc(ref);
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    // Verify the organization is published and approved
-    if (data.publicationStatus === "PUBLISHED" && data.status === "approved") {
-      return { id: docSnap.id, ...data } as OrganizationProfile;
+  // Wrapped in try-catch because Firestore security rules may block access
+  try {
+    const ref = doc(firestore, employerCollection, slug);
+    const docSnap = await getDoc(ref);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Verify the organization is approved (required by security rules)
+      // Also check publicationStatus if set, but allow legacy docs without it
+      if (data.status === "approved") {
+        // If publicationStatus exists, it must be PUBLISHED
+        // If not set (legacy data), allow access for approved employers
+        if (!data.publicationStatus || data.publicationStatus === "PUBLISHED") {
+          return { id: docSnap.id, ...data } as OrganizationProfile;
+        }
+      }
     }
+  } catch (error) {
+    // Permission denied or other error - document may exist but not accessible
+    console.log(`[getPublicOrganizationBySlug] Fallback lookup failed for "${slug}":`, error);
   }
 
   return null;
