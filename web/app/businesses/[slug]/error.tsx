@@ -25,9 +25,11 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
     error.message?.toLowerCase().includes("no longer available");
 
   // Check if this is likely a permission/access error
+  // Check error.name first (set explicitly in page.tsx), then fallback to message content
   const isPermissionError =
     !isDeletedError &&
-    (error.message?.toLowerCase().includes("permission") ||
+    (error.name === "PermissionError" ||
+      error.message?.toLowerCase().includes("permission") ||
       error.message?.toLowerCase().includes("forbidden") ||
       error.message?.toLowerCase().includes("missing or insufficient"));
 
