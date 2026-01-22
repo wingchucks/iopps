@@ -472,7 +472,7 @@ function OverviewTab({
               title="Add a description"
               description="Tell visitors about your organization, mission, and what makes you unique."
               ctaText="Add Description"
-              ctaHref="/organization/dashboard"
+              ctaHref="/organization/onboarding"
             />
           ) : null}
         </section>
