@@ -496,9 +496,11 @@ function EventCard({ event, featured = false }: { event: PowwowEvent; featured?:
             ? "bg-purple-500/20 text-purple-300"
             : event.eventType === "Sports"
               ? "bg-green-500/20 text-green-300"
-              : event.eventType === "Other"
-                ? "bg-blue-500/20 text-blue-300"
-                : "bg-slate-500/20 text-slate-300"
+              : event.eventType === "Career Fair"
+                ? "bg-amber-500/20 text-amber-300"
+                : event.eventType === "Other"
+                  ? "bg-blue-500/20 text-blue-300"
+                  : "bg-slate-500/20 text-slate-300"
             }`}>
             {event.eventType || "Event"}
           </span>

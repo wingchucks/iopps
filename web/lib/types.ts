@@ -1012,6 +1012,7 @@ export interface VendorProduct {
 export const POWWOW_EVENT_TYPES = [
   'Pow Wow',
   'Sports',
+  'Career Fair',
   'Other',
 ] as const;
 export type PowwowEventType = typeof POWWOW_EVENT_TYPES[number];
