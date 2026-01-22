@@ -131,6 +131,7 @@ export default function OnboardingPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [existingProfile, setExistingProfile] = useState<OrganizationProfile | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [justPublished, setJustPublished] = useState(false); // Track if we just published in this session
@@ -193,9 +194,12 @@ export default function OnboardingPage() {
 
     setUploading(true);
     setError('');
+    setSuccessMessage('');
     try {
       const result = await uploadImage(file, user.uid, 'profile');
       setFormData((prev) => ({ ...prev, logoUrl: result.url }));
+      setSuccessMessage('Logo uploaded successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
       // Show the specific error message from validation
       const errorMessage = err?.message || 'Failed to upload logo. Please try again.';
@@ -212,9 +216,12 @@ export default function OnboardingPage() {
 
     setUploadingCover(true);
     setError('');
+    setSuccessMessage('');
     try {
       const result = await uploadImage(file, user.uid, 'cover');
       setFormData((prev) => ({ ...prev, coverImageUrl: result.url }));
+      setSuccessMessage('Cover image uploaded successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
       // Show the specific error message from validation
       const errorMessage = err?.message || 'Failed to upload cover image. Please try again.';
@@ -307,8 +314,10 @@ export default function OnboardingPage() {
         });
       }
       router.push('/organization/dashboard');
-    } catch (err) {
-      setError('Failed to save. Please try again.');
+    } catch (err: any) {
+      console.error('Save draft error:', err);
+      const message = err?.message || 'Failed to save. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -393,9 +402,10 @@ export default function OnboardingPage() {
       setJustPublished(true); // Mark that we just published successfully
       setStep(4);
       setExistingProfile(updatedProfile);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Publish error:', err);
-      setError('Failed to publish. Please try again.');
+      const message = err?.message || 'Failed to publish. Please try again.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -452,6 +462,13 @@ export default function OnboardingPage() {
       {error && (
         <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
           {error}
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-6 rounded-xl bg-teal-500/10 border border-teal-500/20 p-4 text-sm text-teal-400">
+          {successMessage}
         </div>
       )}
 
@@ -902,7 +919,8 @@ export default function OnboardingPage() {
             {step > 1 ? (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                disabled={uploading || uploadingCover}
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ArrowLeftIcon className="h-4 w-4" />
                 Back
@@ -912,10 +930,20 @@ export default function OnboardingPage() {
             )}
             <button
               onClick={handleNext}
-              className="flex items-center gap-2 rounded-full bg-teal-500 px-6 py-2.5 font-medium text-white hover:bg-teal-600 transition-colors"
+              disabled={uploading || uploadingCover}
+              className="flex items-center gap-2 rounded-full bg-teal-500 px-6 py-2.5 font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {step === 3 ? 'Review & Publish' : 'Continue'}
-              <ArrowRightIcon className="h-4 w-4" />
+              {uploading || uploadingCover ? (
+                <>
+                  <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  {step === 3 ? 'Review & Publish' : 'Continue'}
+                  <ArrowRightIcon className="h-4 w-4" />
+                </>
+              )}
             </button>
           </div>
         )}
