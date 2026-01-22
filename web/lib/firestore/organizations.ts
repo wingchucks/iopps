@@ -25,6 +25,7 @@ import type {
   PrimaryCTAType,
   EmployerProfile,
 } from "@/lib/types";
+import { removeDirectoryEntry } from "./directory";
 
 // ============================================
 // SLUG UTILITIES
@@ -532,4 +533,82 @@ export async function migrateToOrganizationProfile(
  */
 export function needsMigration(profile: EmployerProfile | OrganizationProfile): boolean {
   return !(profile as OrganizationProfile).slug;
+}
+
+// ============================================
+// SOFT DELETE
+// ============================================
+
+export interface SoftDeleteResult {
+  success: boolean;
+  orgId: string;
+  organizationName?: string;
+  error?: string;
+}
+
+/**
+ * Soft delete an organization profile
+ * - Sets status to 'deleted'
+ * - Sets directoryVisible to false
+ * - Removes from directory_index
+ * - Records deletion metadata
+ *
+ * This is the shared function used by both employer self-delete and admin delete.
+ */
+export async function softDeleteOrganization(
+  orgId: string,
+  deletedBy: string,
+  reason?: string
+): Promise<SoftDeleteResult> {
+  const firestore = checkFirebase();
+  if (!firestore) {
+    return { success: false, orgId, error: "Firebase not available" };
+  }
+
+  try {
+    const ref = doc(firestore, employerCollection, orgId);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      return { success: false, orgId, error: "Organization not found" };
+    }
+
+    const data = snap.data();
+    const organizationName = data.organizationName;
+
+    // Check if already deleted
+    if (data.status === "deleted") {
+      return { success: false, orgId, organizationName, error: "Organization already deleted" };
+    }
+
+    // Update the organization document with soft-delete fields
+    await updateDoc(ref, {
+      status: "deleted",
+      directoryVisible: false,
+      publicationStatus: "DRAFT", // Unpublish
+      deletedAt: serverTimestamp(),
+      deletedBy,
+      deleteReason: reason || null,
+      updatedAt: serverTimestamp(),
+    });
+
+    // Remove from directory index
+    await removeDirectoryEntry(orgId);
+
+    return { success: true, orgId, organizationName };
+  } catch (error) {
+    console.error(`[softDeleteOrganization] Error deleting ${orgId}:`, error);
+    return {
+      success: false,
+      orgId,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Check if an organization is deleted (soft-deleted)
+ */
+export function isOrganizationDeleted(profile: OrganizationProfile): boolean {
+  return profile.status === "deleted" || !!profile.deletedAt;
 }

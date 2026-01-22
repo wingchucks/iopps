@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPublicOrganizationBySlug, getOrganizationBySlug } from '@/lib/firestore/organizations';
+import { getPublicOrganizationBySlug, getOrganizationBySlug, isOrganizationDeleted } from '@/lib/firestore/organizations';
 import { OrganizationProfileClient } from './OrganizationProfileClient';
 
 // Disable caching for this page so profile updates show immediately
@@ -87,6 +87,13 @@ export default async function OrganizationProfilePage({ params }: Props) {
     if (!org) {
       notFound();
     }
+  }
+
+  // Check if organization has been deleted
+  if (isOrganizationDeleted(org)) {
+    const deletedError = new Error('This business is no longer available');
+    deletedError.name = 'DeletedError';
+    throw deletedError;
   }
 
   return <OrganizationProfileClient organization={org} />;

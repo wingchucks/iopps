@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
+import { softDeleteOrganization } from "@/lib/firestore/organizations";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -144,11 +145,15 @@ export async function POST(req: NextRequest) {
 
         const deletionResults: Record<string, number | Record<string, number>> = {};
 
-        // 1. Soft delete employer document
-        await db.collection("employers").doc(employerId).update({
-            deletedAt: FieldValue.serverTimestamp(),
-            deletedBy: decodedToken.uid,
-        });
+        // 1. Soft delete employer document using shared function
+        // This sets status='deleted', directoryVisible=false, removes from directory_index
+        const deleteResult = await softDeleteOrganization(employerId, decodedToken.uid);
+        if (!deleteResult.success) {
+            return NextResponse.json(
+                { error: deleteResult.error || "Failed to delete employer" },
+                { status: 400 }
+            );
+        }
         deletionResults["employers"] = 1;
 
         // 2. Cascade soft delete to employer-related collections (jobs, conferences, scholarships)

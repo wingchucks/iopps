@@ -198,8 +198,9 @@ export async function upsertDirectoryEntry(profile: OrganizationProfile): Promis
   const firestore = checkFirebase();
   if (!firestore) throw new Error("Firebase not available");
 
-  // Only index published and visible profiles
-  if (profile.publicationStatus !== "PUBLISHED" || !profile.directoryVisible) {
+  // Only index published, visible, and non-deleted profiles
+  const isDeleted = profile.status === "deleted" || !!profile.deletedAt;
+  if (profile.publicationStatus !== "PUBLISHED" || !profile.directoryVisible || isDeleted) {
     // Remove from index if exists
     await removeDirectoryEntry(profile.id);
     return;
@@ -479,12 +480,15 @@ export async function rebuildDirectoryIndex(): Promise<{
     try {
       const profile = { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
 
-      // Only index published and visible
-      if (profile.publicationStatus === "PUBLISHED" && profile.directoryVisible) {
+      // Check if profile is deleted
+      const isDeleted = profile.status === "deleted" || !!profile.deletedAt;
+
+      // Only index published, visible, and non-deleted profiles
+      if (profile.publicationStatus === "PUBLISHED" && profile.directoryVisible && !isDeleted) {
         await upsertDirectoryEntry(profile);
         result.indexed++;
       } else {
-        // Remove from index if not publishable
+        // Remove from index if not publishable or deleted
         await removeDirectoryEntry(profile.id);
       }
     } catch (err) {

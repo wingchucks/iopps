@@ -539,10 +539,11 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
   const getStatusBadge = (status?: EmployerStatus) => {
     const actualStatus = status || "pending";
-    const styles = {
+    const styles: Record<EmployerStatus, string> = {
       pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
       approved: "bg-green-500/10 text-green-400 border-green-500/20",
       rejected: "bg-red-500/10 text-red-400 border-red-500/20",
+      deleted: "bg-slate-500/10 text-slate-400 border-slate-500/20",
     };
 
     return (
@@ -552,6 +553,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
         {actualStatus === "pending" && <ClockIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "approved" && <CheckCircleIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "rejected" && <XCircleIcon className="mr-1 h-3 w-3" />}
+        {actualStatus === "deleted" && <XCircleIcon className="mr-1 h-3 w-3" />}
         {actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}
       </span>
     );

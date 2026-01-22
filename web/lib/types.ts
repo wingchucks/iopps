@@ -1,7 +1,7 @@
 import type { Timestamp } from "firebase/firestore";
 
 export type UserRole = "community" | "employer" | "moderator" | "admin";
-export type EmployerStatus = "pending" | "approved" | "rejected";
+export type EmployerStatus = "pending" | "approved" | "rejected" | "deleted";
 
 export type OpportunityType = 'job' | 'event' | 'scholarship' | 'training' | 'business';
 
@@ -1956,7 +1956,7 @@ export interface School {
   viewCount?: number;
 
   // Status for approval workflow
-  status?: "pending" | "approved" | "rejected";
+  status?: "pending" | "approved" | "rejected" | "deleted";
 
   // Claim status for pre-populated schools
   claimStatus?: "unclaimed" | "pending_claim" | "claimed";
@@ -2598,6 +2598,11 @@ export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'
 
   // Keep legacy socialLinks for backward compatibility
   socialLinks?: SocialLinks;
+
+  // Soft delete fields
+  deletedAt?: Timestamp | null;
+  deletedBy?: string;
+  deleteReason?: string | null;
 }
 
 // Directory Index Entry - denormalized for fast queries
