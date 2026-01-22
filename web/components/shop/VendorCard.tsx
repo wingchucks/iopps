@@ -13,7 +13,7 @@ interface VendorCardProps {
 export function VendorCard({ vendor, featured = false }: VendorCardProps) {
   return (
     <Link
-      href={`/shop/${vendor.slug}`}
+      href={`/business/${vendor.slug}`}
       className={`group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-teal-500/10 ${
         featured
           ? 'border-teal-500/50 ring-1 ring-teal-500/20'

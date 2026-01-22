@@ -198,10 +198,14 @@ export async function upsertDirectoryEntry(profile: OrganizationProfile): Promis
   const firestore = checkFirebase();
   if (!firestore) throw new Error("Firebase not available");
 
-  // Only index published, visible, and non-deleted profiles
+  // Only index published, visible, approved, and non-deleted profiles
   const isDeleted = profile.status === "deleted" || !!profile.deletedAt;
-  if (profile.publicationStatus !== "PUBLISHED" || !profile.directoryVisible || isDeleted) {
-    // Remove from index if exists
+  const isApproved = profile.status === "approved";
+  const isPublished = profile.publicationStatus === "PUBLISHED";
+  const isVisible = profile.directoryVisible !== false; // Default to true if undefined
+
+  if (!isPublished || !isVisible || !isApproved || isDeleted) {
+    // Remove from index if not meeting all visibility criteria
     await removeDirectoryEntry(profile.id);
     return;
   }
@@ -480,15 +484,18 @@ export async function rebuildDirectoryIndex(): Promise<{
     try {
       const profile = { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
 
-      // Check if profile is deleted
+      // Check all visibility criteria
       const isDeleted = profile.status === "deleted" || !!profile.deletedAt;
+      const isApproved = profile.status === "approved";
+      const isPublished = profile.publicationStatus === "PUBLISHED";
+      const isVisible = profile.directoryVisible !== false;
 
-      // Only index published, visible, and non-deleted profiles
-      if (profile.publicationStatus === "PUBLISHED" && profile.directoryVisible && !isDeleted) {
+      // Only index published, visible, approved, and non-deleted profiles
+      if (isPublished && isVisible && isApproved && !isDeleted) {
         await upsertDirectoryEntry(profile);
         result.indexed++;
       } else {
-        // Remove from index if not publishable or deleted
+        // Remove from index if not meeting all visibility criteria
         await removeDirectoryEntry(profile.id);
       }
     } catch (err) {
@@ -514,8 +521,7 @@ export async function refreshDirectoryEntryCounts(orgId: string): Promise<void> 
 
   const profile = { id: profileSnap.id, ...profileSnap.data() } as OrganizationProfile;
 
-  // Only update if published
-  if (profile.publicationStatus === "PUBLISHED" && profile.directoryVisible) {
-    await upsertDirectoryEntry(profile);
-  }
+  // upsertDirectoryEntry handles all visibility checks internally
+  // It will either update the entry or remove it based on status
+  await upsertDirectoryEntry(profile);
 }

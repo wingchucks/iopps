@@ -13,7 +13,7 @@ export default function NotFound() {
           This business listing doesn&apos;t exist or is no longer available.
         </p>
         <Link
-          href="/shop"
+          href="/business"
           className="mt-6 inline-flex items-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
         >
           Browse All Businesses

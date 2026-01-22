@@ -169,7 +169,9 @@ export async function createOrganizationProfile(
     orgType: input.orgType,
     province: input.province,
     city: input.city,
-    location: input.city && input.province ? `${input.city}, ${input.province}` : input.province || input.city || "",
+    location: input.city?.trim() && input.province?.trim()
+      ? `${input.city.trim()}, ${input.province.trim()}`
+      : (input.province?.trim() || input.city?.trim() || ""),
     logoUrl: input.logoUrl || "",
     bannerUrl: input.bannerUrl || "",
     description: input.description || "",
@@ -213,12 +215,12 @@ export async function updateOrganizationProfile(
     }
   }
 
-  // Update location string from city/province
+  // Update location string from city/province (with trimming)
   if (updates.city !== undefined || updates.province !== undefined) {
     const existing = await getDoc(ref);
     const data = existing.exists() ? existing.data() : {};
-    const city = updates.city ?? data.city ?? "";
-    const province = updates.province ?? data.province ?? "";
+    const city = (updates.city ?? data.city ?? "").trim();
+    const province = (updates.province ?? data.province ?? "").trim();
     updates.location = city && province ? `${city}, ${province}` : province || city || "";
   }
 

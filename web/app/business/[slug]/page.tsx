@@ -168,11 +168,11 @@ async function VendorPage({ params, searchParams }: Props) {
 
         {/* Back Link */}
         <Link
-          href="/shop"
+          href="/business"
           className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-teal-400 mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4" />
-          Back to Shop Indigenous
+          Back to Indigenous Marketplace
         </Link>
 
         {/* Hero Section */}

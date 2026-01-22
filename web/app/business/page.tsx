@@ -219,27 +219,31 @@ export default function MarketplacePage() {
               {
                 icon: "💎",
                 label: "Jewelry",
+                value: "jewelry",
                 color: "from-cyan-500/20 to-blue-500/20",
               },
               {
                 icon: "🎨",
                 label: "Art",
+                value: "art",
                 color: "from-pink-500/20 to-rose-500/20",
               },
               {
                 icon: "👕",
                 label: "Apparel",
+                value: "clothing",
                 color: "from-emerald-500/20 to-teal-500/20",
               },
               {
                 icon: "🍞",
                 label: "Food",
+                value: "food",
                 color: "from-amber-500/20 to-orange-500/20",
               },
             ].map((cat) => (
               <Link
                 key={cat.label}
-                href={`/business/products?category=${cat.label}`}
+                href={`/business/products?category=${cat.value}`}
                 className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:-translate-y-0.5"
               >
                 <div

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import { listAllProducts, getVendor } from "@/lib/firebase/shop";
 import { useAuth } from "@/components/AuthProvider";
@@ -20,20 +21,62 @@ const CATEGORIES = [
   { value: "other", label: "Other" },
 ];
 
+// Wrapper component to handle Suspense boundary for useSearchParams
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={<ProductsPageSkeleton />}>
+      <ProductsPageContent />
+    </Suspense>
+  );
+}
+
+function ProductsPageSkeleton() {
+  return (
+    <PageShell>
+      <div className="animate-pulse">
+        <div className="h-4 bg-slate-800 rounded w-48 mb-8" />
+        <div className="text-center mb-12">
+          <div className="h-6 bg-slate-800 rounded w-40 mx-auto mb-4" />
+          <div className="h-10 bg-slate-800 rounded w-80 mx-auto mb-6" />
+          <div className="h-6 bg-slate-800 rounded w-96 mx-auto" />
+        </div>
+        <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="rounded-2xl bg-slate-800/50 h-72" />
+          ))}
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
+function ProductsPageContent() {
   const { role } = useAuth();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<VendorProduct[]>([]);
   const [vendors, setVendors] = useState<Record<string, Vendor>>({});
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [initialized, setInitialized] = useState(false);
 
   // Only show selling CTA to employers/admins
   const canSell = role === "employer" || role === "admin";
 
+  // Read category from URL on mount
   useEffect(() => {
-    loadProducts();
-  }, [category]);
+    const urlCategory = searchParams.get("category");
+    if (urlCategory && CATEGORIES.some(c => c.value === urlCategory)) {
+      setCategory(urlCategory);
+    }
+    setInitialized(true);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (initialized) {
+      loadProducts();
+    }
+  }, [category, initialized]);
 
   async function loadProducts() {
     setLoading(true);
