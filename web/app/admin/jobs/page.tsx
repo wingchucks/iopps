@@ -243,7 +243,7 @@ function AdminJobsContent() {
               : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
               }`}
           >
-            All ({jobs.length})
+            All ({totalJobs})
           </button>
           <button
             onClick={() => setFilter("active")}

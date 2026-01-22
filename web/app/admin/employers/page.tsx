@@ -1417,6 +1417,12 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     </button>
                   </>
                 )}
+                <Link
+                  href={`/admin/employers/${employer.id}/edit`}
+                  className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#14B8A6]/90"
+                >
+                  Edit
+                </Link>
                 <button
                   onClick={() => setPreviewModalId(null)}
                   className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"

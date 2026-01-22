@@ -64,7 +64,7 @@ function AdminMembersContent() {
       setLoading(true);
 
       // Get all member profiles
-      const membersRef = collection(db!, "members");
+      const membersRef = collection(db!, "memberProfiles");
       const membersSnap = await getDocs(query(membersRef, orderBy("createdAt", "desc")));
 
       const memberProfiles = membersSnap.docs.map((doc) => ({
