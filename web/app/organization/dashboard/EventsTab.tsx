@@ -697,8 +697,6 @@ function CreateEventModal({
       setEventType("Pow Wow");
     } else if (lowerName.includes("sport") || lowerName.includes("tournament") || lowerName.includes("game") || lowerDesc.includes("tournament")) {
       setEventType("Sports");
-    } else if (lowerName.includes("cultural") || lowerName.includes("gathering") || lowerDesc.includes("cultural")) {
-      setEventType("Cultural Gathering");
     }
   };
 
