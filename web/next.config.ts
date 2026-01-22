@@ -142,6 +142,12 @@ const nextConfig: NextConfig = {
         destination: "/business/:path*",
         permanent: true,
       },
+      // Business root to Businesses directory redirect (NEW - consolidation)
+      {
+        source: "/business",
+        destination: "/businesses",
+        permanent: true,
+      },
       // Powwows to Community redirects (NEW)
       {
         source: "/powwows",
