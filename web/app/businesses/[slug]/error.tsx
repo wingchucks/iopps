@@ -24,16 +24,15 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
     error.name === "DeletedError" ||
     error.message?.toLowerCase().includes("no longer available");
 
-  // Check if this is likely a permission/access error
-  // Check error.name first (set explicitly in page.tsx), then fallback to message content
-  const isPermissionError =
+  // Check if this is a network/temporary error (not permission or deleted)
+  const isNetworkError =
     !isDeletedError &&
-    (error.name === "PermissionError" ||
-      error.message?.toLowerCase().includes("permission") ||
-      error.message?.toLowerCase().includes("forbidden") ||
-      error.message?.toLowerCase().includes("missing or insufficient"));
+    (error.message?.toLowerCase().includes("network") ||
+      error.message?.toLowerCase().includes("fetch") ||
+      error.message?.toLowerCase().includes("timeout"));
 
   // Get title and message based on error type
+  // Default to "Profile Not Available" for unknown errors since that's the most common case
   const getErrorContent = () => {
     if (isDeletedError) {
       return {
@@ -48,42 +47,46 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
           </>
         ),
         showRetry: false,
+        showLogin: false,
       };
     }
-    if (isPermissionError) {
+    if (isNetworkError) {
       return {
-        title: "Profile Not Available",
-        message: (
-          <>
-            This organization profile is not publicly available yet. It may be
-            awaiting approval or the owner hasn&apos;t published it.
-            <br />
-            <span className="text-sm text-slate-500 mt-2 block">
-              If you&apos;re the owner, please log in to view or publish your
-              profile.
-            </span>
-          </>
-        ),
+        title: "Unable to Load Profile",
+        message: "We encountered a temporary issue loading this profile. Please check your connection and try again.",
         showRetry: true,
+        showLogin: false,
       };
     }
+    // Default: treat as permission/not-found error (most common case for business profiles)
     return {
-      title: "Unable to Load Profile",
-      message: "We encountered an issue loading this organization profile. This might be a temporary problem.",
+      title: "Profile Not Available",
+      message: (
+        <>
+          This organization profile is not publicly available. It may be
+          awaiting approval, not yet published, or no longer exists.
+          <br />
+          <span className="text-sm text-slate-500 mt-2 block">
+            If you&apos;re the owner, please log in to view or publish your
+            profile.
+          </span>
+        </>
+      ),
       showRetry: true,
+      showLogin: true,
     };
   };
 
-  const { title, message, showRetry } = getErrorContent();
+  const { title, message, showRetry, showLogin } = getErrorContent();
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="text-center max-w-lg">
         <div className="inline-flex items-center justify-center rounded-full bg-slate-700/50 p-6">
-          {isPermissionError || isDeletedError ? (
-            <EyeSlashIcon className="h-16 w-16 text-slate-400" />
-          ) : (
+          {isNetworkError ? (
             <BuildingOffice2Icon className="h-16 w-16 text-slate-400" />
+          ) : (
+            <EyeSlashIcon className="h-16 w-16 text-slate-400" />
           )}
         </div>
 
@@ -116,7 +119,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
           </Link>
         </div>
 
-        {isPermissionError && (
+        {showLogin && (
           <div className="mt-6">
             <Link
               href="/login"

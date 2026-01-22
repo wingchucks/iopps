@@ -74,17 +74,30 @@ export default async function OrganizationProfilePage({ params }: Props) {
   if (!org) {
     try {
       org = await getOrganizationBySlug(slug);
-    } catch {
-      // Permission denied - profile exists but user can't access it
-      // Re-throw so error boundary can show appropriate message
-      const permissionError = new Error(
-        'Permission denied: This profile is not publicly available'
-      );
-      permissionError.name = 'PermissionError';
-      throw permissionError;
+    } catch (error) {
+      // Check if this is a Firestore permission error
+      const isPermissionError =
+        error instanceof Error &&
+        (error.message?.includes('permission') ||
+         error.message?.includes('Missing or insufficient') ||
+         (error as { code?: string }).code === 'permission-denied');
+
+      if (isPermissionError) {
+        // Profile exists but user can't access it (not approved/published)
+        const permissionError = new Error(
+          'PermissionDenied: This profile is not publicly available'
+        );
+        permissionError.name = 'PermissionError';
+        throw permissionError;
+      }
+
+      // For other errors (network issues, etc.), log and show generic error
+      console.error('[BusinessProfile] Error fetching profile:', error);
+      throw error;
     }
 
     if (!org) {
+      // Document truly doesn't exist
       notFound();
     }
   }
