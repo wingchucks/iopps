@@ -62,6 +62,7 @@ export default function AdminEmployersPage() {
   const itemsPerPage = 20;
   const [previewModalId, setPreviewModalId] = useState<string | null>(null);
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFixingJobs, setIsFixingJobs] = useState(false);
   const [fixJobsResult, setFixJobsResult] = useState<{
@@ -1433,6 +1434,8 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
         const employer = allEmployers.find((e) => e.id === deleteModalId);
         if (!employer) return null;
 
+        const isConfirmed = deleteConfirmText === employer.organizationName;
+
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
             <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
@@ -1452,22 +1455,41 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   <li>All scholarships by this employer</li>
                   <li>The associated user account</li>
                 </ul>
-                <p className="mt-2 font-medium">This action cannot be undone easily.</p>
+                <p className="mt-2 font-medium">This action cannot be undone.</p>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm text-slate-400 mb-2">
+                  Type <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-200">{employer.organizationName}</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type employer name here"
+                  disabled={isDeleting}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50"
+                />
               </div>
               <div className="mt-6 flex gap-3">
                 <button
-                  onClick={() => setDeleteModalId(null)}
+                  onClick={() => {
+                    setDeleteModalId(null);
+                    setDeleteConfirmText('');
+                  }}
                   disabled={isDeleting}
                   className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDeleteEmployer(deleteModalId)}
-                  disabled={isDeleting}
-                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:opacity-50"
+                  onClick={() => {
+                    handleDeleteEmployer(deleteModalId);
+                    setDeleteConfirmText('');
+                  }}
+                  disabled={isDeleting || !isConfirmed}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isDeleting ? "Deleting..." : "Delete Employer"}
+                  {isDeleting ? "Deleting..." : "Delete Permanently"}
                 </button>
               </div>
             </div>
