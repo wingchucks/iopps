@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
+import { auth, db } from "@/lib/firebase-admin";
 import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 interface SearchResult {
@@ -12,11 +12,44 @@ interface SearchResult {
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify auth
+    // Verify Firebase Admin is initialized
+    if (!auth || !db) {
+      return NextResponse.json(
+        { error: "Server configuration error", results: [] },
+        { status: 503 }
+      );
+    }
+
+    // Verify auth - require Bearer token
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      // Allow unauthenticated access for now, but limit results
-      // In production, you'd want to require auth
+      return NextResponse.json(
+        { error: "Unauthorized", results: [] },
+        { status: 401 }
+      );
+    }
+
+    // Verify the token and get user ID
+    const idToken = authHeader.split("Bearer ")[1];
+    let userId: string;
+    try {
+      const decodedToken = await auth.verifyIdToken(idToken);
+      userId = decodedToken.uid;
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid token", results: [] },
+        { status: 401 }
+      );
+    }
+
+    // Verify user has admin or moderator role
+    const userDoc = await db.collection("users").doc(userId).get();
+    const userData = userDoc.data();
+    if (!userData || (userData.role !== "admin" && userData.role !== "moderator")) {
+      return NextResponse.json(
+        { error: "Forbidden - Admin access required", results: [] },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);

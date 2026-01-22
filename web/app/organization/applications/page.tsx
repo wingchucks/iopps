@@ -327,7 +327,7 @@ export default function ApplicationsInboxPage() {
             Filter by job or status, update stages, and follow up quickly.
           </p>
         </div>
-        <Link href="/employer" className="text-xs text-[#14B8A6] underline">
+        <Link href="/organization" className="text-xs text-[#14B8A6] underline">
           Back to dashboard
         </Link>
       </div>

@@ -243,7 +243,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         active,
         jobVideo: jobVideo || undefined, // Set to undefined to remove if cleared
       });
-      router.push("/employer");
+      router.push("/organization");
     } catch (err) {
       console.error(err);
       setError(
@@ -260,7 +260,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
     setError(null);
     try {
       await deleteJobPosting(jobId);
-      router.push("/employer");
+      router.push("/organization");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not delete job posting.");
@@ -323,7 +323,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           {error}
         </h1>
         <Link
-          href="/employer"
+          href="/organization"
           className="inline-flex rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           Back to Dashboard
@@ -343,7 +343,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           You don&rsquo;t have permission to edit this job posting.
         </p>
         <Link
-          href="/employer"
+          href="/organization"
           className="inline-flex rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
         >
           Back to Dashboard
@@ -711,7 +711,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               {saving ? "Saving..." : "Save Changes"}
             </button>
             <Link
-              href="/employer"
+              href="/organization"
               className="rounded-xl border border-slate-700 px-6 py-2.5 text-sm text-slate-200 hover:border-slate-600 transition-colors"
             >
               Cancel

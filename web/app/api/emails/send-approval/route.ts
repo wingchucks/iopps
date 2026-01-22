@@ -137,7 +137,7 @@ function getApprovalEmailHTML(organizationName: string): string {
                 <li style="margin-bottom: 12px;">Connect with Indigenous professionals</li>
               </ul>
               <div style="text-align: center; margin: 32px 0;">
-                <a href="https://iopps.ca/employer" style="display: inline-block; padding: 14px 32px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 8px; font-weight: 600;">Go to Dashboard</a>
+                <a href="https://iopps.ca/organization" style="display: inline-block; padding: 14px 32px; background: #14B8A6; color: #0D0D0F; text-decoration: none; border-radius: 8px; font-weight: 600;">Go to Dashboard</a>
               </div>
               <p style="margin: 24px 0 0; font-size: 14px; color: #94a3b8;">Questions? Visit our <a href="https://iopps.ca/contact" style="color: #14B8A6;">contact page</a>.</p>
             </td>
@@ -168,7 +168,7 @@ You can now:
 - Offer scholarships
 - Connect with Indigenous professionals
 
-Visit your dashboard: https://iopps.ca/employer
+Visit your dashboard: https://iopps.ca/organization
 
 Questions? Visit https://iopps.ca/contact
 
