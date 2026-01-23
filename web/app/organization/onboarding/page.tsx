@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -123,7 +123,7 @@ interface FormData {
   enabledModules: OrganizationModule[];
 }
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, role } = useAuth();
@@ -979,5 +979,21 @@ export default function OnboardingPage() {
         </p>
       )}
     </PageShell>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell>
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin h-8 w-8 border-2 border-teal-500 border-t-transparent rounded-full" />
+          </div>
+        </PageShell>
+      }
+    >
+      <OnboardingContent />
+    </Suspense>
   );
 }
