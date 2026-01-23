@@ -1,11 +1,26 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
 import { MemberProfile, JobApplication, JobPosting } from "@/lib/types";
 import { ProfileCompletionCard } from "@/components/profile/ProfileCompletionCard";
 import EngagementStats from "@/components/member/EngagementStats";
 import BadgeDisplay from "@/components/member/BadgeDisplay";
 import StreakDisplay from "@/components/member/StreakDisplay";
+import RecommendationsWidget from "@/components/member/RecommendationsWidget";
+import { getMemberSettings } from "@/lib/firestore";
+import type { UserIntent } from "@/lib/firestore";
+import {
+    Briefcase,
+    GraduationCap,
+    Calendar,
+    Users,
+    TrendingUp,
+    Sparkles,
+    Building2,
+    DollarSign,
+} from "lucide-react";
 
 export type ApplicationWithJob = JobApplication & {
     job?: JobPosting | null;
@@ -21,6 +36,40 @@ interface OverviewTabProps {
     onNavigate: (tab: TabType) => void;
 }
 
+// Map intents to quick actions
+const INTENT_ACTIONS: Record<UserIntent, { href: string; icon: React.ReactNode; label: string; description: string; color: string }[]> = {
+    "find-job": [
+        { href: "/careers", icon: <Briefcase className="h-5 w-5" />, label: "Browse Jobs", description: "Find your next opportunity", color: "emerald" },
+        { href: "/training", icon: <TrendingUp className="h-5 w-5" />, label: "Training Programs", description: "Build new skills", color: "cyan" },
+        { href: "/members/discover", icon: <Users className="h-5 w-5" />, label: "Network", description: "Connect with professionals", color: "blue" },
+    ],
+    "explore-careers": [
+        { href: "/careers", icon: <Briefcase className="h-5 w-5" />, label: "Explore Careers", description: "See what's out there", color: "emerald" },
+        { href: "/training", icon: <GraduationCap className="h-5 w-5" />, label: "Skills Training", description: "Develop your career", color: "amber" },
+        { href: "/education", icon: <Building2 className="h-5 w-5" />, label: "Education Programs", description: "Formal education paths", color: "purple" },
+    ],
+    "attend-events": [
+        { href: "/conferences", icon: <Calendar className="h-5 w-5" />, label: "Conferences", description: "Professional events", color: "purple" },
+        { href: "/powwows", icon: <Sparkles className="h-5 w-5" />, label: "Pow Wows", description: "Cultural gatherings", color: "rose" },
+        { href: "/members", icon: <Users className="h-5 w-5" />, label: "Community", description: "Meet others", color: "blue" },
+    ],
+    "find-scholarships": [
+        { href: "/scholarships", icon: <GraduationCap className="h-5 w-5" />, label: "Scholarships", description: "Find funding", color: "amber" },
+        { href: "/education/programs", icon: <Building2 className="h-5 w-5" />, label: "Programs", description: "Education opportunities", color: "purple" },
+        { href: "/business/funding", icon: <DollarSign className="h-5 w-5" />, label: "Grants", description: "Business funding", color: "emerald" },
+    ],
+    "connect-professionals": [
+        { href: "/members/discover", icon: <Sparkles className="h-5 w-5" />, label: "People to Meet", description: "Suggested connections", color: "purple" },
+        { href: "/members", icon: <Users className="h-5 w-5" />, label: "Directory", description: "Browse community", color: "blue" },
+        { href: "/conferences", icon: <Calendar className="h-5 w-5" />, label: "Networking Events", description: "Meet in person", color: "emerald" },
+    ],
+    "browse-community": [
+        { href: "/members", icon: <Users className="h-5 w-5" />, label: "Community", description: "Explore members", color: "blue" },
+        { href: "/radar", icon: <TrendingUp className="h-5 w-5" />, label: "Community Feed", description: "Latest updates", color: "emerald" },
+        { href: "/community/leaderboard", icon: <Sparkles className="h-5 w-5" />, label: "Leaderboard", description: "Top contributors", color: "amber" },
+    ],
+};
+
 export default function OverviewTab({
     profile,
     profileCompletion,
@@ -28,8 +77,71 @@ export default function OverviewTab({
     applications,
     onNavigate
 }: OverviewTabProps) {
+    const { user } = useAuth();
+    const [intents, setIntents] = useState<UserIntent[]>([]);
+    const [loadingIntents, setLoadingIntents] = useState(true);
+
+    useEffect(() => {
+        if (!user) return;
+
+        const loadIntents = async () => {
+            try {
+                const settings = await getMemberSettings(user.uid);
+                setIntents(settings.onboarding.intents || []);
+            } catch (error) {
+                console.error("Error loading user intents:", error);
+            } finally {
+                setLoadingIntents(false);
+            }
+        };
+
+        loadIntents();
+    }, [user]);
+
+    // Get personalized quick actions based on intents
+    const getQuickActions = () => {
+        if (intents.length === 0) {
+            // Default actions if no intents set
+            return [
+                { href: "/careers", icon: <Briefcase className="h-5 w-5" />, label: "Browse Jobs", description: "Find opportunities", color: "emerald" },
+                { href: "/members", icon: <Users className="h-5 w-5" />, label: "Community", description: "Connect with others", color: "blue" },
+                { href: "/conferences", icon: <Calendar className="h-5 w-5" />, label: "Events", description: "Upcoming conferences", color: "purple" },
+            ];
+        }
+
+        // Combine actions from user's intents, prioritizing first intent
+        const actionSet = new Map<string, typeof INTENT_ACTIONS["find-job"][0]>();
+        for (const intent of intents) {
+            const intentActions = INTENT_ACTIONS[intent] || [];
+            for (const action of intentActions) {
+                if (!actionSet.has(action.href)) {
+                    actionSet.set(action.href, action);
+                }
+            }
+        }
+
+        return Array.from(actionSet.values()).slice(0, 3);
+    };
+
+    const quickActions = getQuickActions();
+
+    const getColorClasses = (color: string) => {
+        const colors: Record<string, { bg: string; text: string; hover: string }> = {
+            emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", hover: "hover:border-emerald-500/30" },
+            blue: { bg: "bg-blue-500/10", text: "text-blue-400", hover: "hover:border-blue-500/30" },
+            purple: { bg: "bg-purple-500/10", text: "text-purple-400", hover: "hover:border-purple-500/30" },
+            amber: { bg: "bg-amber-500/10", text: "text-amber-400", hover: "hover:border-amber-500/30" },
+            rose: { bg: "bg-rose-500/10", text: "text-rose-400", hover: "hover:border-rose-500/30" },
+            cyan: { bg: "bg-cyan-500/10", text: "text-cyan-400", hover: "hover:border-cyan-500/30" },
+        };
+        return colors[color] || colors.emerald;
+    };
+
     return (
         <div className="space-y-8">
+            {/* Recommendations Section */}
+            <RecommendationsWidget variant="compact" />
+
             {/* Engagement Stats Section */}
             <EngagementStats onNavigate={onNavigate} />
 
@@ -83,50 +195,28 @@ export default function OverviewTab({
                         </div>
                     </div>
 
-                    {/* Quick Actions */}
+                    {/* Personalized Quick Actions */}
                     <div className="grid gap-4 sm:grid-cols-3">
-                        <Link
-                            href="/careers"
-                            className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-all hover:border-emerald-500/30 hover:bg-slate-900/70"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                                    💼
-                                </div>
-                                <div>
-                                    <p className="font-medium text-white">Browse Jobs</p>
-                                    <p className="text-xs text-slate-500">Find opportunities</p>
-                                </div>
-                            </div>
-                        </Link>
-                        <Link
-                            href="/members"
-                            className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-all hover:border-blue-500/30 hover:bg-slate-900/70"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                                    👥
-                                </div>
-                                <div>
-                                    <p className="font-medium text-white">Community</p>
-                                    <p className="text-xs text-slate-500">Connect with others</p>
-                                </div>
-                            </div>
-                        </Link>
-                        <Link
-                            href="/conferences"
-                            className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-all hover:border-purple-500/30 hover:bg-slate-900/70"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
-                                    📅
-                                </div>
-                                <div>
-                                    <p className="font-medium text-white">Events</p>
-                                    <p className="text-xs text-slate-500">Upcoming conferences</p>
-                                </div>
-                            </div>
-                        </Link>
+                        {quickActions.map((action) => {
+                            const colors = getColorClasses(action.color);
+                            return (
+                                <Link
+                                    key={action.href}
+                                    href={action.href}
+                                    className={`group rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-all ${colors.hover} hover:bg-slate-900/70`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg ${colors.bg} ${colors.text}`}>
+                                            {action.icon}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-white">{action.label}</p>
+                                            <p className="text-xs text-slate-500">{action.description}</p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            );
+                        })}
                     </div>
                 </div>
 

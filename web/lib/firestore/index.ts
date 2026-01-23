@@ -531,3 +531,68 @@ export type {
   LeaderboardData,
   LeaderboardType,
 } from "./leaderboard";
+
+// ============================================
+// RECOMMENDATIONS ENGINE
+// ============================================
+export {
+  getJobRecommendations,
+  getScholarshipRecommendations,
+  getEventRecommendations,
+  getTrainingRecommendations,
+  getRecommendationFeed,
+  getNetworkingRecommendations,
+  getQuickRecommendations,
+} from "./recommendations";
+export type {
+  RecommendationScore,
+  RecommendedItem,
+  RecommendationFeed,
+  NetworkingRecommendation,
+} from "./recommendations";
+
+// ============================================
+// SAVED SEARCHES
+// ============================================
+export {
+  saveSearch,
+  getSavedSearches,
+  getSavedSearch,
+  updateSavedSearch,
+  deleteSavedSearch,
+  markSearchRun,
+  toggleSearchAlert,
+  recordSearch,
+  getSearchHistory,
+  clearSearchHistory,
+  getSuggestedSearches,
+} from "./savedSearches";
+export type {
+  SearchFilters,
+  SavedSearch,
+  SearchHistory,
+} from "./savedSearches";
+
+// ============================================
+// NOTIFICATION PREFERENCES
+// ============================================
+export {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  updateNotificationCategory,
+  toggleGlobalNotifications,
+  setQuietHours,
+  registerPushSubscription,
+  unregisterPushSubscription,
+  shouldNotify,
+  getUsersForNotification,
+  bulkToggleCategory,
+  getNotificationCategoryGroups,
+  DEFAULT_NOTIFICATION_PREFERENCES,
+} from "./notificationPreferences";
+export type {
+  NotificationChannel,
+  NotificationFrequency,
+  NotificationTypePreference,
+  MemberNotificationPreferences,
+} from "./notificationPreferences";
