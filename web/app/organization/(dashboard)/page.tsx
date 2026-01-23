@@ -512,7 +512,7 @@ export default function OrganizationDashboardHome() {
   actions.push({
     title: 'Add your logo',
     description: hasLogo ? 'Logo uploaded' : 'Help people recognize your organization',
-    href: '/organization/onboarding?step=2',
+    href: '/organization/onboarding?step=3',
     icon: EyeIcon,
     completed: hasLogo,
   });

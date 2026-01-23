@@ -37,11 +37,11 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const searchParams = request.nextUrl.searchParams;
 
-  // Handle legacy /business/[slug] → /businesses/[slug] redirect (singular to plural)
+  // Handle legacy /business/[slug] → /organizations/[slug] redirect
   const businessMatch = path.match(/^\/business\/([^/]+)$/);
   if (businessMatch) {
     const slug = businessMatch[1];
-    const redirectUrl = new URL(`/businesses/${slug}`, request.url);
+    const redirectUrl = new URL(`/organizations/${slug}`, request.url);
     return NextResponse.redirect(redirectUrl, { status: 301 });
   }
 

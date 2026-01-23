@@ -161,7 +161,7 @@ export default function OrganizationShell({
 
             <div className="flex items-center gap-3">
               <Link
-                href={`/businesses/${(profile as OrganizationProfile).slug || profile.id}`}
+                href={`/organizations/${(profile as OrganizationProfile).slug || profile.id}`}
                 target="_blank"
                 className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
               >

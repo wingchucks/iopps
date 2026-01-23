@@ -220,12 +220,12 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
   const isPreview = preview === "true";
   const { employer, jobs, status } = await getEmployerData(employerId, isPreview);
 
-  // Redirect to canonical /businesses/[slug] URL if employer has a slug
+  // Redirect to canonical /organizations/[slug] URL if employer has a slug
   // This consolidates all public profile URLs to one canonical location
   if (employer && (employer as any).slug) {
     const redirectUrl = isPreview
-      ? `/businesses/${(employer as any).slug}?preview=true`
-      : `/businesses/${(employer as any).slug}`;
+      ? `/organizations/${(employer as any).slug}?preview=true`
+      : `/organizations/${(employer as any).slug}`;
     redirect(redirectUrl);
   }
 

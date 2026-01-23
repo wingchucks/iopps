@@ -2574,6 +2574,7 @@ export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'
   // New universal fields
   slug: string;
   orgType: OrgType;
+  badgePreference?: OrgType | 'AUTO';  // 'AUTO' = derive from modules
 
   // Publication status
   publicationStatus: OrganizationStatus;

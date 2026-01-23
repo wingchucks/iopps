@@ -97,7 +97,7 @@ export function TrustedPartners() {
               {displayPartners.map((partner, index) => (
                 <Link
                   key={`${partner.id}-${index}`}
-                  href={`/businesses/${(partner as any).slug || partner.id}`}
+                  href={`/organizations/${(partner as any).slug || partner.id}`}
                   className="group relative flex-shrink-0 flex items-center justify-center
                     h-28 w-52 sm:h-36 sm:w-72
                     rounded-xl sm:rounded-2xl

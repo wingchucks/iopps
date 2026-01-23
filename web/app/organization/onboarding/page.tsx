@@ -1,15 +1,12 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  BuildingOffice2Icon,
   BuildingStorefrontIcon,
   AcademicCapIcon,
-  HeartIcon,
-  MapPinIcon,
   GlobeAltIcon,
   PhotoIcon,
   BriefcaseIcon,
@@ -20,6 +17,7 @@ import {
   ArrowLeftIcon,
   SparklesIcon,
   RocketLaunchIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
@@ -36,84 +34,88 @@ import { ORG_TYPE_LABELS, NORTH_AMERICAN_REGIONS } from '@/lib/types';
 // Canadian provinces only
 const CANADIAN_PROVINCES = NORTH_AMERICAN_REGIONS.slice(0, 13);
 
-// Organization type configs
-const ORG_TYPE_CONFIGS: Record<OrgType, { icon: typeof BuildingOffice2Icon; color: string; description: string }> = {
-  EMPLOYER: {
-    icon: BuildingOffice2Icon,
-    color: 'bg-blue-500',
-    description: 'Hiring Indigenous talent for your organization',
-  },
-  INDIGENOUS_BUSINESS: {
-    icon: BuildingStorefrontIcon,
-    color: 'bg-teal-500',
-    description: 'Indigenous-owned business selling products or services',
-  },
-  SCHOOL: {
-    icon: AcademicCapIcon,
-    color: 'bg-purple-500',
-    description: 'Educational institution offering programs & scholarships',
-  },
-  NONPROFIT: {
-    icon: HeartIcon,
-    color: 'bg-pink-500',
-    description: 'Non-profit organization serving Indigenous communities',
-  },
-  GOVERNMENT: {
-    icon: BuildingOffice2Icon,
-    color: 'bg-slate-500',
-    description: 'Government agency or department',
-  },
-  OTHER: {
-    icon: BuildingOffice2Icon,
-    color: 'bg-slate-500',
-    description: 'Other type of organization',
-  },
-};
+// Badge options for public display
+const BADGE_OPTIONS: { value: OrgType | 'AUTO'; label: string }[] = [
+  { value: 'AUTO', label: 'Auto-detect based on my modules' },
+  { value: 'EMPLOYER', label: 'Employer' },
+  { value: 'INDIGENOUS_BUSINESS', label: 'Indigenous Business' },
+  { value: 'SCHOOL', label: 'School / College' },
+  { value: 'NONPROFIT', label: 'Non-Profit' },
+  { value: 'OTHER', label: 'Organization' },
+];
 
-// Module configs
+// Module configs with pricing info
 const MODULE_CONFIGS: Record<OrganizationModule, {
   icon: typeof BriefcaseIcon;
   label: string;
   description: string;
+  pricing: string;
   color: string;
+  isFree: boolean;
 }> = {
   hire: {
     icon: BriefcaseIcon,
     label: 'Hire',
     description: 'Post jobs and find Indigenous talent',
+    pricing: 'from $125/post',
     color: 'bg-blue-500',
+    isFree: false,
   },
   sell: {
     icon: BuildingStorefrontIcon,
     label: 'Sell',
     description: 'List products and services',
+    pricing: '$50/mo',
     color: 'bg-teal-500',
+    isFree: false,
   },
   educate: {
     icon: AcademicCapIcon,
     label: 'Educate',
     description: 'Share programs, courses & scholarships',
+    pricing: 'FREE',
     color: 'bg-purple-500',
+    isFree: true,
   },
   host: {
     icon: CalendarIcon,
     label: 'Host',
     description: 'Create events, conferences & pow wows',
+    pricing: 'FREE',
     color: 'bg-amber-500',
+    isFree: true,
   },
   funding: {
     icon: CurrencyDollarIcon,
     label: 'Funding',
     description: 'Share grants & funding opportunities',
+    pricing: 'FREE',
     color: 'bg-green-500',
+    isFree: true,
   },
 };
+
+// Derive orgType from modules (for auto-detection)
+function deriveOrgType(modules: OrganizationModule[], badge: OrgType | 'AUTO'): OrgType {
+  if (badge !== 'AUTO') return badge;
+
+  // Auto-derive based on modules
+  if (modules.includes('educate') && !modules.includes('hire') && !modules.includes('sell')) {
+    return 'SCHOOL';
+  }
+  if (modules.includes('sell') && !modules.includes('hire')) {
+    return 'INDIGENOUS_BUSINESS';
+  }
+  if (modules.includes('hire') && !modules.includes('sell')) {
+    return 'EMPLOYER';
+  }
+  return 'OTHER'; // Multi-capability org
+}
 
 type Step = 1 | 2 | 3 | 4;
 
 interface FormData {
   organizationName: string;
-  orgType: OrgType | null;
   province: string;
   city: string;
   logoUrl: string;
@@ -121,6 +123,7 @@ interface FormData {
   description: string;
   website: string;
   enabledModules: OrganizationModule[];
+  badgePreference: OrgType | 'AUTO';
 }
 
 function OnboardingContent() {
@@ -143,19 +146,41 @@ function OnboardingContent() {
   const [successMessage, setSuccessMessage] = useState('');
   const [existingProfile, setExistingProfile] = useState<OrganizationProfile | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
-  const [justPublished, setJustPublished] = useState(false); // Track if we just published in this session
+  const [justPublished, setJustPublished] = useState(false);
+  const [showBadgeSelector, setShowBadgeSelector] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Free modules ON by default, paid modules OFF
   const [formData, setFormData] = useState<FormData>({
     organizationName: '',
-    orgType: null,
     province: '',
     city: '',
     logoUrl: '',
     coverImageUrl: '',
     description: '',
     website: '',
-    enabledModules: [],
+    enabledModules: ['educate', 'host', 'funding'], // Free modules ON by default
+    badgePreference: 'AUTO',
   });
+
+  // Track unsaved changes
+  const updateFormData = useCallback((updates: Partial<FormData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setHasUnsavedChanges(true);
+  }, []);
+
+  // Unsaved changes warning
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges && !justPublished) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges, justPublished]);
 
   // Check if user already has a profile
   useEffect(() => {
@@ -167,23 +192,20 @@ function OnboardingContent() {
         // Pre-fill form with existing data
         setFormData({
           organizationName: profile.organizationName || '',
-          orgType: (profile as OrganizationProfile).orgType || null,
           province: (profile as OrganizationProfile).province || '',
           city: (profile as OrganizationProfile).city || '',
           logoUrl: profile.logoUrl || '',
           coverImageUrl: (profile as any).coverImageUrl || (profile as any).bannerUrl || '',
           description: (profile as any).description || '',
           website: (profile as OrganizationProfile).links?.website || profile.website || '',
-          enabledModules: profile.enabledModules || [],
+          enabledModules: profile.enabledModules || ['educate', 'host', 'funding'],
+          badgePreference: (profile as OrganizationProfile).badgePreference || 'AUTO',
         });
 
-        // Always start at step 3 to ensure re-publish generates slug
-        // User can click publish to get a fresh slug
         const profileSlug = (profile as OrganizationProfile).slug;
         if (profileSlug) {
           setPublishedSlug(profileSlug);
         }
-        // Don't auto-skip to step 4 - let user go through publish flow
       }
     }
     checkExistingProfile();
@@ -192,7 +214,6 @@ function OnboardingContent() {
   // Redirect if not employer
   useEffect(() => {
     if (!authLoading && (!user || (role !== 'employer' && role !== 'admin'))) {
-      // If not logged in, redirect to login. If logged in but wrong role, redirect to register
       router.push(user ? '/register?role=employer' : '/login');
     }
   }, [user, role, authLoading, router]);
@@ -206,11 +227,10 @@ function OnboardingContent() {
     setSuccessMessage('');
     try {
       const result = await uploadImage(file, user.uid, 'profile');
-      setFormData((prev) => ({ ...prev, logoUrl: result.url }));
+      updateFormData({ logoUrl: result.url });
       setSuccessMessage('Logo uploaded successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
-      // Show the specific error message from validation
       const errorMessage = err?.message || 'Failed to upload logo. Please try again.';
       setError(errorMessage);
       console.error('[Onboarding] Logo upload failed:', err);
@@ -228,11 +248,10 @@ function OnboardingContent() {
     setSuccessMessage('');
     try {
       const result = await uploadImage(file, user.uid, 'cover');
-      setFormData((prev) => ({ ...prev, coverImageUrl: result.url }));
+      updateFormData({ coverImageUrl: result.url });
       setSuccessMessage('Cover image uploaded successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
-      // Show the specific error message from validation
       const errorMessage = err?.message || 'Failed to upload cover image. Please try again.';
       setError(errorMessage);
       console.error('[Onboarding] Cover image upload failed:', err);
@@ -248,29 +267,28 @@ function OnboardingContent() {
         ? prev.enabledModules.filter((m) => m !== module)
         : [...prev.enabledModules, module],
     }));
+    setHasUnsavedChanges(true);
   };
 
   const validateStep = (currentStep: Step): boolean => {
     setError('');
     switch (currentStep) {
       case 1:
-        if (!formData.organizationName.trim()) {
-          setError('Organization name is required');
-          return false;
-        }
-        if (!formData.orgType) {
-          setError('Please select an organization type');
-          return false;
-        }
-        return true;
-      case 2:
-        // Optional step, always valid
-        return true;
-      case 3:
+        // Step 1 is now Capabilities - need at least one module
         if (formData.enabledModules.length === 0) {
           setError('Please select at least one thing you want to do');
           return false;
         }
+        return true;
+      case 2:
+        // Step 2 is now Basics - need org name
+        if (!formData.organizationName.trim()) {
+          setError('Organization name is required');
+          return false;
+        }
+        return true;
+      case 3:
+        // Step 3 is Branding - optional
         return true;
       default:
         return true;
@@ -292,7 +310,9 @@ function OnboardingContent() {
   };
 
   const handleSaveDraft = async () => {
-    if (!user || !formData.organizationName || !formData.orgType) return;
+    if (!user || !formData.organizationName) return;
+
+    const derivedOrgType = deriveOrgType(formData.enabledModules, formData.badgePreference);
 
     setLoading(true);
     setError('');
@@ -300,7 +320,7 @@ function OnboardingContent() {
       if (existingProfile) {
         await updateOrganizationProfile(user.uid, {
           organizationName: formData.organizationName,
-          orgType: formData.orgType,
+          orgType: derivedOrgType,
           province: formData.province,
           city: formData.city,
           logoUrl: formData.logoUrl,
@@ -308,11 +328,12 @@ function OnboardingContent() {
           description: formData.description,
           links: { website: formData.website },
           enabledModules: formData.enabledModules,
+          badgePreference: formData.badgePreference,
         });
       } else {
         await createOrganizationProfile(user.uid, {
           organizationName: formData.organizationName,
-          orgType: formData.orgType,
+          orgType: derivedOrgType,
           province: formData.province || undefined,
           city: formData.city || undefined,
           logoUrl: formData.logoUrl || undefined,
@@ -320,8 +341,10 @@ function OnboardingContent() {
           description: formData.description || undefined,
           website: formData.website || undefined,
           enabledModules: formData.enabledModules,
+          badgePreference: formData.badgePreference,
         });
       }
+      setHasUnsavedChanges(false);
       router.push('/organization/dashboard');
     } catch (err: any) {
       console.error('Save draft error:', err);
@@ -333,13 +356,14 @@ function OnboardingContent() {
   };
 
   const handlePublish = async () => {
-    if (!user || !formData.organizationName || !formData.orgType) return;
-    if (!validateStep(3)) return;
+    if (!user || !formData.organizationName) return;
+    if (!validateStep(1) || !validateStep(2)) return;
+
+    const derivedOrgType = deriveOrgType(formData.enabledModules, formData.badgePreference);
 
     setLoading(true);
     setError('');
     try {
-      // Get the current user's ID token for API authentication
       const auth = getAuth();
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -347,16 +371,15 @@ function OnboardingContent() {
       }
       const idToken = await currentUser.getIdToken();
 
-      // Debug: Log what we're about to send
       console.log('[Onboarding] Publishing with data:', {
         organizationName: formData.organizationName,
-        orgType: formData.orgType,
+        derivedOrgType,
+        badgePreference: formData.badgePreference,
         province: formData.province,
         city: formData.city,
         userId: currentUser.uid,
       });
 
-      // Call the server-side publish API
       const response = await fetch('/api/organization/publish', {
         method: 'POST',
         headers: {
@@ -365,7 +388,8 @@ function OnboardingContent() {
         },
         body: JSON.stringify({
           organizationName: formData.organizationName,
-          orgType: formData.orgType,
+          orgType: derivedOrgType,
+          badgePreference: formData.badgePreference,
           province: formData.province,
           city: formData.city,
           logoUrl: formData.logoUrl,
@@ -388,14 +412,13 @@ function OnboardingContent() {
         throw new Error('Publishing succeeded but no slug was returned');
       }
 
-      // Build updated profile from API response and form data
-      // Spread existingProfile first so API response values take precedence
       const updatedProfile: OrganizationProfile = {
         ...(existingProfile || {}),
         id: data.profileId,
         slug: data.slug,
         organizationName: formData.organizationName,
-        orgType: formData.orgType,
+        orgType: derivedOrgType,
+        badgePreference: formData.badgePreference,
         province: formData.province,
         city: formData.city,
         logoUrl: formData.logoUrl,
@@ -406,9 +429,9 @@ function OnboardingContent() {
         directoryVisible: true,
       } as OrganizationProfile;
 
-      // Move to success step
       setPublishedSlug(data.slug);
-      setJustPublished(true); // Mark that we just published successfully
+      setJustPublished(true);
+      setHasUnsavedChanges(false);
       setStep(4);
       setExistingProfile(updatedProfile);
     } catch (err: any) {
@@ -431,6 +454,7 @@ function OnboardingContent() {
   }
 
   const isPublished = existingProfile?.publicationStatus === 'PUBLISHED';
+  const derivedBadge = deriveOrgType(formData.enabledModules, formData.badgePreference);
 
   return (
     <PageShell className="max-w-3xl">
@@ -442,7 +466,6 @@ function OnboardingContent() {
               <button
                 type="button"
                 onClick={() => {
-                  // Allow navigation to completed steps or current step
                   if (s <= step || (s === step + 1 && validateStep(step))) {
                     setStep(s as Step);
                   }
@@ -470,9 +493,9 @@ function OnboardingContent() {
           ))}
         </div>
         <div className="flex justify-between mt-2 text-xs text-slate-400">
-          <button type="button" onClick={() => setStep(1)} className="hover:text-teal-400 transition-colors">Basics</button>
-          <button type="button" onClick={() => step >= 1 && setStep(2)} className={step >= 1 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Branding</button>
-          <button type="button" onClick={() => step >= 2 && setStep(3)} className={step >= 2 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Goals</button>
+          <button type="button" onClick={() => setStep(1)} className="hover:text-teal-400 transition-colors">Capabilities</button>
+          <button type="button" onClick={() => step >= 1 && setStep(2)} className={step >= 1 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Basics</button>
+          <button type="button" onClick={() => step >= 2 && setStep(3)} className={step >= 2 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Branding</button>
           <button type="button" onClick={() => step >= 3 && setStep(4)} className={step >= 3 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Launch</button>
         </div>
       </div>
@@ -493,15 +516,67 @@ function OnboardingContent() {
 
       {/* Step Content */}
       <div className="rounded-3xl bg-slate-800/50 border border-slate-700 p-6 sm:p-8">
-        {/* Step 1: Basic Info */}
+        {/* Step 1: Capabilities (Module Selection) */}
         {step === 1 && (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-white">What do you want to do?</h1>
+              <p className="mt-2 text-slate-400">
+                Select all that apply. You can change this anytime.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(Object.keys(MODULE_CONFIGS) as OrganizationModule[]).map((module) => {
+                const config = MODULE_CONFIGS[module];
+                const Icon = config.icon;
+                const isSelected = formData.enabledModules.includes(module);
+                return (
+                  <button
+                    key={module}
+                    type="button"
+                    onClick={() => toggleModule(module)}
+                    className={`flex items-start gap-3 rounded-xl p-4 text-left transition-all ${
+                      isSelected
+                        ? 'bg-teal-500/10 border-2 border-teal-500 ring-1 ring-teal-500/20'
+                        : 'bg-slate-900 border border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 p-2 rounded-lg ${config.color}`}>
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-white">{config.label}</p>
+                        {isSelected && (
+                          <CheckIcon className="h-5 w-5 text-teal-500" />
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">{config.description}</p>
+                      <span className={`inline-block mt-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded ${
+                        config.isFree
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-blue-500/20 text-blue-400'
+                      }`}>
+                        {config.pricing}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Basics (Name & Location) */}
+        {step === 2 && (
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-white">
                 {existingProfile ? 'Edit Your Profile' : "Let's get started"}
               </h1>
               <p className="mt-2 text-slate-400">
-                {existingProfile ? 'Update your organization details' : 'Tell us about your organization in 60 seconds'}
+                {existingProfile ? 'Update your organization details' : 'Tell us about your organization'}
               </p>
             </div>
 
@@ -513,44 +588,10 @@ function OnboardingContent() {
               <input
                 type="text"
                 value={formData.organizationName}
-                onChange={(e) => setFormData((prev) => ({ ...prev, organizationName: e.target.value }))}
+                onChange={(e) => updateFormData({ organizationName: e.target.value })}
                 placeholder="Your organization name"
                 className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
               />
-            </div>
-
-            {/* Organization Type */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-3">
-                What type of organization are you? *
-              </label>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {(Object.keys(ORG_TYPE_CONFIGS) as OrgType[]).slice(0, 4).map((type) => {
-                  const config = ORG_TYPE_CONFIGS[type];
-                  const Icon = config.icon;
-                  const isSelected = formData.orgType === type;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, orgType: type }))}
-                      className={`flex items-start gap-3 rounded-xl p-4 text-left transition-all ${
-                        isSelected
-                          ? 'bg-teal-500/10 border-2 border-teal-500 ring-1 ring-teal-500/20'
-                          : 'bg-slate-900 border border-slate-700 hover:border-slate-600'
-                      }`}
-                    >
-                      <div className={`flex-shrink-0 p-2 rounded-lg ${config.color}`}>
-                        <Icon className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-white">{ORG_TYPE_LABELS[type]}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{config.description}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Location */}
@@ -561,7 +602,7 @@ function OnboardingContent() {
                 </label>
                 <select
                   value={formData.province}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, province: e.target.value }))}
+                  onChange={(e) => updateFormData({ province: e.target.value })}
                   className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
                 >
                   <option value="">Select province</option>
@@ -579,7 +620,7 @@ function OnboardingContent() {
                 <input
                   type="text"
                   value={formData.city}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                  onChange={(e) => updateFormData({ city: e.target.value })}
                   placeholder="City or community"
                   className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
                 />
@@ -588,8 +629,8 @@ function OnboardingContent() {
           </div>
         )}
 
-        {/* Step 2: Logo & Website */}
-        {step === 2 && (
+        {/* Step 3: Branding */}
+        {step === 3 && (
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-white">Add your branding</h1>
@@ -640,7 +681,7 @@ function OnboardingContent() {
                       disabled={uploading}
                     />
                   </label>
-                  <p className="mt-1 text-xs text-slate-500">Square image, 200×200px minimum. PNG, JPG up to 2MB</p>
+                  <p className="mt-1 text-xs text-slate-500">Square image, 200x200px minimum. PNG, JPG up to 2MB</p>
                 </div>
               </div>
             </div>
@@ -684,7 +725,7 @@ function OnboardingContent() {
                     disabled={uploadingCover}
                   />
                 </label>
-                <p className="text-xs text-slate-500">Recommended: 1200×400px or 3:1 ratio</p>
+                <p className="text-xs text-slate-500">Recommended: 1200x400px or 3:1 ratio</p>
               </div>
             </div>
 
@@ -695,7 +736,7 @@ function OnboardingContent() {
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                onChange={(e) => updateFormData({ description: e.target.value })}
                 placeholder="Tell people about your organization..."
                 rows={4}
                 className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 resize-none"
@@ -715,7 +756,7 @@ function OnboardingContent() {
                 <input
                   type="url"
                   value={formData.website}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+                  onChange={(e) => updateFormData({ website: e.target.value })}
                   placeholder="https://yourwebsite.com"
                   className="w-full rounded-xl bg-slate-900 border border-slate-700 pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
                 />
@@ -728,57 +769,11 @@ function OnboardingContent() {
           </div>
         )}
 
-        {/* Step 3: Module Selection */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-white">What do you want to do?</h1>
-              <p className="mt-2 text-slate-400">
-                Select all that apply. You can change this anytime.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(Object.keys(MODULE_CONFIGS) as OrganizationModule[]).map((module) => {
-                const config = MODULE_CONFIGS[module];
-                const Icon = config.icon;
-                const isSelected = formData.enabledModules.includes(module);
-                return (
-                  <button
-                    key={module}
-                    type="button"
-                    onClick={() => toggleModule(module)}
-                    className={`flex items-start gap-3 rounded-xl p-4 text-left transition-all ${
-                      isSelected
-                        ? 'bg-teal-500/10 border-2 border-teal-500 ring-1 ring-teal-500/20'
-                        : 'bg-slate-900 border border-slate-700 hover:border-slate-600'
-                    }`}
-                  >
-                    <div className={`flex-shrink-0 p-2 rounded-lg ${config.color}`}>
-                      <Icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-white">{config.label}</p>
-                        {isSelected && (
-                          <CheckIcon className="h-5 w-5 text-teal-500" />
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5">{config.description}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Publish / Success */}
+        {/* Step 4: Launch + Badge Selection */}
         {step === 4 && (
           <div className="space-y-6 text-center">
             {justPublished ? (
               existingProfile?.status === 'approved' ? (
-                // Approved employer - profile is live
                 <>
                   <div className="mx-auto h-20 w-20 rounded-full bg-teal-500/10 flex items-center justify-center">
                     <SparklesIcon className="h-10 w-10 text-teal-500" />
@@ -786,13 +781,13 @@ function OnboardingContent() {
                   <div>
                     <h1 className="text-2xl font-bold text-white">You&apos;re Live!</h1>
                     <p className="mt-2 text-slate-400">
-                      Your profile is now visible in the Businesses directory
+                      Your profile is now visible in the Organizations directory
                     </p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                     {(publishedSlug || existingProfile?.slug) ? (
                       <Link
-                        href={`/businesses/${publishedSlug || existingProfile?.slug}`}
+                        href={`/organizations/${publishedSlug || existingProfile?.slug}`}
                         className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
                       >
                         View Public Profile
@@ -800,7 +795,7 @@ function OnboardingContent() {
                       </Link>
                     ) : (
                       <Link
-                        href="/businesses"
+                        href="/organizations"
                         className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors"
                       >
                         Browse Organizations
@@ -816,7 +811,6 @@ function OnboardingContent() {
                   </div>
                 </>
               ) : (
-                // Pending employer - profile submitted but awaiting approval
                 <>
                   <div className="mx-auto h-20 w-20 rounded-full bg-amber-500/10 flex items-center justify-center">
                     <SparklesIcon className="h-10 w-10 text-amber-500" />
@@ -865,7 +859,7 @@ function OnboardingContent() {
                   <p className="mt-2 text-slate-400">
                     {isPublished
                       ? 'Confirm your updates to save them to your profile'
-                      : 'Publish your profile to appear in the Businesses directory'}
+                      : 'Publish your profile to appear in the Organizations directory'}
                   </p>
                 </div>
 
@@ -878,8 +872,8 @@ function OnboardingContent() {
                       <dd className="text-white">{formData.organizationName}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-slate-400">Type</dt>
-                      <dd className="text-white">{formData.orgType ? ORG_TYPE_LABELS[formData.orgType] : '-'}</dd>
+                      <dt className="text-slate-400">Badge</dt>
+                      <dd className="text-white">{ORG_TYPE_LABELS[derivedBadge]}</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-slate-400">Location</dt>
@@ -888,12 +882,43 @@ function OnboardingContent() {
                       </dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-slate-400">Modules</dt>
+                      <dt className="text-slate-400">Capabilities</dt>
                       <dd className="text-white">
                         {formData.enabledModules.map((m) => MODULE_CONFIGS[m].label).join(', ') || '-'}
                       </dd>
                     </div>
                   </dl>
+                </div>
+
+                {/* Optional Badge Selector */}
+                <div className="text-left">
+                  <button
+                    type="button"
+                    onClick={() => setShowBadgeSelector(!showBadgeSelector)}
+                    className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  >
+                    <ChevronDownIcon className={`h-4 w-4 transition-transform ${showBadgeSelector ? 'rotate-180' : ''}`} />
+                    Set a public badge (optional)
+                  </button>
+
+                  {showBadgeSelector && (
+                    <div className="mt-4 bg-slate-900 rounded-xl p-4">
+                      <p className="text-xs text-slate-500 mb-3">
+                        This badge appears on your public profile. It doesn&apos;t affect your features.
+                      </p>
+                      <select
+                        value={formData.badgePreference}
+                        onChange={(e) => updateFormData({ badgePreference: e.target.value as OrgType | 'AUTO' })}
+                        className="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
+                      >
+                        {BADGE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">

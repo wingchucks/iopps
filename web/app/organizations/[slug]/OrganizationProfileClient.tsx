@@ -105,7 +105,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const handleEditStory = useCallback(() => {
     if (!user) {
       // Redirect to login with return URL
-      router.push(`/login?returnTo=/businesses/${org.slug}`);
+      router.push(`/login?returnTo=/organizations/${org.slug}`);
       return;
     }
     setIsStoryModalOpen(true);

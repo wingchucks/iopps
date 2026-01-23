@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     const {
       organizationName,
       orgType,
+      badgePreference,
       province,
       city,
       logoUrl,
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
         organizationName,
         slug, // Ensure slug is saved
         orgType,
+        badgePreference: badgePreference || 'AUTO',
         province: province || "",
         city: city || "",
         location: city && province ? `${city}, ${province}` : province || city || "",
@@ -148,6 +150,7 @@ export async function POST(req: NextRequest) {
         organizationName,
         slug,
         orgType,
+        badgePreference: badgePreference || 'AUTO',
         province: province || "",
         city: city || "",
         location: city && province ? `${city}, ${province}` : province || city || "",
@@ -179,6 +182,7 @@ export async function POST(req: NextRequest) {
       name: organizationName,
       slug,
       orgType,
+      badgePreference: badgePreference || 'AUTO',
       province: province || null,
       city: city || null,
       enabledModules: enabledModules || [],

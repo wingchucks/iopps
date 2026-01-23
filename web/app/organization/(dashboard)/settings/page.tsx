@@ -9,7 +9,9 @@ import {
   enableModule,
   disableModule,
 } from '@/lib/firestore';
-import type { EmployerProfile, OrganizationModule } from '@/lib/types';
+import type { EmployerProfile, OrganizationModule, OrgType } from '@/lib/types';
+import { ORG_TYPE_LABELS } from '@/lib/types';
+import { getAuth } from 'firebase/auth';
 import {
   Cog6ToothIcon,
   BriefcaseIcon,
@@ -20,7 +22,18 @@ import {
   CheckCircleIcon,
   PlusCircleIcon,
   BellIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
+
+// Badge options for public display
+const BADGE_OPTIONS: { value: OrgType | 'AUTO'; label: string }[] = [
+  { value: 'AUTO', label: 'Auto-detect based on my modules' },
+  { value: 'EMPLOYER', label: 'Employer' },
+  { value: 'INDIGENOUS_BUSINESS', label: 'Indigenous Business' },
+  { value: 'SCHOOL', label: 'School / College' },
+  { value: 'NONPROFIT', label: 'Non-Profit' },
+  { value: 'OTHER', label: 'Organization' },
+];
 
 const MODULE_INFO: Record<OrganizationModule, {
   name: string;
@@ -73,6 +86,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab || 'general');
   const [togglingModule, setTogglingModule] = useState<OrganizationModule | null>(null);
+  const [badgePreference, setBadgePreference] = useState<OrgType | 'AUTO'>('AUTO');
+  const [savingBadge, setSavingBadge] = useState(false);
+  const [badgeSuccess, setBadgeSuccess] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -86,6 +102,7 @@ export default function SettingsPage() {
 
         setProfile(employerProfile);
         setEnabledModules(modules);
+        setBadgePreference((employerProfile as any)?.badgePreference || 'AUTO');
 
         // Handle enableModule query param
         if (enableModuleParam && !modules.includes(enableModuleParam)) {
@@ -117,6 +134,40 @@ export default function SettingsPage() {
       console.error('Error toggling module:', error);
     } finally {
       setTogglingModule(null);
+    }
+  };
+
+  const handleBadgeChange = async (newBadge: OrgType | 'AUTO') => {
+    if (!user) return;
+
+    setSavingBadge(true);
+    setBadgeSuccess(false);
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('Not authenticated');
+
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch('/api/organization/badge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ badgePreference: newBadge }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update badge');
+      }
+
+      setBadgePreference(newBadge);
+      setBadgeSuccess(true);
+      setTimeout(() => setBadgeSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error updating badge:', error);
+    } finally {
+      setSavingBadge(false);
     }
   };
 
@@ -220,6 +271,58 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Public Badge Section */}
+          <div className="bg-card border border-card-border rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-accent/10 text-accent">
+                <TagIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-50">Public Badge</h2>
+                <p className="text-sm text-slate-400">
+                  How your organization is identified in the directory
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-200 mb-2">
+                  Badge Type
+                </label>
+                <select
+                  value={badgePreference}
+                  onChange={(e) => handleBadgeChange(e.target.value as OrgType | 'AUTO')}
+                  disabled={savingBadge}
+                  className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50"
+                >
+                  {BADGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-slate-500">
+                  This badge appears on your public profile. It doesn&apos;t affect your features or capabilities.
+                </p>
+              </div>
+
+              {savingBadge && (
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </div>
+              )}
+
+              {badgeSuccess && (
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <CheckCircleIcon className="w-4 h-4" />
+                  Badge updated successfully
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -102,7 +102,7 @@ export default function EducateProfilePage() {
         <div className="flex gap-2">
           {school.slug && (
             <Link
-              href={`/businesses/${school.slug}`}
+              href={`/organizations/${school.slug}`}
               target="_blank"
               className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
             >

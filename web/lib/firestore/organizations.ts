@@ -152,6 +152,7 @@ export function computePrimaryCTAType(
 export interface CreateOrganizationInput {
   organizationName: string;
   orgType: OrgType;
+  badgePreference?: OrgType | 'AUTO';
   province?: string;
   city?: string;
   logoUrl?: string;

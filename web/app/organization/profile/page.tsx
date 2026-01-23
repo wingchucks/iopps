@@ -70,7 +70,7 @@ export default function OrganizationProfilePage() {
   }
 
   const isPublished = profile.publicationStatus === 'PUBLISHED' && profile.slug;
-  const publicUrl = profile.slug ? `/businesses/${profile.slug}` : null;
+  const publicUrl = profile.slug ? `/organizations/${profile.slug}` : null;
 
   return (
     <div className="min-h-screen bg-slate-950 py-12 px-4">
