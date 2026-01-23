@@ -251,25 +251,42 @@ function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
   const hasActiveSubscription = profile?.subscription?.active;
   const subscriptionTier = profile?.subscription?.tier;
 
-  // Determine what's included
-  const freeFeatures = [];
-  const paidFeatures = [];
+  // Determine what's included with descriptions for tooltips
+  const freeFeatures: { name: string; tooltip: string }[] = [];
+  const paidFeatures: { name: string; price: string; tooltip: string }[] = [];
 
   if (enabledModules.includes('host')) {
-    freeFeatures.push('Events & Conferences');
+    freeFeatures.push({
+      name: 'Events & Conferences',
+      tooltip: 'Create and promote conferences, pow wows, and community events for free'
+    });
   }
   if (enabledModules.includes('funding')) {
-    freeFeatures.push('Funding Opportunities');
+    freeFeatures.push({
+      name: 'Funding Opportunities',
+      tooltip: 'Share grants, scholarships, and funding opportunities with the community'
+    });
   }
   if (enabledModules.includes('educate')) {
-    freeFeatures.push('Education Programs');
+    freeFeatures.push({
+      name: 'Education Programs',
+      tooltip: 'List your training programs, courses, and educational offerings'
+    });
   }
 
   if (enabledModules.includes('hire')) {
-    paidFeatures.push({ name: 'Job Postings', price: 'from $125' });
+    paidFeatures.push({
+      name: 'Job Postings',
+      price: 'from $125',
+      tooltip: 'Post job opportunities visible to Indigenous job seekers across Canada'
+    });
   }
   if (enabledModules.includes('sell')) {
-    paidFeatures.push({ name: 'Shop Indigenous', price: 'from $50/mo' });
+    paidFeatures.push({
+      name: 'Shop Indigenous',
+      price: 'from $50/mo',
+      tooltip: 'List your products and services in the Indigenous business directory'
+    });
   }
 
   return (
@@ -303,9 +320,13 @@ function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400 mb-2">Free</p>
             <ul className="space-y-1">
               {freeFeatures.map(feature => (
-                <li key={feature} className="text-sm text-slate-300 flex items-center gap-2">
+                <li
+                  key={feature.name}
+                  className="text-sm text-slate-300 flex items-center gap-2 cursor-help"
+                  title={feature.tooltip}
+                >
                   <CheckCircleIcon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  {feature}
+                  <span className="border-b border-dotted border-slate-600">{feature.name}</span>
                 </li>
               ))}
             </ul>
@@ -318,8 +339,12 @@ function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
             <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-2">Paid</p>
             <ul className="space-y-1">
               {paidFeatures.map(feature => (
-                <li key={feature.name} className="text-sm text-slate-300">
-                  <span>{feature.name}</span>
+                <li
+                  key={feature.name}
+                  className="text-sm text-slate-300 cursor-help"
+                  title={feature.tooltip}
+                >
+                  <span className="border-b border-dotted border-slate-600">{feature.name}</span>
                   <span className="text-slate-500 text-xs ml-1">({feature.price})</span>
                 </li>
               ))}

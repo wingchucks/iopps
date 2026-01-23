@@ -23,6 +23,7 @@ import {
   TicketIcon,
   SparklesIcon,
   PlusCircleIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline';
 
 interface NavItemProps {
@@ -320,6 +321,17 @@ export default function NavigationSidebar({
           </div>
         )}
       </nav>
+
+      {/* Help Section - Fixed at bottom */}
+      <div className="flex-shrink-0 pt-4 border-t border-slate-800">
+        <a
+          href="mailto:support@iopps.ca?subject=Help%20Request"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all"
+        >
+          <QuestionMarkCircleIcon className="w-5 h-5" />
+          <span className="text-sm font-medium">Need help?</span>
+        </a>
+      </div>
     </div>
   );
 }
