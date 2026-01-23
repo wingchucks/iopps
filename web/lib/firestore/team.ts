@@ -219,7 +219,7 @@ export async function createInvitation(
     organizationName,
     invitedEmail: invitedEmail.toLowerCase(),
     invitedBy,
-    invitedByName,
+    invitedByName: invitedByName || organizationName || "Team Admin",
     role,
     status: "pending" as TeamInvitationStatus,
     token,
