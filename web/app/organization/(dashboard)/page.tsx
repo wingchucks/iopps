@@ -38,9 +38,10 @@ interface StatCardProps {
   color?: 'blue' | 'teal' | 'amber' | 'purple' | 'pink';
   loading?: boolean;
   error?: boolean;
+  emptyHint?: string;
 }
 
-function StatCard({ label, value, icon: Icon, href, color = 'teal', loading, error }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, href, color = 'teal', loading, error, emptyHint }: StatCardProps) {
   const colorClasses = {
     blue: 'from-blue-500/20 to-blue-600/5 border-blue-500/20 text-blue-400',
     teal: 'from-accent/20 to-teal-600/5 border-accent/20 text-accent',
@@ -61,7 +62,12 @@ function StatCard({ label, value, icon: Icon, href, color = 'teal', loading, err
       return <p className="text-lg text-slate-500">--</p>;
     }
     if (value === 0) {
-      return <p className="text-3xl font-bold text-slate-400">0</p>;
+      return (
+        <div>
+          <p className="text-3xl font-bold text-slate-400">0</p>
+          {emptyHint && <p className="text-xs text-slate-500 mt-1">{emptyHint}</p>}
+        </div>
+      );
     }
     return <p className="text-3xl font-bold text-slate-50">{value}</p>;
   };
@@ -451,8 +457,8 @@ export default function OrganizationDashboardHome() {
 
   if (enabledModules.includes('hire')) {
     visibleStats.push(
-      { label: 'Active Jobs', value: stats.activeJobs, icon: BriefcaseIcon, href: '/organization/jobs', color: 'blue', loading: statsLoading.jobs, error: statsError.jobs },
-      { label: 'New Applications', value: stats.newApplications, icon: DocumentTextIcon, href: '/organization/applications', color: 'blue', loading: statsLoading.applications, error: statsError.applications }
+      { label: 'Active Jobs', value: stats.activeJobs, icon: BriefcaseIcon, href: '/organization/jobs', color: 'blue', loading: statsLoading.jobs, error: statsError.jobs, emptyHint: 'Post your first job' },
+      { label: 'New Applications', value: stats.newApplications, icon: DocumentTextIcon, href: '/organization/applications', color: 'blue', loading: statsLoading.applications, error: statsError.applications, emptyHint: 'Post jobs to receive applications' }
     );
   }
 
@@ -462,7 +468,7 @@ export default function OrganizationDashboardHome() {
 
   if (enabledModules.includes('sell')) {
     visibleStats.push(
-      { label: 'Profile Views', value: stats.profileViews, icon: EyeIcon, href: '/organization/analytics', color: 'purple', loading: statsLoading.analytics, error: statsError.analytics },
+      { label: 'Profile Views', value: stats.profileViews, icon: EyeIcon, href: '/organization/analytics', color: 'purple', loading: statsLoading.analytics, error: statsError.analytics, emptyHint: 'Complete your profile to get views' },
       { label: 'Link Clicks', value: stats.outboundClicks, icon: CursorArrowRaysIcon, href: '/organization/analytics', color: 'amber', loading: statsLoading.analytics, error: statsError.analytics },
       { label: 'Offerings', value: stats.offerings, icon: ShoppingBagIcon, href: '/organization/sell/offerings', color: 'teal', loading: statsLoading.offerings, error: statsError.offerings }
     );

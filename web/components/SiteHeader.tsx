@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
@@ -16,17 +16,26 @@ const navLinks = [
   { href: "/community", label: "Connect" }, // Renamed from Events/Community
   { href: "/live", label: "Live" },
   { href: "/map", label: "Map" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 export default function SiteHeader() {
   const { user, role, loading, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  // Handle logout with redirect to homepage
+  const handleLogout = async () => {
+    closeMenu();
+    router.push('/');
+    await logout();
+  };
 
   useEffect(() => {
     async function fetchUnreadMessages() {
@@ -191,10 +200,7 @@ export default function SiteHeader() {
 
                           <div className="mt-3 border-t border-slate-700/50 pt-3">
                             <button
-                              onClick={() => {
-                                closeMenu();
-                                void logout();
-                              }}
+                              onClick={() => void handleLogout()}
                               className="w-full rounded-lg bg-gradient-to-r from-[#14B8A6] to-cyan-600 px-3 py-2 text-xs font-semibold text-white transition hover:from-[#16cdb8] hover:to-cyan-500"
                             >
                               Sign out
@@ -330,7 +336,7 @@ export default function SiteHeader() {
                       <button
                         onClick={() => {
                           setMobileNavOpen(false);
-                          void logout();
+                          void handleLogout();
                         }}
                         className="w-full rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-500/20 hover:border-red-400/50"
                       >
