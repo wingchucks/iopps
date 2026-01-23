@@ -271,7 +271,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             </button>
             {canEdit && (
               <Link
-                href="/organization/onboarding"
+                href="/organization/profile"
                 className="flex items-center gap-1.5 rounded-full bg-teal-500 px-3 py-1.5 text-sm text-white hover:bg-teal-600 transition-colors"
               >
                 <PencilIcon className="h-4 w-4" />
@@ -472,7 +472,7 @@ function OverviewTab({
               title="Add a description"
               description="Tell visitors about your organization, mission, and what makes you unique."
               ctaText="Add Description"
-              ctaHref="/organization/onboarding"
+              ctaHref="/organization/profile"
             />
           ) : null}
         </section>
