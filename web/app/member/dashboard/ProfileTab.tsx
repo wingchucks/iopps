@@ -3,10 +3,13 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/components/AuthProvider";
-import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
+import { getMemberProfile, upsertMemberProfile, getMemberSettings, updatePrivacySettings, DEFAULT_MEMBER_SETTINGS, type FieldPrivacySettings, type FieldVisibility } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import type { WorkExperience, Education, PortfolioItem, MemberProfile } from "@/lib/types";
+import { PrivacyIndicator } from "@/components/profile/PrivacyIndicator";
+import { ProfilePreviewModal } from "@/components/profile/ProfilePreviewModal";
+import { Eye, EyeOff } from "lucide-react";
 
 interface ProfileTabProps {
   initialProfile?: MemberProfile | null;
@@ -45,6 +48,11 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<PortfolioItem | null>(null);
 
+  // Privacy settings state
+  const [fieldPrivacy, setFieldPrivacy] = useState<FieldPrivacySettings>(DEFAULT_MEMBER_SETTINGS.fieldPrivacy);
+  const [showPrivacyControls, setShowPrivacyControls] = useState(false);
+  const [showProfilePreview, setShowProfilePreview] = useState(false);
+
   // Initialize from prop or load from Firestore
   const initializeFromProfile = useCallback((profile: MemberProfile | null) => {
     if (profile) {
@@ -67,18 +75,28 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
   useEffect(() => {
     if (initialized) return;
 
-    if (initialProfile) {
-      initializeFromProfile(initialProfile);
-      setInitialized(true);
-    } else if (user) {
-      getMemberProfile(user.uid).then((profile) => {
-        initializeFromProfile(profile);
-        setInitialized(true);
-      }).catch((error) => {
+    const loadData = async () => {
+      try {
+        if (initialProfile) {
+          initializeFromProfile(initialProfile);
+        } else if (user) {
+          const profile = await getMemberProfile(user.uid);
+          initializeFromProfile(profile);
+        }
+
+        // Load privacy settings
+        if (user) {
+          const settings = await getMemberSettings(user.uid);
+          setFieldPrivacy(settings.fieldPrivacy);
+        }
+      } catch (error) {
         console.error("Error loading profile:", error);
+      } finally {
         setInitialized(true);
-      });
-    }
+      }
+    };
+
+    loadData();
   }, [user, initialProfile, initialized, initializeFromProfile]);
 
   // Calculate profile completeness
@@ -319,6 +337,24 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
     }
   };
 
+  // Handle privacy setting change
+  const handlePrivacyChange = async (field: keyof FieldPrivacySettings, value: FieldVisibility) => {
+    if (!user) return;
+
+    const newPrivacy = { ...fieldPrivacy, [field]: value };
+    setFieldPrivacy(newPrivacy);
+
+    try {
+      await updatePrivacySettings(user.uid, { fieldPrivacy: { [field]: value } });
+      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} visibility updated`);
+    } catch (error) {
+      console.error("Error updating privacy:", error);
+      toast.error("Error updating privacy setting");
+      // Revert on error
+      setFieldPrivacy(fieldPrivacy);
+    }
+  };
+
   // Experience management
   const handleSaveExperience = (exp: WorkExperience) => {
     if (editingExperience) {
@@ -378,6 +414,35 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-white">Profile Management</h2>
             <p className="mt-2 text-slate-400">Manage your professional information and settings</p>
+
+            {/* Privacy Controls Toggle and Preview */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPrivacyControls(!showPrivacyControls)}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  showPrivacyControls
+                    ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                    : "bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-600"
+                }`}
+              >
+                {showPrivacyControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPrivacyControls ? "Hide Privacy Controls" : "Show Privacy Controls"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowProfilePreview(true)}
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors"
+              >
+                <Eye className="h-4 w-4" />
+                Preview Profile
+              </button>
+            </div>
+            {showPrivacyControls && (
+              <p className="mt-2 text-xs text-slate-500">
+                Click the badges next to each field to control who can see your information
+              </p>
+            )}
           </div>
 
           {/* Profile Completeness Circle */}
@@ -503,7 +568,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">About Me</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-300">About Me</label>
+              {showPrivacyControls && (
+                <PrivacyIndicator
+                  visibility={fieldPrivacy.bio}
+                  onChange={(v) => handlePrivacyChange("bio", v)}
+                  fieldName="Bio"
+                  editable
+                />
+              )}
+            </div>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
@@ -516,7 +591,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Location</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-300">Location</label>
+              {showPrivacyControls && (
+                <PrivacyIndicator
+                  visibility={fieldPrivacy.location}
+                  onChange={(v) => handlePrivacyChange("location", v)}
+                  fieldName="Location"
+                  editable
+                />
+              )}
+            </div>
             <input
               type="text"
               value={location}
@@ -527,7 +612,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Indigenous Affiliation</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-300">Indigenous Affiliation</label>
+              {showPrivacyControls && (
+                <PrivacyIndicator
+                  visibility={fieldPrivacy.affiliation}
+                  onChange={(v) => handlePrivacyChange("affiliation", v)}
+                  fieldName="Affiliation"
+                  editable
+                />
+              )}
+            </div>
             <input
               type="text"
               value={indigenousAffiliation}
@@ -566,7 +661,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
 
       {/* Skills Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
-        <h3 className="mb-6 text-xl font-bold text-white">Skills</h3>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Skills</h3>
+          {showPrivacyControls && (
+            <PrivacyIndicator
+              visibility={fieldPrivacy.skills}
+              onChange={(v) => handlePrivacyChange("skills", v)}
+              fieldName="Skills"
+              editable
+            />
+          )}
+        </div>
 
         {/* Skills Input */}
         <div className="mb-4 flex gap-2">
@@ -611,7 +716,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
       {/* Work Experience Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Work Experience</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">Work Experience</h3>
+            {showPrivacyControls && (
+              <PrivacyIndicator
+                visibility={fieldPrivacy.experience}
+                onChange={(v) => handlePrivacyChange("experience", v)}
+                fieldName="Experience"
+                editable
+              />
+            )}
+          </div>
           <button
             onClick={() => {
               setEditingExperience(null);
@@ -668,7 +783,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
       {/* Education Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Education</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">Education</h3>
+            {showPrivacyControls && (
+              <PrivacyIndicator
+                visibility={fieldPrivacy.education}
+                onChange={(v) => handlePrivacyChange("education", v)}
+                fieldName="Education"
+                editable
+              />
+            )}
+          </div>
           <button
             onClick={() => {
               setEditingEducation(null);
@@ -725,7 +850,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
       {/* Portfolio Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Portfolio & Projects</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">Portfolio & Projects</h3>
+            {showPrivacyControls && (
+              <PrivacyIndicator
+                visibility={fieldPrivacy.portfolio}
+                onChange={(v) => handlePrivacyChange("portfolio", v)}
+                fieldName="Portfolio"
+                editable
+              />
+            )}
+          </div>
           <button
             onClick={() => {
               setEditingPortfolio(null);
@@ -800,7 +935,17 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
 
       {/* Resume Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
-        <h3 className="mb-6 text-xl font-bold text-white">Resume / CV</h3>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Resume / CV</h3>
+          {showPrivacyControls && (
+            <PrivacyIndicator
+              visibility={fieldPrivacy.resume}
+              onChange={(v) => handlePrivacyChange("resume", v)}
+              fieldName="Resume"
+              editable
+            />
+          )}
+        </div>
 
         {resumeUrl ? (
           <div className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6">
@@ -911,6 +1056,27 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
             setShowPortfolioModal(false);
             setEditingPortfolio(null);
           }}
+        />
+      )}
+
+      {/* Profile Preview Modal */}
+      {showProfilePreview && (
+        <ProfilePreviewModal
+          profile={{
+            displayName,
+            avatarUrl,
+            bio,
+            location,
+            indigenousAffiliation,
+            skills,
+            experience,
+            education,
+            portfolio,
+            availableForInterviews: availability,
+            messagingHandle,
+          }}
+          fieldPrivacy={fieldPrivacy}
+          onClose={() => setShowProfilePreview(false)}
         />
       )}
     </div>

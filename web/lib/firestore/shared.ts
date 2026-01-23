@@ -104,6 +104,9 @@ export const analyticsEventsCollection = "analytics_events";
 // Universal Organization Directory collections
 export const directoryIndexCollection = "directory_index";
 
+// Member Settings collections
+export const memberSettingsCollection = "member_settings";
+
 // Helper to check if Firebase is available
 export function checkFirebase() {
   if (!db) {

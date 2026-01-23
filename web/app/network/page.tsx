@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getPendingConnectionRequests, getSuggestedConnections, respondToConnectionRequest, getSuggestedOrganizations } from "@/lib/firestore/social";
 import { ConnectionButton } from "@/components/social/ConnectionButton";
@@ -94,12 +95,16 @@ export default function NetworkPage() {
                         {requests.map((request) => (
                             <Card key={request.id} className="bg-slate-900/50 border-slate-800/50 backdrop-blur-sm">
                                 <CardContent className="p-4 flex items-center gap-4">
-                                    <Avatar className="h-12 w-12 border-2 border-slate-800">
-                                        <AvatarImage src={request.requesterAvatarUrl} />
-                                        <AvatarFallback>{request.requesterName ? request.requesterName[0] : "?"}</AvatarFallback>
-                                    </Avatar>
+                                    <Link href={`/member/${request.requesterId}`} className="flex-shrink-0">
+                                        <Avatar className="h-12 w-12 border-2 border-slate-800 hover:border-emerald-500/50 transition-colors cursor-pointer">
+                                            <AvatarImage src={request.requesterAvatarUrl} />
+                                            <AvatarFallback>{request.requesterName ? request.requesterName[0] : "?"}</AvatarFallback>
+                                        </Avatar>
+                                    </Link>
                                     <div className="flex-1 overflow-hidden">
-                                        <h3 className="font-semibold text-slate-200 truncate">{request.requesterName}</h3>
+                                        <Link href={`/member/${request.requesterId}`} className="block group">
+                                            <h3 className="font-semibold text-slate-200 truncate group-hover:text-emerald-400 transition-colors">{request.requesterName}</h3>
+                                        </Link>
                                         <p className="text-xs text-slate-500 truncate">{request.requesterTagline || "Member"}</p>
                                     </div>
                                     <div className="flex gap-2">
@@ -180,29 +185,47 @@ export default function NetworkPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {suggestions.map((person) => (
-                        <Card key={person.id} className="bg-slate-900 border-slate-800 overflow-hidden hover:border-slate-700 transition-all group">
-                            {/* Banner */}
-                            <div className="h-20 bg-gradient-to-br from-slate-800 to-slate-900 relative">
-                                <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
-                            </div>
+                        <Card key={person.id} className="bg-slate-900 border-slate-800 overflow-hidden hover:border-emerald-500/30 transition-all group">
+                            {/* Banner - Clickable */}
+                            <Link href={`/member/${person.id}`} className="block">
+                                <div className="h-20 bg-gradient-to-br from-slate-800 to-slate-900 relative">
+                                    <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
+                                </div>
+                            </Link>
 
                             <CardContent className="p-4 pt-0 relative">
-                                <Avatar className="h-16 w-16 border-4 border-slate-900 absolute -top-8 left-4 shadow-lg">
-                                    <AvatarImage src={person.photoURL} />
-                                    <AvatarFallback>{person.displayName?.[0]}</AvatarFallback>
-                                </Avatar>
+                                <Link href={`/member/${person.id}`} className="block absolute -top-8 left-4">
+                                    <Avatar className="h-16 w-16 border-4 border-slate-900 shadow-lg hover:border-emerald-500/50 transition-colors cursor-pointer">
+                                        <AvatarImage src={person.photoURL || person.avatarUrl} />
+                                        <AvatarFallback>{person.displayName?.[0]}</AvatarFallback>
+                                    </Avatar>
+                                </Link>
 
                                 <div className="mt-10 mb-4 space-y-1">
-                                    <h3 className="font-semibold text-slate-200 line-clamp-1 group-hover:text-emerald-400 transition-colors" title={person.displayName}>
-                                        {person.displayName}
-                                    </h3>
-                                    <p className="text-xs text-slate-500 line-clamp-2 min-h-[2.5em]" title={person.tagline}>
-                                        {person.tagline || "IOPPS Member"}
+                                    <Link href={`/member/${person.id}`} className="block">
+                                        <h3 className="font-semibold text-slate-200 line-clamp-1 group-hover:text-emerald-400 transition-colors cursor-pointer" title={person.displayName}>
+                                            {person.displayName}
+                                        </h3>
+                                    </Link>
+                                    <p className="text-xs text-slate-500 line-clamp-2 min-h-[2.5em]" title={person.tagline || person.bio}>
+                                        {person.tagline || person.bio?.slice(0, 60) || "IOPPS Member"}
                                     </p>
-                                    {/* Optional: Mutual connections count */}
-                                    <p className="text-[10px] text-slate-600 flex items-center gap-1 mt-1">
-                                        <Users className="h-3 w-3" /> 12 mutual connections
-                                    </p>
+                                    {/* Skills preview */}
+                                    {person.skills && person.skills.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-2">
+                                            {person.skills.slice(0, 3).map((skill) => (
+                                                <span key={skill} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                                                    {skill}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* Indigenous affiliation badge */}
+                                    {person.indigenousAffiliation && (
+                                        <p className="text-[10px] text-emerald-500 flex items-center gap-1 mt-1">
+                                            <Users className="h-3 w-3" /> {person.indigenousAffiliation}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <ConnectionButton targetUserId={person.id} className="w-full" />

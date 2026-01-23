@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import MemberDashboardLayout from '@/components/member/dashboard/MemberDashboardLayout';
 import MemberSidebar from '@/components/member/dashboard/MemberSidebar';
 import { type MemberSection } from '@/components/member/dashboard/MemberMobileNav';
+import { OnboardingFlow } from '@/components/member/onboarding/OnboardingFlow';
+import SettingsTab from './SettingsTab';
 
 // Tab Components
 import OverviewTab from './OverviewTab';
@@ -22,7 +24,8 @@ import ProfileTab from './ProfileTab';
 import {
   getMemberProfile,
   listMemberApplications,
-  getJobPosting
+  getJobPosting,
+  getMemberSettings,
 } from '@/lib/firestore';
 import type { MemberProfile, JobApplication, JobPosting } from '@/lib/types';
 import { useDashboardBadges } from '@/hooks/useDashboardBadges';
@@ -42,6 +45,8 @@ function MemberDashboardContent() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [applications, setApplications] = useState<ApplicationWithJob[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
 
   // Real-time Badges
   const { badges } = useDashboardBadges(user, 'member');
@@ -83,13 +88,20 @@ function MemberDashboardContent() {
 
       try {
         setLoadingData(true);
-        // Note: we removed getUnreadMessageCount from here as it's handled by the hook
-        const [userProfile, userApps] = await Promise.all([
+        // Load profile, applications, and settings in parallel
+        const [userProfile, userApps, memberSettings] = await Promise.all([
           getMemberProfile(user.uid),
-          listMemberApplications(user.uid)
+          listMemberApplications(user.uid),
+          getMemberSettings(user.uid),
         ]);
 
         setProfile(userProfile);
+
+        // Check if onboarding is needed
+        if (!memberSettings.onboarding.completed) {
+          setShowOnboarding(true);
+        }
+        setOnboardingChecked(true);
 
         // Fetch job details for applications
         const appsWithJobs = await Promise.all(
@@ -108,6 +120,7 @@ function MemberDashboardContent() {
 
       } catch (err) {
         console.error("Error loading dashboard data:", err);
+        setOnboardingChecked(true); // Continue without onboarding on error
       } finally {
         setLoadingData(false);
       }
@@ -182,8 +195,7 @@ function MemberDashboardContent() {
       case 'profile':
         return <ProfileTab />;
       case 'settings':
-        // Reuse ProfileTab for settings context if applicable, or placeholder
-        return <ProfileTab />;
+        return <SettingsTab />;
 
       default:
         // Pass required props even to default
@@ -201,6 +213,16 @@ function MemberDashboardContent() {
         );
     }
   };
+
+  // Show onboarding if needed
+  if (showOnboarding && onboardingChecked) {
+    return (
+      <OnboardingFlow
+        onComplete={() => setShowOnboarding(false)}
+        userName={profile?.displayName || user?.displayName || undefined}
+      />
+    );
+  }
 
   return (
     <MemberDashboardLayout

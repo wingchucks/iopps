@@ -454,47 +454,7 @@ export default function RegisterPage() {
             <AuthDivider text="Or register with email" />
 
             <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-              <AuthInput
-                label="Name"
-                type="text"
-                required
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name or organization"
-                autoComplete="name"
-              />
-
-              <AuthInput
-                label="Email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-              />
-
-              <AuthInput
-                label="Password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                hint="Must be at least 6 characters"
-                autoComplete="new-password"
-              />
-
-              <AuthInput
-                label="Confirm Password"
-                type="password"
-                required
-                minLength={6}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-
+              {/* Step 1: Account Type Selection - FIRST */}
               <div>
                 <p className="block text-sm font-medium text-slate-200 mb-3">
                   I am signing up as:
@@ -553,23 +513,83 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={loading || googleLoading}
-                className="w-full rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Creating account...
-                  </span>
-                ) : (
-                  "Create account"
-                )}
-              </button>
+              {/* Step 2: Account Details - Only show after role is selected */}
+              {role && (
+                <div className="space-y-5 animate-fade-in pt-2 border-t border-slate-800">
+                  <AuthInput
+                    label={role === "employer" ? "Organization Name" : "Your Full Name"}
+                    type="text"
+                    required
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder={role === "employer" ? "Your organization or company name" : "Your full name"}
+                    autoComplete={role === "employer" ? "organization" : "name"}
+                  />
+
+                  <AuthInput
+                    label="Email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={role === "employer" ? "contact@yourcompany.com" : "you@example.com"}
+                    autoComplete="email"
+                  />
+
+                  <AuthInput
+                    label="Password"
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    hint="Must be at least 6 characters"
+                    autoComplete="new-password"
+                  />
+
+                  <AuthInput
+                    label="Confirm Password"
+                    type="password"
+                    required
+                    minLength={6}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+              )}
+
+              {/* Submit button - only show when role is selected */}
+              {role && (
+                <button
+                  type="submit"
+                  disabled={loading || googleLoading || (role === "employer" && !employerIntent)}
+                  className="w-full rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Creating account...
+                    </span>
+                  ) : role === "employer" ? (
+                    "Create employer account"
+                  ) : (
+                    "Create account"
+                  )}
+                </button>
+              )}
+
+              {/* Prompt to select role if not selected */}
+              {!role && (
+                <div className="text-center py-4 px-6 rounded-xl bg-slate-800/50 border border-slate-700">
+                  <p className="text-sm text-slate-400">
+                    Select an account type above to continue
+                  </p>
+                </div>
+              )}
 
               <p className="text-center text-xs text-slate-400">
                 By creating an account you agree to our{" "}

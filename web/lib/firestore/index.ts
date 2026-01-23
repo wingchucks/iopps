@@ -75,7 +75,9 @@ export {
   getMemberProfile,
   upsertMemberProfile,
   searchMembers,
+  listMembersForDirectory,
 } from "./members";
+export type { ListMembersOptions } from "./members";
 
 // Conferences
 export {
@@ -170,7 +172,15 @@ export {
   markMessagesAsRead,
   getUnreadMessageCount,
   archiveConversation,
+  // Peer-to-peer messaging
+  getOrCreatePeerConversation,
+  getPeerConversations,
+  sendPeerMessage,
+  markPeerMessagesAsRead,
+  getUnreadPeerMessageCount,
+  getOtherParticipant,
 } from "./messaging";
+export type { PeerConversation } from "./messaging";
 
 // Notifications
 export {
@@ -429,3 +439,95 @@ export {
   getOffering,
   getActiveOfferingCounts,
 } from "./offerings";
+
+// ============================================
+// MEMBER SETTINGS
+// ============================================
+export {
+  getMemberSettings,
+  updateMemberSettings,
+  updateNotificationSettings,
+  updatePrivacySettings,
+  updateOnboardingStatus,
+  completeOnboarding,
+  skipOnboarding,
+  DEFAULT_MEMBER_SETTINGS,
+} from "./memberSettings";
+export type {
+  MemberSettings,
+  NotificationSettings,
+  FieldPrivacySettings,
+  FieldVisibility,
+  ProfileVisibility,
+  OnboardingStatus,
+  UserIntent,
+} from "./memberSettings";
+
+// ============================================
+// MEMBER ENGAGEMENT & ANALYTICS
+// ============================================
+export {
+  trackMemberProfileView,
+  getMemberProfileViews,
+  getMemberEngagementStats,
+  checkMilestones,
+  getMilestoneProgress,
+} from "./memberEngagement";
+export type {
+  MemberProfileView,
+  MemberEngagementStats,
+  EngagementMilestone,
+} from "./memberEngagement";
+
+// ============================================
+// ACHIEVEMENT BADGES
+// ============================================
+export {
+  BADGE_DEFINITIONS,
+  getUserBadges,
+  hasBadge,
+  awardBadge,
+  markBadgeNotified,
+  getUnnotifiedBadges,
+  checkAndAwardBadges,
+  getUserBadgePoints,
+  getBadgeProgress,
+  getTierColor,
+  getTierBorderColor,
+} from "./badges";
+export type {
+  BadgeDefinition,
+  UserBadge,
+  UserBadgeWithDefinition,
+} from "./badges";
+
+// ============================================
+// ACTIVITY STREAKS
+// ============================================
+export {
+  getUserStreak,
+  recordDailyActivity,
+  getStreakStatus,
+  checkStreakAtRisk,
+  getStreakMilestones,
+} from "./streaks";
+export type {
+  UserStreak,
+  StreakStatus,
+} from "./streaks";
+
+// ============================================
+// COMMUNITY LEADERBOARD
+// ============================================
+export {
+  calculateEngagementScore,
+  getLeaderboard,
+  getUserLeaderboardPosition,
+  getMonthlySpotlight,
+  getRisingStars,
+} from "./leaderboard";
+export type {
+  LeaderboardEntry,
+  LeaderboardData,
+  LeaderboardType,
+} from "./leaderboard";
