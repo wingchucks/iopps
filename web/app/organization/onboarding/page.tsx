@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -125,8 +125,17 @@ interface FormData {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, role } = useAuth();
-  const [step, setStep] = useState<Step>(1);
+  const initialStep = (() => {
+    const stepParam = searchParams.get('step');
+    if (stepParam) {
+      const parsed = parseInt(stepParam, 10);
+      if (parsed >= 1 && parsed <= 4) return parsed as Step;
+    }
+    return 1;
+  })();
+  const [step, setStep] = useState<Step>(initialStep);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -430,15 +439,25 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-between">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center">
-              <div
+              <button
+                type="button"
+                onClick={() => {
+                  // Allow navigation to completed steps or current step
+                  if (s <= step || (s === step + 1 && validateStep(step))) {
+                    setStep(s as Step);
+                  }
+                }}
+                disabled={s > step + 1}
                 className={`flex items-center justify-center h-10 w-10 rounded-full text-sm font-semibold transition-colors ${
                   step >= s
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-slate-800 text-slate-400'
+                    ? 'bg-teal-500 text-white hover:bg-teal-600'
+                    : s === step + 1
+                      ? 'bg-slate-800 text-slate-400 hover:bg-slate-700 cursor-pointer'
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                 }`}
               >
                 {step > s ? <CheckIcon className="h-5 w-5" /> : s}
-              </div>
+              </button>
               {s < 4 && (
                 <div
                   className={`hidden sm:block w-full h-1 mx-2 ${
@@ -451,10 +470,10 @@ export default function OnboardingPage() {
           ))}
         </div>
         <div className="flex justify-between mt-2 text-xs text-slate-400">
-          <span>Basics</span>
-          <span>Branding</span>
-          <span>Goals</span>
-          <span>Launch</span>
+          <button type="button" onClick={() => setStep(1)} className="hover:text-teal-400 transition-colors">Basics</button>
+          <button type="button" onClick={() => step >= 1 && setStep(2)} className={step >= 1 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Branding</button>
+          <button type="button" onClick={() => step >= 2 && setStep(3)} className={step >= 2 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Goals</button>
+          <button type="button" onClick={() => step >= 3 && setStep(4)} className={step >= 3 ? 'hover:text-teal-400 transition-colors' : 'cursor-not-allowed'}>Launch</button>
         </div>
       </div>
 
@@ -478,9 +497,11 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-white">Let&apos;s get started</h1>
+              <h1 className="text-2xl font-bold text-white">
+                {existingProfile ? 'Edit Your Profile' : "Let's get started"}
+              </h1>
               <p className="mt-2 text-slate-400">
-                Tell us about your organization in 60 seconds
+                {existingProfile ? 'Update your organization details' : 'Tell us about your organization in 60 seconds'}
               </p>
             </div>
 
@@ -619,7 +640,7 @@ export default function OnboardingPage() {
                       disabled={uploading}
                     />
                   </label>
-                  <p className="mt-1 text-xs text-slate-500">PNG, JPG up to 2MB</p>
+                  <p className="mt-1 text-xs text-slate-500">Square image, 200×200px minimum. PNG, JPG up to 2MB</p>
                 </div>
               </div>
             </div>

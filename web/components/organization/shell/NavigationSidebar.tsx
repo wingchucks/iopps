@@ -152,7 +152,7 @@ export default function NavigationSidebar({
           />
           <NavItem
             href="/organization/profile"
-            label="Public Profile"
+            label="Manage Profile"
             icon={UserCircleIcon}
             active={isActive('/organization/profile')}
             onClick={onNavigate}
