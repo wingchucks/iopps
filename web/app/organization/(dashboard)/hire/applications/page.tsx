@@ -19,6 +19,8 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; i
   submitted: { label: 'New', color: 'bg-blue-900/30 text-blue-400', icon: ClockIcon },
   reviewed: { label: 'Reviewed', color: 'bg-slate-800 text-slate-400', icon: DocumentTextIcon },
   shortlisted: { label: 'Shortlisted', color: 'bg-amber-900/30 text-amber-400', icon: StarIcon },
+  interviewing: { label: 'Interviewing', color: 'bg-purple-900/30 text-purple-400', icon: UserIcon },
+  offered: { label: 'Offered', color: 'bg-cyan-900/30 text-cyan-400', icon: DocumentTextIcon },
   rejected: { label: 'Rejected', color: 'bg-red-900/30 text-red-400', icon: XCircleIcon },
   hired: { label: 'Hired', color: 'bg-green-900/30 text-green-400', icon: CheckCircleIcon },
   withdrawn: { label: 'Withdrawn', color: 'bg-slate-800 text-slate-500', icon: XCircleIcon },
@@ -86,7 +88,7 @@ export default function HireApplicationsPage() {
         >
           All ({applications.length})
         </button>
-        {(['submitted', 'shortlisted', 'reviewed', 'hired', 'rejected'] as ApplicationStatus[]).map(status => {
+        {(['submitted', 'shortlisted', 'interviewing', 'offered', 'reviewed', 'hired', 'rejected'] as ApplicationStatus[]).map(status => {
           const config = STATUS_CONFIG[status];
           const count = statusCounts[status] || 0;
 

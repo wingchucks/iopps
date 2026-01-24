@@ -622,9 +622,19 @@ export type ApplicationStatus =
   | "submitted"
   | "reviewed"
   | "shortlisted"
+  | "interviewing"
+  | "offered"
   | "rejected"
   | "hired"
   | "withdrawn";
+
+// Application stage history entry
+export interface ApplicationStageEntry {
+  status: ApplicationStatus;
+  timestamp: Timestamp | Date;
+  changedBy?: string; // User ID who made the change
+  note?: string; // Optional note about the transition
+}
 
 // Applicant Notes (employer private notes on applications)
 export interface ApplicantNote {
@@ -650,6 +660,9 @@ export interface JobApplication {
 
   // Employer Notes (multiple timestamped notes)
   employerNotes?: ApplicantNote[];
+
+  // Stage History (tracks status transitions)
+  stageHistory?: ApplicationStageEntry[];
 
   // Modern Cover Letter Handling
   coverLetterType?: 'text' | 'file';

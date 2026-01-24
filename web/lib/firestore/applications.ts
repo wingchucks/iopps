@@ -16,7 +16,7 @@ import {
   applicationsCollection,
   jobsCollection,
 } from "./shared";
-import type { JobApplication, ApplicationStatus, ApplicantNote } from "@/lib/types";
+import type { JobApplication, ApplicationStatus, ApplicantNote, ApplicationStageEntry } from "@/lib/types";
 import { arrayUnion, arrayRemove } from "firebase/firestore";
 import { createNotification } from "./notifications";
 
@@ -155,14 +155,24 @@ export async function listEmployerApplications(
 
 export async function updateApplicationStatus(
   applicationId: string,
-  status: ApplicationStatus
+  status: ApplicationStatus,
+  options?: { changedBy?: string; note?: string }
 ) {
   const ref = doc(db!, applicationsCollection, applicationId);
   const appSnap = await getDoc(ref);
   const appData = appSnap.data();
 
+  // Create stage history entry
+  const stageEntry: ApplicationStageEntry = {
+    status,
+    timestamp: new Date(),
+    changedBy: options?.changedBy,
+    note: options?.note,
+  };
+
   await updateDoc(ref, {
     status,
+    stageHistory: arrayUnion(stageEntry),
     updatedAt: serverTimestamp(),
   });
 
@@ -181,6 +191,8 @@ export async function updateApplicationStatus(
         submitted: "has been submitted",
         reviewed: "is being reviewed",
         shortlisted: "has been shortlisted!",
+        interviewing: "is moving to the interview stage!",
+        offered: "has received an offer!",
         rejected: "was not selected to move forward",
         hired: "was successful - Congratulations!",
         withdrawn: "has been withdrawn",

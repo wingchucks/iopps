@@ -233,6 +233,8 @@ function AdminApplicationsContent() {
     submitted: applications.filter((a) => a.status === "submitted").length,
     reviewed: applications.filter((a) => a.status === "reviewed").length,
     shortlisted: applications.filter((a) => a.status === "shortlisted").length,
+    interviewing: applications.filter((a) => a.status === "interviewing").length,
+    offered: applications.filter((a) => a.status === "offered").length,
     rejected: applications.filter((a) => a.status === "rejected").length,
     hired: applications.filter((a) => a.status === "hired").length,
     withdrawn: applications.filter((a) => a.status === "withdrawn").length,
@@ -246,6 +248,10 @@ function AdminApplicationsContent() {
         return "bg-purple-500/10 text-purple-400";
       case "shortlisted":
         return "bg-yellow-500/10 text-yellow-400";
+      case "interviewing":
+        return "bg-indigo-500/10 text-indigo-400";
+      case "offered":
+        return "bg-cyan-500/10 text-cyan-400";
       case "rejected":
         return "bg-red-500/10 text-red-400";
       case "hired":
@@ -323,6 +329,24 @@ function AdminApplicationsContent() {
             Shortlisted ({statusCounts.shortlisted})
           </button>
           <button
+            onClick={() => setFilter("interviewing")}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "interviewing"
+                ? "bg-indigo-500 text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-indigo-500"
+              }`}
+          >
+            Interviewing ({statusCounts.interviewing})
+          </button>
+          <button
+            onClick={() => setFilter("offered")}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "offered"
+                ? "bg-cyan-500 text-slate-900"
+                : "border border-slate-700 text-slate-300 hover:border-cyan-500"
+              }`}
+          >
+            Offered ({statusCounts.offered})
+          </button>
+          <button
             onClick={() => setFilter("hired")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "hired"
                 ? "bg-green-500 text-slate-900"
@@ -373,6 +397,20 @@ function AdminApplicationsContent() {
               >
                 <CheckCircleIcon className="h-4 w-4" />
                 Shortlist
+              </button>
+              <button
+                onClick={() => bulkUpdateStatus("interviewing")}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 rounded-lg bg-indigo-500/10 px-3 py-1.5 text-sm font-medium text-indigo-400 hover:bg-indigo-500/20 disabled:opacity-50"
+              >
+                Interview
+              </button>
+              <button
+                onClick={() => bulkUpdateStatus("offered")}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 rounded-lg bg-cyan-500/10 px-3 py-1.5 text-sm font-medium text-cyan-400 hover:bg-cyan-500/20 disabled:opacity-50"
+              >
+                Offer
               </button>
               <button
                 onClick={() => bulkUpdateStatus("rejected")}

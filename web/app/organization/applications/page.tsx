@@ -109,6 +109,8 @@ export default function ApplicationsInboxPage() {
       submitted: 0,
       reviewed: 0,
       shortlisted: 0,
+      interviewing: 0,
+      offered: 0,
       rejected: 0,
       hired: 0,
       withdrawn: 0,
@@ -373,6 +375,8 @@ export default function ApplicationsInboxPage() {
             <option value="submitted">Submitted</option>
             <option value="reviewed">Reviewed</option>
             <option value="shortlisted">Shortlisted</option>
+            <option value="interviewing">Interviewing</option>
+            <option value="offered">Offered</option>
             <option value="rejected">Rejected</option>
             <option value="hired">Hired</option>
           </select>
@@ -418,6 +422,8 @@ export default function ApplicationsInboxPage() {
               <option value="">Bulk update status...</option>
               <option value="reviewed">Mark as Reviewed</option>
               <option value="shortlisted">Shortlist</option>
+              <option value="interviewing">Move to Interviewing</option>
+              <option value="offered">Make Offer</option>
               <option value="rejected">Reject</option>
               <option value="hired">Mark as Hired</option>
             </select>
@@ -559,6 +565,8 @@ export default function ApplicationsInboxPage() {
                       <option value="submitted">Submitted</option>
                       <option value="reviewed">Reviewed</option>
                       <option value="shortlisted">Shortlisted</option>
+                      <option value="interviewing">Interviewing</option>
+                      <option value="offered">Offered</option>
                       <option value="rejected">Rejected</option>
                       <option value="hired">Hired</option>
                     </select>

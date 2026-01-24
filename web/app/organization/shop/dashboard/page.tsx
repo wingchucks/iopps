@@ -27,6 +27,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
 import UpgradeToEmployerCard from '@/components/UpgradeToEmployerCard';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
+import VendorAnalytics from '@/components/shop/VendorAnalytics';
 import { uploadProfileImage, uploadCoverImage, uploadGalleryImage, uploadGalleryImages } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
@@ -325,42 +326,8 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
-                  <EyeIcon className="h-5 w-5 text-teal-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{vendor.viewCount || 0}</p>
-                  <p className="text-sm text-slate-400">Profile Views</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-                  <PhotoIcon className="h-5 w-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{products.length}</p>
-                  <p className="text-sm text-slate-400">Products Listed</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-                  <ChartBarIcon className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{typeof vendor.region === 'string' ? vendor.region : 'N/A'}</p>
-                  <p className="text-sm text-slate-400">Region</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Analytics Dashboard */}
+          <VendorAnalytics />
 
           {/* Quick Actions */}
           {vendor.status === 'draft' && (

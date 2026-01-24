@@ -91,6 +91,8 @@ export async function GET(request: NextRequest) {
       submitted: 0,
       reviewed: 0,
       shortlisted: 0,
+      interviewing: 0,
+      offered: 0,
       rejected: 0,
       hired: 0,
       withdrawn: 0,
