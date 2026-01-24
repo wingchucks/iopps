@@ -340,3 +340,60 @@ export interface Notification {
   relatedEmployerId?: string;
   createdAt?: any;
 }
+
+// Interviews
+export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "no-show";
+export type InterviewType = "virtual" | "phone" | "in-person";
+
+export interface ScheduledInterview {
+  id: string;
+  employerId: string;
+  applicationId: string;
+  candidateId: string;
+  jobId?: string;
+  jobTitle?: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  type: InterviewType;
+  scheduledAt: any; // Timestamp
+  duration: number; // minutes
+  meetingUrl?: string;
+  phoneNumber?: string;
+  location?: string;
+  interviewerName?: string;
+  notes?: string;
+  status: ScheduledInterviewStatus;
+  cancelReason?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+// Talent Search
+export type ExperienceLevel = "entry" | "mid" | "senior" | "";
+export type Availability = "yes" | "maybe" | "no" | "";
+
+export interface TalentSearchFilters {
+  query?: string;
+  location?: string;
+  skills?: string[];
+  experience?: ExperienceLevel;
+  availability?: Availability;
+  hasResume?: boolean;
+}
+
+export interface TalentSearchResult {
+  member: UserProfile;
+  matchScore?: number;
+  matchReasons?: string[];
+}
+
+export interface SavedTalent {
+  id: string;
+  employerId: string;
+  memberId: string;
+  memberName: string;
+  memberAvatar?: string;
+  notes?: string;
+  tags?: string[];
+  savedAt?: any;
+}

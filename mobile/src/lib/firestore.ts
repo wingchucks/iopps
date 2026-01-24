@@ -30,6 +30,11 @@ import type {
   Message,
   Notification,
   UserProfile,
+  ScheduledInterview,
+  ScheduledInterviewStatus,
+  TalentSearchFilters,
+  TalentSearchResult,
+  SavedTalent,
 } from "../types";
 
 // ============ SAVED JOBS ============
@@ -656,4 +661,193 @@ export async function getVendorStats(vendorId: string): Promise<{
   const productsCount = productsSnapshot.size;
 
   return { viewCount, productsCount };
+}
+
+// ============ INTERVIEWS ============
+
+export async function getEmployerInterviews(
+  employerId: string
+): Promise<ScheduledInterview[]> {
+  const q = query(
+    collection(db, "interviews"),
+    where("employerId", "==", employerId),
+    orderBy("scheduledAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as ScheduledInterview[];
+}
+
+export async function getCandidateInterviews(
+  candidateId: string
+): Promise<ScheduledInterview[]> {
+  const q = query(
+    collection(db, "interviews"),
+    where("candidateId", "==", candidateId),
+    orderBy("scheduledAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as ScheduledInterview[];
+}
+
+export async function getInterview(
+  interviewId: string
+): Promise<ScheduledInterview | null> {
+  const docSnap = await getDoc(doc(db, "interviews", interviewId));
+  if (!docSnap.exists()) return null;
+  return { id: docSnap.id, ...docSnap.data() } as ScheduledInterview;
+}
+
+export async function updateInterviewStatus(
+  interviewId: string,
+  status: ScheduledInterviewStatus,
+  cancelReason?: string
+): Promise<void> {
+  const updates: any = {
+    status,
+    updatedAt: serverTimestamp(),
+  };
+  if (cancelReason) {
+    updates.cancelReason = cancelReason;
+  }
+  await updateDoc(doc(db, "interviews", interviewId), updates);
+}
+
+// ============ TALENT SEARCH ============
+
+export async function searchTalent(
+  filters: TalentSearchFilters,
+  limitCount = 20
+): Promise<TalentSearchResult[]> {
+  // Build query for members who are open to opportunities
+  const constraints: any[] = [
+    where("profileComplete", "==", true),
+    where("availableForInterviews", "in", ["yes", "maybe"]),
+    orderBy("updatedAt", "desc"),
+    limit(limitCount),
+  ];
+
+  // Skills filter (Firestore limitation: can only use array-contains-any)
+  if (filters.skills && filters.skills.length > 0) {
+    constraints.push(where("skills", "array-contains-any", filters.skills.slice(0, 10)));
+  }
+
+  const q = query(collection(db, "members"), ...constraints);
+  const snapshot = await getDocs(q);
+
+  let members = snapshot.docs.map((docSnap) => ({
+    uid: docSnap.id,
+    ...docSnap.data(),
+  })) as UserProfile[];
+
+  // Client-side filtering
+  if (filters.query) {
+    const searchLower = filters.query.toLowerCase();
+    members = members.filter(
+      (m) =>
+        m.displayName?.toLowerCase().includes(searchLower) ||
+        m.bio?.toLowerCase().includes(searchLower)
+    );
+  }
+
+  if (filters.location) {
+    const locationLower = filters.location.toLowerCase();
+    members = members.filter((m) =>
+      m.location?.toLowerCase().includes(locationLower)
+    );
+  }
+
+  if (filters.hasResume) {
+    members = members.filter((m) => m.resumeUrl && m.resumeUrl.length > 0);
+  }
+
+  // Calculate match scores
+  const results: TalentSearchResult[] = members.map((member) => {
+    const matchReasons: string[] = [];
+    let matchScore = 50;
+
+    if (filters.location && member.location?.toLowerCase().includes(filters.location.toLowerCase())) {
+      matchScore += 15;
+      matchReasons.push("Location match");
+    }
+
+    if (member.resumeUrl) {
+      matchScore += 5;
+    }
+
+    matchScore = Math.min(100, matchScore);
+
+    return { member, matchScore, matchReasons };
+  });
+
+  results.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+
+  return results;
+}
+
+export async function saveTalent(
+  employerId: string,
+  memberId: string,
+  memberName: string,
+  memberAvatar?: string,
+  notes?: string,
+  tags?: string[]
+): Promise<string> {
+  const docRef = await addDoc(collection(db, "savedTalent"), {
+    employerId,
+    memberId,
+    memberName,
+    memberAvatar: memberAvatar || null,
+    notes: notes || null,
+    tags: tags || [],
+    savedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function unsaveTalent(
+  employerId: string,
+  memberId: string
+): Promise<void> {
+  const q = query(
+    collection(db, "savedTalent"),
+    where("employerId", "==", employerId),
+    where("memberId", "==", memberId)
+  );
+  const snapshot = await getDocs(q);
+  for (const docSnap of snapshot.docs) {
+    await deleteDoc(doc(db, "savedTalent", docSnap.id));
+  }
+}
+
+export async function getSavedTalent(employerId: string): Promise<SavedTalent[]> {
+  const q = query(
+    collection(db, "savedTalent"),
+    where("employerId", "==", employerId),
+    orderBy("savedAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...docSnap.data(),
+  })) as SavedTalent[];
+}
+
+export async function isTalentSaved(
+  employerId: string,
+  memberId: string
+): Promise<boolean> {
+  const q = query(
+    collection(db, "savedTalent"),
+    where("employerId", "==", employerId),
+    where("memberId", "==", memberId),
+    limit(1)
+  );
+  const snapshot = await getDocs(q);
+  return !snapshot.empty;
 }
