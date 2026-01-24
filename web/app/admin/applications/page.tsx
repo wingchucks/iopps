@@ -11,11 +11,14 @@ import {
   orderBy,
   doc,
   deleteDoc,
+  updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { JobApplication, ApplicationStatus } from "@/lib/types";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin";
 import toast from "react-hot-toast";
+import { TrashIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 interface ApplicationWithDetails extends JobApplication {
   jobTitle?: string;
@@ -34,6 +37,8 @@ function AdminApplicationsContent() {
     statusFilter || "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -105,11 +110,109 @@ function AdminApplicationsContent() {
 
       // Update local state
       setApplications((prev) => prev.filter((app) => app.id !== applicationId));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(applicationId);
+        return next;
+      });
     } catch (error) {
       console.error("Error deleting application:", error);
       toast.error("Failed to delete application. Please try again.");
     } finally {
       setProcessing(null);
+    }
+  }
+
+  // Toggle selection for single item
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  // Select/deselect all visible items
+  function toggleSelectAll() {
+    const visibleIds = filteredApplications.map((a) => a.id);
+    const allSelected = visibleIds.every((id) => selectedIds.has(id));
+
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(visibleIds));
+    }
+  }
+
+  // Bulk update status
+  async function bulkUpdateStatus(newStatus: ApplicationStatus) {
+    if (selectedIds.size === 0) return;
+
+    const confirmed = confirm(
+      `Update ${selectedIds.size} application(s) to "${newStatus}"?`
+    );
+    if (!confirmed) return;
+
+    try {
+      setBulkProcessing(true);
+      const batch = writeBatch(db!);
+
+      selectedIds.forEach((id) => {
+        const ref = doc(db!, "applications", id);
+        batch.update(ref, { status: newStatus, updatedAt: new Date() });
+      });
+
+      await batch.commit();
+
+      // Update local state
+      setApplications((prev) =>
+        prev.map((app) =>
+          selectedIds.has(app.id) ? { ...app, status: newStatus } : app
+        )
+      );
+      setSelectedIds(new Set());
+      toast.success(`Updated ${selectedIds.size} application(s)`);
+    } catch (error) {
+      console.error("Error updating applications:", error);
+      toast.error("Failed to update applications");
+    } finally {
+      setBulkProcessing(false);
+    }
+  }
+
+  // Bulk delete
+  async function bulkDelete() {
+    if (selectedIds.size === 0) return;
+
+    const confirmed = confirm(
+      `Delete ${selectedIds.size} application(s)? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setBulkProcessing(true);
+      const batch = writeBatch(db!);
+
+      selectedIds.forEach((id) => {
+        const ref = doc(db!, "applications", id);
+        batch.delete(ref);
+      });
+
+      await batch.commit();
+
+      // Update local state
+      setApplications((prev) => prev.filter((app) => !selectedIds.has(app.id)));
+      setSelectedIds(new Set());
+      toast.success(`Deleted ${selectedIds.size} application(s)`);
+    } catch (error) {
+      console.error("Error deleting applications:", error);
+      toast.error("Failed to delete applications");
+    } finally {
+      setBulkProcessing(false);
     }
   }
 
@@ -248,6 +351,70 @@ function AdminApplicationsContent() {
           </button>
         </div>
 
+        {/* Bulk Actions Bar */}
+        {selectedIds.size > 0 && (
+          <div className="mb-4 flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3">
+            <span className="text-sm font-medium text-slate-300">
+              {selectedIds.size} selected
+            </span>
+            <div className="h-4 w-px bg-slate-700" />
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => bulkUpdateStatus("reviewed")}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 rounded-lg bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-400 hover:bg-purple-500/20 disabled:opacity-50"
+              >
+                Mark Reviewed
+              </button>
+              <button
+                onClick={() => bulkUpdateStatus("shortlisted")}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 rounded-lg bg-yellow-500/10 px-3 py-1.5 text-sm font-medium text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-50"
+              >
+                <CheckCircleIcon className="h-4 w-4" />
+                Shortlist
+              </button>
+              <button
+                onClick={() => bulkUpdateStatus("rejected")}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 rounded-lg bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/20 disabled:opacity-50"
+              >
+                <XCircleIcon className="h-4 w-4" />
+                Reject
+              </button>
+              <button
+                onClick={bulkDelete}
+                disabled={bulkProcessing}
+                className="flex items-center gap-1.5 rounded-lg border border-red-500/50 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+              >
+                <TrashIcon className="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="ml-auto text-sm text-slate-400 hover:text-slate-300"
+            >
+              Clear selection
+            </button>
+          </div>
+        )}
+
+        {/* Select All */}
+        {filteredApplications.length > 0 && (
+          <div className="mb-4 flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filteredApplications.length > 0 && filteredApplications.every((a) => selectedIds.has(a.id))}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
+              />
+              <span className="text-sm text-slate-400">Select all</span>
+            </label>
+          </div>
+        )}
+
         {/* Applications List */}
         <div className="space-y-4">
           {filteredApplications.length === 0 ? (
@@ -258,13 +425,26 @@ function AdminApplicationsContent() {
           ) : (
             filteredApplications.map((application) => {
               const isProcessing = processing === application.id;
+              const isSelected = selectedIds.has(application.id);
 
               return (
                 <div
                   key={application.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
+                  className={`rounded-2xl border bg-slate-900/60 p-6 transition hover:border-slate-700 ${
+                    isSelected ? "border-[#14B8A6]/50 bg-[#14B8A6]/5" : "border-slate-800"
+                  }`}
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    {/* Checkbox */}
+                    <div className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(application.id)}
+                        className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
+                      />
+                    </div>
+
                     {/* Application Info */}
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4">
