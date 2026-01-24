@@ -384,6 +384,11 @@ Founded in 2018 by David Couture, a proud Metis entrepreneur from the Metis Nati
     approvedAt: now,
     approvedBy: "system-seed",
 
+    // Publication - PUBLISHED (required for public directory visibility)
+    publicationStatus: "PUBLISHED",
+    directoryVisible: true,
+    publishedAt: now,
+
     // Subscription - Active Professional tier
     subscription: {
       active: true,
