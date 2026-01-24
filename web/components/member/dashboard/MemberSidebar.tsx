@@ -9,6 +9,7 @@ import {
     ChatBubbleLeftRightIcon,
     UserCircleIcon,
     Cog6ToothIcon,
+    ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import SidebarItem from '../../organization/dashboard/SidebarItem';
 import type { MemberSection } from './MemberMobileNav';
@@ -32,6 +33,7 @@ export default function MemberSidebar({
         { id: 'applications' as const, label: 'Applications', icon: BriefcaseIcon, badge: badges.applications },
         { id: 'saved-jobs' as const, label: 'Saved Jobs', icon: BookmarkIcon },
         { id: 'job-alerts' as const, label: 'Job Alerts', icon: BellIcon },
+        { id: 'analytics' as const, label: 'Analytics', icon: ChartBarIcon },
     ];
 
     const learningNav = [

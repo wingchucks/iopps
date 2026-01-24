@@ -362,6 +362,7 @@ export {
   getFeedPosts,
   getUserPosts,
   toggleLikePost,
+  hasUserLikedPost,
   addComment,
   getComments,
   sendConnectionRequest,

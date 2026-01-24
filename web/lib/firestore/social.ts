@@ -119,6 +119,13 @@ export async function toggleLikePost(postId: string, userId: string) {
     }
 }
 
+export async function hasUserLikedPost(postId: string, userId: string): Promise<boolean> {
+    const firestore = getDb();
+    const likeRef = doc(firestore, "posts", postId, "likes", userId);
+    const likeSnap = await getDoc(likeRef);
+    return likeSnap.exists();
+}
+
 export async function addComment(postId: string, commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt' | 'likesCount'>) {
     const firestore = getDb();
     const commentsRef = collection(firestore, "posts", postId, "comments");

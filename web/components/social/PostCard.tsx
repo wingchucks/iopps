@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Post, Comment } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle, Share2, MoreHorizontal } from "lucide-react";
-import { toggleLikePost } from "@/lib/firestore";
+import { toggleLikePost, hasUserLikedPost } from "@/lib/firestore";
 import { useAuth } from "@/components/AuthProvider";
 
 interface PostCardProps {
@@ -16,8 +16,22 @@ interface PostCardProps {
 
 export function PostCard({ post }: PostCardProps) {
     const { user } = useAuth();
-    const [liked, setLiked] = useState(false); // TODO: Check if user already liked
+    const [liked, setLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(post.likesCount);
+
+    // Check if user has already liked this post
+    useEffect(() => {
+        if (!user) {
+            setLiked(false);
+            return;
+        }
+
+        hasUserLikedPost(post.id, user.uid)
+            .then(setLiked)
+            .catch((err) => {
+                console.error("Failed to check like status:", err);
+            });
+    }, [post.id, user]);
 
     const handleLike = async () => {
         if (!user) return;

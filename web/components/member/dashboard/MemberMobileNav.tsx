@@ -11,6 +11,7 @@ import {
     ChatBubbleLeftRightIcon,
     BookmarkIcon,
     BellIcon,
+    ChartBarIcon,
 } from '@heroicons/react/24/outline';
 
 export type MemberSection =
@@ -18,6 +19,7 @@ export type MemberSection =
     | 'applications'
     | 'saved-jobs'
     | 'job-alerts'
+    | 'analytics'
     | 'training'
     | 'saved-scholarships'
     | 'messages'
@@ -52,6 +54,7 @@ export default function MemberMobileNav({
     const moreItems = [
         { id: 'saved-jobs' as const, label: 'Saved Jobs', icon: BookmarkIcon },
         { id: 'job-alerts' as const, label: 'Job Alerts', icon: BellIcon },
+        { id: 'analytics' as const, label: 'Analytics', icon: ChartBarIcon },
         { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
     ];
 

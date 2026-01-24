@@ -19,6 +19,7 @@ import JobAlertsTab from './JobAlertsTab';
 import TrainingTab from './TrainingTab';
 import MessagesTab from './MessagesTab';
 import ProfileTab from './ProfileTab';
+import AnalyticsTab from './AnalyticsTab';
 
 // Data Fetching
 import {
@@ -182,6 +183,8 @@ function MemberDashboardContent() {
         return <SavedItemsTab />;
       case 'job-alerts':
         return <JobAlertsTab />;
+      case 'analytics':
+        return <AnalyticsTab />;
 
       // Learning
       case 'training':
