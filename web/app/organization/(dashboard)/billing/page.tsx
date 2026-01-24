@@ -15,8 +15,22 @@ import {
   ShoppingBagIcon,
   CalendarDaysIcon,
   AcademicCapIcon,
+  DocumentTextIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+
+interface PaymentRecord {
+  id: string;
+  type: string;
+  description: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string | null;
+  receiptUrl: string | null;
+  invoiceUrl: string | null;
+}
 
 interface PlanCardProps {
   module: string;
@@ -107,7 +121,40 @@ export default function BillingPage() {
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [enabledModules, setEnabledModules] = useState<OrganizationModule[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const openBillingPortal = async () => {
+    if (!user) return;
+
+    try {
+      setPortalLoading(true);
+      const token = await user.getIdToken();
+      const response = await fetch('/api/billing/portal', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          returnUrl: window.location.href,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.url;
+      } else {
+        console.error('Failed to create portal session');
+      }
+    } catch (error) {
+      console.error('Error opening billing portal:', error);
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function loadBillingData() {
@@ -131,6 +178,34 @@ export default function BillingPage() {
     }
 
     loadBillingData();
+  }, [user]);
+
+  // Fetch payment history
+  useEffect(() => {
+    async function loadPaymentHistory() {
+      if (!user) return;
+
+      try {
+        setPaymentsLoading(true);
+        const token = await user.getIdToken();
+        const response = await fetch('/api/billing/payments', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPayments(data.payments || []);
+        }
+      } catch (error) {
+        console.error('Error loading payment history:', error);
+      } finally {
+        setPaymentsLoading(false);
+      }
+    }
+
+    loadPaymentHistory();
   }, [user]);
 
   if (loading) {
@@ -179,9 +254,25 @@ export default function BillingPage() {
 
       {/* Overview Card */}
       <div className="bg-card border border-card-border rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <CreditCardIcon className="w-6 h-6 text-accent" />
-          <h2 className="text-lg font-semibold text-slate-50">Subscription Overview</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <CreditCardIcon className="w-6 h-6 text-accent" />
+            <h2 className="text-lg font-semibold text-slate-50">Subscription Overview</h2>
+          </div>
+          {(profile?.subscription?.active || vendor?.subscriptionStatus === 'active') && (
+            <button
+              onClick={openBillingPortal}
+              disabled={portalLoading}
+              className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {portalLoading ? (
+                <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <CreditCardIcon className="w-4 h-4" />
+              )}
+              Manage Billing
+            </button>
+          )}
         </div>
 
         {profile?.subscription?.active ? (
@@ -280,13 +371,81 @@ export default function BillingPage() {
 
       {/* Payment History */}
       <div className="bg-card border border-card-border rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-slate-50 mb-4">Payment History</h2>
-        <div className="text-center py-8 text-slate-500">
-          <p>Payment history coming soon</p>
-          <p className="text-sm mt-1">
-            View your invoices and receipts here
-          </p>
+        <div className="flex items-center gap-3 mb-4">
+          <DocumentTextIcon className="w-6 h-6 text-accent" />
+          <h2 className="text-lg font-semibold text-slate-50">Payment History</h2>
         </div>
+
+        {paymentsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : payments.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <DocumentTextIcon className="w-10 h-10 mx-auto mb-3 text-slate-600" />
+            <p>No payments yet</p>
+            <p className="text-sm mt-1">
+              Your payment history will appear here
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Date</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Description</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Amount</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">Status</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((payment) => (
+                  <tr key={payment.id} className="border-b border-slate-800/50 hover:bg-slate-900/30">
+                    <td className="py-3 px-4 text-sm text-slate-300">
+                      {payment.createdAt
+                        ? format(new Date(payment.createdAt), 'MMM d, yyyy')
+                        : '—'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <p className="text-sm text-slate-200">{payment.description}</p>
+                      <p className="text-xs text-slate-500 capitalize">{payment.type.replace('_', ' ')}</p>
+                    </td>
+                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-200">
+                      ${((payment.amount || 0) / 100).toFixed(2)} {payment.currency?.toUpperCase()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        payment.status === 'succeeded'
+                          ? 'bg-green-500/10 text-green-400'
+                          : payment.status === 'pending'
+                          ? 'bg-yellow-500/10 text-yellow-400'
+                          : 'bg-red-500/10 text-red-400'
+                      }`}>
+                        {payment.status === 'succeeded' && <CheckCircleIcon className="w-3 h-3" />}
+                        {payment.status === 'succeeded' ? 'Paid' : payment.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {payment.receiptUrl && (
+                        <a
+                          href={payment.receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent/80"
+                        >
+                          Receipt
+                          <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Help Section */}

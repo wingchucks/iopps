@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { collection, getDocs, orderBy, limit, query } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import {
   UsersIcon,
   BriefcaseIcon,
@@ -165,62 +165,68 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // Fetch system health
+  // Fetch system health via API
   const fetchSystemHealth = useCallback(async () => {
-    if (!db) return;
-
-    const health: HealthItem[] = [];
-
-    // Check RSS feeds health
     try {
-      const feedsSnap = await getDocs(collection(db, "rssFeeds"));
-      const totalFeeds = feedsSnap.docs.length;
-      const failedFeeds = feedsSnap.docs.filter(
-        (doc) => doc.data().lastError || doc.data().lastRunStatus === "error"
-      ).length;
-      const successFeeds = totalFeeds - failedFeeds;
+      // Get current user token for authentication
+      const user = auth.currentUser;
+      if (!user) {
+        setHealthItems([
+          { id: "auth", name: "Authentication", status: "error", message: "Not authenticated" },
+        ]);
+        return;
+      }
 
-      health.push({
-        id: "rss",
-        name: "RSS Imports",
-        status: failedFeeds > 0 ? "warning" : totalFeeds > 0 ? "healthy" : "unknown",
-        details: totalFeeds > 0 ? `${successFeeds}/${totalFeeds} OK` : "No feeds",
-        message: failedFeeds > 0 ? `${failedFeeds} failed` : undefined,
+      const token = await user.getIdToken();
+      const response = await fetch("/api/admin/health", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-    } catch {
-      health.push({
-        id: "rss",
-        name: "RSS Imports",
-        status: "unknown",
-        message: "Unable to check",
-      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setHealthItems(data.checks);
+      } else {
+        // Fallback to basic checks if API fails
+        const health: HealthItem[] = [
+          { id: "api", name: "Health API", status: "error", message: "Failed to fetch" },
+        ];
+
+        // Still try to check RSS feeds locally
+        if (db) {
+          try {
+            const feedsSnap = await getDocs(collection(db, "rssFeeds"));
+            const totalFeeds = feedsSnap.docs.length;
+            const failedFeeds = feedsSnap.docs.filter(
+              (doc) => doc.data().lastError || doc.data().lastRunStatus === "error"
+            ).length;
+
+            health.push({
+              id: "rss",
+              name: "RSS Imports",
+              status: failedFeeds > 0 ? "warning" : totalFeeds > 0 ? "healthy" : "unknown",
+              details: totalFeeds > 0 ? `${totalFeeds - failedFeeds}/${totalFeeds} OK` : "No feeds",
+              message: failedFeeds > 0 ? `${failedFeeds} failed` : undefined,
+            });
+          } catch {
+            health.push({
+              id: "rss",
+              name: "RSS Imports",
+              status: "unknown",
+              message: "Unable to check",
+            });
+          }
+        }
+
+        setHealthItems(health);
+      }
+    } catch (error) {
+      console.error("Error fetching system health:", error);
+      setHealthItems([
+        { id: "api", name: "Health API", status: "error", message: "Connection failed" },
+      ]);
     }
-
-    // Email service (placeholder - would need API check)
-    health.push({
-      id: "email",
-      name: "Email Service",
-      status: "healthy",
-      details: "Connected",
-    });
-
-    // Stripe (placeholder - would need API check)
-    health.push({
-      id: "stripe",
-      name: "Stripe Payments",
-      status: "healthy",
-      details: "Connected",
-    });
-
-    // Storage (placeholder)
-    health.push({
-      id: "storage",
-      name: "Cloud Storage",
-      status: "healthy",
-      details: "Available",
-    });
-
-    setHealthItems(health);
   }, []);
 
   // Initial load

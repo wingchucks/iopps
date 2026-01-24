@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState, useMemo } from "react";
 import { PageShell } from "@/components/PageShell";
-import { VendorCard } from "@/components/shop";
+import { VendorCard, ServiceCard } from "@/components/shop";
+import { GrantCard } from "@/components/business/GrantCard";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { getFeaturedVendors } from "@/lib/firebase/shop";
-import type { Vendor } from "@/lib/types";
+import { listServices, listBusinessGrants } from "@/lib/firestore";
+import type { Vendor, Service, BusinessGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
@@ -35,10 +37,18 @@ const TAB_CONFIG = {
 export default function MarketplacePage() {
   const { user, role } = useAuth();
   const [featuredVendors, setFeaturedVendors] = useState<Vendor[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [grants, setGrants] = useState<BusinessGrant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [grantsLoading, setGrantsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [servicesError, setServicesError] = useState<Error | null>(null);
+  const [grantsError, setGrantsError] = useState<Error | null>(null);
   const [activeTab, setActiveTab] = useState<BusinessTab>("shop");
   const [search, setSearch] = useState("");
+  const [servicesSearch, setServicesSearch] = useState("");
+  const [grantsSearch, setGrantsSearch] = useState("");
 
   // Filter vendors based on search
   const filteredVendors = useMemo(() => {
@@ -53,6 +63,33 @@ export default function MarketplacePage() {
         v.nation?.toLowerCase().includes(searchLower)
     );
   }, [featuredVendors, search]);
+
+  // Filter services based on search
+  const filteredServices = useMemo(() => {
+    if (!servicesSearch.trim()) return services;
+    const searchLower = servicesSearch.toLowerCase();
+    return services.filter(
+      (s) =>
+        s.businessName?.toLowerCase().includes(searchLower) ||
+        s.title?.toLowerCase().includes(searchLower) ||
+        s.description?.toLowerCase().includes(searchLower) ||
+        s.category?.toLowerCase().includes(searchLower) ||
+        s.location?.toLowerCase().includes(searchLower)
+    );
+  }, [services, servicesSearch]);
+
+  // Filter grants based on search
+  const filteredGrants = useMemo(() => {
+    if (!grantsSearch.trim()) return grants;
+    const searchLower = grantsSearch.toLowerCase();
+    return grants.filter(
+      (g) =>
+        g.title?.toLowerCase().includes(searchLower) ||
+        g.provider?.toLowerCase().includes(searchLower) ||
+        g.description?.toLowerCase().includes(searchLower) ||
+        g.grantType?.toLowerCase().includes(searchLower)
+    );
+  }, [grants, grantsSearch]);
 
   // Determine empty state type for Shop tab
   const hasBusinesses = featuredVendors.length > 0;
@@ -69,8 +106,48 @@ export default function MarketplacePage() {
   // Clear search when switching tabs
   const handleTabChange = (tab: BusinessTab) => {
     setSearch("");
+    setServicesSearch("");
+    setGrantsSearch("");
     setActiveTab(tab);
   };
+
+  // Load services when tab becomes active
+  useEffect(() => {
+    if (activeTab !== "services" || services.length > 0) return;
+
+    (async () => {
+      try {
+        setServicesLoading(true);
+        setServicesError(null);
+        const servicesList = await listServices({ maxResults: 12 });
+        setServices(servicesList);
+      } catch (err) {
+        console.error("Failed to load services:", err);
+        setServicesError(err instanceof Error ? err : new Error("Failed to load services"));
+      } finally {
+        setServicesLoading(false);
+      }
+    })();
+  }, [activeTab, services.length]);
+
+  // Load grants when tab becomes active
+  useEffect(() => {
+    if (activeTab !== "grants" || grants.length > 0) return;
+
+    (async () => {
+      try {
+        setGrantsLoading(true);
+        setGrantsError(null);
+        const grantsList = await listBusinessGrants({ status: "active", limitCount: 12 });
+        setGrants(grantsList);
+      } catch (err) {
+        console.error("Failed to load grants:", err);
+        setGrantsError(err instanceof Error ? err : new Error("Failed to load grants"));
+      } finally {
+        setGrantsLoading(false);
+      }
+    })();
+  }, [activeTab, grants.length]);
 
   useEffect(() => {
     (async () => {
@@ -355,31 +432,271 @@ export default function MarketplacePage() {
 
   // Render Services Tab Content
   const renderServicesTab = () => {
-    // Services feature is not live yet
+    // Show error state
+    if (servicesError) {
+      return (
+        <ErrorState
+          title="Unable to load services"
+          description="We encountered a problem loading the services directory. Please try again."
+          onRetry={() => {
+            setServices([]);
+            setServicesError(null);
+          }}
+          testId="services-error-state"
+        />
+      );
+    }
+
+    // Loading state
+    if (servicesLoading) {
+      return (
+        <section className="mb-8">
+          <div className="h-6 w-48 bg-slate-800 rounded animate-pulse mb-6" />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-2xl bg-slate-800/50 h-64"
+              />
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // No services yet
+    if (services.length === 0) {
+      return (
+        <EmptyState
+          icon="services"
+          title="No services listed yet"
+          description="Be the first to list your professional services on IOPPS."
+          ctaLabel="Add a Service"
+          ctaHref="/organization/services/new"
+          testId="services-empty-no-services"
+        />
+      );
+    }
+
+    // Search with no results
+    const isSearching = servicesSearch.trim().length > 0;
+    if (isSearching && filteredServices.length === 0) {
+      return (
+        <EmptyState
+          icon="search"
+          title="No services found"
+          description="Try adjusting your search terms."
+          ctaLabel="Clear search"
+          onCta={() => setServicesSearch("")}
+          testId="services-empty-no-results"
+        />
+      );
+    }
+
+    // Service categories for browsing
+    const serviceCategories = [
+      { icon: "💼", label: "Consulting", value: "consulting", color: "from-blue-500/20 to-indigo-500/20" },
+      { icon: "⚖️", label: "Legal", value: "legal", color: "from-purple-500/20 to-violet-500/20" },
+      { icon: "📊", label: "Finance", value: "finance", color: "from-emerald-500/20 to-teal-500/20" },
+      { icon: "🎨", label: "Creative", value: "creative", color: "from-pink-500/20 to-rose-500/20" },
+    ];
+
     return (
-      <EmptyState
-        icon="services"
-        title="Services directory coming soon"
-        description="Indigenous-owned services will be discoverable here."
-        ctaLabel="Add a Service"
-        ctaHref="/organization/services/new"
-        testId="services-empty-coming-soon"
-      />
+      <>
+        {/* Service Categories */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-400 mb-4">
+            Browse by Category
+          </h2>
+          <div className="grid grid-cols-4 gap-3">
+            {serviceCategories.map((cat) => (
+              <button
+                key={cat.label}
+                onClick={() => setServicesSearch(cat.value)}
+                className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:-translate-y-0.5"
+              >
+                <div
+                  className={`h-10 w-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center text-xl`}
+                >
+                  {cat.icon}
+                </div>
+                <span className="text-xs text-slate-300 font-medium">
+                  {cat.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Search Bar for Services */}
+        <section className="mb-6">
+          <div className="relative max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={servicesSearch}
+              onChange={(e) => setServicesSearch(e.target.value)}
+              className="w-full rounded-lg bg-slate-800/50 border border-slate-700 py-2.5 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            />
+          </div>
+        </section>
+
+        {/* Services Grid */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {isSearching ? "Search Results" : "Featured Services"}
+            </h2>
+            {isSearching && (
+              <span className="text-sm text-slate-400">
+                {filteredServices.length}{" "}
+                {filteredServices.length === 1 ? "result" : "results"}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredServices.map((service) => (
+              <ServiceCard key={service.id} service={service} featured={service.featured} />
+            ))}
+          </div>
+        </section>
+      </>
     );
   };
 
   // Render Grants Tab Content
   const renderGrantsTab = () => {
-    // Grants feature - showing placeholder for now
+    // Show error state
+    if (grantsError) {
+      return (
+        <ErrorState
+          title="Unable to load grants"
+          description="We encountered a problem loading the grants directory. Please try again."
+          onRetry={() => {
+            setGrants([]);
+            setGrantsError(null);
+          }}
+          testId="grants-error-state"
+        />
+      );
+    }
+
+    // Loading state
+    if (grantsLoading) {
+      return (
+        <section className="mb-8">
+          <div className="h-6 w-48 bg-slate-800 rounded animate-pulse mb-6" />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-2xl bg-slate-800/50 h-64"
+              />
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // No grants yet
+    if (grants.length === 0) {
+      return (
+        <EmptyState
+          icon="grants"
+          title="No grants available yet"
+          description="Check back soon for funding opportunities for Indigenous businesses."
+          testId="grants-empty-no-grants"
+        />
+      );
+    }
+
+    // Search with no results
+    const isSearching = grantsSearch.trim().length > 0;
+    if (isSearching && filteredGrants.length === 0) {
+      return (
+        <EmptyState
+          icon="search"
+          title="No grants found"
+          description="Try adjusting your search terms."
+          ctaLabel="Clear search"
+          onCta={() => setGrantsSearch("")}
+          testId="grants-empty-no-results"
+        />
+      );
+    }
+
+    // Grant type categories
+    const grantTypes = [
+      { icon: "🚀", label: "Startup", value: "startup", color: "from-blue-500/20 to-indigo-500/20" },
+      { icon: "📈", label: "Expansion", value: "expansion", color: "from-purple-500/20 to-violet-500/20" },
+      { icon: "🌱", label: "Green", value: "green", color: "from-emerald-500/20 to-teal-500/20" },
+      { icon: "💡", label: "Innovation", value: "innovation", color: "from-amber-500/20 to-orange-500/20" },
+    ];
+
     return (
-      <EmptyState
-        icon="grants"
-        title="Funding opportunities will appear here"
-        description="We're building a directory of grants supporting Indigenous businesses."
-        ctaLabel="Submit a Grant"
-        ctaHref="/contact"
-        testId="grants-empty-coming-soon"
-      />
+      <>
+        {/* Grant Type Categories */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-400 mb-4">
+            Browse by Type
+          </h2>
+          <div className="grid grid-cols-4 gap-3">
+            {grantTypes.map((type) => (
+              <button
+                key={type.label}
+                onClick={() => setGrantsSearch(type.value)}
+                className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:-translate-y-0.5"
+              >
+                <div
+                  className={`h-10 w-10 rounded-lg bg-gradient-to-br ${type.color} flex items-center justify-center text-xl`}
+                >
+                  {type.icon}
+                </div>
+                <span className="text-xs text-slate-300 font-medium">
+                  {type.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Search Bar for Grants */}
+        <section className="mb-6">
+          <div className="relative max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search grants..."
+              value={grantsSearch}
+              onChange={(e) => setGrantsSearch(e.target.value)}
+              className="w-full rounded-lg bg-slate-800/50 border border-slate-700 py-2.5 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+          </div>
+        </section>
+
+        {/* Grants Grid */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {isSearching ? "Search Results" : "Available Grants"}
+            </h2>
+            {isSearching && (
+              <span className="text-sm text-slate-400">
+                {filteredGrants.length}{" "}
+                {filteredGrants.length === 1 ? "result" : "results"}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredGrants.map((grant) => (
+              <GrantCard key={grant.id} grant={grant} featured={grant.featured} />
+            ))}
+          </div>
+        </section>
+      </>
     );
   };
 

@@ -31,6 +31,42 @@ async function markEventProcessed(db: FirebaseFirestore.Firestore, eventId: stri
     });
 }
 
+// Save payment record for billing history
+async function savePaymentRecord(
+    db: FirebaseFirestore.Firestore,
+    session: Stripe.Checkout.Session,
+    type: string,
+    description: string
+): Promise<void> {
+    const metadata = session.metadata || {};
+    const userId = metadata.userId || metadata.employerId;
+
+    if (!userId) {
+        console.log("No userId found for payment record, skipping");
+        return;
+    }
+
+    await db.collection("payments").add({
+        userId,
+        type,
+        description,
+        amount: session.amount_total,
+        currency: session.currency || "cad",
+        status: "succeeded",
+        paymentIntentId: session.payment_intent as string,
+        sessionId: session.id,
+        metadata: {
+            productType: metadata.productType,
+            jobId: metadata.jobId,
+            conferenceId: metadata.conferenceId,
+            vendorId: metadata.vendorId,
+            programId: metadata.programId,
+            tier: metadata.tier,
+        },
+        createdAt: new Date(),
+    });
+}
+
 export async function POST(request: NextRequest) {
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
@@ -154,6 +190,14 @@ export async function POST(request: NextRequest) {
 
                     await employerRef.update(updateData);
 
+                    // Save payment record
+                    await savePaymentRecord(
+                        db,
+                        session,
+                        "subscription",
+                        `${productType === "TIER2" ? "Unlimited" : "Growth"} Subscription`
+                    );
+
                     console.log(`Subscription ${productType} activated for user ${userId}`);
                     break;
                 }
@@ -181,6 +225,17 @@ export async function POST(request: NextRequest) {
                         subscriptionEndsAt: expirationDate,
                         updatedAt: new Date(),
                     });
+
+                    // Get vendor owner for payment record
+                    const vendorData = vendorDoc.data();
+                    if (vendorData?.ownerUserId) {
+                        await savePaymentRecord(
+                            db,
+                            { ...session, metadata: { ...metadata, userId: vendorData.ownerUserId } } as Stripe.Checkout.Session,
+                            "vendor",
+                            featured === "true" ? "Annual Vendor Plan" : "Monthly Vendor Listing"
+                        );
+                    }
 
                     console.log(`Vendor ${vendorId} subscription activated until ${expirationDate.toISOString()}`);
                     break;
@@ -251,6 +306,14 @@ export async function POST(request: NextRequest) {
                             employerName: jobData.employerName || "Unknown",
                             location: jobData.location || "Not specified",
                         }).catch(console.error);
+
+                        // Save payment record
+                        await savePaymentRecord(
+                            db,
+                            { ...session, metadata: { ...metadata, userId: jobData.employerId } } as Stripe.Checkout.Session,
+                            "job",
+                            featured === "true" ? `Featured Job Ad: ${jobData.title}` : `Job Post: ${jobData.title}`
+                        );
                     }
 
                     console.log(`Job ${jobId} activated successfully`);
@@ -277,6 +340,20 @@ export async function POST(request: NextRequest) {
                         amountPaid: session.amount_total,
                     });
 
+                    // Get conference data for payment record
+                    const conferenceDoc = await conferenceRef.get();
+                    const conferenceData = conferenceDoc.exists ? conferenceDoc.data() : null;
+                    if (conferenceData?.employerId) {
+                        await savePaymentRecord(
+                            db,
+                            { ...session, metadata: { ...metadata, userId: conferenceData.employerId } } as Stripe.Checkout.Session,
+                            "conference",
+                            featured === "true"
+                                ? `Featured Conference: ${conferenceData.title || "Conference"}`
+                                : `Conference: ${conferenceData.title || "Conference"}`
+                        );
+                    }
+
                     console.log(`Conference ${conferenceId} activated successfully`);
                     break;
                 }
@@ -299,6 +376,18 @@ export async function POST(request: NextRequest) {
                         featuredAmountPaid: session.amount_total,
                         updatedAt: new Date(),
                     });
+
+                    // Get program data for payment record
+                    const programDoc = await programRef.get();
+                    const programData = programDoc.exists ? programDoc.data() : null;
+                    if (programData?.employerId) {
+                        await savePaymentRecord(
+                            db,
+                            { ...session, metadata: { ...metadata, userId: programData.employerId } } as Stripe.Checkout.Session,
+                            "training_featured",
+                            `Featured Training: ${programData.title || "Training Program"}`
+                        );
+                    }
 
                     console.log(`Training program ${programId} featured successfully until ${featuredExpiresAt.toISOString()}`);
                     break;
@@ -324,6 +413,14 @@ export async function POST(request: NextRequest) {
                             amountPaid: session.amount_total,
                         },
                     });
+
+                    // Save payment record
+                    await savePaymentRecord(
+                        db,
+                        session,
+                        "talent_pool",
+                        `Talent Pool Access (${tier === "ANNUAL" ? "Annual" : "Monthly"})`
+                    );
 
                     console.log(`Talent Pool Access (${tier}) activated for user ${userId} until ${expirationDate.toISOString()}`);
                     break;
