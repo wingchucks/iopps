@@ -31,8 +31,22 @@ import type {
   OrganizationModule,
   OrgType,
   ExtendedSocialLinks,
+  JobPosting,
+  Scholarship,
+  Service,
+  Conference,
+  PowwowEvent,
+  BusinessGrant,
 } from '@/lib/types';
 import { ORG_TYPE_LABELS } from '@/lib/types';
+import {
+  listEmployerJobs,
+  listEmployerScholarships,
+  listUserServices,
+  listEmployerConferences,
+  listEmployerPowwows,
+  listOrganizationGrants,
+} from '@/lib/firestore';
 
 // Tab types
 type ProfileTab = 'overview' | 'jobs' | 'programs' | 'offerings' | 'events' | 'funding';
@@ -584,91 +598,526 @@ function OverviewTab({
 }
 
 function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
-  // TODO: Implement jobs listing
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchJobs() {
+      try {
+        const data = await listEmployerJobs(org.userId);
+        // Only show active jobs for public view
+        setJobs(canEdit ? data : data.filter(j => j.active));
+      } catch (error) {
+        console.error('Error loading jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchJobs();
+  }, [org.userId, canEdit]);
+
+  const formatSalary = (salaryRange: JobPosting['salaryRange']) => {
+    if (!salaryRange) return null;
+    if (typeof salaryRange === 'string') return salaryRange;
+    if (salaryRange.min && salaryRange.max) {
+      return `$${salaryRange.min.toLocaleString()} - $${salaryRange.max.toLocaleString()}`;
+    }
+    if (salaryRange.max) return `Up to $${salaryRange.max.toLocaleString()}`;
+    if (salaryRange.min) return `From $${salaryRange.min.toLocaleString()}`;
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+        {canEdit ? (
+          <EmptyStateCard
+            title="No jobs posted yet"
+            description="Post your first job to start attracting Indigenous talent."
+            ctaText="Post a Job"
+            ctaHref="/organization/jobs/new"
+          />
+        ) : (
+          <p className="text-slate-400">No job openings at this time.</p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
-      {canEdit ? (
-        <EmptyStateCard
-          title="No jobs posted yet"
-          description="Post your first job to start attracting Indigenous talent."
-          ctaText="Post a Job"
-          ctaHref="/organization/jobs/new"
-        />
-      ) : (
-        <p className="text-slate-400">No job openings at this time.</p>
-      )}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {jobs.map((job) => {
+        const salary = formatSalary(job.salaryRange);
+        return (
+          <Link
+            key={job.id}
+            href={`/jobs/${job.id}`}
+            className="group rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+                  {job.title}
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">{job.location || 'Remote'}</p>
+              </div>
+              {!job.active && canEdit && (
+                <span className="flex-shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
+                  Inactive
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {job.employmentType && (
+                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                  {job.employmentType.replace('-', ' ')}
+                </span>
+              )}
+              {salary && (
+                <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-xs text-teal-400">
+                  {salary}
+                </span>
+              )}
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }
 
 function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
-  // TODO: Implement programs listing
+  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPrograms() {
+      try {
+        const data = await listEmployerScholarships(org.userId);
+        // Only show active scholarships for public view
+        setScholarships(canEdit ? data : data.filter(s => s.active));
+      } catch (error) {
+        console.error('Error loading scholarships:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPrograms();
+  }, [org.userId, canEdit]);
+
+  const formatDate = (date: Scholarship['deadline']) => {
+    if (!date) return null;
+    if (typeof date === 'string') return new Date(date).toLocaleDateString();
+    if (date instanceof Date) return date.toLocaleDateString();
+    if ('toDate' in date) return date.toDate().toLocaleDateString();
+    return null;
+  };
+
+  const formatAmount = (amount: Scholarship['amount']) => {
+    if (!amount) return null;
+    if (typeof amount === 'number') return `$${amount.toLocaleString()}`;
+    if (typeof amount === 'string') return amount;
+    return String(amount);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (scholarships.length === 0) {
+    return (
+      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+        {canEdit ? (
+          <EmptyStateCard
+            title="No programs listed"
+            description="Add your educational programs and scholarships."
+            ctaText="Add Scholarship"
+            ctaHref="/organization/scholarships/new"
+          />
+        ) : (
+          <p className="text-slate-400">No programs available at this time.</p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
-      {canEdit ? (
-        <EmptyStateCard
-          title="No programs listed"
-          description="Add your educational programs and scholarships."
-          ctaText="Add Program"
-          ctaHref="/organization/education/programs/new"
-        />
-      ) : (
-        <p className="text-slate-400">No programs available at this time.</p>
-      )}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {scholarships.map((scholarship) => {
+        const deadlineStr = formatDate(scholarship.deadline);
+        const amountStr = formatAmount(scholarship.amount);
+        return (
+          <Link
+            key={scholarship.id}
+            href={`/scholarships/${scholarship.id}`}
+            className="group rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <AcademicCapIcon className="h-5 w-5 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+                  {scholarship.title}
+                </h3>
+                {amountStr && (
+                  <p className="text-sm text-teal-400 mt-1">{amountStr}</p>
+                )}
+              </div>
+            </div>
+            {deadlineStr && (
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                Deadline: {deadlineStr}
+              </div>
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 }
 
 function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
-  // TODO: Implement offerings listing
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const data = await listUserServices(org.userId);
+        // Only show approved services for public view
+        setServices(canEdit ? data : data.filter(s => s.status === 'approved'));
+      } catch (error) {
+        console.error('Error loading services:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchServices();
+  }, [org.userId, canEdit]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (services.length === 0) {
+    return (
+      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+        {canEdit ? (
+          <EmptyStateCard
+            title="No offerings listed"
+            description="List your products and services for the community to discover."
+            ctaText="Add Offering"
+            ctaHref="/organization/services/new"
+          />
+        ) : (
+          <p className="text-slate-400">No products or services available at this time.</p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
-      {canEdit ? (
-        <EmptyStateCard
-          title="No offerings listed"
-          description="List your products and services for the community to discover."
-          ctaText="Add Offering"
-          ctaHref="/organization/shop"
-        />
-      ) : (
-        <p className="text-slate-400">No products or services available at this time.</p>
-      )}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {services.map((service) => (
+        <Link
+          key={service.id}
+          href={`/services/${service.slug || service.id}`}
+          className="group rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+        >
+          {service.coverImageUrl && (
+            <div className="relative h-32 bg-slate-700">
+              <Image
+                src={service.coverImageUrl}
+                alt={service.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
+          <div className="p-4">
+            <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+              {service.title}
+            </h3>
+            {service.category && (
+              <p className="text-xs text-slate-500 mt-1 capitalize">
+                {service.category.replace(/-/g, ' ')}
+              </p>
+            )}
+            {service.priceRange && (
+              <p className="text-sm text-teal-400 mt-2">{service.priceRange}</p>
+            )}
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
 
 function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
-  // TODO: Implement events listing
+  const [conferences, setConferences] = useState<Conference[]>([]);
+  const [powwows, setPowwows] = useState<PowwowEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const [confData, powwowData] = await Promise.all([
+          listEmployerConferences(org.userId),
+          listEmployerPowwows(org.userId),
+        ]);
+        // Only show active events for public view
+        setConferences(canEdit ? confData : confData.filter(c => c.active));
+        setPowwows(canEdit ? powwowData : powwowData.filter(p => p.active));
+      } catch (error) {
+        console.error('Error loading events:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchEvents();
+  }, [org.userId, canEdit]);
+
+  const formatEventDate = (date: Conference['startDate'] | PowwowEvent['startDate']) => {
+    if (!date) return null;
+    if (typeof date === 'string') return new Date(date).toLocaleDateString();
+    if ('toDate' in date) return date.toDate().toLocaleDateString();
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  const hasEvents = conferences.length > 0 || powwows.length > 0;
+
+  if (!hasEvents) {
+    return (
+      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+        {canEdit ? (
+          <EmptyStateCard
+            title="No events scheduled"
+            description="Create conferences, pow wows, or other events."
+            ctaText="Create Event"
+            ctaHref="/organization/conferences/new"
+          />
+        ) : (
+          <p className="text-slate-400">No upcoming events.</p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
-      {canEdit ? (
-        <EmptyStateCard
-          title="No events scheduled"
-          description="Create conferences, pow wows, or other events."
-          ctaText="Create Event"
-          ctaHref="/organization/conferences"
-        />
-      ) : (
-        <p className="text-slate-400">No upcoming events.</p>
+    <div className="space-y-8">
+      {/* Conferences */}
+      {conferences.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4">Conferences</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {conferences.map((conf) => (
+              <Link
+                key={conf.id}
+                href={`/conferences/${conf.id}`}
+                className="group rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+              >
+                {conf.imageUrl && (
+                  <div className="relative h-32 bg-slate-700">
+                    <Image
+                      src={conf.imageUrl}
+                      alt={conf.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-4">
+                  <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+                    {conf.title}
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {formatEventDate(conf.startDate)}
+                  </div>
+                  {conf.location && (
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                      <MapPinIcon className="h-3.5 w-3.5" />
+                      {conf.location}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pow Wows */}
+      {powwows.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4">Pow Wows</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {powwows.map((powwow) => (
+              <Link
+                key={powwow.id}
+                href={`/powwows/${powwow.id}`}
+                className="group rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+              >
+                {powwow.imageUrl && (
+                  <div className="relative h-32 bg-slate-700">
+                    <Image
+                      src={powwow.imageUrl}
+                      alt={powwow.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-4">
+                  <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+                    {powwow.name}
+                  </h4>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {formatEventDate(powwow.startDate)}
+                  </div>
+                  {powwow.location && (
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                      <MapPinIcon className="h-3.5 w-3.5" />
+                      {powwow.location}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
 function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean }) {
-  // TODO: Implement funding opportunities listing
+  const [grants, setGrants] = useState<BusinessGrant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchGrants() {
+      try {
+        const data = await listOrganizationGrants(org.userId);
+        // Only show active grants for public view
+        setGrants(canEdit ? data : data.filter(g => g.status === 'active'));
+      } catch (error) {
+        console.error('Error loading grants:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchGrants();
+  }, [org.userId, canEdit]);
+
+  const formatGrantDate = (date: BusinessGrant['deadline']) => {
+    if (!date) return null;
+    if (typeof date === 'string') return new Date(date).toLocaleDateString();
+    if (date instanceof Date) return date.toLocaleDateString();
+    if ('toDate' in date) return date.toDate().toLocaleDateString();
+    return null;
+  };
+
+  const formatGrantAmount = (amount: BusinessGrant['amount']) => {
+    if (!amount) return null;
+    if (amount.display) return amount.display;
+    if (amount.max) return `Up to $${amount.max.toLocaleString()}`;
+    if (amount.min) return `From $${amount.min.toLocaleString()}`;
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (grants.length === 0) {
+    return (
+      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+        {canEdit ? (
+          <EmptyStateCard
+            title="No funding opportunities"
+            description="Share grants and funding opportunities for Indigenous businesses."
+            ctaText="Add Funding"
+            ctaHref="/organization/grants/new"
+          />
+        ) : (
+          <p className="text-slate-400">No funding opportunities available at this time.</p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
-      {canEdit ? (
-        <EmptyStateCard
-          title="No funding opportunities"
-          description="Share grants and funding opportunities for Indigenous businesses."
-          ctaText="Add Funding"
-          ctaHref="/organization/funding/new"
-        />
-      ) : (
-        <p className="text-slate-400">No funding opportunities available at this time.</p>
-      )}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {grants.map((grant) => {
+        const amountStr = formatGrantAmount(grant.amount);
+        const deadlineStr = formatGrantDate(grant.deadline);
+        return (
+          <Link
+            key={grant.id}
+            href={`/grants/${grant.slug || grant.id}`}
+            className="group rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <CurrencyDollarIcon className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+                  {grant.title}
+                </h3>
+                {amountStr && (
+                  <p className="text-sm text-emerald-400 mt-1">{amountStr}</p>
+                )}
+              </div>
+            </div>
+            {deadlineStr && (
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                Deadline: {deadlineStr}
+              </div>
+            )}
+            {grant.grantType && (
+              <div className="mt-2">
+                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                  {grant.grantType.replace(/-/g, ' ')}
+                </span>
+              </div>
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 }
