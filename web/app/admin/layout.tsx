@@ -23,6 +23,7 @@ import {
   XMarkIcon,
   AcademicCapIcon,
   ClipboardDocumentListIcon,
+  FlagIcon,
 } from "@heroicons/react/24/outline";
 import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
 import { useAdminCounts } from "@/lib/hooks/admin";
@@ -72,6 +73,13 @@ function useNavigationGroups(): NavGroup[] {
           badgeVariant: "warning" as const,
         },
         { name: "Applications", href: "/admin/applications", icon: ClipboardDocumentListIcon },
+      ],
+      defaultOpen: true,
+    },
+    {
+      label: "Moderation",
+      items: [
+        { name: "Flagged Content", href: "/admin/moderation", icon: FlagIcon },
       ],
       defaultOpen: true,
     },

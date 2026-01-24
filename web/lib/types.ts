@@ -992,6 +992,65 @@ export interface Vendor {
   updatedAt: Timestamp | null;
 }
 
+// Vendor Inquiry (from potential customers)
+export interface VendorInquiry {
+  id: string;
+  vendorId: string;
+  productId?: string; // Optional - if inquiry is about a specific product
+
+  // Sender info
+  senderName: string;
+  senderEmail: string;
+  senderPhone?: string;
+
+  // Inquiry details
+  subject: string;
+  message: string;
+
+  // Status
+  status: 'new' | 'read' | 'replied' | 'archived';
+  repliedAt?: Timestamp | null;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Content Flag / Report for moderation queue
+export type FlaggedContentType = 'job' | 'vendor' | 'product' | 'member' | 'employer' | 'post' | 'comment';
+export type FlagReason = 'spam' | 'inappropriate' | 'misleading' | 'offensive' | 'scam' | 'duplicate' | 'other';
+export type FlagStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+
+export interface ContentFlag {
+  id: string;
+
+  // What is being flagged
+  contentType: FlaggedContentType;
+  contentId: string;
+  contentTitle?: string; // Denormalized for display
+  contentPreview?: string; // Short preview of the content
+
+  // Who flagged it
+  reporterId?: string; // Optional - anonymous reports allowed
+  reporterEmail?: string;
+  reporterName?: string;
+
+  // Flag details
+  reason: FlagReason;
+  reasonDetails?: string; // Additional context from reporter
+
+  // Moderation
+  status: FlagStatus;
+  reviewedBy?: string; // Moderator user ID
+  reviewedAt?: Timestamp | null;
+  moderatorNotes?: string;
+  actionTaken?: 'none' | 'warned' | 'removed' | 'banned';
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
 export interface VendorProduct {
   id: string;
   vendorId: string;

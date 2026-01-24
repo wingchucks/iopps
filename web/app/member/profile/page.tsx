@@ -745,6 +745,18 @@ export default function MemberProfilePage() {
             )}
           </section>
 
+          {/* Data & Privacy */}
+          <section className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-900/50 to-slate-800/50 p-8 shadow-xl border border-slate-700/50">
+            <h2 className="mb-2 text-xl font-bold text-white">Data & Privacy</h2>
+            <p className="mb-6 text-sm text-slate-400">
+              You have the right to access and export all your personal data stored on our platform.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <DataExportButton format="json" />
+              <DataExportButton format="csv" />
+            </div>
+          </section>
+
           {/* Save Button */}
           <div className="flex justify-end gap-4">
             <button
@@ -1224,5 +1236,70 @@ function PortfolioModal({
         </form>
       </div>
     </div>
+  );
+}
+
+// Data Export Button Component
+function DataExportButton({ format }: { format: "json" | "csv" }) {
+  const { user } = useAuth();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!user) return;
+
+    setExporting(true);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/member/export-data?format=${format}`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      // Get the blob and create download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `iopps-data-export-${new Date().toISOString().split("T")[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Data exported successfully!");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleExport}
+      disabled={exporting}
+      className="flex items-center gap-2 rounded-xl border border-slate-600 px-5 py-3 font-medium text-slate-300 transition-all hover:border-emerald-500/50 hover:bg-slate-800 disabled:opacity-50"
+    >
+      {exporting ? (
+        <>
+          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+            <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Exporting...
+        </>
+      ) : (
+        <>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export as {format.toUpperCase()}
+        </>
+      )}
+    </button>
   );
 }

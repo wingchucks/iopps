@@ -39,16 +39,68 @@ export default function MemberApplicationsPage() {
   const [appsLoading, setAppsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "company" | "status">("date-desc");
+  const [dateRange, setDateRange] = useState<"all" | "7" | "30" | "90">("all");
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [confirmWithdrawId, setConfirmWithdrawId] = useState<string | null>(null);
   const filteredApplications = useMemo(() => {
-    if (statusFilter === "all") return applications;
-    return applications.filter(
-      (app) =>
-        (app.status ?? "submitted").toLowerCase() ===
-        statusFilter.toLowerCase()
-    );
-  }, [applications, statusFilter]);
+    let filtered = [...applications];
+
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (app) =>
+          (app.status ?? "submitted").toLowerCase() ===
+          statusFilter.toLowerCase()
+      );
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (app) =>
+          app.job?.title?.toLowerCase().includes(query) ||
+          app.job?.employerName?.toLowerCase().includes(query) ||
+          app.job?.location?.toLowerCase().includes(query)
+      );
+    }
+
+    // Date range filter
+    if (dateRange !== "all") {
+      const days = parseInt(dateRange, 10);
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      filtered = filtered.filter((app) => {
+        const date = toDateValue(app.createdAt);
+        return date ? date.getTime() >= cutoff : false;
+      });
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "date-desc": {
+          const dateA = toDateValue(a.createdAt)?.getTime() || 0;
+          const dateB = toDateValue(b.createdAt)?.getTime() || 0;
+          return dateB - dateA;
+        }
+        case "date-asc": {
+          const dateA = toDateValue(a.createdAt)?.getTime() || 0;
+          const dateB = toDateValue(b.createdAt)?.getTime() || 0;
+          return dateA - dateB;
+        }
+        case "company":
+          return (a.job?.employerName || "").localeCompare(b.job?.employerName || "");
+        case "status":
+          return (a.status || "submitted").localeCompare(b.status || "submitted");
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [applications, statusFilter, searchQuery, dateRange, sortBy]);
 
   const counts = useMemo(() => {
     const statusMap = new Map<string, number>();
@@ -229,27 +281,125 @@ export default function MemberApplicationsPage() {
         )}
 
         {/* Filter Section */}
-        <div className="mb-8 flex justify-end">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Filter by status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
-            >
-              <option value="all">All statuses</option>
-              <option value="submitted">Submitted</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="shortlisted">Shortlisted</option>
-              <option value="hired">Hired</option>
-              <option value="rejected">Rejected</option>
-              <option value="withdrawn">Withdrawn</option>
-            </select>
+        <div className="mb-8 rounded-xl border border-slate-800 bg-slate-800/20 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            {/* Search */}
+            <div className="flex-1 max-w-md">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2 block">Search</label>
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by job title, company, or location..."
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/60 pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                />
+              </div>
+            </div>
+
+            {/* Filters Row */}
+            <div className="flex flex-wrap gap-3">
+              {/* Status Filter */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="shortlisted">Shortlisted</option>
+                  <option value="interviewing">Interviewing</option>
+                  <option value="offered">Offered</option>
+                  <option value="hired">Hired</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </div>
+
+              {/* Date Range */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Applied</label>
+                <select
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
+                  className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                >
+                  <option value="all">All time</option>
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                </select>
+              </div>
+
+              {/* Sort By */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Sort by</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                >
+                  <option value="date-desc">Newest first</option>
+                  <option value="date-asc">Oldest first</option>
+                  <option value="company">Company A-Z</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+            </div>
           </div>
+
+          {/* Active Filters Summary */}
+          {(statusFilter !== "all" || searchQuery || dateRange !== "all") && (
+            <div className="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-500">Active filters:</span>
+              {searchQuery && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs text-[#14B8A6]">
+                  Search: {searchQuery}
+                  <button onClick={() => setSearchQuery("")} className="ml-1 hover:text-white">×</button>
+                </span>
+              )}
+              {statusFilter !== "all" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs text-[#14B8A6]">
+                  Status: {statusFilter}
+                  <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-white">×</button>
+                </span>
+              )}
+              {dateRange !== "all" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs text-[#14B8A6]">
+                  Last {dateRange} days
+                  <button onClick={() => setDateRange("all")} className="ml-1 hover:text-white">×</button>
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                  setDateRange("all");
+                  setSortBy("date-desc");
+                }}
+                className="text-xs text-slate-400 hover:text-[#14B8A6] ml-2"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Applications Section */}
         <div className="rounded-xl border border-slate-800 bg-slate-800/20 p-6">
+          {/* Results Count */}
+          {!appsLoading && applications.length > 0 && (
+            <div className="mb-4 text-sm text-slate-400">
+              Showing {filteredApplications.length} of {applications.length} application{applications.length !== 1 ? "s" : ""}
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
               {error}

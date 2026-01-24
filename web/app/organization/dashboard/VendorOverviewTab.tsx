@@ -36,6 +36,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<VendorProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inquiryCount, setInquiryCount] = useState(0);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -46,6 +47,20 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
         setVendor(vendorData);
         const vendorProducts = await getVendorProducts(vendorData.id);
         setProducts(vendorProducts);
+
+        // Fetch inquiry count
+        try {
+          const idToken = await user.getIdToken();
+          const response = await fetch('/api/vendor/inquiries?limit=1', {
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setInquiryCount(data.counts?.total || 0);
+          }
+        } catch (err) {
+          console.error('Error loading inquiry count:', err);
+        }
       }
     } catch (error) {
       console.error('Error loading vendor data:', error);
@@ -88,7 +103,6 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
   const productCount = products.filter(p => !p.category?.toLowerCase().includes('service')).length;
   const serviceCount = products.filter(p => p.category?.toLowerCase().includes('service')).length;
   const viewCount = vendor.viewCount || 0;
-  const inquiryCount = 0; // TODO: Implement inquiry tracking
 
   // Get publish validation
   const publishValidation = validateVendorForPublish(vendor);

@@ -18,6 +18,7 @@ import { PageShell } from '@/components/PageShell';
 import { getVendorBySlug, getVendorBySlugAnyStatus, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct } from '@/lib/types';
 import { generateVendorSchema, buildMetadata } from '@/lib/seo';
+import VendorInquiryForm from '@/components/shop/VendorInquiryForm';
 
 // Social icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -450,6 +451,15 @@ async function VendorPage({ params, searchParams }: Props) {
                 )}
               </div>
             </div>
+
+            {/* Inquiry Form - Only show for active vendors */}
+            {vendor.status === 'active' && (
+              <VendorInquiryForm
+                vendorId={vendor.id}
+                vendorName={vendor.businessName}
+                themeColor={vendor.themeColor}
+              />
+            )}
           </div>
         </div>
       </PageShell>
