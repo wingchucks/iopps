@@ -612,3 +612,24 @@ export {
   getUpcomingInterviews,
   generateICSContent,
 } from "./interviews";
+
+// ============================================
+// TALENT SEARCH
+// ============================================
+export {
+  searchTalent,
+  saveTalent,
+  unsaveTalent,
+  isTalentSaved,
+  getSavedTalent,
+  updateSavedTalent,
+  trackTalentView,
+  getPopularSkills,
+  getTalentByLocation,
+} from "./talentSearch";
+export type {
+  TalentSearchFilters,
+  TalentSearchResult,
+  SavedTalent,
+  TalentSearchOptions,
+} from "./talentSearch";
