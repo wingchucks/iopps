@@ -169,6 +169,12 @@ export default function AdminDashboard() {
   const fetchSystemHealth = useCallback(async () => {
     try {
       // Get current user token for authentication
+      if (!auth) {
+        setHealthItems([
+          { id: "auth", name: "Authentication", status: "error", message: "Auth not initialized" },
+        ]);
+        return;
+      }
       const user = auth.currentUser;
       if (!user) {
         setHealthItems([
