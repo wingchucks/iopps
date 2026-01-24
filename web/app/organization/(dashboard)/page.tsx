@@ -28,6 +28,7 @@ import {
   CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import OnboardingChecklist from '@/components/organization/OnboardingChecklist';
 
 interface StatCardProps {
   label: string;
@@ -383,6 +384,7 @@ export default function OrganizationDashboardHome() {
     offerings: false,
   });
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -584,6 +586,17 @@ export default function OrganizationDashboardHome() {
           Here&apos;s what&apos;s happening with your organization
         </p>
       </div>
+
+      {/* Onboarding Checklist for New/Pending Employers */}
+      {showOnboarding && (
+        <OnboardingChecklist
+          profile={profile}
+          enabledModules={enabledModules}
+          stats={{ activeJobs: stats.activeJobs, offerings: stats.offerings }}
+          onDismiss={() => setShowOnboarding(false)}
+          showDismiss={profile?.status === 'approved'}
+        />
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
