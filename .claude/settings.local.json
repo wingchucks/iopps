@@ -25,7 +25,10 @@
       "WebFetch(domain:localhost)",
       "Bash(git diff:*)",
       "Bash(git checkout:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git branch:*)",
+      "Bash(npm run build:*)",
+      "Bash(powershell -Command \"reg add ''HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\AppModelUnlock'' /t REG_DWORD /f /v AllowDevelopmentWithoutDevLicense /d 1\")"
     ],
     "deny": [],
     "ask": []
