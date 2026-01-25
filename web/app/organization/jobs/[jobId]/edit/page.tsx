@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { getJobPosting, updateJobPosting, deleteJobPosting } from "@/lib/firestore";
-import type { JobPosting, LocationType, SalaryPeriod } from "@/lib/types";
+import type { JobPosting, LocationType, SalaryPeriod, JobCategory } from "@/lib/types";
 import { RichTextEditor } from "@/components/forms/RichTextEditor";
 import { SalaryRangeInput } from "@/components/forms/SalaryRangeInput";
 import { LocationTypeSelector } from "@/components/forms/LocationTypeSelector";
@@ -32,7 +32,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
 
   // Basic job info
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<JobCategory | "">("");
   const [employmentType, setEmploymentType] = useState("Full-time");
 
   // Location
@@ -218,7 +218,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
 
       await updateJobPosting(params.jobId, {
         title,
-        category,
+        category: category || undefined,
         location: displayLocation,
         locationType,
         employmentType,
@@ -432,7 +432,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
               </label>
               <CategorySelect
                 value={category}
-                onChange={setCategory}
+                onChange={(val) => setCategory(val as JobCategory | "")}
                 placeholder="Select a category..."
               />
             </div>

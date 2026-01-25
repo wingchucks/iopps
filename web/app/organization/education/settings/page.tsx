@@ -96,10 +96,10 @@ export default function SchoolSettingsPage() {
             setType(schoolData.type || "university");
             setWebsite(schoolData.website || "");
             setDescription(schoolData.description || "");
-            setCity(schoolData.location?.city || "");
-            setProvince(schoolData.location?.province || "");
-            setAddress(schoolData.location?.address || "");
-            setPostalCode(schoolData.location?.postalCode || "");
+            setCity(schoolData.headOffice?.city || "");
+            setProvince(schoolData.headOffice?.province || "");
+            setAddress(schoolData.headOffice?.address || "");
+            setPostalCode(schoolData.headOffice?.postalCode || "");
             setIndigenousFocused(schoolData.indigenousFocused || false);
             setLogoUrl(schoolData.logoUrl || "");
             setBannerUrl(schoolData.bannerUrl || "");
@@ -184,12 +184,13 @@ export default function SchoolSettingsPage() {
         type,
         website: website || undefined,
         description: description || undefined,
-        location: {
+        headOffice: {
           city,
           province,
-          address: address || undefined,
+          address: address || "",
           postalCode: postalCode || undefined,
         },
+        location: city && province ? `${city}, ${province}` : undefined,
         indigenousFocused,
         logoUrl: logoUrl || undefined,
         bannerUrl: bannerUrl || undefined,
@@ -199,8 +200,13 @@ export default function SchoolSettingsPage() {
         },
         indigenousServices: {
           elderInResidence,
+          culturalCoordinators: false,
           academicCoaches: indigenousStudentServices,
+          learningSpecialists: false,
+          wellnessCoaches: false,
+          psychologists: false,
           culturalProgramming: culturalPrograms,
+          ceremonySpace: false,
         },
       };
 
@@ -369,8 +375,8 @@ export default function SchoolSettingsPage() {
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               >
                 {SCHOOL_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1).replace(/_/g, " ")}
                   </option>
                 ))}
               </select>

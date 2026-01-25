@@ -150,23 +150,24 @@ export default function SchoolSetupPage() {
       }
 
       const schoolData: Omit<School, "id" | "createdAt" | "updatedAt" | "viewCount"> = {
-        organizationId: profile.id,
+        employerId: profile.id,
         name,
         shortName: shortName || undefined,
         type,
         website: website || undefined,
         slug: generateSlug(name),
         description: description || undefined,
-        location: {
+        headOffice: {
           city,
           province,
-          address: address || undefined,
+          address: address || "",
           postalCode: postalCode || undefined,
         },
+        campuses: [],
+        location: city && province ? `${city}, ${province}` : undefined,
         indigenousFocused,
         logoUrl: logoUrl || undefined,
         bannerUrl: bannerUrl || undefined,
-        status: "pending",
         isPublished: false,
       };
 
@@ -324,8 +325,8 @@ export default function SchoolSetupPage() {
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               >
                 {SCHOOL_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1).replace(/_/g, " ")}
                   </option>
                 ))}
               </select>

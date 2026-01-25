@@ -96,13 +96,11 @@ export default function OrganizationEducationProgramsPage() {
   };
 
   const getCategoryLabel = (category: string) => {
-    return (
-      PROGRAM_CATEGORIES.find((c) => c.value === category)?.label || category
-    );
+    return category;
   };
 
   const getLevelLabel = (level: string) => {
-    return PROGRAM_LEVELS.find((l) => l.value === level)?.label || level;
+    return level.charAt(0).toUpperCase() + level.slice(1);
   };
 
   if (loading) {

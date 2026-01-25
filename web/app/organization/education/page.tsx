@@ -152,8 +152,8 @@ export default function OrganizationEducationPage() {
               )}
             </div>
             <p className="text-slate-400">
-              {school.type.charAt(0).toUpperCase() + school.type.slice(1)} •{" "}
-              {school.location?.city}, {school.location?.province}
+              {school.type.charAt(0).toUpperCase() + school.type.slice(1)}
+              {school.location && ` • ${school.location}`}
             </p>
           </div>
         </div>
