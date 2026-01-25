@@ -7,7 +7,7 @@ import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
 import { EmptyState } from "@/components/EmptyState";
 import { listEmployers } from "@/lib/firestore";
-import type { EmployerProfile, IndustryType } from "@/lib/types";
+import type { EmployerProfile, IndustryType, OrganizationProfile } from "@/lib/types";
 import {
   BuildingOfficeIcon,
   MapPinIcon,
@@ -42,7 +42,8 @@ const INDUSTRIES: { value: IndustryType; label: string }[] = [
 ];
 
 export default function OrganizationsPage() {
-  const [organizations, setOrganizations] = useState<EmployerProfile[]>([]);
+  // Use OrganizationProfile which includes slug field
+  const [organizations, setOrganizations] = useState<(EmployerProfile & { slug?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [industry, setIndustry] = useState<IndustryType | "">("");
@@ -163,7 +164,7 @@ export default function OrganizationsPage() {
             {organizations.map((org) => (
               <Link
                 key={org.id}
-                href={`/employers/${org.id}`}
+                href={org.slug ? `/organizations/${org.slug}` : `/employers/${org.id}`}
                 className="group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
               >
                 {/* Banner/Cover */}
