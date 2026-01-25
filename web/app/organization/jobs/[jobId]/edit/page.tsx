@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,7 +24,8 @@ function detectVideoProvider(url: string): { provider: "youtube" | "vimeo" | "cu
   return { provider: "custom" };
 }
 
-export default function EditJobPage({ params }: { params: { jobId: string } }) {
+export default function EditJobPage({ params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = use(params);
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const [job, setJob] = useState<JobPosting | null>(null);
@@ -78,12 +79,12 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!params.jobId) return;
+    if (!jobId) return;
 
     (async () => {
       try {
         setLoadingJob(true);
-        const jobData = await getJobPosting(params.jobId);
+        const jobData = await getJobPosting(jobId);
 
         if (!jobData) {
           setError("Job not found");
@@ -174,7 +175,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         setLoadingJob(false);
       }
     })();
-  }, [params.jobId]);
+  }, [jobId]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -216,7 +217,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
         ? "Remote"
         : locationAddress || "Location not specified";
 
-      await updateJobPosting(params.jobId, {
+      await updateJobPosting(jobId, {
         title,
         category: category || undefined,
         location: displayLocation,
@@ -253,11 +254,11 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
   };
 
   const handleDelete = async () => {
-    if (!params.jobId) return;
+    if (!jobId) return;
     setDeleting(true);
     setError(null);
     try {
-      await deleteJobPosting(params.jobId);
+      await deleteJobPosting(jobId);
       router.push("/employer");
     } catch (err) {
       console.error(err);
@@ -360,7 +361,7 @@ export default function EditJobPage({ params }: { params: { jobId: string } }) {
           </p>
         </div>
         <Link
-          href={`/jobs-training/${params.jobId}`}
+          href={`/jobs-training/${jobId}`}
           target="_blank"
           className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6] transition-colors whitespace-nowrap"
         >
