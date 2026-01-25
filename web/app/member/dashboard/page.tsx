@@ -247,7 +247,10 @@ function MemberDashboardContent() {
 
 export default function MemberDashboard() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute
+      allowedRoles={["community"]}
+      unauthorizedPath="/organization/dashboard"
+    >
       <Suspense fallback={
         <div className="flex h-screen items-center justify-center bg-slate-950">
           <p className="text-slate-400">Loading dashboard...</p>
