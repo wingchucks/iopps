@@ -14,6 +14,22 @@ function getFirebaseAdmin() {
     return db;
 }
 
+// Lazy-load visibility recompute function
+async function recomputeVisibility(orgId: string): Promise<void> {
+    try {
+        const { recomputeOrganizationVisibility } = await import("@/lib/firestore/visibility");
+        const result = await recomputeOrganizationVisibility(orgId);
+        if (result.success) {
+            console.log(`[webhook] Recomputed visibility for ${orgId}: visible=${result.isDirectoryVisible}, reason=${result.visibilityReason}`);
+        } else {
+            console.warn(`[webhook] Failed to recompute visibility for ${orgId}: ${result.error}`);
+        }
+    } catch (error) {
+        // Non-fatal - visibility will be corrected by scheduled reconciliation
+        console.warn(`[webhook] Error recomputing visibility for ${orgId}:`, error);
+    }
+}
+
 // Check if event has already been processed (idempotency)
 async function isEventProcessed(db: FirebaseFirestore.Firestore, eventId: string): Promise<boolean> {
     const eventRef = db.collection("stripe_events").doc(eventId);
@@ -199,6 +215,10 @@ export async function POST(request: NextRequest) {
                     );
 
                     console.log(`Subscription ${productType} activated for user ${userId}`);
+
+                    // Recompute directory visibility (subscription extends visibility)
+                    await recomputeVisibility(userId);
+
                     break;
                 }
 
@@ -238,6 +258,12 @@ export async function POST(request: NextRequest) {
                     }
 
                     console.log(`Vendor ${vendorId} subscription activated until ${expirationDate.toISOString()}`);
+
+                    // Recompute directory visibility for the vendor's owner organization
+                    if (vendorData?.ownerUserId) {
+                        await recomputeVisibility(vendorData.ownerUserId);
+                    }
+
                     break;
                 }
 
@@ -317,6 +343,12 @@ export async function POST(request: NextRequest) {
                     }
 
                     console.log(`Job ${jobId} activated successfully`);
+
+                    // Recompute directory visibility (job publish extends visibility)
+                    if (jobData?.employerId) {
+                        await recomputeVisibility(jobData.employerId);
+                    }
+
                     break;
                 }
 
@@ -531,11 +563,20 @@ export async function POST(request: NextRequest) {
 
                         // Deactivate the job/conference if refunded
                         if (refundMetadata.jobId) {
+                            // Get employerId before updating
+                            const jobDoc = await db.collection("jobs").doc(refundMetadata.jobId).get();
+                            const jobEmployerId = jobDoc.exists ? jobDoc.data()?.employerId : null;
+
                             await db.collection("jobs").doc(refundMetadata.jobId).update({
                                 active: false,
                                 paymentStatus: "refunded",
                             });
                             console.log(`Job ${refundMetadata.jobId} deactivated due to refund`);
+
+                            // Recompute visibility after job deactivation
+                            if (jobEmployerId) {
+                                await recomputeVisibility(jobEmployerId);
+                            }
                         }
                         if (refundMetadata.conferenceId) {
                             await db.collection("conferences").doc(refundMetadata.conferenceId).update({
@@ -567,6 +608,12 @@ export async function POST(request: NextRequest) {
                             status: "inactive",
                         });
                         console.log(`Vendor ${vendorDoc.id} subscription cancelled`);
+
+                        // Recompute visibility for vendor's owner organization
+                        const vendorData = vendorDoc.data();
+                        if (vendorData?.ownerUserId) {
+                            await recomputeVisibility(vendorData.ownerUserId);
+                        }
                     }
                 } catch (subErr) {
                     console.error("Failed to process subscription cancellation:", subErr);

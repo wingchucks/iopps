@@ -101,6 +101,19 @@ service cloud.firestore {
         );
       }
 
+      // Helper to check if visibility fields are being modified
+      // These fields are SERVER-WRITE ONLY (managed by webhooks and cron jobs)
+      function isModifyingVisibilityFields() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'isGrandfathered',
+          'isDirectoryVisible',
+          'directoryVisibleUntil',
+          'visibilityReason',
+          'visibilityComputedAt',
+          'visibilitySourceDetails'
+        ]);
+      }
+
       // Admin/moderator can read ALL employers (for dashboard queries)
       // This rule comes first to allow list queries without resource.data checks
       allow read: if isAdminOrModerator();
@@ -109,11 +122,16 @@ service cloud.firestore {
       allow read: if resource.data.status == 'approved' || isEmployerOwner() || isTeamMemberOf(employerId);
 
       // Employers can create their own profile
+      // (visibility fields will be null/undefined at creation, which is fine)
       allow create: if isSignedIn() && request.auth.uid == employerId;
 
       // Employers and team admins can update, platform admins can update any
+      // IMPORTANT: Non-admin users cannot modify visibility fields (server-write only)
       // Note: teamMembers array is managed via API routes with admin SDK
-      allow update: if isEmployerOwner() || isAdminOrModerator();
+      allow update: if isAdminOrModerator() || (
+        (isEmployerOwner() || isTeamMemberOf(employerId)) &&
+        !isModifyingVisibilityFields()
+      );
 
       // Only admins can delete
       allow delete: if isAdmin();

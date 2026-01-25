@@ -375,6 +375,13 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
 
 /**
  * List published organizations (for directory)
+ *
+ * Visibility rules:
+ * - Must be approved (status === 'approved')
+ * - Must be directory visible (isDirectoryVisible === true)
+ *   This is computed from: isGrandfathered OR directoryVisibleUntil > now
+ *
+ * Note: isDirectoryVisible is server-computed based on engagement (subscriptions, jobs, etc.)
  */
 export async function listPublishedOrganizations(
   limitCount: number = 50
@@ -384,9 +391,8 @@ export async function listPublishedOrganizations(
 
   const q = query(
     collection(firestore, employerCollection),
-    where("publicationStatus", "==", "PUBLISHED"),
     where("status", "==", "approved"), // Required by Firestore security rules
-    where("directoryVisible", "==", true),
+    where("isDirectoryVisible", "==", true), // Computed visibility based on engagement
     orderBy("organizationName", "asc"),
     limit(limitCount)
   );

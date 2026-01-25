@@ -646,3 +646,13 @@ export type {
   SavedTalent,
   TalentSearchOptions,
 } from "./talentSearch";
+
+// ============================================
+// ORGANIZATION DIRECTORY VISIBILITY
+// ============================================
+export {
+  recomputeOrganizationVisibility,
+  recomputeOrganizationVisibilityForAllApprovedOrgs,
+  isOrganizationDirectoryVisible,
+  expireStaleVisibility,
+} from "./visibility";

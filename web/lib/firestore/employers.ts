@@ -254,7 +254,22 @@ export async function createPendingEmployerProfile(
   });
 }
 
-export async function listEmployers(status?: EmployerStatus, includeDeleted = false): Promise<EmployerProfile[]> {
+/**
+ * List employers by status
+ *
+ * For public directory (status === "approved"):
+ * - Also filters by isDirectoryVisible === true (engagement-based visibility)
+ * - Dormant orgs (approved but no active engagement) are hidden
+ *
+ * @param status - Filter by employer status
+ * @param includeDeleted - Include soft-deleted employers
+ * @param includeHidden - For admin use: include approved orgs that are not directory-visible
+ */
+export async function listEmployers(
+  status?: EmployerStatus,
+  includeDeleted = false,
+  includeHidden = false
+): Promise<EmployerProfile[]> {
   try {
     const firestore = checkFirebase();
     if (!firestore) {
@@ -264,7 +279,18 @@ export async function listEmployers(status?: EmployerStatus, includeDeleted = fa
     let q;
 
     if (status) {
-      q = query(ref, where("status", "==", status), orderBy("createdAt", "desc"));
+      // For approved status (public directory), also filter by visibility
+      // unless includeHidden is true (for admin views)
+      if (status === "approved" && !includeHidden) {
+        q = query(
+          ref,
+          where("status", "==", status),
+          where("isDirectoryVisible", "==", true),
+          orderBy("organizationName", "asc")
+        );
+      } else {
+        q = query(ref, where("status", "==", status), orderBy("createdAt", "desc"));
+      }
     } else {
       q = query(ref, orderBy("createdAt", "desc"));
     }

@@ -238,19 +238,48 @@ export async function listEmployerJobs(
   });
 }
 
-export async function updateJobStatus(jobId: string, active: boolean) {
+/**
+ * Update job active status (publish/unpublish/archive)
+ *
+ * IMPORTANT: After calling this, trigger visibility recompute!
+ * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
+ *
+ * @returns The employerId of the job for visibility recompute
+ */
+export async function updateJobStatus(jobId: string, active: boolean): Promise<string | null> {
   const ref = doc(db!, jobsCollection, jobId);
+
+  // Get employerId before updating (for visibility recompute)
+  const snap = await getDoc(ref);
+  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
+
   await updateDoc(ref, {
     active,
+    // Set publishedAt when activating (if not already set)
+    ...(active && !snap.data()?.publishedAt ? { publishedAt: serverTimestamp() } : {}),
     updatedAt: serverTimestamp(),
   });
+
+  return employerId;
 }
 
+/**
+ * Update job posting fields
+ *
+ * IMPORTANT: If updating 'active' or 'featured', trigger visibility recompute!
+ * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
+ *
+ * @returns The employerId of the job for visibility recompute
+ */
 export async function updateJobPosting(
   jobId: string,
   data: Partial<Omit<JobPosting, "id" | "createdAt" | "employerId">>
-) {
+): Promise<string | null> {
   const ref = doc(db!, jobsCollection, jobId);
+
+  // Get employerId (for visibility recompute)
+  const snap = await getDoc(ref);
+  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
 
   // Filter out undefined values - Firestore doesn't accept undefined
   const cleanData: Record<string, unknown> = {};
@@ -264,6 +293,8 @@ export async function updateJobPosting(
     ...cleanData,
     updatedAt: serverTimestamp(),
   });
+
+  return employerId;
 }
 
 export async function incrementJobViews(jobId: string) {
@@ -273,9 +304,24 @@ export async function incrementJobViews(jobId: string) {
   });
 }
 
-export async function deleteJobPosting(id: string) {
+/**
+ * Delete a job posting
+ *
+ * IMPORTANT: After calling this, trigger visibility recompute!
+ * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
+ *
+ * @returns The employerId of the deleted job for visibility recompute
+ */
+export async function deleteJobPosting(id: string): Promise<string | null> {
   const ref = doc(db!, jobsCollection, id);
+
+  // Get employerId before deleting (for visibility recompute)
+  const snap = await getDoc(ref);
+  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
+
   await deleteDoc(ref);
+
+  return employerId;
 }
 
 // Job-specific Video functions

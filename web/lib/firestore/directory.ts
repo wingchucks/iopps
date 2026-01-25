@@ -185,7 +185,8 @@ export async function buildDirectoryEntry(
     isIndigenousOwned,
     nation: profile.nation || profile.indigenousVerification?.nationAffiliation,
     counts,
-    directoryVisible: profile.directoryVisible ?? true,
+    // Use computed isDirectoryVisible if available, fallback to legacy field
+    directoryVisible: profile.isDirectoryVisible ?? profile.directoryVisible ?? true,
     createdAt: profile.createdAt || null,
     updatedAt: serverTimestamp() as unknown as Timestamp,
   };
@@ -193,19 +194,25 @@ export async function buildDirectoryEntry(
 
 /**
  * Update or create directory index entry for an organization
+ *
+ * Visibility requirements:
+ * - status === 'approved'
+ * - isDirectoryVisible === true (computed from engagement)
+ * - not deleted
  */
 export async function upsertDirectoryEntry(profile: OrganizationProfile): Promise<void> {
   const firestore = checkFirebase();
   if (!firestore) throw new Error("Firebase not available");
 
-  // Only index published, visible, approved, and non-deleted profiles
+  // Check visibility criteria
   const isDeleted = profile.status === "deleted" || !!profile.deletedAt;
   const isApproved = profile.status === "approved";
-  const isPublished = profile.publicationStatus === "PUBLISHED";
-  const isVisible = profile.directoryVisible !== false; // Default to true if undefined
+  // Use the computed isDirectoryVisible field (based on engagement)
+  // Fall back to legacy directoryVisible for backward compatibility during migration
+  const isEngagementVisible = profile.isDirectoryVisible ?? profile.directoryVisible ?? false;
 
-  if (!isPublished || !isVisible || !isApproved || isDeleted) {
-    // Remove from index if not meeting all visibility criteria
+  if (!isApproved || !isEngagementVisible || isDeleted) {
+    // Remove from index if not meeting visibility criteria
     await removeDirectoryEntry(profile.id);
     return;
   }
@@ -487,11 +494,11 @@ export async function rebuildDirectoryIndex(): Promise<{
       // Check all visibility criteria
       const isDeleted = profile.status === "deleted" || !!profile.deletedAt;
       const isApproved = profile.status === "approved";
-      const isPublished = profile.publicationStatus === "PUBLISHED";
-      const isVisible = profile.directoryVisible !== false;
+      // Use computed isDirectoryVisible, fallback to legacy directoryVisible
+      const isVisible = profile.isDirectoryVisible ?? profile.directoryVisible ?? false;
 
-      // Only index published, visible, approved, and non-deleted profiles
-      if (isPublished && isVisible && isApproved && !isDeleted) {
+      // Only index approved, visible, and non-deleted profiles
+      if (isVisible && isApproved && !isDeleted) {
         await upsertDirectoryEntry(profile);
         result.indexed++;
       } else {

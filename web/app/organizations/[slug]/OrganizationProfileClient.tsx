@@ -244,6 +244,38 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         </div>
       )}
 
+      {/* Dormant/Hidden Banner - shown to owners when org is approved but not directory-visible */}
+      {!isDraft && canEdit && org.status === 'approved' && org.isDirectoryVisible === false && (
+        <div className="mb-6 rounded-xl bg-slate-700/50 border border-slate-600 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <EyeIcon className="h-5 w-5 text-slate-400 mt-0.5 sm:mt-0 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-slate-300">Hidden from Directory</p>
+              <p className="text-xs text-slate-400">
+                Your organization is not visible in the public directory.
+                {org.visibilityReason === 'expired' && (
+                  <> Post a job or subscribe to a plan to appear in search results.</>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Link
+              href="/organization/post-job"
+              className="flex-1 sm:flex-none text-center rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+            >
+              Post a Job
+            </Link>
+            <Link
+              href="/pricing"
+              className="flex-1 sm:flex-none text-center rounded-full bg-slate-600 px-4 py-2 text-sm font-medium text-white hover:bg-slate-500 transition-colors"
+            >
+              View Plans
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-slate-700 mb-8">
         {/* Banner */}

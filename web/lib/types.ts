@@ -114,6 +114,34 @@ export interface EmployerSubscription {
   unlimitedPosts: boolean;
 }
 
+// ============================================
+// DIRECTORY VISIBILITY (Engagement-Based)
+// ============================================
+
+// Reason why an organization is visible/hidden in the directory
+export type VisibilityReason =
+  | 'grandfathered'    // Permanent visibility for legacy orgs
+  | 'subscription'     // Has active employer subscription
+  | 'vendor'           // Has active vendor subscription
+  | 'featured_job'     // Has featured job extending visibility
+  | 'job'              // Has standard job extending visibility
+  | 'expired';         // No active engagement, visibility expired
+
+// Source that contributes to visibility
+export type VisibilitySource = 'subscription' | 'vendor' | 'featured_job' | 'job' | 'none';
+
+// Debug info about what's driving visibility
+export interface VisibilitySourceDetails {
+  maxSource: VisibilitySource;
+  maxUntil?: Timestamp | Date | null;
+  // Individual source dates for debugging
+  subscriptionUntil?: Timestamp | Date | null;
+  vendorUntil?: Timestamp | Date | null;
+  jobsMaxUntil?: Timestamp | Date | null;
+  featuredJobsMaxUntil?: Timestamp | Date | null;
+  eligibleJobsCount?: number;
+}
+
 // Grant types for free posting packages
 export type GrantType = "single" | "featured" | "tier1" | "tier2";
 
@@ -189,6 +217,19 @@ export interface EmployerProfile {
   approvedBy?: string;
   rejectionReason?: string;
   subscription?: EmployerSubscription;
+  // Vendor subscription (for Shop Indigenous vendors linked to org)
+  vendorSubscription?: {
+    active: boolean;
+    vendorId: string;
+    expiresAt?: Timestamp | Date | null;
+  };
+  // Directory Visibility (engagement-based) - SERVER-WRITTEN ONLY
+  isGrandfathered?: boolean;                    // Permanent visibility for legacy orgs
+  isDirectoryVisible?: boolean;                  // Computed: visible in directory + search
+  directoryVisibleUntil?: Timestamp | null;      // null ONLY if grandfathered
+  visibilityReason?: VisibilityReason;           // Why org is visible/hidden
+  visibilityComputedAt?: Timestamp | null;       // Debug: when visibility was last computed
+  visibilitySourceDetails?: VisibilitySourceDetails; // Debug: detailed source info
   // Admin Bypass - Free posting without payment (legacy fields for backward compatibility)
   freePostingEnabled?: boolean;
   freePostingReason?: string;

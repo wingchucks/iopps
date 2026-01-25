@@ -17,6 +17,10 @@
       "schedule": "0 0 * * *"
     },
     {
+      "path": "/api/cron/expire-directory-visibility",
+      "schedule": "0 1 * * *"
+    },
+    {
       "path": "/api/cron/publish-scheduled-jobs",
       "schedule": "*/15 * * * *"
     },
