@@ -1862,6 +1862,7 @@ export interface StudentInquiry {
   programId?: string; // If about a specific program
   interestedInPrograms?: string[]; // Program IDs student is interested in
   intendedStartDate?: string; // When student plans to start
+  educationLevel?: string; // Current education level
 
   // Status
   status: InquiryStatus;
