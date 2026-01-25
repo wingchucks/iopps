@@ -991,8 +991,8 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                             });
                           }
 
-                          // Delete action - Admin only
-                          if (role === "admin") {
+                          // Delete action - Admin and Moderator
+                          if (role === "admin" || role === "moderator") {
                             actions.push({
                               id: `danger-${employer.id}`,
                               items: [
