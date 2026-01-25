@@ -15,6 +15,9 @@ import {
   WrenchIcon,
   UserCircleIcon,
   CreditCardIcon,
+  AcademicCapIcon,
+  BuildingLibraryIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import type { DashboardMode, DashboardSection } from './DashboardSidebar';
 
@@ -26,6 +29,7 @@ interface MobileBottomNavProps {
   badges?: {
     applications?: number;
     inquiries?: number;
+    shopInquiries?: number; // Updated prop name
     messages?: number;
   };
 }
@@ -59,20 +63,29 @@ export default function MobileBottomNav({
   const vendorTabs = [
     { id: 'overview' as const, label: 'Home', icon: Squares2X2Icon },
     { id: 'products' as const, label: 'Products', icon: CubeIcon },
-    { id: 'inquiries' as const, label: 'Inquiries', icon: ChatBubbleLeftRightIcon, badge: badges.inquiries },
+    { id: 'shop-inquiries' as const, label: 'Inquiries', icon: ChatBubbleLeftRightIcon, badge: badges.shopInquiries },
     { id: 'messages' as const, label: 'Messages', icon: ChatBubbleLeftRightIcon, badge: badges.messages },
   ];
 
   // Secondary items in the more menu
   const employerMoreItems = [
-    { id: 'videos' as const, label: 'Interview Videos', icon: VideoCameraIcon },
-    { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
+    // Talent
+    { id: 'videos' as const, label: 'Interviews', icon: VideoCameraIcon },
+    // Education (New)
+    { id: 'school' as const, label: 'School Profile', icon: BuildingLibraryIcon },
+    { id: 'programs' as const, label: 'Programs', icon: AcademicCapIcon },
+    { id: 'scholarships' as const, label: 'Scholarships', icon: AcademicCapIcon },
+    { id: 'events' as const, label: 'Events', icon: VideoCameraIcon }, // Reusing generic icon or specialized
+    { id: 'student-inquiries' as const, label: 'Student Inq.', icon: ChatBubbleLeftRightIcon, badge: badges.inquiries },
+    // Account
+    { id: 'profile' as const, label: 'Settings', icon: UserCircleIcon },
     { id: 'billing' as const, label: 'Billing', icon: CreditCardIcon },
   ];
 
   const vendorMoreItems = [
     { id: 'services' as const, label: 'Services', icon: WrenchIcon },
-    { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
+    { id: 'funding' as const, label: 'Funding', icon: SparklesIcon },
+    { id: 'profile' as const, label: 'Settings', icon: UserCircleIcon },
     { id: 'billing' as const, label: 'Billing', icon: CreditCardIcon },
   ];
 
@@ -81,6 +94,8 @@ export default function MobileBottomNav({
 
   // Check if active section is in more menu
   const isMoreActive = currentMoreItems.some((item) => item.id === activeSection);
+  // Also check sections not in either list (safeguard)
+  const isOtherActive = !currentTabs.some(t => t.id === activeSection) && !currentMoreItems.some(t => t.id === activeSection);
 
   const handleTabClick = (section: DashboardSection) => {
     onSectionChange(section);
@@ -110,7 +125,7 @@ export default function MobileBottomNav({
 
       {/* More Menu Panel */}
       {showMoreMenu && (
-        <div className="fixed bottom-16 left-0 right-0 bg-[#0A0B0F] border-t border-slate-800/60 rounded-t-3xl z-50 md:hidden animate-slide-up">
+        <div className="fixed bottom-16 left-0 right-0 bg-[#0A0B0F] border-t border-slate-800/60 rounded-t-3xl z-50 md:hidden animate-slide-up max-h-[80vh] overflow-y-auto">
           <div className="p-4">
             {/* Mode Toggle */}
             <div className="mb-4 pb-4 border-b border-slate-800/60">
@@ -139,7 +154,7 @@ export default function MobileBottomNav({
                   )}
                 </div>
                 <span className="text-xs text-slate-500">
-                  Tap to switch to {mode === 'employer' ? 'Vendor' : 'Employer'}
+                  Switch to {mode === 'employer' ? 'Vendor' : 'Employer'}
                 </span>
               </button>
             </div>
@@ -150,16 +165,20 @@ export default function MobileBottomNav({
                 <button
                   key={item.id}
                   onClick={() => handleTabClick(item.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    activeSection === item.id
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${activeSection === item.id
                       ? mode === 'employer'
                         ? 'bg-blue-500/10 text-blue-400'
                         : 'bg-accent/10 text-accent'
                       : 'text-slate-400 hover:bg-slate-800/50'
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium flex-1 text-left">{item.label}</span>
+                  {(item as any).badge > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {(item as any).badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -174,9 +193,8 @@ export default function MobileBottomNav({
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${
-                activeSection === tab.id ? activeColor : 'text-slate-500'
-              }`}
+              className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${activeSection === tab.id ? activeColor : 'text-slate-500'
+                }`}
             >
               <div className="relative">
                 <tab.icon className="w-6 h-6" />
@@ -195,9 +213,8 @@ export default function MobileBottomNav({
           {/* More Button */}
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
-            className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${
-              showMoreMenu || isMoreActive ? activeColor : 'text-slate-500'
-            }`}
+            className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${showMoreMenu || isMoreActive || isOtherActive ? activeColor : 'text-slate-500'
+              }`}
           >
             {showMoreMenu ? (
               <XMarkIcon className="w-6 h-6" />

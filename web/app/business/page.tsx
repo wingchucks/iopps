@@ -1,171 +1,790 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { PageShell } from "@/components/PageShell";
-import { VendorCard } from "@/components/shop";
+import { VendorCard, ServiceCard } from "@/components/shop";
+import { GrantCard } from "@/components/business/GrantCard";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 import { getFeaturedVendors } from "@/lib/firebase/shop";
-import type { Vendor } from "@/lib/types";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { listServices, listBusinessGrants } from "@/lib/firestore";
+import type { Vendor, Service, BusinessGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+
+type BusinessTab = "shop" | "grants" | "services";
+
+// Tab configuration for dynamic content
+const TAB_CONFIG = {
+  shop: {
+    searchPlaceholder: "Search businesses...",
+    ctaLabel: "List Your Business",
+    ctaHref: "/organization/shop",
+  },
+  services: {
+    searchPlaceholder: "Search services...",
+    ctaLabel: "Add a Service",
+    ctaHref: "/organization/services/new",
+  },
+  grants: {
+    searchPlaceholder: "Search grants...",
+    ctaLabel: "Submit a Grant",
+    ctaHref: "/admin/grants/new", // or appropriate route
+  },
+} as const;
 
 export default function MarketplacePage() {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const [featuredVendors, setFeaturedVendors] = useState<Vendor[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [grants, setGrants] = useState<BusinessGrant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [grantsLoading, setGrantsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [servicesError, setServicesError] = useState<Error | null>(null);
+  const [grantsError, setGrantsError] = useState<Error | null>(null);
+  const [activeTab, setActiveTab] = useState<BusinessTab>("shop");
+  const [search, setSearch] = useState("");
+  const [servicesSearch, setServicesSearch] = useState("");
+  const [grantsSearch, setGrantsSearch] = useState("");
+
+  // Filter vendors based on search
+  const filteredVendors = useMemo(() => {
+    if (!search.trim()) return featuredVendors;
+    const searchLower = search.toLowerCase();
+    return featuredVendors.filter(
+      (v) =>
+        v.businessName?.toLowerCase().includes(searchLower) ||
+        v.tagline?.toLowerCase().includes(searchLower) ||
+        v.description?.toLowerCase().includes(searchLower) ||
+        v.location?.toLowerCase().includes(searchLower) ||
+        v.nation?.toLowerCase().includes(searchLower)
+    );
+  }, [featuredVendors, search]);
+
+  // Filter services based on search
+  const filteredServices = useMemo(() => {
+    if (!servicesSearch.trim()) return services;
+    const searchLower = servicesSearch.toLowerCase();
+    return services.filter(
+      (s) =>
+        s.businessName?.toLowerCase().includes(searchLower) ||
+        s.title?.toLowerCase().includes(searchLower) ||
+        s.description?.toLowerCase().includes(searchLower) ||
+        s.category?.toLowerCase().includes(searchLower) ||
+        s.location?.toLowerCase().includes(searchLower)
+    );
+  }, [services, servicesSearch]);
+
+  // Filter grants based on search
+  const filteredGrants = useMemo(() => {
+    if (!grantsSearch.trim()) return grants;
+    const searchLower = grantsSearch.toLowerCase();
+    return grants.filter(
+      (g) =>
+        g.title?.toLowerCase().includes(searchLower) ||
+        g.provider?.toLowerCase().includes(searchLower) ||
+        g.description?.toLowerCase().includes(searchLower) ||
+        g.grantType?.toLowerCase().includes(searchLower)
+    );
+  }, [grants, grantsSearch]);
+
+  // Determine empty state type for Shop tab
+  const hasBusinesses = featuredVendors.length > 0;
+  const hasSearchResults = filteredVendors.length > 0;
+  const isSearching = search.trim().length > 0;
 
   // Only show business listing CTAs to employers/admins (not community members)
   const canListBusiness = role === "employer" || role === "admin";
+  const isAuthenticated = !!user;
+
+  // Get current tab config
+  const currentTabConfig = TAB_CONFIG[activeTab];
+
+  // Clear search when switching tabs
+  const handleTabChange = (tab: BusinessTab) => {
+    setSearch("");
+    setServicesSearch("");
+    setGrantsSearch("");
+    setActiveTab(tab);
+  };
+
+  // Load services when tab becomes active
+  useEffect(() => {
+    if (activeTab !== "services" || services.length > 0) return;
+
+    (async () => {
+      try {
+        setServicesLoading(true);
+        setServicesError(null);
+        const servicesList = await listServices({ maxResults: 12 });
+        setServices(servicesList);
+      } catch (err) {
+        console.error("Failed to load services:", err);
+        setServicesError(err instanceof Error ? err : new Error("Failed to load services"));
+      } finally {
+        setServicesLoading(false);
+      }
+    })();
+  }, [activeTab, services.length]);
+
+  // Load grants when tab becomes active
+  useEffect(() => {
+    if (activeTab !== "grants" || grants.length > 0) return;
+
+    (async () => {
+      try {
+        setGrantsLoading(true);
+        setGrantsError(null);
+        const grantsList = await listBusinessGrants({ status: "active", limitCount: 12 });
+        setGrants(grantsList);
+      } catch (err) {
+        console.error("Failed to load grants:", err);
+        setGrantsError(err instanceof Error ? err : new Error("Failed to load grants"));
+      } finally {
+        setGrantsLoading(false);
+      }
+    })();
+  }, [activeTab, grants.length]);
 
   useEffect(() => {
     (async () => {
       try {
+        setError(null);
         const featured = await getFeaturedVendors(6);
         setFeaturedVendors(featured);
-      } catch (error) {
-        console.error("Failed to load featured vendors:", error);
+      } catch (err) {
+        console.error("Failed to load featured vendors:", err);
+        setError(err instanceof Error ? err : new Error("Failed to load data"));
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Indigenous Marketplace"
-        title={
-          <>
-            Discover & Support
-            <br />
-            Indigenous Businesses
-          </>
-        }
-        subtitle="Buy authentic Indigenous products, hire Indigenous services, and connect with Indigenous-owned businesses across Canada."
-        size="md"
-      >
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/business/products"
-            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Shop Products
-          </Link>
-          <Link
-            href="/business/services"
-            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-          >
-            Find Services
-          </Link>
-        </div>
-      </OceanWaveHero>
+  // Render Shop Tab Content
+  const renderShopTab = () => {
+    // Show error state if there was an error loading
+    if (error) {
+      return (
+        <ErrorState
+          title="Unable to load businesses"
+          description="We encountered a problem loading the business directory. Please try again."
+          onRetry={() => window.location.reload()}
+          testId="shop-error-state"
+        />
+      );
+    }
 
-      <PageShell>
+    // Show loading skeletons
+    if (loading) {
+      return (
+        <>
+          {/* Business of the Day skeleton */}
+          <section className="mb-8">
+            <div className="rounded-2xl border border-teal-500/20 bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900 p-6">
+              <div className="animate-pulse h-20 bg-slate-800/50 rounded-lg" />
+            </div>
+          </section>
 
-      {/* Category Cards Section */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-12">
-        {/* Browse Products Card */}
-        <Link
-          href="/business/products"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-        >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-            <span className="text-2xl">🛍️</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Browse Products</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Shop authentic Indigenous-made goods — art, clothing, jewelry, food, and more.
-          </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Shop Now →
-          </span>
-        </Link>
+          {/* Categories skeleton */}
+          <section className="mb-8">
+            <div className="h-4 w-32 bg-slate-800 rounded animate-pulse mb-4" />
+            <div className="grid grid-cols-4 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse rounded-xl bg-slate-800/50 h-20"
+                />
+              ))}
+            </div>
+          </section>
 
-        {/* Browse Services Card */}
-        <Link
-          href="/business/services"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-        >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-            <span className="text-2xl">💼</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Browse Services</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Find Indigenous professionals — legal, accounting, construction, tech, and more.
-          </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Find Services →
-          </span>
-        </Link>
-
-        {/* Business Directory Card */}
-        <Link
-          href="/business/directory"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-        >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-            <span className="text-2xl">🏢</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Business Directory</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Explore all Indigenous-owned businesses. Find partners and suppliers.
-          </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Explore →
-          </span>
-        </Link>
-
-        {/* Funding & Grants Card */}
-        <Link
-          href="/business/funding"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-        >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
-            <span className="text-2xl">💰</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">Funding & Grants</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Discover grants and funding opportunities for Indigenous entrepreneurs.
-          </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            Find Funding →
-          </span>
-        </Link>
-      </div>
-
-      {/* Featured Businesses Section */}
-      {(featuredVendors.length > 0 || loading) && (
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Featured Businesses</h2>
-            <Link
-              href="/business/directory"
-              className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
-            >
-              View All →
-            </Link>
-          </div>
-
-          {loading ? (
+          {/* Featured businesses skeleton */}
+          <section className="mb-12">
+            <div className="h-6 w-48 bg-slate-800 rounded animate-pulse mb-6" />
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-64" />
+                <div
+                  key={i}
+                  className="animate-pulse rounded-2xl bg-slate-800/50 h-64"
+                />
               ))}
             </div>
-          ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          </section>
+        </>
+      );
+    }
+
+    // No businesses exist at all (new platform)
+    if (!hasBusinesses) {
+      return (
+        <EmptyState
+          icon="shop"
+          title="No businesses listed yet"
+          description="Be the first to showcase your business on IOPPS."
+          ctaLabel="List Your Business"
+          ctaHref="/organization/shop"
+          testId="shop-empty-no-businesses"
+        />
+      );
+    }
+
+    // Businesses exist but search yields no results
+    if (isSearching && !hasSearchResults) {
+      return (
+        <EmptyState
+          icon="search"
+          title="No results found"
+          description="Try adjusting your search or filters."
+          ctaLabel="Clear filters"
+          onCta={() => setSearch("")}
+          testId="shop-empty-no-results"
+        />
+      );
+    }
+
+    // Normal state with data
+    return (
+      <>
+        {/* Business of the Day Showcase */}
+        <section className="mb-8">
+          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900 border border-teal-500/20 p-6">
+            {/* Badge */}
+            <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold mb-3">
+              <span>⭐</span>
+              Business of the Day
+            </div>
+
+            {featuredVendors[0] && (
+              <div className="flex items-start gap-4">
+                {/* Logo */}
+                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-2xl shrink-0">
+                  🎨
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl font-bold text-white">
+                    {featuredVendors[0].businessName}
+                  </h3>
+                  <p className="text-sm text-slate-400 line-clamp-1">
+                    {featuredVendors[0].tagline ||
+                      featuredVendors[0].description}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    {featuredVendors[0].nation && (
+                      <span className="text-xs text-teal-400">
+                        🪶 {featuredVendors[0].nation}
+                      </span>
+                    )}
+                    <span className="text-xs text-amber-400">⭐ 4.9</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Browse Categories - always show when we have businesses */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-400 mb-4">
+            Browse Categories
+          </h2>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              {
+                icon: "💎",
+                label: "Jewelry",
+                value: "jewelry",
+                color: "from-cyan-500/20 to-blue-500/20",
+              },
+              {
+                icon: "🎨",
+                label: "Art",
+                value: "art",
+                color: "from-pink-500/20 to-rose-500/20",
+              },
+              {
+                icon: "👕",
+                label: "Apparel",
+                value: "clothing",
+                color: "from-emerald-500/20 to-teal-500/20",
+              },
+              {
+                icon: "🍞",
+                label: "Food",
+                value: "food",
+                color: "from-amber-500/20 to-orange-500/20",
+              },
+            ].map((cat) => (
+              <Link
+                key={cat.label}
+                href={`/business/products?category=${cat.value}`}
+                className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:-translate-y-0.5"
+              >
+                <div
+                  className={`h-10 w-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center text-xl`}
+                >
+                  {cat.icon}
+                </div>
+                <span className="text-xs text-slate-300 font-medium">
+                  {cat.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Vendors your connections support - only show when authenticated and not searching */}
+        {isAuthenticated && !isSearching && (
+          <section className="mb-8">
+            <h2 className="text-sm font-semibold text-slate-400 mb-4">
+              Vendors your connections support
+            </h2>
+
+            <div className="space-y-3">
               {featuredVendors.slice(0, 3).map((vendor) => (
-                <VendorCard key={vendor.id} vendor={vendor} featured />
+                <Link
+                  key={vendor.id}
+                  href={`/business/${vendor.slug}`}
+                  className="block rounded-2xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-xl shrink-0">
+                      🧵
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-white">
+                        {vendor.businessName}
+                      </h3>
+                      <p className="text-sm text-slate-400 line-clamp-1">
+                        {vendor.tagline}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {vendor.nation && (
+                          <span className="text-xs text-teal-400">
+                            🪶 {vendor.nation}
+                          </span>
+                        )}
+                        <span className="text-xs text-amber-400">⭐ 4.8</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Connection Signal */}
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-800/50 p-2">
+                    <div className="flex -space-x-1.5">
+                      {[...Array(3)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`inline-block h-5 w-5 rounded-full ring-2 ring-slate-900 ${
+                            ["bg-orange-400", "bg-blue-400", "bg-purple-400"][
+                              i % 3
+                            ]
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-teal-400 font-medium">
+                      6 connections purchased from here
+                    </span>
+                  </div>
+                </Link>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Featured Businesses / Search Results Section */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {isSearching ? "Search Results" : "Featured Businesses"}
+            </h2>
+            {!isSearching && (
+              <Link
+                href="/business/directory"
+                className="text-sm font-semibold text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
+              >
+                View All →
+              </Link>
+            )}
+            {isSearching && (
+              <span className="text-sm text-slate-400">
+                {filteredVendors.length}{" "}
+                {filteredVendors.length === 1 ? "result" : "results"}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {(isSearching ? filteredVendors : featuredVendors.slice(0, 3)).map(
+              (vendor) => (
+                <VendorCard key={vendor.id} vendor={vendor} featured />
+              )
+            )}
+          </div>
+        </section>
+      </>
+    );
+  };
+
+  // Render Services Tab Content
+  const renderServicesTab = () => {
+    // Show error state
+    if (servicesError) {
+      return (
+        <ErrorState
+          title="Unable to load services"
+          description="We encountered a problem loading the services directory. Please try again."
+          onRetry={() => {
+            setServices([]);
+            setServicesError(null);
+          }}
+          testId="services-error-state"
+        />
+      );
+    }
+
+    // Loading state
+    if (servicesLoading) {
+      return (
+        <section className="mb-8">
+          <div className="h-6 w-48 bg-slate-800 rounded animate-pulse mb-6" />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-2xl bg-slate-800/50 h-64"
+              />
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // No services yet
+    if (services.length === 0) {
+      return (
+        <EmptyState
+          icon="services"
+          title="No services listed yet"
+          description="Be the first to list your professional services on IOPPS."
+          ctaLabel="Add a Service"
+          ctaHref="/organization/services/new"
+          testId="services-empty-no-services"
+        />
+      );
+    }
+
+    // Search with no results
+    const isSearching = servicesSearch.trim().length > 0;
+    if (isSearching && filteredServices.length === 0) {
+      return (
+        <EmptyState
+          icon="search"
+          title="No services found"
+          description="Try adjusting your search terms."
+          ctaLabel="Clear search"
+          onCta={() => setServicesSearch("")}
+          testId="services-empty-no-results"
+        />
+      );
+    }
+
+    // Service categories for browsing
+    const serviceCategories = [
+      { icon: "💼", label: "Consulting", value: "consulting", color: "from-blue-500/20 to-indigo-500/20" },
+      { icon: "⚖️", label: "Legal", value: "legal", color: "from-purple-500/20 to-violet-500/20" },
+      { icon: "📊", label: "Finance", value: "finance", color: "from-emerald-500/20 to-teal-500/20" },
+      { icon: "🎨", label: "Creative", value: "creative", color: "from-pink-500/20 to-rose-500/20" },
+    ];
+
+    return (
+      <>
+        {/* Service Categories */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-400 mb-4">
+            Browse by Category
+          </h2>
+          <div className="grid grid-cols-4 gap-3">
+            {serviceCategories.map((cat) => (
+              <button
+                key={cat.label}
+                onClick={() => setServicesSearch(cat.value)}
+                className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:-translate-y-0.5"
+              >
+                <div
+                  className={`h-10 w-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center text-xl`}
+                >
+                  {cat.icon}
+                </div>
+                <span className="text-xs text-slate-300 font-medium">
+                  {cat.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Search Bar for Services */}
+        <section className="mb-6">
+          <div className="relative max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search services..."
+              value={servicesSearch}
+              onChange={(e) => setServicesSearch(e.target.value)}
+              className="w-full rounded-lg bg-slate-800/50 border border-slate-700 py-2.5 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            />
+          </div>
+        </section>
+
+        {/* Services Grid */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {isSearching ? "Search Results" : "Featured Services"}
+            </h2>
+            {isSearching && (
+              <span className="text-sm text-slate-400">
+                {filteredServices.length}{" "}
+                {filteredServices.length === 1 ? "result" : "results"}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredServices.map((service) => (
+              <ServiceCard key={service.id} service={service} featured={service.featured} />
+            ))}
+          </div>
+        </section>
+      </>
+    );
+  };
+
+  // Render Grants Tab Content
+  const renderGrantsTab = () => {
+    // Show error state
+    if (grantsError) {
+      return (
+        <ErrorState
+          title="Unable to load grants"
+          description="We encountered a problem loading the grants directory. Please try again."
+          onRetry={() => {
+            setGrants([]);
+            setGrantsError(null);
+          }}
+          testId="grants-error-state"
+        />
+      );
+    }
+
+    // Loading state
+    if (grantsLoading) {
+      return (
+        <section className="mb-8">
+          <div className="h-6 w-48 bg-slate-800 rounded animate-pulse mb-6" />
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse rounded-2xl bg-slate-800/50 h-64"
+              />
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // No grants yet
+    if (grants.length === 0) {
+      return (
+        <EmptyState
+          icon="grants"
+          title="No grants available yet"
+          description="Check back soon for funding opportunities for Indigenous businesses."
+          testId="grants-empty-no-grants"
+        />
+      );
+    }
+
+    // Search with no results
+    const isSearching = grantsSearch.trim().length > 0;
+    if (isSearching && filteredGrants.length === 0) {
+      return (
+        <EmptyState
+          icon="search"
+          title="No grants found"
+          description="Try adjusting your search terms."
+          ctaLabel="Clear search"
+          onCta={() => setGrantsSearch("")}
+          testId="grants-empty-no-results"
+        />
+      );
+    }
+
+    // Grant type categories
+    const grantTypes = [
+      { icon: "🚀", label: "Startup", value: "startup", color: "from-blue-500/20 to-indigo-500/20" },
+      { icon: "📈", label: "Expansion", value: "expansion", color: "from-purple-500/20 to-violet-500/20" },
+      { icon: "🌱", label: "Green", value: "green", color: "from-emerald-500/20 to-teal-500/20" },
+      { icon: "💡", label: "Innovation", value: "innovation", color: "from-amber-500/20 to-orange-500/20" },
+    ];
+
+    return (
+      <>
+        {/* Grant Type Categories */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-slate-400 mb-4">
+            Browse by Type
+          </h2>
+          <div className="grid grid-cols-4 gap-3">
+            {grantTypes.map((type) => (
+              <button
+                key={type.label}
+                onClick={() => setGrantsSearch(type.value)}
+                className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700 hover:-translate-y-0.5"
+              >
+                <div
+                  className={`h-10 w-10 rounded-lg bg-gradient-to-br ${type.color} flex items-center justify-center text-xl`}
+                >
+                  {type.icon}
+                </div>
+                <span className="text-xs text-slate-300 font-medium">
+                  {type.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Search Bar for Grants */}
+        <section className="mb-6">
+          <div className="relative max-w-md">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search grants..."
+              value={grantsSearch}
+              onChange={(e) => setGrantsSearch(e.target.value)}
+              className="w-full rounded-lg bg-slate-800/50 border border-slate-700 py-2.5 pl-11 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+          </div>
+        </section>
+
+        {/* Grants Grid */}
+        <section className="mb-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {isSearching ? "Search Results" : "Available Grants"}
+            </h2>
+            {isSearching && (
+              <span className="text-sm text-slate-400">
+                {filteredGrants.length}{" "}
+                {filteredGrants.length === 1 ? "result" : "results"}
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredGrants.map((grant) => (
+              <GrantCard key={grant.id} grant={grant} featured={grant.featured} />
+            ))}
+          </div>
+        </section>
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen text-slate-100">
+      {/* Hero Section with Gradient */}
+      <section className="relative overflow-hidden">
+        {/* Background Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-cyan-500 to-blue-500" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:py-12">
+          {/* Eyebrow */}
+          <p className="text-sm font-semibold uppercase tracking-wider text-white/80 mb-2">
+            Shop Indigenous
+          </p>
+
+          {/* Title */}
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
+            Support Indigenous Businesses
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-white/80 max-w-2xl mb-6">
+            Discover authentic Indigenous-owned businesses, artisans, and
+            service providers across Turtle Island.
+          </p>
+
+          {/* Tab Pills */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => handleTabChange("shop")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "shop"
+                  ? "bg-white text-teal-700 shadow-lg"
+                  : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
+              }`}
+            >
+              Shop
+            </button>
+            <button
+              onClick={() => handleTabChange("services")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "services"
+                  ? "bg-white text-teal-700 shadow-lg"
+                  : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
+              }`}
+            >
+              Services
+            </button>
+            <button
+              onClick={() => handleTabChange("grants")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "grants"
+                  ? "bg-white text-teal-700 shadow-lg"
+                  : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
+              }`}
+            >
+              Grants
+            </button>
+          </div>
+
+          {/* Search Bar - only show for Shop tab (since others don't have searchable content yet) */}
+          {activeTab === "shop" && (
+            <div className="flex gap-3 max-w-xl">
+              <div className="relative flex-1">
+                <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+                <input
+                  type="text"
+                  placeholder={currentTabConfig.searchPlaceholder}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                />
+              </div>
             </div>
           )}
-        </section>
-      )}
+        </div>
+      </section>
 
+      <PageShell>
+        {/* Tab Content */}
+        {activeTab === "shop" && renderShopTab()}
+        {activeTab === "services" && renderServicesTab()}
+        {activeTab === "grants" && renderGrantsTab()}
       </PageShell>
 
-      {/* CTA Section - Ocean Wave Style (only for employers/admins) */}
+      {/* CTA Section - Context-aware by active tab (only for employers/admins) */}
       {canListBusiness && (
         <section className="relative overflow-hidden">
           <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
@@ -175,21 +794,24 @@ export default function MarketplacePage() {
                   Own an Indigenous Business?
                 </h2>
                 <p className="mt-3 text-white/80 max-w-2xl mx-auto">
-                  Join our growing community of Indigenous entrepreneurs. List your business and connect with customers across North America.
+                  Join our growing community of Indigenous entrepreneurs. List
+                  your business and connect with customers across North America.
                 </p>
                 <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
-                    href="/organization/shop"
+                    href={currentTabConfig.ctaHref}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                   >
-                    List Your Business
+                    {currentTabConfig.ctaLabel}
                   </Link>
-                  <Link
-                    href="/organization/services/new"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
-                  >
-                    Add a Service
-                  </Link>
+                  {activeTab === "shop" && (
+                    <Link
+                      href="/organization/services/new"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                    >
+                      Add a Service
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>

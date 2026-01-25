@@ -18,7 +18,10 @@ import {
   isErrorWithCode,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import { db, auth } from "../lib/firebase";
 
 // Google logo icon component
 function GoogleIcon() {
@@ -51,12 +54,39 @@ interface SignInScreenProps {
   navigation: any;
 }
 
+// Helper function to get user role and navigate accordingly
+async function navigateByRole(userId: string, navigation: any) {
+  try {
+    const userDoc = await getDoc(doc(db, "users", userId));
+    if (userDoc.exists()) {
+      const role = userDoc.data()?.role;
+      if (role === "employer" || role === "admin" || role === "moderator") {
+        // Navigate to employer dashboard for employer/admin users
+        navigation.reset({
+          index: 0,
+          routes: [
+            { name: "MainTabs" },
+            { name: "EmployerDashboard" },
+          ],
+        });
+        return;
+      }
+    }
+    // Default: go back to previous screen (community flow)
+    navigation.goBack();
+  } catch (error) {
+    console.error("Error checking user role:", error);
+    navigation.goBack();
+  }
+}
+
 export default function SignInScreen({ navigation }: SignInScreenProps) {
   const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   // Configure Google Sign-In on mount
   useEffect(() => {
@@ -76,7 +106,13 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
         const idToken = response.data.idToken;
         if (idToken) {
           await signInWithGoogle(idToken);
-          navigation.goBack();
+          // Navigate based on user role
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            await navigateByRole(currentUser.uid, navigation);
+          } else {
+            navigation.goBack();
+          }
         } else {
           Alert.alert("Sign In Failed", "Could not get authentication token.");
         }
@@ -112,7 +148,13 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      navigation.goBack();
+      // Navigate based on user role
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await navigateByRole(currentUser.uid, navigation);
+      } else {
+        navigation.goBack();
+      }
     } catch (error: any) {
       let message = "Failed to sign in";
       if (error.code === "auth/invalid-credential") {
@@ -125,6 +167,44 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       Alert.alert("Sign In Failed", message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert(
+        "Enter Email",
+        "Please enter your email address above, then tap 'Forgot password?' again.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      Alert.alert(
+        "Check Your Email",
+        `We've sent a password reset link to ${email.trim()}. Please check your inbox and spam folder.`,
+        [{ text: "OK" }]
+      );
+    } catch (error: any) {
+      let message = "Failed to send reset email. Please try again.";
+      if (error.code === "auth/invalid-email") {
+        message = "Please enter a valid email address.";
+      } else if (error.code === "auth/user-not-found") {
+        // Don't reveal if user exists for security
+        Alert.alert(
+          "Check Your Email",
+          "If an account exists with this email, you will receive a password reset link.",
+          [{ text: "OK" }]
+        );
+        setResetLoading(false);
+        return;
+      }
+      Alert.alert("Error", message);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -178,9 +258,12 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 
           <TouchableOpacity
             style={styles.forgotPassword}
-            onPress={() => Alert.alert("Reset Password", "Password reset feature coming soon")}
+            onPress={handleForgotPassword}
+            disabled={resetLoading}
           >
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            <Text style={styles.forgotPasswordText}>
+              {resetLoading ? "Sending..." : "Forgot password?"}
+            </Text>
           </TouchableOpacity>
 
           {/* Divider */}

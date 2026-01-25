@@ -16,7 +16,8 @@ import {
   applicationsCollection,
   jobsCollection,
 } from "./shared";
-import type { JobApplication, ApplicationStatus } from "@/lib/types";
+import type { JobApplication, ApplicationStatus, ApplicantNote, ApplicationStageEntry } from "@/lib/types";
+import { arrayUnion, arrayRemove } from "firebase/firestore";
 import { createNotification } from "./notifications";
 
 type ApplicationInput = {
@@ -154,14 +155,24 @@ export async function listEmployerApplications(
 
 export async function updateApplicationStatus(
   applicationId: string,
-  status: ApplicationStatus
+  status: ApplicationStatus,
+  options?: { changedBy?: string; note?: string }
 ) {
   const ref = doc(db!, applicationsCollection, applicationId);
   const appSnap = await getDoc(ref);
   const appData = appSnap.data();
 
+  // Create stage history entry
+  const stageEntry: ApplicationStageEntry = {
+    status,
+    timestamp: new Date(),
+    changedBy: options?.changedBy,
+    note: options?.note,
+  };
+
   await updateDoc(ref, {
     status,
+    stageHistory: arrayUnion(stageEntry),
     updatedAt: serverTimestamp(),
   });
 
@@ -180,6 +191,8 @@ export async function updateApplicationStatus(
         submitted: "has been submitted",
         reviewed: "is being reviewed",
         shortlisted: "has been shortlisted!",
+        interviewing: "is moving to the interview stage!",
+        offered: "has received an offer!",
         rejected: "was not selected to move forward",
         hired: "was successful - Congratulations!",
         withdrawn: "has been withdrawn",
@@ -206,6 +219,88 @@ export async function withdrawJobApplication(applicationId: string) {
   const ref = doc(db!, applicationsCollection, applicationId);
   await updateDoc(ref, {
     status: "withdrawn" as ApplicationStatus,
+    updatedAt: serverTimestamp(),
+  });
+}
+export function getOrganizationApplicationsQuery(employerId: string) {
+  return query(
+    collection(db!, applicationsCollection),
+    where("employerId", "==", employerId),
+    where("status", "==", "submitted")
+  );
+}
+
+// ============================================
+// APPLICANT NOTES
+// ============================================
+
+export async function addApplicantNote(
+  applicationId: string,
+  note: { content: string; createdBy: string; createdByName?: string }
+): Promise<ApplicantNote> {
+  const noteId = `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const newNote: ApplicantNote = {
+    id: noteId,
+    content: note.content,
+    createdBy: note.createdBy,
+    createdByName: note.createdByName,
+    createdAt: null, // Will be set by serverTimestamp in the update
+  };
+
+  const ref = doc(db!, applicationsCollection, applicationId);
+
+  // We need to manually set the timestamp since arrayUnion doesn't support serverTimestamp
+  const noteWithTimestamp = {
+    ...newNote,
+    createdAt: new Date(),
+  };
+
+  await updateDoc(ref, {
+    employerNotes: arrayUnion(noteWithTimestamp),
+    updatedAt: serverTimestamp(),
+  });
+
+  return noteWithTimestamp as unknown as ApplicantNote;
+}
+
+export async function updateApplicantNote(
+  applicationId: string,
+  noteId: string,
+  content: string
+): Promise<void> {
+  const ref = doc(db!, applicationsCollection, applicationId);
+  const snap = await getDoc(ref);
+  const data = snap.data() as JobApplication;
+
+  if (!data.employerNotes) return;
+
+  const updatedNotes = data.employerNotes.map((note) =>
+    note.id === noteId
+      ? { ...note, content, updatedAt: new Date() }
+      : note
+  );
+
+  await updateDoc(ref, {
+    employerNotes: updatedNotes,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteApplicantNote(
+  applicationId: string,
+  noteId: string
+): Promise<void> {
+  const ref = doc(db!, applicationsCollection, applicationId);
+  const snap = await getDoc(ref);
+  const data = snap.data() as JobApplication;
+
+  if (!data.employerNotes) return;
+
+  const noteToRemove = data.employerNotes.find((note) => note.id === noteId);
+  if (!noteToRemove) return;
+
+  await updateDoc(ref, {
+    employerNotes: arrayRemove(noteToRemove),
     updatedAt: serverTimestamp(),
   });
 }

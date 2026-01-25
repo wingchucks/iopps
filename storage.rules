@@ -28,16 +28,34 @@ service firebase.storage {
     // ===========================================================================
     // USER PROFILE PICTURES
     // ===========================================================================
-    match /users/{userId}/profile/{fileName} {
+    match /users/{userId}/avatar/{fileName} {
       // Public read for profile pictures
       allow read: if true;
-      
+
       // Users can upload their own profile picture
       // Max 5MB, must be image
-      allow write: if isSignedIn() 
-                   && request.auth.uid == userId 
-                   && isImage() 
+      allow write: if isSignedIn()
+                   && request.auth.uid == userId
+                   && isImage()
                    && isValidSize(5);
+    }
+
+    // ===========================================================================
+    // USER AVATAR PICTURES (alternate path)
+    // ===========================================================================
+    match /users/{userId}/avatar/{fileName} {
+      // Public read for avatars
+      allow read: if true;
+
+      // Users can upload their own avatar
+      // Max 5MB, must be image
+      allow write: if isSignedIn()
+                   && request.auth.uid == userId
+                   && isImage()
+                   && isValidSize(5);
+
+      // Users can delete their own avatar
+      allow delete: if isSignedIn() && request.auth.uid == userId;
     }
     
     // ===========================================================================
@@ -114,11 +132,12 @@ service firebase.storage {
       // Public read
       allow read: if true;
 
-      // Only the employer owner can upload
+      // Employer owner or admin can upload
+      // Max 10MB, must be image
       allow write: if isSignedIn()
                    && request.auth.uid == employerId
                    && isImage()
-                   && isValidSize(5);
+                   && isValidSize(10);
     }
 
     // ===========================================================================

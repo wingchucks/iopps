@@ -12,6 +12,7 @@ import {
 } from "@/lib/firestore";
 import type { RSSFeed, EmployerProfile } from "@/lib/types";
 import FeedForm from "./FeedForm";
+import toast from "react-hot-toast";
 
 interface FieldMappings {
     jobIdOrUrl?: string;
@@ -187,13 +188,13 @@ export default function AdminFeedsPage() {
                 // Show detailed error with hint if available
                 let errorMessage = `Error detecting fields: ${result.error}`;
                 if (result.hint) {
-                    errorMessage += `\n\nHint: ${result.hint}`;
+                    errorMessage += ` Hint: ${result.hint}`;
                 }
-                alert(errorMessage);
+                toast.error(errorMessage);
             }
         } catch (error) {
             console.error("Error detecting fields:", error);
-            alert("Failed to detect fields from feed");
+            toast.error("Failed to detect fields from feed");
         } finally {
             setDetectingFields(false);
         }
@@ -252,7 +253,7 @@ export default function AdminFeedsPage() {
     async function handleAddFeed(e: React.FormEvent) {
         e.preventDefault();
         if (!feedName || !feedUrl || !employerId) {
-            alert("Please fill in all required fields");
+            toast.error("Please fill in all required fields");
             return;
         }
 
@@ -304,14 +305,14 @@ export default function AdminFeedsPage() {
             loadData();
         } catch (error) {
             console.error("Error adding feed:", error);
-            alert("Failed to add feed");
+            toast.error("Failed to add feed");
         }
     }
 
     async function handleUpdateFeed(e: React.FormEvent) {
         e.preventDefault();
         if (!editingFeed || !feedName || !feedUrl || !employerId) {
-            alert("Please fill in all required fields");
+            toast.error("Please fill in all required fields");
             return;
         }
 
@@ -363,7 +364,7 @@ export default function AdminFeedsPage() {
             loadData();
         } catch (error) {
             console.error("Error updating feed:", error);
-            alert("Failed to update feed");
+            toast.error("Failed to update feed");
         }
     }
 
@@ -384,17 +385,16 @@ export default function AdminFeedsPage() {
 
             const result = await response.json();
             if (response.ok) {
-                alert(
-                    `Success!\n\nImported: ${result.jobsImported} jobs\nUpdated: ${result.jobsUpdated || 0} jobs\nSkipped (duplicates): ${result.jobsSkipped}\nTotal in feed: ${result.totalJobsInFeed}${result.errors.length > 0 ? `\n\nWarnings:\n${result.errors.slice(0, 3).join("\n")}` : ""
-                    }`
+                toast.success(
+                    `Imported: ${result.jobsImported} jobs, Updated: ${result.jobsUpdated || 0} jobs, Skipped: ${result.jobsSkipped}`
                 );
                 loadData();
             } else {
-                alert(`Error: ${result.error}`);
+                toast.error(`Error: ${result.error}`);
             }
         } catch (error) {
             console.error("Sync error:", error);
-            alert("Failed to sync feed");
+            toast.error("Failed to sync feed");
         } finally {
             setSyncing(null);
         }
@@ -406,7 +406,7 @@ export default function AdminFeedsPage() {
             loadData();
         } catch (error) {
             console.error("Error toggling feed:", error);
-            alert("Failed to update feed status");
+            toast.error("Failed to update feed status");
         }
     }
 
@@ -420,7 +420,7 @@ export default function AdminFeedsPage() {
             loadData();
         } catch (error) {
             console.error("Error deleting feed:", error);
-            alert("Failed to delete feed");
+            toast.error("Failed to delete feed");
         }
     }
 

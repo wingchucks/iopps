@@ -1,20 +1,34 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/components/AuthProvider";
-import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
+import { getMemberProfile, upsertMemberProfile, getMemberSettings, updatePrivacySettings, DEFAULT_MEMBER_SETTINGS, type FieldPrivacySettings, type FieldVisibility } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
-import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
+import type { WorkExperience, Education, PortfolioItem, MemberProfile } from "@/lib/types";
+import { PrivacyIndicator } from "@/components/profile/PrivacyIndicator";
+import { ProfilePreviewModal } from "@/components/profile/ProfilePreviewModal";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function ProfileTab() {
+interface ProfileTabProps {
+  initialProfile?: MemberProfile | null;
+  onProfileUpdate?: (profile: MemberProfile) => void;
+}
+
+export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileTabProps) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Form states
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
@@ -34,38 +48,63 @@ export default function ProfileTab() {
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<PortfolioItem | null>(null);
 
-  // Load profile
+  // Privacy settings state
+  const [fieldPrivacy, setFieldPrivacy] = useState<FieldPrivacySettings>(DEFAULT_MEMBER_SETTINGS.fieldPrivacy);
+  const [showPrivacyControls, setShowPrivacyControls] = useState(false);
+  const [showProfilePreview, setShowProfilePreview] = useState(false);
+
+  // Initialize from prop or load from Firestore
+  const initializeFromProfile = useCallback((profile: MemberProfile | null) => {
+    if (profile) {
+      setDisplayName(profile.displayName || "");
+      setAvatarUrl(profile.avatarUrl || profile.photoURL || "");
+      setBio(profile.bio || "");
+      setLocation(profile.location || "");
+      setSkills(profile.skills || []);
+      setExperience(profile.experience || []);
+      setEducation(profile.education || []);
+      setPortfolio(profile.portfolio || []);
+      setResumeUrl(profile.resumeUrl || "");
+      setIndigenousAffiliation(profile.indigenousAffiliation || "");
+      setMessagingHandle(profile.messagingHandle || "");
+      setAvailability(profile.availableForInterviews || "");
+    }
+  }, []);
+
+  // Load profile from prop or fetch
   useEffect(() => {
-    if (!user) return;
+    if (initialized) return;
 
-    const loadProfile = async () => {
+    const loadData = async () => {
       try {
-        const profile = await getMemberProfile(user.uid);
+        if (initialProfile) {
+          initializeFromProfile(initialProfile);
+        } else if (user) {
+          const profile = await getMemberProfile(user.uid);
+          initializeFromProfile(profile);
+        }
 
-        if (profile) {
-          setDisplayName(profile.displayName || "");
-          setLocation(profile.location || "");
-          setSkills(profile.skills || []);
-          setExperience(profile.experience || []);
-          setEducation(profile.education || []);
-          setPortfolio(profile.portfolio || []);
-          setResumeUrl(profile.resumeUrl || "");
-          setIndigenousAffiliation(profile.indigenousAffiliation || "");
-          setMessagingHandle(profile.messagingHandle || "");
-          setAvailability(profile.availableForInterviews || "");
+        // Load privacy settings
+        if (user) {
+          const settings = await getMemberSettings(user.uid);
+          setFieldPrivacy(settings.fieldPrivacy);
         }
       } catch (error) {
         console.error("Error loading profile:", error);
+      } finally {
+        setInitialized(true);
       }
     };
 
-    loadProfile();
-  }, [user]);
+    loadData();
+  }, [user, initialProfile, initialized, initializeFromProfile]);
 
   // Calculate profile completeness
   const profileCompletion = useMemo(() => {
     const fields = [
       displayName,
+      avatarUrl,
+      bio,
       location,
       skills.length > 0 ? "skills" : "",
       experience.length > 0 ? "experience" : "",
@@ -77,16 +116,24 @@ export default function ProfileTab() {
     ];
     const filled = fields.filter((field) => field && field.toString().trim().length > 0).length;
     return Math.round((filled / fields.length) * 100) || 0;
-  }, [availability, displayName, education, experience, indigenousAffiliation, location, messagingHandle, resumeUrl, skills]);
+  }, [availability, avatarUrl, bio, displayName, education, experience, indigenousAffiliation, location, messagingHandle, resumeUrl, skills]);
 
   // Save profile
   const handleSave = async () => {
     if (!user) return;
 
+    // Validate character limits
+    if (bio.length > 500) {
+      toast.error("About Me must be 500 characters or less");
+      return;
+    }
+
     setSaving(true);
     try {
-      await upsertMemberProfile(user.uid, {
+      const updatedProfile = {
         displayName,
+        avatarUrl,
+        bio: bio.slice(0, 500), // Enforce limit on save
         location,
         skills,
         experience,
@@ -96,11 +143,21 @@ export default function ProfileTab() {
         indigenousAffiliation,
         messagingHandle,
         availableForInterviews: availability,
-      });
-      alert("Profile saved successfully!");
+      };
+      await upsertMemberProfile(user.uid, updatedProfile);
+
+      // Notify parent of the update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
+      toast.success("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
-      alert("Error saving profile. Please try again.");
+      toast.error("Error saving profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -114,13 +171,13 @@ export default function ProfileTab() {
     // Validate file type
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a PDF or Word document");
+      toast.error("Please upload a PDF or Word document");
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -147,10 +204,10 @@ export default function ProfileTab() {
         resumeUrl: url,
       });
 
-      alert("Resume uploaded and saved successfully!");
+      toast.success("Resume uploaded and saved successfully!");
     } catch (error) {
       console.error("Error uploading resume:", error);
-      alert("Error uploading resume. Please try again.");
+      toast.error("Error uploading resume. Please try again.");
     } finally {
       setUploadingResume(false);
     }
@@ -173,10 +230,96 @@ export default function ProfileTab() {
       });
 
       setResumeUrl("");
-      alert("Resume deleted successfully!");
+      toast.success("Resume deleted successfully!");
     } catch (error) {
       console.error("Error deleting resume:", error);
-      alert("Error deleting resume. Please try again.");
+      toast.error("Error deleting resume. Please try again.");
+    }
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please upload a JPG, PNG, GIF, or WebP image");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      // Upload new photo
+      const photoRef = ref(storage!, `users/${user.uid}/avatar/profile.${file.name.split('.').pop()}`);
+      await uploadBytes(photoRef, file);
+      const url = await getDownloadURL(photoRef);
+      setAvatarUrl(url);
+
+      // Auto-save avatar URL to profile
+      await upsertMemberProfile(user.uid, {
+        avatarUrl: url,
+      });
+
+      // Notify parent of update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
+      toast.success("Profile photo uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast.error("Error uploading photo. Please try again.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Handle photo delete
+  const handlePhotoDelete = async () => {
+    if (!user || !avatarUrl || !confirm("Are you sure you want to delete your profile photo?")) return;
+
+    try {
+      // Try to delete from storage
+      try {
+        const urlParts = avatarUrl.split('/');
+        const fileName = decodeURIComponent(urlParts[urlParts.length - 1].split('?')[0]);
+        const photoRef = ref(storage!, `users/${user.uid}/avatar/${fileName}`);
+        await deleteObject(photoRef);
+      } catch {
+        // Photo might not exist in storage or different path
+        console.log("Could not delete from storage, continuing...");
+      }
+
+      // Update profile to remove avatar URL
+      await upsertMemberProfile(user.uid, {
+        avatarUrl: "",
+      });
+
+      setAvatarUrl("");
+
+      // Notify parent of update
+      if (onProfileUpdate) {
+        const fullProfile = await getMemberProfile(user.uid);
+        if (fullProfile) {
+          onProfileUpdate(fullProfile);
+        }
+      }
+
+      toast.success("Profile photo deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      toast.error("Error deleting photo. Please try again.");
     }
   };
 
@@ -197,6 +340,24 @@ export default function ProfileTab() {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddSkill();
+    }
+  };
+
+  // Handle privacy setting change
+  const handlePrivacyChange = async (field: keyof FieldPrivacySettings, value: FieldVisibility) => {
+    if (!user) return;
+
+    const newPrivacy = { ...fieldPrivacy, [field]: value };
+    setFieldPrivacy(newPrivacy);
+
+    try {
+      await updatePrivacySettings(user.uid, { fieldPrivacy: { [field]: value } });
+      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} visibility updated`);
+    } catch (error) {
+      console.error("Error updating privacy:", error);
+      toast.error("Error updating privacy setting");
+      // Revert on error
+      setFieldPrivacy(fieldPrivacy);
     }
   };
 
@@ -259,6 +420,35 @@ export default function ProfileTab() {
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-white">Profile Management</h2>
             <p className="mt-2 text-slate-400">Manage your professional information and settings</p>
+
+            {/* Privacy Controls Toggle and Preview */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPrivacyControls(!showPrivacyControls)}
+                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  showPrivacyControls
+                    ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                    : "bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-600"
+                }`}
+              >
+                {showPrivacyControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPrivacyControls ? "Hide Privacy Controls" : "Show Privacy Controls"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowProfilePreview(true)}
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors"
+              >
+                <Eye className="h-4 w-4" />
+                Preview Profile
+              </button>
+            </div>
+            {showPrivacyControls && (
+              <p className="mt-2 text-xs text-slate-500">
+                Click the badges next to each field to control who can see your information
+              </p>
+            )}
           </div>
 
           {/* Profile Completeness Circle */}
@@ -305,6 +495,69 @@ export default function ProfileTab() {
         )}
       </div>
 
+      {/* Profile Photo */}
+      <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
+        <h3 className="mb-6 text-xl font-bold text-white">Profile Photo</h3>
+        <div className="flex items-center gap-6">
+          {/* Photo Preview */}
+          <div className="relative">
+            {avatarUrl ? (
+              <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-emerald-500/30">
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-emerald-500/30 bg-slate-900/50">
+                <svg className="h-10 w-10 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            )}
+            {uploadingPhoto && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              </div>
+            )}
+          </div>
+
+          {/* Upload/Delete Actions */}
+          <div className="flex-1">
+            <p className="mb-3 text-sm text-slate-400">
+              Upload a professional photo. JPG, PNG, GIF or WebP (max 5MB)
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50"
+              >
+                {uploadingPhoto ? "Uploading..." : avatarUrl ? "Change Photo" : "Upload Photo"}
+              </button>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handlePhotoDelete}
+                  className="rounded-xl border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          onChange={handlePhotoUpload}
+          className="hidden"
+        />
+      </section>
+
       {/* Basic Information */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <h3 className="mb-6 text-xl font-bold text-white">Basic Information</h3>
@@ -321,7 +574,55 @@ export default function ProfileTab() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Location</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-300">About Me</label>
+              {showPrivacyControls && (
+                <PrivacyIndicator
+                  visibility={fieldPrivacy.bio}
+                  onChange={(v) => handlePrivacyChange("bio", v)}
+                  fieldName="Bio"
+                  editable
+                />
+              )}
+            </div>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value.slice(0, 500))}
+              rows={4}
+              maxLength={500}
+              className={`w-full rounded-xl border bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:outline-none focus:ring-2 ${
+                bio.length >= 500
+                  ? "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20"
+                  : bio.length >= 450
+                  ? "border-amber-500/50 focus:border-amber-500/50 focus:ring-amber-500/20"
+                  : "border-emerald-500/20 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+              }`}
+              placeholder="Write a brief introduction about yourself, your background, and what you're looking for..."
+            />
+            <p className={`mt-1 text-xs ${
+              bio.length >= 500
+                ? "text-red-400 font-medium"
+                : bio.length >= 450
+                ? "text-amber-400"
+                : "text-slate-500"
+            }`}>
+              {bio.length}/500 characters
+              {bio.length >= 500 && " (limit reached)"}
+            </p>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-300">Location</label>
+              {showPrivacyControls && (
+                <PrivacyIndicator
+                  visibility={fieldPrivacy.location}
+                  onChange={(v) => handlePrivacyChange("location", v)}
+                  fieldName="Location"
+                  editable
+                />
+              )}
+            </div>
             <input
               type="text"
               value={location}
@@ -332,7 +633,17 @@ export default function ProfileTab() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Indigenous Affiliation</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-300">Indigenous Affiliation</label>
+              {showPrivacyControls && (
+                <PrivacyIndicator
+                  visibility={fieldPrivacy.affiliation}
+                  onChange={(v) => handlePrivacyChange("affiliation", v)}
+                  fieldName="Affiliation"
+                  editable
+                />
+              )}
+            </div>
             <input
               type="text"
               value={indigenousAffiliation}
@@ -371,7 +682,17 @@ export default function ProfileTab() {
 
       {/* Skills Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
-        <h3 className="mb-6 text-xl font-bold text-white">Skills</h3>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Skills</h3>
+          {showPrivacyControls && (
+            <PrivacyIndicator
+              visibility={fieldPrivacy.skills}
+              onChange={(v) => handlePrivacyChange("skills", v)}
+              fieldName="Skills"
+              editable
+            />
+          )}
+        </div>
 
         {/* Skills Input */}
         <div className="mb-4 flex gap-2">
@@ -416,7 +737,17 @@ export default function ProfileTab() {
       {/* Work Experience Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Work Experience</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">Work Experience</h3>
+            {showPrivacyControls && (
+              <PrivacyIndicator
+                visibility={fieldPrivacy.experience}
+                onChange={(v) => handlePrivacyChange("experience", v)}
+                fieldName="Experience"
+                editable
+              />
+            )}
+          </div>
           <button
             onClick={() => {
               setEditingExperience(null);
@@ -473,7 +804,17 @@ export default function ProfileTab() {
       {/* Education Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Education</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">Education</h3>
+            {showPrivacyControls && (
+              <PrivacyIndicator
+                visibility={fieldPrivacy.education}
+                onChange={(v) => handlePrivacyChange("education", v)}
+                fieldName="Education"
+                editable
+              />
+            )}
+          </div>
           <button
             onClick={() => {
               setEditingEducation(null);
@@ -530,7 +871,17 @@ export default function ProfileTab() {
       {/* Portfolio Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Portfolio & Projects</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">Portfolio & Projects</h3>
+            {showPrivacyControls && (
+              <PrivacyIndicator
+                visibility={fieldPrivacy.portfolio}
+                onChange={(v) => handlePrivacyChange("portfolio", v)}
+                fieldName="Portfolio"
+                editable
+              />
+            )}
+          </div>
           <button
             onClick={() => {
               setEditingPortfolio(null);
@@ -605,7 +956,17 @@ export default function ProfileTab() {
 
       {/* Resume Section */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
-        <h3 className="mb-6 text-xl font-bold text-white">Resume / CV</h3>
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-xl font-bold text-white">Resume / CV</h3>
+          {showPrivacyControls && (
+            <PrivacyIndicator
+              visibility={fieldPrivacy.resume}
+              onChange={(v) => handlePrivacyChange("resume", v)}
+              fieldName="Resume"
+              editable
+            />
+          )}
+        </div>
 
         {resumeUrl ? (
           <div className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6">
@@ -718,6 +1079,27 @@ export default function ProfileTab() {
           }}
         />
       )}
+
+      {/* Profile Preview Modal */}
+      {showProfilePreview && (
+        <ProfilePreviewModal
+          profile={{
+            displayName,
+            avatarUrl,
+            bio,
+            location,
+            indigenousAffiliation,
+            skills,
+            experience,
+            education,
+            portfolio,
+            availableForInterviews: availability,
+            messagingHandle,
+          }}
+          fieldPrivacy={fieldPrivacy}
+          onClose={() => setShowProfilePreview(false)}
+        />
+      )}
     </div>
   );
 }
@@ -745,6 +1127,15 @@ function ExperienceModal({
     }
   );
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.company && formData.position && formData.startDate) {
@@ -752,9 +1143,24 @@ function ExperienceModal({
     }
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {experience ? "Edit" : "Add"} Work Experience
         </h3>
@@ -887,6 +1293,15 @@ function EducationModal({
     }
   );
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.institution && formData.degree && formData.startDate) {
@@ -894,9 +1309,24 @@ function EducationModal({
     }
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {education ? "Edit" : "Add"} Education
         </h3>
@@ -1027,6 +1457,15 @@ function PortfolioModal({
   );
   const [tagInput, setTagInput] = useState("");
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.title && formData.description) {
@@ -1046,9 +1485,24 @@ function PortfolioModal({
     setFormData({ ...formData, tags: formData.tags?.filter((t) => t !== tag) });
   };
 
+  // Handle backdrop click
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-900 to-slate-950 p-8 shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Close modal"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h3 className="mb-6 text-2xl font-bold text-white">
           {item ? "Edit" : "Add"} Portfolio Item
         </h3>

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { listJobPostings } from "@/lib/firestore";
-import type { JobPosting } from "@/lib/types";
+import { listJobPostings, getMemberProfile } from "@/lib/firestore";
+import { useAuth } from "@/components/AuthProvider";
+import JobMatchBadge from "@/components/jobs/JobMatchBadge";
+import type { JobPosting, MemberProfile } from "@/lib/types";
 
 const EMPLOYMENT_TYPES = [
   { value: "", label: "All Types" },
@@ -15,12 +17,23 @@ const EMPLOYMENT_TYPES = [
 ];
 
 export function JobsTabContent() {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [indigenousOnly, setIndigenousOnly] = useState(false);
+  const [memberProfile, setMemberProfile] = useState<MemberProfile | null>(null);
+
+  // Fetch member profile for logged-in users
+  useEffect(() => {
+    if (user) {
+      getMemberProfile(user.uid).then(setMemberProfile).catch(() => setMemberProfile(null));
+    } else {
+      setMemberProfile(null);
+    }
+  }, [user]);
 
   useEffect(() => {
     loadJobs();
@@ -163,7 +176,7 @@ export function JobsTabContent() {
           {filteredJobs.map((job) => (
             <Link
               key={job.id}
-              href={`/jobs-training/${job.id}`}
+              href={`/careers/${job.id}`}
               className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
             >
               <div className="flex items-center gap-5">
@@ -175,6 +188,9 @@ export function JobsTabContent() {
                     <span className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
                       {job.title}
                     </span>
+                    {memberProfile && (
+                      <JobMatchBadge job={job} profile={memberProfile} showDetails />
+                    )}
                     {job.indigenousPreference && (
                       <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6] uppercase">
                         Indigenous Preference

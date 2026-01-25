@@ -8,7 +8,8 @@ import { getEmployerConversations, getConversation } from "@/lib/firestore";
 import type { Conversation } from "@/lib/types";
 import ConversationList from "@/components/messaging/ConversationList";
 import MessageThread from "@/components/messaging/MessageThread";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 function EmployerMessagesContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -20,6 +21,20 @@ function EmployerMessagesContent() {
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter conversations by search query
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return conversations;
+    const query = searchQuery.toLowerCase();
+    return conversations.filter(
+      (c) =>
+        c.memberName?.toLowerCase().includes(query) ||
+        c.memberEmail?.toLowerCase().includes(query) ||
+        c.jobTitle?.toLowerCase().includes(query) ||
+        c.lastMessage?.toLowerCase().includes(query)
+    );
+  }, [conversations, searchQuery]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -134,11 +149,22 @@ function EmployerMessagesContent() {
           <div className="grid h-[calc(100vh-280px)] min-h-[500px] md:grid-cols-[320px_1fr]">
             {/* Conversation List */}
             <div className="border-r border-slate-800 overflow-y-auto">
-              <div className="border-b border-slate-800 p-4">
+              <div className="border-b border-slate-800 p-4 space-y-3">
                 <h2 className="font-semibold text-white">Conversations</h2>
+                {/* Search */}
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search conversations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
+                  />
+                </div>
               </div>
               <ConversationList
-                conversations={conversations}
+                conversations={filteredConversations}
                 selectedId={selectedConversation?.id}
                 onSelect={handleSelectConversation}
                 userType="employer"

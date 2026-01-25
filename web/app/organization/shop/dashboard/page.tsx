@@ -22,10 +22,12 @@ import {
 } from '@heroicons/react/24/outline';
 import { VENDOR_PRODUCTS, type VendorProductType } from '@/lib/stripe';
 import { getAuth } from 'firebase/auth';
+import toast from "react-hot-toast";
 import { useAuth } from '@/components/AuthProvider';
 import { PageShell } from '@/components/PageShell';
 import UpgradeToEmployerCard from '@/components/UpgradeToEmployerCard';
 import { getVendorByUserId, createVendor, updateVendor, getVendorProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/shop';
+import VendorAnalytics from '@/components/shop/VendorAnalytics';
 import { uploadProfileImage, uploadCoverImage, uploadGalleryImage, uploadGalleryImages } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct, VendorCategory, NorthAmericanRegion } from '@/lib/types';
 import { VENDOR_CATEGORIES, NORTH_AMERICAN_REGIONS } from '@/lib/types';
@@ -151,15 +153,15 @@ export default function VendorDashboard() {
         setVendor(newVendor);
         setIsNewVendor(false);
         setActiveTab('overview');
-        alert('Profile created successfully!');
+        toast.success('Profile created successfully!');
       } else if (vendor) {
         await updateVendor(vendor.id, formData);
         await loadVendor();
-        alert('Profile saved successfully!');
+        toast.success('Profile saved successfully!');
       }
     } catch (error: any) {
       console.error('Error saving vendor:', error);
-      alert(`Failed to save profile: ${error?.message || 'Unknown error'}`);
+      toast.error(`Failed to save profile: ${error?.message || 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -193,7 +195,7 @@ export default function VendorDashboard() {
       setEditingProduct(null);
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Failed to save product. Please try again.');
+      toast.error('Failed to save product. Please try again.');
     }
   };
 
@@ -205,7 +207,7 @@ export default function VendorDashboard() {
       await loadVendor();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      toast.error('Failed to delete product. Please try again.');
     }
   };
 
@@ -324,42 +326,8 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
-                  <EyeIcon className="h-5 w-5 text-teal-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{vendor.viewCount || 0}</p>
-                  <p className="text-sm text-slate-400">Profile Views</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-                  <PhotoIcon className="h-5 w-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{products.length}</p>
-                  <p className="text-sm text-slate-400">Products Listed</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-                  <ChartBarIcon className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{typeof vendor.region === 'string' ? vendor.region : 'N/A'}</p>
-                  <p className="text-sm text-slate-400">Region</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Analytics Dashboard */}
+          <VendorAnalytics />
 
           {/* Quick Actions */}
           {vendor.status === 'draft' && (
@@ -588,7 +556,7 @@ export default function VendorDashboard() {
                             setFormData({ ...formData, logoUrl: url });
                           } catch (error) {
                             console.error('Failed to upload logo:', error);
-                            alert('Failed to upload logo. Please try again.');
+                            toast.error('Failed to upload logo. Please try again.');
                           } finally {
                             setUploadingLogo(false);
                           }
@@ -673,7 +641,7 @@ export default function VendorDashboard() {
                           setFormData({ ...formData, coverImageUrl: url });
                         } catch (error) {
                           console.error('Failed to upload cover image:', error);
-                          alert('Failed to upload cover image. Please try again.');
+                          toast.error('Failed to upload cover image. Please try again.');
                         } finally {
                           setUploadingCover(false);
                         }
@@ -768,7 +736,7 @@ export default function VendorDashboard() {
                             });
                           } catch (error) {
                             console.error('Failed to upload gallery images:', error);
-                            alert('Failed to upload some images. Please try again.');
+                            toast.error('Failed to upload some images. Please try again.');
                           } finally {
                             setUploadingGallery(false);
                           }
@@ -1214,7 +1182,7 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
       }
     } catch (error) {
       console.error('Subscription error:', error);
-      alert('Failed to start checkout. Please try again.');
+      toast.error('Failed to start checkout. Please try again.');
     } finally {
       setLoading(false);
       setSelectedPlan(null);
@@ -1376,7 +1344,7 @@ function ProductModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.description) {
-      alert('Please fill in the required fields.');
+      toast.error('Please fill in the required fields.');
       return;
     }
 
@@ -1398,7 +1366,7 @@ function ProductModal({
       setFormData({ ...formData, imageUrl: result.url });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
+      toast.error('Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
     }

@@ -70,19 +70,23 @@ export default function MessagesScreen() {
             employerName: item.employerName,
           })
         }
+        accessibilityLabel={`Conversation with ${item.employerName || "Employer"}${hasUnread ? `, ${item.memberUnreadCount} unread message${item.memberUnreadCount > 1 ? "s" : ""}` : ""}`}
+        accessibilityRole="button"
+        accessibilityHint="Tap to open conversation"
+        testID={`conversation-card-${item.id}`}
       >
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
+          <View style={styles.avatar} accessibilityElementsHidden>
             <Text style={styles.avatarText}>
               {(item.employerName || "E").charAt(0).toUpperCase()}
             </Text>
           </View>
-          {hasUnread && <View style={styles.unreadDot} />}
+          {hasUnread && <View style={styles.unreadDot} accessibilityElementsHidden />}
         </View>
 
         <View style={styles.conversationInfo}>
           <View style={styles.headerRow}>
-            <Text style={[styles.employerName, hasUnread && styles.unreadText]}>
+            <Text style={[styles.employerName, hasUnread && styles.unreadText]} numberOfLines={1} ellipsizeMode="tail">
               {item.employerName || "Employer"}
             </Text>
             <Text style={styles.timestamp}>
@@ -91,12 +95,13 @@ export default function MessagesScreen() {
           </View>
 
           {item.jobTitle && (
-            <Text style={styles.jobTitle}>Re: {item.jobTitle}</Text>
+            <Text style={styles.jobTitle} numberOfLines={1} ellipsizeMode="tail">Re: {item.jobTitle}</Text>
           )}
 
           <Text
             style={[styles.lastMessage, hasUnread && styles.unreadText]}
             numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {item.lastMessage || "No messages yet"}
           </Text>
@@ -115,6 +120,9 @@ export default function MessagesScreen() {
         <TouchableOpacity
           style={styles.signInButton}
           onPress={() => (navigation as any).navigate("SignIn")}
+          accessibilityLabel="Sign in to view messages"
+          accessibilityRole="button"
+          testID="messages-signin-button"
         >
           <Text style={styles.signInButtonText}>Sign In</Text>
         </TouchableOpacity>

@@ -17,6 +17,7 @@ import {
     AcademicCapIcon,
     XMarkIcon
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 export default function TrainingTab() {
     const { user } = useAuth();
@@ -122,7 +123,7 @@ export default function TrainingTab() {
             setShowModal(false);
         } catch (err) {
             console.error("Failed to save program", err);
-            alert("Failed to save. Please try again.");
+            toast.error("Failed to save. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -135,7 +136,7 @@ export default function TrainingTab() {
             setPrograms(prev => prev.filter(p => p.id !== id));
         } catch (err) {
             console.error("Failed to delete", err);
-            alert("Failed to delete.");
+            toast.error("Failed to delete.");
         }
     };
 

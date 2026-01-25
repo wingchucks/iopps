@@ -13,6 +13,7 @@ import {
   ClockIcon,
   SparklesIcon,
   CubeIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -22,8 +23,11 @@ import {
   updateProduct,
   deleteProduct,
 } from '@/lib/firebase/shop';
-import { uploadGalleryImage } from '@/lib/firebase/storage';
+import { uploadGalleryImage, uploadGalleryImages } from '@/lib/firebase/storage';
 import type { Vendor, VendorProduct } from '@/lib/types';
+import toast from "react-hot-toast";
+import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
+import { RichTextEditor } from "@/components/forms/RichTextEditor";
 
 /**
  * ProductsTab - Vendor product management
@@ -36,6 +40,7 @@ import type { Vendor, VendorProduct } from '@/lib/types';
  */
 export default function ProductsTab() {
   const { user } = useAuth();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<VendorProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,20 +87,42 @@ export default function ProductsTab() {
       setEditingProduct(null);
     } catch (error) {
       console.error('Error saving product:', error);
-      alert('Failed to save product. Please try again.');
+      toast.error('Failed to save product. Please try again.');
     }
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+  const handleDeleteProduct = async (productId: string, productName: string) => {
+    const confirmed = await confirm(deleteConfirmOptions(productName, "Product"));
+    if (!confirmed) return;
 
     try {
       await deleteProduct(productId);
       await loadData();
+      toast.success("Product deleted");
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      toast.error('Failed to delete product. Please try again.');
     }
+  };
+
+  const handleDuplicateProduct = (product: VendorProduct) => {
+    setEditingProduct(null);
+    setShowProductModal(true);
+    // Pre-fill form data through the modal - we need to pass initial data
+    // For now, store duplicated data in session and modal will pick it up
+    sessionStorage.setItem('duplicateProductData', JSON.stringify({
+      name: `${product.name} (Copy)`,
+      description: product.description,
+      category: product.category,
+      priceDisplay: product.priceDisplay,
+      imageUrl: product.imageUrl,
+      inStock: product.inStock,
+      madeToOrder: product.madeToOrder,
+      featured: product.featured,
+      sortOrder: product.sortOrder,
+      active: product.active,
+    }));
+    toast.success("Duplicated! Edit and save as new product.");
   };
 
   if (loading) {
@@ -198,6 +225,16 @@ export default function ProductsTab() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        handleDuplicateProduct(product);
+                      }}
+                      className="p-1.5 rounded-lg bg-slate-700 hover:bg-blue-500/20 text-slate-300 hover:text-blue-400 transition-colors"
+                      title="Duplicate product"
+                    >
+                      <DocumentDuplicateIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setEditingProduct(product);
                         setShowProductModal(true);
                       }}
@@ -209,7 +246,7 @@ export default function ProductsTab() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteProduct(product.id);
+                        handleDeleteProduct(product.id, product.name);
                       }}
                       className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
                       title="Delete product"
@@ -257,6 +294,9 @@ export default function ProductsTab() {
           }}
         />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }
@@ -276,23 +316,60 @@ function ProductModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [formData, setFormData] = useState({
-    name: product?.name || '',
-    description: product?.description || '',
-    category: product?.category || '',
-    priceDisplay: product?.priceDisplay || '',
-    imageUrl: product?.imageUrl || '',
-    inStock: product?.inStock ?? true,
-    madeToOrder: product?.madeToOrder ?? false,
-    featured: product?.featured ?? false,
-    sortOrder: product?.sortOrder ?? 0,
-    active: product?.active ?? true,
-  });
+
+  // Check for duplicated product data in sessionStorage
+  const getInitialFormData = () => {
+    if (product) {
+      return {
+        name: product.name || '',
+        description: product.description || '',
+        category: product.category || '',
+        priceDisplay: product.priceDisplay || '',
+        imageUrl: product.imageUrl || '',
+        images: product.images || [],
+        inStock: product.inStock ?? true,
+        madeToOrder: product.madeToOrder ?? false,
+        featured: product.featured ?? false,
+        sortOrder: product.sortOrder ?? 0,
+        active: product.active ?? true,
+      };
+    }
+
+    // Check for duplicated data
+    const duplicateData = sessionStorage.getItem('duplicateProductData');
+    if (duplicateData) {
+      sessionStorage.removeItem('duplicateProductData');
+      try {
+        const parsed = JSON.parse(duplicateData);
+        return { ...parsed, images: parsed.images || [] };
+      } catch {
+        // Fall through to default
+      }
+    }
+
+    return {
+      name: '',
+      description: '',
+      category: '',
+      priceDisplay: '',
+      imageUrl: '',
+      images: [] as string[],
+      inStock: true,
+      madeToOrder: false,
+      featured: false,
+      sortOrder: 0,
+      active: true,
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.description) {
-      alert('Please fill in the required fields.');
+      toast.error('Please fill in the required fields.');
       return;
     }
 
@@ -314,10 +391,37 @@ function ProductModal({
       setFormData({ ...formData, imageUrl: result.url });
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
+      toast.error('Failed to upload image. Please try again.');
     } finally {
       setUploadingImage(false);
     }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingGallery(true);
+    try {
+      const results = await uploadGalleryImages(files, vendorId);
+      const newUrls = results.map(r => r.url);
+      setFormData({ ...formData, images: [...(formData.images || []), ...newUrls] });
+      toast.success(`${files.length} image${files.length > 1 ? 's' : ''} uploaded`);
+    } catch (error) {
+      console.error('Failed to upload gallery images:', error);
+      toast.error('Failed to upload some images. Please try again.');
+    } finally {
+      setUploadingGallery(false);
+      if (galleryInputRef.current) {
+        galleryInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    const newImages = [...(formData.images || [])];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
   };
 
   return (
@@ -392,6 +496,62 @@ function ProductModal({
             </div>
           </div>
 
+          {/* Gallery Images */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Gallery Images
+            </label>
+            <p className="text-xs text-slate-500 mb-3">
+              Add multiple images to showcase your product from different angles
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {(formData.images || []).map((url: string, idx: number) => (
+                <div key={idx} className="relative">
+                  <Image
+                    src={url}
+                    alt={`Gallery ${idx + 1}`}
+                    width={80}
+                    height={80}
+                    className="rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveGalleryImage(idx)}
+                    className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+              <div>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleGalleryUpload}
+                />
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={uploadingGallery}
+                  className={`flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
+                    uploadingGallery
+                      ? 'border-slate-600 text-slate-600 cursor-not-allowed'
+                      : 'border-slate-600 text-slate-400 hover:border-accent hover:text-accent'
+                  }`}
+                >
+                  {uploadingGallery ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                  ) : (
+                    <PlusIcon className="h-6 w-6" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -412,13 +572,11 @@ function ProductModal({
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Description *
             </label>
-            <textarea
-              required
-              rows={3}
+            <RichTextEditor
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
+              onChange={(html) => setFormData({ ...formData, description: html })}
               placeholder="Describe your product..."
+              minHeight="120px"
             />
           </div>
 
@@ -493,7 +651,7 @@ function ProductModal({
             </button>
             <button
               type="submit"
-              disabled={saving || uploadingImage}
+              disabled={saving || uploadingImage || uploadingGallery}
               className="flex items-center gap-2 px-6 py-3 rounded-lg bg-accent text-slate-950 font-semibold hover:bg-accent-hover transition-all disabled:opacity-50"
             >
               {saving ? 'Saving...' : product ? 'Save Changes' : 'Add Product'}

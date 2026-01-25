@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { createJobAlert } from "@/lib/firestore";
 import type { JobAlertFrequency } from "@/lib/types";
@@ -39,11 +40,11 @@ export default function CreateJobAlertModal({
                 frequency,
                 active: true,
             });
-            alert("Job alert created!");
+            toast.success("Job alert created! You'll receive notifications based on your settings.");
             onClose();
         } catch (error) {
             console.error("Error creating alert:", error);
-            alert("Failed to create alert.");
+            toast.error("Failed to create alert. Please try again.");
         } finally {
             setSaving(false);
         }

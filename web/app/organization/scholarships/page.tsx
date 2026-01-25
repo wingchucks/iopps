@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { listEmployerScholarships, deleteScholarship } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function OrganizationScholarshipsPage() {
   const { user, role, loading } = useAuth();
@@ -38,7 +39,7 @@ export default function OrganizationScholarshipsPage() {
       setScholarships((prev) => prev.filter((s) => s.id !== scholarshipId));
     } catch (err) {
       console.error("Error deleting scholarship:", err);
-      alert("Failed to delete scholarship");
+      toast.error("Failed to delete scholarship");
     } finally {
       setDeleting(null);
     }

@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Scholarship } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface ScholarshipWithEmployer extends Scholarship {
   employerLogoUrl?: string;
@@ -114,7 +115,7 @@ function AdminScholarshipsContent() {
       );
     } catch (error) {
       console.error("Error toggling scholarship status:", error);
-      alert("Failed to update scholarship status. Please try again.");
+      toast.error("Failed to update scholarship status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -140,7 +141,7 @@ function AdminScholarshipsContent() {
       );
     } catch (error) {
       console.error("Error deleting scholarship:", error);
-      alert("Failed to delete scholarship. Please try again.");
+      toast.error("Failed to delete scholarship. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -191,6 +192,15 @@ function AdminScholarshipsContent() {
                 {filteredScholarships.length !== 1 ? "s" : ""}
               </p>
             </div>
+            <Link
+              href="/organization/scholarships/new"
+              className="flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create New
+            </Link>
           </div>
         </div>
       </div>
@@ -331,7 +341,7 @@ function AdminScholarshipsContent() {
                     {/* Actions */}
                     <div className="flex gap-2 lg:flex-col">
                       <Link
-                        href={`/scholarships/${scholarship.id}`}
+                        href={`/education/scholarships/${scholarship.id}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View Scholarship

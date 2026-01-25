@@ -43,11 +43,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Check for existing employer application
+        const existingEmployer = await db.collection("employers").doc(userId).get();
+        if (existingEmployer.exists) {
+            const existingData = existingEmployer.data();
+            if (existingData?.status === "pending") {
+                return NextResponse.json(
+                    { error: "You already have a pending employer application. Please wait for admin review." },
+                    { status: 400 }
+                );
+            }
+            if (existingData?.status === "rejected") {
+                return NextResponse.json(
+                    { error: "Your previous application was not approved. Please contact support for assistance." },
+                    { status: 400 }
+                );
+            }
+        }
+
         // Get organization data from request
         const body = await request.json();
-        const { organizationName, description } = body as {
+        const { organizationName, description, intent, website } = body as {
             organizationName: string;
-            description?: string;
+            description: string;
+            intent: string;
+            website?: string;
         };
 
         // Validate required fields
@@ -58,34 +78,48 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Update user role to employer
-        await db.collection("users").doc(userId).update({
-            role: "employer",
-            updatedAt: FieldValue.serverTimestamp(),
-        });
+        if (!description || description.trim().length < 50) {
+            return NextResponse.json(
+                { error: "Description is required (minimum 50 characters)" },
+                { status: 400 }
+            );
+        }
 
-        // Create employer profile
+        if (!intent) {
+            return NextResponse.json(
+                { error: "Please select what you plan to do with your employer account" },
+                { status: 400 }
+            );
+        }
+
+        // Create employer application (pending approval)
+        // Note: User role stays as "community" until admin approves
         await db.collection("employers").doc(userId).set({
             id: userId,
             userId,
             organizationName: organizationName.trim(),
-            description: description?.trim() || "",
+            description: description.trim(),
+            intent,
+            website: website?.trim() || "",
             email: userEmail || "",
-            status: "approved", // Auto-approve for simplicity
+            status: "pending", // Requires admin approval
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
 
-        // Send admin notification (fire and forget)
+        // Send admin notification for review (fire and forget)
         notifyAdmin({
             type: "new_employer",
             organizationName: organizationName.trim(),
             employerEmail: userEmail || "Unknown",
+            intent,
+            status: "pending",
         }).catch(console.error);
 
         return NextResponse.json({
             success: true,
-            message: "Account upgraded to employer successfully",
+            message: "Your application has been submitted and is pending review",
+            status: "pending",
         });
     } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to upgrade account";

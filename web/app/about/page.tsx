@@ -150,7 +150,7 @@ export default function AboutPage() {
         <h2 className="text-2xl font-bold text-slate-50">What IOPPS Offers</h2>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Link href="/jobs" className="group rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-all hover:border-[#14B8A6]/50 hover:bg-slate-900">
+          <Link href="/careers" className="group rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-all hover:border-[#14B8A6]/50 hover:bg-slate-900">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/20 transition-colors group-hover:bg-[#14B8A6]/30">
               <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

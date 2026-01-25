@@ -21,10 +21,11 @@ import type { JobPosting, JobApplication } from "../types";
 import { logger } from "../lib/logger";
 
 const WEB_DASHBOARD_URL = "https://iopps.ca/organization/dashboard";
+const WEB_PROFILE_URL = "https://iopps.ca/organization/profile";
 
 export default function EmployerDashboardScreen() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, isEmployerPending, employerProfile, refreshAccountState } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
@@ -59,7 +60,9 @@ export default function EmployerDashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [user])
+      // Refresh account state in case employer was approved
+      refreshAccountState();
+    }, [user, refreshAccountState])
   );
 
   const handleRefresh = () => {
@@ -105,11 +108,34 @@ export default function EmployerDashboardScreen() {
         />
       }
     >
+      {/* Pending Employer Banner */}
+      {isEmployerPending && (
+        <View style={styles.pendingBanner}>
+          <Text style={styles.pendingBannerIcon}>⏳</Text>
+          <View style={styles.pendingBannerContent}>
+            <Text style={styles.pendingBannerTitle}>Account Pending Approval</Text>
+            <Text style={styles.pendingBannerText}>
+              Your employer account is being reviewed. You can set up your organization profile while we review your application.
+            </Text>
+            <TouchableOpacity
+              style={styles.pendingBannerButton}
+              onPress={() => Linking.openURL(WEB_PROFILE_URL)}
+            >
+              <Text style={styles.pendingBannerButtonText}>Complete Profile</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Employer Dashboard</Text>
+        <Text style={styles.title}>
+          {isEmployerPending ? "Welcome, " + (employerProfile?.organizationName || "Employer") : "Employer Dashboard"}
+        </Text>
         <Text style={styles.subtitle}>
-          Manage your opportunities and track applications
+          {isEmployerPending
+            ? "Complete your profile while we review your application"
+            : "Manage your opportunities and track applications"}
         </Text>
       </View>
 
@@ -233,13 +259,19 @@ export default function EmployerDashboardScreen() {
         {recentJobs.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyIcon}>📝</Text>
-            <Text style={styles.emptyText}>No job postings yet</Text>
-            <TouchableOpacity
-              style={styles.postJobButton}
-              onPress={() => Linking.openURL(WEB_DASHBOARD_URL)}
-            >
-              <Text style={styles.postJobButtonText}>Post a Job on Web</Text>
-            </TouchableOpacity>
+            <Text style={styles.emptyText}>
+              {isEmployerPending
+                ? "You can post jobs once your account is approved"
+                : "No job postings yet"}
+            </Text>
+            {!isEmployerPending && (
+              <TouchableOpacity
+                style={styles.postJobButton}
+                onPress={() => Linking.openURL(WEB_DASHBOARD_URL)}
+              >
+                <Text style={styles.postJobButtonText}>Post a Job on Web</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           recentJobs.map((job) => (
@@ -311,6 +343,47 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 32,
+  },
+  // Pending Employer Banner
+  pendingBanner: {
+    flexDirection: "row",
+    backgroundColor: "#F59E0B20",
+    borderWidth: 1,
+    borderColor: "#F59E0B40",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  pendingBannerIcon: {
+    fontSize: 28,
+    marginRight: 12,
+  },
+  pendingBannerContent: {
+    flex: 1,
+  },
+  pendingBannerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FCD34D",
+    marginBottom: 4,
+  },
+  pendingBannerText: {
+    fontSize: 14,
+    color: "#FDE68A",
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  pendingBannerButton: {
+    backgroundColor: "#F59E0B",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  pendingBannerButtonText: {
+    color: "#0F172A",
+    fontSize: 14,
+    fontWeight: "600",
   },
   loadingContainer: {
     flex: 1,

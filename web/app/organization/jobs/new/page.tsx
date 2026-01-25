@@ -4,8 +4,16 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { getEmployerProfile, createJobPosting } from "@/lib/firestore";
+import { getEmployerProfile, createJobPosting, listEmployerTemplates, createJobTemplate, incrementTemplateUsage, templateToJobData } from "@/lib/firestore";
+import type { JobTemplate } from "@/lib/types";
+import { getActiveSubscriptionProduct } from "@/lib/firestore/employer-products";
 import { JOB_POSTING_PRODUCTS, SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
+import { DatePicker } from "@/components/ui/date-picker";
+import { FormProgressIndicator, useFormSectionTracker } from "@/components/ui/FormProgressIndicator";
+import { JobPreviewModal } from "@/components/organization/JobPreviewModal";
+import toast from "react-hot-toast";
+
+const DRAFT_STORAGE_KEY = "iopps_job_draft";
 
 type SubscriptionInfo = {
   active: boolean;
@@ -24,10 +32,30 @@ function NewJobPageContent() {
   const [organizationName, setOrganizationName] = useState("");
   const [subscription, setSubscription] = useState<SubscriptionInfo>(null);
   const [freePostingEnabled, setFreePostingEnabled] = useState(false);
+  const [employerStatus, setEmployerStatus] = useState<string>("approved");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [aiGenerating, setAiGenerating] = useState(false);
+
+  // Template State
+  const [templates, setTemplates] = useState<JobTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  // Draft & Preview State
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [showDraftRecovery, setShowDraftRecovery] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [pricingModalDismissed, setPricingModalDismissed] = useState(false);
+
+  // Section tracking for progress indicator
+  const sectionIds = ["section-core", "section-schedule", "section-trc", "section-description", "section-application"];
+  const currentSection = useFormSectionTracker(sectionIds);
 
   // Form Data
   const [formData, setFormData] = useState({
@@ -44,7 +72,13 @@ function NewJobPageContent() {
     willTrain: false,
     driversLicense: false,
     closingDate: "",
+    scheduledPublishAt: "", // For scheduling job to publish later
     jobVideoUrl: "",
+    // TRC Fields
+    trcIndigenousHiring: false,
+    trcLeadershipTraining: false,
+    trcIndigenousOwned: false,
+    trcCommitmentStatement: "",
   });
 
   // Load duplicate data from sessionStorage if duplicating
@@ -81,6 +115,190 @@ function NewJobPageContent() {
     }
   }, [isDuplicate]);
 
+  // Check for saved draft on mount
+  useEffect(() => {
+    if (isDuplicate) return; // Don't show recovery if duplicating
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        // Only show recovery if draft is less than 7 days old
+        if (draft.savedAt && Date.now() - draft.savedAt < 7 * 24 * 60 * 60 * 1000) {
+          setShowDraftRecovery(true);
+        } else {
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+        }
+      } catch (e) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    }
+  }, [isDuplicate]);
+
+  // Show pricing modal on first visit (only for non-subscribers without free posting)
+  useEffect(() => {
+    if (loading || pricingModalDismissed || isDuplicate) return;
+    // Only show if user doesn't have active subscription or free posting
+    const hasActiveSubscription = subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0);
+    if (!hasActiveSubscription && !freePostingEnabled) {
+      // Check if user has seen this modal before in this session
+      const hasSeenModal = sessionStorage.getItem('job_pricing_modal_seen');
+      if (!hasSeenModal) {
+        setShowPricingModal(true);
+      }
+    }
+  }, [loading, subscription, freePostingEnabled, pricingModalDismissed, isDuplicate]);
+
+  // Auto-save draft every 30 seconds if form has content
+  useEffect(() => {
+    const hasContent = formData.title || formData.description || formData.location;
+    if (!hasContent) return;
+
+    const saveInterval = setInterval(() => {
+      saveDraft(true);
+    }, 30000);
+
+    return () => clearInterval(saveInterval);
+  }, [formData]);
+
+  // Save draft function
+  const saveDraft = (isAutoSave = false) => {
+    try {
+      localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({
+          formData,
+          savedAt: Date.now(),
+        })
+      );
+      setDraftSaved(true);
+      if (!isAutoSave) {
+        toast.success("Draft saved successfully");
+      }
+      // Reset the saved indicator after 3 seconds
+      setTimeout(() => setDraftSaved(false), 3000);
+    } catch (e) {
+      if (!isAutoSave) {
+        toast.error("Failed to save draft");
+      }
+    }
+  };
+
+  // Recover saved draft
+  const recoverDraft = () => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setFormData(draft.formData);
+        toast.success("Draft recovered successfully");
+      } catch (e) {
+        toast.error("Failed to recover draft");
+      }
+    }
+    setShowDraftRecovery(false);
+  };
+
+  // Discard saved draft
+  const discardDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setShowDraftRecovery(false);
+  };
+
+  // Clear draft on successful submission
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+  };
+
+  // Load employer templates
+  useEffect(() => {
+    const loadTemplates = async () => {
+      if (!user) return;
+      try {
+        const employerTemplates = await listEmployerTemplates(user.uid);
+        setTemplates(employerTemplates);
+      } catch (err) {
+        console.error("Failed to load templates:", err);
+      }
+    };
+    loadTemplates();
+  }, [user]);
+
+  // Apply selected template
+  const handleTemplateSelect = async (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) return;
+
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const templateData = templateToJobData(template);
+
+    setFormData(prev => ({
+      ...prev,
+      title: (templateData.title as string) || prev.title,
+      location: (templateData.location as string) || prev.location,
+      employmentType: (templateData.employmentType as string) || prev.employmentType,
+      remoteFlag: (templateData.remoteFlag as boolean) ?? prev.remoteFlag,
+      description: (templateData.description as string) || prev.description,
+      responsibilities: Array.isArray(templateData.responsibilities)
+        ? (templateData.responsibilities as string[]).join("\n")
+        : prev.responsibilities,
+      qualifications: Array.isArray(templateData.qualifications)
+        ? (templateData.qualifications as string[]).join("\n")
+        : prev.qualifications,
+      salaryRange: (templateData.salaryRange as string) || prev.salaryRange,
+      indigenousPreference: (templateData.indigenousPreference as boolean) ?? prev.indigenousPreference,
+      cpicRequired: (templateData.cpicRequired as boolean) ?? prev.cpicRequired,
+      willTrain: (templateData.willTrain as boolean) ?? prev.willTrain,
+      driversLicense: (templateData.driversLicense as boolean) ?? prev.driversLicense,
+    }));
+
+    // Track template usage
+    try {
+      await incrementTemplateUsage(templateId);
+    } catch (err) {
+      console.error("Failed to track template usage:", err);
+    }
+  };
+
+  // Save current form as template
+  const handleSaveAsTemplate = async () => {
+    if (!user || !templateName.trim()) return;
+    setSavingTemplate(true);
+
+    try {
+      await createJobTemplate({
+        employerId: user.uid,
+        name: templateName.trim(),
+        title: formData.title,
+        location: formData.location,
+        employmentType: formData.employmentType,
+        remoteFlag: formData.remoteFlag,
+        indigenousPreference: formData.indigenousPreference,
+        jobDescription: formData.description,
+        responsibilities: formData.responsibilities.split('\n').filter(r => r.trim()),
+        qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+        salaryRange: formData.salaryRange,
+        cpicRequired: formData.cpicRequired,
+        willTrain: formData.willTrain,
+        driversLicense: formData.driversLicense,
+        quickApplyEnabled: true,
+      });
+
+      // Reload templates
+      const employerTemplates = await listEmployerTemplates(user.uid);
+      setTemplates(employerTemplates);
+
+      setShowSaveTemplateModal(false);
+      setTemplateName("");
+    } catch (err) {
+      console.error("Failed to save template:", err);
+      toast.error("Failed to save template. Please try again.");
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
   const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
 
   // Load Employer Data
@@ -96,7 +314,10 @@ function NewJobPageContent() {
         if (profile) {
           setOrganizationName(profile.organizationName);
           setFreePostingEnabled(!!profile.freePostingEnabled);
+          setEmployerStatus(profile.status || "approved");
 
+          // First try: check subscription field on employer document
+          let subscriptionFound = false;
           if (profile.subscription?.active && profile.subscription.expiresAt) {
             const rawExpires = profile.subscription.expiresAt;
             const expiresAt = typeof (rawExpires as any).toDate === 'function' ? (rawExpires as any).toDate() : new Date(rawExpires as any);
@@ -106,6 +327,21 @@ function NewJobPageContent() {
                 tier: profile.subscription.tier,
                 remainingCredits: (profile.subscription.jobCredits || 0) - (profile.subscription.jobCreditsUsed || 0),
                 unlimitedPosts: profile.subscription.unlimitedPosts || false
+              });
+              subscriptionFound = true;
+            }
+          }
+
+          // Fallback: check products subcollection for active subscription
+          // This handles cases where the subscription field wasn't populated
+          if (!subscriptionFound && profile.id) {
+            const activeProduct = await getActiveSubscriptionProduct(profile.id);
+            if (activeProduct) {
+              setSubscription({
+                active: true,
+                tier: activeProduct.tier,
+                remainingCredits: activeProduct.remainingCredits,
+                unlimitedPosts: activeProduct.unlimitedPosts
               });
             }
           }
@@ -122,6 +358,14 @@ function NewJobPageContent() {
   // Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    // Clear validation error when field is edited
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
     if (type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
     } else {
@@ -129,8 +373,60 @@ function NewJobPageContent() {
     }
   };
 
+  // Validation
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Job Title validation
+    if (!formData.title.trim()) {
+      errors.title = "Job title is required";
+    } else if (formData.title.trim().length < 3) {
+      errors.title = "Job title must be at least 3 characters";
+    } else if (formData.title.trim().length > 100) {
+      errors.title = "Job title must be less than 100 characters";
+    } else if (/https?:\/\//i.test(formData.title)) {
+      errors.title = "Job title cannot contain URLs";
+    } else if (formData.title === formData.title.toUpperCase() && formData.title.length > 10) {
+      errors.title = "Please avoid using all capital letters";
+    }
+
+    // Location validation
+    if (!formData.location.trim()) {
+      errors.location = "Location is required";
+    } else if (formData.location.trim().length < 2) {
+      errors.location = "Please enter a valid location";
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      errors.description = "Job description is required";
+    } else if (formData.description.trim().length < 50) {
+      errors.description = `Description must be at least 50 characters (currently ${formData.description.trim().length})`;
+    }
+
+    // Closing Date validation
+    if (!formData.closingDate) {
+      errors.closingDate = "Closing date is required";
+    } else {
+      const closingDate = new Date(formData.closingDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (closingDate < today) {
+        errors.closingDate = "Closing date must be in the future";
+      }
+    }
+
+    // Employment type validation (should always be set but double-check)
+    if (!formData.employmentType) {
+      errors.employmentType = "Employment type is required";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const generateWithAI = async () => {
-    if (!formData.title) return alert("Please enter a job title first.");
+    if (!formData.title) return toast.error("Please enter a job title first.");
     setAiGenerating(true);
     try {
       const response = await fetch("/api/ai/job-description", {
@@ -153,7 +449,7 @@ function NewJobPageContent() {
         qualifications: Array.isArray(data.qualifications) ? data.qualifications.join("\n") : prev.qualifications,
       }));
     } catch (e) {
-      alert("Failed to generate description. Please try again.");
+      toast.error("Failed to generate description. Please try again.");
     } finally {
       setAiGenerating(false);
     }
@@ -161,6 +457,18 @@ function NewJobPageContent() {
 
   const handlePostJob = async (productType: "SINGLE" | "FEATURED" | "SUBSCRIPTION" | "FREE_POSTING") => {
     if (!user) return;
+
+    // Validate form before submission
+    if (!validateForm()) {
+      setError("Please fix the errors below before posting.");
+      // Scroll to first error
+      const firstErrorField = document.querySelector('[data-error="true"]');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -196,9 +504,24 @@ function NewJobPageContent() {
         qualifications: formData.qualifications.split('\n'),
         salaryRange: formData.salaryRange,
         closingDate: formData.closingDate,
+        ...(formData.scheduledPublishAt && { scheduledPublishAt: new Date(formData.scheduledPublishAt) }),
         quickApplyEnabled: true, // Always enable Quick Apply as the only application method
         ...(jobVideo && { jobVideo }),
+        trcAlignment: {
+          hasIndigenousHiringStrategy: formData.trcIndigenousHiring,
+          leadershipTrainingComplete: formData.trcLeadershipTraining,
+          isIndigenousOwned: formData.trcIndigenousOwned,
+          commitmentStatement: formData.trcCommitmentStatement,
+        },
+        // Flag jobs from pending employers so they can be activated on approval
+        ...(employerStatus === "pending" && { pendingEmployerApproval: true }),
       };
+
+      // Check if job is scheduled for later
+      const isScheduled = !!formData.scheduledPublishAt;
+
+      // Jobs from pending employers should not be activated until approved
+      const isPendingEmployer = employerStatus === "pending";
 
       // Payment Logic (Shared with Wizard)
       if (productType === "SUBSCRIPTION") {
@@ -206,27 +529,37 @@ function NewJobPageContent() {
           throw new Error("No credits remaining.");
         }
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
-        // Notify admin of new job posting
-        fetch("/api/admin/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => {});
-        router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
+        // Jobs from pending employers stay inactive until employer is approved
+        const shouldBeActive = !isScheduled && !isPendingEmployer;
+        const id = await createJobPosting({ ...jobPayload, active: shouldBeActive, paymentStatus: 'paid', productType: 'SUBSCRIPTION', expiresAt: expires });
+        // Notify admin of new job posting (only if published immediately)
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        clearDraft();
+        router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
 
       if (productType === "FREE_POSTING") {
         const expires = new Date(); expires.setDate(expires.getDate() + 30);
-        const id = await createJobPosting({ ...jobPayload, active: true, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
-        // Notify admin of new job posting
-        fetch("/api/admin/notify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-        }).catch(() => {});
-        router.push(`/organization/jobs/success?job_id=${id}&subscription=true`);
+        // Jobs from pending employers stay inactive until employer is approved
+        const shouldBeActive = !isScheduled && !isPendingEmployer;
+        const id = await createJobPosting({ ...jobPayload, active: shouldBeActive, paymentStatus: 'paid', productType: 'FREE_POSTING', expiresAt: expires });
+        // Notify admin of new job posting (only if published immediately)
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        clearDraft();
+        router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
         return;
       }
 
@@ -240,6 +573,7 @@ function NewJobPageContent() {
       });
       if (!res.ok) throw new Error("Checkout failed");
       const { url } = await res.json();
+      clearDraft();
       window.location.href = url;
 
     } catch (e: any) {
@@ -295,6 +629,27 @@ function NewJobPageContent() {
 
   return (
     <div className="min-h-screen bg-[#020306] pb-20">
+      {/* Pending Employer Banner */}
+      {employerStatus === "pending" && (
+        <div className="border-b border-amber-500/30 bg-amber-500/5">
+          <div className="mx-auto max-w-5xl px-4 py-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-amber-200">Your account is pending approval</p>
+                <p className="text-sm text-amber-300/80 mt-0.5">
+                  You can create jobs, but they won&apos;t be visible to job seekers until your organization is approved. We&apos;ll notify you by email once approved.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-slate-800 bg-[#08090C] py-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -308,35 +663,301 @@ function NewJobPageContent() {
                 : "Create a new opportunity for the community."}
             </p>
           </div>
-          <Link
-            href="/organization/jobs/import"
-            className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-            Import form CSV
-          </Link>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => saveDraft(false)}
+              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              {draftSaved ? (
+                <>
+                  <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Saved
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                  Save Draft
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPreviewModal(true)}
+              className="flex items-center gap-2 rounded-lg border border-teal-500/50 bg-teal-500/10 px-4 py-2 text-sm font-semibold text-teal-400 hover:bg-teal-500/20 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              Preview
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSaveTemplateModal(true)}
+              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              Save as Template
+            </button>
+            <Link
+              href="/organization/jobs/import"
+              className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+              Import from CSV
+            </Link>
+          </div>
         </div>
       </div>
 
+      {/* Save Template Modal */}
+      {showSaveTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#08090C] p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">Save as Template</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Save the current job details as a reusable template for future postings.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-1">Template Name *</label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                placeholder="e.g. Senior Developer Role"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSaveTemplateModal(false);
+                  setTemplateName("");
+                }}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAsTemplate}
+                disabled={!templateName.trim() || savingTemplate}
+                className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingTemplate ? "Saving..." : "Save Template"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draft Recovery Banner */}
+      {showDraftRecovery && (
+        <div className="border-b border-blue-500/30 bg-blue-500/5">
+          <div className="mx-auto max-w-5xl px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <svg className="h-5 w-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-blue-200">You have an unsaved draft</p>
+                  <p className="text-sm text-blue-300/80">Would you like to continue where you left off?</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={discardDraft}
+                  className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={recoverDraft}
+                  className="px-4 py-1.5 text-sm font-semibold bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Recover Draft
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Job Preview Modal */}
+      <JobPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        jobData={{
+          ...formData,
+          organizationName,
+        }}
+      />
+
+      {/* Pricing Info Modal - Shows before user starts filling form */}
+      {showPricingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg mx-4 rounded-2xl border border-slate-800 bg-[#08090C] p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-blue-500/20 to-teal-500/20 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-100">Job Posting Pricing</h3>
+              <p className="text-sm text-slate-400 mt-2">
+                Reach thousands of Indigenous professionals across Canada
+              </p>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {/* Single Post */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-slate-800">
+                <div>
+                  <p className="font-semibold text-slate-200">Single Job Post</p>
+                  <p className="text-xs text-slate-500">30 days • Standard placement</p>
+                </div>
+                <span className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</span>
+              </div>
+
+              {/* Featured Post */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-amber-400">Featured Job</p>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-white px-1.5 py-0.5 rounded">Popular</span>
+                  </div>
+                  <p className="text-xs text-slate-500">45 days • Spotlight placement</p>
+                </div>
+                <span className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</span>
+              </div>
+
+              {/* Annual Plans */}
+              <div className="pt-2 border-t border-slate-800">
+                <p className="text-xs text-slate-500 mb-2">Or save with annual plans:</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-center">
+                    <p className="text-sm font-semibold text-teal-400">Growth</p>
+                    <p className="text-xs text-slate-500">15 jobs/year</p>
+                    <p className="text-sm font-bold text-white mt-1">${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}</p>
+                  </div>
+                  <div className="flex-1 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center">
+                    <p className="text-sm font-semibold text-purple-400">Unlimited</p>
+                    <p className="text-xs text-slate-500">Unlimited jobs</p>
+                    <p className="text-sm font-bold text-white mt-1">${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Link
+                href="/pricing"
+                className="flex-1 text-center px-4 py-2.5 rounded-lg border border-slate-700 text-slate-300 font-medium hover:bg-slate-800 transition-colors"
+              >
+                View Full Pricing
+              </Link>
+              <button
+                onClick={() => {
+                  setShowPricingModal(false);
+                  setPricingModalDismissed(true);
+                  sessionStorage.setItem('job_pricing_modal_seen', 'true');
+                }}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-teal-500 text-slate-950 font-semibold hover:bg-teal-400 transition-colors"
+              >
+                Continue to Post Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto mt-8 max-w-5xl px-4">
         {error && <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 p-4 text-red-200">{error}</div>}
+
+        {/* Template Selector */}
+        {templates.length > 0 && (
+          <div className="mb-6 rounded-2xl border border-purple-500/30 bg-purple-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Start from a Template
+                </label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full rounded-lg border border-purple-500/30 bg-slate-900 px-4 py-2 text-slate-100 focus:border-purple-500 focus:outline-none"
+                >
+                  <option value="">Select a template...</option>
+                  {templates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} {template.usageCount ? `(used ${template.usageCount}x)` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedTemplateId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTemplateId("");
+                    setFormData({
+                      title: "",
+                      location: "",
+                      employmentType: "Full-time",
+                      remoteFlag: false,
+                      description: "",
+                      responsibilities: "",
+                      qualifications: "",
+                      salaryRange: "",
+                      indigenousPreference: true,
+                      cpicRequired: false,
+                      willTrain: false,
+                      driversLicense: false,
+                      closingDate: "",
+                      scheduledPublishAt: "",
+                      jobVideoUrl: "",
+                      trcIndigenousHiring: false,
+                      trcLeadershipTraining: false,
+                      trcIndigenousOwned: false,
+                      trcCommitmentStatement: "",
+                    });
+                  }}
+                  className="px-3 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Templates let you quickly fill in job details from previous postings. You can also save the current form as a new template.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-8">
 
             {/* Core Details */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+            <section id="section-core" className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Core Details</h2>
               <div className="space-y-4">
-                <div>
+                <div data-error={!!validationErrors.title}>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Job Title *</label>
-                  <input name="title" value={formData.title} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="e.g. Community Coordinator" />
+                  <input name="title" value={formData.title} onChange={handleChange} className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-slate-100 focus:outline-none ${validationErrors.title ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`} placeholder="e.g. Community Coordinator" />
+                  {validationErrors.title && <p className="mt-1 text-sm text-red-400">{validationErrors.title}</p>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div data-error={!!validationErrors.location}>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
-                    <input name="location" value={formData.location} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="City, Prov" />
+                    <input name="location" value={formData.location} onChange={handleChange} className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-slate-100 focus:outline-none ${validationErrors.location ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`} placeholder="City, Prov" />
+                    {validationErrors.location && <p className="mt-1 text-sm text-red-400">{validationErrors.location}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-1">Employment Type</label>
@@ -350,16 +971,141 @@ function NewJobPageContent() {
                     <label className="block text-sm font-medium text-slate-300 mb-1">Salary Range</label>
                     <input name="salaryRange" value={formData.salaryRange} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="e.g. $50k - $70k" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date</label>
-                    <input type="date" name="closingDate" value={formData.closingDate} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" />
+                  <div data-error={!!validationErrors.closingDate}>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Closing Date *</label>
+                    <DatePicker
+                      value={formData.closingDate}
+                      onChange={(date) => {
+                        if (validationErrors.closingDate) {
+                          setValidationErrors(prev => {
+                            const updated = { ...prev };
+                            delete updated.closingDate;
+                            return updated;
+                          });
+                        }
+                        setFormData(prev => ({ ...prev, closingDate: date }));
+                      }}
+                      placeholder="Select closing date"
+                      minDate={new Date()}
+                      error={!!validationErrors.closingDate}
+                    />
+                    {validationErrors.closingDate && <p className="mt-1 text-sm text-red-400">{validationErrors.closingDate}</p>}
                   </div>
                 </div>
               </div>
             </section>
 
+            {/* Scheduled Publishing */}
+            <section id="section-schedule" className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-slate-100">Scheduled Publishing</h2>
+                  <p className="text-sm text-slate-400">
+                    Schedule this job to automatically go live at a future date and time.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.scheduledPublishAt}
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        setFormData(prev => ({ ...prev, scheduledPublishAt: "" }));
+                      } else {
+                        // Set default to tomorrow at 9 AM
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        tomorrow.setHours(9, 0, 0, 0);
+                        setFormData(prev => ({ ...prev, scheduledPublishAt: tomorrow.toISOString().slice(0, 16) }));
+                      }
+                    }}
+                    className="h-5 w-5 rounded border-slate-700 bg-slate-900 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  />
+                  <span className="text-sm text-slate-300">Schedule this job to publish later</span>
+                </label>
+
+                {!!formData.scheduledPublishAt && (
+                  <div className="pl-8 space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Publish Date & Time</label>
+                      <input
+                        type="datetime-local"
+                        value={formData.scheduledPublishAt}
+                        onChange={(e) => setFormData(prev => ({ ...prev, scheduledPublishAt: e.target.value }))}
+                        min={new Date().toISOString().slice(0, 16)}
+                        className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                      />
+                      <p className="mt-2 text-xs text-slate-500">
+                        The job will remain hidden until this date, then automatically become visible to job seekers.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/30">
+                      <div className="flex items-center gap-2 text-[#14B8A6]">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-sm font-medium">
+                          Scheduled for: {new Date(formData.scheduledPublishAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* TRC #92 Alignment (New) */}
+            <section id="section-trc" className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="p-2 bg-amber-500/20 rounded-lg text-2xl">🪶</div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-100">Respect & Reconciliation</h2>
+                  <p className="text-sm text-slate-400">
+                    How does your organization align with <a href="https://www.reconciliationeducation.ca/what-are-truth-and-reconciliation-commission-94-calls-to-action" target="_blank" className="text-amber-500 hover:underline">TRC Call to Action #92</a>? (Optional)
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="trcIndigenousHiring" checked={formData.trcIndigenousHiring} onChange={handleChange} className="h-5 w-5 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                    <span className="text-sm text-slate-300">We have an active Indigenous Hiring Strategy</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="trcLeadershipTraining" checked={formData.trcLeadershipTraining} onChange={handleChange} className="h-5 w-5 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                    <span className="text-sm text-slate-300">Leadership team has completed Cultural Safety Training</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="trcIndigenousOwned" checked={formData.trcIndigenousOwned} onChange={handleChange} className="h-5 w-5 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+                    <span className="text-sm text-slate-300">We are an Indigenous-Owned Business</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Commitment Statement (Max 140 chars)</label>
+                  <input
+                    name="trcCommitmentStatement"
+                    value={formData.trcCommitmentStatement}
+                    onChange={handleChange}
+                    maxLength={140}
+                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-amber-500 focus:outline-none"
+                    placeholder="e.g. We are committed to building meaningful partnerships..."
+                  />
+                  <div className="text-right text-xs text-slate-500 mt-1">{formData.trcCommitmentStatement.length}/140</div>
+                </div>
+              </div>
+            </section>
+
             {/* Description & AI */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 relative">
+            <section id="section-description" className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 relative">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-slate-100">Description</h2>
                 <button onClick={generateWithAI} disabled={aiGenerating} className="text-xs font-bold text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-full hover:bg-amber-500/20 disabled:opacity-50">
@@ -367,9 +1113,10 @@ function NewJobPageContent() {
                 </button>
               </div>
               <div className="space-y-4">
-                <div>
+                <div data-error={!!validationErrors.description}>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Job Description *</label>
-                  <textarea name="description" rows={6} value={formData.description} onChange={handleChange} className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none" placeholder="Role overview..." />
+                  <textarea name="description" rows={6} value={formData.description} onChange={handleChange} className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-slate-100 focus:outline-none ${validationErrors.description ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`} placeholder="Role overview..." />
+                  {validationErrors.description && <p className="mt-1 text-sm text-red-400">{validationErrors.description}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Responsibilities (One per line)</label>
@@ -383,7 +1130,7 @@ function NewJobPageContent() {
             </section>
 
             {/* Application Method - Quick Apply Only */}
-            <section className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6">
+            <section id="section-application" className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6">
               <div className="flex items-start gap-3 mb-4">
                 <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -411,6 +1158,89 @@ function NewJobPageContent() {
 
           {/* Sidebar / Sidebar Options */}
           <div className="space-y-6">
+            {/* Publish Actions - Now at top for immediate pricing visibility */}
+            <section className="rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-500/5 to-slate-900 p-6 sticky top-6 z-10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-100">Pricing & Publish</h2>
+                <Link href="/pricing" className="text-xs text-teal-400 hover:underline">View all plans</Link>
+              </div>
+              <div className="space-y-4">
+                {freePostingEnabled ? (
+                  <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
+                    {submitting ? "Posting..." : "Post Free (Admin)"}
+                  </button>
+                ) : subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0) ? (
+                  <>
+                    <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
+                      <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
+                      <div className="text-xs text-slate-400">
+                        {subscription.unlimitedPosts ? "Unlimited job postings" : "1 Credit will be deducted"}
+                      </div>
+                    </div>
+                    <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
+                      {submitting ? "Posting..." : subscription.unlimitedPosts ? "Post Job" : "Post using Credit"}
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Quick Pricing Summary */}
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Pay Per Post</div>
+
+                    {/* Standard Post Option */}
+                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-slate-300 font-semibold">{JOB_POSTING_PRODUCTS.SINGLE.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.SINGLE.duration} days</div>
+                        </div>
+                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</div>
+                      </div>
+                      <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-slate-700 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 transition-colors">
+                        {submitting ? "Processing..." : "Pay & Post"}
+                      </button>
+                    </div>
+
+                    {/* Featured Post Option */}
+                    <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
+                      <div className="absolute -top-2 right-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Popular</span>
+                      </div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="text-sm text-amber-400 font-semibold">{JOB_POSTING_PRODUCTS.FEATURED.name}</div>
+                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.FEATURED.duration} days</div>
+                        </div>
+                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</div>
+                      </div>
+                      <button onClick={() => handlePostJob("FEATURED")} disabled={submitting} className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
+                        {submitting ? "Processing..." : "Pay & Post Featured"}
+                      </button>
+                    </div>
+
+                    {/* Subscription Upsell */}
+                    <div className="pt-2 border-t border-slate-800">
+                      <Link href="/organization/subscription" className="block text-center text-xs text-teal-400 hover:underline">
+                        Save with annual plans — from $1,250/year
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                <p className="text-center text-xs text-slate-500 mt-2">By posting, you agree to our Terms.</p>
+              </div>
+            </section>
+
+            {/* Progress Indicator */}
+            <FormProgressIndicator
+              sections={[
+                { id: "section-core", label: "Core Details", isComplete: !!(formData.title && formData.location && formData.closingDate) },
+                { id: "section-schedule", label: "Schedule", isComplete: true }, // Optional section, always complete
+                { id: "section-trc", label: "Reconciliation", isComplete: true }, // Optional section
+                { id: "section-description", label: "Description", isComplete: !!formData.description && formData.description.length >= 50 },
+                { id: "section-application", label: "Application", isComplete: true }, // Always complete (Quick Apply is default)
+              ]}
+              currentSection={currentSection}
+            />
+
             {/* Attributes */}
             <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
               <h2 className="text-lg font-bold text-slate-100 mb-4">Job Attributes</h2>
@@ -447,130 +1277,10 @@ function NewJobPageContent() {
               </div>
             </section>
 
-            {/* Publish Actions */}
-            <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sticky top-6">
-              <h2 className="text-lg font-bold text-slate-100 mb-4">Publish</h2>
-              <div className="space-y-4">
-                {freePostingEnabled ? (
-                  <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
-                    {submitting ? "Posting..." : "Post Free (Admin)"}
-                  </button>
-                ) : subscription && subscription.remainingCredits > 0 ? (
-                  <>
-                    <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
-                      <div className="text-sm text-emerald-400 font-medium mb-1">Membership Active</div>
-                      <div className="text-xs text-slate-400">1 Credit will be deducted</div>
-                    </div>
-                    <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
-                      {submitting ? "Posting..." : "Post using Credit"}
-                    </button>
-                  </>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Per-Post Options Header */}
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Pay Per Post</div>
-
-                    {/* Standard Post Option */}
-                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-slate-600 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-slate-300 font-semibold">{JOB_POSTING_PRODUCTS.SINGLE.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.SINGLE.duration} days</div>
-                        </div>
-                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.SINGLE.price / 100}</div>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-3">{JOB_POSTING_PRODUCTS.SINGLE.description}</p>
-                      <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-slate-700 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 transition-colors">
-                        {submitting ? "Processing..." : "Pay & Post"}
-                      </button>
-                    </div>
-
-                    {/* Featured Post Option */}
-                    <div className="rounded-lg bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-4 border border-amber-500/30 relative">
-                      <div className="absolute -top-2 right-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">Popular</span>
-                      </div>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-amber-400 font-semibold">{JOB_POSTING_PRODUCTS.FEATURED.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">{JOB_POSTING_PRODUCTS.FEATURED.duration} days</div>
-                        </div>
-                        <div className="text-lg font-bold text-white">${JOB_POSTING_PRODUCTS.FEATURED.price / 100}</div>
-                      </div>
-                      <p className="text-xs text-slate-400 mb-3">{JOB_POSTING_PRODUCTS.FEATURED.description}</p>
-                      <button onClick={() => handlePostJob("FEATURED")} disabled={submitting} className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-colors">
-                        {submitting ? "Processing..." : "Pay & Post Featured"}
-                      </button>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="relative py-3">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-700"></div>
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-[#08090C] px-3 text-xs text-slate-500">or save with a subscription</span>
-                      </div>
-                    </div>
-
-                    {/* Annual Subscriptions Header */}
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Annual Plans</div>
-
-                    {/* Tier 1 Subscription */}
-                    <div className="rounded-lg bg-slate-900 p-4 border border-slate-700 hover:border-teal-500/50 transition-colors">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-teal-400 font-semibold">{SUBSCRIPTION_PRODUCTS.TIER1.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">12 months</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-white">${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}</div>
-                          <div className="text-[10px] text-slate-500">/year</div>
-                        </div>
-                      </div>
-                      <ul className="text-xs text-slate-400 mb-3 space-y-1">
-                        <li>• 15 job postings per year</li>
-                        <li>• 15 featured listings included</li>
-                        <li>• Organization profile page</li>
-                      </ul>
-                      <Link href="/organization/subscription?plan=TIER1" className="block w-full rounded-lg bg-teal-500/20 border border-teal-500/30 py-2.5 text-sm font-semibold text-teal-400 hover:bg-teal-500/30 transition-colors text-center">
-                        Subscribe & Save
-                      </Link>
-                    </div>
-
-                    {/* Tier 2 Subscription */}
-                    <div className="rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-4 border border-purple-500/30 relative">
-                      <div className="absolute -top-2 right-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full">Best Value</span>
-                      </div>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="text-sm text-purple-400 font-semibold">{SUBSCRIPTION_PRODUCTS.TIER2.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">12 months</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-white">${(SUBSCRIPTION_PRODUCTS.TIER2.price / 100).toLocaleString()}</div>
-                          <div className="text-[10px] text-slate-500">/year</div>
-                        </div>
-                      </div>
-                      <ul className="text-xs text-slate-400 mb-3 space-y-1">
-                        <li>• Unlimited job postings</li>
-                        <li>• Rotating featured listings</li>
-                        <li>• Shop Indigenous listing included</li>
-                      </ul>
-                      <Link href="/organization/subscription?plan=TIER2" className="block w-full rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 py-2.5 text-sm font-semibold text-white hover:from-purple-600 hover:to-pink-600 transition-colors text-center">
-                        Subscribe & Save
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                <p className="text-center text-xs text-slate-500 mt-2">By posting, you agree to our Terms.</p>
-              </div>
-            </section>
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

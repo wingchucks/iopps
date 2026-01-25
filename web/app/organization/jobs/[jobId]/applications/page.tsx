@@ -116,10 +116,10 @@ export default function EmployerJobApplicationsPage() {
           </p>
         </div>
         <Link
-          href="/employer"
+          href="/organization"
           className="text-xs text-[#14B8A6] underline"
         >
-          Back to employer dashboard
+          Back to dashboard
         </Link>
       </div>
 

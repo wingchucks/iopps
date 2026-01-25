@@ -54,6 +54,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [tempFilters, setTempFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -75,6 +76,7 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
   };
 
   const fetchJobs = async (forceRefresh = false) => {
+    setError(null);
     try {
       if (forceRefresh) {
         // On refresh, fetch fresh data and update cache
@@ -95,8 +97,12 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
           logger.log("Jobs loaded from cache, refreshing in background...");
         }
       }
-    } catch (error) {
-      logger.error("Error fetching jobs:", error);
+    } catch (err) {
+      logger.error("Error fetching jobs:", err);
+      // Only show error if we have no cached jobs to display
+      if (jobs.length === 0) {
+        setError("Unable to load jobs. Please check your connection and try again.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -224,16 +230,20 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
       <TouchableOpacity
         style={[styles.jobCard, item.featured && styles.featuredCard]}
         onPress={() => navigation.navigate("JobDetail", { jobId: item.id })}
+        accessibilityLabel={`${item.title} at ${item.employerName}, ${item.location}, ${item.employmentType}${item.featured ? ", Featured job" : ""}`}
+        accessibilityRole="button"
+        accessibilityHint="Tap to view job details"
+        testID={`job-card-${item.id}`}
       >
         {item.featured && (
-          <View style={styles.featuredBadge}>
+          <View style={styles.featuredBadge} accessibilityElementsHidden>
             <Text style={styles.featuredText}>Featured</Text>
           </View>
         )}
-        <Text style={styles.jobTitle}>{item.title}</Text>
-        <Text style={styles.employerName}>{item.employerName}</Text>
+        <Text style={styles.jobTitle} numberOfLines={2} ellipsizeMode="tail">{item.title}</Text>
+        <Text style={styles.employerName} numberOfLines={1} ellipsizeMode="tail">{item.employerName}</Text>
         <View style={styles.jobMeta}>
-          <Text style={styles.location}>{item.location}</Text>
+          <Text style={styles.location} numberOfLines={1} ellipsizeMode="tail">{item.location}</Text>
           <Text style={styles.separator}>•</Text>
           <Text style={styles.employmentType}>{item.employmentType}</Text>
         </View>
@@ -291,6 +301,31 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
     );
   }
 
+  // Error state - only show if no jobs loaded
+  if (error && jobs.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorTitle}>Unable to Load Jobs</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setLoading(true);
+              fetchJobs(true);
+            }}
+            accessibilityLabel="Try again"
+            accessibilityRole="button"
+            testID="jobs-retry-button"
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Search Bar */}
@@ -305,9 +340,18 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
             onChangeText={setSearchQuery}
             returnKeyType="search"
             onSubmitEditing={() => Keyboard.dismiss()}
+            accessibilityLabel="Search jobs"
+            accessibilityHint="Enter keywords to search for jobs, companies, or locations"
+            testID="jobs-search-input"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearButton}>
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              style={styles.clearButton}
+              accessibilityLabel="Clear search"
+              accessibilityRole="button"
+              testID="jobs-clear-search"
+            >
               <Text style={styles.clearIcon}>✕</Text>
             </TouchableOpacity>
           )}
@@ -315,6 +359,10 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
         <TouchableOpacity
           style={[styles.filterButton, hasActiveFilters && styles.filterButtonActive]}
           onPress={openFilterModal}
+          accessibilityLabel={`Filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ""}`}
+          accessibilityRole="button"
+          accessibilityHint="Open filter options"
+          testID="jobs-filter-button"
         >
           <Text style={styles.filterIcon}>⚙️</Text>
           {activeFilterCount > 0 && (
@@ -360,7 +408,13 @@ export default function JobsScreen({ navigation }: JobsScreenProps) {
                 </Text>
               </View>
             )}
-            <TouchableOpacity style={styles.clearAllButton} onPress={clearFilters}>
+            <TouchableOpacity
+              style={styles.clearAllButton}
+              onPress={clearFilters}
+              accessibilityLabel="Clear all filters"
+              accessibilityRole="button"
+              testID="jobs-clear-filters"
+            >
               <Text style={styles.clearAllText}>Clear all</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -931,6 +985,42 @@ const styles = StyleSheet.create({
   clearAllFiltersText: {
     color: "#EF4444",
     fontSize: 15,
+    fontWeight: "600",
+  },
+
+  // Error State
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#F8FAFC",
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: "#94A3B8",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  retryButton: {
+    backgroundColor: "#14B8A6",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: "#0F172A",
+    fontSize: 16,
     fontWeight: "600",
   },
 });

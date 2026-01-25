@@ -78,15 +78,20 @@ export default function ExploreScreen() {
             key={category.id}
             style={styles.card}
             onPress={() => (navigation as any).navigate(category.screen)}
+            accessibilityLabel={`${category.title}: ${category.description}`}
+            accessibilityRole="button"
+            accessibilityHint={`Tap to explore ${category.title.toLowerCase()}`}
+            testID={`explore-${category.id}`}
           >
             <View
               style={[styles.iconContainer, { backgroundColor: `${category.color}20` }]}
+              accessibilityElementsHidden
             >
               <Text style={styles.icon}>{category.icon}</Text>
             </View>
             <Text style={styles.cardTitle}>{category.title}</Text>
             <Text style={styles.cardDescription}>{category.description}</Text>
-            <View style={[styles.arrow, { backgroundColor: `${category.color}20` }]}>
+            <View style={[styles.arrow, { backgroundColor: `${category.color}20` }]} accessibilityElementsHidden>
               <Text style={[styles.arrowText, { color: category.color }]}>→</Text>
             </View>
           </TouchableOpacity>

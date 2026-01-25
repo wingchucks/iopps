@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
   /* Strict Mode for better debugging */
   reactStrictMode: true,
 
+
+
   /* Headers for security and caching */
   async headers() {
     return [
@@ -50,6 +52,10 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
           },
         ],
       },
@@ -134,6 +140,23 @@ const nextConfig: NextConfig = {
       {
         source: "/shop/:path*",
         destination: "/business/:path*",
+        permanent: true,
+      },
+      // Business root to Organizations directory redirect
+      {
+        source: "/business",
+        destination: "/organizations",
+        permanent: true,
+      },
+      // Businesses to Organizations redirects (URL rename)
+      {
+        source: "/businesses",
+        destination: "/organizations",
+        permanent: true,
+      },
+      {
+        source: "/businesses/:slug*",
+        destination: "/organizations/:slug*",
         permanent: true,
       },
       // Powwows to Community redirects (NEW)

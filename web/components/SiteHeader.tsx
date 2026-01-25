@@ -3,30 +3,38 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
   { href: "/careers", label: "Careers" },
-  { href: "/education", label: "Education" },
-  { href: "/business", label: "Business" },
+  { href: "/organizations", label: "Directory" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/community", label: "Community" },
+  { href: "/community", label: "Connect" },
   { href: "/live", label: "Live" },
+  { href: "/map", label: "Map" },
   { href: "/pricing", label: "Pricing" },
 ];
 
 export default function SiteHeader() {
   const { user, role, loading, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = () => setMenuOpen(false);
+
+  // Handle logout with redirect to homepage
+  const handleLogout = async () => {
+    closeMenu();
+    router.push('/');
+    await logout();
+  };
 
   useEffect(() => {
     async function fetchUnreadMessages() {
@@ -99,11 +107,10 @@ export default function SiteHeader() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                        pathname === link.href
-                          ? "bg-white/20 font-semibold text-white"
-                          : "text-white/80 hover:text-white"
-                      }`}
+                      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${pathname === link.href
+                        ? "bg-white/20 font-semibold text-white"
+                        : "text-white/80 hover:text-white"
+                        }`}
                     >
                       {link.label}
                     </Link>
@@ -192,10 +199,7 @@ export default function SiteHeader() {
 
                           <div className="mt-3 border-t border-slate-700/50 pt-3">
                             <button
-                              onClick={() => {
-                                closeMenu();
-                                void logout();
-                              }}
+                              onClick={() => void handleLogout()}
                               className="w-full rounded-lg bg-gradient-to-r from-[#14B8A6] to-cyan-600 px-3 py-2 text-xs font-semibold text-white transition hover:from-[#16cdb8] hover:to-cyan-500"
                             >
                               Sign out
@@ -244,11 +248,10 @@ export default function SiteHeader() {
                         <Link
                           href="/member/dashboard"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                            pathname === "/member/dashboard"
-                              ? "bg-white/20 text-white"
-                              : "text-white/80 hover:bg-white/10 hover:text-white"
-                          }`}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/member/dashboard"
+                            ? "bg-white/20 text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }`}
                         >
                           Dashboard
                         </Link>
@@ -259,22 +262,20 @@ export default function SiteHeader() {
                           <Link
                             href="/organization/dashboard"
                             onClick={() => setMobileNavOpen(false)}
-                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                              pathname === "/organization/dashboard"
-                                ? "bg-white/20 text-white"
-                                : "text-white/80 hover:bg-white/10 hover:text-white"
-                            }`}
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/organization/dashboard"
+                              ? "bg-white/20 text-white"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                              }`}
                           >
                             Dashboard
                           </Link>
                           <Link
                             href="/organization/profile"
                             onClick={() => setMobileNavOpen(false)}
-                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                              pathname === "/organization/profile"
-                                ? "bg-white/20 text-white"
-                                : "text-white/80 hover:bg-white/10 hover:text-white"
-                            }`}
+                            className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/organization/profile"
+                              ? "bg-white/20 text-white"
+                              : "text-white/80 hover:bg-white/10 hover:text-white"
+                              }`}
                           >
                             Manage Organization
                           </Link>
@@ -285,11 +286,10 @@ export default function SiteHeader() {
                         <Link
                           href="/admin"
                           onClick={() => setMobileNavOpen(false)}
-                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                            pathname === "/admin"
-                              ? "bg-white/20 text-white"
-                              : "text-white/80 hover:bg-white/10 hover:text-white"
-                          }`}
+                          className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === "/admin"
+                            ? "bg-white/20 text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                            }`}
                         >
                           Admin Dashboard
                         </Link>
@@ -303,11 +303,10 @@ export default function SiteHeader() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileNavOpen(false)}
-                      className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
-                        pathname === link.href
-                          ? "bg-white/20 text-white"
-                          : "text-white/80 hover:bg-white/10 hover:text-white"
-                      }`}
+                      className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${pathname === link.href
+                        ? "bg-white/20 text-white"
+                        : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }`}
                     >
                       {link.label}
                     </Link>
@@ -336,7 +335,7 @@ export default function SiteHeader() {
                       <button
                         onClick={() => {
                           setMobileNavOpen(false);
-                          void logout();
+                          void handleLogout();
                         }}
                         className="w-full rounded-full border border-white/30 bg-white/10 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-500/20 hover:border-red-400/50"
                       >

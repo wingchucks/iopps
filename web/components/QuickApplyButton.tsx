@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/components/AuthProvider";
 import { createJobApplication } from "@/lib/firestore";
 import type { JobPosting } from "@/lib/types";
@@ -57,6 +58,20 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
         }
     }, [memberProfile]);
 
+    // Handle Escape key to close modal
+    useEffect(() => {
+        if (!showModal) return;
+
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && !applying) {
+                setShowModal(false);
+            }
+        };
+
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [showModal, applying]);
+
     if (!user) {
         return null;
     }
@@ -76,14 +91,14 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
 
         // Validation: Must have a resume
         if (!resumeToUse) {
-            alert("Please upload a resume or use your saved resume");
+            toast.error("Please upload a resume or use your saved resume");
             setApplying(false);
             return;
         }
 
         // Validation: If uploading cover letter file, must have file
         if (coverLetterType === "file" && !coverLetterFile) {
-            alert("Please upload a cover letter file or switch to 'Write Manually'.");
+            toast.error("Please upload a cover letter file or switch to 'Write Manually'.");
             setApplying(false);
             return;
         }
@@ -121,7 +136,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
             }, 2000);
         } catch (error) {
             console.error("Quick apply error:", error);
-            alert("Failed to submit application. Please try again.");
+            toast.error("Failed to submit application. Please try again.");
         } finally {
             setApplying(false);
         }
@@ -137,7 +152,14 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
             </button>
 
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !applying) {
+                            setShowModal(false);
+                        }
+                    }}
+                >
                     <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl my-8">
                         {success ? (
                             <div className="text-center py-8">
@@ -275,7 +297,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                         onUploadComplete={(url, path, name) => {
                                                             setUploadedResume({ name, url, path, type: "document" });
                                                         }}
-                                                        onError={(err) => alert(err)}
+                                                        onError={(err) => toast.error(err)}
                                                         className="border-slate-700"
                                                     />
                                                 )}
@@ -355,7 +377,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                         onUploadComplete={(url, path, name) => {
                                                             setCoverLetterFile({ name, url, path, type: 'document' });
                                                         }}
-                                                        onError={(err) => alert(err)}
+                                                        onError={(err) => toast.error(err)}
                                                         className="border-slate-700"
                                                     />
                                                 )}
@@ -408,7 +430,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                         setAdditionalDocs(prev => [...prev, { name, url, path, type }]);
                                                         setShowAddDoc(false);
                                                     }}
-                                                    onError={(err) => alert(err)}
+                                                    onError={(err) => toast.error(err)}
                                                 />
                                             </div>
                                         ) : (

@@ -14,10 +14,30 @@ import {
   db,
   scholarshipsCollection,
   scholarshipApplicationsCollection,
+  documentId,
   checkFirebase,
 } from "./shared";
 import type { Scholarship, ScholarshipApplication, ApplicationStatus } from "@/lib/types";
 import { MOCK_SCHOLARSHIPS } from "../mockData";
+
+// Helper to convert various timestamp formats to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a scholarship deadline has passed
+export function isScholarshipExpired(scholarship: Scholarship): boolean {
+  const now = new Date();
+  const deadline = toDate(scholarship.deadline);
+  if (deadline && deadline < now) return true;
+  return false;
+}
 
 type ScholarshipInput = Omit<
   Scholarship,
@@ -39,16 +59,27 @@ export async function createScholarship(
   return docRef.id;
 }
 
-export async function listScholarships(): Promise<Scholarship[]> {
+export async function listScholarships(options: { includeExpired?: boolean } = {}): Promise<Scholarship[]> {
   try {
     const firestore = checkFirebase();
     if (!firestore) {
-      return MOCK_SCHOLARSHIPS;
+      let scholarships = [...MOCK_SCHOLARSHIPS];
+      if (!options.includeExpired) {
+        scholarships = scholarships.filter(s => s.active !== false && !isScholarshipExpired(s));
+      }
+      return scholarships;
     }
     const ref = collection(firestore, scholarshipsCollection);
-    const q = query(ref, orderBy("createdAt", "desc"));
+    const q = query(ref, where("active", "==", true), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => docSnap.data() as Scholarship);
+    let scholarships = snap.docs.map((docSnap) => docSnap.data() as Scholarship);
+
+    // Client-side filtering for expired scholarships (safety net)
+    if (!options.includeExpired) {
+      scholarships = scholarships.filter(s => !isScholarshipExpired(s));
+    }
+
+    return scholarships;
   } catch {
     return [];
   }
@@ -297,4 +328,36 @@ export async function createExtendedScholarship(
     id: docRef.id,
   });
   return docRef.id;
+}
+// Batch fetch scholarships by IDs
+export async function getScholarshipsByIds(ids: string[]): Promise<Scholarship[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore || ids.length === 0) return [];
+
+    const scholarships: Scholarship[] = [];
+    const chunks = [];
+
+    // Firestore 'in' query supports max 10 to 30 items. Batching by 10.
+    for (let i = 0; i < ids.length; i += 10) {
+      chunks.push(ids.slice(i, i + 10));
+    }
+
+    const ref = collection(firestore, scholarshipsCollection);
+
+    for (const chunk of chunks) {
+      if (chunk.length > 0) {
+        const q = query(ref, where(documentId(), "in", chunk));
+        const snap = await getDocs(q);
+        snap.docs.forEach((d) => {
+          scholarships.push({ id: d.id, ...d.data() } as Scholarship);
+        });
+      }
+    }
+
+    return scholarships;
+  } catch (error) {
+    console.error("Error fetching scholarships by IDs:", error);
+    return [];
+  }
 }

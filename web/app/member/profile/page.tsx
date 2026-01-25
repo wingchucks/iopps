@@ -6,6 +6,7 @@ import { getMemberProfile, upsertMemberProfile } from "@/lib/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import type { WorkExperience, Education, PortfolioItem } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function MemberProfilePage() {
   const { user, role, loading } = useAuth();
@@ -103,10 +104,10 @@ export default function MemberProfilePage() {
         quickApplyEnabled,
         defaultCoverLetter,
       });
-      alert("Profile saved successfully!");
+      toast.success("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
-      alert("Error saving profile. Please try again.");
+      toast.error("Error saving profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -120,13 +121,13 @@ export default function MemberProfilePage() {
     // Validate file type
     const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please upload a PDF or Word document");
+      toast.error("Please upload a PDF or Word document");
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -153,10 +154,10 @@ export default function MemberProfilePage() {
         resumeUrl: url,
       });
 
-      alert("Resume uploaded and saved successfully!");
+      toast.success("Resume uploaded and saved successfully!");
     } catch (error) {
       console.error("Error uploading resume:", error);
-      alert("Error uploading resume. Please try again.");
+      toast.error("Error uploading resume. Please try again.");
     } finally {
       setUploadingResume(false);
     }
@@ -179,10 +180,10 @@ export default function MemberProfilePage() {
       });
 
       setResumeUrl("");
-      alert("Resume deleted successfully!");
+      toast.success("Resume deleted successfully!");
     } catch (error) {
       console.error("Error deleting resume:", error);
-      alert("Error deleting resume. Please try again.");
+      toast.error("Error deleting resume. Please try again.");
     }
   };
 
@@ -744,6 +745,18 @@ export default function MemberProfilePage() {
             )}
           </section>
 
+          {/* Data & Privacy */}
+          <section className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-900/50 to-slate-800/50 p-8 shadow-xl border border-slate-700/50">
+            <h2 className="mb-2 text-xl font-bold text-white">Data & Privacy</h2>
+            <p className="mb-6 text-sm text-slate-400">
+              You have the right to access and export all your personal data stored on our platform.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <DataExportButton format="json" />
+              <DataExportButton format="csv" />
+            </div>
+          </section>
+
           {/* Save Button */}
           <div className="flex justify-end gap-4">
             <button
@@ -1223,5 +1236,70 @@ function PortfolioModal({
         </form>
       </div>
     </div>
+  );
+}
+
+// Data Export Button Component
+function DataExportButton({ format }: { format: "json" | "csv" }) {
+  const { user } = useAuth();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!user) return;
+
+    setExporting(true);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/member/export-data?format=${format}`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      // Get the blob and create download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `iopps-data-export-${new Date().toISOString().split("T")[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Data exported successfully!");
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data. Please try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleExport}
+      disabled={exporting}
+      className="flex items-center gap-2 rounded-xl border border-slate-600 px-5 py-3 font-medium text-slate-300 transition-all hover:border-emerald-500/50 hover:bg-slate-800 disabled:opacity-50"
+    >
+      {exporting ? (
+        <>
+          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+            <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Exporting...
+        </>
+      ) : (
+        <>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export as {format.toUpperCase()}
+        </>
+      )}
+    </button>
   );
 }

@@ -482,7 +482,7 @@ function TrainingCard({
           {program.providerName}
         </p>
 
-        <Link href={`/jobs-training/programs/${program.id}`}>
+        <Link href={`/careers/programs/${program.id}`}>
           <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-[#14B8A6] transition-colors cursor-pointer">
             {program.title}
           </h3>

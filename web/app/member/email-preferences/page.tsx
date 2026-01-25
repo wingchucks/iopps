@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import type { EmailPreferences, EmailDigestFrequency } from "@/lib/types";
 import {
   BellIcon,
@@ -26,9 +26,8 @@ const FREQUENCY_OPTIONS: { value: EmailDigestFrequency; label: string }[] = [
   { value: "never", label: "Never" },
 ];
 
-export default function EmailPreferencesPage() {
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
+function EmailPreferencesContent() {
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,15 +36,11 @@ export default function EmailPreferencesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      router.push("/login");
-      return;
+    // user is guaranteed by ProtectedRoute
+    if (user) {
+      loadPreferences();
     }
-
-    loadPreferences();
-  }, [user, authLoading, router]);
+  }, [user]);
 
   async function loadPreferences() {
     if (!user) return;
@@ -141,7 +136,8 @@ export default function EmailPreferencesPage() {
     savePreferences({ unsubscribedAll: newValue });
   }
 
-  if (authLoading || loading) {
+  // Show loading while fetching preferences (auth handled by ProtectedRoute)
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#020306] px-4 py-10">
         <div className="mx-auto max-w-3xl">
@@ -151,9 +147,8 @@ export default function EmailPreferencesPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  // user guaranteed by ProtectedRoute
+  if (!user) return null;
 
   if (error && !preferences) {
     return (
@@ -185,7 +180,7 @@ export default function EmailPreferencesPage() {
           <div className="flex items-center justify-between">
             <div>
               <Link
-                href="/member"
+                href="/member/dashboard"
                 className="text-sm text-slate-400 hover:text-[#14B8A6]"
               >
                 ← Back to Dashboard
@@ -470,5 +465,13 @@ function FrequencySelect({
         </button>
       ))}
     </div>
+  );
+}
+
+export default function EmailPreferencesPage() {
+  return (
+    <ProtectedRoute>
+      <EmailPreferencesContent />
+    </ProtectedRoute>
   );
 }

@@ -1,68 +1,71 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createConference, getEmployerProfile, updateConference } from "@/lib/firestore";
-import ConferencePricingSelector from "@/components/ConferencePricingSelector";
-import { PosterUploader } from "@/components/PosterUploader";
-import type { ConferenceExtractedData } from "@/lib/googleAi";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
-import { isPillarPaymentRequired } from "@/lib/platformSettings";
+import { createConference, getEmployerProfile } from "@/lib/firestore";
 import { toast } from "react-hot-toast";
 
 export default function NewConferencePage() {
   const router = useRouter();
   const { user, role, loading } = useAuth();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [registrationLink, setRegistrationLink] = useState("");
-  const [cost, setCost] = useState("");
-  const [orgName, setOrgName] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUploader, setShowUploader] = useState(true);
-  const [posterFile, setPosterFile] = useState<File | null>(null);
 
-  // Step management
-  const [step, setStep] = useState<"form" | "pricing">("form");
-  const [conferenceId, setConferenceId] = useState<string | null>(null);
-  const [paymentRequired, setPaymentRequired] = useState(true);
+  const isAdminOrModerator = role === "admin" || role === "moderator";
+  const canCreate = role === "employer" || isAdminOrModerator;
 
-  // Check if payment is required for conferences
+  // Auto-create draft conference and redirect to edit page
   useEffect(() => {
-    async function checkPayment() {
-      const required = await isPillarPaymentRequired("conferences");
-      setPaymentRequired(required);
-    }
-    checkPayment();
-  }, []);
+    if (loading || creating || !user || !canCreate) return;
 
-  // Handle data extracted from poster
-  const handlePosterDataExtracted = (data: ConferenceExtractedData) => {
-    if (data.title) setTitle(data.title);
-    if (data.description) setDescription(data.description);
-    if (data.location) setLocation(data.location);
-    if (data.startDate) setStartDate(data.startDate);
-    if (data.endDate) setEndDate(data.endDate);
-    if (data.registrationUrl) setRegistrationLink(data.registrationUrl);
-    if (data.cost) setCost(data.cost);
-    if (data.organizerName) setOrgName(data.organizerName);
-  };
+    const createDraftConference = async () => {
+      setCreating(true);
+      try {
+        // Get employer profile for organization name
+        const profile = await getEmployerProfile(user.uid);
+        const organizerName =
+          profile?.organizationName ??
+          user.displayName ??
+          user.email ??
+          "Employer";
 
-  const handlePosterSelect = (file: File) => {
-    setPosterFile(file);
-  };
+        // Create draft conference with minimal data
+        const newConferenceId = await createConference({
+          employerId: user.uid,
+          employerName: organizerName,
+          title: "Untitled Conference",
+          description: "",
+          location: "",
+          startDate: "",
+          endDate: "",
+          registrationLink: "",
+          cost: "",
+          active: false, // Draft - not published yet
+        });
 
-  if (loading) {
+        toast.success("Conference draft created!");
+        router.replace(`/organization/conferences/${newConferenceId}/edit?new=true`);
+      } catch (err) {
+        console.error("Failed to create conference:", err);
+        setError(err instanceof Error ? err.message : "Could not create conference.");
+        setCreating(false);
+      }
+    };
+
+    createDraftConference();
+  }, [loading, user, canCreate, creating, router]);
+
+  if (loading || creating) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+          <p className="text-sm text-slate-300">
+            {creating ? "Creating your conference..." : "Loading..."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -88,9 +91,7 @@ export default function NewConferencePage() {
     );
   }
 
-  const isSuperAdmin = user?.email === "nathan.arias@iopps.ca";
-
-  if (role !== "employer" && !isSuperAdmin) {
+  if (!canCreate) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -117,226 +118,27 @@ export default function NewConferencePage() {
     );
   }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setSaving(true);
-    setError(null);
-    try {
-      let organizerName = orgName;
-      if (!organizerName) {
-        const profile = await getEmployerProfile(user.uid);
-        organizerName =
-          profile?.organizationName ??
-          user.displayName ??
-          user.email ??
-          "Employer";
-        setOrgName(organizerName);
-      }
-
-      // 1. Create conference to get ID
-      const newConferenceId = await createConference({
-        employerId: user.uid,
-        employerName: organizerName,
-        title,
-        description,
-        location,
-        startDate,
-        endDate,
-        registrationLink,
-        cost,
-        active: false, // Start inactive until pricing selected
-      });
-
-      // 2. Upload poster if exists
-      if (posterFile && storage) {
-        try {
-          // Secure Path: conferences/{employerId}/{conferenceId}/images/{fileName}
-          const storagePath = `conferences/${user.uid}/${newConferenceId}/images/${posterFile.name}`;
-          const storageRef = ref(storage, storagePath);
-          await uploadBytes(storageRef, posterFile);
-          const downloadURL = await getDownloadURL(storageRef);
-
-          // Update conference with image URL
-          await updateConference(newConferenceId, {
-            bannerImageUrl: downloadURL,
-            galleryImageUrls: [downloadURL]
-          });
-        } catch (uploadError) {
-          console.error("Failed to upload poster:", uploadError);
-          // Don't fail the creation, just log it. User can re-upload later if needed.
-          // Or maybe show a warning.
-        }
-      }
-
-      // If payment is required, go to pricing step
-      if (paymentRequired) {
-        setConferenceId(newConferenceId);
-        setStep("pricing");
-      } else {
-        // Free posting - stays inactive pending admin approval
-        toast.success("Conference submitted for review!");
-        router.push(`/organization/conferences/${newConferenceId}/edit`);
-      }
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : "Could not create conference.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Pricing step
-  if (step === "pricing" && conferenceId && user) {
+  if (error) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <ConferencePricingSelector
-          conferenceId={conferenceId}
-          userId={user.uid}
-        />
+      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Something went wrong
+        </h1>
+        <p className="rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          {error}
+        </p>
+        <button
+          onClick={() => {
+            setError(null);
+            setCreating(false);
+          }}
+          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
-  // Form step
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Create a conference or gathering
-      </h1>
-      <p className="mt-2 text-sm text-slate-300">
-        Share gatherings, summits, and community events with the IOPPS network.
-      </p>
-
-      {error && (
-        <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-          {error}
-        </p>
-      )}
-
-      {/* AI Poster Uploader */}
-      {showUploader && (
-        <div className="mt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Quick Fill with AI
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowUploader(false)}
-              className="text-sm text-slate-400 hover:text-white"
-            >
-              Skip this step
-            </button>
-          </div>
-          <PosterUploader
-            eventType="conference"
-            onDataExtracted={handlePosterDataExtracted as any}
-            onFileSelect={handlePosterSelect}
-          />
-          <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-sm text-slate-500">or fill manually below</span>
-            <div className="h-px flex-1 bg-slate-800" />
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Title
-          </label>
-          <input
-            type="text"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Description
-          </label>
-          <textarea
-            required
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Location
-          </label>
-          <input
-            type="text"
-            required
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-slate-200">
-              Start date
-            </label>
-            <input
-              type="date"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-200">
-              End date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Registration link
-          </label>
-          <input
-            type="url"
-            value={registrationLink}
-            onChange={(e) => setRegistrationLink(e.target.value)}
-            placeholder="https://example.com/register"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-200">
-            Cost or ticket info
-          </label>
-          <input
-            type="text"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-            placeholder="Free / $150 early bird"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
-        >
-          {saving ? "Creating..." : "Continue to Pricing"}
-        </button>
-      </form>
-    </div>
-  );
+  return null;
 }

@@ -14,14 +14,37 @@ import {
   UserCircleIcon,
   CreditCardIcon,
   AcademicCapIcon,
+  BuildingLibraryIcon,
+  BookOpenIcon,
+  BanknotesIcon,
+  CalendarDaysIcon,
+  EnvelopeIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import SidebarItem from './SidebarItem';
 import type { EmployerProfile } from '@/lib/types';
 
 export type DashboardMode = 'employer' | 'vendor';
 
-export type EmployerSection = 'overview' | 'jobs' | 'training' | 'applications' | 'videos';
-export type VendorSection = 'overview' | 'products' | 'services' | 'inquiries';
+// Expanded types for granular navigation
+export type EmployerSection =
+  | 'overview'
+  | 'jobs'
+  | 'applications'
+  | 'videos'
+  | 'school'
+  | 'programs'
+  | 'scholarships'
+  | 'events'
+  | 'student-inquiries';
+
+export type VendorSection =
+  | 'overview'
+  | 'products'
+  | 'services'
+  | 'shop-inquiries'
+  | 'funding';
+
 export type SharedSection = 'messages' | 'profile' | 'billing';
 export type DashboardSection = EmployerSection | VendorSection | SharedSection;
 
@@ -33,7 +56,8 @@ interface DashboardSidebarProps {
   onSectionChange: (section: DashboardSection) => void;
   badges?: {
     applications?: number;
-    inquiries?: number;
+    inquiries?: number; // Student inquiries
+    shopInquiries?: number; // Business inquiries
     messages?: number;
   };
 }
@@ -41,12 +65,10 @@ interface DashboardSidebarProps {
 /**
  * DashboardSidebar - Main sidebar with org info, mode toggle, and navigation
  *
- * Features:
- * - Organization logo and name display
- * - Binary Employer/Vendor mode toggle
- * - Mode-specific navigation items
- * - Shared account navigation
- * - Badge counts for notifications
+ * Updated Structure:
+ * - Employer Mode: Talent & Hiring, Education Provider
+ * - Vendor Mode: Marketplace, Growth
+ * - Shared: Account
  */
 export default function DashboardSidebar({
   profile,
@@ -64,36 +86,43 @@ export default function DashboardSidebar({
     onSectionChange('overview');
   };
 
-  // Employer mode navigation items
-  const employerNav = [
-    { id: 'overview' as const, label: 'Overview', icon: Squares2X2Icon },
+  // --- Navigation Definitions ---
+
+  const employerTalentNav = [
     { id: 'jobs' as const, label: 'Job Postings', icon: DocumentTextIcon },
-    { id: 'training' as const, label: 'Training Programs', icon: AcademicCapIcon },
     { id: 'applications' as const, label: 'Applications', icon: UsersIcon, badge: badges.applications },
-    { id: 'videos' as const, label: 'Interview Videos', icon: VideoCameraIcon },
+    { id: 'videos' as const, label: 'Interviews', icon: VideoCameraIcon },
   ];
 
-  // Vendor mode navigation items
-  const vendorNav = [
-    { id: 'overview' as const, label: 'Overview', icon: Squares2X2Icon },
-    { id: 'products' as const, label: 'Products', icon: CubeIcon },
+  const employerEducationNav = [
+    { id: 'school' as const, label: 'School Profile', icon: BuildingLibraryIcon },
+    { id: 'programs' as const, label: 'Programs', icon: BookOpenIcon },
+    { id: 'scholarships' as const, label: 'Scholarships', icon: BanknotesIcon },
+    { id: 'events' as const, label: 'Events', icon: CalendarDaysIcon },
+    { id: 'student-inquiries' as const, label: 'Student Inquiries', icon: EnvelopeIcon, badge: badges.inquiries },
+  ];
+
+  const vendorMarketplaceNav = [
+    { id: 'products' as const, label: 'Shop Profile', icon: CubeIcon },
     { id: 'services' as const, label: 'Services', icon: WrenchIcon },
-    { id: 'inquiries' as const, label: 'Inquiries', icon: ChatBubbleLeftRightIcon, badge: badges.inquiries },
+    { id: 'shop-inquiries' as const, label: 'Inquiries', icon: ChatBubbleLeftRightIcon, badge: badges.shopInquiries },
+  ];
+
+  const vendorGrowthNav = [
+    { id: 'funding' as const, label: 'Funding & Grants', icon: SparklesIcon },
   ];
 
   // Shared account navigation
   const sharedNav = [
     { id: 'messages' as const, label: 'Messages', icon: ChatBubbleLeftRightIcon, badge: badges.messages },
-    { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
     { id: 'billing' as const, label: 'Billing & Subscription', icon: CreditCardIcon },
+    { id: 'profile' as const, label: 'Settings', icon: UserCircleIcon },
   ];
 
-  const currentNav = mode === 'employer' ? employerNav : vendorNav;
-
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 h-full">
       {/* Organization Info Card */}
-      <div className="bg-card border border-card-border p-5 rounded-3xl flex items-center gap-4 backdrop-blur-xl">
+      <div className="bg-card border border-card-border p-5 rounded-3xl flex items-center gap-4 backdrop-blur-xl flex-shrink-0">
         {profile?.logoUrl ? (
           <Image
             src={profile.logoUrl}
@@ -118,7 +147,7 @@ export default function DashboardSidebar({
       </div>
 
       {/* Binary Mode Toggle */}
-      <div className="bg-card border border-card-border p-5 rounded-3xl backdrop-blur-xl">
+      <div className="bg-card border border-card-border p-5 rounded-3xl backdrop-blur-xl flex-shrink-0">
         <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 px-1">
           Dashboard Mode
         </h3>
@@ -165,45 +194,115 @@ export default function DashboardSidebar({
       </div>
 
       {/* Mode-Specific Navigation */}
-      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-        <div className="mb-8">
-          <h3 className={`text-[10px] font-bold uppercase tracking-[0.2em] mb-4 px-4 flex items-center gap-2 ${
-            mode === 'employer' ? 'text-blue-400' : 'text-accent'
-          }`}>
-            {mode === 'employer' ? <BriefcaseIcon className="w-2.5 h-2.5" /> : <ShoppingBagIcon className="w-2.5 h-2.5" />}
-            {mode === 'employer' ? 'Employer Tools' : 'Vendor Tools'}
-          </h3>
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
+        <div className="mb-0 space-y-8">
 
-          {currentNav.map((item) => (
+          {/* Overview - Always at top of list */}
+          <div>
             <SidebarItem
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              active={activeSection === item.id}
-              badge={item.badge}
-              onClick={() => onSectionChange(item.id)}
+              icon={Squares2X2Icon}
+              label="Overview"
+              active={activeSection === 'overview'}
+              onClick={() => onSectionChange('overview')}
               colorVariant={mode}
             />
-          ))}
-        </div>
+          </div>
 
-        {/* Shared Account Navigation */}
-        <div>
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 px-4">
-            Account
-          </h3>
+          {mode === 'employer' ? (
+            <>
+              {/* Talent & Hiring Group */}
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-4 text-blue-400">
+                  Talent & Hiring
+                </h3>
+                {employerTalentNav.map((item) => (
+                  <SidebarItem
+                    key={item.id}
+                    icon={item.icon}
+                    label={item.label}
+                    active={activeSection === item.id}
+                    badge={item.badge}
+                    onClick={() => onSectionChange(item.id)}
+                    colorVariant="employer"
+                  />
+                ))}
+              </div>
 
-          {sharedNav.map((item) => (
-            <SidebarItem
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              active={activeSection === item.id}
-              badge={item.badge}
-              onClick={() => onSectionChange(item.id)}
-              colorVariant="shared"
-            />
-          ))}
+              {/* Education Provider Group */}
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-4 text-teal-400">
+                  Education Provider
+                </h3>
+                {employerEducationNav.map((item) => (
+                  <SidebarItem
+                    key={item.id}
+                    icon={item.icon}
+                    label={item.label}
+                    active={activeSection === item.id}
+                    badge={item.badge}
+                    onClick={() => onSectionChange(item.id)}
+                    colorVariant="employer"
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Marketplace Group */}
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-4 text-accent">
+                  Marketplace
+                </h3>
+                {vendorMarketplaceNav.map((item) => (
+                  <SidebarItem
+                    key={item.id}
+                    icon={item.icon}
+                    label={item.label}
+                    active={activeSection === item.id}
+                    badge={item.badge}
+                    onClick={() => onSectionChange(item.id)}
+                    colorVariant="vendor"
+                  />
+                ))}
+              </div>
+
+              {/* Growth Group */}
+              <div>
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-4 text-amber-500">
+                  Growth
+                </h3>
+                {vendorGrowthNav.map((item) => (
+                  <SidebarItem
+                    key={item.id}
+                    icon={item.icon}
+                    label={item.label}
+                    active={activeSection === item.id}
+                    onClick={() => onSectionChange(item.id)}
+                    colorVariant="vendor"
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Shared Account Navigation */}
+          <div>
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-3 px-4">
+              Account
+            </h3>
+            {sharedNav.map((item) => (
+              <SidebarItem
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                active={activeSection === item.id}
+                badge={item.badge}
+                onClick={() => onSectionChange(item.id)}
+                colorVariant="shared"
+              />
+            ))}
+          </div>
+
         </div>
       </div>
     </div>

@@ -26,6 +26,30 @@ import {
 import type { JobPosting, SavedJob, JobVideo } from "@/lib/types";
 import { MOCK_JOBS } from "../mockData";
 
+// Helper to convert various timestamp formats to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp.toDate) return timestamp.toDate();
+  if (typeof timestamp === "string") return new Date(timestamp);
+  return null;
+}
+
+// Check if a job has expired based on closingDate or expiresAt
+export function isJobExpired(job: JobPosting): boolean {
+  const now = new Date();
+
+  const closingDate = toDate(job.closingDate);
+  if (closingDate && closingDate < now) return true;
+
+  const expiresAt = toDate(job.expiresAt);
+  if (expiresAt && expiresAt < now) return true;
+
+  return false;
+}
+
 type JobInput = Omit<
   JobPosting,
   "id" | "createdAt" | "active" | "employerId"
@@ -45,6 +69,40 @@ export async function createJobPosting(data: JobInput): Promise<string> {
   });
 
   return docRef.id;
+}
+
+/**
+ * Clear the pendingEmployerApproval flag from jobs when an employer is approved.
+ * This allows the employer to activate their jobs.
+ * Note: Does NOT automatically activate jobs - employer decides when to publish.
+ */
+export async function clearPendingEmployerApprovalFlag(employerId: string): Promise<number> {
+  const firestore = checkFirebase();
+  if (!firestore) return 0;
+
+  try {
+    const jobsRef = collection(firestore, jobsCollection);
+    const q = query(
+      jobsRef,
+      where("employerId", "==", employerId),
+      where("pendingEmployerApproval", "==", true)
+    );
+
+    const snapshot = await getDocs(q);
+    let count = 0;
+
+    for (const docSnapshot of snapshot.docs) {
+      await updateDoc(docSnapshot.ref, {
+        pendingEmployerApproval: false,
+      });
+      count++;
+    }
+
+    return count;
+  } catch (error) {
+    console.error("[clearPendingEmployerApprovalFlag] Error:", error);
+    return 0;
+  }
 }
 
 type JobFilters = {
@@ -81,7 +139,7 @@ export async function listJobPostingsPaginated(
       let jobs = [...MOCK_JOBS];
 
       if (filters.activeOnly !== false) {
-        jobs = jobs.filter(j => j.active);
+        jobs = jobs.filter(j => j.active && !isJobExpired(j));
       }
       if (filters.employmentType) {
         jobs = jobs.filter(j => j.employmentType === filters.employmentType);
@@ -127,13 +185,18 @@ export async function listJobPostingsPaginated(
     const docs = hasMore ? snap.docs.slice(0, pageSize) : snap.docs;
     const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
 
-    const jobs = docs.map((docSnapshot) => {
+    let jobs = docs.map((docSnapshot) => {
       const data = docSnapshot.data() as JobPosting;
       return {
         ...data,
         id: docSnapshot.id,
       };
     });
+
+    // Client-side filtering for expired jobs (safety net for jobs not yet processed by cron)
+    if (filters.activeOnly !== false) {
+      jobs = jobs.filter((job) => !isJobExpired(job));
+    }
 
     return { jobs, lastDoc, hasMore };
   } catch {
@@ -175,19 +238,48 @@ export async function listEmployerJobs(
   });
 }
 
-export async function updateJobStatus(jobId: string, active: boolean) {
+/**
+ * Update job active status (publish/unpublish/archive)
+ *
+ * IMPORTANT: After calling this, trigger visibility recompute!
+ * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
+ *
+ * @returns The employerId of the job for visibility recompute
+ */
+export async function updateJobStatus(jobId: string, active: boolean): Promise<string | null> {
   const ref = doc(db!, jobsCollection, jobId);
+
+  // Get employerId before updating (for visibility recompute)
+  const snap = await getDoc(ref);
+  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
+
   await updateDoc(ref, {
     active,
+    // Set publishedAt when activating (if not already set)
+    ...(active && !snap.data()?.publishedAt ? { publishedAt: serverTimestamp() } : {}),
     updatedAt: serverTimestamp(),
   });
+
+  return employerId;
 }
 
+/**
+ * Update job posting fields
+ *
+ * IMPORTANT: If updating 'active' or 'featured', trigger visibility recompute!
+ * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
+ *
+ * @returns The employerId of the job for visibility recompute
+ */
 export async function updateJobPosting(
   jobId: string,
   data: Partial<Omit<JobPosting, "id" | "createdAt" | "employerId">>
-) {
+): Promise<string | null> {
   const ref = doc(db!, jobsCollection, jobId);
+
+  // Get employerId (for visibility recompute)
+  const snap = await getDoc(ref);
+  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
 
   // Filter out undefined values - Firestore doesn't accept undefined
   const cleanData: Record<string, unknown> = {};
@@ -201,6 +293,8 @@ export async function updateJobPosting(
     ...cleanData,
     updatedAt: serverTimestamp(),
   });
+
+  return employerId;
 }
 
 export async function incrementJobViews(jobId: string) {
@@ -210,9 +304,24 @@ export async function incrementJobViews(jobId: string) {
   });
 }
 
-export async function deleteJobPosting(id: string) {
+/**
+ * Delete a job posting
+ *
+ * IMPORTANT: After calling this, trigger visibility recompute!
+ * Use: triggerVisibilityRecompute(employerId) from '@/lib/visibility-client'
+ *
+ * @returns The employerId of the deleted job for visibility recompute
+ */
+export async function deleteJobPosting(id: string): Promise<string | null> {
   const ref = doc(db!, jobsCollection, id);
+
+  // Get employerId before deleting (for visibility recompute)
+  const snap = await getDoc(ref);
+  const employerId = snap.exists() ? (snap.data() as JobPosting).employerId : null;
+
   await deleteDoc(ref);
+
+  return employerId;
 }
 
 // Job-specific Video functions
@@ -325,4 +434,22 @@ export async function listSavedJobIds(memberId: string): Promise<string[]> {
     const data = docSnap.data() as SavedJob;
     return data.jobId;
   });
+}
+
+export async function isJobSaved(memberId: string, jobId: string): Promise<boolean> {
+  const snapshot = await getDocs(
+    query(
+      collection(db!, savedJobsCollection),
+      where("memberId", "==", memberId),
+      where("jobId", "==", jobId),
+      limit(1)
+    )
+  );
+  return !snapshot.empty;
+}
+export function getSavedJobsQuery(memberId: string) {
+  return query(
+    collection(db!, savedJobsCollection),
+    where("memberId", "==", memberId)
+  );
 }

@@ -55,21 +55,59 @@ export async function getEmployerProfile(
     if (!firestore) {
       return MOCK_EMPLOYERS.find(e => e.userId === userId || e.id === userId) || MOCK_EMPLOYERS[0];
     }
+
+    // First try: look up by document ID (the normal case where doc ID = userId)
     const ref = doc(firestore, employerCollection, userId);
     const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      return null;
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as EmployerProfile;
     }
-    return snap.data() as EmployerProfile;
+
+    // Second try: query by userId field (handles cases where doc ID differs from userId)
+    const q = query(
+      collection(firestore, employerCollection),
+      where("userId", "==", userId)
+    );
+    const querySnap = await getDocs(q);
+    if (!querySnap.empty) {
+      const docSnap = querySnap.docs[0];
+      return { id: docSnap.id, ...docSnap.data() } as EmployerProfile;
+    }
+
+    return null;
   } catch {
     return null;
   }
 }
 
+// Helper to find employer document reference (handles doc ID mismatch)
+async function getEmployerDocRef(userId: string): Promise<{ ref: ReturnType<typeof doc>; exists: boolean }> {
+  const firestore = db!;
+
+  // First try: look up by document ID
+  const directRef = doc(firestore, employerCollection, userId);
+  const directSnap = await getDoc(directRef);
+  if (directSnap.exists()) {
+    return { ref: directRef, exists: true };
+  }
+
+  // Second try: query by userId field
+  const q = query(
+    collection(firestore, employerCollection),
+    where("userId", "==", userId)
+  );
+  const querySnap = await getDocs(q);
+  if (!querySnap.empty) {
+    return { ref: querySnap.docs[0].ref, exists: true };
+  }
+
+  // Not found - return direct ref for creating new document
+  return { ref: directRef, exists: false };
+}
+
 export async function updateEmployerLogo(userId: string, logoUrl: string) {
-  const ref = doc(db!, employerCollection, userId);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
+  const { ref, exists } = await getEmployerDocRef(userId);
+  if (exists) {
     await updateDoc(ref, {
       logoUrl,
       updatedAt: serverTimestamp(),
@@ -90,9 +128,8 @@ export async function updateEmployerLogo(userId: string, logoUrl: string) {
 }
 
 export async function updateEmployerBanner(userId: string, bannerUrl: string) {
-  const ref = doc(db!, employerCollection, userId);
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
+  const { ref, exists } = await getEmployerDocRef(userId);
+  if (exists) {
     await updateDoc(ref, {
       bannerUrl,
       updatedAt: serverTimestamp(),
@@ -116,7 +153,7 @@ export async function upsertEmployerProfile(
   userId: string,
   data: Omit<EmployerProfile, "id" | "userId" | "createdAt" | "updatedAt">
 ) {
-  const ref = doc(db!, employerCollection, userId);
+  const firestore = db!;
   const base: Record<string, any> = {
     organizationName: data.organizationName,
     description: data.description ?? "",
@@ -134,25 +171,105 @@ export async function upsertEmployerProfile(
   if (data.contactEmail !== undefined) base.contactEmail = data.contactEmail;
   if (data.contactPhone !== undefined) base.contactPhone = data.contactPhone;
 
-  const snap = await getDoc(ref);
-  if (snap.exists()) {
-    await updateDoc(ref, {
+  // First try: look up by document ID (the normal case where doc ID = userId)
+  const directRef = doc(firestore, employerCollection, userId);
+  const directSnap = await getDoc(directRef);
+
+  if (directSnap.exists()) {
+    await updateDoc(directRef, {
       ...base,
       updatedAt: serverTimestamp(),
     });
-  } else {
-    await setDoc(ref, {
-      id: userId,
-      userId,
-      ...base,
-      status: "pending",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+    return;
   }
+
+  // Second try: query by userId field (handles cases where doc ID differs from userId)
+  const q = query(
+    collection(firestore, employerCollection),
+    where("userId", "==", userId)
+  );
+  const querySnap = await getDocs(q);
+
+  if (!querySnap.empty) {
+    // Found existing document with different ID - update it
+    const existingDoc = querySnap.docs[0];
+    await updateDoc(existingDoc.ref, {
+      ...base,
+      updatedAt: serverTimestamp(),
+    });
+    return;
+  }
+
+  // No existing document found - create new one with userId as doc ID
+  await setDoc(directRef, {
+    id: userId,
+    userId,
+    ...base,
+    status: "pending",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 }
 
-export async function listEmployers(status?: EmployerStatus, includeDeleted = false): Promise<EmployerProfile[]> {
+/**
+ * Create a pending employer profile during registration.
+ * This is called immediately when a user signs up as an employer,
+ * so they appear in the admin pending queue right away.
+ */
+export async function createPendingEmployerProfile(
+  userId: string,
+  data: {
+    organizationName: string;
+    email: string;
+    intent?: string;
+  }
+): Promise<void> {
+  const firestore = checkFirebase();
+  if (!firestore) {
+    console.log("[createPendingEmployerProfile] Skipped - offline mode");
+    return;
+  }
+
+  // Check if employer profile already exists
+  const existingProfile = await getEmployerProfile(userId);
+  if (existingProfile) {
+    console.log("[createPendingEmployerProfile] Profile already exists for:", userId);
+    return;
+  }
+
+  const ref = doc(firestore, employerCollection, userId);
+  await setDoc(ref, {
+    id: userId,
+    userId,
+    organizationName: data.organizationName,
+    contactEmail: data.email,
+    intent: data.intent || null,
+    status: "pending" as EmployerStatus,
+    description: "",
+    website: "",
+    location: "",
+    logoUrl: "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * List employers by status
+ *
+ * For public directory (status === "approved"):
+ * - Also filters by isDirectoryVisible === true (engagement-based visibility)
+ * - Dormant orgs (approved but no active engagement) are hidden
+ *
+ * @param status - Filter by employer status
+ * @param includeDeleted - Include soft-deleted employers
+ * @param includeHidden - For admin use: include approved orgs that are not directory-visible
+ */
+export async function listEmployers(
+  status?: EmployerStatus,
+  includeDeleted = false,
+  includeHidden = false
+): Promise<EmployerProfile[]> {
   try {
     const firestore = checkFirebase();
     if (!firestore) {
@@ -162,7 +279,18 @@ export async function listEmployers(status?: EmployerStatus, includeDeleted = fa
     let q;
 
     if (status) {
-      q = query(ref, where("status", "==", status), orderBy("createdAt", "desc"));
+      // For approved status (public directory), also filter by visibility
+      // unless includeHidden is true (for admin views)
+      if (status === "approved" && !includeHidden) {
+        q = query(
+          ref,
+          where("status", "==", status),
+          where("isDirectoryVisible", "==", true),
+          orderBy("organizationName", "asc")
+        );
+      } else {
+        q = query(ref, where("status", "==", status), orderBy("createdAt", "desc"));
+      }
     } else {
       q = query(ref, orderBy("createdAt", "desc"));
     }
@@ -191,7 +319,11 @@ export async function updateEmployerStatus(
   approvedBy?: string,
   rejectionReason?: string
 ) {
-  const ref = doc(db!, employerCollection, userId);
+  const { ref, exists } = await getEmployerDocRef(userId);
+  if (!exists) {
+    throw new Error(`Employer profile not found for userId: ${userId}`);
+  }
+
   const updates: any = {
     status,
     updatedAt: serverTimestamp(),

@@ -20,6 +20,7 @@ import {
   ClockIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 type InquiryStatus = "new" | "read" | "responded" | "archived";
 
@@ -70,7 +71,7 @@ export default function OrganizationEducationInquiriesPage() {
       );
     } catch (err) {
       console.error("Error updating inquiry status:", err);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     } finally {
       setUpdating(null);
     }

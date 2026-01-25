@@ -119,6 +119,13 @@ export async function toggleLikePost(postId: string, userId: string) {
     }
 }
 
+export async function hasUserLikedPost(postId: string, userId: string): Promise<boolean> {
+    const firestore = getDb();
+    const likeRef = doc(firestore, "posts", postId, "likes", userId);
+    const likeSnap = await getDoc(likeRef);
+    return likeSnap.exists();
+}
+
 export async function addComment(postId: string, commentData: Omit<Comment, 'id' | 'createdAt' | 'updatedAt' | 'likesCount'>) {
     const firestore = getDb();
     const commentsRef = collection(firestore, "posts", postId, "comments");
@@ -158,8 +165,8 @@ export async function sendConnectionRequest(requesterId: string, recipientId: st
 
     // Fetch profiles for denormalization
     const [requesterSnap, recipientSnap] = await Promise.all([
-        getDoc(doc(firestore, "members", requesterId)),
-        getDoc(doc(firestore, "members", recipientId))
+        getDoc(doc(firestore, "memberProfiles", requesterId)),
+        getDoc(doc(firestore, "memberProfiles", recipientId))
     ]);
 
     const requesterData = requesterSnap.exists() ? requesterSnap.data() as MemberProfile : null;
@@ -284,15 +291,29 @@ export async function getSuggestedConnections(userId: string) {
     // For now, this is a "dumb" suggestion - just return some recent users who aren't me
     // In a real app, we'd filter by industry/skills and exclude existing connections
     // TODO: Enhance with Algolia or more complex queries
-    const usersRef = collection(firestore, "users"); // Assuming 'users' collection exists, or we use member profiles
-    const membersRef = collection(firestore, "members");
+    const membersRef = collection(firestore, "memberProfiles");
 
     const q = query(membersRef, limit(5)); // Just grab 5 random members for demo
     const snapshot = await getDocs(q);
 
     return snapshot.docs
-        .map(doc => doc.data() as MemberProfile)
-        .filter(m => m.userId !== userId); // Filter self
+        .map(doc => ({ ...doc.data(), id: doc.id } as MemberProfile))
+        .filter(m => m.id !== userId); // Filter self
+}
+
+export async function getSuggestedOrganizations(limitCount: number = 5) {
+    const firestore = getDb();
+    const employersRef = collection(firestore, "employers");
+
+    // Simple fetch for now - get approved employers only
+    const q = query(
+        employersRef,
+        where("status", "==", "approved"),
+        limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 // ============================================
@@ -317,6 +338,55 @@ export async function shareEntity(
         type: entityType,
         visibility: 'public',
         referenceId: entityReferenceId,
-        referenceData: entityData
     });
 }
+
+// ============================================
+// FOLLOWING (Organizations/Mentors)
+// ============================================
+
+export async function followOrganization(userId: string, orgId: string) {
+    const firestore = getDb();
+    // Use a subcollection on the organization for followers
+    // This allows easy counting and checking
+    const followRef = doc(firestore, "organizations", orgId, "followers", userId);
+
+    await setDoc(followRef, {
+        userId,
+        createdAt: serverTimestamp()
+    });
+
+    // Optional: Increment follower count on organization doc (if we have a field for it)
+    const orgRef = doc(firestore, "organizations", orgId);
+    await updateDoc(orgRef, {
+        followersCount: increment(1)
+    }).catch(() => {
+        // Ignore error if specific field doesn't exist yet, or handle gracefully
+        // Ideally we ensure the Organization type has this field
+    });
+
+    return true;
+}
+
+export async function unfollowOrganization(userId: string, orgId: string) {
+    const firestore = getDb();
+    const followRef = doc(firestore, "organizations", orgId, "followers", userId);
+
+    await deleteDoc(followRef);
+
+    // Decrement follower count
+    const orgRef = doc(firestore, "organizations", orgId);
+    await updateDoc(orgRef, {
+        followersCount: increment(-1)
+    }).catch(() => { });
+
+    return true;
+}
+
+export async function getOrganizationFollowStatus(userId: string, orgId: string): Promise<boolean> {
+    const firestore = getDb();
+    const followRef = doc(firestore, "organizations", orgId, "followers", userId);
+    const snap = await getDoc(followRef);
+    return snap.exists();
+}
+

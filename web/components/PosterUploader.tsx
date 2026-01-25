@@ -18,6 +18,21 @@ interface PosterUploaderProps {
   onFileSelect?: (file: File) => void;
 }
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const INITIAL_DELAY_MS = 1000;
+
+// Helper function to sleep for a given duration
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to calculate exponential backoff delay
+const getBackoffDelay = (attempt: number): number => {
+  // Exponential backoff: 1s, 2s, 4s + jitter
+  const exponentialDelay = INITIAL_DELAY_MS * Math.pow(2, attempt);
+  const jitter = Math.random() * 500; // Add 0-500ms jitter
+  return exponentialDelay + jitter;
+};
+
 export function PosterUploader({
   eventType,
   onDataExtracted,
@@ -29,10 +44,11 @@ export function PosterUploader({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<PosterAnalysisResult | null>(null);
+  const [retryStatus, setRetryStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const eventTypeLabels: Record<PosterAnalysisType, string> = {
-    powwow: "Pow Wow",
+    powwow: "Event",
     conference: "Conference",
     scholarship: "Scholarship",
   };
@@ -95,6 +111,7 @@ export function PosterUploader({
 
     // Analyze the poster
     setIsAnalyzing(true);
+    setRetryStatus(null);
 
     try {
       // Get auth token
@@ -111,37 +128,75 @@ export function PosterUploader({
       formData.append("image", file);
       formData.append("eventType", eventType);
 
-      const response = await fetch("/api/ai/analyze-poster", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-        body: formData,
-      });
+      // Retry loop with exponential backoff
+      let lastError: Error | null = null;
 
-      const data = await response.json();
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        try {
+          if (attempt > 0) {
+            const delay = getBackoffDelay(attempt - 1);
+            setRetryStatus(`AI is busy. Retrying in ${Math.round(delay / 1000)}s... (attempt ${attempt + 1}/${MAX_RETRIES})`);
+            await sleep(delay);
+            setRetryStatus(`Retrying... (attempt ${attempt + 1}/${MAX_RETRIES})`);
+          }
 
+          const response = await fetch("/api/ai/analyze-poster", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            },
+            body: formData,
+          });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze poster");
+          const data = await response.json();
+
+          // If rate limited (429), retry with backoff
+          if (response.status === 429) {
+            lastError = new Error(data.error || "AI service is busy");
+            continue; // Try again
+          }
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to analyze poster");
+          }
+
+          // Success!
+          setRetryStatus(null);
+          setAnalysisResult(data.result);
+
+          // Pass extracted data to parent
+          if (data.result?.data) {
+            onDataExtracted(data.result.data);
+          }
+
+          // Optionally pass image URL
+          if (onImageUploaded && previewUrl) {
+            onImageUploaded(previewUrl);
+          }
+
+          return; // Exit on success
+        } catch (fetchError: any) {
+          lastError = fetchError;
+          // Only retry on network errors or rate limits, not on other errors
+          if (!fetchError.message?.includes("rate") && !fetchError.message?.includes("busy") && attempt === 0) {
+            throw fetchError;
+          }
+        }
       }
 
-      setAnalysisResult(data.result);
-
-      // Pass extracted data to parent
-      if (data.result?.data) {
-        onDataExtracted(data.result.data);
-      }
-
-      // Optionally pass image URL
-      if (onImageUploaded && previewUrl) {
-        onImageUploaded(previewUrl);
-      }
+      // All retries exhausted
+      throw lastError || new Error("Failed after multiple attempts");
     } catch (err: any) {
       console.error("Poster analysis error:", err);
-      setError(err.message || "Failed to analyze poster. Please try again.");
+      const isRateLimit = err.message?.includes("unavailable") || err.message?.includes("busy") || err.message?.includes("rate");
+      setError(
+        isRateLimit
+          ? "AI service is temporarily unavailable due to high usage. Please try again in a few minutes, or fill in the form manually."
+          : err.message || "Failed to analyze poster. Please try again."
+      );
     } finally {
       setIsAnalyzing(false);
+      setRetryStatus(null);
     }
   };
 
@@ -149,6 +204,7 @@ export function PosterUploader({
     setPreviewUrl(null);
     setAnalysisResult(null);
     setError(null);
+    setRetryStatus(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -317,10 +373,10 @@ export function PosterUploader({
                   <div className="text-center">
                     <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
                     <p className="mt-4 text-sm text-slate-400">
-                      AI is reading the poster...
+                      {retryStatus || "AI is reading the poster..."}
                     </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      This may take a few seconds
+                      {retryStatus ? "Please wait while we retry" : "This may take a few seconds"}
                     </p>
                   </div>
                 </div>

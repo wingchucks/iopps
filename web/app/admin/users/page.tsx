@@ -26,6 +26,7 @@ import {
   StatusBadge,
 } from "@/components/admin";
 import { Suspense } from "react";
+import toast from "react-hot-toast";
 
 interface User {
   id: string;
@@ -161,7 +162,7 @@ function AdminUsersContent() {
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
     } catch (error) {
       console.error("Error updating user role:", error);
-      alert("Failed to update user role. Please try again.");
+      toast.error("Failed to update user role. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -179,7 +180,7 @@ function AdminUsersContent() {
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, disabled: !currentStatus } : u));
     } catch (error) {
       console.error("Error toggling user status:", error);
-      alert("Failed to update user status. Please try again.");
+      toast.error("Failed to update user status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -213,7 +214,7 @@ function AdminUsersContent() {
       }
     } catch (error) {
       console.error("Error impersonating user:", error);
-      alert("Failed to impersonate user. Please try again.");
+      toast.error("Failed to impersonate user. Please try again.");
       setProcessing(null);
     }
   }
@@ -238,10 +239,10 @@ function AdminUsersContent() {
       // Remove user from local state
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       setUserToDelete(null);
-      alert("User deleted successfully");
+      toast.success("User deleted successfully");
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert(error instanceof Error ? error.message : "Failed to delete user. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to delete user. Please try again.");
     } finally {
       setIsDeleting(false);
     }

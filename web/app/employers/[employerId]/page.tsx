@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/firebase-admin";
@@ -6,6 +6,7 @@ import type { EmployerProfile, JobPosting, IndustryType } from "@/lib/types";
 import Image from "next/image";
 import CompanyIntroVideo from "@/components/employer/CompanyIntroVideo";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
+import DirectoryVisibilityOwnerBanner from "@/components/employer/DirectoryVisibilityOwnerBanner";
 
 type PageProps = {
   params: Promise<{
@@ -220,6 +221,15 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
   const isPreview = preview === "true";
   const { employer, jobs, status } = await getEmployerData(employerId, isPreview);
 
+  // Redirect to canonical /organizations/[slug] URL if employer has a slug
+  // This consolidates all public profile URLs to one canonical location
+  if (employer && (employer as any).slug) {
+    const redirectUrl = isPreview
+      ? `/organizations/${(employer as any).slug}?preview=true`
+      : `/organizations/${(employer as any).slug}`;
+    redirect(redirectUrl);
+  }
+
   // Show 404 only if employer doesn't exist
   if (status === "not_found") {
     notFound();
@@ -245,7 +255,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
-              href="/jobs"
+              href="/careers"
               className="rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#14B8A6]/90"
             >
               Browse Jobs
@@ -306,15 +316,23 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
         </div>
       )}
 
+      {/* Owner-only Directory Visibility Banner */}
+      <DirectoryVisibilityOwnerBanner
+        ownerId={employer.userId}
+        isDirectoryVisible={(employer as any).directoryVisible ?? true}
+        isGrandfathered={(employer as any).isGrandfathered}
+      />
+
       {/* Banner Image */}
       {employer.bannerUrl && (
         <div className="relative w-full h-48 md:h-64 rounded-t-lg overflow-hidden mb-0">
           <Image
-            src={employer.bannerUrl}
+            src={`${employer.bannerUrl}${employer.bannerUrl.includes('?') ? '&' : '?'}v=${(employer as any).bannerUpdatedAt?.seconds || Date.now()}`}
             alt={`${employer.organizationName} banner`}
             fill
             className="object-cover"
             priority
+            unoptimized
           />
         </div>
       )}
@@ -467,7 +485,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
             {jobs.map((job) => (
               <Link
                 key={job.id}
-                href={`/jobs-training/${job.id}`}
+                href={`/careers/${job.id}`}
                 className="block rounded-lg border border-slate-700 bg-slate-800/50 p-6 hover:border-[#14B8A6]/50 hover:bg-slate-800/70 transition-all"
               >
                 <div className="flex items-start justify-between gap-4">

@@ -9,6 +9,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -31,12 +32,37 @@ const PRODUCTS_COLLECTION = 'vendorProducts';
 // ============================================
 
 function generateSlug(businessName: string): string {
-  const base = businessName
+  return businessName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 50); // Limit length
+}
+
+function generateUniqueSlug(businessName: string): string {
+  const base = generateSlug(businessName);
   const suffix = Math.random().toString(36).substring(2, 6);
   return `${base}-${suffix}`;
+}
+
+async function isVendorSlugAvailable(slug: string, excludeVendorId?: string): Promise<boolean> {
+  if (!db) return false;
+
+  const q = query(
+    collection(db, VENDORS_COLLECTION),
+    where('slug', '==', slug),
+    limit(2)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return true;
+
+  // If we're excluding a specific vendor (updating), check if the only match is that vendor
+  if (excludeVendorId && snap.size === 1 && snap.docs[0].id === excludeVendorId) {
+    return true;
+  }
+
+  return false;
 }
 
 // ============================================
@@ -49,7 +75,11 @@ export async function createVendor(
 ): Promise<string> {
   if (!db) throw new Error('Firebase not initialized');
 
-  const slug = generateSlug(data.businessName);
+  // Generate unique slug from business name
+  let slug = generateSlug(data.businessName);
+  if (!(await isVendorSlugAvailable(slug))) {
+    slug = generateUniqueSlug(data.businessName);
+  }
 
   const vendor: Omit<Vendor, 'id'> = {
     ...data,
@@ -63,8 +93,10 @@ export async function createVendor(
     updatedAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(collection(db, VENDORS_COLLECTION), vendor);
-  return docRef.id;
+  // Use setDoc with userId as document ID to match Firestore security rules
+  // which require vendorId == request.auth.uid for create operations
+  await setDoc(doc(db, VENDORS_COLLECTION, userId), vendor);
+  return userId;
 }
 
 export async function getVendor(vendorId: string): Promise<Vendor | null> {
@@ -137,9 +169,32 @@ export async function updateVendor(
 ): Promise<void> {
   if (!db) throw new Error('Firebase not initialized');
 
+  const updates = { ...data };
+
+  // If businessName is being updated, regenerate the slug
+  if (updates.businessName && !updates.slug) {
+    const docRef = doc(db, VENDORS_COLLECTION, vendorId);
+    const docSnap = await getDoc(docRef);
+    const currentData = docSnap.data();
+    const currentSlug = currentData?.slug;
+    const currentBusinessName = currentData?.businessName;
+
+    // Only regenerate slug if business name actually changed
+    if (currentBusinessName !== updates.businessName) {
+      let newSlug = generateSlug(updates.businessName);
+      if (!(await isVendorSlugAvailable(newSlug, vendorId))) {
+        newSlug = generateUniqueSlug(updates.businessName);
+      }
+      // Only update slug if it's different
+      if (newSlug !== currentSlug) {
+        updates.slug = newSlug;
+      }
+    }
+  }
+
   const docRef = doc(db, VENDORS_COLLECTION, vendorId);
   await updateDoc(docRef, {
-    ...data,
+    ...updates,
     updatedAt: serverTimestamp(),
   });
 }
@@ -167,29 +222,24 @@ export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[
     return [];
   }
 
-  let q = query(
-    collection(db, VENDORS_COLLECTION),
-    where('status', '==', 'active')
-    // orderBy('featured', 'desc'), // Removed to avoid index requirement
-    // orderBy('createdAt', 'desc') // Removed to avoid index requirement
-  );
+  // Build query constraints - all filters are additive
+  const constraints: QueryConstraint[] = [
+    where('status', '==', 'active'),
+  ];
 
   if (filters?.category) {
-    q = query(
-      collection(db, VENDORS_COLLECTION),
-      where('status', '==', 'active'),
-      where('category', '==', filters.category)
-    );
+    constraints.push(where('category', '==', filters.category));
   }
 
   if (filters?.region) {
-    q = query(
-      collection(db, VENDORS_COLLECTION),
-      where('status', '==', 'active'),
-      where('region', '==', filters.region)
-    );
+    constraints.push(where('region', '==', filters.region));
   }
 
+  if (filters?.featured !== undefined) {
+    constraints.push(where('featured', '==', filters.featured));
+  }
+
+  const q = query(collection(db, VENDORS_COLLECTION), ...constraints);
   const snap = await getDocs(q);
   console.log('[getActiveVendors] Query returned', snap.docs.length, 'vendors');
   let vendors = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vendor));
@@ -203,6 +253,12 @@ export async function getActiveVendors(filters?: VendorFilters): Promise<Vendor[
       v.tagline?.toLowerCase().includes(searchLower)
     );
   }
+
+  // Sort client-side: featured first, then by name
+  vendors.sort((a, b) => {
+    if (a.featured !== b.featured) return a.featured ? -1 : 1;
+    return a.businessName.localeCompare(b.businessName);
+  });
 
   return vendors;
 }
@@ -473,6 +529,7 @@ export function validateVendorForPublish(vendor: Vendor): PublishValidation {
 /**
  * Creates a minimal draft vendor profile for a new employer.
  * Called automatically during employer registration.
+ * Note: Initial slug is temporary and will be regenerated when business name is set.
  */
 export async function createDraftVendorForEmployer(
   userId: string,
@@ -487,12 +544,14 @@ export async function createDraftVendorForEmployer(
     return existingVendor.id; // Return existing ID, don't create duplicate
   }
 
-  const slug = generateSlug(displayName || 'business');
+  // Generate a temporary slug with user ID prefix
+  // This will be regenerated when the user sets their actual business name
+  const tempSlug = `business-${userId.substring(0, 8)}-${Math.random().toString(36).substring(2, 6)}`;
 
   const vendor: Omit<Vendor, 'id'> = {
     userId,
-    businessName: displayName || '',
-    slug,
+    businessName: '', // Leave empty - user must fill in actual business name
+    slug: tempSlug,
     description: '',
     category: 'Other' as VendorCategory,
     region: 'Ontario' as NorthAmericanRegion,
@@ -507,6 +566,8 @@ export async function createDraftVendorForEmployer(
     updatedAt: serverTimestamp() as Timestamp,
   };
 
-  const docRef = await addDoc(collection(db, VENDORS_COLLECTION), vendor);
-  return docRef.id;
+  // Use setDoc with userId as document ID to match Firestore security rules
+  // which require vendorId == request.auth.uid for create operations
+  await setDoc(doc(db, VENDORS_COLLECTION, userId), vendor);
+  return userId;
 }

@@ -17,6 +17,7 @@ import type {
   JobApplication,
   JobPosting,
 } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function ApplicationsInboxPage() {
   const { user, role, loading } = useAuth();
@@ -42,6 +43,10 @@ export default function ApplicationsInboxPage() {
       }
     >
   >({});
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   useEffect(() => {
     if (!user || role !== "employer") return;
@@ -104,6 +109,8 @@ export default function ApplicationsInboxPage() {
       submitted: 0,
       reviewed: 0,
       shortlisted: 0,
+      interviewing: 0,
+      offered: 0,
       rejected: 0,
       hired: 0,
       withdrawn: 0,
@@ -157,8 +164,128 @@ export default function ApplicationsInboxPage() {
       router.push(`/organization/messages?id=${conversation.id}`);
     } catch (err) {
       console.error("Error starting conversation:", err);
-      alert("Failed to start conversation. Please try again.");
+      toast.error("Failed to start conversation. Please try again.");
     }
+  };
+
+  // Bulk selection handlers
+  const toggleSelection = (appId: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(appId)) {
+        newSet.delete(appId);
+      } else {
+        newSet.add(appId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAll = () => {
+    const allDisplayedIds = displayedApps.map((app) => app.id);
+    setSelectedIds(new Set(allDisplayedIds));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkStatusUpdate = async (newStatus: ApplicationStatus) => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      setBulkUpdating(true);
+      setError(null);
+
+      const token = await user?.getIdToken();
+      const response = await fetch("/api/organization/applications/bulk", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          applicationIds: Array.from(selectedIds),
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update applications");
+      }
+
+      // Update local state
+      setApplications((prev) =>
+        prev.map((app) =>
+          selectedIds.has(app.id) ? { ...app, status: newStatus } : app
+        )
+      );
+      clearSelection();
+    } catch (err) {
+      console.error("Bulk update error:", err);
+      setError(err instanceof Error ? err.message : "Failed to update applications");
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const exportSelectedToCSV = () => {
+    const appsToExport = selectedIds.size > 0
+      ? filteredApps.filter((app) => selectedIds.has(app.id))
+      : filteredApps;
+
+    if (appsToExport.length === 0) {
+      toast.error("No applications to export");
+      return;
+    }
+
+    const escapeCSV = (val: string | undefined | null) => {
+      if (!val) return "";
+      const str = String(val);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const headers = [
+      "Applicant Name",
+      "Email",
+      "Job Title",
+      "Status",
+      "Applied Date",
+      "Resume URL",
+      "Availability",
+    ];
+
+    const rows = appsToExport.map((app) => {
+      const job = jobs.find((j) => j.id === app.jobId);
+      const appliedDate = app.createdAt
+        ? typeof app.createdAt === "string"
+          ? app.createdAt
+          : app.createdAt.toDate().toISOString().split("T")[0]
+        : "";
+
+      return [
+        escapeCSV(app.memberDisplayName),
+        escapeCSV(app.memberEmail),
+        escapeCSV(job?.title),
+        escapeCSV(app.status),
+        escapeCSV(appliedDate),
+        escapeCSV(memberInfo[app.memberId]?.resumeUrl),
+        escapeCSV(memberInfo[app.memberId]?.availability),
+      ].join(",");
+    });
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `applications-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -202,7 +329,7 @@ export default function ApplicationsInboxPage() {
             Filter by job or status, update stages, and follow up quickly.
           </p>
         </div>
-        <Link href="/employer" className="text-xs text-[#14B8A6] underline">
+        <Link href="/organization" className="text-xs text-[#14B8A6] underline">
           Back to dashboard
         </Link>
       </div>
@@ -224,7 +351,7 @@ export default function ApplicationsInboxPage() {
           ))}
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 sm:flex-wrap">
           <select
             value={selectedJob}
             onChange={(e) => setSelectedJob(e.target.value)}
@@ -248,6 +375,8 @@ export default function ApplicationsInboxPage() {
             <option value="submitted">Submitted</option>
             <option value="reviewed">Reviewed</option>
             <option value="shortlisted">Shortlisted</option>
+            <option value="interviewing">Interviewing</option>
+            <option value="offered">Offered</option>
             <option value="rejected">Rejected</option>
             <option value="hired">Hired</option>
           </select>
@@ -258,7 +387,57 @@ export default function ApplicationsInboxPage() {
             placeholder="Search name or email"
             className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
+          <div className="flex gap-2 ml-auto">
+            <button
+              onClick={selectAll}
+              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-[#14B8A6] hover:text-[#14B8A6] transition"
+            >
+              Select All
+            </button>
+            <button
+              onClick={exportSelectedToCSV}
+              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-[#14B8A6] hover:text-[#14B8A6] transition"
+            >
+              Export CSV
+            </button>
+          </div>
         </div>
+
+        {/* Bulk Actions Bar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-4 rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/10 p-3">
+            <span className="text-sm font-medium text-[#14B8A6]">
+              {selectedIds.size} selected
+            </span>
+            <select
+              value=""
+              disabled={bulkUpdating}
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleBulkStatusUpdate(e.target.value as ApplicationStatus);
+                }
+              }}
+              className="rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+              <option value="">Bulk update status...</option>
+              <option value="reviewed">Mark as Reviewed</option>
+              <option value="shortlisted">Shortlist</option>
+              <option value="interviewing">Move to Interviewing</option>
+              <option value="offered">Make Offer</option>
+              <option value="rejected">Reject</option>
+              <option value="hired">Mark as Hired</option>
+            </select>
+            <button
+              onClick={clearSelection}
+              className="text-xs text-slate-400 hover:text-slate-200 transition"
+            >
+              Clear selection
+            </button>
+            {bulkUpdating && (
+              <span className="text-xs text-slate-400">Updating...</span>
+            )}
+          </div>
+        )}
 
         {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
 
@@ -277,13 +456,24 @@ export default function ApplicationsInboxPage() {
               {displayedApps.map((app) => (
               <div
                 key={app.id}
-                className="rounded-md border border-slate-800 bg-slate-950/40 p-4"
+                className={`rounded-md border p-4 transition-colors ${
+                  selectedIds.has(app.id)
+                    ? "border-[#14B8A6]/50 bg-[#14B8A6]/5"
+                    : "border-slate-800 bg-slate-950/40"
+                }`}
               >
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-50">
-                      {app.memberDisplayName || "Applicant"}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(app.id)}
+                      onChange={() => toggleSelection(app.id)}
+                      className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-50">
+                        {app.memberDisplayName || "Applicant"}
+                      </p>
                     <p className="text-xs text-slate-300">
                       {app.memberEmail || "Email not provided"}
                     </p>
@@ -296,7 +486,7 @@ export default function ApplicationsInboxPage() {
                         : ""}
                     </p>
                     <Link
-                      href={`/jobs-training/${app.jobId}`}
+                      href={`/careers/${app.jobId}`}
                       className="mt-1 inline-flex text-xs text-[#14B8A6] underline"
                     >
                       View job posting
@@ -311,6 +501,7 @@ export default function ApplicationsInboxPage() {
                         Messaging handle: {memberInfo[app.memberId]?.messagingHandle}
                       </p>
                     )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                     <span className="rounded-full border border-slate-700 px-3 py-1 uppercase tracking-widest">
@@ -374,6 +565,8 @@ export default function ApplicationsInboxPage() {
                       <option value="submitted">Submitted</option>
                       <option value="reviewed">Reviewed</option>
                       <option value="shortlisted">Shortlisted</option>
+                      <option value="interviewing">Interviewing</option>
+                      <option value="offered">Offered</option>
                       <option value="rejected">Rejected</option>
                       <option value="hired">Hired</option>
                     </select>

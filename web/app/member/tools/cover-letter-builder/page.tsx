@@ -6,6 +6,7 @@ import { PageShell } from "@/components/PageShell";
 import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import toast from "react-hot-toast";
 
 // Template Designs
 const TEMPLATES = {
@@ -69,7 +70,7 @@ export default function CoverLetterBuilder() {
 
         } catch (err) {
             console.error("PDF Generation failed:", err);
-            alert("Failed to generate PDF. Please try again.");
+            toast.error("Failed to generate PDF. Please try again.");
         } finally {
             setLoading(false);
         }

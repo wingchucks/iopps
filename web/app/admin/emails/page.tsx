@@ -14,6 +14,9 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
+  PencilSquareIcon,
+  PaperAirplaneIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 
 interface EmailStats {
@@ -40,6 +43,20 @@ interface EmailLog {
   error?: string;
 }
 
+interface Campaign {
+  id: string;
+  subject: string;
+  recipientFilter: string;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  status: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+type RecipientFilter = "all" | "job_seekers" | "employers" | "digest_subscribers";
+
 export default function AdminEmailsPage() {
   const { user, role, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -48,6 +65,17 @@ export default function AdminEmailsPage() {
   const [recentLogs, setRecentLogs] = useState<EmailLog[]>([]);
   const [triggeringCampaign, setTriggeringCampaign] = useState<string | null>(null);
   const [triggerResult, setTriggerResult] = useState<{ type: string; success: boolean; message: string } | null>(null);
+
+  // Campaign builder state
+  const [activeTab, setActiveTab] = useState<"dashboard" | "compose">("dashboard");
+  const [campaignSubject, setCampaignSubject] = useState("");
+  const [campaignContent, setCampaignContent] = useState("");
+  const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>("all");
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingCampaign, setSendingCampaign] = useState(false);
+  const [campaignResult, setCampaignResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -64,6 +92,7 @@ export default function AdminEmailsPage() {
     }
 
     loadEmailStats();
+    loadCampaigns();
   }, [user, role, authLoading, router]);
 
   async function loadEmailStats() {
@@ -136,6 +165,84 @@ export default function AdminEmailsPage() {
       console.error("Error loading email stats:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadCampaigns() {
+    if (!user) return;
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/campaigns", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCampaigns(data.campaigns || []);
+      }
+    } catch (error) {
+      console.error("Error loading campaigns:", error);
+    }
+  }
+
+  async function sendCampaign(testMode: boolean = false) {
+    if (!user) return;
+    if (!campaignSubject.trim() || !campaignContent.trim()) {
+      setCampaignResult({ success: false, message: "Subject and content are required" });
+      return;
+    }
+    if (testMode && !testEmail.trim()) {
+      setCampaignResult({ success: false, message: "Test email address is required" });
+      return;
+    }
+
+    setSendingCampaign(true);
+    setCampaignResult(null);
+
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/campaigns", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          subject: campaignSubject,
+          content: campaignContent,
+          recipientFilter,
+          testMode,
+          testEmail: testMode ? testEmail : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCampaignResult({
+          success: true,
+          message: data.message || "Campaign sent successfully",
+        });
+        if (!testMode) {
+          // Clear form and refresh data
+          setCampaignSubject("");
+          setCampaignContent("");
+          setRecipientFilter("all");
+          loadEmailStats();
+          loadCampaigns();
+        }
+      } else {
+        setCampaignResult({
+          success: false,
+          message: data.error || "Failed to send campaign",
+        });
+      }
+    } catch (error) {
+      setCampaignResult({
+        success: false,
+        message: "Error sending campaign",
+      });
+    } finally {
+      setSendingCampaign(false);
     }
   }
 
@@ -218,6 +325,243 @@ export default function AdminEmailsPage() {
         <p className="mt-1 text-sm text-slate-400">Manage email notifications and view campaign statistics</p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-800 pb-px">
+        <button
+          onClick={() => setActiveTab("dashboard")}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+            activeTab === "dashboard"
+              ? "bg-slate-800 text-[#14B8A6] border-b-2 border-[#14B8A6]"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <ChartBarIcon className="inline-block w-4 h-4 mr-2" />
+          Dashboard
+        </button>
+        <button
+          onClick={() => setActiveTab("compose")}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+            activeTab === "compose"
+              ? "bg-slate-800 text-[#14B8A6] border-b-2 border-[#14B8A6]"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <PencilSquareIcon className="inline-block w-4 h-4 mr-2" />
+          Compose Campaign
+        </button>
+      </div>
+
+      {/* Compose Campaign Tab */}
+      {activeTab === "compose" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <h2 className="text-xl font-semibold text-slate-50 mb-4">New Email Campaign</h2>
+
+            {campaignResult && (
+              <div
+                className={`mb-4 rounded-lg p-4 ${
+                  campaignResult.success
+                    ? "bg-green-500/10 border border-green-500/20"
+                    : "bg-red-500/10 border border-red-500/20"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {campaignResult.success ? (
+                    <CheckCircleIcon className="h-5 w-5 text-green-400" />
+                  ) : (
+                    <XCircleIcon className="h-5 w-5 text-red-400" />
+                  )}
+                  <span className={campaignResult.success ? "text-green-400" : "text-red-400"}>
+                    {campaignResult.message}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Subject Line
+                </label>
+                <input
+                  type="text"
+                  value={campaignSubject}
+                  onChange={(e) => setCampaignSubject(e.target.value)}
+                  placeholder="Enter email subject..."
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                />
+              </div>
+
+              {/* Recipient Filter */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Recipients
+                </label>
+                <select
+                  value={recipientFilter}
+                  onChange={(e) => setRecipientFilter(e.target.value as RecipientFilter)}
+                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-[#14B8A6]"
+                >
+                  <option value="all">All Subscribers</option>
+                  <option value="job_seekers">Job Seekers (Job Alerts Enabled)</option>
+                  <option value="employers">Approved Employers</option>
+                  <option value="digest_subscribers">Weekly Digest Subscribers</option>
+                </select>
+                <p className="mt-1 text-xs text-slate-500">
+                  {recipientFilter === "all" && stats && `${stats.totalSubscribers - stats.unsubscribedCount} recipients`}
+                  {recipientFilter === "job_seekers" && stats && `${stats.jobAlertsEnabled} recipients`}
+                  {recipientFilter === "employers" && "All approved employer accounts"}
+                  {recipientFilter === "digest_subscribers" && stats && `${stats.weeklyDigestEnabled} recipients`}
+                </p>
+              </div>
+
+              {/* Content */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Email Content
+                  <span className="ml-2 text-xs text-slate-500">(Markdown supported: # heading, ## subheading, - bullet)</span>
+                </label>
+                <textarea
+                  value={campaignContent}
+                  onChange={(e) => setCampaignContent(e.target.value)}
+                  placeholder="Enter your email content here..."
+                  rows={10}
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6] font-mono text-sm"
+                />
+              </div>
+
+              {/* Preview Toggle */}
+              {campaignContent && (
+                <div>
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="flex items-center gap-2 text-sm text-[#14B8A6] hover:text-[#0D9488]"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                    {showPreview ? "Hide Preview" : "Show Preview"}
+                  </button>
+
+                  {showPreview && (
+                    <div className="mt-4 p-4 bg-slate-800 rounded-lg border border-slate-700">
+                      <p className="text-xs text-slate-500 mb-2">Preview:</p>
+                      <div className="prose prose-invert prose-sm max-w-none">
+                        {campaignContent.split("\n\n").map((paragraph, i) => {
+                          if (paragraph.startsWith("# ")) {
+                            return <h1 key={i} className="text-xl font-bold text-slate-100 mt-4 mb-2">{paragraph.slice(2)}</h1>;
+                          }
+                          if (paragraph.startsWith("## ")) {
+                            return <h2 key={i} className="text-lg font-semibold text-slate-200 mt-3 mb-2">{paragraph.slice(3)}</h2>;
+                          }
+                          if (paragraph.startsWith("- ")) {
+                            return (
+                              <ul key={i} className="list-disc list-inside text-slate-300 my-2">
+                                {paragraph.split("\n").map((line, j) => (
+                                  <li key={j}>{line.slice(2)}</li>
+                                ))}
+                              </ul>
+                            );
+                          }
+                          return <p key={i} className="text-slate-300 my-2">{paragraph}</p>;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Test Email */}
+              <div className="pt-4 border-t border-slate-700">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Send Test Email
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="test@example.com"
+                    className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                  />
+                  <button
+                    onClick={() => sendCampaign(true)}
+                    disabled={sendingCampaign || !campaignSubject || !campaignContent || !testEmail}
+                    className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {sendingCampaign ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-white" />
+                    ) : (
+                      <EnvelopeIcon className="h-4 w-4" />
+                    )}
+                    Send Test
+                  </button>
+                </div>
+              </div>
+
+              {/* Send Button */}
+              <div className="flex justify-end pt-4">
+                <button
+                  onClick={() => {
+                    if (confirm(`Are you sure you want to send this campaign to all ${recipientFilter.replace(/_/g, " ")}? This action cannot be undone.`)) {
+                      sendCampaign(false);
+                    }
+                  }}
+                  disabled={sendingCampaign || !campaignSubject || !campaignContent}
+                  className="px-6 py-3 bg-[#14B8A6] text-slate-900 font-semibold rounded-lg hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {sendingCampaign ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-white" />
+                  ) : (
+                    <PaperAirplaneIcon className="h-5 w-5" />
+                  )}
+                  Send Campaign
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Campaign History */}
+          {campaigns.length > 0 && (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+              <h2 className="text-xl font-semibold text-slate-50 mb-4">Campaign History</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Subject</th>
+                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Recipients</th>
+                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Sent</th>
+                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Failed</th>
+                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Status</th>
+                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {campaigns.map((campaign) => (
+                      <tr key={campaign.id}>
+                        <td className="py-3 text-sm text-slate-300 max-w-xs truncate">{campaign.subject}</td>
+                        <td className="py-3 text-sm text-slate-300 capitalize">{campaign.recipientFilter.replace(/_/g, " ")}</td>
+                        <td className="py-3 text-sm text-green-400">{campaign.sentCount}</td>
+                        <td className="py-3 text-sm text-red-400">{campaign.failedCount}</td>
+                        <td className="py-3">
+                          <StatusBadge status={campaign.status} />
+                        </td>
+                        <td className="py-3 text-sm text-slate-400">
+                          {campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : "N/A"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Dashboard Tab */}
+      {activeTab === "dashboard" && (
+        <>
       {/* Stats Overview */}
       {stats && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -357,6 +701,8 @@ export default function AdminEmailsPage() {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ export {
   updateEmployerLogo,
   updateEmployerBanner,
   upsertEmployerProfile,
+  createPendingEmployerProfile,
   listEmployers,
   updateEmployerStatus,
   grantEmployerFreePosting,
@@ -40,7 +41,21 @@ export {
   toggleSavedJob,
   listSavedJobs,
   listSavedJobIds,
+  isJobSaved,
+  isJobExpired,
+  clearPendingEmployerApprovalFlag,
 } from "./jobs";
+
+// Job Templates
+export {
+  createJobTemplate,
+  getJobTemplate,
+  listEmployerTemplates,
+  updateJobTemplate,
+  deleteJobTemplate,
+  incrementTemplateUsage,
+  templateToJobData,
+} from "./jobTemplates";
 
 // Applications
 export {
@@ -51,6 +66,9 @@ export {
   listEmployerApplications,
   updateApplicationStatus,
   withdrawJobApplication,
+  addApplicantNote,
+  updateApplicantNote,
+  deleteApplicantNote,
 } from "./applications";
 
 // Members
@@ -58,7 +76,9 @@ export {
   getMemberProfile,
   upsertMemberProfile,
   searchMembers,
+  listMembersForDirectory,
 } from "./members";
+export type { ListMembersOptions } from "./members";
 
 // Conferences
 export {
@@ -72,8 +92,20 @@ export {
   listSavedConferences,
   listSavedConferenceIds,
   createConferenceRegistration,
+  isConferenceExpired,
+  // Visibility system (45-day free visibility)
+  FREE_VISIBILITY_DAYS,
+  FAR_FUTURE_EVENT_DAYS,
+  generateConferenceFingerprint,
+  computeVisibilityTier,
+  isConferenceVisible,
+  isEventFarInFuture,
+  recordFingerprintHistory,
+  checkFingerprintHistory,
+  checkPublishBlocked,
+  publishConference,
 } from "./conferences";
-export type { SavedConference } from "./conferences";
+export type { SavedConference, FingerprintHistoryEntry, ListConferencesOptions } from "./conferences";
 
 // Scholarships
 export {
@@ -93,6 +125,7 @@ export {
   listUpcomingDeadlineScholarships,
   listScholarshipsForProgram,
   createExtendedScholarship,
+  isScholarshipExpired,
 } from "./scholarships";
 export type { ExtendedScholarshipInput } from "./scholarships";
 
@@ -107,6 +140,7 @@ export {
   createPowwowRegistration,
   listMemberPowwowRegistrations,
   listPowwowRegistrants,
+  isPowwowExpired,
 } from "./powwows";
 
 // Vendors
@@ -150,7 +184,15 @@ export {
   markMessagesAsRead,
   getUnreadMessageCount,
   archiveConversation,
+  // Peer-to-peer messaging
+  getOrCreatePeerConversation,
+  getPeerConversations,
+  sendPeerMessage,
+  markPeerMessagesAsRead,
+  getUnreadPeerMessageCount,
+  getOtherParticipant,
 } from "./messaging";
+export type { PeerConversation } from "./messaging";
 
 // Notifications
 export {
@@ -201,6 +243,7 @@ export {
   unsaveTrainingProgram,
   isTrainingSaved,
   listSavedTraining,
+  isTrainingProgramExpired,
 } from "./training";
 export type { ListTrainingProgramsOptions } from "./training";
 
@@ -331,6 +374,7 @@ export {
   getFeedPosts,
   getUserPosts,
   toggleLikePost,
+  hasUserLikedPost,
   addComment,
   getComments,
   sendConnectionRequest,
@@ -341,3 +385,271 @@ export {
   getSuggestedConnections,
   shareEntity,
 } from "./social";
+
+// ============================================
+// TEAM ACCESS
+// ============================================
+export {
+  // Team members
+  getTeamMembers,
+  addTeamMember,
+  removeTeamMember,
+  updateTeamMemberRole,
+  isUserTeamMember,
+  getEmployerIdForUser,
+  // Team invitations
+  createInvitation,
+  getInvitation,
+  getInvitationByToken,
+  getPendingInvitationsForEmail,
+  getInvitationsForEmployer,
+  acceptInvitation,
+  declineInvitation,
+  revokeInvitation,
+  resendInvitation,
+} from "./team";
+
+// ============================================
+// ORGANIZATION MODULES (Dashboard Overhaul)
+// ============================================
+
+// Module Management
+export {
+  getEnabledModules,
+  detectModulesFromData,
+  enableModule,
+  disableModule,
+  setLastActiveModule,
+  getModuleSettings,
+  updateModuleSettings,
+  initializeModules,
+} from "./modules";
+
+// Unified Inbox
+export {
+  getUnifiedInbox,
+  getUnifiedUnreadCount,
+  markInboxItemRead,
+  archiveInboxItem,
+  getInboxCounts,
+} from "./inbox";
+
+// Analytics & Tracking
+export {
+  trackOutboundClick,
+  trackProfileView,
+  getOutboundClickStats,
+  getProfileViewStats,
+  getAnalyticsSummary,
+  getRecentOutboundClicks,
+} from "./analytics";
+
+// Unified Offerings
+export {
+  listUserOfferings,
+  listUserOfferingsByType,
+  getOfferingCounts,
+  getOffering,
+  getActiveOfferingCounts,
+} from "./offerings";
+
+// ============================================
+// MEMBER SETTINGS
+// ============================================
+export {
+  getMemberSettings,
+  updateMemberSettings,
+  updateNotificationSettings,
+  updatePrivacySettings,
+  updateOnboardingStatus,
+  completeOnboarding,
+  skipOnboarding,
+  DEFAULT_MEMBER_SETTINGS,
+} from "./memberSettings";
+export type {
+  MemberSettings,
+  NotificationSettings,
+  FieldPrivacySettings,
+  FieldVisibility,
+  ProfileVisibility,
+  OnboardingStatus,
+  UserIntent,
+} from "./memberSettings";
+
+// ============================================
+// MEMBER ENGAGEMENT & ANALYTICS
+// ============================================
+export {
+  trackMemberProfileView,
+  getMemberProfileViews,
+  getMemberEngagementStats,
+  checkMilestones,
+  getMilestoneProgress,
+} from "./memberEngagement";
+export type {
+  MemberProfileView,
+  MemberEngagementStats,
+  EngagementMilestone,
+} from "./memberEngagement";
+
+// ============================================
+// ACHIEVEMENT BADGES
+// ============================================
+export {
+  BADGE_DEFINITIONS,
+  getUserBadges,
+  hasBadge,
+  awardBadge,
+  markBadgeNotified,
+  getUnnotifiedBadges,
+  checkAndAwardBadges,
+  getUserBadgePoints,
+  getBadgeProgress,
+  getTierColor,
+  getTierBorderColor,
+} from "./badges";
+export type {
+  BadgeDefinition,
+  UserBadge,
+  UserBadgeWithDefinition,
+} from "./badges";
+
+// ============================================
+// ACTIVITY STREAKS
+// ============================================
+export {
+  getUserStreak,
+  recordDailyActivity,
+  getStreakStatus,
+  checkStreakAtRisk,
+  getStreakMilestones,
+} from "./streaks";
+export type {
+  UserStreak,
+  StreakStatus,
+} from "./streaks";
+
+// ============================================
+// COMMUNITY LEADERBOARD
+// ============================================
+export {
+  calculateEngagementScore,
+  getLeaderboard,
+  getUserLeaderboardPosition,
+  getMonthlySpotlight,
+  getRisingStars,
+} from "./leaderboard";
+export type {
+  LeaderboardEntry,
+  LeaderboardData,
+  LeaderboardType,
+} from "./leaderboard";
+
+// ============================================
+// RECOMMENDATIONS ENGINE
+// ============================================
+export {
+  getJobRecommendations,
+  getScholarshipRecommendations,
+  getEventRecommendations,
+  getTrainingRecommendations,
+  getRecommendationFeed,
+  getNetworkingRecommendations,
+  getQuickRecommendations,
+} from "./recommendations";
+export type {
+  RecommendationScore,
+  RecommendedItem,
+  RecommendationFeed,
+  NetworkingRecommendation,
+} from "./recommendations";
+
+// ============================================
+// SAVED SEARCHES
+// ============================================
+export {
+  saveSearch,
+  getSavedSearches,
+  getSavedSearch,
+  updateSavedSearch,
+  deleteSavedSearch,
+  markSearchRun,
+  toggleSearchAlert,
+  recordSearch,
+  getSearchHistory,
+  clearSearchHistory,
+  getSuggestedSearches,
+} from "./savedSearches";
+export type {
+  SearchFilters,
+  SavedSearch,
+  SearchHistory,
+} from "./savedSearches";
+
+// ============================================
+// NOTIFICATION PREFERENCES
+// ============================================
+export {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  updateNotificationCategory,
+  toggleGlobalNotifications,
+  setQuietHours,
+  registerPushSubscription,
+  unregisterPushSubscription,
+  shouldNotify,
+  getUsersForNotification,
+  bulkToggleCategory,
+  getNotificationCategoryGroups,
+  DEFAULT_NOTIFICATION_PREFERENCES,
+} from "./notificationPreferences";
+export type {
+  NotificationChannel,
+  NotificationFrequency,
+  NotificationTypePreference,
+  MemberNotificationPreferences,
+} from "./notificationPreferences";
+
+// ============================================
+// INTERVIEWS
+// ============================================
+export {
+  getEmployerInterviews,
+  getApplicationInterviews,
+  getCandidateInterviews,
+  getInterview,
+  createInterview,
+  updateInterview,
+  updateInterviewStatus,
+  deleteInterview,
+  getUpcomingInterviews,
+  generateICSContent,
+} from "./interviews";
+
+// ============================================
+// TALENT SEARCH
+// ============================================
+export {
+  searchTalent,
+  saveTalent,
+  unsaveTalent,
+  isTalentSaved,
+  getSavedTalent,
+  updateSavedTalent,
+  trackTalentView,
+  getPopularSkills,
+  getTalentByLocation,
+} from "./talentSearch";
+export type {
+  TalentSearchFilters,
+  TalentSearchResult,
+  SavedTalent,
+  TalentSearchOptions,
+} from "./talentSearch";
+
+// ============================================
+// ORGANIZATION DIRECTORY VISIBILITY
+// ============================================
+// NOTE: visibility.ts uses firebase-admin and is SERVER-ONLY.
+// Import directly from "@/lib/firestore/visibility" in API routes only.
+// DO NOT export here - it will break client-side builds.

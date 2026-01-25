@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, FormEvent } from "react";
+import toast from "react-hot-toast";
 import type { Conversation, Message } from "@/lib/types";
 import {
   getConversationMessages,
@@ -82,7 +83,7 @@ export default function MessageThread({
       inputRef.current?.focus();
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Failed to send message. Please try again.");
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }

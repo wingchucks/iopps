@@ -95,13 +95,15 @@ export function StatsCounter() {
 
     if (!isVisible) return null;
 
+    // Filter out stats that are 0 or not publicly visible yet
     const statItems: StatItem[] = stats
         ? [
             { label: "Jobs", value: stats.jobs, suffix: "+" },
             { label: "Conferences", value: stats.conferences, suffix: "+" },
             { label: "Scholarships", value: stats.scholarships, suffix: "+" },
-            { label: "Indigenous Vendors", value: stats.vendors, suffix: "+" },
-        ]
+            // Vendors hidden until Shop Indigenous marketplace is publicly visible
+            // { label: "Indigenous Vendors", value: stats.vendors, suffix: "+" },
+        ].filter(stat => stat.value > 0)
         : [];
 
     return (

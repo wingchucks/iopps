@@ -13,7 +13,7 @@ interface ServiceCardProps {
 export function ServiceCard({ service, featured = false }: ServiceCardProps) {
   return (
     <Link
-      href={`/marketplace/services/${service.id}`}
+      href={`/business/services/${service.id}`}
       className={`group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 ${
         featured
           ? 'border-indigo-500/50 ring-1 ring-indigo-500/20'

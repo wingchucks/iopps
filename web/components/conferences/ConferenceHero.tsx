@@ -19,6 +19,10 @@ export default function ConferenceHero({
   isSaved = false,
 }: ConferenceHeroProps) {
   const [saveAnimating, setSaveAnimating] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  // Try multiple possible image field names
+  const heroImageUrl = conference.bannerImageUrl || conference.coverImageUrl || conference.imageUrl;
 
   const formatDate = (value: Conference["startDate"]) => {
     if (!value) return null;
@@ -54,36 +58,35 @@ export default function ConferenceHero({
     <div className="relative">
       {/* Banner Image */}
       <div className="relative h-64 sm:h-80 lg:h-96 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900">
-        {conference.bannerImageUrl ? (
+        {heroImageUrl && !imageError ? (
           <Image
-            src={conference.bannerImageUrl}
+            src={heroImageUrl}
             alt={conference.title}
             fill
             className="object-cover"
             priority
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#14B8A6]/20 via-slate-800 to-slate-900">
-            <div className="absolute inset-0 opacity-10">
-              <svg
-                className="h-full w-full"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-              >
-                <pattern
-                  id="conference-pattern"
-                  patternUnits="userSpaceOnUse"
-                  width="20"
-                  height="20"
+          /* Branded fallback with gradient and icon */
+          <div className="absolute inset-0 bg-gradient-to-br from-[#14B8A6]/30 via-blue-900/50 to-slate-900 flex items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+                <svg
+                  className="h-10 w-10 text-white/70"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                </pattern>
-                <rect
-                  width="100%"
-                  height="100%"
-                  fill="url(#conference-pattern)"
-                />
-              </svg>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <p className="text-lg font-medium text-white/60">Conference</p>
             </div>
           </div>
         )}

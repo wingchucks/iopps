@@ -6,6 +6,7 @@ import SiteFooter from "./SiteFooter";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { BackToTop } from "./BackToTop";
 
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
@@ -20,6 +21,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen flex flex-col">
+
       <SiteHeader />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
       <SiteFooter />

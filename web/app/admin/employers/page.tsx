@@ -3,9 +3,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid, updateEmployerCarouselFeature } from "@/lib/firestore";
+import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid, updateEmployerCarouselFeature, clearPendingEmployerApprovalFlag } from "@/lib/firestore";
 import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
+import {
+  EntityActionsMenu,
+  type ActionItem,
+  type ActionGroup,
+} from "@/components/admin";
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -24,6 +29,7 @@ import {
   PencilSquareIcon,
   CurrencyDollarIcon,
   SparklesIcon,
+  KeyIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -36,8 +42,8 @@ export default function AdminEmployersPage() {
   const [allEmployers, setAllEmployers] = useState<EmployerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  // Default to "all" if coming from search, otherwise "pending"
-  const [filter, setFilter] = useState<EmployerStatus | "all">(initialSearch ? "all" : "pending");
+  // Default to "all" to show complete list on page load
+  const [filter, setFilter] = useState<EmployerStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -56,6 +62,7 @@ export default function AdminEmployersPage() {
   const itemsPerPage = 20;
   const [previewModalId, setPreviewModalId] = useState<string | null>(null);
   const [deleteModalId, setDeleteModalId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFixingJobs, setIsFixingJobs] = useState(false);
   const [fixJobsResult, setFixJobsResult] = useState<{
@@ -64,19 +71,6 @@ export default function AdminEmployersPage() {
     deactivated: number;
     jobs: Array<{ id: string; title: string; employerId: string; reason: string }>;
   } | null>(null);
-
-  // Check admin access
-  if (!loading && role !== "admin" && role !== "moderator") {
-    return (
-      <div className="rounded-lg border border-red-800 bg-red-950/20 p-8 text-center">
-        <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
-        <h2 className="mt-4 text-xl font-bold text-red-400">Unauthorized Access</h2>
-        <p className="mt-2 text-slate-400">
-          You do not have permission to access this page. Admin access required.
-        </p>
-      </div>
-    );
-  }
 
   const fetchEmployers = async () => {
     setLoading(true);
@@ -107,6 +101,13 @@ export default function AdminEmployersPage() {
     setProcessingId(employerId);
     try {
       await updateEmployerStatus(employerId, "approved", user.uid);
+
+      // Clear the pendingEmployerApproval flag from any jobs created while pending
+      // This allows the employer to publish their jobs
+      const jobsCleared = await clearPendingEmployerApprovalFlag(employerId);
+      if (jobsCleared > 0) {
+        console.log(`Cleared pending flag from ${jobsCleared} job(s) for employer ${employerId}`);
+      }
 
       // Send approval email to employer (fire and forget)
       if (employerEmail) {
@@ -298,6 +299,39 @@ export default function AdminEmployersPage() {
       showToast("error", error instanceof Error ? error.message : "Failed to delete employer");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleSendPasswordReset = async (email: string, employerName: string) => {
+    if (!user || !email) return;
+
+    setProcessingId(email);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/send-password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send password reset");
+      }
+
+      // Copy reset link to clipboard
+      if (data.resetLink) {
+        await navigator.clipboard.writeText(data.resetLink);
+        showToast("success", `Password reset link copied to clipboard for ${employerName}`);
+      } else {
+        showToast("success", `Password reset email sent to ${email}`);
+      }
+    } catch (error) {
+      console.error("Error sending password reset:", error);
+      showToast("error", error instanceof Error ? error.message : "Failed to send password reset");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -506,10 +540,11 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
   const getStatusBadge = (status?: EmployerStatus) => {
     const actualStatus = status || "pending";
-    const styles = {
+    const styles: Record<EmployerStatus, string> = {
       pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
       approved: "bg-green-500/10 text-green-400 border-green-500/20",
       rejected: "bg-red-500/10 text-red-400 border-red-500/20",
+      deleted: "bg-slate-500/10 text-slate-400 border-slate-500/20",
     };
 
     return (
@@ -519,10 +554,24 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
         {actualStatus === "pending" && <ClockIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "approved" && <CheckCircleIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "rejected" && <XCircleIcon className="mr-1 h-3 w-3" />}
+        {actualStatus === "deleted" && <XCircleIcon className="mr-1 h-3 w-3" />}
         {actualStatus.charAt(0).toUpperCase() + actualStatus.slice(1)}
       </span>
     );
   };
+
+  // Check admin access (after all hooks)
+  if (!loading && role !== "admin" && role !== "moderator") {
+    return (
+      <div className="rounded-lg border border-red-800 bg-red-950/20 p-8 text-center">
+        <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
+        <h2 className="mt-4 text-xl font-bold text-red-400">Unauthorized Access</h2>
+        <p className="mt-2 text-slate-400">
+          You do not have permission to access this page. Admin access required.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -832,137 +881,148 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     </div>
 
                     {/* Right: Actions */}
-                    <div className="flex flex-col gap-2 lg:flex-shrink-0">
+                    <div className="flex items-center gap-2 lg:flex-shrink-0">
                       {/* View Profile Button */}
                       <button
                         onClick={() => setPreviewModalId(employer.id)}
-                        className="flex items-center justify-center gap-2 rounded-md bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-400 transition-colors hover:bg-teal-500/20"
+                        className="flex items-center justify-center gap-2 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-teal-500 hover:text-teal-400"
                       >
-                        <EyeIcon className="h-4 w-4" />
-                        View Profile
+                        View
                       </button>
 
-                      {/* Edit & Products Buttons */}
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/admin/employers/${employer.id}/edit`}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-teal-500 hover:text-teal-400"
-                        >
-                          <PencilSquareIcon className="h-4 w-4" />
-                          Edit
-                        </Link>
-                        <Link
-                          href={`/admin/employers/${employer.id}/products`}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-400"
-                        >
-                          <CurrencyDollarIcon className="h-4 w-4" />
-                          Products
-                        </Link>
-                      </div>
+                      <EntityActionsMenu
+                        actions={(() => {
+                          const actions: (ActionItem | ActionGroup)[] = [];
 
-                      {status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(employer.id, employer.organizationName, employer.contactEmail)}
-                            disabled={!!processingId}
-                            className="flex items-center justify-center gap-2 rounded-md bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReject(employer.id, employer.organizationName)}
-                            disabled={!!processingId}
-                            className="flex items-center justify-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <XCircleIcon className="h-4 w-4" />
-                            Reject
-                          </button>
-                        </>
-                      )}
+                          // Edit & Products links
+                          actions.push({
+                            id: `edit-${employer.id}`,
+                            label: "Edit",
+                            href: `/admin/employers/${employer.id}/edit`,
+                          });
+                          actions.push({
+                            id: `products-${employer.id}`,
+                            label: "Manage Products",
+                            href: `/admin/employers/${employer.id}/products`,
+                          });
 
-                      {status === "approved" && (
-                        <button
-                          onClick={() => handleRevoke(employer.id, employer.organizationName)}
-                          disabled={!!processingId}
-                          className="flex items-center justify-center gap-2 rounded-md bg-yellow-500/10 px-4 py-2 text-sm font-medium text-yellow-400 transition-colors hover:bg-yellow-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <XCircleIcon className="h-4 w-4" />
-                          Revoke Approval
-                        </button>
-                      )}
+                          // Moderation actions based on status
+                          if (status === "pending") {
+                            actions.push({
+                              id: `moderation-${employer.id}`,
+                              items: [
+                                {
+                                  id: `approve-${employer.id}`,
+                                  label: "Approve",
+                                  onClick: () => handleApprove(employer.id, employer.organizationName, employer.contactEmail),
+                                  variant: "success",
+                                  disabled: !!processingId,
+                                },
+                                {
+                                  id: `reject-${employer.id}`,
+                                  label: "Reject",
+                                  onClick: () => handleReject(employer.id, employer.organizationName),
+                                  variant: "danger",
+                                  disabled: !!processingId,
+                                },
+                              ],
+                            });
+                          }
 
-                      {status === "rejected" && (
-                        <button
-                          onClick={() => handleReconsider(employer.id, employer.organizationName)}
-                          disabled={!!processingId}
-                          className="flex items-center justify-center gap-2 rounded-md bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-400 transition-colors hover:bg-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <CheckCircleIcon className="h-4 w-4" />
-                          Reconsider
-                        </button>
-                      )}
+                          if (status === "approved") {
+                            const statusItems: ActionItem[] = [
+                              {
+                                id: `revoke-${employer.id}`,
+                                label: "Revoke Approval",
+                                onClick: () => handleRevoke(employer.id, employer.organizationName),
+                                variant: "warning",
+                                disabled: !!processingId,
+                              },
+                              {
+                                id: `free-posting-${employer.id}`,
+                                label: employer.freePostingEnabled ? "Revoke Free Posting" : "Grant Free Posting",
+                                onClick: () => handleToggleFreePosting(employer),
+                                disabled: !!processingId,
+                              },
+                            ];
 
-                      {/* Free Posting Toggle - Only for approved employers */}
-                      {status === "approved" && (
-                        <button
-                          onClick={() => handleToggleFreePosting(employer)}
-                          disabled={!!processingId}
-                          className={`flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                            employer.freePostingEnabled
-                              ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                              : "bg-slate-700/50 text-slate-400 hover:bg-slate-700"
-                          }`}
-                        >
-                          <GiftIcon className="h-4 w-4" />
-                          {employer.freePostingEnabled ? "Revoke Free Posting" : "Grant Free Posting"}
-                        </button>
-                      )}
+                            if (employer.logoUrl) {
+                              statusItems.push({
+                                id: `carousel-${employer.id}`,
+                                label: (employer as any).featuredOnCarousel ? "Remove from Carousel" : "Feature on Carousel",
+                                onClick: () => handleToggleCarouselFeature(employer),
+                                disabled: !!processingId,
+                              });
+                            }
 
-                      {/* Partner Carousel Toggle - Only for approved employers with logos */}
-                      {status === "approved" && employer.logoUrl && (
-                        <button
-                          onClick={() => handleToggleCarouselFeature(employer)}
-                          disabled={!!processingId}
-                          className={`flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                            (employer as any).featuredOnCarousel
-                              ? "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
-                              : "bg-slate-700/50 text-slate-400 hover:bg-slate-700"
-                          }`}
-                        >
-                          <SparklesIcon className="h-4 w-4" />
-                          {(employer as any).featuredOnCarousel ? "Remove from Carousel" : "Feature on Carousel"}
-                        </button>
-                      )}
+                            actions.push({
+                              id: `status-${employer.id}`,
+                              items: statusItems,
+                            });
+                          }
 
+                          if (status === "rejected") {
+                            actions.push({
+                              id: `reconsider-group-${employer.id}`,
+                              items: [
+                                {
+                                  id: `reconsider-${employer.id}`,
+                                  label: "Reconsider",
+                                  onClick: () => handleReconsider(employer.id, employer.organizationName),
+                                  variant: "success",
+                                  disabled: !!processingId,
+                                },
+                              ],
+                            });
+                          }
+
+                          // Password reset action - available for all employers with email
+                          if (employer.contactEmail) {
+                            actions.push({
+                              id: `account-${employer.id}`,
+                              items: [
+                                {
+                                  id: `password-reset-${employer.id}`,
+                                  label: "Send Password Reset",
+                                  onClick: () => handleSendPasswordReset(employer.contactEmail!, employer.organizationName),
+                                  disabled: !!processingId,
+                                },
+                              ],
+                            });
+                          }
+
+                          // Delete action - Admin only
+                          if (role === "admin") {
+                            actions.push({
+                              id: `danger-${employer.id}`,
+                              items: [
+                                {
+                                  id: `delete-${employer.id}`,
+                                  label: "Delete",
+                                  onClick: () => setDeleteModalId(employer.id),
+                                  variant: "danger",
+                                  disabled: !!processingId,
+                                },
+                              ],
+                            });
+                          }
+
+                          return actions;
+                        })()}
+                        processing={!!processingId}
+                      />
+
+                      {/* Expand/Collapse for long descriptions */}
                       {employer.description && employer.description.length > 100 && (
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : employer.id)}
-                          className="flex items-center justify-center gap-1 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-300"
+                          className="flex items-center justify-center gap-1 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-300"
                         >
                           {isExpanded ? (
-                            <>
-                              <ChevronUpIcon className="h-4 w-4" />
-                              Show Less
-                            </>
+                            <ChevronUpIcon className="h-4 w-4" />
                           ) : (
-                            <>
-                              <ChevronDownIcon className="h-4 w-4" />
-                              View Details
-                            </>
+                            <ChevronDownIcon className="h-4 w-4" />
                           )}
-                        </button>
-                      )}
-
-                      {/* Delete Employer - Admin only */}
-                      {role === "admin" && (
-                        <button
-                          onClick={() => setDeleteModalId(employer.id)}
-                          disabled={!!processingId}
-                          className="flex items-center justify-center gap-2 rounded-md border border-red-800 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:border-red-500 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <XCircleIcon className="h-4 w-4" />
-                          Delete
                         </button>
                       )}
                     </div>
@@ -1357,6 +1417,12 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     </button>
                   </>
                 )}
+                <Link
+                  href={`/admin/employers/${employer.id}/edit`}
+                  className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#14B8A6]/90"
+                >
+                  Edit
+                </Link>
                 <button
                   onClick={() => setPreviewModalId(null)}
                   className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
@@ -1373,6 +1439,8 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       {deleteModalId && (() => {
         const employer = allEmployers.find((e) => e.id === deleteModalId);
         if (!employer) return null;
+
+        const isConfirmed = deleteConfirmText === employer.organizationName;
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -1393,22 +1461,41 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   <li>All scholarships by this employer</li>
                   <li>The associated user account</li>
                 </ul>
-                <p className="mt-2 font-medium">This action cannot be undone easily.</p>
+                <p className="mt-2 font-medium">This action cannot be undone.</p>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm text-slate-400 mb-2">
+                  Type <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-200">{employer.organizationName}</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type employer name here"
+                  disabled={isDeleting}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50"
+                />
               </div>
               <div className="mt-6 flex gap-3">
                 <button
-                  onClick={() => setDeleteModalId(null)}
+                  onClick={() => {
+                    setDeleteModalId(null);
+                    setDeleteConfirmText('');
+                  }}
                   disabled={isDeleting}
                   className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDeleteEmployer(deleteModalId)}
-                  disabled={isDeleting}
-                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:opacity-50"
+                  onClick={() => {
+                    handleDeleteEmployer(deleteModalId);
+                    setDeleteConfirmText('');
+                  }}
+                  disabled={isDeleting || !isConfirmed}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isDeleting ? "Deleting..." : "Delete Employer"}
+                  {isDeleting ? "Deleting..." : "Delete Permanently"}
                 </button>
               </div>
             </div>

@@ -55,6 +55,7 @@ export default function EmailVerificationBanner({
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2}
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -93,7 +94,7 @@ export default function EmailVerificationBanner({
               >
                 {sending ? (
                   <>
-                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                       <circle
                         className="opacity-25"
                         cx="12"
@@ -125,6 +126,7 @@ export default function EmailVerificationBanner({
             )}
             <button
               onClick={() => window.location.reload()}
+              aria-label="Refresh page after verifying email"
               className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 px-4 py-2 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/10"
             >
               I've verified, refresh

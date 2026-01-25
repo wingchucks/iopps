@@ -354,3 +354,10 @@ export const getSchoolByOrganizationId = getSchoolByEmployerId;
 
 // Alias for createStudentInquiry (some files use createSchoolInquiry)
 export const createSchoolInquiry = createStudentInquiry;
+export function getStudentInquiriesQuery(schoolId: string) {
+  return query(
+    collection(db!, studentInquiriesCollection),
+    where("schoolId", "==", schoolId),
+    where("status", "==", "new")
+  );
+}

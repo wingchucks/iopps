@@ -20,6 +20,7 @@ import { useAuth } from "@/components/AuthProvider";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import WelcomeWizard from "@/components/WelcomeWizard";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
+import ApplicationAnalytics from "@/components/organization/ApplicationAnalytics";
 import { StatCard, type DashboardSection } from "@/components/organization/dashboard";
 import {
   getEmployerProfile,
@@ -134,50 +135,82 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={BriefcaseIcon} value={activeJobs.length} label="Active Jobs" />
-        <StatCard icon={UsersIcon} value={pendingApplications.length} label="New Applications" />
-        <StatCard icon={EyeIcon} value={totalViews} label="Total Views" />
-        <StatCard icon={ChatBubbleLeftRightIcon} value={unreadMessages} label="Unread Messages" />
+        <StatCard
+          icon={BriefcaseIcon}
+          value={activeJobs.length}
+          label="Active Jobs"
+          className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          onClick={() => handleNavigate("jobs")}
+        />
+        <StatCard
+          icon={UsersIcon}
+          value={pendingApplications.length}
+          label="New Applications"
+          className="bg-blue-500/10 border-blue-500/20 text-blue-400"
+          onClick={() => handleNavigate("applications")}
+        />
+        <StatCard
+          icon={EyeIcon}
+          value={totalViews}
+          label="Total Views"
+          className="bg-purple-500/10 border-purple-500/20 text-purple-400"
+          onClick={() => handleNavigate("jobs")}
+        />
+        <StatCard
+          icon={ChatBubbleLeftRightIcon}
+          value={unreadMessages}
+          label="Unread Messages"
+          className="bg-amber-500/10 border-amber-500/20 text-amber-400"
+          onClick={() => handleNavigate("messages")}
+        />
       </div>
+
+      {/* Application Analytics */}
+      {applications.length > 0 && <ApplicationAnalytics />}
 
       {/* Organization Status Card */}
       {profile && (
-        <div className="rounded-2xl bg-card border border-card-border p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
+        <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 backdrop-blur-xl shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 sm:gap-0">
+            <div className="flex items-center gap-6">
               {profile.logoUrl ? (
                 <Image
                   src={profile.logoUrl}
                   alt={profile.organizationName || "Organization"}
-                  width={64}
-                  height={64}
-                  className="rounded-xl object-cover"
+                  width={80}
+                  height={80}
+                  className="rounded-2xl object-cover border-2 border-slate-700/50 shadow-lg"
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-2xl font-bold text-white">
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-3xl font-bold text-white shadow-lg">
                   {profile.organizationName?.charAt(0) || "O"}
                 </div>
               )}
               <div>
-                <h3 className="text-xl font-bold text-white">{profile.organizationName || "Your Organization"}</h3>
-                <div className="flex items-center gap-2 mt-1">
+                <h3 className="text-2xl font-bold text-white tracking-tight">{profile.organizationName || "Your Organization"}</h3>
+                <div className="flex items-center gap-3 mt-2">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${profile.status === "approved"
-                        ? "bg-emerald-500"
-                        : profile.status === "pending"
-                          ? "bg-amber-500"
-                          : "bg-slate-500"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${profile.status === "approved"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      : profile.status === "pending"
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        : "bg-slate-500/10 text-slate-400 border-slate-500/20"
                       }`}
                   >
-                    {profile.status === "approved" ? "Active" : profile.status === "pending" ? "Pending" : "Draft"}
+                    <span className={`h-1.5 w-1.5 rounded-full ${profile.status === "approved" ? "bg-emerald-400" : profile.status === "pending" ? "bg-amber-400" : "bg-slate-400"}`} />
+                    {profile.status === "approved" ? "Active" : profile.status === "pending" ? "Pending Approval" : "Draft"}
                   </span>
-                  {profile.location && <span className="text-sm text-slate-500">{profile.location}</span>}
+                  {profile.location && (
+                    <span className="flex items-center gap-1 text-sm text-slate-400">
+                      <span>📍</span> {profile.location}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
             <button
               onClick={() => handleNavigate("profile")}
-              className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              className="flex items-center gap-2 rounded-xl bg-slate-800/50 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all border border-slate-700/50 hover:border-slate-600"
             >
               <Cog6ToothIcon className="h-4 w-4" />
               Edit Profile
@@ -187,117 +220,108 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
       )}
 
       {/* Quick Actions */}
-      <div className="rounded-2xl bg-card border border-card-border p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Post a Job */}
-          <Link
-            href="/organization/jobs/new"
-            className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 hover:border-blue-500/50 transition-colors group"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <PlusIcon className="h-5 w-5 text-blue-400" />
-              </div>
-              <h4 className="font-semibold text-white group-hover:text-blue-400">Post a Job</h4>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link
+          href="/organization/jobs/new"
+          className="group relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 p-6 transition-all hover:border-blue-500/40 hover:shadow-lg hover:shadow-blue-500/10"
+        >
+          <div className="relative z-10">
+            <div className="mb-4 inline-flex rounded-xl bg-blue-500/20 p-3 text-blue-400">
+              <PlusIcon className="h-6 w-6" />
             </div>
-            <p className="text-sm text-slate-400">Create a new job listing</p>
-          </Link>
-
-          {/* View Applications */}
-          <button
-            onClick={() => handleNavigate("applications")}
-            className="p-4 rounded-xl bg-card border border-card-border hover:border-blue-500/50 transition-colors text-left group"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-slate-900/50">
-                <DocumentTextIcon className="h-5 w-5 text-slate-400 group-hover:text-blue-400" />
-              </div>
-              <h4 className="font-semibold text-white">Applications</h4>
-            </div>
-            <p className="text-sm text-slate-400">{pendingApplications.length} pending review</p>
-          </button>
-
-          {/* Search Talent */}
-          <Link
-            href="/organization/talent"
-            className="p-4 rounded-xl bg-card border border-card-border hover:border-blue-500/50 transition-colors group"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-slate-900/50">
-                <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 group-hover:text-blue-400" />
-              </div>
-              <h4 className="font-semibold text-white">Search Talent</h4>
-            </div>
-            <p className="text-sm text-slate-400">Find candidates</p>
-          </Link>
-
-          {/* Create Event Dropdown */}
-          <div className="relative" ref={createMenuRef}>
-            <button
-              onClick={() => setShowCreateMenu(!showCreateMenu)}
-              className="w-full p-4 rounded-xl bg-card border border-card-border hover:border-blue-500/50 transition-colors text-left group"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg bg-slate-900/50">
-                  <CalendarDaysIcon className="h-5 w-5 text-slate-400 group-hover:text-blue-400" />
-                </div>
-                <h4 className="font-semibold text-white flex items-center gap-2">
-                  Create Event
-                  <svg
-                    className={`h-4 w-4 transition-transform ${showCreateMenu ? "rotate-180" : ""}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </h4>
-              </div>
-              <p className="text-sm text-slate-400">Pow wows, conferences</p>
-            </button>
-
-            {/* Dropdown Menu */}
-            {showCreateMenu && (
-              <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl">
-                <Link
-                  href="/organization/powwows/new"
-                  onClick={() => setShowCreateMenu(false)}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
-                >
-                  <span className="text-xl">🎪</span>
-                  <div>
-                    <p className="font-medium">Pow Wow / Event</p>
-                    <p className="text-xs text-slate-400">Cultural gatherings</p>
-                  </div>
-                </Link>
-                <Link
-                  href="/organization/scholarships/new"
-                  onClick={() => setShowCreateMenu(false)}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
-                >
-                  <AcademicCapIcon className="h-5 w-5" />
-                  <div>
-                    <p className="font-medium">Scholarship</p>
-                    <p className="text-xs text-slate-400">Scholarships & grants</p>
-                  </div>
-                </Link>
-                <Link
-                  href="/organization/conferences/new"
-                  onClick={() => setShowCreateMenu(false)}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-200 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
-                >
-                  <ChartBarIcon className="h-5 w-5" />
-                  <div>
-                    <p className="font-medium">Conference</p>
-                    <p className="text-xs text-slate-400">Announce conferences</p>
-                  </div>
-                </Link>
-              </div>
-            )}
-
+            <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">Post a Job</h4>
+            <p className="mt-1 text-sm text-slate-400">Find your next hire</p>
           </div>
+        </Link>
+
+        <button
+          onClick={() => handleNavigate("applications")}
+          className="group relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-6 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10"
+        >
+          <div className="relative z-10">
+            <div className="mb-4 inline-flex rounded-xl bg-emerald-500/20 p-3 text-emerald-400">
+              <DocumentTextIcon className="h-6 w-6" />
+            </div>
+            <h4 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">Review Applications</h4>
+            <p className="mt-1 text-sm text-slate-400">{pendingApplications.length} candidates waiting</p>
+          </div>
+        </button>
+
+        <div className="relative" ref={createMenuRef}>
+          <button
+            onClick={() => setShowCreateMenu(!showCreateMenu)}
+            className="w-full text-left group relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-6 transition-all hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10"
+          >
+            <div className="relative z-10">
+              <div className="mb-4 inline-flex rounded-xl bg-purple-500/20 p-3 text-purple-400">
+                <CalendarDaysIcon className="h-6 w-6" />
+              </div>
+              <h4 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors flex items-center justify-between">
+                Create Event
+                <svg
+                  className={`h-4 w-4 transition-transform ${showCreateMenu ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </h4>
+              <p className="mt-1 text-sm text-slate-400">Host a gathering</p>
+            </div>
+          </button>
+          {/* Dropdown Menu */}
+          {showCreateMenu && (
+            <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-xl p-2 shadow-2xl">
+              <Link
+                href="/organization/powwows/new"
+                onClick={() => setShowCreateMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-200 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+              >
+                <span className="text-xl">🎪</span>
+                <div>
+                  <p className="font-medium">Pow Wow / Event</p>
+                  <p className="text-xs text-slate-400">Cultural gatherings</p>
+                </div>
+              </Link>
+              <Link
+                href="/organization/scholarships/new"
+                onClick={() => setShowCreateMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-200 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+              >
+                <AcademicCapIcon className="h-5 w-5" />
+                <div>
+                  <p className="font-medium">Scholarship</p>
+                  <p className="text-xs text-slate-400">Scholarships & grants</p>
+                </div>
+              </Link>
+              <Link
+                href="/organization/conferences/new"
+                onClick={() => setShowCreateMenu(false)}
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-200 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+              >
+                <ChartBarIcon className="h-5 w-5" />
+                <div>
+                  <p className="font-medium">Conference</p>
+                  <p className="text-xs text-slate-400">Announce conferences</p>
+                </div>
+              </Link>
+            </div>
+          )}
         </div>
+
+        <Link
+          href="/organization/talent"
+          className="group relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-6 transition-all hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10"
+        >
+          <div className="relative z-10">
+            <div className="mb-4 inline-flex rounded-xl bg-amber-500/20 p-3 text-amber-400">
+              <MagnifyingGlassIcon className="h-6 w-6" />
+            </div>
+            <h4 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">Search Talent</h4>
+            <p className="mt-1 text-sm text-slate-400">Browse the community</p>
+          </div>
+        </Link>
       </div>
 
       {/* Recent Applications */}
@@ -323,7 +347,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
             {recentApplications.map((app) => (
               <div
                 key={app.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 gap-4"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-semibold">
@@ -334,13 +358,13 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                     <p className="text-sm text-slate-500">{app.memberEmail}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0">
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${app.status === "submitted" || app.status === "reviewed"
-                        ? "bg-blue-500/20 text-blue-300"
-                        : app.status === "hired" || app.status === "shortlisted"
-                          ? "bg-green-500/20 text-green-300"
-                          : "bg-slate-500/20 text-slate-400"
+                      ? "bg-blue-500/20 text-blue-300"
+                      : app.status === "hired" || app.status === "shortlisted"
+                        ? "bg-green-500/20 text-green-300"
+                        : "bg-slate-500/20 text-slate-400"
                       }`}
                   >
                     {app.status || "submitted"}

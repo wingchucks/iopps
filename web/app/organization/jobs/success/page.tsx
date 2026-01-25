@@ -106,7 +106,7 @@ function PaymentSuccessContent() {
                         View My Jobs
                     </Link>
                     <Link
-                        href="/jobs"
+                        href="/careers"
                         className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                     >
                         View Job Board

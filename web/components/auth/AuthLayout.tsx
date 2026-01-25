@@ -30,13 +30,13 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             Empowering Indigenous Success
           </h2>
           <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-            Connect with opportunities, build your career, and join a community dedicated to Indigenous prosperity.
+            Whether you're seeking opportunities or looking to connect with Indigenous talent, join Canada's premier Indigenous platform.
           </p>
 
           <div className="mt-10 space-y-4">
-            <FeatureItem text="Access thousands of job opportunities" />
-            <FeatureItem text="Connect with Indigenous-focused employers" />
-            <FeatureItem text="Discover scholarships and events" />
+            <FeatureItem text="Access jobs, scholarships, and events" />
+            <FeatureItem text="Connect with Indigenous communities across Canada" />
+            <FeatureItem text="Promote your organization to engaged audiences" />
           </div>
         </div>
       </div>

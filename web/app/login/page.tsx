@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 import {
   AuthLayout,
   GoogleSignInButton,
@@ -16,13 +17,16 @@ import {
 
 // Helper to get redirect path based on user role
 async function getRedirectPath(userId: string): Promise<string> {
-  if (!db) return "/jobs";
+  if (!db) return "/member/dashboard";
 
   try {
     const userDoc = await getDoc(doc(db, "users", userId));
     if (userDoc.exists()) {
       const role = userDoc.data()?.role;
-      if (role === "employer" || role === "admin" || role === "moderator") {
+      if (role === "admin" || role === "moderator") {
+        return "/admin";
+      }
+      if (role === "employer") {
         return "/organization/dashboard";
       }
     }
@@ -30,7 +34,7 @@ async function getRedirectPath(userId: string): Promise<string> {
     console.error("Error fetching user role:", error);
   }
 
-  return "/jobs";
+  return "/member/dashboard";
 }
 
 export default function LoginPage() {
@@ -59,22 +63,7 @@ export default function LoginPage() {
       router.push(redirectPath);
     } catch (err) {
       console.error(err);
-
-      let message = "Unable to sign in. Please try again.";
-      if (err instanceof Error) {
-        if (err.message.includes("network-request-failed")) {
-          message = "Network error. Firebase emulators may not be running. Please check your connection or contact support.";
-        } else if (err.message.includes("user-not-found") || err.message.includes("wrong-password")) {
-          message = "Invalid email or password. Please try again.";
-        } else if (err.message.includes("too-many-requests")) {
-          message = "Too many failed attempts. Please try again later.";
-        } else if (err.message.includes("invalid-email")) {
-          message = "Invalid email address. Please check and try again.";
-        } else {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Unable to sign in. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -91,24 +80,11 @@ export default function LoginPage() {
         const redirectPath = await getRedirectPath(auth.currentUser.uid);
         router.push(redirectPath);
       } else {
-        router.push("/jobs");
+        router.push("/member/dashboard");
       }
     } catch (err) {
       console.error(err);
-
-      let message = "Unable to sign in with Google. Please try again.";
-      if (err instanceof Error) {
-        if (err.message.includes("popup-closed-by-user")) {
-          message = "Sign-in cancelled. Please try again when ready.";
-        } else if (err.message.includes("popup-blocked")) {
-          message = "Pop-up blocked. Please allow pop-ups for this site and try again.";
-        } else if (err.message.includes("network-request-failed")) {
-          message = "Network error. Please check your connection and try again.";
-        } else if (!err.message.includes("offline mode")) {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Unable to sign in with Google. Please try again."));
     } finally {
       setGoogleLoading(false);
     }
@@ -138,6 +114,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          autoComplete="email"
         />
 
         <AuthInput
@@ -146,6 +123,7 @@ export default function LoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           rightElement={
             <Link
               href="/forgot-password"

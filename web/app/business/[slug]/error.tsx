@@ -46,10 +46,10 @@ export default function Error({
                     Try Again
                 </button>
                 <Link
-                    href="/shop"
+                    href="/business"
                     className="rounded-full border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800"
                 >
-                    Browse All Shops
+                    Browse All Businesses
                 </Link>
             </div>
             {process.env.NODE_ENV === "development" && (

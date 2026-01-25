@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { listEmployerPowwows, deletePowwow } from "@/lib/firestore";
 import type { PowwowEvent } from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function OrganizationPowwowsPage() {
   const { user, role, loading } = useAuth();
@@ -38,7 +39,7 @@ export default function OrganizationPowwowsPage() {
       setPowwows((prev) => prev.filter((p) => p.id !== powwowId));
     } catch (err) {
       console.error("Error deleting pow wow:", err);
-      alert("Failed to delete pow wow");
+      toast.error("Failed to delete pow wow");
     } finally {
       setDeleting(null);
     }

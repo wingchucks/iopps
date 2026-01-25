@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
@@ -30,48 +31,55 @@ export default function ConversationScreen() {
   };
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        const data = await getConversationMessages(conversationId, 100);
-        setMessages(data);
-        // Mark conversation as read
-        if (user) {
-          await markConversationAsRead(conversationId, "member");
-        }
-      } catch (error) {
-        logger.error("Error loading messages:", error);
-      } finally {
-        setLoading(false);
+  const loadMessages = async () => {
+    setLoadError(false);
+    try {
+      const data = await getConversationMessages(conversationId, 100);
+      setMessages(data);
+      // Mark conversation as read
+      if (user) {
+        await markConversationAsRead(conversationId, "member");
       }
-    };
+    } catch (error) {
+      logger.error("Error loading messages:", error);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadMessages();
   }, [conversationId, user]);
 
   const handleSend = async () => {
     if (!user || !newMessage.trim()) return;
 
+    const content = newMessage.trim();
+    const tempId = `temp-${Date.now()}`;
+    const previousMessages = [...messages];
+
     setSending(true);
+    setNewMessage(""); // Clear input optimistically
+
+    // Optimistic update
+    const tempMessage: Message = {
+      id: tempId,
+      conversationId,
+      senderId: user.uid,
+      senderType: "member",
+      content,
+      read: false,
+      createdAt: new Date(),
+    };
+    setMessages([...messages, tempMessage]);
+
     try {
-      const content = newMessage.trim();
-      setNewMessage("");
-
-      // Optimistic update
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        conversationId,
-        senderId: user.uid,
-        senderType: "member",
-        content,
-        read: false,
-        createdAt: new Date(),
-      };
-      setMessages([...messages, tempMessage]);
-
       await sendMessage(conversationId, user.uid, content);
 
       // Refresh messages
@@ -79,6 +87,13 @@ export default function ConversationScreen() {
       setMessages(updatedMessages);
     } catch (error) {
       logger.error("Error sending message:", error);
+      // Rollback: remove optimistic message and restore input
+      setMessages(previousMessages);
+      setNewMessage(content);
+      Alert.alert(
+        "Failed to Send",
+        "Your message could not be sent. Please check your connection and try again."
+      );
     } finally {
       setSending(false);
     }
@@ -118,6 +133,24 @@ export default function ConversationScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#14B8A6" />
+      </View>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorIcon}>⚠️</Text>
+        <Text style={styles.errorText}>Unable to load messages</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setLoading(true);
+            loadMessages();
+          }}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -326,5 +359,26 @@ const styles = StyleSheet.create({
   },
   sendButtonTextDisabled: {
     color: "#64748B",
+  },
+  // Error state
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#94A3B8",
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: "#14B8A6",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: "#0F172A",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

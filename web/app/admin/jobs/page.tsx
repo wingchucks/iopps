@@ -32,6 +32,7 @@ import {
   CalendarDaysIcon,
   BriefcaseIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface JobWithEmployer extends JobPosting {
   employerLogoUrl?: string;
@@ -55,6 +56,8 @@ function AdminJobsContent() {
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [activeJobsCount, setActiveJobsCount] = useState(0);
+  const [inactiveJobsCount, setInactiveJobsCount] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -111,9 +114,13 @@ function AdminJobsContent() {
         setJobs((prev) => [...prev, ...newJobs]);
       } else {
         setJobs(newJobs);
-        // Get total count
+        // Get total count and status breakdown from ALL jobs
         const allJobsSnap = await getDocs(collection(db!, "jobs"));
-        setTotalJobs(allJobsSnap.size);
+        const allJobs = allJobsSnap.docs;
+        setTotalJobs(allJobs.length);
+        const activeCount = allJobs.filter((doc) => doc.data().active === true).length;
+        setActiveJobsCount(activeCount);
+        setInactiveJobsCount(allJobs.length - activeCount);
       }
 
       setLastDoc(jobsSnap.docs[jobsSnap.docs.length - 1] || null);
@@ -143,7 +150,7 @@ function AdminJobsContent() {
       );
     } catch (error) {
       console.error("Error toggling job status:", error);
-      alert("Failed to update job status. Please try again.");
+      toast.error("Failed to update job status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -167,7 +174,7 @@ function AdminJobsContent() {
       setTotalJobs((prev) => prev - 1);
     } catch (error) {
       console.error("Error deleting job:", error);
-      alert("Failed to delete job. Please try again.");
+      toast.error("Failed to delete job. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -203,8 +210,9 @@ function AdminJobsContent() {
     );
   }
 
-  const activeCount = jobs.filter((j) => j.active === true).length;
-  const inactiveCount = jobs.filter((j) => j.active === false).length;
+  // Use accurate counts from all jobs (not just paginated)
+  const activeCount = activeJobsCount;
+  const inactiveCount = inactiveJobsCount;
 
   return (
     <div className="space-y-6">
@@ -235,7 +243,7 @@ function AdminJobsContent() {
               : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
               }`}
           >
-            All ({jobs.length})
+            All ({totalJobs})
           </button>
           <button
             onClick={() => setFilter("active")}
@@ -298,12 +306,16 @@ function AdminJobsContent() {
                   const isActive = job.active === true;
 
                   return (
-                    <tr key={job.id} className="text-sm hover:bg-slate-800/50">
+                    <tr key={job.id} className="text-sm hover:bg-slate-800/50 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}>
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
-                          <p className="font-medium text-slate-100 truncate">
+                          <Link
+                            href={`/admin/jobs/${job.id}/edit`}
+                            className="font-medium text-slate-100 truncate hover:text-[#14B8A6] transition-colors block"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {job.title}
-                          </p>
+                          </Link>
                           <p className="text-xs text-slate-500 mt-1">
                             {job.employmentType || "Full-time"}
                             {job.remoteFlag && " • Remote"}
@@ -357,12 +369,12 @@ function AdminJobsContent() {
                           <p>{job.applicationsCount || 0} applies</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/jobs-training/${job.id}`}
+                            href={`/careers/${job.id}`}
                             className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
-                            title="View"
+                            title="View public page"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </Link>

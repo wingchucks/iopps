@@ -289,7 +289,7 @@ export default function ApplicationsTab() {
                 use "Record my application" to add one.
               </p>
               <Link
-                href="/jobs"
+                href="/careers"
                 className="mt-4 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50"
               >
                 Browse jobs
@@ -334,7 +334,7 @@ export default function ApplicationsTab() {
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     {app.job && (
                       <Link
-                        href={`/jobs-training/${app.jobId}`}
+                        href={`/careers/${app.jobId}`}
                         className="inline-flex text-sm text-emerald-400 transition-colors hover:text-emerald-300"
                       >
                         View job posting →
@@ -434,7 +434,7 @@ export default function ApplicationsTab() {
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   {app.scholarship && (
                     <Link
-                      href={`/scholarships/${app.scholarshipId}`}
+                      href={`/education/scholarships/${app.scholarshipId}`}
                       className="inline-flex text-sm text-emerald-400 transition-colors hover:text-emerald-300"
                     >
                       View scholarship →

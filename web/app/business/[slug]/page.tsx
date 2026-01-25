@@ -17,7 +17,8 @@ import {
 import { PageShell } from '@/components/PageShell';
 import { getVendorBySlug, getVendorBySlugAnyStatus, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct } from '@/lib/types';
-import { generateVendorSchema } from '@/lib/seo';
+import { generateVendorSchema, buildMetadata } from '@/lib/seo';
+import VendorInquiryForm from '@/components/shop/VendorInquiryForm';
 
 // Social icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -64,30 +65,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const description = vendor.tagline || vendor.description?.substring(0, 160) || `Shop ${vendor.category} from ${vendor.businessName} - an Indigenous-owned business`;
 
-  return {
+  return buildMetadata({
     title: vendor.businessName,
     description,
-    openGraph: {
-      title: vendor.businessName,
-      description,
-      type: 'website',
-      url: `${siteUrl}/marketplace/${slug}`,
-      images: [
-        {
-          url: vendor.coverImageUrl || ogImageUrl,
-          width: 1200,
-          height: 630,
-          alt: vendor.businessName,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: vendor.businessName,
-      description,
-      images: [vendor.coverImageUrl || ogImageUrl],
-    },
-  };
+    path: `/business/${slug}`,
+    image: vendor.coverImageUrl || ogImageUrl,
+    type: "website",
+  });
 }
 
 // Status banner component for non-active vendors
@@ -151,7 +135,9 @@ async function VendorPage({ params, searchParams }: Props) {
 
   // Only increment view count for active vendors (not previews)
   if (vendor.status === 'active') {
-    incrementVendorViews(vendor.id).catch(() => { });
+    incrementVendorViews(vendor.id).catch((err) => {
+      console.warn("Failed to track vendor view:", err);
+    });
   }
 
   // Get vendor products
@@ -178,276 +164,304 @@ async function VendorPage({ params, searchParams }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(vendorSchema) }}
       />
       <PageShell className="pb-24">
-      {/* Status Banner for non-active vendors */}
-      <StatusBanner status={vendor.status} />
+        {/* Status Banner for non-active vendors */}
+        <StatusBanner status={vendor.status} />
 
-      {/* Back Link */}
-      <Link
-        href="/shop"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-teal-400 mb-6"
-      >
-        <ArrowLeftIcon className="h-4 w-4" />
-        Back to Shop Indigenous
-      </Link>
+        {/* Back Link */}
+        <Link
+          href="/business"
+          className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-teal-400 mb-6"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to Indigenous Marketplace
+        </Link>
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-slate-800/50 border border-slate-700 mb-8">
-        {/* Cover Image */}
-        <div className="relative h-64 sm:h-80 overflow-hidden">
-          {vendor.coverImageUrl ? (
-            <Image
-              src={vendor.coverImageUrl}
-              alt={vendor.businessName}
-              fill
-              className="object-cover"
-              priority
-            />
-          ) : (
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(135deg, ${vendor.themeColor || '#0d9488'}40, ${vendor.themeColor || '#0d9488'}80)`
-              }}
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
-
-          {/* Badges */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            {vendor.featured && (
-              <span className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                Featured
-              </span>
-            )}
-            {vendor.verified && (
-              <span className="flex items-center gap-1.5 rounded-full bg-teal-500/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
-                <CheckBadgeIcon className="h-4 w-4" />
-                Verified
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Profile Info */}
-        <div className="relative px-6 pb-6 sm:px-8">
-          {/* Logo */}
-          <div className="absolute -top-12 left-6 sm:left-8">
-            <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-xl">
-              {vendor.logoUrl ? (
-                <Image
-                  src={vendor.logoUrl}
-                  alt={`${vendor.businessName} logo`}
-                  width={96}
-                  height={96}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-slate-800/50 border border-slate-700 mb-8">
+          {/* Cover Image */}
+          <div className="relative h-64 sm:h-80 overflow-hidden">
+            {vendor.coverImageUrl ? (
+              <Image
+                src={vendor.coverImageUrl}
+                alt={vendor.businessName}
+                fill
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(135deg, ${vendor.themeColor || '#0d9488'}30, ${vendor.themeColor || '#0d9488'}60, #0f172a)`
+                }}
+              >
+                {/* Decorative pattern overlay for visual interest */}
                 <div
-                  className="flex h-full w-full items-center justify-center text-3xl font-bold text-white"
-                  style={{ backgroundColor: vendor.themeColor || '#0d9488' }}
-                >
-                  {vendor.businessName.charAt(0)}
-                </div>
+                  className="absolute inset-0 opacity-30"
+                  style={{
+                    backgroundImage: `radial-gradient(circle at 20% 50%, ${vendor.themeColor || '#14b8a6'}40 0%, transparent 50%),
+                                      radial-gradient(circle at 80% 20%, ${vendor.themeColor || '#14b8a6'}30 0%, transparent 40%),
+                                      radial-gradient(circle at 40% 80%, ${vendor.themeColor || '#14b8a6'}20 0%, transparent 45%)`
+                  }}
+                />
+                {/* Grid pattern */}
+                <div
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${vendor.themeColor || '#14b8a6'}20 1px, transparent 1px),
+                                      linear-gradient(to bottom, ${vendor.themeColor || '#14b8a6'}20 1px, transparent 1px)`,
+                    backgroundSize: '40px 40px'
+                  }}
+                />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+
+            {/* Badges */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              {vendor.featured && (
+                <span className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  Featured
+                </span>
+              )}
+              {vendor.verified && (
+                <span className="flex items-center gap-1.5 rounded-full bg-teal-500/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
+                  <CheckBadgeIcon className="h-4 w-4" />
+                  Verified
+                </span>
               )}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="pt-16 sm:pt-4 sm:pl-32">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-white">{vendor.businessName}</h1>
-                {vendor.tagline && (
-                  <p className="mt-1 text-lg text-slate-400">{vendor.tagline}</p>
-                )}
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <span
-                    className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
-                    style={{ backgroundColor: `${vendor.themeColor || '#14b8a6'}33`, color: vendor.themeColor || '#2dd4bf' }}
+          {/* Profile Info */}
+          <div className="relative px-6 pb-6 sm:px-8">
+            {/* Logo */}
+            <div className="absolute -top-12 left-6 sm:left-8">
+              <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+                {vendor.logoUrl ? (
+                  <Image
+                    src={vendor.logoUrl}
+                    alt={`${vendor.businessName} logo`}
+                    width={96}
+                    height={96}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="flex h-full w-full items-center justify-center text-3xl font-bold text-white"
+                    style={{ backgroundColor: vendor.themeColor || '#0d9488' }}
                   >
-                    {vendor.category}
-                  </span>
-                  {vendor.nation && (
-                    <span className="text-sm text-slate-500">{vendor.nation}</span>
+                    {vendor.businessName.charAt(0)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="pt-16 sm:pt-4 sm:pl-32">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl font-bold text-white">{vendor.businessName}</h1>
+                  {vendor.tagline && (
+                    <p className="mt-1 text-lg text-slate-400">{vendor.tagline}</p>
+                  )}
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <span
+                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                      style={{ backgroundColor: `${vendor.themeColor || '#14b8a6'}33`, color: vendor.themeColor || '#2dd4bf' }}
+                    >
+                      {vendor.category}
+                    </span>
+                    {vendor.nation && (
+                      <span className="text-sm text-slate-500">{vendor.nation}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Social Links */}
+                <div className="flex items-center gap-3">
+                  {vendor.instagram && (
+                    <a
+                      href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-pink-500/20 hover:text-pink-400"
+                    >
+                      <InstagramIcon className="h-5 w-5" />
+                    </a>
+                  )}
+                  {vendor.facebook && (
+                    <a
+                      href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-blue-500/20 hover:text-blue-400"
+                    >
+                      <FacebookIcon className="h-5 w-5" />
+                    </a>
+                  )}
+                  {vendor.tiktok && (
+                    <a
+                      href={`https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-slate-500/20 hover:text-white"
+                    >
+                      <TikTokIcon className="h-5 w-5" />
+                    </a>
+                  )}
+                  {vendor.website && (
+                    <a
+                      href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-teal-500/20 hover:text-teal-400"
+                    >
+                      <GlobeAltIcon className="h-5 w-5" />
+                    </a>
                   )}
                 </div>
               </div>
-
-              {/* Social Links */}
-              <div className="flex items-center gap-3">
-                {vendor.instagram && (
-                  <a
-                    href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-pink-500/20 hover:text-pink-400"
-                  >
-                    <InstagramIcon className="h-5 w-5" />
-                  </a>
-                )}
-                {vendor.facebook && (
-                  <a
-                    href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-blue-500/20 hover:text-blue-400"
-                  >
-                    <FacebookIcon className="h-5 w-5" />
-                  </a>
-                )}
-                {vendor.tiktok && (
-                  <a
-                    href={`https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-slate-500/20 hover:text-white"
-                  >
-                    <TikTokIcon className="h-5 w-5" />
-                  </a>
-                )}
-                {vendor.website && (
-                  <a
-                    href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-teal-500/20 hover:text-teal-400"
-                  >
-                    <GlobeAltIcon className="h-5 w-5" />
-                  </a>
-                )}
-              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* About */}
-          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-            <h2 className="text-xl font-bold text-white mb-4">About</h2>
-            <p className="text-slate-300 whitespace-pre-wrap">{vendor.description}</p>
-          </section>
-
-          {/* Community Story */}
-          {vendor.communityStory && (
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* About */}
             <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Our Story</h2>
-              <p className="text-slate-300 whitespace-pre-wrap">{vendor.communityStory}</p>
+              <h2 className="text-xl font-bold text-white mb-4">About</h2>
+              <p className="text-slate-300 whitespace-pre-wrap">{vendor.description}</p>
             </section>
-          )}
 
-          {/* Products */}
-          {products.length > 0 && (
-            <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Products & Services</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} themeColor={vendor.themeColor} />
-                ))}
-              </div>
-            </section>
-          )}
+            {/* Community Story */}
+            {vendor.communityStory && (
+              <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+                <h2 className="text-xl font-bold text-white mb-4">Our Story</h2>
+                <p className="text-slate-300 whitespace-pre-wrap">{vendor.communityStory}</p>
+              </section>
+            )}
 
-          {/* Gallery */}
-          {vendor.galleryImages && vendor.galleryImages.length > 0 && (
-            <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <h2 className="text-xl font-bold text-white mb-6">Gallery</h2>
-              <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
-                {vendor.galleryImages.map((image, index) => (
-                  <div key={index} className="relative aspect-square overflow-hidden rounded-xl">
-                    <Image
-                      src={image}
-                      alt={`${vendor.businessName} gallery image ${index + 1}`}
-                      fill
-                      className="object-cover transition-transform hover:scale-105"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Contact Card */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
-            <div className="space-y-3">
-              {vendor.location && (
-                <div className="flex items-start gap-3 text-slate-300">
-                  <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p>{vendor.location}</p>
-                    <p className="text-sm text-slate-500">{vendor.region}</p>
-                  </div>
+            {/* Products */}
+            {products.length > 0 && (
+              <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+                <h2 className="text-xl font-bold text-white mb-6">Products & Services</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} themeColor={vendor.themeColor} />
+                  ))}
                 </div>
-              )}
-              {vendor.email && (
-                <a
-                  href={`mailto:${vendor.email}`}
-                  className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
-                >
-                  <EnvelopeIcon className="h-5 w-5 text-slate-500" />
-                  {vendor.email}
-                </a>
-              )}
-              {vendor.phone && (
-                <a
-                  href={`tel:${vendor.phone}`}
-                  className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
-                >
-                  <PhoneIcon className="h-5 w-5 text-slate-500" />
-                  {vendor.phone}
-                </a>
-              )}
-            </div>
+              </section>
+            )}
 
-            {/* Website Button */}
-            {vendor.website && (
-              <a
-                href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:opacity-90"
-                style={{ backgroundColor: vendor.themeColor || '#14b8a6', boxShadow: `0 10px 15px -3px ${vendor.themeColor || '#14b8a6'}40` }}
-              >
-                <GlobeAltIcon className="h-5 w-5" />
-                Visit Website
-              </a>
+            {/* Gallery */}
+            {vendor.galleryImages && vendor.galleryImages.length > 0 && (
+              <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+                <h2 className="text-xl font-bold text-white mb-6">Gallery</h2>
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+                  {vendor.galleryImages.map((image, index) => (
+                    <div key={index} className="relative aspect-square overflow-hidden rounded-xl">
+                      <Image
+                        src={image}
+                        alt={`${vendor.businessName} gallery image ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform hover:scale-105"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
           </div>
 
-          {/* Shipping Info */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Shipping & Location</h3>
-            <div className="space-y-3">
-              {vendor.offersShipping && (
-                <div className="flex items-center gap-3" style={{ color: vendor.themeColor || '#2dd4bf' }}>
-                  <TruckIcon className="h-5 w-5" />
-                  <span>Offers Shipping</span>
-                </div>
-              )}
-              {vendor.onlineOnly ? (
-                <div className="flex items-center gap-3 text-slate-400">
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Contact Card */}
+            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+              <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
+              <div className="space-y-3">
+                {vendor.location && (
+                  <div className="flex items-start gap-3 text-slate-300">
+                    <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p>{vendor.location}</p>
+                      <p className="text-sm text-slate-500">{vendor.region}</p>
+                    </div>
+                  </div>
+                )}
+                {vendor.email && (
+                  <a
+                    href={`mailto:${vendor.email}`}
+                    className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
+                  >
+                    <EnvelopeIcon className="h-5 w-5 text-slate-500" />
+                    {vendor.email}
+                  </a>
+                )}
+                {vendor.phone && (
+                  <a
+                    href={`tel:${vendor.phone}`}
+                    className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
+                  >
+                    <PhoneIcon className="h-5 w-5 text-slate-500" />
+                    {vendor.phone}
+                  </a>
+                )}
+              </div>
+
+              {/* Website Button */}
+              {vendor.website && (
+                <a
+                  href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:opacity-90"
+                  style={{ backgroundColor: vendor.themeColor || '#14b8a6', boxShadow: `0 10px 15px -3px ${vendor.themeColor || '#14b8a6'}40` }}
+                >
                   <GlobeAltIcon className="h-5 w-5" />
-                  <span>Online only</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 text-slate-400">
-                  <MapPinIcon className="h-5 w-5" />
-                  <span>Physical location available</span>
-                </div>
+                  Visit Website
+                </a>
               )}
             </div>
+
+            {/* Shipping Info */}
+            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+              <h3 className="text-lg font-bold text-white mb-4">Shipping & Location</h3>
+              <div className="space-y-3">
+                {vendor.offersShipping && (
+                  <div className="flex items-center gap-3" style={{ color: vendor.themeColor || '#2dd4bf' }}>
+                    <TruckIcon className="h-5 w-5" />
+                    <span>Offers Shipping</span>
+                  </div>
+                )}
+                {vendor.onlineOnly ? (
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <GlobeAltIcon className="h-5 w-5" />
+                    <span>Online only</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <MapPinIcon className="h-5 w-5" />
+                    <span>Physical location available</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Inquiry Form - Only show for active vendors */}
+            {vendor.status === 'active' && (
+              <VendorInquiryForm
+                vendorId={vendor.id}
+                vendorName={vendor.businessName}
+                themeColor={vendor.themeColor}
+              />
+            )}
           </div>
         </div>
-      </div>
       </PageShell>
     </>
   );

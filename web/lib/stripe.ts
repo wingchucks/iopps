@@ -37,7 +37,7 @@ export type JobPostingProductType = keyof typeof JOB_POSTING_PRODUCTS;
 // Organization subscription tiers (annual plans)
 export const SUBSCRIPTION_PRODUCTS = {
     TIER1: {
-        name: "Tier 1 – Basic Visibility",
+        name: "Growth",
         price: 125000, // $1,250.00
         duration: 365, // days (1 year)
         featured: false,
@@ -56,7 +56,7 @@ export const SUBSCRIPTION_PRODUCTS = {
         ],
     },
     TIER2: {
-        name: "Tier 2 – Unlimited + Shop",
+        name: "Unlimited",
         price: 250000, // $2,500.00
         duration: 365, // days (1 year)
         featured: true,
@@ -83,20 +83,21 @@ export const SUBSCRIPTION_PRODUCTS = {
 export type SubscriptionProductType = keyof typeof SUBSCRIPTION_PRODUCTS;
 
 // Conference/Event product configurations
+// NOTE: Conference posting is FREE. These are visibility upgrades only.
 export const CONFERENCE_PRODUCTS = {
-    STANDARD: {
-        name: "Conference / Event Posting",
+    FEATURED_90: {
+        name: "Featured Conference (90 Days)",
         price: 25000, // $250.00
         duration: 90, // days
-        featured: false,
-        description: "Upload any conference, summit, gathering, hiring event, or training with banner image and registration link",
-    },
-    FEATURED: {
-        name: "Featured Conference Spotlight",
-        price: 40000, // $400.00
-        duration: 360, // days
         featured: true,
-        description: "Premium spotlight placement with featured badge and top positioning for 360 days",
+        description: "Boost your conference visibility with featured badge and priority placement for 90 days. Posting is always free.",
+    },
+    FEATURED_365: {
+        name: "Featured Conference Spotlight (365 Days)",
+        price: 40000, // $400.00
+        duration: 365, // days
+        featured: true,
+        description: "Maximum visibility with featured badge, homepage spotlight, and top positioning for a full year. Posting is always free.",
     },
 } as const;
 
@@ -140,20 +141,21 @@ export const VENDOR_PRODUCTS = {
 export type VendorProductType = keyof typeof VENDOR_PRODUCTS;
 
 // Training Program product configurations
+// NOTE: Training program listing is FREE. These are visibility upgrades only.
 export const TRAINING_PRODUCTS = {
-    FEATURED: {
-        name: "Featured Training Program",
+    FEATURED_60: {
+        name: "Featured Training Program (60 Days)",
         price: 15000, // $150.00 CAD
         duration: 60, // days
         featured: true,
-        description: "Premium spotlight placement with featured badge and top positioning for 60 days",
+        description: "Boost your training program visibility with featured badge and priority placement for 60 days. Listing is always free.",
     },
     FEATURED_90: {
         name: "Featured Training Program (90 Days)",
         price: 22500, // $225.00 CAD
         duration: 90, // days
         featured: true,
-        description: "Extended premium spotlight placement for 90 days - Save 25%",
+        description: "Extended visibility with featured badge and top positioning for 90 days. Listing is always free.",
     },
 } as const;
 

@@ -1,3 +1,121 @@
+import type { Metadata } from "next";
+
+// Site configuration - single source of truth
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://iopps.ca";
+const SITE_NAME = "IOPPS.ca";
+const DEFAULT_TITLE = "IOPPS.ca — Empowering Indigenous Success";
+const DEFAULT_DESCRIPTION =
+    "IOPPS.ca — Empowering Indigenous Success. Jobs, education, business, conferences, events, and livestreams for Indigenous communities across Canada.";
+const DEFAULT_OG_IMAGE = "/og/default.png";
+
+// ============================================
+// METADATA BUILDER - Central SEO Helper
+// ============================================
+
+export type SeoInput = {
+    title?: string;
+    description?: string;
+    path?: string; // e.g. "/job/abc" or "/conferences/123"
+    image?: string; // relative (e.g. "/api/og?...") or absolute URL
+    type?: "website" | "article";
+    publishedTime?: string;
+    noIndex?: boolean;
+};
+
+/**
+ * Build consistent metadata for any page.
+ * Always returns absolute URLs for og:image and canonical.
+ * Provides sensible fallbacks for missing values.
+ */
+export function buildMetadata(input: SeoInput = {}): Metadata {
+    const {
+        title,
+        description,
+        path = "/",
+        image,
+        type = "website",
+        noIndex = false,
+    } = input;
+
+    // Build absolute URLs
+    const canonicalUrl = new URL(path, SITE_URL).toString();
+    const ogImageUrl = image
+        ? image.startsWith("http")
+            ? image
+            : new URL(image, SITE_URL).toString()
+        : new URL(DEFAULT_OG_IMAGE, SITE_URL).toString();
+
+    // Truncate description to ~160 chars for social previews
+    const truncatedDescription = (description || DEFAULT_DESCRIPTION).length > 160
+        ? (description || DEFAULT_DESCRIPTION).slice(0, 157) + "..."
+        : (description || DEFAULT_DESCRIPTION);
+
+    const finalTitle = title || DEFAULT_TITLE;
+
+    return {
+        title: finalTitle,
+        description: truncatedDescription,
+        alternates: {
+            canonical: canonicalUrl,
+        },
+        openGraph: {
+            title: finalTitle,
+            description: truncatedDescription,
+            url: canonicalUrl,
+            siteName: SITE_NAME,
+            type,
+            locale: "en_CA",
+            images: [
+                {
+                    url: ogImageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: finalTitle,
+                },
+            ],
+            ...(input.publishedTime && { publishedTime: input.publishedTime }),
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: finalTitle,
+            description: truncatedDescription,
+            images: [ogImageUrl],
+            creator: "@ioppsca",
+        },
+        ...(noIndex && {
+            robots: {
+                index: false,
+                follow: false,
+                googleBot: {
+                    index: false,
+                    follow: false,
+                }
+            },
+        }),
+    };
+}
+
+/**
+ * Helper to build dynamic OG image URL for the /api/og endpoint
+ */
+export function buildOgImageUrl(params: {
+    title: string;
+    subtitle?: string;
+    type?: "job" | "business" | "service" | "scholarship" | "conference" | "event" | "employer" | "product" | "school" | "program" | "grant" | "live";
+    image?: string;
+}): string {
+    const searchParams = new URLSearchParams();
+    searchParams.set("title", params.title);
+    if (params.subtitle) searchParams.set("subtitle", params.subtitle);
+    if (params.type) searchParams.set("type", params.type);
+    if (params.image) searchParams.set("image", params.image);
+    return `/api/og?${searchParams.toString()}`;
+}
+
+// ============================================
+// SCHEMA.ORG GENERATORS
+// ============================================
+
 export function generateOrganizationSchema() {
     return {
         "@context": "https://schema.org",

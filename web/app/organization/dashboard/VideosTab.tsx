@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   getEmployerProfile,
@@ -10,7 +10,9 @@ import {
   setEmployerCompanyIntro,
   removeEmployerCompanyIntro,
 } from "@/lib/firestore";
+import { uploadCompanyVideo, validateVideo, formatFileSize, type UploadProgress } from "@/lib/firebase/storage";
 import type { EmployerProfile, Interview, CompanyVideo } from "@/lib/types";
+import toast from "react-hot-toast";
 
 // Helper to detect video provider from URL
 function detectVideoProvider(url: string): { provider: "youtube" | "vimeo" | "custom"; videoId?: string } {
@@ -38,6 +40,15 @@ export default function VideosTab() {
   const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [introTitle, setIntroTitle] = useState("");
   const [introDescription, setIntroDescription] = useState("");
+
+  // Video upload state
+  const [introInputMode, setIntroInputMode] = useState<"upload" | "url">("upload");
+  const [introVideoFile, setIntroVideoFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Interview modal state
   const [showInterviewModal, setShowInterviewModal] = useState(false);
@@ -73,11 +84,16 @@ export default function VideosTab() {
       setIntroVideoUrl(profile.companyIntroVideo.videoUrl || "");
       setIntroTitle(profile.companyIntroVideo.title || "");
       setIntroDescription(profile.companyIntroVideo.description || "");
+      setIntroInputMode("url"); // If editing existing, default to URL mode
     } else {
       setIntroVideoUrl("");
       setIntroTitle("");
       setIntroDescription("");
+      setIntroInputMode("upload"); // For new videos, default to upload mode
     }
+    setIntroVideoFile(null);
+    setUploadProgress(0);
+    setUploadError(null);
     setShowIntroModal(true);
   };
 
@@ -86,26 +102,113 @@ export default function VideosTab() {
     setIntroVideoUrl("");
     setIntroTitle("");
     setIntroDescription("");
+    setIntroVideoFile(null);
+    setUploadProgress(0);
+    setUploadError(null);
+    setIntroInputMode("upload");
   };
 
+  // File handling for video upload
+  const handleFileSelect = useCallback((file: File) => {
+    const validation = validateVideo(file);
+    if (!validation.valid) {
+      setUploadError(validation.error || "Invalid file");
+      return;
+    }
+    setIntroVideoFile(file);
+    setUploadError(null);
+  }, []);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  }, [handleFileSelect]);
+
   const handleSaveIntro = async () => {
-    if (!user || !introVideoUrl) return;
+    if (!user) return;
+
+    // Check if we have either a file or URL
+    if (introInputMode === "upload" && !introVideoFile) {
+      setUploadError("Please select a video file to upload");
+      return;
+    }
+    if (introInputMode === "url" && !introVideoUrl) {
+      setUploadError("Please enter a video URL");
+      return;
+    }
+
     setSaving(true);
+    setUploadError(null);
+
     try {
-      const { provider, videoId } = detectVideoProvider(introVideoUrl);
+      let finalVideoUrl = introVideoUrl;
+      let provider: "youtube" | "vimeo" | "custom" = "custom";
+      let videoId: string | undefined;
+
+      // If uploading a file, upload it first
+      if (introInputMode === "upload" && introVideoFile) {
+        setIsUploading(true);
+        setUploadProgress(0);
+
+        const result = await uploadCompanyVideo(
+          introVideoFile,
+          user.uid,
+          (progress: UploadProgress) => {
+            setUploadProgress(progress.progress);
+          }
+        );
+
+        finalVideoUrl = result.url;
+        provider = "custom";
+        setIsUploading(false);
+      } else {
+        // Parse URL for provider detection
+        const detected = detectVideoProvider(introVideoUrl);
+        provider = detected.provider;
+        videoId = detected.videoId;
+      }
+
       const videoData: CompanyVideo = {
-        videoUrl: introVideoUrl,
+        videoUrl: finalVideoUrl,
         videoProvider: provider,
         videoId,
         title: introTitle || undefined,
         description: introDescription || undefined,
       };
+
       await setEmployerCompanyIntro(user.uid, videoData);
       await loadProfile();
       closeIntroModal();
     } catch (err) {
       console.error("Error saving company intro:", err);
-      alert("Failed to save company intro video");
+      setUploadError(err instanceof Error ? err.message : "Failed to save company intro video");
+      setIsUploading(false);
     } finally {
       setSaving(false);
     }
@@ -119,7 +222,7 @@ export default function VideosTab() {
       await loadProfile();
     } catch (err) {
       console.error("Error removing intro:", err);
-      alert("Failed to remove company intro video");
+      toast.error("Failed to remove company intro video");
     } finally {
       setSaving(false);
     }
@@ -183,7 +286,7 @@ export default function VideosTab() {
       closeInterviewModal();
     } catch (err) {
       console.error("Error saving video:", err);
-      alert("Failed to save video");
+      toast.error("Failed to save video");
     } finally {
       setSaving(false);
     }
@@ -196,7 +299,7 @@ export default function VideosTab() {
       await loadProfile();
     } catch (err) {
       console.error("Error deleting video:", err);
-      alert("Failed to delete video");
+      toast.error("Failed to delete video");
     }
   };
 
@@ -218,25 +321,54 @@ export default function VideosTab() {
         <p className="mt-2 text-slate-400">
           Manage your company intro video, IOPPS interviews, and promotional videos
         </p>
+
+        {/* Video Types Explanation */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-emerald-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
+                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-emerald-300 text-sm">Company Intro</h4>
+            </div>
+            <p className="text-xs text-slate-400">Your featured video that appears prominently on your profile. First impression for candidates.</p>
+          </div>
+
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-purple-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
+                <svg className="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-purple-300 text-sm">Promotional Videos</h4>
+            </div>
+            <p className="text-xs text-slate-400">Additional videos showcasing team culture, office tours, employee testimonials, and more.</p>
+          </div>
+
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-teal-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/20">
+                <svg className="h-4 w-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-teal-300 text-sm">IOPPS Interviews</h4>
+            </div>
+            <p className="text-xs text-slate-400">Professional interviews conducted by IOPPS. Contact us to schedule yours!</p>
+          </div>
+        </div>
       </div>
 
       {/* Company Intro Video */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-semibold text-white">Company Intro Video</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              A video introducing your organization to potential candidates
-            </p>
-          </div>
-          {!profile?.companyIntroVideo && (
-            <button
-              onClick={openIntroModal}
-              className="rounded-xl bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30"
-            >
-              + Add Intro Video
-            </button>
-          )}
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-white">Company Intro Video</h3>
+          <p className="mt-1 text-sm text-slate-400">
+            A video introducing your organization to potential candidates
+          </p>
         </div>
 
         {profile?.companyIntroVideo ? (
@@ -303,6 +435,95 @@ export default function VideosTab() {
             >
               Add Intro Video
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Promotional Videos */}
+      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-white">Promotional Videos</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              Your own videos showcasing your organization, culture, and team
+            </p>
+          </div>
+          <button
+            onClick={() => openInterviewModal()}
+            className="rounded-xl bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+          >
+            + Add Video
+          </button>
+        </div>
+
+        {promoVideos.length === 0 ? (
+          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10">
+              <svg className="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="mt-4 text-slate-400">
+              Add videos to showcase your organization culture and team
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Use the &quot;+ Add Video&quot; button above to get started
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {promoVideos.map((video) => (
+              <div
+                key={video.id}
+                className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-purple-500/20">
+                      <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white">
+                        {video.title || "Untitled Video"}
+                      </h4>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {video.videoProvider} {video.viewsCount ? `| ${video.viewsCount} views` : ""}
+                      </p>
+                      {video.description && (
+                        <p className="mt-2 text-sm text-slate-300 line-clamp-2">
+                          {video.description}
+                        </p>
+                      )}
+                      <a
+                        href={video.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex text-sm text-purple-400 hover:text-purple-300"
+                      >
+                        Watch video
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openInterviewModal(video)}
+                      className="rounded-lg bg-purple-500/20 px-3 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteInterview(video.id)}
+                      className="rounded-lg bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 transition-all hover:bg-red-500/30"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -376,120 +597,157 @@ export default function VideosTab() {
         )}
       </div>
 
-      {/* Promotional Videos */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-semibold text-white">Promotional Videos</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Your own videos showcasing your organization, culture, and team
-            </p>
-          </div>
-          <button
-            onClick={() => openInterviewModal()}
-            className="rounded-xl bg-purple-500/20 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
-          >
-            + Add Video
-          </button>
-        </div>
-
-        {promoVideos.length === 0 ? (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10">
-              <svg className="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <p className="mt-4 text-slate-400">
-              Add videos to showcase your organization culture and team
-            </p>
-            <button
-              onClick={() => openInterviewModal()}
-              className="mt-4 rounded-xl bg-purple-500/20 px-6 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
-            >
-              Add Your First Video
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {promoVideos.map((video) => (
-              <div
-                key={video.id}
-                className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-purple-500/20">
-                      <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-white">
-                        {video.title || "Untitled Video"}
-                      </h4>
-                      <p className="mt-1 text-sm text-slate-400">
-                        {video.videoProvider} {video.viewsCount ? `| ${video.viewsCount} views` : ""}
-                      </p>
-                      {video.description && (
-                        <p className="mt-2 text-sm text-slate-300 line-clamp-2">
-                          {video.description}
-                        </p>
-                      )}
-                      <a
-                        href={video.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex text-sm text-purple-400 hover:text-purple-300"
-                      >
-                        Watch video
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openInterviewModal(video)}
-                      className="rounded-lg bg-purple-500/20 px-3 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteInterview(video.id)}
-                      className="rounded-lg bg-red-500/20 px-3 py-2 text-sm font-semibold text-red-300 transition-all hover:bg-red-500/30"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Company Intro Modal */}
       {showIntroModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 p-8 shadow-2xl">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 p-8 shadow-2xl">
             <h3 className="mb-6 text-2xl font-bold text-white">
               {profile?.companyIntroVideo ? "Edit Company Intro Video" : "Add Company Intro Video"}
             </h3>
 
             <div className="space-y-6">
-              <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Video URL *
-                </label>
-                <input
-                  type="url"
-                  value={introVideoUrl}
-                  onChange={(e) => setIntroVideoUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                />
-                <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+              {/* Input Mode Tabs */}
+              <div className="flex rounded-xl bg-slate-900/50 p-1">
+                <button
+                  onClick={() => setIntroInputMode("upload")}
+                  className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                    introInputMode === "upload"
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "text-slate-400 hover:text-slate-300"
+                  }`}
+                >
+                  <svg className="inline-block h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Upload Video
+                </button>
+                <button
+                  onClick={() => setIntroInputMode("url")}
+                  className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+                    introInputMode === "url"
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "text-slate-400 hover:text-slate-300"
+                  }`}
+                >
+                  <svg className="inline-block h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Paste URL
+                </button>
               </div>
+
+              {/* Upload Mode */}
+              {introInputMode === "upload" && (
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/mpeg"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+
+                  {/* Drag & Drop Zone */}
+                  {!introVideoFile ? (
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+                        isDragging
+                          ? "border-emerald-500 bg-emerald-500/10"
+                          : "border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800/50"
+                      }`}
+                    >
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 mb-4">
+                        <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-slate-300 font-medium mb-1">
+                        {isDragging ? "Drop your video here" : "Drag & drop your video here"}
+                      </p>
+                      <p className="text-slate-500 text-sm mb-4">or click to browse files</p>
+                      <p className="text-xs text-slate-600">
+                        MP4, WebM, MOV, AVI, MPEG • Max 100MB
+                      </p>
+                    </div>
+                  ) : (
+                    /* Selected File Preview */
+                    <div className="rounded-xl border border-emerald-500/30 bg-slate-900/50 p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500/20">
+                            <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-white truncate max-w-[300px]">
+                              {introVideoFile.name}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {formatFileSize(introVideoFile.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setIntroVideoFile(null);
+                            setUploadProgress(0);
+                          }}
+                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Upload Progress */}
+                      {isUploading && (
+                        <div className="mt-4">
+                          <div className="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>Uploading...</span>
+                            <span>{Math.round(uploadProgress)}%</span>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* URL Mode */}
+              {introInputMode === "url" && (
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                    Video URL *
+                  </label>
+                  <input
+                    type="url"
+                    value={introVideoUrl}
+                    onChange={(e) => setIntroVideoUrl(e.target.value)}
+                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                    className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {uploadError && (
+                <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-3">
+                  <p className="text-sm text-red-400">{uploadError}</p>
+                </div>
+              )}
 
               <div>
                 <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -520,14 +778,15 @@ export default function VideosTab() {
               <div className="flex gap-3">
                 <button
                   onClick={handleSaveIntro}
-                  disabled={!introVideoUrl || saving}
+                  disabled={(introInputMode === "upload" && !introVideoFile) || (introInputMode === "url" && !introVideoUrl) || saving || isUploading}
                   className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50 disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : "Save Video"}
+                  {isUploading ? `Uploading ${Math.round(uploadProgress)}%...` : saving ? "Saving..." : "Save Video"}
                 </button>
                 <button
                   onClick={closeIntroModal}
-                  className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+                  disabled={isUploading}
+                  className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:border-slate-600 hover:text-white disabled:opacity-50"
                 >
                   Cancel
                 </button>

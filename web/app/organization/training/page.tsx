@@ -18,6 +18,7 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { TRAINING_PRODUCTS, TrainingProductType } from "@/lib/stripe";
+import toast from "react-hot-toast";
 
 export default function OrganizationTrainingPage() {
   const { user, role, loading } = useAuth();
@@ -58,7 +59,7 @@ export default function OrganizationTrainingPage() {
       setPrograms((prev) => prev.filter((p) => p.id !== programId));
     } catch (err) {
       console.error("Error deleting training program:", err);
-      alert("Failed to delete training program");
+      toast.error("Failed to delete training program");
     } finally {
       setDeleting(null);
     }
@@ -88,7 +89,7 @@ export default function OrganizationTrainingPage() {
       window.location.href = data.url;
     } catch (err) {
       console.error("Error creating checkout:", err);
-      alert(err instanceof Error ? err.message : "Failed to start checkout");
+      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
       setPurchasing(false);
     }
   };
@@ -350,25 +351,25 @@ export default function OrganizationTrainingPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-white">
-                      {TRAINING_PRODUCTS.FEATURED.name}
+                      {TRAINING_PRODUCTS.FEATURED_60.name}
                     </h3>
                     <p className="mt-1 text-sm text-slate-400">
-                      {TRAINING_PRODUCTS.FEATURED.description}
+                      {TRAINING_PRODUCTS.FEATURED_60.description}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-white">
-                      ${(TRAINING_PRODUCTS.FEATURED.price / 100).toFixed(0)}
+                      ${(TRAINING_PRODUCTS.FEATURED_60.price / 100).toFixed(0)}
                     </p>
                     <p className="text-xs text-slate-400">CAD</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => handleFeaturePurchase("FEATURED")}
+                  onClick={() => handleFeaturePurchase("FEATURED_60")}
                   disabled={purchasing}
                   className="mt-4 w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 font-semibold text-white hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 transition-colors"
                 >
-                  {purchasing ? "Processing..." : "Get Featured (60 Days)"}
+                  {purchasing ? "Processing..." : "Feature for 60 Days"}
                 </button>
               </div>
 
@@ -398,7 +399,7 @@ export default function OrganizationTrainingPage() {
                   disabled={purchasing}
                   className="mt-4 w-full rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 py-2.5 font-semibold text-white hover:from-purple-600 hover:to-indigo-600 disabled:opacity-50 transition-colors"
                 >
-                  {purchasing ? "Processing..." : "Get Featured (90 Days)"}
+                  {purchasing ? "Processing..." : "Feature for 90 Days"}
                 </button>
               </div>
             </div>

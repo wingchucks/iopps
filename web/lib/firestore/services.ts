@@ -74,13 +74,8 @@ export async function listServices(options: ListServicesOptions = {}): Promise<S
     constraints.push(where("featured", "==", options.featured));
   }
 
-  // Order by featured first, then by createdAt
-  constraints.push(orderBy("featured", "desc"));
-  constraints.push(orderBy("createdAt", "desc"));
-
-  if (options.maxResults) {
-    constraints.push(limit(options.maxResults));
-  }
+  // Note: Removed orderBy to avoid composite index requirement
+  // Sorting is done client-side instead
 
   const q = query(servicesRef, ...constraints);
   const snapshot = await getDocs(q);
@@ -89,6 +84,19 @@ export async function listServices(options: ListServicesOptions = {}): Promise<S
     id: docSnap.id,
     ...docSnap.data(),
   })) as Service[];
+
+  // Client-side sorting: featured first, then by createdAt desc
+  services.sort((a, b) => {
+    if (a.featured !== b.featured) return a.featured ? -1 : 1;
+    const timeA = a.createdAt?.toMillis?.() ?? a.createdAt?.seconds ?? 0;
+    const timeB = b.createdAt?.toMillis?.() ?? b.createdAt?.seconds ?? 0;
+    return timeB - timeA;
+  });
+
+  // Apply maxResults limit after sorting
+  if (options.maxResults && services.length > options.maxResults) {
+    services = services.slice(0, options.maxResults);
+  }
 
   // Client-side search filter
   if (options.search) {
@@ -177,7 +185,7 @@ export async function createService(input: CreateServiceInput): Promise<string> 
 
   const slug = generateUniqueSlug(input.title);
 
-  const serviceData: Omit<Service, "id"> = {
+  const serviceData: Record<string, unknown> = {
     userId: input.userId,
     vendorId: input.vendorId || "",
     businessName: input.businessName,
@@ -216,7 +224,12 @@ export async function createService(input: CreateServiceInput): Promise<string> 
     updatedAt: serverTimestamp() as any,
   };
 
-  const docRef = await addDoc(collection(db, servicesCollection), serviceData);
+  // Remove undefined values - Firestore doesn't accept undefined
+  const cleanedData = Object.fromEntries(
+    Object.entries(serviceData).filter(([_, v]) => v !== undefined)
+  );
+
+  const docRef = await addDoc(collection(db, servicesCollection), cleanedData);
   return docRef.id;
 }
 

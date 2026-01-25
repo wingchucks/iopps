@@ -23,13 +23,90 @@ import {
   VideoCameraIcon,
   BuildingOfficeIcon,
   FireIcon,
+  ClockIcon,
+  DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
+import { POWWOW_EVENT_TYPES, PowwowEventType } from "@/lib/types";
+import toast from "react-hot-toast";
+import { useConfirmDialog, deleteConfirmOptions } from "@/hooks/useConfirmDialog";
+import { AddToCalendarButton } from "@/components/ui/AddToCalendarButton";
 
 type EventType = "powwows" | "conferences";
 type StatusFilter = "all" | "active" | "inactive";
+type DateStatus = "ended" | "happening" | "upcoming";
+
+// Helper to convert Firestore Timestamp to Date
+function toDate(timestamp: any): Date | null {
+  if (!timestamp) return null;
+  if (timestamp instanceof Date) return timestamp;
+  if (typeof timestamp === "object" && "_seconds" in timestamp) {
+    return new Date(timestamp._seconds * 1000);
+  }
+  if (typeof timestamp === "object" && "seconds" in timestamp) {
+    return new Date(timestamp.seconds * 1000);
+  }
+  if (timestamp.toDate && typeof timestamp.toDate === "function") {
+    return timestamp.toDate();
+  }
+  if (typeof timestamp === "string") {
+    return new Date(timestamp);
+  }
+  return null;
+}
+
+// Determine the date-based status of an event
+function getEventDateStatus(startDate: any, endDate: any): DateStatus | null {
+  const now = new Date();
+  const start = toDate(startDate);
+  const end = toDate(endDate);
+
+  // If we have an end date, use it to determine if event has ended
+  if (end) {
+    if (end < now) return "ended";
+    if (start && start <= now && end >= now) return "happening";
+    if (start && start > now) return "upcoming";
+    // If only end date and it's in the future
+    if (!start && end >= now) return "upcoming";
+  }
+
+  // If we only have a start date
+  if (start) {
+    // Assume event lasts one day if no end date
+    const eventEndOfDay = new Date(start);
+    eventEndOfDay.setHours(23, 59, 59, 999);
+
+    if (eventEndOfDay < now) return "ended";
+    if (start <= now && eventEndOfDay >= now) return "happening";
+    if (start > now) return "upcoming";
+  }
+
+  return null;
+}
+
+// Get display configuration for date status
+function getDateStatusDisplay(status: DateStatus): { label: string; className: string } {
+  switch (status) {
+    case "ended":
+      return {
+        label: "Ended",
+        className: "bg-slate-600/20 text-slate-400",
+      };
+    case "happening":
+      return {
+        label: "Happening Now",
+        className: "bg-amber-500/20 text-amber-400 animate-pulse",
+      };
+    case "upcoming":
+      return {
+        label: "Upcoming",
+        className: "bg-blue-500/20 text-blue-400",
+      };
+  }
+}
 
 export default function EventsTab() {
   const { user } = useAuth();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [eventType, setEventType] = useState<EventType>("powwows");
   const [powwows, setPowwows] = useState<PowwowEvent[]>([]);
   const [conferences, setConferences] = useState<Conference[]>([]);
@@ -37,6 +114,7 @@ export default function EventsTab() {
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [duplicatePowwowData, setDuplicatePowwowData] = useState<Partial<PowwowEvent> | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -98,42 +176,92 @@ export default function EventsTab() {
       await loadData();
     } catch (err) {
       console.error("Error toggling event status:", err);
-      alert("Failed to update event status");
+      toast.error("Failed to update event status");
     }
   };
 
   const handleDeletePowwow = async (eventId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm(deleteConfirmOptions(name, "Event"));
+    if (!confirmed) return;
+    if (!user) return;
+
     try {
-      await deletePowwow(eventId);
+      // Use server-side API to delete (bypasses Firestore rules)
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/events/powwow/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ powwowId: eventId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete pow wow");
+      }
+
       await loadData();
+      toast.success("Event deleted");
     } catch (err) {
       console.error("Error deleting event:", err);
-      alert("Failed to delete event");
+      toast.error(err instanceof Error ? err.message : "Failed to delete event");
     }
   };
 
   const handleDeleteConference = async (confId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await confirm(deleteConfirmOptions(title, "Conference"));
+    if (!confirmed) return;
+
     try {
       await deleteConference(confId);
       await loadData();
+      toast.success("Conference deleted");
     } catch (err) {
       console.error("Error deleting conference:", err);
-      alert("Failed to delete conference");
+      toast.error("Failed to delete conference");
     }
+  };
+
+  const handleDuplicatePowwow = (event: PowwowEvent) => {
+    setDuplicatePowwowData({
+      name: `${event.name} (Copy)`,
+      eventType: event.eventType,
+      host: event.host,
+      description: event.description,
+      location: event.location,
+      startDate: undefined, // Clear dates for duplicate
+      endDate: undefined,
+      dateRange: event.dateRange,
+      season: event.season,
+      registrationStatus: event.registrationStatus,
+      livestream: event.livestream,
+    });
+    setShowCreateModal(true);
+    toast.success("Duplicated! Edit and save as new event.");
+  };
+
+  const handleDuplicateConference = (conf: Conference) => {
+    // Store conference data in sessionStorage for the new conference page
+    sessionStorage.setItem('duplicateConferenceData', JSON.stringify({
+      title: `${conf.title} (Copy)`,
+      description: conf.description,
+      location: conf.location,
+      organizerName: conf.organizerName,
+      registrationUrl: conf.registrationUrl,
+      // Don't copy dates - they should be updated for the new event
+    }));
+    toast.success("Duplicated! Redirecting to create page...");
+    window.location.href = "/organization/conferences/new";
   };
 
   const getNewButtonConfig = () => {
     switch (eventType) {
       case "powwows":
-        return { href: "/organization/events/new", label: "Pow Wow", modal: true };
+        return { href: "/organization/events/new", label: "Event", modal: true };
       case "conferences":
-        return { href: "/organization/conferences/new", label: "Conference", modal: false };
+        return { href: "/organization/conferences/new", label: "Event", modal: false };
     }
   };
 
@@ -148,7 +276,7 @@ export default function EventsTab() {
           <div>
             <h2 className="text-2xl font-bold text-white">Events</h2>
             <p className="mt-1 text-slate-400">
-              Manage conferences, pow wows, and cultural events
+              Manage conferences, pow wows, sports, and cultural events
             </p>
           </div>
         </div>
@@ -158,22 +286,20 @@ export default function EventsTab() {
       <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
         <button
           onClick={() => setEventType("powwows")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            eventType === "powwows"
-              ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${eventType === "powwows"
+            ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            }`}
         >
           <FireIcon className="h-4 w-4" />
-          Pow Wows ({powwows.length})
+          Community Events ({powwows.length})
         </button>
         <button
           onClick={() => setEventType("conferences")}
-          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${
-            eventType === "conferences"
-              ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
-          }`}
+          className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${eventType === "conferences"
+            ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
+            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            }`}
         >
           <BuildingOfficeIcon className="h-4 w-4" />
           Conferences ({conferences.length})
@@ -187,7 +313,7 @@ export default function EventsTab() {
             <label className="sr-only">Search</label>
             <input
               type="text"
-              placeholder={`Search ${eventType === "powwows" ? "pow wows" : "conferences"}...`}
+              placeholder={`Search ${eventType === "powwows" ? "events" : "conferences"}...`}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
@@ -236,12 +362,12 @@ export default function EventsTab() {
             <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
               <FireIcon className="mx-auto h-12 w-12 text-slate-600" />
               <h3 className="mt-4 text-lg font-semibold text-white">
-                {keyword || statusFilter !== "all" ? "No pow wows found" : "No pow wows yet"}
+                {keyword || statusFilter !== "all" ? "No events found" : "No events yet"}
               </h3>
               <p className="mt-2 text-slate-400">
                 {keyword || statusFilter !== "all"
                   ? "Try adjusting your search or filter"
-                  : "Create your first pow wow event to share with the community."}
+                  : "Create your first event to share with the community."}
               </p>
               {!keyword && statusFilter === "all" && (
                 <button
@@ -249,7 +375,7 @@ export default function EventsTab() {
                   className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white"
                 >
                   <PlusIcon className="h-5 w-5" />
-                  Create your first pow wow
+                  Create your first event
                 </button>
               )}
             </div>
@@ -266,6 +392,11 @@ export default function EventsTab() {
                         <h3 className="text-lg font-semibold text-white truncate">
                           {event.name}
                         </h3>
+                        {event.eventType && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
+                            {event.eventType}
+                          </span>
+                        )}
                         {event.livestream && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
                             <VideoCameraIcon className="h-3 w-3" />
@@ -297,24 +428,54 @@ export default function EventsTab() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Date-based status badge */}
+                      {(() => {
+                        const dateStatus = getEventDateStatus(event.startDate, event.endDate);
+                        if (dateStatus) {
+                          const display = getDateStatusDisplay(dateStatus);
+                          return (
+                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${display.className}`}>
+                              {display.label}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                      {/* Active/Inactive status badge */}
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          event.active !== false
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-slate-700 text-slate-400"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${event.active !== false
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-slate-700 text-slate-400"
+                          }`}
                       >
-                        {event.active !== false ? "Active" : "Inactive"}
+                        {event.active !== false ? "Active" : "Paused"}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-700 pt-4">
                     <Link
                       href={`/community/${event.id}`}
                       className="rounded-lg px-3 py-1.5 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors"
                     >
                       View public page
                     </Link>
+                    {event.startDate && (
+                      <AddToCalendarButton
+                        title={event.name}
+                        description={event.description}
+                        location={event.location}
+                        startDate={event.startDate}
+                        endDate={event.endDate}
+                        size="sm"
+                      />
+                    )}
+                    <button
+                      onClick={() => handleDuplicatePowwow(event)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
+                    >
+                      <DocumentDuplicateIcon className="h-4 w-4" />
+                      Duplicate
+                    </button>
                     <button
                       onClick={() => handleTogglePowwowStatus(event.id, event.active !== false)}
                       className="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
@@ -401,18 +562,31 @@ export default function EventsTab() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Date-based status badge */}
+                      {(() => {
+                        const dateStatus = getEventDateStatus(conf.startDate, conf.endDate);
+                        if (dateStatus) {
+                          const display = getDateStatusDisplay(dateStatus);
+                          return (
+                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${display.className}`}>
+                              {display.label}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                      {/* Active/Inactive status badge */}
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          conf.active !== false
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-slate-700 text-slate-400"
-                        }`}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${conf.active !== false
+                          ? "bg-emerald-500/20 text-emerald-400"
+                          : "bg-slate-700 text-slate-400"
+                          }`}
                       >
-                        {conf.active !== false ? "Active" : "Inactive"}
+                        {conf.active !== false ? "Active" : "Paused"}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-700 pt-4">
                     <Link
                       href={`/organization/conferences/${conf.id}/edit`}
                       className="rounded-lg px-3 py-1.5 text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
@@ -425,6 +599,23 @@ export default function EventsTab() {
                     >
                       View public page
                     </Link>
+                    {conf.startDate && (
+                      <AddToCalendarButton
+                        title={conf.title}
+                        description={conf.description}
+                        location={conf.location}
+                        startDate={conf.startDate}
+                        endDate={conf.endDate}
+                        size="sm"
+                      />
+                    )}
+                    <button
+                      onClick={() => handleDuplicateConference(conf)}
+                      className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center gap-1"
+                    >
+                      <DocumentDuplicateIcon className="h-4 w-4" />
+                      Duplicate
+                    </button>
                     <button
                       onClick={() => handleDeleteConference(conf.id, conf.title)}
                       className="rounded-lg px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
@@ -442,39 +633,50 @@ export default function EventsTab() {
       {/* Create Event Modal */}
       {showCreateModal && (
         <CreateEventModal
-          onClose={() => setShowCreateModal(false)}
+          initialData={duplicatePowwowData}
+          onClose={() => {
+            setShowCreateModal(false);
+            setDuplicatePowwowData(null);
+          }}
           onCreated={() => {
             setShowCreateModal(false);
+            setDuplicatePowwowData(null);
             loadData();
           }}
         />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog />
     </div>
   );
 }
 
 // Create Event Modal Component
 function CreateEventModal({
+  initialData,
   onClose,
   onCreated,
 }: {
+  initialData?: Partial<PowwowEvent> | null;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const { user } = useAuth();
-  const [name, setName] = useState("");
-  const [host, setHost] = useState("");
-  const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  const [eventType, setEventType] = useState<PowwowEventType | "">(initialData?.eventType || "");
+  const [name, setName] = useState(initialData?.name || "");
+  const [host, setHost] = useState(initialData?.host || "");
+  const [description, setDescription] = useState(initialData?.description || "");
+  const [location, setLocation] = useState(initialData?.location || "");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [dateRange, setDateRange] = useState("");
-  const [season, setSeason] = useState("");
-  const [registrationStatus, setRegistrationStatus] = useState("open");
-  const [livestream, setLivestream] = useState(false);
+  const [dateRange, setDateRange] = useState(initialData?.dateRange || "");
+  const [season, setSeason] = useState(initialData?.season || "");
+  const [registrationStatus, setRegistrationStatus] = useState(initialData?.registrationStatus || "open");
+  const [livestream, setLivestream] = useState(initialData?.livestream || false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUploader, setShowUploader] = useState(true);
+  const [showUploader, setShowUploader] = useState(!initialData); // Hide uploader if duplicating
 
   const handlePosterDataExtracted = (data: PowwowExtractedData) => {
     if (data.name) setName(data.name);
@@ -486,6 +688,16 @@ function CreateEventModal({
     if (data.dateRange) setDateRange(data.dateRange);
     if (data.registrationStatus) setRegistrationStatus(data.registrationStatus);
     if (data.livestream !== undefined) setLivestream(data.livestream);
+
+    // Auto-detect type if possible
+    const lowerName = data.name?.toLowerCase() || "";
+    const lowerDesc = data.description?.toLowerCase() || "";
+
+    if (lowerName.includes("pow") || lowerDesc.includes("pow")) {
+      setEventType("Pow Wow");
+    } else if (lowerName.includes("sport") || lowerName.includes("tournament") || lowerName.includes("game") || lowerDesc.includes("tournament")) {
+      setEventType("Sports");
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -499,6 +711,7 @@ function CreateEventModal({
       await createPowwowEvent({
         employerId: user.uid,
         name,
+        eventType: eventType || undefined,
         host: host || undefined,
         description,
         location,
@@ -524,9 +737,9 @@ function CreateEventModal({
         {/* Modal Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-700 bg-slate-900">
           <div>
-            <h3 className="text-xl font-bold text-white">Create Pow Wow Event</h3>
+            <h3 className="text-xl font-bold text-white">Create Event</h3>
             <p className="mt-1 text-sm text-slate-400">
-              Share pow wow gatherings and cultural events
+              Share pow wows, sports events, and cultural gatherings
             </p>
           </div>
           <button
@@ -561,7 +774,7 @@ function CreateEventModal({
                 </button>
               </div>
               <p className="mb-4 text-sm text-slate-400">
-                Upload a pow wow poster or flyer and our AI will automatically extract the event details.
+                Upload an event poster or flyer and our AI will automatically extract the event details.
               </p>
               <PosterUploader
                 eventType="powwow"
@@ -579,14 +792,29 @@ function CreateEventModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
-                Pow Wow Name *
+                Event Type *
+              </label>
+              <select
+                required
+                value={eventType}
+                onChange={(e) => setEventType(e.target.value as PowwowEventType)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none mb-4"
+              >
+                <option value="">Select event type...</option>
+                {POWWOW_EVENT_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+
+              <label className="block text-sm font-medium text-slate-300 mb-1">
+                Event Name *
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Annual Traditional Pow Wow"
+                placeholder="e.g., Annual Traditional Pow Wow or Sports Tournament"
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
@@ -613,7 +841,7 @@ function CreateEventModal({
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the pow wow, activities, categories, and what attendees can expect..."
+                placeholder="Describe the event, activities, categories, and what attendees can expect..."
                 className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>

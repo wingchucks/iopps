@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
@@ -40,9 +41,11 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadNotifications = async (forceRefresh = false) => {
     if (!user) return;
+    setError(null);
     try {
       const cacheKey = CACHE_KEYS.NOTIFICATIONS(user.uid);
 
@@ -58,8 +61,11 @@ export default function NotificationsScreen() {
         );
         setNotifications(data);
       }
-    } catch (error) {
-      logger.error("Error loading notifications:", error);
+    } catch (err) {
+      logger.error("Error loading notifications:", err);
+      if (notifications.length === 0) {
+        setError("Unable to load notifications. Please check your connection.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -78,17 +84,25 @@ export default function NotificationsScreen() {
   };
 
   const handleNotificationPress = async (notification: Notification) => {
-    // Mark as read
+    // Mark as read (optimistic update)
     if (!notification.read) {
+      // Update UI immediately
+      setNotifications(
+        notifications.map((n) =>
+          n.id === notification.id ? { ...n, read: true } : n
+        )
+      );
+      // Then update backend
       try {
         await markNotificationAsRead(notification.id);
+      } catch (err) {
+        logger.error("Error marking notification as read:", err);
+        // Rollback on failure
         setNotifications(
           notifications.map((n) =>
-            n.id === notification.id ? { ...n, read: true } : n
+            n.id === notification.id ? { ...n, read: false } : n
           )
         );
-      } catch (error) {
-        logger.error("Error marking notification as read:", error);
       }
     }
 
@@ -106,11 +120,16 @@ export default function NotificationsScreen() {
 
   const handleMarkAllRead = async () => {
     if (!user) return;
+    const previousNotifications = [...notifications];
+    // Optimistic update
+    setNotifications(notifications.map((n) => ({ ...n, read: true })));
     try {
       await markAllNotificationsAsRead(user.uid);
-      setNotifications(notifications.map((n) => ({ ...n, read: true })));
-    } catch (error) {
-      logger.error("Error marking all as read:", error);
+    } catch (err) {
+      logger.error("Error marking all as read:", err);
+      // Rollback on failure
+      setNotifications(previousNotifications);
+      Alert.alert("Error", "Unable to mark notifications as read. Please try again.");
     }
   };
 
@@ -172,6 +191,34 @@ export default function NotificationsScreen() {
           </View>
         </View>
         <NotificationListSkeleton count={8} />
+      </View>
+    );
+  }
+
+  // Error state - only show if no notifications loaded
+  if (error && notifications.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Notifications</Text>
+            <Text style={styles.headerSubtitle}>Unable to load</Text>
+          </View>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorTitle}>Unable to Load Notifications</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              setLoading(true);
+              loadNotifications(true);
+            }}
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -371,5 +418,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#94A3B8",
     textAlign: "center",
+  },
+  // Error state
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#F8FAFC",
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: "#94A3B8",
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  retryButton: {
+    backgroundColor: "#14B8A6",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: "#0F172A",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

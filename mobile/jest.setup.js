@@ -1,6 +1,49 @@
 // Jest setup file
 import '@testing-library/jest-native/extend-expect';
 
+// Mock Sentry
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  setUser: jest.fn(),
+  setTag: jest.fn(),
+  setTags: jest.fn(),
+  setExtra: jest.fn(),
+  setExtras: jest.fn(),
+  setContext: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  withScope: jest.fn((callback) => callback({ setExtra: jest.fn(), setTag: jest.fn() })),
+  Severity: {
+    Fatal: 'fatal',
+    Error: 'error',
+    Warning: 'warning',
+    Info: 'info',
+    Debug: 'debug',
+  },
+  wrap: (component) => component,
+  ReactNavigationInstrumentation: jest.fn(),
+  ReactNativeTracing: jest.fn(),
+}));
+
+// Mock Google Sign-in
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn(() => Promise.resolve(true)),
+    signIn: jest.fn(() => Promise.resolve({ idToken: 'mock-id-token', user: { email: 'test@example.com' } })),
+    signOut: jest.fn(() => Promise.resolve()),
+    isSignedIn: jest.fn(() => Promise.resolve(false)),
+    getCurrentUser: jest.fn(() => Promise.resolve(null)),
+    revokeAccess: jest.fn(() => Promise.resolve()),
+  },
+  statusCodes: {
+    SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    PLAY_SERVICES_NOT_AVAILABLE: 'PLAY_SERVICES_NOT_AVAILABLE',
+  },
+}));
+
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -71,6 +114,14 @@ jest.mock('firebase/auth', () => ({
     })
   ),
   signOut: jest.fn(() => Promise.resolve()),
+  GoogleAuthProvider: {
+    credential: jest.fn(() => ({ providerId: 'google.com' })),
+  },
+  signInWithCredential: jest.fn(() =>
+    Promise.resolve({
+      user: { uid: 'google-uid', email: 'google@example.com' },
+    })
+  ),
   __triggerAuthStateChange: (user) => {
     mockAuthStateListeners.forEach((listener) => listener(user));
   },
@@ -123,6 +174,27 @@ jest.mock('./src/lib/notifications', () => ({
   removePushToken: jest.fn(() => Promise.resolve()),
 }));
 
+// Mock account state service
+jest.mock('./src/services/accountState', () => ({
+  AccountState: {
+    COMMUNITY: 'COMMUNITY',
+    EMPLOYER_PENDING: 'EMPLOYER_PENDING',
+    EMPLOYER_APPROVED: 'EMPLOYER_APPROVED',
+    VENDOR: 'VENDOR',
+    ADMIN: 'ADMIN',
+  },
+  resolveAccountState: jest.fn(() => Promise.resolve({
+    state: 'COMMUNITY',
+    userProfile: null,
+    employerProfile: null,
+    role: 'user',
+  })),
+  determineAccountState: jest.fn(() => 'COMMUNITY'),
+  canAccessEmployerDashboard: jest.fn(() => false),
+  isEmployerPending: jest.fn(() => false),
+  isEmployerApproved: jest.fn(() => false),
+}));
+
 // Mock Expo Notifications
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
@@ -130,6 +202,13 @@ jest.mock('expo-notifications', () => ({
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
   getExpoPushTokenAsync: jest.fn(() => Promise.resolve({ data: 'mock-token' })),
   setNotificationChannelAsync: jest.fn(),
+}));
+
+// Mock Expo Web Browser
+jest.mock('expo-web-browser', () => ({
+  maybeCompleteAuthSession: jest.fn(),
+  openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'cancel' })),
+  openAuthSessionAsync: jest.fn(() => Promise.resolve({ type: 'cancel' })),
 }));
 
 // Mock react-native-safe-area-context

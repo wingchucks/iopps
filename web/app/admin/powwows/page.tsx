@@ -6,6 +6,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
 import {
+  AdminLoadingState,
+  EntityActionsMenu,
+  ConfirmationModal,
+  type ActionItem,
+  type ActionGroup,
+} from "@/components/admin";
+import {
   collection,
   query,
   getDocs,
@@ -18,6 +25,7 @@ import {
 import { db } from "@/lib/firebase";
 import { uploadPowwowImage } from "@/lib/firebase/storage";
 import type { PowwowEvent } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface PowwowWithEmployer extends PowwowEvent {
   employerName?: string;
@@ -57,6 +65,31 @@ function AdminPowwowsContent() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: "danger" | "warning" | "success" | "info";
+    confirmText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    variant: "danger",
+    confirmText: "Confirm",
+    onConfirm: () => {},
+  });
+
+  const openConfirmModal = (config: Omit<typeof confirmModal, "isOpen">) => {
+    setConfirmModal({ ...config, isOpen: true });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -129,7 +162,7 @@ function AdminPowwowsContent() {
       );
     } catch (error) {
       console.error("Error toggling pow wow status:", error);
-      alert("Failed to update pow wow status. Please try again.");
+      toast.error("Failed to update pow wow status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -137,12 +170,6 @@ function AdminPowwowsContent() {
 
   async function deletePowwow(powwowId: string, powwowName: string) {
     if (!user) return;
-
-    const confirmed = confirm(
-      `Are you sure you want to delete the pow wow "${powwowName}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) return;
 
     try {
       setProcessing(powwowId);
@@ -153,7 +180,7 @@ function AdminPowwowsContent() {
       setPowwows((prev) => prev.filter((powwow) => powwow.id !== powwowId));
     } catch (error) {
       console.error("Error deleting pow wow:", error);
-      alert("Failed to delete pow wow. Please try again.");
+      toast.error("Failed to delete pow wow. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -248,7 +275,7 @@ function AdminPowwowsContent() {
     } catch (error) {
       console.error("Error uploading image:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to upload image: ${errorMessage}`);
+      toast.error(`Failed to upload image: ${errorMessage}`);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -283,10 +310,10 @@ function AdminPowwowsContent() {
       );
 
       closeEditModal();
-      alert("Pow wow updated successfully!");
+      toast.success("Pow wow updated successfully!");
     } catch (error) {
       console.error("Error saving pow wow:", error);
-      alert("Failed to save changes. Please try again.");
+      toast.error("Failed to save changes. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -511,7 +538,7 @@ function AdminPowwowsContent() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/powwows/${powwow.id}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
@@ -519,42 +546,48 @@ function AdminPowwowsContent() {
                         View
                       </Link>
 
-                      <Link
-                        href={`/admin/powwows/${powwow.id}/edit`}
-                        className="rounded-md border border-blue-500 px-4 py-2 text-sm font-semibold text-blue-400 transition hover:bg-blue-500/10 text-center"
-                      >
-                        Edit
-                      </Link>
-
-                      <button
-                        onClick={() => openEditModal(powwow)}
-                        className="rounded-md border border-[#14B8A6] px-4 py-2 text-sm font-semibold text-[#14B8A6] transition hover:bg-[#14B8A6]/10"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => togglePowwowStatus(powwow.id, isActive)}
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                            ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                            : "bg-green-600 text-white hover:bg-green-500"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : isActive
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
-
-                      <button
-                        onClick={() => deletePowwow(powwow.id, powwow.name)}
-                        disabled={isProcessing}
-                        className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
+                      <EntityActionsMenu
+                        actions={[
+                          {
+                            id: `edit-${powwow.id}`,
+                            label: "Quick Edit",
+                            onClick: () => openEditModal(powwow),
+                          },
+                          {
+                            id: `status-${powwow.id}`,
+                            items: [
+                              {
+                                id: `toggle-${powwow.id}`,
+                                label: isActive ? "Deactivate" : "Activate",
+                                onClick: () => togglePowwowStatus(powwow.id, isActive),
+                                variant: isActive ? "warning" : "success",
+                                disabled: isProcessing,
+                              },
+                            ],
+                          },
+                          {
+                            id: `danger-${powwow.id}`,
+                            items: [
+                              {
+                                id: `delete-${powwow.id}`,
+                                label: "Delete",
+                                onClick: () => {
+                                  openConfirmModal({
+                                    title: "Delete Pow Wow",
+                                    message: `Are you sure you want to delete "${powwow.name}"? This action cannot be undone.`,
+                                    variant: "danger",
+                                    confirmText: "Delete",
+                                    onConfirm: () => deletePowwow(powwow.id, powwow.name),
+                                  });
+                                },
+                                variant: "danger",
+                                disabled: isProcessing,
+                              },
+                            ],
+                          },
+                        ]}
+                        processing={isProcessing}
+                      />
                     </div>
                   </div>
                 </div>
@@ -563,6 +596,20 @@ function AdminPowwowsContent() {
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={() => {
+          confirmModal.onConfirm();
+          closeConfirmModal();
+        }}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        confirmText={confirmModal.confirmText}
+      />
 
       {/* Edit Modal */}
       {editingPowwow && (

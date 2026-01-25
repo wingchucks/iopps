@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
 
         const moreText =
           filteredPrograms.length > 5
-            ? `<tr><td style="padding: 20px; text-align: center; color: #94a3b8;">... and ${filteredPrograms.length - 5} more programs. <a href="${SITE_URL}/jobs-training/programs" style="color: #a855f7;">View all</a></td></tr>`
+            ? `<tr><td style="padding: 20px; text-align: center; color: #94a3b8;">... and ${filteredPrograms.length - 5} more programs. <a href="${SITE_URL}/careers/programs" style="color: #a855f7;">View all</a></td></tr>`
             : "";
 
         const htmlContent = wrapEmail(
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
               </table>
             </td>
           </tr>
-          ${ctaButton("Browse All Training Programs", `${SITE_URL}/jobs-training/programs`)}`,
+          ${ctaButton("Browse All Training Programs", `${SITE_URL}/careers/programs`)}`,
           unsubscribeUrl
         );
 

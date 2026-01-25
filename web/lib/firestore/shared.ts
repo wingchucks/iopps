@@ -1,6 +1,8 @@
 // Shared imports and utilities for firestore operations
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -26,6 +28,8 @@ import { db, auth } from "@/lib/firebase";
 // Re-export firebase utilities for use in domain files
 export {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -53,6 +57,7 @@ export type { QueryDocumentSnapshot, DocumentData };
 export const employerCollection = "employers";
 export const memberCollection = "memberProfiles";
 export const jobsCollection = "jobs";
+export const jobTemplatesCollection = "jobTemplates";
 export const applicationsCollection = "applications";
 export const savedJobsCollection = "savedJobs";
 export const savedConferencesCollection = "savedConferences";
@@ -87,6 +92,23 @@ export const importJobsCollection = "import_jobs";
 
 // Business Pillar collections
 export const businessGrantsCollection = "business_grants";
+
+// Team Access collections
+export const teamInvitationsCollection = "teamInvitations";
+
+// Analytics collections
+export const outboundClicksCollection = "outbound_clicks";
+export const profileViewsCollection = "profile_views";
+export const analyticsEventsCollection = "analytics_events";
+
+// Conference visibility tracking
+export const conferenceFingerprintHistoryCollection = "conference_fingerprint_history";
+
+// Universal Organization Directory collections
+export const directoryIndexCollection = "directory_index";
+
+// Member Settings collections
+export const memberSettingsCollection = "member_settings";
 
 // Helper to check if Firebase is available
 export function checkFirebase() {

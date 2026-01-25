@@ -17,7 +17,15 @@ import {
 import { db } from "@/lib/firebase";
 import { grantVendorFreeListing, revokeVendorFreeListing } from "@/lib/firestore";
 import type { Vendor } from "@/lib/types";
-import { AdminLoadingState, AdminEmptyState, StatusBadge } from "@/components/admin";
+import {
+  AdminLoadingState,
+  AdminEmptyState,
+  StatusBadge,
+  EntityActionsMenu,
+  ConfirmationModal,
+  type ActionItem,
+  type ActionGroup,
+} from "@/components/admin";
 import {
   CurrencyDollarIcon,
   StarIcon,
@@ -25,6 +33,7 @@ import {
   GiftIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 function AdminVendorsContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -48,6 +57,31 @@ function AdminVendorsContent() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [freeListingModalId, setFreeListingModalId] = useState<string | null>(null);
   const [freeListingReason, setFreeListingReason] = useState("");
+
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: "danger" | "warning" | "success" | "info";
+    confirmText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    variant: "danger",
+    confirmText: "Confirm",
+    onConfirm: () => {},
+  });
+
+  const openConfirmModal = (config: Omit<typeof confirmModal, "isOpen">) => {
+    setConfirmModal({ ...config, isOpen: true });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,7 +142,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error toggling vendor status:", error);
-      alert("Failed to update vendor status. Please try again.");
+      toast.error("Failed to update vendor status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -133,7 +167,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error approving vendor:", error);
-      alert("Failed to approve vendor. Please try again.");
+      toast.error("Failed to approve vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -141,12 +175,6 @@ function AdminVendorsContent() {
 
   async function rejectVendor(vendorId: string, vendorName: string) {
     if (!user) return;
-
-    const confirmed = confirm(
-      `Reject "${vendorName}"? This will return the listing to draft status.`
-    );
-
-    if (!confirmed) return;
 
     try {
       setProcessing(vendorId);
@@ -164,7 +192,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error rejecting vendor:", error);
-      alert("Failed to reject vendor. Please try again.");
+      toast.error("Failed to reject vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -191,7 +219,7 @@ function AdminVendorsContent() {
       );
     } catch (error) {
       console.error("Error toggling featured status:", error);
-      alert("Failed to update featured status. Please try again.");
+      toast.error("Failed to update featured status. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -199,12 +227,6 @@ function AdminVendorsContent() {
 
   async function deleteVendor(vendorId: string, vendorName: string) {
     if (!user) return;
-
-    const confirmed = confirm(
-      `Are you sure you want to delete the vendor "${vendorName}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) return;
 
     try {
       setProcessing(vendorId);
@@ -215,7 +237,7 @@ function AdminVendorsContent() {
       setVendors((prev) => prev.filter((vendor) => vendor.id !== vendorId));
     } catch (error) {
       console.error("Error deleting vendor:", error);
-      alert("Failed to delete vendor. Please try again.");
+      toast.error("Failed to delete vendor. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -243,7 +265,7 @@ function AdminVendorsContent() {
         );
       } catch (error) {
         console.error("Error revoking free listing:", error);
-        alert("Failed to revoke free listing. Please try again.");
+        toast.error("Failed to revoke free listing. Please try again.");
       } finally {
         setProcessing(null);
       }
@@ -271,7 +293,7 @@ function AdminVendorsContent() {
       setFreeListingReason("");
     } catch (error) {
       console.error("Error granting free listing:", error);
-      alert("Failed to grant free listing. Please try again.");
+      toast.error("Failed to grant free listing. Please try again.");
     } finally {
       setProcessing(null);
     }
@@ -586,89 +608,108 @@ function AdminVendorsContent() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col">
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/shop/${vendor.slug}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
-                        View Vendor
+                        View
                       </Link>
 
-                      {/* Approve/Reject for pending vendors */}
-                      {vendor.status === "pending" && (
-                        <>
-                          <button
-                            onClick={() => approveVendor(vendor.id)}
-                            disabled={isProcessing}
-                            className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
-                          >
-                            {isProcessing ? "Processing..." : "Approve"}
-                          </button>
-                          <button
-                            onClick={() => rejectVendor(vendor.id, vendor.businessName)}
-                            disabled={isProcessing}
-                            className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                          >
-                            {isProcessing ? "Processing..." : "Reject"}
-                          </button>
-                        </>
-                      )}
+                      <EntityActionsMenu
+                        actions={(() => {
+                          const actions: (ActionItem | ActionGroup)[] = [];
 
-                      {/* Activate/Deactivate for non-pending vendors */}
-                      {vendor.status !== "pending" && (
-                        <button
-                          onClick={() => toggleVendorStatus(vendor.id, isActive)}
-                          disabled={isProcessing}
-                          className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                            ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                            : "bg-green-600 text-white hover:bg-green-500"
-                            }`}
-                        >
-                          {isProcessing
-                            ? "Processing..."
-                            : isActive
-                              ? "Deactivate"
-                              : "Activate"}
-                        </button>
-                      )}
+                          // Moderation actions for pending vendors
+                          if (vendor.status === "pending") {
+                            actions.push({
+                              id: `moderation-${vendor.id}`,
+                              items: [
+                                {
+                                  id: `approve-${vendor.id}`,
+                                  label: "Approve",
+                                  onClick: () => approveVendor(vendor.id),
+                                  variant: "success",
+                                  disabled: isProcessing,
+                                },
+                                {
+                                  id: `reject-${vendor.id}`,
+                                  label: "Reject",
+                                  onClick: () => {
+                                    openConfirmModal({
+                                      title: "Reject Vendor",
+                                      message: `Reject "${vendor.businessName}"? This will return the listing to draft status.`,
+                                      variant: "danger",
+                                      confirmText: "Reject",
+                                      onConfirm: () => rejectVendor(vendor.id, vendor.businessName),
+                                    });
+                                  },
+                                  variant: "danger",
+                                  disabled: isProcessing,
+                                },
+                              ],
+                            });
+                          }
 
-                      <button
-                        onClick={() => toggleFeaturedStatus(vendor.id, isFeatured)}
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isFeatured
-                          ? "bg-yellow-600 text-white hover:bg-yellow-500"
-                          : "border border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : isFeatured
-                            ? "Unfeature"
-                            : "Feature"}
-                      </button>
+                          // Status & visibility actions
+                          const statusItems: ActionItem[] = [];
 
-                      <button
-                        onClick={() => handleToggleFreeListing(vendor)}
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${vendor.freeListingEnabled
-                          ? "bg-emerald-600 text-white hover:bg-emerald-500"
-                          : "border border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : vendor.freeListingEnabled
-                            ? "Revoke Free"
-                            : "Grant Free"}
-                      </button>
+                          if (vendor.status !== "pending") {
+                            statusItems.push({
+                              id: `toggle-status-${vendor.id}`,
+                              label: isActive ? "Deactivate" : "Activate",
+                              onClick: () => toggleVendorStatus(vendor.id, isActive),
+                              disabled: isProcessing,
+                            });
+                          }
 
-                      <button
-                        onClick={() => deleteVendor(vendor.id, vendor.businessName)}
-                        disabled={isProcessing}
-                        className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
+                          statusItems.push({
+                            id: `toggle-featured-${vendor.id}`,
+                            label: isFeatured ? "Remove from Featured" : "Add to Featured",
+                            onClick: () => toggleFeaturedStatus(vendor.id, isFeatured),
+                            disabled: isProcessing,
+                          });
+
+                          statusItems.push({
+                            id: `toggle-free-${vendor.id}`,
+                            label: vendor.freeListingEnabled
+                              ? "Revoke Free Listing"
+                              : "Grant Free Listing",
+                            onClick: () => handleToggleFreeListing(vendor),
+                            disabled: isProcessing,
+                          });
+
+                          actions.push({
+                            id: `status-${vendor.id}`,
+                            items: statusItems,
+                          });
+
+                          // Danger zone
+                          actions.push({
+                            id: `danger-${vendor.id}`,
+                            items: [
+                              {
+                                id: `delete-${vendor.id}`,
+                                label: "Delete Vendor",
+                                onClick: () => {
+                                  openConfirmModal({
+                                    title: "Delete Vendor",
+                                    message: `Are you sure you want to delete "${vendor.businessName}"? This action cannot be undone.`,
+                                    variant: "danger",
+                                    confirmText: "Delete",
+                                    onConfirm: () => deleteVendor(vendor.id, vendor.businessName),
+                                  });
+                                },
+                                variant: "danger",
+                                disabled: isProcessing,
+                              },
+                            ],
+                          });
+
+                          return actions;
+                        })()}
+                        processing={isProcessing}
+                      />
                     </div>
                   </div>
                 </div>
@@ -677,6 +718,20 @@ function AdminVendorsContent() {
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={() => {
+          confirmModal.onConfirm();
+          closeConfirmModal();
+        }}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        confirmText={confirmModal.confirmText}
+      />
 
       {/* Free Listing Modal */}
       {freeListingModalId && (

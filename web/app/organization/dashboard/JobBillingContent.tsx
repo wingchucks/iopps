@@ -262,7 +262,7 @@ export default function BillingTab() {
                                 {paidJobs.map((job) => (
                                     <tr key={job.id} className="text-sm hover:bg-slate-800/30">
                                         <td className="py-4">
-                                            <Link href={`/jobs-training/${job.id}`} className="font-medium text-white hover:text-emerald-400">
+                                            <Link href={`/careers/${job.id}`} className="font-medium text-white hover:text-emerald-400">
                                                 {job.title}
                                             </Link>
                                             <p className="text-xs text-slate-500">{job.location}</p>
@@ -322,7 +322,7 @@ export default function BillingTab() {
                                                     </svg>
                                                 </Link>
                                                 <Link
-                                                    href={`/jobs-training/${job.id}`}
+                                                    href={`/careers/${job.id}`}
                                                     className="text-slate-400 transition hover:text-blue-400"
                                                     title="View job"
                                                 >

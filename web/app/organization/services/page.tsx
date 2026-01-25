@@ -14,6 +14,7 @@ import {
   CheckBadgeIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 export default function OrganizationServicesPage() {
   const { user, loading } = useAuth();
@@ -48,7 +49,7 @@ export default function OrganizationServicesPage() {
       setServices((prev) => prev.filter((s) => s.id !== serviceId));
     } catch (err) {
       console.error("Error deleting service:", err);
-      alert("Failed to delete service");
+      toast.error("Failed to delete service");
     } finally {
       setDeleting(null);
     }

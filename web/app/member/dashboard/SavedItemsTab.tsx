@@ -79,7 +79,7 @@ export default function SavedItemsTab() {
           </p>
           <div className="mt-3 flex flex-col gap-2">
             <Link
-              href="/jobs"
+              href="/careers"
               className="rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-2 text-sm font-semibold text-emerald-400 transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
             >
               Browse more jobs →
@@ -137,7 +137,7 @@ export default function SavedItemsTab() {
                 : "No saved jobs match your filters."}
             </p>
             <Link
-              href="/jobs"
+              href="/careers"
               className="mt-4 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50"
             >
               Browse jobs
@@ -153,7 +153,7 @@ export default function SavedItemsTab() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
                     <Link
-                      href={`/jobs-training/${entry.jobId}`}
+                      href={`/careers/${entry.jobId}`}
                       className="text-lg font-semibold text-white transition-colors hover:text-emerald-400"
                     >
                       {entry.job?.title}
@@ -205,7 +205,7 @@ export default function SavedItemsTab() {
 
                 <div className="mt-4 flex gap-3">
                   <Link
-                    href={`/jobs-training/${entry.jobId}`}
+                    href={`/careers/${entry.jobId}`}
                     className="text-sm font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
                   >
                     View job details →

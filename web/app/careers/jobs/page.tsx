@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
-import { listJobPostings } from "@/lib/firestore";
+import { listJobPostings, listSavedJobIds, toggleSavedJob } from "@/lib/firestore";
+import { useAuth } from "@/components/AuthProvider";
 import type { JobPosting } from "@/lib/types";
+import { HeartIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import toast from "react-hot-toast";
 
 const EMPLOYMENT_TYPES = [
   { value: "", label: "All Types" },
@@ -16,16 +21,31 @@ const EMPLOYMENT_TYPES = [
 ];
 
 export default function JobsPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [indigenousOnly, setIndigenousOnly] = useState(false);
+  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+  const [savingJobId, setSavingJobId] = useState<string | null>(null);
 
   useEffect(() => {
     loadJobs();
   }, [employmentType, remoteOnly, indigenousOnly]);
+
+  // Load saved job IDs for current user
+  useEffect(() => {
+    if (user) {
+      listSavedJobIds(user.uid)
+        .then((ids) => setSavedJobIds(new Set(ids)))
+        .catch(console.error);
+    } else {
+      setSavedJobIds(new Set());
+    }
+  }, [user]);
 
   async function loadJobs() {
     setLoading(true);
@@ -67,6 +87,38 @@ export default function JobsPage() {
       if (job.salaryRange.max) return `Up to $${job.salaryRange.max.toLocaleString()} ${currency}`;
     }
     return null;
+  };
+
+  const handleToggleSave = async (e: React.MouseEvent, jobId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      router.push(`/login?redirect=/careers/jobs`);
+      return;
+    }
+
+    setSavingJobId(jobId);
+    const isCurrentlySaved = savedJobIds.has(jobId);
+
+    try {
+      await toggleSavedJob(user.uid, jobId, !isCurrentlySaved);
+      setSavedJobIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlySaved) {
+          next.delete(jobId);
+        } else {
+          next.add(jobId);
+        }
+        return next;
+      });
+      toast.success(isCurrentlySaved ? "Job removed from saved" : "Job saved!");
+    } catch (err) {
+      console.error("Failed to toggle save:", err);
+      toast.error("Failed to save job. Please try again.");
+    } finally {
+      setSavingJobId(null);
+    }
   };
 
   return (
@@ -122,10 +174,14 @@ export default function JobsPage() {
             <select
               value={employmentType}
               onChange={(e) => setEmploymentType(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none cursor-pointer"
             >
               {EMPLOYMENT_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
+                <option
+                  key={type.value}
+                  value={type.value}
+                  className="bg-slate-900 text-white py-2"
+                >
                   {type.label}
                 </option>
               ))}
@@ -221,9 +277,32 @@ export default function JobsPage() {
                   </div>
                 </div>
               </div>
-              <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
-                View Job →
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={(e) => handleToggleSave(e, job.id)}
+                  disabled={savingJobId === job.id}
+                  aria-label={savedJobIds.has(job.id) ? "Remove from saved jobs" : "Save job"}
+                  className={`rounded-lg p-3 transition-all ${
+                    savedJobIds.has(job.id)
+                      ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30"
+                      : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {savingJobId === job.id ? (
+                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : savedJobIds.has(job.id) ? (
+                    <HeartSolidIcon className="h-5 w-5" />
+                  ) : (
+                    <HeartIcon className="h-5 w-5" />
+                  )}
+                </button>
+                <span className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors group-hover:bg-[#16cdb8]">
+                  View Job →
+                </span>
+              </div>
             </Link>
           ))}
         </div>
