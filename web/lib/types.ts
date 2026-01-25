@@ -559,6 +559,7 @@ export interface Conference {
   // Rich Media
   imageUrl?: string;
   bannerImageUrl?: string;
+  coverImageUrl?: string;
   galleryImageUrls?: string[];
   promoVideoUrl?: string;
 
