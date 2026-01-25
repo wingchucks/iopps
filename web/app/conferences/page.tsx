@@ -2,12 +2,21 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, CalendarDaysIcon, MapPinIcon, TicketIcon } from "@heroicons/react/24/outline";
+import { CalendarDaysIcon, MapPinIcon, TicketIcon } from "@heroicons/react/24/outline";
 import { listConferences } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
+import { EmptyState } from "@/components/EmptyState";
+import {
+  SearchBarRow,
+  FiltersDrawer,
+  ResultsHeader,
+  DiscoveryGrid,
+  LoadingGrid,
+  LoadMoreButton,
+  FilterGroup,
+} from "@/components/discovery";
 
 const TIMEFRAME_OPTIONS = [
   { label: "All Dates", value: "all" },
@@ -166,7 +175,7 @@ function ConferencesContent() {
   );
 
   const hasMore = displayLimit < sorted.length;
-  const hasFilters = search || timeframe !== "all" || costFilter !== "all";
+  const hasFilters = Boolean(search || timeframe !== "all" || costFilter !== "all");
 
   const clearFilters = () => {
     setSearch("");
@@ -174,6 +183,26 @@ function ConferencesContent() {
     setCostFilter("all");
     setDisplayLimit(12);
   };
+
+  // Filter groups for FiltersDrawer
+  const filterGroups: FilterGroup[] = [
+    {
+      id: "timeframe",
+      label: "When",
+      type: "chips",
+      options: TIMEFRAME_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
+      value: timeframe,
+      onChange: (v) => setTimeframe(v as TimeframeValue),
+    },
+    {
+      id: "cost",
+      label: "Cost",
+      type: "chips",
+      options: COST_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
+      value: costFilter,
+      onChange: (v) => setCostFilter(v as CostValue),
+    },
+  ];
 
   return (
     <div className="min-h-screen text-slate-100">
@@ -184,188 +213,91 @@ function ConferencesContent() {
         subtitle="Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits, and professional gatherings from organizations across Turtle Island."
         size="md"
       >
-        {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
-            <input
-              type="text"
-              placeholder="Search conferences..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-          >
-            <FunnelIcon className="h-5 w-5" />
-            Filters
-            {hasFilters && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
-                !
-              </span>
-            )}
-          </button>
-        </div>
+        <SearchBarRow
+          placeholder="Search conferences..."
+          value={search}
+          onChange={setSearch}
+          onFiltersClick={() => setShowFilters(!showFilters)}
+          hasActiveFilters={hasFilters}
+          variant="hero"
+        />
       </OceanWaveHero>
 
       <PageShell>
+        {/* Filters Panel */}
+        <FiltersDrawer
+          isOpen={showFilters}
+          filters={filterGroups}
+          onClearAll={clearFilters}
+          hasActiveFilters={hasFilters}
+        />
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Filters</h3>
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                <XMarkIcon className="h-4 w-4" />
-                Clear all
-              </button>
-            )}
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Timeframe */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">When</label>
-              <div className="flex flex-wrap gap-2">
-                {TIMEFRAME_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setTimeframe(option.value)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      timeframe === option.value
-                        ? "bg-[#14B8A6] text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+        {/* Featured Conferences Section */}
+        {!hasFilters && featuredConferences.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
+                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
               </div>
+              <h2 className="text-2xl font-bold text-white">Featured Conferences</h2>
             </div>
-
-            {/* Cost */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">Cost</label>
-              <div className="flex flex-wrap gap-2">
-                {COST_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setCostFilter(option.value)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      costFilter === option.value
-                        ? "bg-[#14B8A6] text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Featured Conferences Section */}
-      {!hasFilters && featuredConferences.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
-              <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-white">Featured Conferences</h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredConferences.map((conf) => (
-              <ConferenceCard key={conf.id} conference={conf} featured />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      {/* All Conferences */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {hasFilters ? "Search Results" : "All Conferences"}
-          </h2>
-          <span className="text-sm text-slate-400">
-            {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "conference" : "conferences"}`}
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-72" />
-            ))}
-          </div>
-        ) : conferences.length === 0 && !hasFilters ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <CalendarDaysIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No conferences scheduled yet</h3>
-            <p className="text-slate-400">
-              Check back soon! Organizations are adding conferences and summits regularly.
-            </p>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No conferences found</h3>
-            <p className="text-slate-400 mb-4">
-              Try adjusting your filters or search terms.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d9488] transition-colors"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedConferences.map((conf) => (
-                <ConferenceCard key={conf.id} conference={conf} />
+            <DiscoveryGrid>
+              {featuredConferences.map((conf) => (
+                <ConferenceCard key={conf.id} conference={conf} featured />
               ))}
-            </div>
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
-                <button
-                  onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
-                >
-                  Load more conferences
-                  <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </>
+            </DiscoveryGrid>
+          </section>
         )}
-      </section>
 
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
+        {/* All Conferences */}
+        <section>
+          <ResultsHeader
+            title="All Conferences"
+            count={sorted.length}
+            loading={loading}
+            hasFilters={hasFilters}
+          />
+
+          {loading ? (
+            <LoadingGrid count={6} height="h-72" />
+          ) : conferences.length === 0 && !hasFilters ? (
+            <EmptyState
+              icon="conferences"
+              title="No conferences scheduled yet"
+              description="Check back soon! Organizations are adding conferences and summits regularly."
+            />
+          ) : sorted.length === 0 ? (
+            <EmptyState
+              icon="search"
+              title="No conferences found"
+              description="Try adjusting your filters or search terms."
+              action={{ label: "Clear filters", href: "#" }}
+            />
+          ) : (
+            <>
+              <DiscoveryGrid>
+                {displayedConferences.map((conf) => (
+                  <ConferenceCard key={conf.id} conference={conf} />
+                ))}
+              </DiscoveryGrid>
+              {hasMore && (
+                <LoadMoreButton
+                  onClick={() => setDisplayLimit((prev) => prev + 12)}
+                  label="Load more conferences"
+                />
+              )}
+            </>
+          )}
+        </section>
       </PageShell>
 
       {/* CTA Section - Ocean Wave Style */}
@@ -504,14 +436,7 @@ export default function ConferencesPage() {
             size="md"
           />
           <PageShell>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-72 animate-pulse rounded-2xl bg-slate-800/50"
-                />
-              ))}
-            </div>
+            <LoadingGrid count={6} height="h-72" />
           </PageShell>
         </div>
       }

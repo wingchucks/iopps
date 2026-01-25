@@ -3,9 +3,6 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  XMarkIcon,
   AcademicCapIcon,
   MapPinIcon,
   ClockIcon,
@@ -20,6 +17,19 @@ import { listTrainingPrograms, trackEnrollmentClick } from "@/lib/firestore";
 import type { TrainingProgram, TrainingFormat } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
+import { EmptyState } from "@/components/EmptyState";
+import {
+  SearchBarRow,
+  FiltersDrawer,
+  ResultsHeader,
+  DiscoveryGrid,
+  LoadingGrid,
+  LoadMoreButton,
+  FilterGroup,
+  FormatBadge,
+  DiscoveryBadge,
+} from "@/components/discovery";
 
 const CATEGORIES = [
   "All",
@@ -134,12 +144,13 @@ function TrainingProgramsContent() {
   );
 
   const hasMore = displayLimit < sorted.length;
-  const hasFilters =
+  const hasFilters = Boolean(
     search ||
     category !== "All" ||
     format !== "All" ||
     indigenousOnly ||
-    fundingOnly;
+    fundingOnly
+  );
 
   const clearFilters = () => {
     setSearch("");
@@ -163,310 +174,197 @@ function TrainingProgramsContent() {
     window.open(program.enrollmentUrl, "_blank", "noopener,noreferrer");
   };
 
+  // Build filter groups for FiltersDrawer
+  const categoryOptions = CATEGORIES.map((cat) => ({
+    label: cat,
+    value: cat,
+  }));
+
+  const formatOptions = FORMATS.map((f) => ({
+    label: f.label,
+    value: f.value,
+  }));
+
+  const filterGroups: FilterGroup[] = [
+    {
+      id: "category",
+      label: "Category",
+      type: "chips",
+      options: categoryOptions.slice(0, 5),
+      value: category,
+      onChange: (v) => setCategory(v as Category),
+    },
+    {
+      id: "format",
+      label: "Format",
+      type: "chips",
+      options: formatOptions,
+      value: format,
+      onChange: (v) => setFormat(v as TrainingFormat | "All"),
+    },
+    {
+      id: "indigenous",
+      label: "Focus",
+      type: "toggle",
+      options: [{ label: "Indigenous-Focused", value: "indigenous" }],
+      value: indigenousOnly,
+      onChange: (v) => setIndigenousOnly(v as boolean),
+    },
+    {
+      id: "funding",
+      label: "Funding",
+      type: "toggle",
+      options: [{ label: "Funding Available", value: "funding" }],
+      value: fundingOnly,
+      onChange: (v) => setFundingOnly(v as boolean),
+    },
+  ];
+
   return (
-    <PageShell>
-      {/* Hero Section */}
-      <div className="relative text-center mb-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
-          Professional Development
-        </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl">
-          Training Programs
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          Build your skills with training programs from Indigenous-focused
-          organizations and educational partners across Turtle Island.
-        </p>
-      </div>
+    <div className="min-h-screen text-slate-100">
+      {/* Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Professional Development"
+        title="Training Programs"
+        subtitle="Build your skills with training programs from Indigenous-focused organizations and educational partners across Turtle Island."
+        size="md"
+      >
+        <SearchBarRow
+          placeholder="Search programs..."
+          value={search}
+          onChange={setSearch}
+          onFiltersClick={() => setShowFilters(!showFilters)}
+          hasActiveFilters={hasFilters}
+          variant="hero"
+        />
+      </OceanWaveHero>
 
-      {/* Search and Filter Bar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-8">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search programs, skills, providers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-full bg-slate-800 border border-slate-700 py-3 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/50 focus:border-[#14B8A6]"
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 rounded-full bg-slate-800 border border-slate-700 px-6 py-3 text-slate-300 transition-colors hover:border-[#14B8A6] hover:text-white"
-          >
-            <FunnelIcon className="h-5 w-5" />
-            Filters
-            {hasFilters && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-xs font-bold text-slate-900">
-                !
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
+      <PageShell>
+        {/* Filters Panel */}
+        <FiltersDrawer
+          isOpen={showFilters}
+          filters={filterGroups}
+          onClearAll={clearFilters}
+          hasActiveFilters={hasFilters}
+        />
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Filters</h3>
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
-              >
-                <XMarkIcon className="h-4 w-4" />
-                Clear all
-              </button>
-            )}
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Category */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
-                Category
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.slice(0, 5).map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategory(cat)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      category === cat
-                        ? "bg-[#14B8A6] text-slate-900"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+        {/* Featured Programs Section */}
+        {!hasFilters && featuredPrograms.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
+                <StarIcon className="h-4 w-4 text-white" />
               </div>
+              <h2 className="text-2xl font-bold text-white">Featured Programs</h2>
             </div>
-
-            {/* Format */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
-                Format
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {FORMATS.map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setFormat(f.value)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-                      format === f.value
-                        ? "bg-[#14B8A6] text-slate-900"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Indigenous Focus */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
-                Focus
-              </label>
-              <button
-                onClick={() => setIndigenousOnly(!indigenousOnly)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  indigenousOnly
-                    ? "bg-teal-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Indigenous-Focused
-              </button>
-            </div>
-
-            {/* Funding Available */}
-            <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
-                Funding
-              </label>
-              <button
-                onClick={() => setFundingOnly(!fundingOnly)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                  fundingOnly
-                    ? "bg-emerald-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                }`}
-              >
-                Funding Available
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Featured Programs Section */}
-      {!hasFilters && featuredPrograms.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
-              <StarIcon className="h-4 w-4 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Featured Programs</h2>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredPrograms.map((program) => (
-              <TrainingCard
-                key={program.id}
-                program={program}
-                featured
-                onEnrollClick={() => handleEnrollClick(program)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
-        </div>
-      )}
-
-      {/* All Programs */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {hasFilters ? "Search Results" : "All Training Programs"}
-          </h2>
-          <span className="text-sm text-slate-400">
-            {loading
-              ? "Loading..."
-              : `${sorted.length} ${sorted.length === 1 ? "program" : "programs"}`}
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="animate-pulse rounded-2xl bg-slate-800/50 h-80"
-              />
-            ))}
-          </div>
-        ) : programs.length === 0 && !hasFilters ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <AcademicCapIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              No training programs available yet
-            </h3>
-            <p className="text-slate-400">
-              Check back soon! Organizations are adding training programs
-              regularly.
-            </p>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-              <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              No programs found
-            </h3>
-            <p className="text-slate-400 mb-4">
-              Try adjusting your filters or search terms.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#16cdb8] transition-colors"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedPrograms.map((program) => (
+            <DiscoveryGrid>
+              {featuredPrograms.map((program) => (
                 <TrainingCard
                   key={program.id}
                   program={program}
+                  featured
                   onEnrollClick={() => handleEnrollClick(program)}
                 />
               ))}
-            </div>
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
-                <button
-                  onClick={() => setDisplayLimit((prev) => prev + 12)}
-                  className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
-                >
-                  Load more programs
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:translate-y-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </>
+            </DiscoveryGrid>
+          </section>
         )}
-      </section>
 
-      {/* Back to Jobs Link */}
-      <div className="mt-8">
-        <Link
-          href="/careers"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-teal-400 transition-colors"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
+        {/* All Programs */}
+        <section>
+          <ResultsHeader
+            title="All Training Programs"
+            count={sorted.length}
+            loading={loading}
+            hasFilters={hasFilters}
+          />
+
+          {loading ? (
+            <LoadingGrid count={6} height="h-80" />
+          ) : programs.length === 0 && !hasFilters ? (
+            <EmptyState
+              icon="training"
+              title="No training programs available yet"
+              description="Check back soon! Organizations are adding training programs regularly."
             />
-          </svg>
-          Back to Jobs & Training
-        </Link>
-      </div>
-
-      {/* CTA Section - Only visible to employers and admins */}
-      {(role === 'employer' || role === 'admin') && (
-        <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Offer Training Programs?
-          </h2>
-          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-            List your training program on IOPPS. Reach Indigenous learners and
-            professionals across North America.
-          </p>
-          <Link
-            href="/organization/training/new"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
-          >
-            Post a Training Program
-          </Link>
+          ) : sorted.length === 0 ? (
+            <EmptyState
+              icon="search"
+              title="No programs found"
+              description="Try adjusting your filters or search terms."
+              action={{ label: "Clear filters", href: "#" }}
+            />
+          ) : (
+            <>
+              <DiscoveryGrid>
+                {displayedPrograms.map((program) => (
+                  <TrainingCard
+                    key={program.id}
+                    program={program}
+                    onEnrollClick={() => handleEnrollClick(program)}
+                  />
+                ))}
+              </DiscoveryGrid>
+              {hasMore && (
+                <LoadMoreButton
+                  onClick={() => setDisplayLimit((prev) => prev + 12)}
+                  label="Load more programs"
+                />
+              )}
+            </>
+          )}
         </section>
-      )}
-    </PageShell>
+
+        {/* Back to Jobs Link */}
+        <div className="mt-8">
+          <Link
+            href="/careers"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-[#14B8A6] transition-colors"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back to Jobs & Training
+          </Link>
+        </div>
+
+        {/* CTA Section - Only visible to employers and admins */}
+        {(role === 'employer' || role === 'admin') && (
+          <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">
+              Offer Training Programs?
+            </h2>
+            <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+              List your training program on IOPPS. Reach Indigenous learners and
+              professionals across North America.
+            </p>
+            <Link
+              href="/organization/training/new"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            >
+              Post a Training Program
+            </Link>
+          </section>
+        )}
+      </PageShell>
+    </div>
   );
 }
 
@@ -519,23 +417,16 @@ function TrainingCard({
       <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-5">
         {/* Featured Badge */}
         {featured && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
-            <StarIcon className="h-3 w-3" />
-            Featured
+          <div className="absolute top-3 right-3">
+            <DiscoveryBadge variant="featured" />
           </div>
         )}
 
         {/* Format & Indigenous Badge */}
         <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-300">
-            {getFormatIcon(program.format)}
-            {getFormatLabel(program.format)}
-          </span>
+          <FormatBadge format={program.format} />
           {program.indigenousFocused && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/20 px-2.5 py-1 text-xs font-semibold text-teal-300">
-              <CheckBadgeIcon className="h-3 w-3" />
-              Indigenous-Focused
-            </span>
+            <DiscoveryBadge variant="indigenous-focused" />
           )}
         </div>
 
@@ -641,19 +532,17 @@ export default function TrainingProgramsPage() {
   return (
     <Suspense
       fallback={
-        <PageShell>
-          <div className="mx-auto max-w-7xl">
-            <div className="h-64 w-full animate-pulse rounded-3xl bg-slate-800/50 mb-12" />
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-80 animate-pulse rounded-2xl bg-slate-800/50"
-                />
-              ))}
-            </div>
-          </div>
-        </PageShell>
+        <div className="min-h-screen text-slate-100">
+          <OceanWaveHero
+            eyebrow="Professional Development"
+            title="Training Programs"
+            subtitle="Build your skills with training programs from Indigenous-focused organizations and educational partners across Turtle Island."
+            size="md"
+          />
+          <PageShell>
+            <LoadingGrid count={6} height="h-80" />
+          </PageShell>
+        </div>
       }
     >
       <TrainingProgramsContent />
