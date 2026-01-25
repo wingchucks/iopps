@@ -164,7 +164,7 @@ export default function SchoolSetupPage() {
           postalCode: postalCode || undefined,
         },
         campuses: [],
-        location: city && province ? `${city}, ${province}` : undefined,
+        location: city || province ? { city, province, address: address || undefined, postalCode: postalCode || undefined } : undefined,
         indigenousFocused,
         logoUrl: logoUrl || undefined,
         bannerUrl: bannerUrl || undefined,

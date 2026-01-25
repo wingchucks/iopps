@@ -190,7 +190,7 @@ export default function SchoolSettingsPage() {
           address: address || "",
           postalCode: postalCode || undefined,
         },
-        location: city && province ? `${city}, ${province}` : undefined,
+        location: city || province ? { city, province, address: address || undefined, postalCode: postalCode || undefined } : undefined,
         indigenousFocused,
         logoUrl: logoUrl || undefined,
         bannerUrl: bannerUrl || undefined,
