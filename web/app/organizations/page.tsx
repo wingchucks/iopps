@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PageShell } from "@/components/PageShell";
+import OceanWaveHero from "@/components/OceanWaveHero";
 import { listEmployers } from "@/lib/firestore";
 import type { EmployerProfile, IndustryType } from "@/lib/types";
 import {
@@ -86,62 +87,38 @@ export default function OrganizationsPage() {
   return (
     <PageShell>
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-teal-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-emerald-100">
-            <BuildingOfficeIcon className="h-5 w-5" />
-            Partner Organizations
+      <OceanWaveHero
+        eyebrow="Partner Organizations"
+        title="Organization Directory"
+        subtitle="Discover organizations committed to Indigenous employment and community development."
+        size="md"
+      >
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-xl mx-auto">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search organizations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+            />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Organization Directory
-          </h1>
-          <p className="mt-4 text-lg text-emerald-100 sm:text-xl">
-            Discover organizations committed to Indigenous employment and community development.
-          </p>
-
-          {/* Search Bar */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search organizations..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
-            >
-              <FunnelIcon className="h-5 w-5" />
-              Filters
-              {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-emerald-600">
-                  !
-                </span>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+          >
+            <FunnelIcon className="h-5 w-5" />
+            Filters
+            {hasFilters && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
+                !
+              </span>
+            )}
+          </button>
         </div>
-      </div>
+      </OceanWaveHero>
 
       {/* Filters Panel */}
       {showFilters && (
@@ -167,7 +144,7 @@ export default function OrganizationsPage() {
                 onClick={() => setIndustry(null)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   industry === null
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-[#14B8A6] text-white"
                     : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                 }`}
               >
@@ -179,7 +156,7 @@ export default function OrganizationsPage() {
                   onClick={() => setIndustry(ind.value)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     industry === ind.value
-                      ? "bg-emerald-500 text-white"
+                      ? "bg-[#14B8A6] text-white"
                       : "bg-slate-700 text-slate-300 hover:bg-slate-600"
                   }`}
                 >
@@ -221,7 +198,7 @@ export default function OrganizationsPage() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-white hover:bg-[#0D9488] transition-colors"
             >
               Clear filters
             </button>
@@ -233,7 +210,7 @@ export default function OrganizationsPage() {
             <Link
               key={org.id}
               href={`/organizations/${(org as any).slug || org.id}`}
-              className="group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-500/30"
+              className="group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
             >
               {/* Banner/Cover */}
               <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800">
@@ -245,7 +222,7 @@ export default function OrganizationsPage() {
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-teal-600/20" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/20" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
 
@@ -261,7 +238,7 @@ export default function OrganizationsPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 text-xl font-bold text-white">
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#14B8A6] to-cyan-600 text-xl font-bold text-white">
                         {org.organizationName?.charAt(0) || "O"}
                       </div>
                     )}
@@ -272,11 +249,11 @@ export default function OrganizationsPage() {
               {/* Content */}
               <div className="p-4 pt-10">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors line-clamp-1">
+                  <h3 className="text-lg font-semibold text-white group-hover:text-[#14B8A6] transition-colors line-clamp-1">
                     {org.organizationName}
                   </h3>
                   {org.status === "approved" && (
-                    <CheckBadgeIcon className="h-5 w-5 flex-shrink-0 text-emerald-400" />
+                    <CheckBadgeIcon className="h-5 w-5 flex-shrink-0 text-[#14B8A6]" />
                   )}
                 </div>
 
@@ -289,7 +266,7 @@ export default function OrganizationsPage() {
                 {/* Tags */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {org.industry && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-2.5 py-0.5 text-xs font-medium text-[#14B8A6]">
                       <BuildingOfficeIcon className="h-3 w-3" />
                       {INDUSTRIES.find((i) => i.value === org.industry)?.label || org.industry}
                     </span>
@@ -328,7 +305,7 @@ export default function OrganizationsPage() {
         <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/careers"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#14B8A6] to-cyan-500 px-8 py-3 text-lg font-semibold text-white shadow-lg shadow-[#14B8A6]/25 transition-all hover:shadow-xl hover:shadow-[#14B8A6]/30 hover:scale-105"
           >
             <BriefcaseIcon className="h-5 w-5" />
             Browse Jobs

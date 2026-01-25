@@ -75,6 +75,7 @@ function ConferencesContent() {
   const [timeframe, setTimeframe] = useState<TimeframeValue>("all");
   const [costFilter, setCostFilter] = useState<CostValue>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<"upcoming" | "rsvps">("upcoming");
 
   useEffect(() => {
     const load = async () => {
@@ -177,72 +178,65 @@ function ConferencesContent() {
 
   return (
     <div className="min-h-screen text-slate-100">
-      {/* Gradient Hero - Mockup Style */}
-      <section className="relative overflow-hidden">
-        {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
-
-        {/* Content */}
-        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:py-12">
-          {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6">
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold bg-white/20 text-white border border-white/30 backdrop-blur-sm">
-              Upcoming
-            </button>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white/70 hover:bg-white/10 transition-colors">
-              My RSVPs
-            </button>
-          </div>
-
-          {/* Featured Conference Hero Card */}
-          {featuredConferences.length > 0 && (
-            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg border border-white/20 p-6 sm:p-8">
-              <div className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-fuchsia-500/80 backdrop-blur-sm px-3 py-1 text-xs font-bold text-white">
-                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                Featured Conference
-              </div>
-
-              <div className="pt-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                  {featuredConferences[0].title}
-                </h1>
-                <p className="text-white/80 text-sm mb-4">
-                  {formatDate(featuredConferences[0].startDate)}
-                  {featuredConferences[0].endDate && formatDate(featuredConferences[0].endDate) !== formatDate(featuredConferences[0].startDate) &&
-                    ` - ${formatDate(featuredConferences[0].endDate)}`
-                  }
-                  <span className="mx-2">•</span>
-                  {featuredConferences[0].location}
-                </p>
-
-                {/* Connection Signal */}
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="flex -space-x-1.5">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className={`inline-block h-6 w-6 rounded-full ring-2 ring-fuchsia-500 ${['bg-orange-400', 'bg-blue-400', 'bg-purple-400'][i % 3]
-                        }`} />
-                    ))}
-                  </div>
-                  <span className="text-sm text-teal-300 font-medium">18 connections attending</span>
-                  <span className="text-xs text-white/50">• 450+ registered</span>
-                </div>
-
-                {/* CTA */}
-                <Link
-                  href={`/conferences/${featuredConferences[0].id}`}
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-pink-500 px-6 py-3 text-sm font-bold text-white shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-                >
-                  Register
-                </Link>
-              </div>
-            </div>
-          )}
+      {/* Standard Ocean Wave Hero */}
+      <OceanWaveHero
+        eyebrow="Conferences & Summits"
+        title="Connect & Learn"
+        subtitle="Discover conferences, summits, and professional gatherings from organizations across Turtle Island."
+        size="md"
+      >
+        {/* Tabs */}
+        <div className="flex justify-center gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab("upcoming")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              activeTab === "upcoming"
+                ? "bg-white text-blue-900 shadow-lg"
+                : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
+            }`}
+          >
+            Upcoming
+          </button>
+          <button
+            onClick={() => setActiveTab("rsvps")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              activeTab === "rsvps"
+                ? "bg-white text-blue-900 shadow-lg"
+                : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
+            }`}
+          >
+            My RSVPs
+          </button>
         </div>
-      </section>
+
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-xl mx-auto">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+            <input
+              type="text"
+              placeholder="Search conferences..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+          >
+            <FunnelIcon className="h-5 w-5" />
+            Filters
+            {hasFilters && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
+                !
+              </span>
+            )}
+          </button>
+        </div>
+      </OceanWaveHero>
 
       <PageShell>
-
         {/* Filters Panel */}
         {showFilters && (
           <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
@@ -576,7 +570,7 @@ export default function ConferencesPage() {
           <OceanWaveHero
             eyebrow="Conferences & Summits"
             title="Connect & Learn"
-            subtitle="Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits, and professional gatherings from organizations across Turtle Island."
+            subtitle="Discover conferences, summits, and professional gatherings from organizations across Turtle Island."
             size="md"
           />
           <PageShell>
