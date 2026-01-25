@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { rateLimiters, getRateLimitHeaders } from "@/lib/rate-limit";
-import { softDeleteOrganization } from "@/lib/firestore/organizations";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -145,16 +144,41 @@ export async function POST(req: NextRequest) {
 
         const deletionResults: Record<string, number | Record<string, number>> = {};
 
-        // 1. Soft delete employer document using shared function
+        // 1. Soft delete employer document using Admin SDK
         // This sets status='deleted', directoryVisible=false, removes from directory_index
-        const deleteResult = await softDeleteOrganization(employerId, decodedToken.uid);
-        if (!deleteResult.success) {
+        try {
+            // Check if already deleted
+            if (employerData?.status === "deleted") {
+                return NextResponse.json(
+                    { error: "Employer already deleted" },
+                    { status: 400 }
+                );
+            }
+
+            // Update employer document with soft-delete fields
+            await db.collection("employers").doc(employerId).update({
+                status: "deleted",
+                directoryVisible: false,
+                publicationStatus: "DRAFT",
+                deletedAt: FieldValue.serverTimestamp(),
+                deletedBy: decodedToken.uid,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+
+            // Remove from directory index
+            const directoryDoc = await db.collection("directory_index").doc(employerId).get();
+            if (directoryDoc.exists) {
+                await db.collection("directory_index").doc(employerId).delete();
+            }
+
+            deletionResults["employers"] = 1;
+        } catch (deleteError) {
+            console.error("Error soft deleting employer:", deleteError);
             return NextResponse.json(
-                { error: deleteResult.error || "Failed to delete employer" },
-                { status: 400 }
+                { error: "Failed to delete employer profile" },
+                { status: 500 }
             );
         }
-        deletionResults["employers"] = 1;
 
         // 2. Cascade soft delete to employer-related collections (jobs, conferences, scholarships)
         for (const { collection, field } of EMPLOYER_RELATED_COLLECTIONS) {
