@@ -215,6 +215,11 @@ export interface JobPosting {
   noIndex?: boolean; // If true, tell search engines not to index
   expiredAt?: Timestamp | Date | null; // When job was auto-expired
   expirationReason?: string; // Why job was expired (e.g., "Removed from feed")
+  // Additional job properties
+  applicationMethod?: ApplicationMethod;
+  category?: JobCategory;
+  locationType?: LocationType;
+  featured?: boolean;
 }
 
 // Conference sub-types
@@ -1548,6 +1553,12 @@ export interface School {
   updatedAt?: Timestamp | null;
   lastScrapedAt?: Timestamp | null;
   isPublished: boolean;
+
+  // Additional properties for compatibility
+  location?: string; // Simple location string (city, province)
+  isVerified?: boolean; // Quick verification status
+  viewCount?: number; // Page view count
+  indigenousFocused?: boolean; // Indigenous-focused institution
 }
 
 // Program intake dates
@@ -1670,7 +1681,13 @@ export interface EducationProgram {
 
   // Analytics
   viewsCount?: number;
+  viewCount?: number; // Alias
   savesCount?: number;
+  inquiryCount?: number;
+
+  // Additional properties
+  featured?: boolean;
+  credential?: string;
 }
 
 // Education Event (open houses, info sessions, campus tours)
@@ -1717,6 +1734,7 @@ export interface EducationEvent {
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   isPublished: boolean;
+  viewCount?: number;
 }
 
 // Extended Scholarship for Education pillar
@@ -1842,9 +1860,11 @@ export interface StudentInquiry {
   subject: string;
   message: string;
   programId?: string; // If about a specific program
+  interestedInPrograms?: string[]; // Program IDs student is interested in
+  intendedStartDate?: string; // When student plans to start
 
   // Status
-  status: "new" | "read" | "replied";
+  status: InquiryStatus;
   repliedAt?: Timestamp | null;
   repliedBy?: string;
 
@@ -1852,6 +1872,12 @@ export interface StudentInquiry {
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
+
+// Inquiry status type
+export type InquiryStatus = "new" | "read" | "replied" | "responded" | "archived";
+
+// Alias for backward compatibility
+export type SchoolInquiry = StudentInquiry;
 
 // Import job for AI scraping
 export type ImportJobStatus = "pending" | "crawling" | "extracting" | "review" | "completed" | "failed";

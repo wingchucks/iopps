@@ -19,9 +19,8 @@ import {
 } from "./shared";
 import type {
   EducationProgram,
-  ProgramStatus,
   ProgramLevel,
-  ProgramDeliveryMethod,
+  ProgramDelivery,
   ProgramCategory,
   SavedProgram,
 } from "@/lib/types";
@@ -30,11 +29,13 @@ import type {
 // EDUCATION PROGRAMS
 // ============================================
 
+type ProgramStatus = "draft" | "pending" | "approved" | "rejected";
+
 export interface ListEducationProgramsOptions {
   schoolId?: string;
   category?: ProgramCategory | string;
   level?: ProgramLevel;
-  deliveryMethod?: ProgramDeliveryMethod;
+  deliveryMethod?: ProgramDelivery;
   province?: string;
   indigenousFocused?: boolean;
   status?: ProgramStatus;
