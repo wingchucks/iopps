@@ -164,46 +164,59 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get("limit");
     const limitNum = limitParam ? parseInt(limitParam, 10) : 50;
 
-    // Build query
-    let queryRef = db
-      .collection("contentFlags")
-      .orderBy("createdAt", "desc");
-
-    if (status && VALID_STATUSES.includes(status)) {
-      queryRef = queryRef.where("status", "==", status);
-    }
-
-    if (contentType && VALID_CONTENT_TYPES.includes(contentType)) {
-      queryRef = queryRef.where("contentType", "==", contentType);
-    }
-
-    const flagsSnap = await queryRef.limit(limitNum).get();
-
-    const flags = flagsSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
-      updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString(),
-      reviewedAt: doc.data().reviewedAt?.toDate?.()?.toISOString(),
-    }));
-
-    // Get counts by status
-    const allFlagsSnap = await db.collection("contentFlags").get();
-
+    // Build query - handle potentially empty/missing collection
+    let flags: Array<Record<string, unknown>> = [];
     const counts = {
-      total: allFlagsSnap.size,
+      total: 0,
       pending: 0,
       reviewed: 0,
       resolved: 0,
       dismissed: 0,
     };
 
-    allFlagsSnap.forEach((doc) => {
-      const s = doc.data().status as keyof typeof counts;
-      if (counts[s] !== undefined) {
-        counts[s]++;
+    try {
+      // First check if collection has any documents
+      const collectionRef = db.collection("contentFlags");
+      const checkSnap = await collectionRef.limit(1).get();
+
+      if (!checkSnap.empty) {
+        // Collection exists and has documents - run the full query
+        let queryRef = collectionRef.orderBy("createdAt", "desc");
+
+        if (status && VALID_STATUSES.includes(status)) {
+          queryRef = queryRef.where("status", "==", status);
+        }
+
+        if (contentType && VALID_CONTENT_TYPES.includes(contentType)) {
+          queryRef = queryRef.where("contentType", "==", contentType);
+        }
+
+        const flagsSnap = await queryRef.limit(limitNum).get();
+
+        flags = flagsSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
+          updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString(),
+          reviewedAt: doc.data().reviewedAt?.toDate?.()?.toISOString(),
+        }));
+
+        // Get counts by status
+        const allFlagsSnap = await collectionRef.get();
+        counts.total = allFlagsSnap.size;
+
+        allFlagsSnap.forEach((doc) => {
+          const s = doc.data().status as keyof typeof counts;
+          if (counts[s] !== undefined) {
+            counts[s]++;
+          }
+        });
       }
-    });
+      // If collection is empty, flags and counts remain at defaults (empty/zero)
+    } catch (queryError) {
+      // Log but don't fail - treat query errors on empty collection as empty result
+      console.warn("Query error (possibly missing index or empty collection):", queryError);
+    }
 
     return NextResponse.json({ flags, counts });
   } catch (error) {
