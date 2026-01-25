@@ -14,24 +14,46 @@ export default function EducationPanel() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-50">For Education & Training Providers</h2>
         <p className="mt-2 text-slate-400">
-          Boost visibility for your training programs with premium spotlight placement.
+          List your training programs for free. Pay only for featured visibility and premium placement.
         </p>
       </div>
+
+      {/* Free Listing Info - FIRST */}
+      <div className="max-w-3xl rounded-xl border border-blue-500/20 bg-blue-500/5 p-6 mb-8">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/20">
+            <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-100">Listing Is Always Free</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              All training programs can be listed at no cost with standard placement. Featured options below provide premium visibility and priority positioning in the directory.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Options */}
+      <h3 className="text-lg font-semibold text-slate-200 mb-4">Boost Your Visibility</h3>
+      <p className="text-sm text-slate-400 mb-6">
+        Get more enrollments with featured placement and increased exposure to job seekers.
+      </p>
 
       <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
         {/* 60-day Featured */}
         <PricingCard
-          title={TRAINING_PRODUCTS.FEATURED.name}
-          price={`$${TRAINING_PRODUCTS.FEATURED.price / 100}`}
-          period="per program"
+          title={TRAINING_PRODUCTS.FEATURED_60.name}
+          price={`$${TRAINING_PRODUCTS.FEATURED_60.price / 100}`}
           features={[
-            `Premium spotlight for ${TRAINING_PRODUCTS.FEATURED.duration} days`,
             "Featured badge on listing",
-            "Top positioning in directory",
-            "Increased visibility to job seekers",
+            "Priority placement in directory",
+            "Highlighted to job seekers",
+            "Increased visibility for 60 days",
           ]}
-          buttonText={isCommunityMember ? "Employer Account Required" : "Feature Your Program"}
-          buttonHref={isCommunityMember ? undefined : "/organization/training"}
+          buttonText={isCommunityMember ? "Employer Account Required" : "Feature for 60 Days"}
+          buttonHref={isCommunityMember ? undefined : "/organization/training?featured=60"}
           disabled={isCommunityMember}
           helperText={isCommunityMember ? "Create an employer account to feature programs." : undefined}
         />
@@ -40,38 +62,19 @@ export default function EducationPanel() {
         <PricingCard
           title={TRAINING_PRODUCTS.FEATURED_90.name}
           price={`$${TRAINING_PRODUCTS.FEATURED_90.price / 100}`}
-          period="per program"
           badge="RECOMMENDED"
           highlighted={true}
           features={[
-            `Extended spotlight for ${TRAINING_PRODUCTS.FEATURED_90.duration} days`,
             "Featured badge on listing",
             "Top positioning in directory",
+            "Maximum visibility for 90 days",
             "Best value for longer campaigns",
-            "Save 25% vs monthly renewal",
           ]}
-          buttonText={isCommunityMember ? "Employer Account Required" : "Feature Your Program"}
-          buttonHref={isCommunityMember ? undefined : "/organization/training"}
+          buttonText={isCommunityMember ? "Employer Account Required" : "Feature for 90 Days"}
+          buttonHref={isCommunityMember ? undefined : "/organization/training?featured=90"}
           disabled={isCommunityMember}
           helperText={isCommunityMember ? "Create an employer account to feature programs." : undefined}
         />
-      </div>
-
-      {/* Info box */}
-      <div className="mt-8 rounded-xl border border-blue-500/20 bg-blue-500/5 p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/20">
-            <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-100">Free Basic Listings Available</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              All training programs can be listed for free with standard placement. Featured listings provide premium visibility and priority positioning.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Talk to us CTA */}

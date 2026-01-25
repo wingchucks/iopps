@@ -6,9 +6,10 @@ import { CONFERENCE_PRODUCTS, ConferenceProductType } from "@/lib/stripe";
 interface ConferencePricingSelectorProps {
     conferenceId: string;
     userId: string;
+    onSkip?: () => void;
 }
 
-export default function ConferencePricingSelector({ conferenceId, userId }: ConferencePricingSelectorProps) {
+export default function ConferencePricingSelector({ conferenceId, userId, onSkip }: ConferencePricingSelectorProps) {
     const [loading, setLoading] = useState<ConferenceProductType | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -53,8 +54,10 @@ export default function ConferencePricingSelector({ conferenceId, userId }: Conf
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h2 className="text-2xl font-bold text-white">Choose Your Conference Listing Package</h2>
-                <p className="mt-2 text-slate-400">Select the best option to promote your event</p>
+                <h2 className="text-2xl font-bold text-white">Boost Your Conference Visibility</h2>
+                <p className="mt-2 text-slate-400">
+                    Your conference is posted for free. Feature it for premium placement and more registrations.
+                </p>
             </div>
 
             {error && (
@@ -64,15 +67,15 @@ export default function ConferencePricingSelector({ conferenceId, userId }: Conf
             )}
 
             <div className="grid gap-6 md:grid-cols-2">
-                {/* Standard Listing */}
+                {/* Featured 90 Days */}
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700">
                     <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-white">{CONFERENCE_PRODUCTS.STANDARD.name}</h3>
+                        <h3 className="text-lg font-semibold text-white">{CONFERENCE_PRODUCTS.FEATURED_90.name}</h3>
                         <div className="mt-2 flex items-baseline gap-1">
-                            <span className="text-4xl font-bold text-emerald-400">${CONFERENCE_PRODUCTS.STANDARD.price / 100}</span>
+                            <span className="text-4xl font-bold text-emerald-400">${CONFERENCE_PRODUCTS.FEATURED_90.price / 100}</span>
                             <span className="text-slate-500">CAD</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-400">{CONFERENCE_PRODUCTS.STANDARD.description}</p>
+                        <p className="mt-2 text-sm text-slate-400">{CONFERENCE_PRODUCTS.FEATURED_90.description}</p>
                     </div>
 
                     <ul className="mb-6 space-y-3 text-sm">
@@ -80,38 +83,32 @@ export default function ConferencePricingSelector({ conferenceId, userId }: Conf
                             <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Visible for {CONFERENCE_PRODUCTS.STANDARD.duration} days</span>
+                            <span>Featured badge for {CONFERENCE_PRODUCTS.FEATURED_90.duration} days</span>
                         </li>
                         <li className="flex items-start gap-2 text-slate-300">
                             <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Full event details with banner image</span>
+                            <span>Priority placement in listings</span>
                         </li>
                         <li className="flex items-start gap-2 text-slate-300">
                             <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Registration link included</span>
-                        </li>
-                        <li className="flex items-start gap-2 text-slate-300">
-                            <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Standard positioning</span>
+                            <span>Increased visibility to attendees</span>
                         </li>
                     </ul>
 
                     <button
-                        onClick={() => handleSelectPlan("STANDARD")}
-                        disabled={loading === "STANDARD"}
+                        onClick={() => handleSelectPlan("FEATURED_90")}
+                        disabled={loading === "FEATURED_90"}
                         className="w-full rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
                     >
-                        {loading === "STANDARD" ? "Processing..." : "Select Standard"}
+                        {loading === "FEATURED_90" ? "Processing..." : "Feature for 90 Days"}
                     </button>
                 </div>
 
-                {/* Featured Listing */}
+                {/* Featured 365 Days - Best Value */}
                 <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-6 shadow-lg ring-2 ring-amber-500/20 transition hover:ring-amber-500/30">
                     <div className="mb-4">
                         <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-400">
@@ -120,12 +117,12 @@ export default function ConferencePricingSelector({ conferenceId, userId }: Conf
                             </svg>
                             BEST VALUE
                         </div>
-                        <h3 className="text-lg font-semibold text-white">{CONFERENCE_PRODUCTS.FEATURED.name}</h3>
+                        <h3 className="text-lg font-semibold text-white">{CONFERENCE_PRODUCTS.FEATURED_365.name}</h3>
                         <div className="mt-2 flex items-baseline gap-1">
-                            <span className="text-4xl font-bold text-amber-400">${CONFERENCE_PRODUCTS.FEATURED.price / 100}</span>
+                            <span className="text-4xl font-bold text-amber-400">${CONFERENCE_PRODUCTS.FEATURED_365.price / 100}</span>
                             <span className="text-slate-500">CAD</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-400">{CONFERENCE_PRODUCTS.FEATURED.description}</p>
+                        <p className="mt-2 text-sm text-slate-400">{CONFERENCE_PRODUCTS.FEATURED_365.description}</p>
                     </div>
 
                     <ul className="mb-6 space-y-3 text-sm">
@@ -133,47 +130,53 @@ export default function ConferencePricingSelector({ conferenceId, userId }: Conf
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Visible for {CONFERENCE_PRODUCTS.FEATURED.duration} days</span>
+                            <span>Featured badge for full year</span>
                         </li>
                         <li className="flex items-start gap-2 text-slate-300">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Featured badge &amp; banner image</span>
+                            <span>Homepage spotlight placement</span>
                         </li>
                         <li className="flex items-start gap-2 text-slate-300">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Top positioning spotlight</span>
+                            <span>Top positioning in all listings</span>
                         </li>
                         <li className="flex items-start gap-2 text-slate-300">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>Premium analytics</span>
-                        </li>
-                        <li className="flex items-start gap-2 text-slate-300">
-                            <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Social media promotion</span>
+                            <span>Maximum visibility for recurring events</span>
                         </li>
                     </ul>
 
                     <button
-                        onClick={() => handleSelectPlan("FEATURED")}
-                        disabled={loading === "FEATURED"}
+                        onClick={() => handleSelectPlan("FEATURED_365")}
+                        disabled={loading === "FEATURED_365"}
                         className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-amber-600 hover:to-amber-700 disabled:opacity-50"
                     >
-                        {loading === "FEATURED" ? "Processing..." : "Select Featured"}
+                        {loading === "FEATURED_365" ? "Processing..." : "Feature for 1 Year"}
                     </button>
                 </div>
             </div>
 
+            {/* Skip option */}
+            {onSkip && (
+                <div className="text-center">
+                    <button
+                        onClick={onSkip}
+                        className="text-sm text-slate-400 hover:text-slate-300 underline"
+                    >
+                        Continue with free listing
+                    </button>
+                </div>
+            )}
+
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
                 <p className="text-sm text-slate-300">
-                    <span className="font-semibold text-emerald-400">💡 Tip:</span> Featured listings get 3x more views and registrations on average
+                    <span className="font-semibold text-emerald-400">💡 Tip:</span> Featured conferences get 3x more views and registrations on average
                 </p>
             </div>
         </div>
