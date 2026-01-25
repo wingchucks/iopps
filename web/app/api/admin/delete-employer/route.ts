@@ -113,12 +113,12 @@ export async function POST(req: NextRequest) {
         const idToken = authHeader.split("Bearer ")[1];
         const decodedToken = await auth.verifyIdToken(idToken);
 
-        // Check if caller is admin
+        // Check if caller is admin or moderator
         const adminDoc = await db.collection("users").doc(decodedToken.uid).get();
         const adminData = adminDoc.data();
 
-        if (!adminData || adminData.role !== "admin") {
-            return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+        if (!adminData || (adminData.role !== "admin" && adminData.role !== "moderator")) {
+            return NextResponse.json({ error: "Forbidden: Admin or moderator access required" }, { status: 403 });
         }
 
         // Get request body
