@@ -122,12 +122,18 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
   const handleSave = async () => {
     if (!user) return;
 
+    // Validate character limits
+    if (bio.length > 500) {
+      toast.error("About Me must be 500 characters or less");
+      return;
+    }
+
     setSaving(true);
     try {
       const updatedProfile = {
         displayName,
         avatarUrl,
-        bio,
+        bio: bio.slice(0, 500), // Enforce limit on save
         location,
         skills,
         experience,
@@ -581,13 +587,28 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
             </div>
             <textarea
               value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              onChange={(e) => setBio(e.target.value.slice(0, 500))}
               rows={4}
               maxLength={500}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className={`w-full rounded-xl border bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:outline-none focus:ring-2 ${
+                bio.length >= 500
+                  ? "border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20"
+                  : bio.length >= 450
+                  ? "border-amber-500/50 focus:border-amber-500/50 focus:ring-amber-500/20"
+                  : "border-emerald-500/20 focus:border-emerald-500/50 focus:ring-emerald-500/20"
+              }`}
               placeholder="Write a brief introduction about yourself, your background, and what you're looking for..."
             />
-            <p className="mt-1 text-xs text-slate-500">{bio.length}/500 characters</p>
+            <p className={`mt-1 text-xs ${
+              bio.length >= 500
+                ? "text-red-400 font-medium"
+                : bio.length >= 450
+                ? "text-amber-400"
+                : "text-slate-500"
+            }`}>
+              {bio.length}/500 characters
+              {bio.length >= 500 && " (limit reached)"}
+            </p>
           </div>
 
           <div>
