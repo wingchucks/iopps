@@ -650,9 +650,6 @@ export type {
 // ============================================
 // ORGANIZATION DIRECTORY VISIBILITY
 // ============================================
-export {
-  recomputeOrganizationVisibility,
-  recomputeOrganizationVisibilityForAllApprovedOrgs,
-  isOrganizationDirectoryVisible,
-  expireStaleVisibility,
-} from "./visibility";
+// NOTE: visibility.ts uses firebase-admin and is SERVER-ONLY.
+// Import directly from "@/lib/firestore/visibility" in API routes only.
+// DO NOT export here - it will break client-side builds.
