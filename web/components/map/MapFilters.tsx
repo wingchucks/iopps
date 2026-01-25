@@ -85,32 +85,34 @@ export default function MapFiltersComponent({
           All ({counts.total})
         </button>
 
-        {/* Category buttons */}
-        {categories.map((category) => {
-          const isActive = activeCategory === category;
-          const color = markerColors[category];
-          const count = counts.byCategory[category];
+        {/* Category buttons - only show categories with content */}
+        {categories
+          .filter((category) => counts.byCategory[category] > 0)
+          .map((category) => {
+            const isActive = activeCategory === category;
+            const color = markerColors[category];
+            const count = counts.byCategory[category];
 
-          return (
-            <button
-              key={category}
-              onClick={() => handleCategoryClick(category)}
-              disabled={loading}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 ${
-                isActive
-                  ? "text-white"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
-              }`}
-              style={isActive ? { backgroundColor: color } : undefined}
-            >
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: isActive ? "white" : color }}
-              />
-              {categoryLabels[category]} ({count})
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={category}
+                onClick={() => handleCategoryClick(category)}
+                disabled={loading}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 ${
+                  isActive
+                    ? "text-white"
+                    : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
+                }`}
+                style={isActive ? { backgroundColor: color } : undefined}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: isActive ? "white" : color }}
+                />
+                {categoryLabels[category]} ({count})
+              </button>
+            );
+          })}
 
         {/* Expand/Collapse button */}
         <button
@@ -137,39 +139,41 @@ export default function MapFiltersComponent({
       {/* Expanded Type Filters */}
       {expanded && (
         <div className="pt-2 border-t border-slate-700/50 space-y-3">
-          {/* Type toggles */}
+          {/* Type toggles - only show types with content */}
           <div className="flex flex-wrap gap-2">
             <span className="text-xs text-slate-500 uppercase tracking-wider py-1.5">
               Filter by type:
             </span>
-            {(Object.keys(contentTypeLabels) as MapContentType[]).map((type) => {
-              const isActive = activeTypes.includes(type);
-              const category = categoryToContentTypes.jobs.includes(type)
-                ? "jobs"
-                : categoryToContentTypes.events.includes(type)
-                ? "events"
-                : categoryToContentTypes.businesses.includes(type)
-                ? "businesses"
-                : "education";
-              const color = markerColors[category];
-              const count = counts.byType[type];
+            {(Object.keys(contentTypeLabels) as MapContentType[])
+              .filter((type) => counts.byType[type] > 0)
+              .map((type) => {
+                const isActive = activeTypes.includes(type);
+                const category = categoryToContentTypes.jobs.includes(type)
+                  ? "jobs"
+                  : categoryToContentTypes.events.includes(type)
+                  ? "events"
+                  : categoryToContentTypes.businesses.includes(type)
+                  ? "businesses"
+                  : "education";
+                const color = markerColors[category];
+                const count = counts.byType[type];
 
-              return (
-                <button
-                  key={type}
-                  onClick={() => handleTypeToggle(type)}
-                  disabled={loading}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 ${
-                    isActive
-                      ? "text-white"
-                      : "bg-slate-800/60 text-slate-400 hover:bg-slate-700"
-                  }`}
-                  style={isActive ? { backgroundColor: color } : undefined}
-                >
-                  {contentTypeLabels[type]} ({count})
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={type}
+                    onClick={() => handleTypeToggle(type)}
+                    disabled={loading}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 ${
+                      isActive
+                        ? "text-white"
+                        : "bg-slate-800/60 text-slate-400 hover:bg-slate-700"
+                    }`}
+                    style={isActive ? { backgroundColor: color } : undefined}
+                  >
+                    {contentTypeLabels[type]} ({count})
+                  </button>
+                );
+              })}
           </div>
 
           {/* Featured toggle */}
@@ -218,30 +222,32 @@ export function MobileMapFilters({
         All
       </button>
 
-      {categories.map((category) => {
-        const isActive = activeCategory === category;
-        const color = markerColors[category];
+      {categories
+        .filter((category) => counts.byCategory[category] > 0)
+        .map((category) => {
+          const isActive = activeCategory === category;
+          const color = markerColors[category];
 
-        return (
-          <button
-            key={category}
-            onClick={() =>
-              onFiltersChange({
-                ...filters,
-                category: isActive ? undefined : category,
-                types: undefined,
-              })
-            }
-            disabled={loading}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all disabled:opacity-50 ${
-              isActive ? "text-white" : "bg-slate-800/80 text-slate-300"
-            }`}
-            style={isActive ? { backgroundColor: color } : undefined}
-          >
-            {categoryLabels[category]}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={category}
+              onClick={() =>
+                onFiltersChange({
+                  ...filters,
+                  category: isActive ? undefined : category,
+                  types: undefined,
+                })
+              }
+              disabled={loading}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all disabled:opacity-50 ${
+                isActive ? "text-white" : "bg-slate-800/80 text-slate-300"
+              }`}
+              style={isActive ? { backgroundColor: color } : undefined}
+            >
+              {categoryLabels[category]}
+            </button>
+          );
+        })}
     </div>
   );
 }

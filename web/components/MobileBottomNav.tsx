@@ -6,21 +6,28 @@ import {
     VideoCameraIcon,
     UserCircleIcon,
     MapIcon,
+    ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import {
     VideoCameraIcon as VideoCameraIconSolid,
     UserCircleIcon as UserCircleIconSolid,
     MapIcon as MapIconSolid,
+    ArrowRightOnRectangleIcon as ArrowRightOnRectangleIconSolid,
 } from "@heroicons/react/24/solid";
-
-const navItems = [
-    { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
-    { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
-    { href: "/member/dashboard", label: "Dashboard", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid },
-];
+import { useAuth } from "@/components/AuthProvider";
 
 export function MobileBottomNav() {
     const pathname = usePathname();
+    const { user } = useAuth();
+
+    // Build nav items based on auth state
+    const navItems = [
+        { href: "/live", label: "Live", Icon: VideoCameraIcon, ActiveIcon: VideoCameraIconSolid },
+        { href: "/map", label: "Map", Icon: MapIcon, ActiveIcon: MapIconSolid },
+        user
+            ? { href: "/member/dashboard", label: "Dashboard", Icon: UserCircleIcon, ActiveIcon: UserCircleIconSolid }
+            : { href: "/login", label: "Sign In", Icon: ArrowRightOnRectangleIcon, ActiveIcon: ArrowRightOnRectangleIconSolid },
+    ];
 
     // Hide on certain pages (auth pages, dashboards with their own navigation)
     const hiddenPaths = ["/login", "/register", "/organization", "/member"];
