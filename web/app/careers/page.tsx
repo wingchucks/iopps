@@ -6,11 +6,19 @@ import { listJobPostings, listTrainingPrograms } from "@/lib/firestore";
 import type { JobPosting, TrainingProgram } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
+import { useAuth } from "@/components/AuthProvider";
+import { getAccountMode, getDashboardUrl, getDashboardLabel } from "@/lib/auth-utils";
 
 function CareersContent() {
+  const { user, role } = useAuth();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Determine account mode for dashboard CTA
+  const accountMode = getAccountMode(user, role);
+  const dashboardUrl = getDashboardUrl(accountMode);
+  const dashboardLabel = getDashboardLabel(accountMode);
 
   useEffect(() => {
     (async () => {
@@ -146,22 +154,26 @@ function CareersContent() {
           </span>
         </Link>
 
-        {/* My Dashboard Card */}
-        <Link
-          href="/member/dashboard"
-          className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-        >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-            <span className="text-2xl">📊</span>
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">My Dashboard</h2>
-          <p className="text-sm text-slate-400 leading-relaxed mb-4">
-            Track applications, continue learning, and manage your certificates.
-          </p>
-          <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-            View Dashboard →
-          </span>
-        </Link>
+        {/* Dashboard Card - Only shown when logged in, varies by account type */}
+        {dashboardUrl && dashboardLabel && (
+          <Link
+            href={dashboardUrl}
+            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
+          >
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
+              <span className="text-2xl">📊</span>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">{dashboardLabel}</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+              {accountMode === "community"
+                ? "Track applications, continue learning, and manage your certificates."
+                : "Manage your organization, post jobs, and view applications."}
+            </p>
+            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
+              View Dashboard →
+            </span>
+          </Link>
+        )}
       </div>
 
       {/* Featured Jobs Section */}
