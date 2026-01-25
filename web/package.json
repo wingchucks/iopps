@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "emulators": "firebase emulators:start",
-    "seed:test-accounts": "node -r dotenv/config scripts/seed-test-accounts.js"
+    "seed:test-accounts": "node -r dotenv/config scripts/seed-test-accounts.js",
+    "check:dashboard-cta": "node scripts/check-dashboard-cta-guard.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

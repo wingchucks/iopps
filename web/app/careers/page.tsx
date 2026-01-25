@@ -2,23 +2,25 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { listJobPostings, listTrainingPrograms } from "@/lib/firestore";
+import { useRouter } from "next/navigation";
+import { listJobPostings, listTrainingPrograms, listSavedJobIds, toggleSavedJob } from "@/lib/firestore";
+import { useAuth } from "@/components/AuthProvider";
 import type { JobPosting, TrainingProgram } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
-import { useAuth } from "@/components/AuthProvider";
-import { getAccountMode, getDashboardUrl, getDashboardLabel } from "@/lib/auth-utils";
+import { DashboardEntryCTA } from "@/components/auth/DashboardEntryCTA";
+import { HeartIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import toast from "react-hot-toast";
 
 function CareersContent() {
-  const { user, role } = useAuth();
+  const router = useRouter();
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Determine account mode for dashboard CTA
-  const accountMode = getAccountMode(user, role);
-  const dashboardUrl = getDashboardUrl(accountMode);
-  const dashboardLabel = getDashboardLabel(accountMode);
+  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+  const [savingJobId, setSavingJobId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -36,6 +38,49 @@ function CareersContent() {
       }
     })();
   }, []);
+
+  // Load saved job IDs for current user
+  useEffect(() => {
+    if (user) {
+      listSavedJobIds(user.uid)
+        .then((ids) => setSavedJobIds(new Set(ids)))
+        .catch(console.error);
+    } else {
+      setSavedJobIds(new Set());
+    }
+  }, [user]);
+
+  const handleToggleSave = async (e: React.MouseEvent, jobId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      router.push(`/login?redirect=/careers`);
+      return;
+    }
+
+    setSavingJobId(jobId);
+    const isCurrentlySaved = savedJobIds.has(jobId);
+
+    try {
+      await toggleSavedJob(user.uid, jobId, !isCurrentlySaved);
+      setSavedJobIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlySaved) {
+          next.delete(jobId);
+        } else {
+          next.add(jobId);
+        }
+        return next;
+      });
+      toast.success(isCurrentlySaved ? "Job removed from saved" : "Job saved!");
+    } catch (err) {
+      console.error("Failed to toggle save:", err);
+      toast.error("Failed to save job. Please try again.");
+    } finally {
+      setSavingJobId(null);
+    }
+  };
 
   const featuredJobs = useMemo(() => {
     return jobs.filter((job) => job.indigenousPreference).slice(0, 3);
@@ -92,7 +137,7 @@ function CareersContent() {
         eyebrow="Careers"
         title={
           <>
-            Find Your Path.
+            Find Your Path.{" "}
             <br />
             Build Your Future.
           </>
@@ -154,26 +199,8 @@ function CareersContent() {
           </span>
         </Link>
 
-        {/* Dashboard Card - Only shown when logged in, varies by account type */}
-        {dashboardUrl && dashboardLabel && (
-          <Link
-            href={dashboardUrl}
-            className="group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10"
-          >
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
-              <span className="text-2xl">📊</span>
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">{dashboardLabel}</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              {accountMode === "community"
-                ? "Track applications, continue learning, and manage your certificates."
-                : "Manage your organization, post jobs, and view applications."}
-            </p>
-            <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-              View Dashboard →
-            </span>
-          </Link>
-        )}
+        {/* Dashboard Card - Role-gated: shows correct dashboard for member vs organization */}
+        <DashboardEntryCTA variant="card" showLoading />
       </div>
 
       {/* Featured Jobs Section */}
@@ -199,7 +226,7 @@ function CareersContent() {
             {featuredJobs.map((job) => (
               <Link
                 key={job.id}
-                href={`/careers/jobs/${job.id}`}
+                href={`/careers/${job.id}`}
                 className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
               >
                 <div className="flex items-center gap-5">
@@ -227,9 +254,32 @@ function CareersContent() {
                     </div>
                   </div>
                 </div>
-                <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
-                  View Job →
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={(e) => handleToggleSave(e, job.id)}
+                    disabled={savingJobId === job.id}
+                    aria-label={savedJobIds.has(job.id) ? "Remove from saved jobs" : "Save job"}
+                    className={`rounded-lg p-3 transition-all ${
+                      savedJobIds.has(job.id)
+                        ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30"
+                        : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {savingJobId === job.id ? (
+                      <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : savedJobIds.has(job.id) ? (
+                      <HeartSolidIcon className="h-5 w-5" />
+                    ) : (
+                      <HeartIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                  <span className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors group-hover:bg-[#16cdb8]">
+                    View Job →
+                  </span>
+                </div>
               </Link>
             ))}
           </div>
