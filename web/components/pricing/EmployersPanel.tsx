@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import PricingCard from "./PricingCard";
+import DirectoryVisibilityInfo from "./DirectoryVisibilityInfo";
 import {
   JOB_POSTING_PRODUCTS,
   SUBSCRIPTION_PRODUCTS,
 } from "@/lib/stripe";
+import { DIRECTORY_VISIBILITY_BULLETS } from "@/lib/constants/directory-visibility";
 
 export default function EmployersPanel() {
   const { user, role } = useAuth();
@@ -60,11 +62,16 @@ export default function EmployersPanel() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-50">For Employers & Recruiters</h2>
         <p className="mt-2 text-slate-400">
           Connect with Indigenous talent through job postings or annual hiring plans.
         </p>
+      </div>
+
+      {/* Directory Visibility Info */}
+      <div className="mb-8">
+        <DirectoryVisibilityInfo />
       </div>
 
       {error && (
@@ -73,7 +80,9 @@ export default function EmployersPanel() {
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Pay-Per-Post Options */}
+      <h3 className="text-lg font-semibold text-slate-200 mb-4">Pay-Per-Post</h3>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
         {/* Single Job Post - Starter option */}
         <PricingCard
           title="Single Job Post"
@@ -83,6 +92,7 @@ export default function EmployersPanel() {
             "Standard placement on job board",
             "Basic employer profile",
             "Easy online posting",
+            DIRECTORY_VISIBILITY_BULLETS.SINGLE_JOB,
           ]}
           buttonText={isCommunityMember ? "Employer Account Required" : "Post a Job"}
           buttonHref={isCommunityMember ? undefined : "/organization/jobs/new"}
@@ -102,6 +112,7 @@ export default function EmployersPanel() {
             "Employer logo & branding",
             "7 days Talent Pool access",
             "Posting analytics",
+            DIRECTORY_VISIBILITY_BULLETS.FEATURED_JOB,
           ]}
           buttonText={isCommunityMember ? "Employer Account Required" : "Post Featured Job"}
           buttonHref={isCommunityMember ? undefined : "/organization/jobs/new?tier=featured"}
@@ -114,7 +125,7 @@ export default function EmployersPanel() {
           title={SUBSCRIPTION_PRODUCTS.TIER1.name}
           price={`$${(SUBSCRIPTION_PRODUCTS.TIER1.price / 100).toLocaleString()}`}
           period="/ year"
-          features={SUBSCRIPTION_PRODUCTS.TIER1.features}
+          features={[...SUBSCRIPTION_PRODUCTS.TIER1.features, DIRECTORY_VISIBILITY_BULLETS.GROWTH_SUBSCRIPTION]}
           buttonText={
             role === "community"
               ? "Employer Account Required"
@@ -140,7 +151,7 @@ export default function EmployersPanel() {
           period="/ year"
           badge="BEST VALUE"
           highlighted={true}
-          features={SUBSCRIPTION_PRODUCTS.TIER2.features}
+          features={[...SUBSCRIPTION_PRODUCTS.TIER2.features, DIRECTORY_VISIBILITY_BULLETS.UNLIMITED_SUBSCRIPTION]}
           buttonText={
             role === "community"
               ? "Employer Account Required"

@@ -5,6 +5,7 @@ export { default as EducationPanel } from "./EducationPanel";
 export { default as EventsPanel } from "./EventsPanel";
 export { default as VendorsPanel } from "./VendorsPanel";
 export { default as LiveStreamingPanel } from "./LiveStreamingPanel";
+export { default as DirectoryVisibilityInfo } from "./DirectoryVisibilityInfo";
 
 export type { PricingCardProps } from "./PricingCard";
 export type { TabId } from "./PricingTabs";

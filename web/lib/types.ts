@@ -2705,6 +2705,8 @@ export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'
   // Publication status
   publicationStatus: OrganizationStatus;
   directoryVisible: boolean;
+  directoryVisibleUntil?: Timestamp | null; // When directory visibility expires (null = no expiry)
+  isGrandfathered?: boolean; // Grandfathered listings have permanent visibility
   publishedAt?: Timestamp | null;
 
   // Enhanced location

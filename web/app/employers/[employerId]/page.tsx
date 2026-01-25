@@ -6,6 +6,7 @@ import type { EmployerProfile, JobPosting, IndustryType } from "@/lib/types";
 import Image from "next/image";
 import CompanyIntroVideo from "@/components/employer/CompanyIntroVideo";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
+import DirectoryVisibilityOwnerBanner from "@/components/employer/DirectoryVisibilityOwnerBanner";
 
 type PageProps = {
   params: Promise<{
@@ -314,6 +315,13 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
           </div>
         </div>
       )}
+
+      {/* Owner-only Directory Visibility Banner */}
+      <DirectoryVisibilityOwnerBanner
+        ownerId={employer.userId}
+        isDirectoryVisible={(employer as any).directoryVisible ?? true}
+        isGrandfathered={(employer as any).isGrandfathered}
+      />
 
       {/* Banner Image */}
       {employer.bannerUrl && (

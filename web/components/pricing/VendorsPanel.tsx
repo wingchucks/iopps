@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import PricingCard from "./PricingCard";
+import DirectoryVisibilityInfo from "./DirectoryVisibilityInfo";
 import { VENDOR_PRODUCTS } from "@/lib/stripe";
+import { DIRECTORY_VISIBILITY_BULLETS } from "@/lib/constants/directory-visibility";
 
 export default function VendorsPanel() {
   const { role } = useAuth();
@@ -11,11 +13,16 @@ export default function VendorsPanel() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-50">For Shop Indigenous Vendors</h2>
         <p className="mt-2 text-slate-400">
           Showcase your Indigenous-owned business in our marketplace and connect with customers across Turtle Island.
         </p>
+      </div>
+
+      {/* Directory Visibility Info */}
+      <div className="mb-8">
+        <DirectoryVisibilityInfo />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
@@ -25,7 +32,7 @@ export default function VendorsPanel() {
           price={`$${VENDOR_PRODUCTS.MONTHLY.price / 100}`}
           period="/ month"
           badge="First Month FREE"
-          features={VENDOR_PRODUCTS.MONTHLY.features}
+          features={[...VENDOR_PRODUCTS.MONTHLY.features, DIRECTORY_VISIBILITY_BULLETS.VENDOR_MONTHLY]}
           buttonText={isCommunityMember ? "Employer Account Required" : "Start Free Trial"}
           buttonHref={isCommunityMember ? undefined : "/organization/shop/setup"}
           disabled={isCommunityMember}
@@ -42,6 +49,7 @@ export default function VendorsPanel() {
           features={[
             ...VENDOR_PRODUCTS.ANNUAL.features,
             "Save $200 vs monthly billing",
+            DIRECTORY_VISIBILITY_BULLETS.VENDOR_ANNUAL,
           ]}
           buttonText={isCommunityMember ? "Employer Account Required" : "Get Annual Plan"}
           buttonHref={isCommunityMember ? undefined : "/organization/shop/setup?plan=annual"}

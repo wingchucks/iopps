@@ -11,7 +11,8 @@ import {
   getOfferingCounts,
   getAnalyticsSummary,
 } from '@/lib/firestore';
-import type { EmployerProfile, OrganizationModule } from '@/lib/types';
+import type { EmployerProfile, OrganizationModule, OrganizationProfile } from '@/lib/types';
+import DirectoryStatusCard from '@/components/organization/dashboard/DirectoryStatusCard';
 import {
   BriefcaseIcon,
   DocumentTextIcon,
@@ -605,8 +606,15 @@ export default function OrganizationDashboardHome() {
         ))}
       </div>
 
-      {/* Your Plan Card */}
-      <YourPlanCard profile={profile} enabledModules={enabledModules} />
+      {/* Your Plan & Directory Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <YourPlanCard profile={profile} enabledModules={enabledModules} />
+        <DirectoryStatusCard
+          isDirectoryVisible={(profile as OrganizationProfile)?.directoryVisible ?? true}
+          directoryVisibleUntil={(profile as OrganizationProfile)?.directoryVisibleUntil}
+          isGrandfathered={(profile as OrganizationProfile)?.isGrandfathered}
+        />
+      </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
