@@ -1,7 +1,39 @@
 import type { Timestamp } from "firebase/firestore";
 
 export type UserRole = "community" | "employer" | "moderator" | "admin";
-export type EmployerStatus = "pending" | "approved" | "rejected";
+export type EmployerStatus = "pending" | "approved" | "rejected" | "deleted";
+
+export type OpportunityType = 'job' | 'event' | 'scholarship' | 'training' | 'business';
+
+export interface Opportunity {
+  id: string;
+  type: OpportunityType;
+  title: string;
+  organizationName: string;
+  organizationId: string;
+  location: string;
+  postedAt: Date | Timestamp;
+  deadline?: Date | Timestamp | string;
+  tags: string[];
+  imageUrl?: string;
+  matchScore?: number; // 0-100
+  trcAligned?: boolean;
+  isNew?: boolean; // Added in last 24h
+  salary?: string; // e.g. "$55k - $65k"
+  connectionCount?: number; // e.g. 4 connections work here
+  originalObject: JobPosting | PowwowEvent | Conference | Scholarship; // Underlying data
+}
+
+// ============================================
+// SOCIAL FEED (COMMUNITY CONTENT)
+// ============================================
+
+// Union type for the Unified Feed (Forward declaration)
+export type FeedItem =
+  | { type: 'opportunity'; data: Opportunity }
+  | { type: 'post'; data: Post };
+
+// ============================================
 
 // Job Categories
 export const JOB_CATEGORIES = [
@@ -82,6 +114,34 @@ export interface EmployerSubscription {
   unlimitedPosts: boolean;
 }
 
+// ============================================
+// DIRECTORY VISIBILITY (Engagement-Based)
+// ============================================
+
+// Reason why an organization is visible/hidden in the directory
+export type VisibilityReason =
+  | 'grandfathered'    // Permanent visibility for legacy orgs
+  | 'subscription'     // Has active employer subscription
+  | 'vendor'           // Has active vendor subscription
+  | 'featured_job'     // Has featured job extending visibility
+  | 'job'              // Has standard job extending visibility
+  | 'expired';         // No active engagement, visibility expired
+
+// Source that contributes to visibility
+export type VisibilitySource = 'subscription' | 'vendor' | 'featured_job' | 'job' | 'none';
+
+// Debug info about what's driving visibility
+export interface VisibilitySourceDetails {
+  maxSource: VisibilitySource;
+  maxUntil?: Timestamp | Date | null;
+  // Individual source dates for debugging
+  subscriptionUntil?: Timestamp | Date | null;
+  vendorUntil?: Timestamp | Date | null;
+  jobsMaxUntil?: Timestamp | Date | null;
+  featuredJobsMaxUntil?: Timestamp | Date | null;
+  eligibleJobsCount?: number;
+}
+
 // Grant types for free posting packages
 export type GrantType = "single" | "featured" | "tier1" | "tier2";
 
@@ -119,6 +179,13 @@ export type IndustryType =
   | 'transportation'
   | 'other';
 
+export interface TRCAlignment {
+  hasIndigenousHiringStrategy: boolean;
+  leadershipTrainingComplete: boolean;
+  isIndigenousOwned: boolean;
+  commitmentStatement: string; // Max 140 chars
+}
+
 export interface SocialLinks {
   linkedin?: string;
   twitter?: string;
@@ -150,6 +217,19 @@ export interface EmployerProfile {
   approvedBy?: string;
   rejectionReason?: string;
   subscription?: EmployerSubscription;
+  // Vendor subscription (for Shop Indigenous vendors linked to org)
+  vendorSubscription?: {
+    active: boolean;
+    vendorId: string;
+    expiresAt?: Timestamp | Date | null;
+  };
+  // Directory Visibility (engagement-based) - SERVER-WRITTEN ONLY
+  isGrandfathered?: boolean;                    // Permanent visibility for legacy orgs
+  isDirectoryVisible?: boolean;                  // Computed: visible in directory + search
+  directoryVisibleUntil?: Timestamp | null;      // null ONLY if grandfathered
+  visibilityReason?: VisibilityReason;           // Why org is visible/hidden
+  visibilityComputedAt?: Timestamp | null;       // Debug: when visibility was last computed
+  visibilitySourceDetails?: VisibilitySourceDetails; // Debug: detailed source info
   // Admin Bypass - Free posting without payment (legacy fields for backward compatibility)
   freePostingEnabled?: boolean;
   freePostingReason?: string;
@@ -157,12 +237,164 @@ export interface EmployerProfile {
   freePostingGrantedBy?: string;
   // Enhanced free posting grant
   freePostingGrant?: FreePostingGrant;
-  // Organization Capabilities (for multi-mode dashboard)
+  // Organization Capabilities (legacy - for multi-mode dashboard)
   capabilities?: OrganizationCapability[];
+  // NEW: Module-based dashboard system
+  enabledModules?: OrganizationModule[];
+  moduleSettings?: ModuleSettings;
+  lastActiveModule?: OrganizationModule;
   // Education Mode settings
   educationSettings?: EducationSettings;
+  // TRC Alignment
+  trcAlignment?: TRCAlignment;
+  // Indigenous Verification
+  indigenousVerification?: IndigenousVerification;
+  // Team Access
+  teamMembers?: TeamMember[];
+  teamSettings?: TeamSettings;
+  // Notification Preferences
+  notificationPreferences?: EmployerNotificationPreferences;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+}
+
+// Employer Notification Preferences
+export interface EmployerNotificationPreferences {
+  // Application notifications
+  newApplications: boolean; // Notify when someone applies
+  applicationStatusChanges: boolean; // Notify when application status changes
+
+  // Job notifications
+  jobExpiring: boolean; // Notify when a job is about to expire
+  scheduledJobPublished: boolean; // Notify when a scheduled job goes live
+
+  // Training program notifications
+  trainingProgramExpiring?: boolean; // Notify when a training program is about to expire
+  trainingProgramPublished?: boolean; // Notify when a scheduled training goes live
+  trainingRegistrations?: boolean; // Notify about new registrations
+
+  // Event notifications
+  eventReminders?: boolean; // Remind about upcoming events
+  eventPublished?: boolean; // Notify when scheduled events go live
+  eventRegistrations?: boolean; // Notify about event registrations
+
+  // Product/Service notifications
+  productServiceExpiring?: boolean; // Notify when listings are about to expire
+  productServicePublished?: boolean; // Notify when scheduled listings go live
+  productServiceInquiries?: boolean; // Notify about product/service inquiries
+
+  // Scholarship/Grant notifications
+  scholarshipGrantExpiring?: boolean; // Notify when opportunities are about to expire
+  scholarshipGrantPublished?: boolean; // Notify when scheduled items go live
+  scholarshipApplications?: boolean; // Notify about scholarship applications
+
+  // Team notifications
+  teamInvitations: boolean; // Notify about team invitations
+  teamActivity: boolean; // Notify about team member activity
+
+  // Digest notifications
+  weeklyDigest: boolean; // Weekly summary of activity
+  dailyActivitySummary?: boolean; // Daily summary of team activity
+
+  // Marketing
+  marketingEmails: boolean; // Product updates, tips, etc.
+}
+
+// Scheduled Interview (for job application interviews)
+export type ScheduledInterviewType = "virtual" | "phone" | "in-person";
+export type ScheduledInterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled" | "no-show";
+
+export interface ScheduledInterview {
+  id: string;
+  applicationId: string;
+  jobId: string;
+  employerId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  // Scheduling details
+  scheduledAt: Timestamp | Date | string;
+  duration: number; // minutes (30, 45, 60, 90)
+  timezone?: string;
+  // Location/meeting details
+  type: ScheduledInterviewType;
+  location?: string; // Physical address for in-person, or meeting URL for virtual
+  meetingUrl?: string; // Video call link
+  phoneNumber?: string; // For phone interviews
+  // Status tracking
+  status: ScheduledInterviewStatus;
+  // Notes and follow-up
+  notes?: string; // Employer notes
+  interviewerName?: string;
+  interviewerEmail?: string;
+  // Calendar integration
+  calendarEventId?: string;
+  icsFileUrl?: string;
+  // Notifications
+  reminderSent?: boolean;
+  reminderSentAt?: Timestamp | null;
+  // Timestamps
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  cancelledAt?: Timestamp | null;
+  cancelReason?: string;
+}
+
+// Indigenous Business Verification
+export type IndigenousVerificationStatus = "not_requested" | "pending" | "approved" | "rejected";
+
+export interface IndigenousVerification {
+  status: IndigenousVerificationStatus;
+  // For approved verifications
+  isIndigenousOwned?: boolean; // Majority Indigenous owned (51%+)
+  isIndigenousLed?: boolean; // Indigenous leadership/management
+  nationAffiliation?: string; // e.g., "Cree Nation", "Métis Nation"
+  certifications?: string[]; // e.g., "CCAB Certified", "CAMSC Certified"
+  // Request details
+  requestedAt?: Timestamp | null;
+  requestNotes?: string; // Notes from employer during request
+  // Review details
+  reviewedAt?: Timestamp | null;
+  reviewedBy?: string; // Admin who reviewed
+  reviewNotes?: string; // Internal admin notes
+  rejectionReason?: string;
+}
+
+// Team Access Types
+export type TeamRole = "admin" | "editor" | "viewer";
+
+export interface TeamMember {
+  id: string; // User's Firebase UID
+  email: string;
+  displayName?: string;
+  role: TeamRole;
+  addedBy: string; // UID of who invited this member
+  addedAt: Timestamp | null;
+  lastAccessedAt?: Timestamp | null;
+}
+
+export type TeamInvitationStatus = "pending" | "accepted" | "declined" | "expired";
+
+export interface TeamInvitation {
+  id: string;
+  employerId: string;
+  organizationName: string; // Denormalized for display
+  invitedEmail: string;
+  invitedBy: string; // UID
+  invitedByName?: string; // Denormalized for display
+  role: TeamRole;
+  status: TeamInvitationStatus;
+  token: string; // Secret token for email invitation links
+  expiresAt: Timestamp | null;
+  createdAt: Timestamp | null;
+  acceptedAt?: Timestamp | null;
+}
+
+export interface TeamSettings {
+  allowInvitations: boolean;
+  defaultRole: TeamRole;
+  maxTeamSize?: number; // Optional limit
 }
 
 export interface JobPosting {
@@ -208,6 +440,9 @@ export interface JobPosting {
   productType?: string;
   amountPaid?: number;
   expiresAt?: Timestamp | Date | string | null;
+  // Scheduled publishing
+  scheduledPublishAt?: Timestamp | Date | string | null; // When to auto-publish
+  publishedAt?: Timestamp | Date | null; // When job was actually published
   // RSS Import fields
   importedFrom?: string; // RSS feed ID this job came from
   originalUrl?: string; // Original job listing URL
@@ -215,11 +450,53 @@ export interface JobPosting {
   noIndex?: boolean; // If true, tell search engines not to index
   expiredAt?: Timestamp | Date | null; // When job was auto-expired
   expirationReason?: string; // Why job was expired (e.g., "Removed from feed")
-  // Additional job properties
-  applicationMethod?: ApplicationMethod;
+  // Enhanced job fields
   category?: JobCategory;
   locationType?: LocationType;
+  applicationMethod?: ApplicationMethod;
+
   featured?: boolean;
+  trcAlignment?: TRCAlignment;
+}
+
+// Job Templates (reusable templates for employers)
+export interface JobTemplate {
+  id: string;
+  employerId: string;
+  name: string; // Template name (e.g., "Senior Developer Role")
+  description?: string; // Optional description of what this template is for
+  // Job fields (subset of JobPosting)
+  title?: string;
+  location?: string;
+  employmentType?: string;
+  remoteFlag?: boolean;
+  indigenousPreference?: boolean;
+  jobDescription?: string; // Using different name to avoid confusion with template description
+  responsibilities?: string[];
+  qualifications?: string[];
+  requirements?: string;
+  benefits?: string;
+  salaryRange?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    period?: SalaryPeriod;
+    disclosed?: boolean;
+  } | string;
+  category?: JobCategory;
+  locationType?: LocationType;
+  // Job Requirement Flags
+  cpicRequired?: boolean;
+  willTrain?: boolean;
+  driversLicense?: boolean;
+  // Quick Apply
+  quickApplyEnabled?: boolean;
+  applicationLink?: string;
+  applicationEmail?: string;
+  // Metadata
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  usageCount?: number; // How many times this template has been used
 }
 
 // Conference sub-types
@@ -294,6 +571,9 @@ export interface ConferenceRegistrationOptions {
   registrationDeadline?: Timestamp | string | null;
 }
 
+// Visibility tier for conferences
+export type ConferenceVisibilityTier = "standard" | "demoted" | "featured";
+
 export interface Conference {
   id: string;
   employerId: string;
@@ -311,8 +591,17 @@ export interface Conference {
   active: boolean;
   createdAt?: Timestamp | null;
 
-  // Payment fields
+  // Visibility & Lifecycle fields (45-day free visibility system)
+  publishedAt?: Timestamp | Date | string | null;
+  visibilityTier?: ConferenceVisibilityTier;
+  freeVisibilityExpiresAt?: Timestamp | Date | string | null;
+  eventFingerprint?: string;
+  freeVisibilityUsed?: boolean;
+
+  // Payment & Featured fields
   featured?: boolean;
+  featuredExpiresAt?: Timestamp | Date | string | null;
+  featurePlan?: "FEATURED_90" | "FEATURED_365";
   paymentStatus?: "paid" | "pending" | "failed" | "refunded";
   paymentId?: string;
   productType?: string;
@@ -323,6 +612,7 @@ export interface Conference {
   // Rich Media
   imageUrl?: string;
   bannerImageUrl?: string;
+  coverImageUrl?: string;
   galleryImageUrls?: string[];
   promoVideoUrl?: string;
 
@@ -386,9 +676,29 @@ export type ApplicationStatus =
   | "submitted"
   | "reviewed"
   | "shortlisted"
+  | "interviewing"
+  | "offered"
   | "rejected"
   | "hired"
   | "withdrawn";
+
+// Application stage history entry
+export interface ApplicationStageEntry {
+  status: ApplicationStatus;
+  timestamp: Timestamp | Date;
+  changedBy?: string; // User ID who made the change
+  note?: string; // Optional note about the transition
+}
+
+// Applicant Notes (employer private notes on applications)
+export interface ApplicantNote {
+  id: string;
+  content: string;
+  createdBy: string; // User ID
+  createdByName?: string; // Denormalized display name
+  createdAt: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
 
 export interface JobApplication {
   id: string;
@@ -400,7 +710,13 @@ export interface JobApplication {
   status: ApplicationStatus;
   resumeUrl?: string;
   coverLetter?: string; // Legacy text field
-  note?: string;
+  note?: string; // Legacy single note
+
+  // Employer Notes (multiple timestamped notes)
+  employerNotes?: ApplicantNote[];
+
+  // Stage History (tracks status transitions)
+  stageHistory?: ApplicationStageEntry[];
 
   // Modern Cover Letter Handling
   coverLetterType?: 'text' | 'file';
@@ -459,6 +775,7 @@ export interface MemberProfile {
   avatarUrl?: string;
   photoURL?: string; // For compatibility with Firebase User
   tagline?: string;
+  bio?: string; // About me / personal summary
   location?: string;
   skills?: string[];
   experience?: WorkExperience[];
@@ -729,6 +1046,65 @@ export interface Vendor {
   updatedAt: Timestamp | null;
 }
 
+// Vendor Inquiry (from potential customers)
+export interface VendorInquiry {
+  id: string;
+  vendorId: string;
+  productId?: string; // Optional - if inquiry is about a specific product
+
+  // Sender info
+  senderName: string;
+  senderEmail: string;
+  senderPhone?: string;
+
+  // Inquiry details
+  subject: string;
+  message: string;
+
+  // Status
+  status: 'new' | 'read' | 'replied' | 'archived';
+  repliedAt?: Timestamp | null;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Content Flag / Report for moderation queue
+export type FlaggedContentType = 'job' | 'vendor' | 'product' | 'member' | 'employer' | 'post' | 'comment';
+export type FlagReason = 'spam' | 'inappropriate' | 'misleading' | 'offensive' | 'scam' | 'duplicate' | 'other';
+export type FlagStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+
+export interface ContentFlag {
+  id: string;
+
+  // What is being flagged
+  contentType: FlaggedContentType;
+  contentId: string;
+  contentTitle?: string; // Denormalized for display
+  contentPreview?: string; // Short preview of the content
+
+  // Who flagged it
+  reporterId?: string; // Optional - anonymous reports allowed
+  reporterEmail?: string;
+  reporterName?: string;
+
+  // Flag details
+  reason: FlagReason;
+  reasonDetails?: string; // Additional context from reporter
+
+  // Moderation
+  status: FlagStatus;
+  reviewedBy?: string; // Moderator user ID
+  reviewedAt?: Timestamp | null;
+  moderatorNotes?: string;
+  actionTaken?: 'none' | 'warned' | 'removed' | 'banned';
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
 export interface VendorProduct {
   id: string;
   vendorId: string;
@@ -762,7 +1138,8 @@ export interface VendorProduct {
 export const POWWOW_EVENT_TYPES = [
   'Pow Wow',
   'Sports',
-  'Cultural Gathering',
+  'Career Fair',
+  'Other',
 ] as const;
 export type PowwowEventType = typeof POWWOW_EVENT_TYPES[number];
 
@@ -1341,11 +1718,147 @@ export interface Service {
 }
 
 // ============================================
-// EDUCATION PILLAR - Schools, Programs, Events
+// ORGANIZATION MODULES (Dashboard Overhaul)
 // ============================================
 
-// Organization capabilities (for mode switching in dashboard)
+// Organization capabilities (legacy - for backward compatibility)
 export type OrganizationCapability = "employer" | "vendor" | "education";
+
+// New module system (replaces binary employer/vendor mode)
+export type OrganizationModule = 'hire' | 'sell' | 'educate' | 'host' | 'funding';
+
+export const ORGANIZATION_MODULES = ['hire', 'sell', 'educate', 'host', 'funding'] as const;
+
+export interface ModuleSettings {
+  hire?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+  sell?: {
+    enabled: boolean;
+    setupComplete: boolean;
+    vendorId?: string;
+  };
+  educate?: {
+    enabled: boolean;
+    setupComplete: boolean;
+    schoolId?: string;
+  };
+  host?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+  funding?: {
+    enabled: boolean;
+    setupComplete: boolean;
+  };
+}
+
+// Unified Inbox Types
+export type InboxItemType = 'candidate_message' | 'customer_inquiry' | 'student_inquiry' | 'system';
+
+export interface UnifiedInboxItem {
+  id: string;
+  type: InboxItemType;
+  sourceId: string; // conversationId or inquiryId
+  senderName: string;
+  senderEmail?: string;
+  senderAvatarUrl?: string;
+  subject?: string;
+  preview: string;
+  isRead: boolean;
+  status: 'new' | 'read' | 'replied' | 'archived';
+  relatedEntity?: {
+    type: 'job' | 'program' | 'product' | 'service' | 'scholarship';
+    id: string;
+    title: string;
+  };
+  createdAt: Timestamp | null;
+  lastActivityAt?: Timestamp | null;
+}
+
+// Analytics Event Types
+export type AnalyticsEventType =
+  | 'profile_view'
+  | 'outbound_link_click'
+  | 'inquiry_submitted'
+  | 'application_submitted'
+  | 'entity_created'
+  | 'entity_published';
+
+export type OutboundLinkType = 'website' | 'instagram' | 'facebook' | 'tiktok' | 'linkedin' | 'booking' | 'phone' | 'email' | 'other';
+
+export interface OutboundClickEvent {
+  id: string;
+  organizationId: string;
+  vendorId?: string;
+  offeringId?: string;
+  linkType: OutboundLinkType;
+  targetUrl: string;
+  visitorId?: string;
+  sessionId?: string;
+  referrer?: string;
+  createdAt: Timestamp | null;
+}
+
+export interface ClickStats {
+  total: number;
+  byLinkType: Record<OutboundLinkType, number>;
+  byDay: { date: string; count: number }[];
+}
+
+export interface ViewStats {
+  total: number;
+  byDay: { date: string; count: number }[];
+}
+
+// Unified Offering Type (wraps products and services)
+export type OfferingType = 'product' | 'service';
+
+export interface UnifiedOffering {
+  id: string;
+  type: OfferingType;
+  userId: string;
+  vendorId?: string;
+
+  // Common fields
+  name: string;
+  slug?: string;
+  description: string;
+  category: string;
+
+  // Pricing
+  price?: number;
+  priceDisplay?: string;
+
+  // Media
+  imageUrl?: string;
+  images?: string[];
+
+  // Availability
+  active: boolean;
+  featured: boolean;
+
+  // Service-specific
+  servesRemote?: boolean;
+  bookingUrl?: string;
+
+  // Product-specific
+  inStock?: boolean;
+  madeToOrder?: boolean;
+
+  // Analytics
+  viewCount: number;
+  contactClicks: number;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// ============================================
+// EDUCATION PILLAR - Schools, Programs, Events
+// ============================================
 
 // School types
 export const SCHOOL_TYPES = [
@@ -1373,6 +1886,10 @@ export type ProgramLevel = typeof PROGRAM_LEVELS[number];
 
 // Program delivery methods
 export type ProgramDelivery = "in-person" | "online" | "hybrid";
+export type ProgramDeliveryMethod = ProgramDelivery; // Alias
+
+// Program status
+export type ProgramStatus = "draft" | "pending" | "active" | "approved" | "archived";
 
 // Program categories
 export const PROGRAM_CATEGORIES = [
@@ -1432,15 +1949,15 @@ export interface IndigenousServices {
     name: string;
     description?: string;
   };
-  elderInResidence: boolean;
-  culturalCoordinators: boolean;
-  academicCoaches: boolean;
-  learningSpecialists: boolean;
-  wellnessCoaches: boolean;
-  psychologists: boolean;
+  elderInResidence?: boolean;
+  culturalCoordinators?: boolean;
+  academicCoaches?: boolean;
+  learningSpecialists?: boolean;
+  wellnessCoaches?: boolean;
+  psychologists?: boolean;
   languagePrograms?: string[]; // ['Cree', 'Ojibwe', etc.]
-  culturalProgramming: boolean;
-  ceremonySpace: boolean;
+  culturalProgramming?: boolean;
+  ceremonySpace?: boolean;
   communitySupports?: string[]; // ['housing', 'childcare', 'transportation']
 }
 
@@ -1498,7 +2015,7 @@ export interface School {
   description?: string;
 
   // Head Office Location
-  headOffice: {
+  headOffice?: {
     address: string;
     city: string;
     province: string;
@@ -1511,7 +2028,7 @@ export interface School {
   };
 
   // Campuses
-  campuses: SchoolCampus[];
+  campuses?: SchoolCampus[];
 
   // Indigenous Services (key differentiator)
   indigenousServices?: IndigenousServices;
@@ -1554,11 +2071,24 @@ export interface School {
   lastScrapedAt?: Timestamp | null;
   isPublished: boolean;
 
-  // Additional properties for compatibility
-  location?: string; // Simple location string (city, province)
-  isVerified?: boolean; // Quick verification status
-  viewCount?: number; // Page view count
-  indigenousFocused?: boolean; // Indigenous-focused institution
+  // Convenience properties (denormalized for easier access)
+  isVerified?: boolean;
+  location?: {
+    city?: string;
+    province?: string;
+    address?: string;
+    postalCode?: string;
+  };
+  indigenousFocused?: boolean;
+  viewCount?: number;
+
+  // Status for approval workflow
+  status?: "pending" | "approved" | "rejected" | "deleted";
+
+  // Claim status for pre-populated schools
+  claimStatus?: "unclaimed" | "pending_claim" | "claimed";
+  claimedBy?: string; // employerId who claimed
+  claimedAt?: Timestamp | null;
 }
 
 // Program intake dates
@@ -1685,9 +2215,9 @@ export interface EducationProgram {
   savesCount?: number;
   inquiryCount?: number;
 
-  // Additional properties
+  // Display
   featured?: boolean;
-  credential?: string;
+  credential?: string; // Alias for level display
 }
 
 // Education Event (open houses, info sessions, campus tours)
@@ -1734,6 +2264,11 @@ export interface EducationEvent {
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   isPublished: boolean;
+
+  // Additional location fields
+  venue?: string;
+  city?: string;
+  province?: string;
   viewCount?: number;
 }
 
@@ -1860,25 +2395,32 @@ export interface StudentInquiry {
   subject: string;
   message: string;
   programId?: string; // If about a specific program
-  interestedInPrograms?: string[]; // Program IDs student is interested in
-  intendedStartDate?: string; // When student plans to start
-  educationLevel?: string; // Current education level
 
   // Status
-  status: InquiryStatus;
+  status: "new" | "read" | "replied" | "responded" | "archived";
   repliedAt?: Timestamp | null;
   repliedBy?: string;
 
   // Metadata
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
-}
 
-// Inquiry status type
-export type InquiryStatus = "new" | "read" | "replied" | "responded" | "archived";
+  // Additional fields
+  interestedInPrograms?: string[];
+  intendedStartDate?: string;
+  educationLevel?: string;
+}
 
 // Alias for backward compatibility
 export type SchoolInquiry = StudentInquiry;
+
+// Input type for creating student inquiries
+export type StudentInquiryInput = Omit<StudentInquiry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'repliedAt' | 'repliedBy'> & {
+  interestedInPrograms?: string[];
+};
+
+// Inquiry status type
+export type InquiryStatus = "new" | "read" | "replied" | "responded" | "archived";
 
 // Import job for AI scraping
 export type ImportJobStatus = "pending" | "crawling" | "extracting" | "review" | "completed" | "failed";
@@ -2059,4 +2601,222 @@ export interface Activity {
   referenceId: string;
   content?: string;
   createdAt: Timestamp;
+}
+
+// ============================================
+// TEAM ACTIVITY LOG
+// ============================================
+
+export const TEAM_ACTIVITY_ACTIONS = [
+  'created',
+  'updated',
+  'deleted',
+  'published',
+  'unpublished',
+  'duplicated',
+  'archived',
+] as const;
+
+export type TeamActivityAction = typeof TEAM_ACTIVITY_ACTIONS[number];
+
+export const TEAM_ACTIVITY_RESOURCES = [
+  'job',
+  'training_program',
+  'event',
+  'conference',
+  'product',
+  'service',
+  'scholarship',
+  'grant',
+  'team_member',
+  'settings',
+] as const;
+
+export type TeamActivityResource = typeof TEAM_ACTIVITY_RESOURCES[number];
+
+export interface TeamActivityLog {
+  id: string;
+  organizationId: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  userAvatarUrl?: string;
+  action: TeamActivityAction;
+  resource: TeamActivityResource;
+  resourceId: string;
+  resourceTitle: string;
+  details?: Record<string, unknown>; // Additional context (e.g., what fields changed)
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: Timestamp | null;
+}
+
+// ============================================
+// UNIVERSAL ORGANIZATION PROFILE
+// ============================================
+
+// Organization types - what kind of entity is this?
+export const ORG_TYPES = [
+  'EMPLOYER',
+  'INDIGENOUS_BUSINESS',
+  'SCHOOL',
+  'NONPROFIT',
+  'GOVERNMENT',
+  'OTHER',
+] as const;
+
+export type OrgType = typeof ORG_TYPES[number];
+
+export const ORG_TYPE_LABELS: Record<OrgType, string> = {
+  EMPLOYER: 'Employer',
+  INDIGENOUS_BUSINESS: 'Indigenous Business',
+  SCHOOL: 'School / College',
+  NONPROFIT: 'Non-Profit',
+  GOVERNMENT: 'Government',
+  OTHER: 'Organization',
+};
+
+// Organization publication status
+export type OrganizationStatus = 'DRAFT' | 'PUBLISHED';
+
+// Extended social links with all platforms
+export interface ExtendedSocialLinks {
+  website?: string;
+  email?: string;
+  phone?: string;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  linkedin?: string;
+  twitter?: string;
+  youtube?: string;
+}
+
+// Primary CTA type for directory cards (computed from enabled modules)
+export type PrimaryCTAType = 'JOBS' | 'OFFERINGS' | 'PROGRAMS' | 'EVENTS' | 'FUNDING' | 'WEBSITE';
+
+// Universal Organization Profile - extends EmployerProfile with directory-specific fields
+export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'> {
+  // New universal fields
+  slug: string;
+  orgType: OrgType;
+  badgePreference?: OrgType | 'AUTO';  // 'AUTO' = derive from modules
+
+  // Publication status
+  publicationStatus: OrganizationStatus;
+  directoryVisible: boolean;
+  directoryVisibleUntil?: Timestamp | null; // When directory visibility expires (null = no expiry)
+  isGrandfathered?: boolean; // Grandfathered listings have permanent visibility
+  publishedAt?: Timestamp | null;
+
+  // Enhanced location
+  province?: string;
+  city?: string;
+  nation?: string; // Indigenous nation/community
+  community?: string; // Specific community
+
+  // Enhanced content
+  tagline?: string;
+  story?: string; // Longer narrative content
+
+  // Categories/tags for filtering
+  categories?: string[];
+  tags?: string[];
+
+  // Extended social links
+  links?: ExtendedSocialLinks;
+
+  // Keep legacy socialLinks for backward compatibility
+  socialLinks?: SocialLinks;
+
+  // Soft delete fields
+  deletedAt?: Timestamp | null;
+  deletedBy?: string;
+  deleteReason?: string | null;
+}
+
+// Directory Index Entry - denormalized for fast queries
+export interface DirectoryEntry {
+  id: string;
+  orgId: string;
+
+  // Basic info for display
+  name: string;
+  slug: string;
+  orgType: OrgType;
+  tagline?: string;
+
+  // Location
+  province?: string;
+  city?: string;
+
+  // Categorization
+  categories?: string[];
+  tags?: string[];
+
+  // Modules enabled
+  enabledModules: OrganizationModule[];
+
+  // Computed primary CTA
+  primaryCTAType: PrimaryCTAType;
+
+  // Media
+  logoUrl?: string;
+
+  // Indigenous-specific
+  isIndigenousOwned?: boolean;
+  nation?: string;
+
+  // Content counts for filtering/display
+  counts: {
+    jobsCount: number;
+    programsCount: number;
+    scholarshipsCount: number;
+    offeringsCount: number;
+    eventsCount: number;
+    fundingCount: number;
+  };
+
+  // Status
+  directoryVisible: boolean;
+
+  // Timestamps
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Profile view analytics event
+export interface ProfileViewEvent {
+  id: string;
+  organizationId: string;
+  slug: string;
+  visitorId?: string;
+  sessionId?: string;
+  referrer?: string;
+  userAgent?: string;
+  createdAt: Timestamp | null;
+}
+
+// Filter options for directory
+export interface DirectoryFilters {
+  search?: string;
+  orgType?: OrgType | OrgType[];
+  province?: string;
+  city?: string;
+  categories?: string[];
+  tags?: string[];
+  modules?: OrganizationModule[];
+  isIndigenousOwned?: boolean;
+}
+
+// Sort options for directory
+export type DirectorySortOption = 'name_asc' | 'name_desc' | 'newest' | 'oldest';
+
+// Paginated directory results
+export interface DirectoryResults {
+  entries: DirectoryEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
