@@ -51,9 +51,10 @@ export default function OrganizationsPage() {
   const loadOrganizations = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await listEmployers();
-      // Filter to only approved organizations
-      let filtered = data.filter((org) => org.status === "approved");
+      // Fetch approved organizations - includeHidden=true to show all approved orgs
+      // until visibility backfill is complete
+      const data = await listEmployers("approved", false, true);
+      let filtered = data;
 
       // Apply search filter
       if (search) {

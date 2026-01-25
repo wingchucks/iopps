@@ -351,6 +351,24 @@
       ]
     },
     {
+      "collectionGroup": "employers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isDirectoryVisible",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "conversations",
       "queryScope": "COLLECTION",
       "fields": [
