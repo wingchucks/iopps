@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -29,23 +30,7 @@ export default function ForgotPasswordPage() {
       setEmail(""); // Clear the email field
     } catch (err) {
       console.error(err);
-
-      // Handle specific Firebase auth errors
-      let message = "Unable to send password reset email. Please try again.";
-      if (err instanceof Error) {
-        if (err.message.includes("user-not-found")) {
-          message = "No account found with this email address.";
-        } else if (err.message.includes("invalid-email")) {
-          message = "Invalid email address. Please check and try again.";
-        } else if (err.message.includes("too-many-requests")) {
-          message = "Too many requests. Please try again later.";
-        } else if (err.message.includes("network-request-failed")) {
-          message = "Network error. Please check your connection and try again.";
-        } else {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Unable to send password reset email. Please try again."));
     } finally {
       setLoading(false);
     }

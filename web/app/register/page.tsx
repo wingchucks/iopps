@@ -11,6 +11,7 @@ import {
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 import {
   AuthLayout,
   GoogleSignInButton,
@@ -193,22 +194,7 @@ export default function RegisterPage() {
       }
     } catch (err) {
       console.error(err);
-
-      let message = "Could not create account.";
-      if (err instanceof Error) {
-        if (err.message.includes("network-request-failed")) {
-          message = "Network error. Firebase emulators may not be running. Please check your connection or contact support.";
-        } else if (err.message.includes("email-already-in-use")) {
-          message = "This email is already registered. Try logging in instead.";
-        } else if (err.message.includes("weak-password")) {
-          message = "Password is too weak. Please use at least 6 characters.";
-        } else if (err.message.includes("invalid-email")) {
-          message = "Invalid email address. Please check and try again.";
-        } else {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Could not create account. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -229,20 +215,7 @@ export default function RegisterPage() {
       }
     } catch (err) {
       console.error(err);
-
-      let message = "Unable to sign in with Google. Please try again.";
-      if (err instanceof Error) {
-        if (err.message.includes("popup-closed-by-user")) {
-          message = "Sign-in cancelled. Please try again when ready.";
-        } else if (err.message.includes("popup-blocked")) {
-          message = "Pop-up blocked. Please allow pop-ups for this site and try again.";
-        } else if (err.message.includes("network-request-failed")) {
-          message = "Network error. Please check your connection and try again.";
-        } else if (!err.message.includes("offline mode")) {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Unable to sign in with Google. Please try again."));
       setGoogleLoading(false);
     }
   };

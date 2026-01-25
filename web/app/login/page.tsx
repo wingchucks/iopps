@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 import {
   AuthLayout,
   GoogleSignInButton,
@@ -62,22 +63,7 @@ export default function LoginPage() {
       router.push(redirectPath);
     } catch (err) {
       console.error(err);
-
-      let message = "Unable to sign in. Please try again.";
-      if (err instanceof Error) {
-        if (err.message.includes("network-request-failed")) {
-          message = "Network error. Firebase emulators may not be running. Please check your connection or contact support.";
-        } else if (err.message.includes("user-not-found") || err.message.includes("wrong-password")) {
-          message = "Invalid email or password. Please try again.";
-        } else if (err.message.includes("too-many-requests")) {
-          message = "Too many failed attempts. Please try again later.";
-        } else if (err.message.includes("invalid-email")) {
-          message = "Invalid email address. Please check and try again.";
-        } else {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Unable to sign in. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -98,20 +84,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error(err);
-
-      let message = "Unable to sign in with Google. Please try again.";
-      if (err instanceof Error) {
-        if (err.message.includes("popup-closed-by-user")) {
-          message = "Sign-in cancelled. Please try again when ready.";
-        } else if (err.message.includes("popup-blocked")) {
-          message = "Pop-up blocked. Please allow pop-ups for this site and try again.";
-        } else if (err.message.includes("network-request-failed")) {
-          message = "Network error. Please check your connection and try again.";
-        } else if (!err.message.includes("offline mode")) {
-          message = err.message;
-        }
-      }
-      setError(message);
+      setError(getAuthErrorMessage(err, "Unable to sign in with Google. Please try again."));
     } finally {
       setGoogleLoading(false);
     }
