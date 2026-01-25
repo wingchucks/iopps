@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import PricingCard from "./PricingCard";
+import { CONFERENCE_PRODUCTS } from "@/lib/stripe";
 
 export default function EventsPanel() {
   const { role } = useAuth();
@@ -13,11 +14,51 @@ export default function EventsPanel() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-50">For Event Organizers</h2>
         <p className="mt-2 text-slate-400">
-          Share your conferences, pow wows, and gatherings with the IOPPS community — completely free.
+          Share your conferences, summits, and gatherings with the IOPPS community.
         </p>
       </div>
 
-      {/* Free Events Box */}
+      {/* Conference Pricing Cards */}
+      <div className="grid gap-6 md:grid-cols-2 max-w-3xl mb-10">
+        {/* Standard Conference */}
+        <PricingCard
+          title="Conference Posting"
+          price={`$${CONFERENCE_PRODUCTS.STANDARD.price / 100}`}
+          features={[
+            `Live for ${CONFERENCE_PRODUCTS.STANDARD.duration} days`,
+            "Listed in Conferences section",
+            "Banner image & full description",
+            "Registration link included",
+            "Agenda & speaker profiles",
+          ]}
+          buttonText={isCommunityMember ? "Employer Account Required" : "Post Conference"}
+          buttonHref={isCommunityMember ? undefined : "/organization/conferences/new"}
+          disabled={isCommunityMember}
+          helperText={isCommunityMember ? "Create an employer account to post conferences." : undefined}
+        />
+
+        {/* Featured Conference */}
+        <PricingCard
+          title="Featured Conference"
+          price={`$${CONFERENCE_PRODUCTS.FEATURED.price / 100}`}
+          badge="PREMIUM"
+          highlighted={true}
+          features={[
+            `Extended visibility for ${CONFERENCE_PRODUCTS.FEATURED.duration} days`,
+            "Featured badge & spotlight placement",
+            "Top positioning on homepage",
+            "Priority in conference listings",
+            "Enhanced social media previews",
+          ]}
+          buttonText={isCommunityMember ? "Employer Account Required" : "Post Featured Conference"}
+          buttonHref={isCommunityMember ? undefined : "/organization/conferences/new?featured=true"}
+          disabled={isCommunityMember}
+          helperText={isCommunityMember ? "Create an employer account to post conferences." : undefined}
+        />
+      </div>
+
+      {/* Free Community Events Box */}
+      <h3 className="text-lg font-semibold text-slate-200 mb-4">Community Events & Pow Wows</h3>
       <div className="max-w-2xl rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-8">
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20">

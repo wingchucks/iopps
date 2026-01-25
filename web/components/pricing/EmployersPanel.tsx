@@ -73,7 +73,7 @@ export default function EmployersPanel() {
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Single Job Post - Starter option */}
         <PricingCard
           title="Single Job Post"
@@ -86,6 +86,25 @@ export default function EmployersPanel() {
           ]}
           buttonText={isCommunityMember ? "Employer Account Required" : "Post a Job"}
           buttonHref={isCommunityMember ? undefined : "/organization/jobs/new"}
+          disabled={isCommunityMember}
+          helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
+        />
+
+        {/* Featured Job Ad - Visibility Upgrade */}
+        <PricingCard
+          title="Featured Job Ad"
+          price={`$${JOB_POSTING_PRODUCTS.FEATURED.price / 100}`}
+          badge="POPULAR"
+          features={[
+            `Live for ${JOB_POSTING_PRODUCTS.FEATURED.duration} days`,
+            "Featured spotlight on job board",
+            "Top positioning in search results",
+            "Employer logo & branding",
+            "7 days Talent Pool access",
+            "Posting analytics",
+          ]}
+          buttonText={isCommunityMember ? "Employer Account Required" : "Post Featured Job"}
+          buttonHref={isCommunityMember ? undefined : "/organization/jobs/new?tier=featured"}
           disabled={isCommunityMember}
           helperText={isCommunityMember ? "Create an employer account to post jobs." : undefined}
         />
