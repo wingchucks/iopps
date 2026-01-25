@@ -8,12 +8,15 @@ import { PageShell } from "@/components/PageShell";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
 import JobVideoSection from "@/components/jobs/JobVideoSection";
 import ShareButtons from "@/components/ShareButtons";
-import { getMemberProfile, getEmployerProfile, incrementJobViews } from "@/lib/firestore";
+import { getMemberProfile, getEmployerProfile, incrementJobViews, toggleSavedJob, isJobSaved } from "@/lib/firestore";
 import type { JobPosting, MemberProfile, EmployerProfile } from "@/lib/types";
 import { sanitizeHtml } from "@/lib/sanitize";
 import QuickApplyButton from "@/components/QuickApplyButton";
 import JobHeader from "@/components/jobs/JobHeader";
 import JobSidebar from "@/components/jobs/JobSidebar";
+import { HeartIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import toast from "react-hot-toast";
 
 interface JobDetailClientProps {
   job: JobPosting | null;
@@ -27,6 +30,8 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
   const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
   const [memberProfile, setMemberProfile] = useState<MemberProfile | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingJob, setSavingJob] = useState(false);
 
   useEffect(() => {
     const loadEmployerProfile = async () => {
@@ -70,6 +75,36 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
     };
     loadProfile();
   }, [user, isCommunityMember]);
+
+  // Check if job is saved
+  useEffect(() => {
+    if (user && job?.id) {
+      isJobSaved(user.uid, job.id).then(setIsSaved).catch(console.error);
+    }
+  }, [user, job?.id]);
+
+  // Handle save/unsave job
+  const handleToggleSave = async () => {
+    if (!job) return;
+
+    // Redirect to login if not authenticated
+    if (!user) {
+      router.push(`/login?redirect=/careers/${job.id}`);
+      return;
+    }
+
+    setSavingJob(true);
+    try {
+      await toggleSavedJob(user.uid, job.id, !isSaved);
+      setIsSaved(!isSaved);
+      toast.success(isSaved ? "Job removed from saved" : "Job saved!");
+    } catch (err) {
+      console.error("Failed to toggle save:", err);
+      toast.error("Failed to save job. Please try again.");
+    } finally {
+      setSavingJob(false);
+    }
+  };
 
   if (error || !job) {
     const isExpired = error?.toLowerCase().includes("expired");
@@ -159,16 +194,40 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <JobHeader job={job} employerId={job.employerId} />
 
-        {/* Share Section */}
+        {/* Share & Save Section */}
         <div className="mt-4 rounded-xl border border-slate-800 bg-[#08090C] p-4">
-          <ShareButtons
-            item={{
-              id: job.id,
-              title: `${job.title} at ${job.employerName || 'Company'}`,
-              description: job.description?.substring(0, 150) + '...',
-              type: 'job'
-            }}
-          />
+          <div className="flex items-center justify-between gap-4">
+            <ShareButtons
+              item={{
+                id: job.id,
+                title: `${job.title} at ${job.employerName || 'Company'}`,
+                description: job.description?.substring(0, 150) + '...',
+                type: 'job'
+              }}
+            />
+            <button
+              onClick={handleToggleSave}
+              disabled={savingJob}
+              aria-label={isSaved ? "Remove from saved jobs" : "Save job"}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium transition-all ${
+                isSaved
+                  ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {savingJob ? (
+                <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              ) : isSaved ? (
+                <HeartSolidIcon className="h-5 w-5" />
+              ) : (
+                <HeartIcon className="h-5 w-5" />
+              )}
+              <span className="hidden sm:inline">{isSaved ? "Saved" : "Save"}</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">

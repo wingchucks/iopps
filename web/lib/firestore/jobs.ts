@@ -389,6 +389,18 @@ export async function listSavedJobIds(memberId: string): Promise<string[]> {
     return data.jobId;
   });
 }
+
+export async function isJobSaved(memberId: string, jobId: string): Promise<boolean> {
+  const snapshot = await getDocs(
+    query(
+      collection(db!, savedJobsCollection),
+      where("memberId", "==", memberId),
+      where("jobId", "==", jobId),
+      limit(1)
+    )
+  );
+  return !snapshot.empty;
+}
 export function getSavedJobsQuery(memberId: string) {
   return query(
     collection(db!, savedJobsCollection),

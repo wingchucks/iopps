@@ -41,6 +41,7 @@ export {
   toggleSavedJob,
   listSavedJobs,
   listSavedJobIds,
+  isJobSaved,
   isJobExpired,
   clearPendingEmployerApprovalFlag,
 } from "./jobs";
