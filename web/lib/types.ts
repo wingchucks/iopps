@@ -530,6 +530,9 @@ export interface ConferenceRegistrationOptions {
   registrationDeadline?: Timestamp | string | null;
 }
 
+// Visibility tier for conferences
+export type ConferenceVisibilityTier = "standard" | "demoted" | "featured";
+
 export interface Conference {
   id: string;
   employerId: string;
@@ -547,8 +550,17 @@ export interface Conference {
   active: boolean;
   createdAt?: Timestamp | null;
 
-  // Payment fields
+  // Visibility & Lifecycle fields (45-day free visibility system)
+  publishedAt?: Timestamp | Date | string | null;
+  visibilityTier?: ConferenceVisibilityTier;
+  freeVisibilityExpiresAt?: Timestamp | Date | string | null;
+  eventFingerprint?: string;
+  freeVisibilityUsed?: boolean;
+
+  // Payment & Featured fields
   featured?: boolean;
+  featuredExpiresAt?: Timestamp | Date | string | null;
+  featurePlan?: "FEATURED_90" | "FEATURED_365";
   paymentStatus?: "paid" | "pending" | "failed" | "refunded";
   paymentId?: string;
   productType?: string;

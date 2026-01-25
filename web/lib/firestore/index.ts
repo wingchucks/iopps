@@ -93,8 +93,19 @@ export {
   listSavedConferenceIds,
   createConferenceRegistration,
   isConferenceExpired,
+  // Visibility system (45-day free visibility)
+  FREE_VISIBILITY_DAYS,
+  FAR_FUTURE_EVENT_DAYS,
+  generateConferenceFingerprint,
+  computeVisibilityTier,
+  isConferenceVisible,
+  isEventFarInFuture,
+  recordFingerprintHistory,
+  checkFingerprintHistory,
+  checkPublishBlocked,
+  publishConference,
 } from "./conferences";
-export type { SavedConference } from "./conferences";
+export type { SavedConference, FingerprintHistoryEntry, ListConferencesOptions } from "./conferences";
 
 // Scholarships
 export {

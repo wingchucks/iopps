@@ -320,29 +320,89 @@ export async function POST(request: NextRequest) {
                     break;
                 }
 
-                // Handle conference payment
+                // Handle conference payment (featured visibility upgrade)
                 if (conferenceId) {
-                    const durationDays = duration ? parseInt(duration, 10) : 60;
-                    // Calculate expiration date
-                    const expirationDate = new Date();
-                    expirationDate.setDate(expirationDate.getDate() + durationDays);
+                    const durationDays = duration ? parseInt(duration, 10) : 90;
+                    // Calculate featured expiration date
+                    const featuredExpiresAt = new Date();
+                    featuredExpiresAt.setDate(featuredExpiresAt.getDate() + durationDays);
 
                     const conferenceRef = db.collection("conferences").doc(conferenceId);
+                    const conferenceDoc = await conferenceRef.get();
+                    const existingData = conferenceDoc.exists ? conferenceDoc.data() : {};
 
-                    await conferenceRef.update({
+                    // Build update - featuring should work even for demoted conferences
+                    const updateData: Record<string, unknown> = {
                         active: true,
-                        featured: featured === "true",
-                        // Don't reset createdAt - preserve original creation time
-                        expiresAt: expirationDate,
+                        featured: true,
+                        featuredExpiresAt,
+                        featurePlan: productType || "FEATURED_90",
+                        visibilityTier: "featured",
                         paymentStatus: "paid",
                         paymentId: session.payment_intent as string,
-                        productType: productType || "STANDARD",
+                        productType: productType || "FEATURED_90",
                         amountPaid: session.amount_total,
-                    });
+                        // Legacy field for backwards compatibility
+                        expiresAt: featuredExpiresAt,
+                    };
 
-                    // Get conference data for payment record
-                    const conferenceDoc = await conferenceRef.get();
-                    const conferenceData = conferenceDoc.exists ? conferenceDoc.data() : null;
+                    // If not yet published, set publishedAt now
+                    if (!existingData?.publishedAt) {
+                        const now = new Date();
+                        const freeVisibilityExpiresAt = new Date(now);
+                        freeVisibilityExpiresAt.setDate(freeVisibilityExpiresAt.getDate() + 45); // 45-day free period
+
+                        updateData.publishedAt = now;
+                        updateData.freeVisibilityExpiresAt = freeVisibilityExpiresAt;
+                        updateData.freeVisibilityUsed = true;
+
+                        // Generate and store fingerprint
+                        const title = existingData?.title || "";
+                        const location = existingData?.location || "";
+                        const startDate = existingData?.startDate?.toDate?.()
+                            ? existingData.startDate.toDate().toISOString()
+                            : existingData?.startDate;
+                        const employerId = existingData?.employerId;
+
+                        if (employerId) {
+                            // Simple fingerprint generation
+                            const normalizedTitle = title.toLowerCase().trim().replace(/\s+/g, " ");
+                            const city = (location || "").toLowerCase().trim().split(",")[0].trim();
+                            let dateStr = "";
+                            if (startDate) {
+                                const d = new Date(startDate);
+                                if (!isNaN(d.getTime())) {
+                                    dateStr = d.toISOString().split("T")[0];
+                                }
+                            }
+                            const fingerprintInput = `${employerId}|${normalizedTitle}|${dateStr}|${city}`;
+                            let hash = 5381;
+                            for (let i = 0; i < fingerprintInput.length; i++) {
+                                hash = (hash * 33) ^ fingerprintInput.charCodeAt(i);
+                            }
+                            const fingerprint = `fp_${(hash >>> 0).toString(16)}`;
+
+                            updateData.eventFingerprint = fingerprint;
+
+                            // Record fingerprint history
+                            const historyDocId = `${employerId}_${fingerprint}`;
+                            await db.collection("conference_fingerprint_history").doc(historyDocId).set({
+                                employerId,
+                                fingerprint,
+                                firstPublishedAt: now,
+                                freeVisibilityExpiresAt,
+                                freeVisibilityUsed: true,
+                                conferenceId,
+                                title,
+                            });
+                        }
+                    }
+
+                    await conferenceRef.update(updateData);
+
+                    // Get updated conference data for payment record
+                    const updatedConferenceDoc = await conferenceRef.get();
+                    const conferenceData = updatedConferenceDoc.exists ? updatedConferenceDoc.data() : null;
                     if (conferenceData?.employerId) {
                         await savePaymentRecord(
                             db,

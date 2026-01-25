@@ -32,7 +32,7 @@ export default function EventsPanel() {
               </span>
             </div>
             <p className="mt-2 text-slate-300">
-              All conferences, summits, pow wows, and community events can be posted at no cost. Featured options below provide premium visibility and placement.
+              All conferences, summits, pow wows, and community events can be posted at no cost. Free listings receive standard visibility for 45 days. Feature your event to extend visibility.
             </p>
             <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-slate-400">
               <li className="flex items-center gap-2">

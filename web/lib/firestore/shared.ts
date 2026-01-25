@@ -101,6 +101,9 @@ export const outboundClicksCollection = "outbound_clicks";
 export const profileViewsCollection = "profile_views";
 export const analyticsEventsCollection = "analytics_events";
 
+// Conference visibility tracking
+export const conferenceFingerprintHistoryCollection = "conference_fingerprint_history";
+
 // Universal Organization Directory collections
 export const directoryIndexCollection = "directory_index";
 
