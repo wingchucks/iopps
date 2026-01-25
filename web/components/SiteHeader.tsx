@@ -10,10 +10,9 @@ import { getUnreadMessageCount } from "@/lib/firestore";
 
 const navLinks = [
   { href: "/careers", label: "Careers" },
-  { href: "/education", label: "Education" },
   { href: "/organizations", label: "Directory" },
   { href: "/conferences", label: "Conferences" },
-  { href: "/community", label: "Connect" }, // Renamed from Events/Community
+  { href: "/community", label: "Connect" },
   { href: "/live", label: "Live" },
   { href: "/map", label: "Map" },
   { href: "/pricing", label: "Pricing" },
