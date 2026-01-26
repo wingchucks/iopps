@@ -423,7 +423,7 @@ export default function RecommendationsWidget({
               <h3 className="font-semibold text-white">Upcoming Events</h3>
             </div>
             <Link
-              href="/events"
+              href="/conferences"
               className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
             >
               View all
@@ -434,10 +434,14 @@ export default function RecommendationsWidget({
           <div className="space-y-3">
             {events.map((rec) => {
               const title = "title" in rec.item ? rec.item.title : rec.item.name;
+              // Route to /conferences for conferences, /community for powwows
+              const eventHref = rec.type === "conference"
+                ? `/conferences/${rec.item.id}`
+                : `/community/${rec.item.id}`;
               return (
                 <Link
                   key={rec.item.id}
-                  href={`/events/${rec.item.id}`}
+                  href={eventHref}
                   className="block p-4 rounded-xl border border-slate-700 hover:bg-slate-800/50 transition-all hover:border-purple-500/30"
                 >
                   <div className="flex items-start justify-between gap-4">

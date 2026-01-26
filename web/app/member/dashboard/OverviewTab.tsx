@@ -248,7 +248,7 @@ export default function OverviewTab({
                                 </div>
                             </Link>
                             <Link
-                                href="/training"
+                                href="/careers/programs"
                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
                             >
                                 <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
