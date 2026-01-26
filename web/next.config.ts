@@ -170,6 +170,36 @@ const nextConfig: NextConfig = {
         destination: "/community/:path*",
         permanent: true,
       },
+      // Sign in alias redirect
+      {
+        source: "/signin",
+        destination: "/login",
+        permanent: true,
+      },
+      // Streams to Live redirect
+      {
+        source: "/streams",
+        destination: "/live",
+        permanent: true,
+      },
+      // Notifications to Member Alerts redirect
+      {
+        source: "/notifications",
+        destination: "/member/alerts",
+        permanent: true,
+      },
+      // Organization registration shortcut
+      {
+        source: "/organization/register",
+        destination: "/register",
+        permanent: false,
+      },
+      // Organization post-job shortcut
+      {
+        source: "/organization/post-job",
+        destination: "/organization/jobs/new",
+        permanent: true,
+      },
     ];
   },
 };

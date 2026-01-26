@@ -236,7 +236,7 @@ export default function OverviewTab({
                         <h3 className="text-lg font-bold text-white mb-4">Explore</h3>
                         <div className="space-y-3">
                             <Link
-                                href="/scholarships"
+                                href="/education/scholarships"
                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
                             >
                                 <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
@@ -260,7 +260,7 @@ export default function OverviewTab({
                                 </div>
                             </Link>
                             <Link
-                                href="/powwows"
+                                href="/community"
                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
                             >
                                 <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">

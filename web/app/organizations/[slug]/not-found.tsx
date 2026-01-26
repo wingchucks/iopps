@@ -17,7 +17,7 @@ export default function OrganizationNotFound() {
 
         <div className="flex gap-4">
           <Link
-            href="/businesses"
+            href="/organizations"
             className="rounded-full bg-teal-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
           >
             Browse Organizations

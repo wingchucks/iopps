@@ -244,7 +244,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Link
-              href="/organization/post-job"
+              href="/organization/jobs/new"
               className="flex-1 sm:flex-none text-center rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
             >
               Post a Job

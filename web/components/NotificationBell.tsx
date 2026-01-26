@@ -306,7 +306,7 @@ export default function NotificationBell() {
           {notifications.length > 0 && (
             <div className="border-t border-slate-800 p-2">
               <Link
-                href="/notifications"
+                href="/member/alerts"
                 onClick={() => setIsOpen(false)}
                 className="block rounded-lg px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-slate-800/50"
               >

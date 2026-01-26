@@ -25,7 +25,7 @@ export default function TalentPoolPricingPage() {
     const handleSubscribe = async (tier: "MONTHLY" | "ANNUAL") => {
         if (!user) {
             // Redirect to sign in
-            router.push("/signin?redirect=/organization/talent/pricing");
+            router.push("/login?redirect=/organization/talent/pricing");
             return;
         }
 

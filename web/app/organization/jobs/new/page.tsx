@@ -611,7 +611,7 @@ function NewJobPageContent() {
         </p>
         <div className="flex gap-3">
           <Link
-            href="/organization/register"
+            href="/register?role=employer"
             className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
           >
             Register as Employer

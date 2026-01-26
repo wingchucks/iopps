@@ -82,7 +82,7 @@ export default function LiveStreamingPanel() {
           We&apos;ve provided live coverage for pow wows, Indigenous business conferences, cultural celebrations, and sporting events across Canada.
         </p>
         <Link
-          href="/streams"
+          href="/live"
           className="mt-3 inline-flex text-sm text-[#14B8A6] hover:underline"
         >
           View past streams →

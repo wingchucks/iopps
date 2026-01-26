@@ -108,7 +108,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
             </button>
           )}
           <Link
-            href="/businesses"
+            href="/organizations"
             className={`rounded-full px-6 py-3 font-semibold transition ${
               showRetry
                 ? "border border-slate-700 text-slate-200 hover:border-teal-500 hover:text-teal-400"

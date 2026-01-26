@@ -294,7 +294,7 @@ export default function RecommendationsWidget({
               <h3 className="font-semibold text-white">Job Opportunities</h3>
             </div>
             <Link
-              href="/jobs"
+              href="/careers"
               className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
             >
               View all jobs
@@ -306,7 +306,7 @@ export default function RecommendationsWidget({
             {jobs.map((rec) => (
               <Link
                 key={rec.item.id}
-                href={`/jobs/${rec.item.id}`}
+                href={`/careers/${rec.item.id}`}
                 className="block p-4 rounded-xl border border-slate-700 hover:bg-slate-800/50 transition-all hover:border-emerald-500/30"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -363,7 +363,7 @@ export default function RecommendationsWidget({
               <h3 className="font-semibold text-white">Scholarships</h3>
             </div>
             <Link
-              href="/scholarships"
+              href="/education/scholarships"
               className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
             >
               View all
@@ -375,7 +375,7 @@ export default function RecommendationsWidget({
             {scholarships.map((rec) => (
               <Link
                 key={rec.item.id}
-                href={`/scholarships/${rec.item.id}`}
+                href={`/education/scholarships/${rec.item.id}`}
                 className="block p-4 rounded-xl border border-slate-700 hover:bg-slate-800/50 transition-all hover:border-amber-500/30"
               >
                 <div className="flex items-start justify-between gap-4">

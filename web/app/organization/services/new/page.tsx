@@ -84,7 +84,7 @@ export default function NewServicePage() {
         </p>
         <div className="flex gap-3">
           <Link
-            href="/organization/register"
+            href="/register?role=employer"
             className="inline-block rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 transition-colors"
           >
             Register as Organization
