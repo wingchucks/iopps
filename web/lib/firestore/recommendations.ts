@@ -225,8 +225,12 @@ function scoreJob(
   else if (locationMatch > 0.7) reasons.push("Near your location");
 
   // Experience match (based on description analysis)
+  // Guard against experience being a string or corrupted data instead of an array
+  const experienceText = Array.isArray(profile.experience)
+    ? profile.experience.map(e => e.description).join(" ")
+    : "";
   const experienceMatch = calculateTextSimilarity(
-    profile.experienceSummary || profile.experience?.map(e => e.description).join(" "),
+    profile.experienceSummary || experienceText,
     job.description
   );
   if (experienceMatch > 0.3) reasons.push("Relevant to your experience");
@@ -862,7 +866,9 @@ export async function getNetworkingRecommendations(
       }
 
       // Similar experience
-      if (profile.experience?.length && member.experience?.length) {
+      // Guard against experience being a string instead of an array
+      if (Array.isArray(profile.experience) && profile.experience.length &&
+          Array.isArray(member.experience) && member.experience.length) {
         const userCompanies = profile.experience.map(e => e.company.toLowerCase());
         const memberCompanies = member.experience.map(e => e.company.toLowerCase());
         const sharedCompanies = userCompanies.filter(c => memberCompanies.includes(c));
