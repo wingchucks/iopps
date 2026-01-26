@@ -184,22 +184,27 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
     return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  // Viewport overflow fix: Use min-h-[100dvh] with overflow-y-auto to allow scrolling
+  // when content exceeds viewport height (e.g., Step 3 with many intent cards).
+  // Tested at: 100% zoom 1366x768, 125% zoom, mobile viewports.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-5" />
+      <div className="fixed inset-0 bg-[url('/patterns/grid.svg')] opacity-5 pointer-events-none" />
 
-      {/* Skip Button */}
+      {/* Skip Button - fixed position so it stays visible while scrolling */}
       <button
         onClick={handleSkip}
-        className="absolute right-4 top-4 flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+        className="fixed right-4 top-4 z-10 flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
       >
         Skip for now
         <X className="h-4 w-4" />
       </button>
 
-      {/* Main Content */}
-      <div className="relative w-full max-w-2xl px-4">
+      {/* Scrollable content wrapper with vertical centering when content fits */}
+      <div className="flex min-h-[100dvh] items-center justify-center py-16 px-4">
+        {/* Main Content */}
+        <div className="relative w-full max-w-2xl">
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -480,6 +485,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
             {currentStep === totalSteps - 1 ? "Get Started" : "Continue"}
             {currentStep < totalSteps - 1 && <ChevronRight className="ml-1 h-4 w-4" />}
           </Button>
+        </div>
         </div>
       </div>
     </div>
