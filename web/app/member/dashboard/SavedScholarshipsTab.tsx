@@ -112,7 +112,7 @@ export default function SavedScholarshipsTab() {
                     </p>
                     <div className="mt-3 flex flex-col gap-2">
                         <Link
-                            href="/education?view=scholarships" // Assuming this route exists or similar
+                            href="/education/scholarships"
                             className="rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-2 text-sm font-semibold text-emerald-400 transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
                         >
                             Browse Scholarships →
@@ -170,7 +170,7 @@ export default function SavedScholarshipsTab() {
                                 : "No scholarships match your filters."}
                         </p>
                         <Link
-                            href="/education?view=scholarships"
+                            href="/education/scholarships"
                             className="mt-4 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:shadow-xl hover:shadow-emerald-500/50"
                         >
                             Find Funding

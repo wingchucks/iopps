@@ -73,7 +73,7 @@ export default function EducateProgramsPage() {
           </p>
         </div>
         <Link
-          href="/organization/programs/new"
+          href="/organization/education/programs/new"
           className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
         >
           <PlusIcon className="w-4 h-4" />
@@ -129,7 +129,7 @@ export default function EducateProgramsPage() {
           </p>
           {filter === 'all' && (
             <Link
-              href="/organization/programs/new"
+              href="/organization/education/programs/new"
               className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
             >
               <PlusIcon className="w-4 h-4" />

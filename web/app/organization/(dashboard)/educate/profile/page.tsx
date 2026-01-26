@@ -64,7 +64,7 @@ export default function EducateProfilePage() {
             Create your school profile to share educational programs and scholarships with Indigenous students.
           </p>
           <Link
-            href="/organization/school/create"
+            href="/organization/education/school/new"
             className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
           >
             Create School Profile

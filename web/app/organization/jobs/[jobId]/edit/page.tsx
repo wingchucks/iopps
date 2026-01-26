@@ -242,7 +242,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         active,
         jobVideo: jobVideo || undefined, // Set to undefined to remove if cleared
       });
-      router.push("/employer");
+      router.push("/organization/jobs");
     } catch (err) {
       console.error(err);
       setError(
@@ -259,7 +259,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
     setError(null);
     try {
       await deleteJobPosting(jobId);
-      router.push("/employer");
+      router.push("/organization/jobs");
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Could not delete job posting.");

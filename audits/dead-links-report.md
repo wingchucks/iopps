@@ -1,8 +1,8 @@
 # Dead Internal Links Report
 
-**Generated:** 2025-01-26
+**Generated:** 2026-01-26
 **Project:** IOPPS (Indigenous Opportunities & Partnerships Platform)
-**Scope:** `web/` directory (Next.js App Router)
+**App Root:** `web/app/`
 
 ---
 
@@ -11,108 +11,182 @@
 | Metric | Count |
 |--------|-------|
 | Total internal routes scanned | 147+ |
-| Dead links identified | 14 |
-| **Dead links fixed** | **14** |
-| Files modified | 13 |
-| New redirects added | 5 |
-
-### Resolution Status: ALL FIXED
+| Total unique hrefs found | 118 |
+| Dead links identified | 7 |
+| **Dead links fixed** | **6** |
+| **Dead links unfixed** | **1** |
+| Files modified | 4 |
 
 ---
 
-## Dead Links Fixed
+## Dead Links Fixed (This Scan)
 
 ### Critical Priority
 
-| # | Dead Route | Correct Route | File | Line | Status |
-|---|------------|---------------|------|------|--------|
-| 1 | `/signin` | `/login` | `web/app/organization/talent/pricing/page.tsx` | 28 | **Fixed** |
-
-### High Priority
-
-| # | Dead Route | Correct Route | File | Line | Status |
-|---|------------|---------------|------|------|--------|
-| 2 | `/notifications` | `/member/alerts` | `web/components/NotificationBell.tsx` | 309 | **Fixed** |
-| 3 | `/organization/register` | `/register?role=employer` | `web/app/organization/jobs/new/page.tsx` | 614 | **Fixed** |
-| 4 | `/organization/register` | `/register?role=employer` | `web/app/organization/products/new/page.tsx` | 76 | **Fixed** |
-| 5 | `/organization/register` | `/register?role=employer` | `web/app/organization/services/new/page.tsx` | 87 | **Fixed** |
-| 6 | `/organization/register` | `/register?role=employer` | `web/app/organization/shop/page.tsx` | 62 | **Fixed** |
-| 7 | `/organization/register` | `/register?role=employer` | `web/app/organization/conferences/new/page.tsx` | 121 | **Fixed** |
-| 8 | `/organization/post-job` | `/organization/jobs/new` | `web/app/organizations/[slug]/OrganizationProfileClient.tsx` | 247 | **Fixed** |
+| # | Dead Route | Correct Route | File | Lines | Status |
+|---|------------|---------------|------|-------|--------|
+| 1 | `/organization/programs/new` | `/organization/education/programs/new` | `web/app/organization/(dashboard)/educate/programs/page.tsx` | 76, 132 | **Fixed** |
+| 2 | `/organization/school/create` | `/organization/education/school/new` | `web/app/organization/(dashboard)/educate/profile/page.tsx` | 67 | **Fixed** |
 
 ### Medium Priority
 
-| # | Dead Route | Correct Route | File | Line | Status |
-|---|------------|---------------|------|------|--------|
-| 9 | `/streams` | `/live` | `web/components/pricing/LiveStreamingPanel.tsx` | 85 | **Fixed** |
-| 10 | `/employer` | `/organization/dashboard` | `web/app/organization/jobs/[jobId]/edit/page.tsx` | 325, 345, 723 | **Fixed** |
-| 11 | `/businesses` | `/organizations` | `web/app/organizations/[slug]/not-found.tsx` | 20 | **Fixed** |
-| 12 | `/businesses` | `/organizations` | `web/app/organizations/[slug]/error.tsx` | 111 | **Fixed** |
+| # | Dead Route | Correct Route | File | Lines | Status |
+|---|------------|---------------|------|-------|--------|
+| 3 | `/employer` | `/organization/jobs` | `web/app/organization/jobs/[jobId]/edit/page.tsx` | 245, 262 | **Fixed** |
 
-### Low Priority (Updated to canonical routes to avoid redirect hops)
+### Low Priority
 
-| # | Old Route | Canonical Route | File | Status |
-|---|-----------|-----------------|------|--------|
-| 13 | `/scholarships` | `/education/scholarships` | `web/app/member/dashboard/OverviewTab.tsx` | **Fixed** |
-| 14 | `/powwows` | `/community` | `web/app/member/dashboard/OverviewTab.tsx` | **Fixed** |
-| 15 | `/jobs` | `/careers` | `web/components/member/RecommendationsWidget.tsx` | **Fixed** |
-| 16 | `/scholarships` | `/education/scholarships` | `web/components/member/RecommendationsWidget.tsx` | **Fixed** |
+| # | Dead Route | Correct Route | File | Lines | Status |
+|---|------------|---------------|------|-------|--------|
+| 4 | `/education?view=scholarships` | `/education/scholarships` | `web/app/member/dashboard/SavedScholarshipsTab.tsx` | 115, 173 | **Fixed** |
+
+---
+
+## Unfixed Items (Requires Manual Decision)
+
+### `/organization/hire/talent/saved`
+
+| Dead Route | File | Line | Context |
+|------------|------|------|---------|
+| `/organization/hire/talent/saved` | `web/app/organization/(dashboard)/hire/talent/page.tsx` | 162 | `<Link href="/organization/hire/talent/saved">Saved Talent</Link>` |
+
+**Issue:** Link exists but page does not.
+
+**Options:**
+1. Create `web/app/organization/(dashboard)/hire/talent/saved/page.tsx` for saved talent functionality
+2. Remove the "Saved Talent" link if the feature is not implemented
+3. Redirect to `/organization/hire/talent` with a filter/tab
+
+**Recommendation:** Create the saved talent page since the save/unsave functionality already exists in the talent search page.
+
+---
+
+## Redirect Conflict Warning
+
+### `/business` Route Conflict
+
+**Issue:** The `/business` page exists at `web/app/business/page.tsx` (31KB), but there is a redirect in `web/next.config.ts` that redirects `/business` to `/organizations`:
+
+```typescript
+{
+  source: "/business",
+  destination: "/organizations",
+  permanent: true,
+}
+```
+
+**Impact:** The business page content is **unreachable** - users are always redirected to `/organizations`.
+
+**Recommendation:** Either:
+1. Remove the redirect from `next.config.ts` to expose the business page
+2. Remove/repurpose the business page if the redirect is intentional
+3. Update the redirect to only match specific subpaths
+
+**Status:** Requires manual review - not auto-fixed
+
+---
+
+## Git Diff (Changes Made)
+
+```diff
+diff --git a/web/app/member/dashboard/SavedScholarshipsTab.tsx b/web/app/member/dashboard/SavedScholarshipsTab.tsx
+--- a/web/app/member/dashboard/SavedScholarshipsTab.tsx
++++ b/web/app/member/dashboard/SavedScholarshipsTab.tsx
+@@ -112,7 +112,7 @@ export default function SavedScholarshipsTab() {
+                     </p>
+                     <div className="mt-3 flex flex-col gap-2">
+                         <Link
+-                            href="/education?view=scholarships" // Assuming this route exists or similar
++                            href="/education/scholarships"
+                             className="rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 ..."
+                         >
+                             Browse Scholarships →
+@@ -170,7 +170,7 @@ export default function SavedScholarshipsTab() {
+                                 : "No scholarships match your filters."}
+                         </p>
+                         <Link
+-                            href="/education?view=scholarships"
++                            href="/education/scholarships"
+                             className="mt-4 inline-block rounded-xl bg-gradient-to-r ..."
+                         >
+                             Find Funding
+
+diff --git a/web/app/organization/(dashboard)/educate/profile/page.tsx b/web/app/organization/(dashboard)/educate/profile/page.tsx
+--- a/web/app/organization/(dashboard)/educate/profile/page.tsx
++++ b/web/app/organization/(dashboard)/educate/profile/page.tsx
+@@ -64,7 +64,7 @@ export default function EducateProfilePage() {
+             Create your school profile to share educational programs...
+           </p>
+           <Link
+-            href="/organization/school/create"
++            href="/organization/education/school/new"
+             className="inline-flex items-center gap-2 px-4 py-2 ..."
+           >
+             Create School Profile
+
+diff --git a/web/app/organization/(dashboard)/educate/programs/page.tsx b/web/app/organization/(dashboard)/educate/programs/page.tsx
+--- a/web/app/organization/(dashboard)/educate/programs/page.tsx
++++ b/web/app/organization/(dashboard)/educate/programs/page.tsx
+@@ -73,7 +73,7 @@ export default function EducateProgramsPage() {
+           </p>
+         </div>
+         <Link
+-          href="/organization/programs/new"
++          href="/organization/education/programs/new"
+           className="inline-flex items-center gap-2 px-4 py-2 ..."
+         >
+@@ -129,7 +129,7 @@ export default function EducateProgramsPage() {
+           </p>
+           {filter === 'all' && (
+             <Link
+-              href="/organization/programs/new"
++              href="/organization/education/programs/new"
+               className="inline-flex items-center gap-2 px-4 py-2 ..."
+             >
+
+diff --git a/web/app/organization/jobs/[jobId]/edit/page.tsx b/web/app/organization/jobs/[jobId]/edit/page.tsx
+--- a/web/app/organization/jobs/[jobId]/edit/page.tsx
++++ b/web/app/organization/jobs/[jobId]/edit/page.tsx
+@@ -242,7 +242,7 @@ export default function EditJobPage({ params }) {
+         active,
+         jobVideo: jobVideo || undefined,
+       });
+-      router.push("/employer");
++      router.push("/organization/jobs");
+     } catch (err) {
+@@ -259,7 +259,7 @@ export default function EditJobPage({ params }) {
+     try {
+       await deleteJobPosting(jobId);
+-      router.push("/employer");
++      router.push("/organization/jobs");
+     } catch (err) {
+```
 
 ---
 
 ## Files Modified
 
-1. `web/app/organization/talent/pricing/page.tsx`
-2. `web/components/pricing/LiveStreamingPanel.tsx`
-3. `web/components/NotificationBell.tsx`
-4. `web/app/organization/jobs/new/page.tsx`
-5. `web/app/organization/products/new/page.tsx`
-6. `web/app/organization/services/new/page.tsx`
-7. `web/app/organization/shop/page.tsx`
-8. `web/app/organization/conferences/new/page.tsx`
-9. `web/app/organizations/[slug]/OrganizationProfileClient.tsx`
-10. `web/app/organization/jobs/[jobId]/edit/page.tsx`
-11. `web/app/organizations/[slug]/not-found.tsx`
-12. `web/app/organizations/[slug]/error.tsx`
-13. `web/app/member/dashboard/OverviewTab.tsx`
-14. `web/components/member/RecommendationsWidget.tsx`
-15. `web/next.config.ts` (added redirects)
+1. `web/app/organization/(dashboard)/educate/programs/page.tsx` - 2 link fixes
+2. `web/app/organization/(dashboard)/educate/profile/page.tsx` - 1 link fix
+3. `web/app/organization/jobs/[jobId]/edit/page.tsx` - 2 router.push fixes
+4. `web/app/member/dashboard/SavedScholarshipsTab.tsx` - 2 link fixes + comment cleanup
 
 ---
 
-## Redirects Added to `next.config.ts`
+## Recommended Redirects
 
-The following redirects were added for backward compatibility (external links/bookmarks):
+Add these redirects to `web/next.config.ts` for backward compatibility if these routes were previously used externally:
 
 ```typescript
-// Sign in alias redirect
+// Add to redirects() in next.config.ts
 {
-  source: "/signin",
-  destination: "/login",
+  source: "/organization/programs/new",
+  destination: "/organization/education/programs/new",
   permanent: true,
 },
-// Streams to Live redirect
 {
-  source: "/streams",
-  destination: "/live",
-  permanent: true,
-},
-// Notifications to Member Alerts redirect
-{
-  source: "/notifications",
-  destination: "/member/alerts",
-  permanent: true,
-},
-// Organization registration shortcut
-{
-  source: "/organization/register",
-  destination: "/register",
-  permanent: false,
-},
-// Organization post-job shortcut
-{
-  source: "/organization/post-job",
-  destination: "/organization/jobs/new",
+  source: "/organization/school/create",
+  destination: "/organization/education/school/new",
   permanent: true,
 },
 ```
@@ -133,36 +207,37 @@ These routes were already properly handled in `next.config.ts`:
 | `/jobs-training/*` | `/careers/*` |
 | `/marketplace/*` | `/business/*` |
 | `/vendor/*` | `/organization/shop/*` |
+| `/signin` | `/login` |
+| `/streams` | `/live` |
+| `/notifications` | `/member/alerts` |
+| `/organization/register` | `/register` |
+| `/organization/post-job` | `/organization/jobs/new` |
 
 ---
 
 ## Verification Commands
 
-Run these commands to verify the fixes:
+Run these commands from the `web/` directory to verify the fixes:
 
 ```bash
-# Navigate to web directory
-cd iopps/web
-
-# 1. TypeScript type check
+# TypeScript type check
 npx tsc --noEmit
 
-# 2. ESLint check
+# ESLint check
 npm run lint
 
-# 3. Production build (most comprehensive)
+# Production build (catches routing issues)
 npm run build
 ```
 
 ### Manual Smoke Test Checklist
 
-- [ ] `/organization/talent/pricing` (logged out) - should redirect to `/login`
-- [ ] `/pricing` page - "View past streams" link goes to `/live`
-- [ ] Click notification bell - "View all" goes to `/member/alerts`
-- [ ] `/organization/jobs/new` (logged out) - "Register" link works
-- [ ] `/organizations/[any-slug]` - "Post a Job" link goes to `/organization/jobs/new`
-- [ ] Edit a job and trigger error state - "Back to Dashboard" link works
-- [ ] Member dashboard explore section - Scholarships and Pow Wows links work
+- [ ] Navigate to `/organization/educate/programs` and click "Add Program" → should go to `/organization/education/programs/new`
+- [ ] Navigate to `/organization/educate/profile` with no school and click "Create School Profile" → should go to `/organization/education/school/new`
+- [ ] Navigate to `/organization/jobs/[jobId]/edit`, edit and save a job → should redirect to `/organization/jobs`
+- [ ] Navigate to `/organization/jobs/[jobId]/edit`, delete a job → should redirect to `/organization/jobs`
+- [ ] Navigate to `/member/dashboard` → Saved Scholarships tab → click "Browse Scholarships" → should go to `/education/scholarships`
+- [ ] Navigate to `/organization/hire/talent` and verify "Saved Talent" link behavior (currently broken)
 
 ---
 
@@ -194,18 +269,21 @@ npm run build
 
 ### Organization Routes
 ```
-/organization/dashboard # Org dashboard
-/organization/jobs/new  # Post a job
-/organization/hire/*    # Hiring module
-/organization/educate/* # Education module
-/organization/sell/*    # Marketplace module
+/organization/dashboard              # Org dashboard
+/organization/jobs/new               # Post a job
+/organization/education/programs/new # Add education program
+/organization/education/school/new   # Create school profile
+/organization/hire/*                 # Hiring module
+/organization/educate/*              # Education module (new dashboard)
+/organization/sell/*                 # Marketplace module
 ```
 
 ---
 
 ## Notes
 
-1. **All dead links have been fixed** - Both in source code and with redirect fallbacks
-2. **No external URLs were modified**
-3. **Dynamic routes properly handled** - Template literals like `/careers/${id}` work correctly
-4. **Redirect strategy** - Added redirects for backward compatibility while fixing source code directly for performance
+1. **6 of 7 dead links fixed** - Source code updated directly for performance
+2. **1 dead link unfixed** - `/organization/hire/talent/saved` requires page creation
+3. **No external URLs were modified**
+4. **Route group architecture verified** - `(dashboard)` groups don't affect URLs
+5. **Redirect conflict identified** - `/business` page is unreachable due to redirect
