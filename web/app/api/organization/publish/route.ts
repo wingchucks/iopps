@@ -5,6 +5,10 @@ import { FieldValue } from "firebase-admin/firestore";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// Character limits for profile fields
+const ABOUT_MAX_CHARS = 750;
+const STORY_MAX_CHARS = 500;
+
 // Generate URL-friendly slug from organization name
 function generateSlug(name: string): string {
   return name
@@ -54,6 +58,7 @@ export async function POST(req: NextRequest) {
       logoUrl,
       bannerUrl,
       description,
+      story,
       website,
       enabledModules,
     } = body;
@@ -66,12 +71,50 @@ export async function POST(req: NextRequest) {
       hasLogo: !!logoUrl,
       hasBanner: !!bannerUrl,
       hasDescription: !!description,
+      hasStory: !!story,
     });
 
     if (!organizationName || !orgType) {
       console.log(`[PUBLISH] Missing required fields - organizationName: "${organizationName}", orgType: "${orgType}"`);
       return NextResponse.json(
         { error: "Missing required fields: organizationName and orgType" },
+        { status: 400 }
+      );
+    }
+
+    // Validate About and Story fields for publishing
+    const aboutTrimmed = (description || "").trim();
+    const storyTrimmed = (story || "").trim();
+
+    if (!aboutTrimmed || !storyTrimmed) {
+      console.log(`[PUBLISH] Missing About or Story - about: ${aboutTrimmed.length} chars, story: ${storyTrimmed.length} chars`);
+      return NextResponse.json(
+        {
+          error: `Complete "About" (max ${ABOUT_MAX_CHARS} chars) and "Our Story" (max ${STORY_MAX_CHARS} chars) to publish your profile.`,
+          code: "MISSING_REQUIRED_CONTENT",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (aboutTrimmed.length > ABOUT_MAX_CHARS) {
+      console.log(`[PUBLISH] About exceeds limit - ${aboutTrimmed.length} > ${ABOUT_MAX_CHARS}`);
+      return NextResponse.json(
+        {
+          error: `About must be ${ABOUT_MAX_CHARS} characters or less (currently ${aboutTrimmed.length}).`,
+          code: "ABOUT_TOO_LONG",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (storyTrimmed.length > STORY_MAX_CHARS) {
+      console.log(`[PUBLISH] Story exceeds limit - ${storyTrimmed.length} > ${STORY_MAX_CHARS}`);
+      return NextResponse.json(
+        {
+          error: `Our Story must be ${STORY_MAX_CHARS} characters or less (currently ${storyTrimmed.length}).`,
+          code: "STORY_TOO_LONG",
+        },
         { status: 400 }
       );
     }
@@ -123,7 +166,8 @@ export async function POST(req: NextRequest) {
         location: city && province ? `${city}, ${province}` : province || city || "",
         logoUrl: logoUrl || "",
         bannerUrl: bannerUrl || existingData?.bannerUrl || "",
-        description: description || existingData?.description || "",
+        description: aboutTrimmed,
+        story: storyTrimmed,
         links: { website: website || "" },
         enabledModules: enabledModules || [],
         // Only set PUBLISHED status if employer is already approved
@@ -156,7 +200,8 @@ export async function POST(req: NextRequest) {
         location: city && province ? `${city}, ${province}` : province || city || "",
         logoUrl: logoUrl || "",
         bannerUrl: bannerUrl || "",
-        description: description || "",
+        description: aboutTrimmed,
+        story: storyTrimmed,
         links: { website: website || "" },
         enabledModules: enabledModules || [],
         publicationStatus: "PENDING_APPROVAL", // New profiles require admin approval

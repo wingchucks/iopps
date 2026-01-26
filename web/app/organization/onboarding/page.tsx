@@ -114,13 +114,18 @@ function deriveOrgType(modules: OrganizationModule[], badge: OrgType | 'AUTO'): 
 
 type Step = 1 | 2 | 3 | 4;
 
+// Character limits for profile fields
+const ABOUT_MAX_CHARS = 750;
+const STORY_MAX_CHARS = 500;
+
 interface FormData {
   organizationName: string;
   province: string;
   city: string;
   logoUrl: string;
   coverImageUrl: string;
-  description: string;
+  description: string; // "About" field
+  story: string; // "Our Story" field
   website: string;
   enabledModules: OrganizationModule[];
   badgePreference: OrgType | 'AUTO';
@@ -158,6 +163,7 @@ function OnboardingContent() {
     logoUrl: '',
     coverImageUrl: '',
     description: '',
+    story: '',
     website: '',
     enabledModules: ['educate', 'host', 'funding'], // Free modules ON by default
     badgePreference: 'AUTO',
@@ -197,6 +203,7 @@ function OnboardingContent() {
           logoUrl: profile.logoUrl || '',
           coverImageUrl: (profile as any).coverImageUrl || (profile as any).bannerUrl || '',
           description: (profile as any).description || '',
+          story: (profile as OrganizationProfile).story || '',
           website: (profile as OrganizationProfile).links?.website || profile.website || '',
           enabledModules: profile.enabledModules || ['educate', 'host', 'funding'],
           badgePreference: (profile as OrganizationProfile).badgePreference || 'AUTO',
@@ -326,6 +333,7 @@ function OnboardingContent() {
           logoUrl: formData.logoUrl,
           bannerUrl: formData.coverImageUrl,
           description: formData.description,
+          story: formData.story,
           links: { website: formData.website },
           enabledModules: formData.enabledModules,
           badgePreference: formData.badgePreference,
@@ -358,6 +366,31 @@ function OnboardingContent() {
   const handlePublish = async () => {
     if (!user || !formData.organizationName) return;
     if (!validateStep(1) || !validateStep(2)) return;
+
+    // Validate About and Story fields before publishing
+    const aboutTrimmed = formData.description.trim();
+    const storyTrimmed = formData.story.trim();
+
+    if (!aboutTrimmed || !storyTrimmed) {
+      setError(
+        `Complete "About" (max ${ABOUT_MAX_CHARS} chars) and "Our Story" (max ${STORY_MAX_CHARS} chars) to publish your profile.`
+      );
+      // Navigate to branding step if not there
+      if (step !== 3) setStep(3);
+      return;
+    }
+
+    if (aboutTrimmed.length > ABOUT_MAX_CHARS) {
+      setError(`About must be ${ABOUT_MAX_CHARS} characters or less (currently ${aboutTrimmed.length}).`);
+      if (step !== 3) setStep(3);
+      return;
+    }
+
+    if (storyTrimmed.length > STORY_MAX_CHARS) {
+      setError(`Our Story must be ${STORY_MAX_CHARS} characters or less (currently ${storyTrimmed.length}).`);
+      if (step !== 3) setStep(3);
+      return;
+    }
 
     const derivedOrgType = deriveOrgType(formData.enabledModules, formData.badgePreference);
 
@@ -395,6 +428,7 @@ function OnboardingContent() {
           logoUrl: formData.logoUrl,
           bannerUrl: formData.coverImageUrl,
           description: formData.description,
+          story: formData.story,
           website: formData.website,
           enabledModules: formData.enabledModules,
         }),
@@ -729,21 +763,58 @@ function OnboardingContent() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* About (Description) */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                Description
+                About *
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => updateFormData({ description: e.target.value })}
-                placeholder="Tell people about your organization..."
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, ABOUT_MAX_CHARS);
+                  updateFormData({ description: value });
+                }}
+                placeholder="Tell people about your organization, mission, and what makes you unique..."
                 rows={4}
-                className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 resize-none"
+                className={`w-full rounded-xl bg-slate-900 border px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none ${
+                  formData.description.length > ABOUT_MAX_CHARS
+                    ? 'border-red-500'
+                    : 'border-slate-700 focus:border-teal-500'
+                }`}
               />
-              <p className="mt-1 text-xs text-slate-500">
-                This will be shown on your public profile
-              </p>
+              <div className="mt-1 flex justify-between text-xs">
+                <span className="text-slate-500">Required for publishing</span>
+                <span className={formData.description.length > ABOUT_MAX_CHARS ? 'text-red-400' : 'text-slate-500'}>
+                  {formData.description.length} / {ABOUT_MAX_CHARS}
+                </span>
+              </div>
+            </div>
+
+            {/* Our Story */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Our Story *
+              </label>
+              <textarea
+                value={formData.story}
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, STORY_MAX_CHARS);
+                  updateFormData({ story: value });
+                }}
+                placeholder="Share your organization's journey, values, and connection to community..."
+                rows={4}
+                className={`w-full rounded-xl bg-slate-900 border px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none ${
+                  formData.story.length > STORY_MAX_CHARS
+                    ? 'border-red-500'
+                    : 'border-slate-700 focus:border-teal-500'
+                }`}
+              />
+              <div className="mt-1 flex justify-between text-xs">
+                <span className="text-slate-500">Required for publishing</span>
+                <span className={formData.story.length > STORY_MAX_CHARS ? 'text-red-400' : 'text-slate-500'}>
+                  {formData.story.length} / {STORY_MAX_CHARS}
+                </span>
+              </div>
             </div>
 
             {/* Website */}

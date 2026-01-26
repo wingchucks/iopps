@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -21,9 +21,7 @@ import {
   PencilIcon,
   EyeIcon,
   ArrowTopRightOnSquareIcon,
-  XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { getAuth } from 'firebase/auth';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
 import type {
@@ -106,29 +104,14 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const [copied, setCopied] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Story editor modal state
-  const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
-  const [currentStory, setCurrentStory] = useState(org.story || '');
+  // Story is read-only on public profile - editing happens via Edit Profile
+  const currentStory = org.story || '';
 
   // Check if current user is owner or admin
   const isOwner = user?.uid === org.userId;
   const isAdmin = role === 'admin';
   const canEdit = isOwner || isAdmin;
 
-  // Handler for opening story editor
-  const handleEditStory = useCallback(() => {
-    if (!user) {
-      // Redirect to login with return URL
-      router.push(`/login?returnTo=/organizations/${org.slug}`);
-      return;
-    }
-    setIsStoryModalOpen(true);
-  }, [user, router, org.slug]);
-
-  // Handler for story save success
-  const handleStorySaveSuccess = useCallback((newStory: string) => {
-    setCurrentStory(newStory);
-  }, []);
 
   // Check if profile requires authentication to view
   const isPrivateProfile = org.publicationStatus !== 'PUBLISHED' || org.status !== 'approved';
@@ -458,7 +441,6 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             org={org}
             canEdit={canEdit}
             currentStory={currentStory}
-            onEditStory={handleEditStory}
           />
         )}
         {activeTab === 'jobs' && (
@@ -478,14 +460,6 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         )}
       </div>
 
-      {/* Story Editor Modal */}
-      <StoryEditorModal
-        isOpen={isStoryModalOpen}
-        onClose={() => setIsStoryModalOpen(false)}
-        orgId={org.id}
-        initialStory={currentStory}
-        onSaveSuccess={handleStorySaveSuccess}
-      />
     </PageShell>
   );
 }
@@ -495,12 +469,10 @@ function OverviewTab({
   org,
   canEdit,
   currentStory,
-  onEditStory,
 }: {
   org: OrganizationProfile;
   canEdit: boolean;
   currentStory: string;
-  onEditStory: () => void;
 }) {
   return (
     <div className="grid gap-8 lg:grid-cols-3">
@@ -526,17 +498,7 @@ function OverviewTab({
         {/* Story */}
         {(currentStory || canEdit) && (
           <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Our Story</h2>
-              {currentStory && canEdit && (
-                <button
-                  onClick={onEditStory}
-                  className="text-sm text-teal-400 hover:text-teal-300 transition-colors"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
+            <h2 className="text-lg font-semibold text-white mb-4">Our Story</h2>
             {currentStory ? (
               <div className="prose prose-invert prose-sm max-w-none">
                 <p className="text-slate-300 whitespace-pre-wrap">{currentStory}</p>
@@ -545,8 +507,8 @@ function OverviewTab({
               <EmptyStateCard
                 title="Share your story"
                 description="Share your organization's journey, values, and connection to community."
-                ctaText="Add Story"
-                onCtaClick={onEditStory}
+                ctaText="Edit Profile"
+                ctaHref="/organization/onboarding?step=3"
               />
             ) : null}
           </section>
@@ -1188,146 +1150,3 @@ function EmptyStateCard({
   );
 }
 
-// Story Editor Modal Component
-function StoryEditorModal({
-  isOpen,
-  onClose,
-  orgId,
-  initialStory,
-  onSaveSuccess,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  orgId: string;
-  initialStory: string;
-  onSaveSuccess: (newStory: string) => void;
-}) {
-  const [story, setStory] = useState(initialStory);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  // Reset story when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setStory(initialStory);
-      setError('');
-    }
-  }, [isOpen, initialStory]);
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError('');
-
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        setError('You must be logged in to save.');
-        setSaving(false);
-        return;
-      }
-
-      const idToken = await user.getIdToken();
-
-      const response = await fetch('/api/organization/story', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ orgId, story }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to save story');
-      }
-
-      onSaveSuccess(story.trim());
-      onClose();
-    } catch (err: any) {
-      console.error('Error saving story:', err);
-      setError(err.message || 'Failed to save. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-2xl rounded-2xl bg-slate-800 border border-slate-700 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <h2 className="text-xl font-semibold text-white">Edit Your Story</h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6">
-          <p className="text-sm text-slate-400 mb-4">
-            Share your organization&apos;s journey, values, and connection to community.
-            This will be displayed on your public profile.
-          </p>
-
-          {error && (
-            <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
-          <textarea
-            value={story}
-            onChange={(e) => setStory(e.target.value)}
-            placeholder="Tell your story..."
-            rows={8}
-            className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 resize-none"
-          />
-
-          <p className="mt-2 text-xs text-slate-500">
-            {story.length} characters
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-700">
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="rounded-full px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 transition-colors disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {saving ? (
-              <>
-                <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
-                Saving...
-              </>
-            ) : (
-              'Save Story'
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}

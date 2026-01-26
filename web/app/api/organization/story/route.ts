@@ -5,6 +5,9 @@ import { FieldValue } from "firebase-admin/firestore";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// Character limit for story field
+const STORY_MAX_CHARS = 500;
+
 /**
  * PUT /api/organization/story
  *
@@ -43,6 +46,18 @@ export async function PUT(req: NextRequest) {
     if (typeof story !== "string") {
       return NextResponse.json(
         { error: "Story must be a string" },
+        { status: 400 }
+      );
+    }
+
+    // Validate story length
+    const storyTrimmed = story.trim();
+    if (storyTrimmed.length > STORY_MAX_CHARS) {
+      return NextResponse.json(
+        {
+          error: `Our Story must be ${STORY_MAX_CHARS} characters or less (currently ${storyTrimmed.length}).`,
+          code: "STORY_TOO_LONG",
+        },
         { status: 400 }
       );
     }
