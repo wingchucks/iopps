@@ -1112,5 +1112,78 @@ service cloud.firestore {
       // Only admins can delete
       allow delete: if isAdminOrModerator();
     }
+
+    // ===========================================================================
+    // USER BADGES (Achievement System)
+    // ===========================================================================
+    match /user_badges/{badgeId} {
+      // Users can read badges where they are the owner
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Admins can read all badges
+      allow read: if isAdminOrModerator();
+
+      // Users can create badges for themselves (when earning them)
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own badges (e.g., mark as notified)
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ===========================================================================
+    // USER STREAKS (Activity Tracking)
+    // ===========================================================================
+    match /user_streaks/{userId} {
+      // Users can read their own streak
+      allow read: if isSignedIn() && request.auth.uid == userId;
+
+      // Admins can read all streaks
+      allow read: if isAdminOrModerator();
+
+      // Users can create/update their own streak
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ===========================================================================
+    // MEMBER SETTINGS (Privacy, Notifications, Intents)
+    // ===========================================================================
+    match /member_settings/{userId} {
+      // Users can read their own settings
+      allow read: if isSignedIn() && request.auth.uid == userId;
+
+      // Admins can read all settings
+      allow read: if isAdminOrModerator();
+
+      // Users can create/update their own settings
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ===========================================================================
+    // MEMBER PROFILE VIEWS (Member Analytics)
+    // ===========================================================================
+    match /member_profile_views/{viewId} {
+      // Members can read views of their own profile
+      allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+
+      // Admins can read all
+      allow read: if isAdminOrModerator();
+
+      // Anyone signed in can create view events (tracking)
+      allow create: if isSignedIn();
+
+      // No updates or deletes from client
+      allow update, delete: if false;
+    }
   }
 }
