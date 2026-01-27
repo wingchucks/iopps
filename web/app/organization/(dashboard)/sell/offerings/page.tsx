@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
 import { listUserOfferings } from '@/lib/firestore';
 import type { UnifiedOffering, OfferingType } from '@/lib/types';
+import EditProductModal from '@/components/organization/sell/EditProductModal';
+import EditServiceModal from '@/components/organization/sell/EditServiceModal';
 import {
   CubeIcon,
   WrenchScrewdriverIcon,
@@ -21,22 +23,39 @@ export default function SellOfferingsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | OfferingType>('all');
 
-  useEffect(() => {
-    async function loadOfferings() {
-      if (!user) return;
+  // Edit modal state
+  const [editingProduct, setEditingProduct] = useState<string | null>(null);
+  const [editingService, setEditingService] = useState<string | null>(null);
 
-      try {
-        const offeringsList = await listUserOfferings(user.uid);
-        setOfferings(offeringsList);
-      } catch (error) {
-        console.error('Error loading offerings:', error);
-      } finally {
-        setLoading(false);
-      }
+  const loadOfferings = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const offeringsList = await listUserOfferings(user.uid);
+      setOfferings(offeringsList);
+    } catch (error) {
+      console.error('Error loading offerings:', error);
+    } finally {
+      setLoading(false);
     }
-
-    loadOfferings();
   }, [user]);
+
+  useEffect(() => {
+    loadOfferings();
+  }, [loadOfferings]);
+
+  const handleEditClick = (offering: UnifiedOffering) => {
+    if (offering.type === 'product') {
+      setEditingProduct(offering.id);
+    } else {
+      setEditingService(offering.id);
+    }
+  };
+
+  const handleEditSaved = () => {
+    // Refresh the offerings list
+    loadOfferings();
+  };
 
   const filteredOfferings = activeTab === 'all'
     ? offerings
@@ -58,7 +77,7 @@ export default function SellOfferingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Offerings</h1>
+          <h1 className="text-2xl font-bold text-slate-50">Products & Services</h1>
           <p className="text-slate-400 mt-1">
             Manage your products and services
           </p>
@@ -203,18 +222,39 @@ export default function SellOfferingsPage() {
                     <EyeIcon className="w-3.5 h-3.5" />
                     {offering.viewCount} views
                   </span>
-                  <Link
-                    href="/organization/shop/dashboard"
+                  <button
+                    onClick={() => handleEditClick(offering)}
                     className="flex items-center gap-1 text-accent hover:underline"
                   >
                     <PencilIcon className="w-3.5 h-3.5" />
                     Edit
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {editingProduct && user && (
+        <EditProductModal
+          isOpen={!!editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSaved={handleEditSaved}
+          productId={editingProduct}
+          userId={user.uid}
+        />
+      )}
+
+      {/* Edit Service Modal */}
+      {editingService && (
+        <EditServiceModal
+          isOpen={!!editingService}
+          onClose={() => setEditingService(null)}
+          onSaved={handleEditSaved}
+          serviceId={editingService}
+        />
       )}
     </div>
   );

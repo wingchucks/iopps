@@ -229,7 +229,7 @@ export default function NavigationSidebar({
               <NavGroup title="Sell" color="teal">
                 <NavItem
                   href="/organization/sell/offerings"
-                  label="Offerings"
+                  label="Products & Services"
                   icon={CubeIcon}
                   active={isActive('/organization/sell/offerings')}
                   onClick={onNavigate}
