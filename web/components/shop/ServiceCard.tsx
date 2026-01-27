@@ -130,6 +130,13 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
         {service.nation && (
           <p className="mt-2 text-xs text-slate-500 italic">{service.nation}</p>
         )}
+
+        {/* CTA */}
+        <div className="mt-4 pt-4 border-t border-slate-700/50">
+          <span className="block w-full rounded-lg bg-indigo-600 py-2 text-center text-sm font-semibold text-white group-hover:bg-indigo-500 transition-colors">
+            View Service
+          </span>
+        </div>
       </div>
     </Link>
   );

@@ -72,10 +72,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
             <div className="flex bg-slate-900/50 p-3">
                 <Link
-                    href={`/marketplace/services/${service.slug || service.id}`}
-                    className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white opacity-0 transition-all group-hover:opacity-100 hover:bg-blue-500"
+                    href={`/business/services/${service.id}`}
+                    className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-500"
                 >
-                    View Details
+                    View Service
                 </Link>
             </div>
         </div>
