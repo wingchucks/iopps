@@ -186,7 +186,7 @@ export default function NewProductPage() {
           href="/organization/sell/offerings"
           className="text-sm text-slate-400 hover:text-white transition-colors"
         >
-          ← Back to Offerings
+          ← Back to Products & Services
         </Link>
       </div>
 
