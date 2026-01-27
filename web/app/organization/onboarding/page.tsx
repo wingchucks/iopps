@@ -488,7 +488,39 @@ function OnboardingContent() {
   }
 
   const isPublished = existingProfile?.publicationStatus === 'PUBLISHED';
+  const isRejected = existingProfile?.status === 'rejected';
+  const isPending = existingProfile?.status === 'pending';
   const derivedBadge = deriveOrgType(formData.enabledModules, formData.badgePreference);
+
+  // Determine the appropriate button text based on profile status
+  const getSubmitButtonText = () => {
+    if (loading) {
+      if (isPublished) return 'Updating...';
+      if (isRejected) return 'Resubmitting...';
+      return 'Submitting...';
+    }
+    if (uploading || uploadingCover) return 'Uploading image...';
+    if (isPublished) return 'Update Profile';
+    if (isRejected) return 'Resubmit for Approval';
+    if (isPending) return 'Update & Resubmit';
+    return 'Submit for Approval';
+  };
+
+  // Get the page heading based on status
+  const getLaunchHeading = () => {
+    if (isPublished) return 'Review your changes';
+    if (isRejected) return 'Ready to resubmit?';
+    if (isPending) return 'Update your submission';
+    return 'Ready to submit?';
+  };
+
+  // Get the page description based on status
+  const getLaunchDescription = () => {
+    if (isPublished) return 'Confirm your updates to save them to your profile';
+    if (isRejected) return 'Make any needed changes and resubmit for approval';
+    if (isPending) return 'Your profile is pending review. You can update it while waiting.';
+    return 'Submit your profile for review to appear in the Organizations directory';
+  };
 
   return (
     <PageShell className="max-w-3xl">
@@ -920,17 +952,32 @@ function OnboardingContent() {
               )
             ) : (
               <>
-                <div className="mx-auto h-20 w-20 rounded-full bg-teal-500/10 flex items-center justify-center">
-                  <RocketLaunchIcon className="h-10 w-10 text-teal-500" />
+                {/* Rejection reason banner if previously rejected */}
+                {isRejected && existingProfile?.rejectionReason && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-left mb-6">
+                    <div className="flex items-start gap-3">
+                      <svg className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-medium text-red-200">Previous Rejection Reason</p>
+                        <p className="text-sm text-red-300/80 mt-1">{existingProfile.rejectionReason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className={`mx-auto h-20 w-20 rounded-full flex items-center justify-center ${
+                  isRejected ? 'bg-amber-500/10' : 'bg-teal-500/10'
+                }`}>
+                  <RocketLaunchIcon className={`h-10 w-10 ${isRejected ? 'text-amber-500' : 'text-teal-500'}`} />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-white">
-                    {isPublished ? 'Review your changes' : 'Ready to launch?'}
+                    {getLaunchHeading()}
                   </h1>
                   <p className="mt-2 text-slate-400">
-                    {isPublished
-                      ? 'Confirm your updates to save them to your profile'
-                      : 'Publish your profile to appear in the Organizations directory'}
+                    {getLaunchDescription()}
                   </p>
                 </div>
 
@@ -998,20 +1045,15 @@ function OnboardingContent() {
                     disabled={loading || uploading || uploadingCover}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
                   >
-                    {loading ? (
+                    {loading || uploading || uploadingCover ? (
                       <>
                         <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
-                        {isPublished ? 'Updating...' : 'Publishing...'}
-                      </>
-                    ) : uploading || uploadingCover ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin border-2 border-white border-t-transparent rounded-full" />
-                        Uploading image...
+                        {getSubmitButtonText()}
                       </>
                     ) : (
                       <>
                         <RocketLaunchIcon className="h-5 w-5" />
-                        {isPublished ? 'Update Profile' : 'Publish Profile'}
+                        {getSubmitButtonText()}
                       </>
                     )}
                   </button>
@@ -1057,7 +1099,7 @@ function OnboardingContent() {
                 </>
               ) : (
                 <>
-                  {step === 3 ? 'Review & Publish' : 'Continue'}
+                  {step === 3 ? (isRejected ? 'Review & Resubmit' : isPublished ? 'Review & Update' : 'Review & Submit') : 'Continue'}
                   <ArrowRightIcon className="h-4 w-4" />
                 </>
               )}

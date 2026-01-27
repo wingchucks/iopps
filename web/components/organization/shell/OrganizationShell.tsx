@@ -8,7 +8,7 @@ import type { EmployerProfile, OrganizationModule, OrganizationProfile } from '@
 import NavigationSidebar from './NavigationSidebar';
 import MobileNavBar from './MobileNavBar';
 import ModuleSwitcher from './ModuleSwitcher';
-import { Bars3Icon, XMarkIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ClockIcon, XCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 interface OrganizationShellProps {
   children: React.ReactNode;
@@ -172,6 +172,30 @@ export default function OrganizationShell({
 
           {/* Page Content */}
           <div className="p-4 lg:p-6 pt-20 lg:pt-6 pb-24 lg:pb-6">
+            {/* Incomplete Profile Banner */}
+            {profile.status === 'incomplete' && (
+              <div className="mb-6 rounded-xl border border-slate-600/50 bg-slate-800/50 p-4 lg:p-6">
+                <div className="flex items-start gap-3">
+                  <PencilSquareIcon className="h-6 w-6 lg:h-8 lg:w-8 text-slate-400 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-200">Complete Your Profile</h3>
+                    <p className="text-sm text-slate-400 mt-1">
+                      Finish setting up your organization profile to submit for approval and become visible in the directory.
+                    </p>
+                    <Link
+                      href="/organization/onboarding"
+                      className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors"
+                    >
+                      Complete Profile Setup
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Pending Approval Banner */}
             {profile.status === 'pending' && (
               <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 lg:p-6">
@@ -183,6 +207,30 @@ export default function OrganizationShell({
                       Your organization is being reviewed. You can explore the dashboard and create jobs,
                       but they won&apos;t be visible to job seekers until your account is approved.
                     </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Rejected Banner */}
+            {profile.status === 'rejected' && (
+              <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/5 p-4 lg:p-6">
+                <div className="flex items-start gap-3">
+                  <XCircleIcon className="h-6 w-6 lg:h-8 lg:w-8 text-red-400 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-200">Application Not Approved</h3>
+                    <p className="text-sm text-red-300/80 mt-1">
+                      {profile.rejectionReason || 'Your application was not approved. Please review and update your profile, then resubmit for approval.'}
+                    </p>
+                    <Link
+                      href="/organization/onboarding"
+                      className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-red-300 hover:text-red-200 transition-colors"
+                    >
+                      Edit &amp; Resubmit
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
               </div>

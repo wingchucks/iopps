@@ -1,7 +1,7 @@
 import type { Timestamp } from "firebase/firestore";
 
 export type UserRole = "community" | "employer" | "moderator" | "admin";
-export type EmployerStatus = "pending" | "approved" | "rejected" | "deleted";
+export type EmployerStatus = "incomplete" | "pending" | "approved" | "rejected" | "deleted";
 
 export type OpportunityType = 'job' | 'event' | 'scholarship' | 'training' | 'business';
 
@@ -213,9 +213,15 @@ export interface EmployerProfile {
   companyIntroVideo?: CompanyVideo; // "About Us" intro video
   interviews?: Interview[]; // IOPPS interviews + employer promo videos (distinguished by isIOPPSInterview flag)
   status?: EmployerStatus;
+  // Publication status for UI display
+  publicationStatus?: 'DRAFT' | 'PENDING_APPROVAL' | 'PUBLISHED' | 'REJECTED' | 'SUSPENDED';
+  // Approval tracking
   approvedAt?: Timestamp | null;
   approvedBy?: string;
   rejectionReason?: string;
+  // Submission tracking for approval workflow
+  submittedForReviewAt?: Timestamp | null;
+  resubmittedAt?: Timestamp | null;
   subscription?: EmployerSubscription;
   // Vendor subscription (for Shop Indigenous vendors linked to org)
   vendorSubscription?: {

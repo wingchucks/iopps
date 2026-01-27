@@ -30,6 +30,7 @@ import {
   CurrencyDollarIcon,
   SparklesIcon,
   KeyIcon,
+  DocumentIcon,
 } from "@heroicons/react/24/outline";
 
 type SortOption = "newest" | "oldest" | "name";
@@ -473,7 +474,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
     // Apply status filter
     if (filter !== "all") {
-      result = result.filter((emp) => (emp.status || "pending") === filter);
+      result = result.filter((emp) => (emp.status || "incomplete") === filter);
     }
 
     // Apply search
@@ -519,10 +520,11 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
   // Calculate stats
   const stats = useMemo(() => {
     const total = allEmployers.length;
-    const pending = allEmployers.filter((e) => (e.status || "pending") === "pending").length;
+    const incomplete = allEmployers.filter((e) => e.status === "incomplete" || !e.status).length;
+    const pending = allEmployers.filter((e) => e.status === "pending").length;
     const approved = allEmployers.filter((e) => e.status === "approved").length;
     const rejected = allEmployers.filter((e) => e.status === "rejected").length;
-    return { total, pending, approved, rejected };
+    return { total, incomplete, pending, approved, rejected };
   }, [allEmployers]);
 
   const formatDate = (timestamp: any) => {
@@ -539,8 +541,9 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
   };
 
   const getStatusBadge = (status?: EmployerStatus) => {
-    const actualStatus = status || "pending";
+    const actualStatus = status || "incomplete";
     const styles: Record<EmployerStatus, string> = {
+      incomplete: "bg-slate-500/10 text-slate-400 border-slate-500/20",
       pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
       approved: "bg-green-500/10 text-green-400 border-green-500/20",
       rejected: "bg-red-500/10 text-red-400 border-red-500/20",
@@ -551,6 +554,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       <span
         className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${styles[actualStatus]}`}
       >
+        {actualStatus === "incomplete" && <DocumentIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "pending" && <ClockIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "approved" && <CheckCircleIcon className="mr-1 h-3 w-3" />}
         {actualStatus === "rejected" && <XCircleIcon className="mr-1 h-3 w-3" />}
@@ -718,18 +722,23 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       {/* Filters and Search */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Status Filter Tabs */}
-        <div className="flex rounded-lg bg-slate-800 p-1">
-          {(["all", "pending", "approved", "rejected"] as const).map((status) => (
+        <div className="flex flex-wrap rounded-lg bg-slate-800 p-1">
+          {(["all", "pending", "incomplete", "approved", "rejected"] as const).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors ${
+              className={`rounded-md px-3 py-2 text-sm font-medium capitalize transition-colors ${
                 filter === status
                   ? "bg-teal-500 text-slate-900 shadow-lg"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
               {status}
+              {status === "pending" && stats.pending > 0 && (
+                <span className="ml-1.5 rounded-full bg-yellow-500/20 px-1.5 py-0.5 text-xs text-yellow-400">
+                  {stats.pending}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -786,7 +795,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
         <div className="space-y-4">
           {paginatedEmployers.map((employer) => {
             const isExpanded = expandedId === employer.id;
-            const status = employer.status || "pending";
+            const status = employer.status || "incomplete";
 
             return (
               <div
@@ -815,6 +824,12 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                             {employer.organizationName || "Unnamed Organization"}
                           </h3>
                           {getStatusBadge(employer.status)}
+                          {/* Resubmission indicator for pending profiles that were previously rejected */}
+                          {employer.status === "pending" && employer.resubmittedAt && (
+                            <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400" title="Previously rejected, resubmitted for review">
+                              Resubmission
+                            </span>
+                          )}
                           {employer.freePostingEnabled && (
                             <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400" title={getGrantTooltip(employer.freePostingGrant)}>
                               <GiftIcon className="mr-1 h-3 w-3" />
@@ -865,6 +880,16 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                         )}
 
                         {/* Status-specific info */}
+                        {status === "pending" && employer.submittedForReviewAt && (
+                          <p className="text-xs text-amber-400">
+                            Submitted for review on {formatDate(employer.submittedForReviewAt)}
+                            {employer.resubmittedAt && (
+                              <span className="ml-2 text-amber-300">
+                                (Resubmitted: {formatDate(employer.resubmittedAt)})
+                              </span>
+                            )}
+                          </p>
+                        )}
                         {status === "approved" && employer.approvedAt && (
                           <p className="text-xs text-green-400">
                             Approved on {formatDate(employer.approvedAt)}
@@ -907,6 +932,28 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                           });
 
                           // Moderation actions based on status
+                          if (status === "incomplete") {
+                            // Incomplete profiles are not ready for review
+                            // Admin can still view and contact the employer
+                            actions.push({
+                              id: `incomplete-info-${employer.id}`,
+                              items: [
+                                {
+                                  id: `contact-${employer.id}`,
+                                  label: "Send Reminder Email",
+                                  onClick: () => {
+                                    if (employer.contactEmail) {
+                                      window.location.href = `mailto:${employer.contactEmail}?subject=Complete Your IOPPS Profile&body=Hi ${employer.organizationName},%0D%0A%0D%0APlease complete your employer profile to get approved on IOPPS.%0D%0A%0D%0ABest regards,%0D%0AIOPPS Team`;
+                                    } else {
+                                      showToast("error", "No contact email available");
+                                    }
+                                  },
+                                  disabled: !employer.contactEmail,
+                                },
+                              ],
+                            });
+                          }
+
                           if (status === "pending") {
                             actions.push({
                               id: `moderation-${employer.id}`,

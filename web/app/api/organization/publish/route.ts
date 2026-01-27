@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import {
+  checkProfileCompleteness,
+  getMissingFieldsMessage,
+} from "@/lib/validation/profile-completeness";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -82,20 +86,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate About and Story fields for publishing
+    // Validate field lengths (max limits)
     const aboutTrimmed = (description || "").trim();
     const storyTrimmed = (story || "").trim();
-
-    if (!aboutTrimmed || !storyTrimmed) {
-      console.log(`[PUBLISH] Missing About or Story - about: ${aboutTrimmed.length} chars, story: ${storyTrimmed.length} chars`);
-      return NextResponse.json(
-        {
-          error: `Complete "About" (max ${ABOUT_MAX_CHARS} chars) and "Our Story" (max ${STORY_MAX_CHARS} chars) to publish your profile.`,
-          code: "MISSING_REQUIRED_CONTENT",
-        },
-        { status: 400 }
-      );
-    }
 
     if (aboutTrimmed.length > ABOUT_MAX_CHARS) {
       console.log(`[PUBLISH] About exceeds limit - ${aboutTrimmed.length} > ${ABOUT_MAX_CHARS}`);
@@ -118,6 +111,21 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Check profile completeness using centralized validation
+    const profileData = {
+      logoUrl,
+      bannerUrl,
+      description: aboutTrimmed,
+      story: storyTrimmed,
+    };
+    const completeness = checkProfileCompleteness(profileData);
+
+    console.log(`[PUBLISH] Completeness check:`, {
+      isComplete: completeness.isComplete,
+      missingFields: completeness.missingFields,
+      score: completeness.score,
+    });
 
     // Check if employer document exists (by ID or by userId field)
     let employerRef = db.collection("employers").doc(userId);
@@ -146,15 +154,54 @@ export async function POST(req: NextRequest) {
       // Update existing profile
       const existingData = employerDoc.data();
       slug = existingData?.slug || generateUniqueSlug(organizationName);
-      const currentStatus = existingData?.status || "pending";
+      const currentStatus = existingData?.status || "incomplete";
       const isApproved = currentStatus === "approved";
+      const isRejectedOrDeleted = currentStatus === "rejected" || currentStatus === "deleted";
+
+      // Determine new status based on completeness (don't change if approved/rejected/deleted)
+      let newStatus = currentStatus;
+      const wasRejected = currentStatus === "rejected";
+      const wasPending = currentStatus === "pending";
+
+      if (!isApproved && !isRejectedOrDeleted) {
+        newStatus = completeness.isComplete ? "pending" : "incomplete";
+      }
+      // If rejected, allow resubmission to pending
+      if (wasRejected && completeness.isComplete) {
+        newStatus = "pending";
+      }
+
+      // Determine publication status
+      let publicationStatus: string;
+      if (isApproved) {
+        publicationStatus = "PUBLISHED";
+      } else if (completeness.isComplete) {
+        publicationStatus = "PENDING_APPROVAL";
+      } else {
+        publicationStatus = "DRAFT";
+      }
 
       console.log(`[PUBLISH] Updating existing profile for ${userId}:`, {
         oldName: existingData?.organizationName,
         newName: organizationName,
         docId: existingId,
+        currentStatus,
+        newStatus,
         isApproved,
+        publicationStatus,
       });
+
+      // Determine submission tracking timestamps
+      const submissionTracking: Record<string, any> = {};
+      if (completeness.isComplete && newStatus === "pending") {
+        if (wasRejected) {
+          // Resubmission after rejection
+          submissionTracking.resubmittedAt = now;
+        } else if (!wasPending && !existingData?.submittedForReviewAt) {
+          // First-time submission
+          submissionTracking.submittedForReviewAt = now;
+        }
+      }
 
       await employerRef.update({
         organizationName,
@@ -170,14 +217,18 @@ export async function POST(req: NextRequest) {
         story: storyTrimmed,
         links: { website: website || "" },
         enabledModules: enabledModules || [],
-        // Only set PUBLISHED status if employer is already approved
-        // Unapproved employers stay in DRAFT/PENDING status until admin approval
-        publicationStatus: isApproved ? "PUBLISHED" : "PENDING_APPROVAL",
+        // Set status based on completeness (preserve approved/rejected/deleted)
+        status: newStatus,
+        publicationStatus,
         directoryVisible: isApproved, // Only visible if already approved
         publishedAt: isApproved ? now : existingData?.publishedAt || null,
         updatedAt: now,
         // Track cover photo updates for cache busting
         ...(bannerUrl && bannerUrl !== existingData?.bannerUrl ? { bannerUpdatedAt: now } : {}),
+        // Track submission times for approval workflow
+        ...submissionTracking,
+        // Clear rejection reason when resubmitting
+        ...(wasRejected && completeness.isComplete ? { rejectionReason: null } : {}),
       });
 
       // Verify the update by reading the document back
@@ -187,6 +238,17 @@ export async function POST(req: NextRequest) {
     } else {
       // Create new profile
       slug = generateUniqueSlug(organizationName);
+
+      // Determine status based on completeness
+      const newStatus = completeness.isComplete ? "pending" : "incomplete";
+      const publicationStatus = completeness.isComplete ? "PENDING_APPROVAL" : "DRAFT";
+
+      console.log(`[PUBLISH] Creating new profile for ${userId}:`, {
+        organizationName,
+        newStatus,
+        publicationStatus,
+        isComplete: completeness.isComplete,
+      });
 
       await employerRef.set({
         id: userId,
@@ -204,12 +266,14 @@ export async function POST(req: NextRequest) {
         story: storyTrimmed,
         links: { website: website || "" },
         enabledModules: enabledModules || [],
-        publicationStatus: "PENDING_APPROVAL", // New profiles require admin approval
+        publicationStatus, // DRAFT if incomplete, PENDING_APPROVAL if complete
         directoryVisible: false, // Not visible until admin approves
-        status: "pending", // Requires admin approval
+        status: newStatus, // "incomplete" or "pending" based on completeness
         publishedAt: null, // Only set after admin approval
         createdAt: now,
         updatedAt: now,
+        // Track submission time for approval workflow
+        ...(completeness.isComplete ? { submittedForReviewAt: now } : {}),
         // Track cover photo updates for cache busting
         ...(bannerUrl ? { bannerUpdatedAt: now } : {}),
       });
