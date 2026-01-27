@@ -1683,6 +1683,7 @@ export interface Service {
   serviceAreas?: string[]; // Specific areas served
 
   // Contact & Links
+  useOrgContact?: boolean; // If true, contact info comes from org profile
   email?: string;
   phone?: string;
   website?: string;

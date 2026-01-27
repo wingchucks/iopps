@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase-admin";
 import ServiceDetailClient from "./ServiceDetailClient";
-import type { Service } from "@/lib/types";
+import type { Service, EmployerProfile } from "@/lib/types";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,6 +37,29 @@ async function getServiceData(id: string): Promise<Service | null> {
     } as Service;
   } catch (error) {
     console.error("Error fetching service:", error);
+    return null;
+  }
+}
+
+async function getOrgProfile(userId: string): Promise<EmployerProfile | null> {
+  if (!db) return null;
+
+  try {
+    const snapshot = await db
+      .collection("employers")
+      .where("userId", "==", userId)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) return null;
+
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data(),
+    } as EmployerProfile;
+  } catch (error) {
+    console.error("Error fetching org profile:", error);
     return null;
   }
 }
@@ -99,5 +122,12 @@ export default async function ServiceDetailPage({ params }: Props) {
     notFound();
   }
 
-  return <ServiceDetailClient service={service} />;
+  // Fetch org profile if service uses org contact info
+  // (useOrgContact is true or undefined for backward compatibility)
+  let orgProfile: EmployerProfile | null = null;
+  if (service.useOrgContact !== false && service.userId) {
+    orgProfile = await getOrgProfile(service.userId);
+  }
+
+  return <ServiceDetailClient service={service} orgProfile={orgProfile} />;
 }

@@ -176,8 +176,9 @@ export default function NewServicePage() {
         location: location || undefined,
         region: region as NorthAmericanRegion,
         servesRemote,
-        // Contact - only store if custom (useOrgContact = false)
-        // When useOrgContact is true, frontend will fetch from org profile
+        // Contact handling
+        useOrgContact,
+        // Only store contact fields if custom (useOrgContact = false)
         email: useOrgContact ? undefined : (email || undefined),
         phone: useOrgContact ? undefined : (phone || undefined),
         website: useOrgContact ? undefined : (website || undefined),
@@ -272,9 +273,17 @@ export default function NewServicePage() {
               </div>
             </div>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
-            This service will be listed under your organization profile.
-          </p>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-xs text-slate-500">
+              This service will be listed under your organization profile.
+            </p>
+            <Link
+              href="/organization/profile"
+              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+              Edit Organization Profile →
+            </Link>
+          </div>
         </div>
       )}
 

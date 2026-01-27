@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PageShell } from "@/components/PageShell";
 import ShareButtons from "@/components/ShareButtons";
 import { incrementServiceViews, trackServiceContactClick } from "@/lib/firestore";
-import type { Service } from "@/lib/types";
+import { getServiceContact } from "@/lib/utils/serviceContact";
+import type { Service, EmployerProfile } from "@/lib/types";
 import {
   MapPinIcon,
   GlobeAltIcon,
@@ -22,9 +23,16 @@ import {
 
 interface Props {
   service: Service;
+  orgProfile?: EmployerProfile | null;
 }
 
-export default function ServiceDetailClient({ service }: Props) {
+export default function ServiceDetailClient({ service, orgProfile }: Props) {
+  // Resolve contact info (falls back to org profile when useOrgContact is true/undefined)
+  const contact = useMemo(
+    () => getServiceContact(service, orgProfile),
+    [service, orgProfile]
+  );
+
   // Track views
   useEffect(() => {
     incrementServiceViews(service.id);
@@ -247,9 +255,9 @@ export default function ServiceDetailClient({ service }: Props) {
               <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
 
               <div className="space-y-4">
-                {service.bookingUrl && (
+                {contact.bookingUrl && (
                   <a
-                    href={service.bookingUrl}
+                    href={contact.bookingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleContactClick}
@@ -259,31 +267,31 @@ export default function ServiceDetailClient({ service }: Props) {
                   </a>
                 )}
 
-                {service.email && (
+                {contact.email && (
                   <a
-                    href={`mailto:${service.email}`}
+                    href={`mailto:${contact.email}`}
                     onClick={handleContactClick}
                     className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/50 p-4 text-slate-300 hover:border-indigo-500/50 hover:text-white transition-colors"
                   >
                     <EnvelopeIcon className="h-5 w-5 text-indigo-400" />
-                    <span className="truncate">{service.email}</span>
+                    <span className="truncate">{contact.email}</span>
                   </a>
                 )}
 
-                {service.phone && (
+                {contact.phone && (
                   <a
-                    href={`tel:${service.phone}`}
+                    href={`tel:${contact.phone}`}
                     onClick={handleContactClick}
                     className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/50 p-4 text-slate-300 hover:border-indigo-500/50 hover:text-white transition-colors"
                   >
                     <PhoneIcon className="h-5 w-5 text-indigo-400" />
-                    <span>{service.phone}</span>
+                    <span>{contact.phone}</span>
                   </a>
                 )}
 
-                {service.website && (
+                {contact.website && (
                   <a
-                    href={service.website}
+                    href={contact.website}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleContactClick}
@@ -294,9 +302,9 @@ export default function ServiceDetailClient({ service }: Props) {
                   </a>
                 )}
 
-                {service.linkedin && (
+                {contact.linkedin && (
                   <a
-                    href={service.linkedin}
+                    href={contact.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleContactClick}

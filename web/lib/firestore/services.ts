@@ -160,6 +160,7 @@ export interface CreateServiceInput {
   region: NorthAmericanRegion;
   servesRemote: boolean;
   serviceAreas?: string[];
+  useOrgContact?: boolean; // If true, contact info comes from org profile
   email?: string;
   phone?: string;
   website?: string;
@@ -198,6 +199,7 @@ export async function createService(input: CreateServiceInput): Promise<string> 
     region: input.region,
     servesRemote: input.servesRemote,
     serviceAreas: input.serviceAreas,
+    useOrgContact: input.useOrgContact ?? true,
     email: input.email,
     phone: input.phone,
     website: input.website,
