@@ -107,6 +107,8 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [hasActiveServices, setHasActiveServices] = useState(true); // Default true to avoid flicker
   const [jobCount, setJobCount] = useState(0);
+  const [eventCount, setEventCount] = useState(0);
+  const [scholarshipCount, setScholarshipCount] = useState(0);
 
   // Story is read-only on public profile - editing happens via Edit Profile
   const currentStory = org.story || '';
@@ -131,17 +133,29 @@ export function OrganizationProfileClient({ organization: org }: Props) {
     checkActiveServices();
   }, [org.userId, canEdit]);
 
-  // Fetch job count for Quick Facts
+  // Fetch counts for header stats
   useEffect(() => {
-    async function fetchJobCount() {
+    async function fetchCounts() {
       try {
-        const jobs = await listEmployerJobs(org.userId);
+        const [jobs, conferences, powwows, scholarships] = await Promise.all([
+          listEmployerJobs(org.userId),
+          listEmployerConferences(org.userId),
+          listEmployerPowwows(org.userId),
+          listEmployerScholarships(org.userId),
+        ]);
         setJobCount(jobs.filter(j => j.active).length);
+        setEventCount(
+          conferences.filter(c => c.active).length +
+          powwows.filter(p => p.active).length
+        );
+        setScholarshipCount(scholarships.filter(s => s.active).length);
       } catch {
         setJobCount(0);
+        setEventCount(0);
+        setScholarshipCount(0);
       }
     }
-    fetchJobCount();
+    fetchCounts();
   }, [org.userId]);
 
   // Check if profile requires authentication to view
@@ -309,9 +323,26 @@ export function OrganizationProfileClient({ organization: org }: Props) {
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
             {isIndigenousOwned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-3 py-1 text-sm font-medium text-white">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
                 <CheckBadgeIcon className="h-4 w-4" />
                 Indigenous-Owned
+              </span>
+            )}
+            {org.indigenousVerification?.status === 'approved' && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+                <CheckBadgeIcon className="h-4 w-4" />
+                Verified
+              </span>
+            )}
+            {jobCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+                <BriefcaseIcon className="h-4 w-4" />
+                Hiring
+              </span>
+            )}
+            {org.trcAlignment?.commitmentStatement && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+                TRC Committed
               </span>
             )}
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-3 py-1 text-sm font-medium text-slate-300">
@@ -379,6 +410,60 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
             {org.tagline && (
               <p className="mt-2 text-lg text-slate-300">{org.tagline}</p>
+            )}
+
+            {/* Stats Row */}
+            {(jobCount > 0 || eventCount > 0 || scholarshipCount > 0 || org.createdAt) && (
+              <div className="mt-4 flex flex-wrap items-center gap-6">
+                {jobCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                      <BriefcaseIcon className="h-4 w-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-white">{jobCount}</p>
+                      <p className="text-xs text-slate-500">Active Jobs</p>
+                    </div>
+                  </div>
+                )}
+                {eventCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10">
+                      <CalendarIcon className="h-4 w-4 text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-white">{eventCount}</p>
+                      <p className="text-xs text-slate-500">Events</p>
+                    </div>
+                  </div>
+                )}
+                {scholarshipCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                      <AcademicCapIcon className="h-4 w-4 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-white">{scholarshipCount}</p>
+                      <p className="text-xs text-slate-500">Scholarships</p>
+                    </div>
+                  </div>
+                )}
+                {org.createdAt && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-700/50">
+                      <CheckBadgeIcon className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-white">
+                        {typeof org.createdAt === 'object' && 'toDate' in org.createdAt
+                          ? org.createdAt.toDate().getFullYear()
+                          : new Date(org.createdAt as unknown as string).getFullYear()}
+                      </p>
+                      <p className="text-xs text-slate-500">Member Since</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Location & Industry */}
