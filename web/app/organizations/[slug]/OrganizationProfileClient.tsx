@@ -744,6 +744,28 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
     );
   }
 
+  // Helper to format closing date
+  const formatClosingDate = (date: JobPosting['closingDate']) => {
+    if (!date) return null;
+    let d: Date;
+    if (typeof date === 'string') {
+      d = new Date(date);
+    } else if (date instanceof Date) {
+      d = date;
+    } else if ('toDate' in date) {
+      d = date.toDate();
+    } else {
+      return null;
+    }
+    const now = new Date();
+    const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return null; // Already closed
+    if (diffDays === 0) return 'Closes today';
+    if (diffDays === 1) return 'Closes tomorrow';
+    if (diffDays <= 7) return `Closes in ${diffDays} days`;
+    return null; // Don't show if more than a week away
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {jobs.map((job) => {
@@ -753,26 +775,31 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
               ? job.createdAt.toDate()
               : new Date(job.createdAt as unknown as string))
           : null;
+        const closingText = formatClosingDate(job.closingDate);
         return (
           <Link
             key={job.id}
             href={`/jobs/${job.id}`}
-            className="group rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
-                  {job.title}
-                </h3>
-                <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
-                  <span>{job.location || 'Remote'}</span>
-                  {postedDate && (
-                    <>
-                      <span className="text-slate-600">•</span>
-                      <span className="text-slate-500">{formatTimeAgo(postedDate)}</span>
-                    </>
-                  )}
-                </div>
+            {/* Header with badges */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex flex-wrap gap-1.5">
+                {job.remoteFlag && (
+                  <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
+                    Remote
+                  </span>
+                )}
+                {job.indigenousPreference && (
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                    Indigenous Priority
+                  </span>
+                )}
+                {job.quickApplyEnabled && (
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                    Quick Apply
+                  </span>
+                )}
               </div>
               {!job.active && canEdit && (
                 <span className="flex-shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
@@ -780,6 +807,24 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
                 </span>
               )}
             </div>
+
+            {/* Title and location */}
+            <div className="flex-1">
+              <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
+                {job.title}
+              </h3>
+              <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
+                <span className="truncate">{job.location || 'Location flexible'}</span>
+                {postedDate && (
+                  <>
+                    <span className="text-slate-600">•</span>
+                    <span className="text-slate-500 whitespace-nowrap">{formatTimeAgo(postedDate)}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {job.employmentType && (
                 <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
@@ -791,7 +836,24 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
                   {salary}
                 </span>
               )}
+              {job.willTrain && (
+                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-400">
+                  Will Train
+                </span>
+              )}
             </div>
+
+            {/* Footer with deadline and applicants */}
+            {(closingText || (job.applicationsCount && job.applicationsCount > 0)) && (
+              <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-500">
+                {closingText && (
+                  <span className="text-amber-400">{closingText}</span>
+                )}
+                {job.applicationsCount && job.applicationsCount > 0 && (
+                  <span>{job.applicationsCount} applicant{job.applicationsCount !== 1 ? 's' : ''}</span>
+                )}
+              </div>
+            )}
           </Link>
         );
       })}
