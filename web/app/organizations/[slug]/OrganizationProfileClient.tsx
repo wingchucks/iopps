@@ -23,6 +23,9 @@ import {
   ArrowTopRightOnSquareIcon,
   UserGroupIcon,
   ShieldCheckIcon,
+  VideoCameraIcon,
+  XMarkIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
@@ -50,6 +53,11 @@ import {
   listOrganizationGrants,
   getTeamMembers,
 } from '@/lib/firestore';
+import {
+  updateOrganizationProfile,
+  validateIntroVideoUrl,
+  detectVideoProvider,
+} from '@/lib/firestore/organizations';
 import type { TeamMember } from '@/lib/types';
 
 // Tab types
@@ -113,6 +121,13 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const [jobCount, setJobCount] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [scholarshipCount, setScholarshipCount] = useState(0);
+
+  // Intro video editing state
+  const [introVideoUrl, setIntroVideoUrl] = useState(org.introVideoUrl || '');
+  const [showIntroVideoModal, setShowIntroVideoModal] = useState(false);
+  const [introVideoInput, setIntroVideoInput] = useState('');
+  const [introVideoError, setIntroVideoError] = useState('');
+  const [savingIntroVideo, setSavingIntroVideo] = useState(false);
 
   // Story is read-only on public profile - editing happens via Edit Profile
   const currentStory = org.story || '';
@@ -228,6 +243,56 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       }
     } catch {
       // User cancelled share
+    }
+  };
+
+  // Open intro video modal
+  const handleOpenIntroVideoModal = () => {
+    setIntroVideoInput(introVideoUrl || '');
+    setIntroVideoError('');
+    setShowIntroVideoModal(true);
+  };
+
+  // Save intro video
+  const handleSaveIntroVideo = async () => {
+    const trimmedUrl = introVideoInput.trim();
+
+    // Validate URL
+    const error = validateIntroVideoUrl(trimmedUrl);
+    if (error) {
+      setIntroVideoError(error);
+      return;
+    }
+
+    setSavingIntroVideo(true);
+    try {
+      await updateOrganizationProfile(org.userId, {
+        introVideoUrl: trimmedUrl || null,
+      });
+      setIntroVideoUrl(trimmedUrl);
+      setShowIntroVideoModal(false);
+    } catch (err) {
+      console.error('Error saving intro video:', err);
+      setIntroVideoError('Failed to save. Please try again.');
+    } finally {
+      setSavingIntroVideo(false);
+    }
+  };
+
+  // Remove intro video
+  const handleRemoveIntroVideo = async () => {
+    setSavingIntroVideo(true);
+    try {
+      await updateOrganizationProfile(org.userId, {
+        introVideoUrl: null,
+      });
+      setIntroVideoUrl('');
+      setShowIntroVideoModal(false);
+    } catch (err) {
+      console.error('Error removing intro video:', err);
+      setIntroVideoError('Failed to remove. Please try again.');
+    } finally {
+      setSavingIntroVideo(false);
     }
   };
 
@@ -571,6 +636,8 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             canEdit={canEdit}
             currentStory={currentStory}
             jobCount={jobCount}
+            introVideoUrl={introVideoUrl}
+            onEditIntroVideo={handleOpenIntroVideoModal}
           />
         )}
         {activeTab === 'jobs' && (
@@ -589,6 +656,95 @@ export function OrganizationProfileClient({ organization: org }: Props) {
           <FundingTab org={org} canEdit={canEdit} />
         )}
       </div>
+
+      {/* Intro Video Modal */}
+      {showIntroVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl">
+            {/* Close button */}
+            <button
+              onClick={() => setShowIntroVideoModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+
+            <h2 className="text-xl font-bold text-white mb-2">
+              {introVideoUrl ? 'Edit Intro Video' : 'Add Intro Video'}
+            </h2>
+            <p className="text-sm text-slate-400 mb-6">
+              Add a short YouTube or Vimeo video to introduce your organization
+            </p>
+
+            {/* URL Input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-white mb-2">
+                Video URL
+              </label>
+              <div className="relative">
+                <VideoCameraIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="url"
+                  value={introVideoInput}
+                  onChange={(e) => {
+                    setIntroVideoInput(e.target.value);
+                    setIntroVideoError('');
+                  }}
+                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                  className={`w-full rounded-xl bg-slate-800 border pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
+                    introVideoError ? 'border-red-500' : 'border-slate-700 focus:border-teal-500'
+                  }`}
+                />
+              </div>
+              {introVideoError ? (
+                <p className="mt-1 text-xs text-red-400">{introVideoError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-slate-500">
+                  Paste a YouTube or Vimeo link (short intro recommended)
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                {introVideoUrl && (
+                  <button
+                    onClick={handleRemoveIntroVideo}
+                    disabled={savingIntroVideo}
+                    className="flex items-center gap-1 text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    Remove Video
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowIntroVideoModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveIntroVideo}
+                  disabled={savingIntroVideo}
+                  className="flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50 transition-colors"
+                >
+                  {savingIntroVideo ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </PageShell>
   );
@@ -621,11 +777,15 @@ function OverviewTab({
   canEdit,
   currentStory,
   jobCount,
+  introVideoUrl,
+  onEditIntroVideo,
 }: {
   org: OrganizationProfile;
   canEdit: boolean;
   currentStory: string;
   jobCount: number;
+  introVideoUrl: string;
+  onEditIntroVideo: () => void;
 }) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
@@ -713,6 +873,54 @@ function OverviewTab({
             organizationName={org.organizationName}
           />
         )}
+
+        {/* 10-Second Intro Video */}
+        {introVideoUrl ? (
+          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <VideoCameraIcon className="h-5 w-5 text-teal-400" />
+                Quick Intro
+              </h2>
+              {canEdit && (
+                <button
+                  onClick={onEditIntroVideo}
+                  className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  Edit
+                </button>
+              )}
+            </div>
+            <CompanyIntroVideo
+              video={{
+                videoUrl: introVideoUrl,
+                videoProvider: detectVideoProvider(introVideoUrl) || 'youtube',
+                title: '10-Second Intro',
+              }}
+              organizationName={org.organizationName}
+            />
+          </section>
+        ) : canEdit ? (
+          <section className="rounded-2xl border-2 border-dashed border-slate-700 bg-slate-800/30 p-6">
+            <div className="text-center py-4">
+              <div className="mx-auto h-12 w-12 rounded-full bg-slate-700/50 flex items-center justify-center mb-3">
+                <VideoCameraIcon className="h-6 w-6 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">Add a 10-Second Intro Video</h3>
+              <p className="text-sm text-slate-400 mb-4">
+                Help visitors get to know your organization quickly with a short intro video
+              </p>
+              <button
+                onClick={onEditIntroVideo}
+                className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              >
+                <VideoCameraIcon className="h-4 w-4" />
+                Add Intro Video
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         {/* Employer Interviews */}
         {org.interviews && org.interviews.length > 0 && (

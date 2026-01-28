@@ -250,6 +250,50 @@ export async function updateOrganizationProfile(
 }
 
 /**
+ * Validate intro video URL (YouTube or Vimeo only)
+ * Returns null if valid, error message if invalid
+ */
+export function validateIntroVideoUrl(url: string): string | null {
+  if (!url || url.trim() === '') {
+    return null; // Empty is allowed (removing video)
+  }
+
+  const trimmedUrl = url.trim();
+
+  // Check for YouTube URLs
+  const youtubePatterns = [
+    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}/,
+    /^https?:\/\/youtu\.be\/[a-zA-Z0-9_-]{11}/,
+    /^https?:\/\/(www\.)?youtube\.com\/embed\/[a-zA-Z0-9_-]{11}/,
+  ];
+
+  // Check for Vimeo URLs
+  const vimeoPatterns = [
+    /^https?:\/\/(www\.)?vimeo\.com\/\d+/,
+    /^https?:\/\/player\.vimeo\.com\/video\/\d+/,
+  ];
+
+  const isYouTube = youtubePatterns.some(p => p.test(trimmedUrl));
+  const isVimeo = vimeoPatterns.some(p => p.test(trimmedUrl));
+
+  if (!isYouTube && !isVimeo) {
+    return 'Please enter a valid YouTube or Vimeo URL';
+  }
+
+  return null;
+}
+
+/**
+ * Detect video provider from URL
+ */
+export function detectVideoProvider(url: string): 'youtube' | 'vimeo' | null {
+  if (!url) return null;
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('vimeo.com')) return 'vimeo';
+  return null;
+}
+
+/**
  * Publish organization profile
  */
 export async function publishOrganizationProfile(userId: string): Promise<void> {

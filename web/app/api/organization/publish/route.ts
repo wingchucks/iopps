@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       description,
       story,
       website,
+      introVideoUrl,
       enabledModules,
     } = body;
 
@@ -216,6 +217,7 @@ export async function POST(req: NextRequest) {
         description: aboutTrimmed,
         story: storyTrimmed,
         links: { website: website || "" },
+        introVideoUrl: introVideoUrl || null,
         enabledModules: enabledModules || [],
         // Set status based on completeness (preserve approved/rejected/deleted)
         status: newStatus,
@@ -265,6 +267,7 @@ export async function POST(req: NextRequest) {
         description: aboutTrimmed,
         story: storyTrimmed,
         links: { website: website || "" },
+        introVideoUrl: introVideoUrl || null,
         enabledModules: enabledModules || [],
         publicationStatus, // DRAFT if incomplete, PENDING_APPROVAL if complete
         directoryVisible: false, // Not visible until admin approves

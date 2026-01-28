@@ -18,6 +18,7 @@ import {
   SparklesIcon,
   RocketLaunchIcon,
   ChevronDownIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
@@ -26,6 +27,7 @@ import {
   createOrganizationProfile,
   updateOrganizationProfile,
   getOrganizationProfile,
+  validateIntroVideoUrl,
 } from '@/lib/firestore/organizations';
 import { getAuth } from 'firebase/auth';
 import type { OrgType, OrganizationModule, OrganizationProfile } from '@/lib/types';
@@ -127,6 +129,7 @@ interface FormData {
   description: string; // "About" field
   story: string; // "Our Story" field
   website: string;
+  introVideoUrl: string; // 10-second intro video (YouTube/Vimeo URL)
   enabledModules: OrganizationModule[];
   badgePreference: OrgType | 'AUTO';
 }
@@ -165,9 +168,11 @@ function OnboardingContent() {
     description: '',
     story: '',
     website: '',
+    introVideoUrl: '',
     enabledModules: ['educate', 'host', 'funding'], // Free modules ON by default
     badgePreference: 'AUTO',
   });
+  const [introVideoError, setIntroVideoError] = useState('');
 
   // Track unsaved changes
   const updateFormData = useCallback((updates: Partial<FormData>) => {
@@ -205,6 +210,7 @@ function OnboardingContent() {
           description: (profile as any).description || '',
           story: (profile as OrganizationProfile).story || '',
           website: (profile as OrganizationProfile).links?.website || profile.website || '',
+          introVideoUrl: (profile as OrganizationProfile).introVideoUrl || '',
           enabledModules: profile.enabledModules || ['educate', 'host', 'funding'],
           badgePreference: (profile as OrganizationProfile).badgePreference || 'AUTO',
         });
@@ -335,6 +341,7 @@ function OnboardingContent() {
           description: formData.description,
           story: formData.story,
           links: { website: formData.website },
+          introVideoUrl: formData.introVideoUrl || null,
           enabledModules: formData.enabledModules,
           badgePreference: formData.badgePreference,
         });
@@ -430,6 +437,7 @@ function OnboardingContent() {
           description: formData.description,
           story: formData.story,
           website: formData.website,
+          introVideoUrl: formData.introVideoUrl || null,
           enabledModules: formData.enabledModules,
         }),
       });
@@ -864,6 +872,38 @@ function OnboardingContent() {
                   className="w-full rounded-xl bg-slate-900 border border-slate-700 pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
                 />
               </div>
+            </div>
+
+            {/* Intro Video URL */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                10-Second Intro Video
+              </label>
+              <div className="relative">
+                <VideoCameraIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="url"
+                  value={formData.introVideoUrl}
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    updateFormData({ introVideoUrl: url });
+                    // Validate URL
+                    const validationError = validateIntroVideoUrl(url);
+                    setIntroVideoError(validationError || '');
+                  }}
+                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                  className={`w-full rounded-xl bg-slate-900 border pl-12 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
+                    introVideoError ? 'border-red-500' : 'border-slate-700 focus:border-teal-500'
+                  }`}
+                />
+              </div>
+              {introVideoError ? (
+                <p className="mt-1 text-xs text-red-400">{introVideoError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-slate-500">
+                  Paste a YouTube or Vimeo link (short intro recommended)
+                </p>
+              )}
             </div>
 
             <p className="text-sm text-slate-500 text-center">

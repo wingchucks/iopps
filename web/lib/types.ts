@@ -2725,6 +2725,7 @@ export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'
   // Enhanced content
   tagline?: string;
   story?: string; // Longer narrative content
+  introVideoUrl?: string | null; // 10-second intro video (YouTube/Vimeo URL)
 
   // Categories/tags for filtering
   categories?: string[];
