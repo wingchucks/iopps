@@ -377,7 +377,7 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
   const firestore = checkFirebase();
   if (!firestore) return null;
 
-  // First try: lookup by slug field
+  // First try: lookup by slug field with full publication check
   const q = query(
     collection(firestore, employerCollection),
     where("slug", "==", slug),
@@ -392,7 +392,26 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
     return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
   }
 
-  // Fallback: try lookup by document ID with same status checks
+  // Second try: lookup by slug with only approved status (for legacy data without publicationStatus)
+  const fallbackQuery = query(
+    collection(firestore, employerCollection),
+    where("slug", "==", slug),
+    where("status", "==", "approved"),
+    limit(1)
+  );
+  const fallbackSnap = await getDocs(fallbackQuery);
+
+  if (!fallbackSnap.empty) {
+    const docSnap = fallbackSnap.docs[0];
+    const data = docSnap.data();
+    // Allow if publicationStatus is missing (legacy) or PUBLISHED
+    if (!data.publicationStatus || data.publicationStatus === "PUBLISHED") {
+      console.log(`[getPublicOrganizationBySlug] Found approved profile via fallback for slug "${slug}"`);
+      return { id: docSnap.id, ...data } as OrganizationProfile;
+    }
+  }
+
+  // Third try: lookup by document ID with same status checks
   // Wrapped in try-catch because Firestore security rules may block access
   try {
     const ref = doc(firestore, employerCollection, slug);
