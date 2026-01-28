@@ -1050,31 +1050,94 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
       {services.map((service) => (
         <Link
           key={service.id}
-          href={`/services/${service.slug || service.id}`}
-          className="group rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+          href={`/business/services/${service.id}`}
+          className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
         >
-          {service.coverImageUrl && (
-            <div className="relative h-32 bg-slate-700">
+          {/* Cover Image */}
+          <div className="relative h-36 bg-gradient-to-br from-slate-700 to-slate-800">
+            {service.coverImageUrl ? (
               <Image
                 src={service.coverImageUrl}
                 alt={service.title}
                 fill
                 className="object-cover"
               />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <BuildingStorefrontIcon className="h-12 w-12 text-slate-600" />
+              </div>
+            )}
+            {/* Overlay badges */}
+            <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
+              {service.indigenousOwned && (
+                <span className="rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+                  Indigenous-Owned
+                </span>
+              )}
+              {service.verified && (
+                <span className="rounded-full bg-blue-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm flex items-center gap-1">
+                  <CheckBadgeIcon className="h-3 w-3" />
+                  Verified
+                </span>
+              )}
             </div>
-          )}
-          <div className="p-4">
-            <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+            {/* Logo overlay */}
+            {service.logoUrl && (
+              <div className="absolute -bottom-5 left-4">
+                <div className="h-10 w-10 rounded-lg border-2 border-slate-800 bg-slate-700 overflow-hidden shadow-lg">
+                  <Image
+                    src={service.logoUrl}
+                    alt={service.businessName}
+                    width={40}
+                    height={40}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 p-4 pt-7">
+            <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
               {service.title}
             </h3>
-            {service.category && (
-              <p className="text-xs text-slate-500 mt-1 capitalize">
-                {service.category.replace(/-/g, ' ')}
-              </p>
+            {service.tagline && (
+              <p className="text-xs text-slate-400 mt-1 line-clamp-2">{service.tagline}</p>
             )}
-            {service.priceRange && (
-              <p className="text-sm text-teal-400 mt-2">{service.priceRange}</p>
-            )}
+
+            {/* Tags row */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {service.category && (
+                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                  {service.category.replace(/-/g, ' ')}
+                </span>
+              )}
+              {service.servesRemote && (
+                <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">
+                  Remote
+                </span>
+              )}
+              {service.freeConsultation && (
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-400">
+                  Free Consultation
+                </span>
+              )}
+            </div>
+
+            {/* Footer with price and experience */}
+            <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between">
+              {service.priceRange ? (
+                <span className="text-sm font-medium text-teal-400">{service.priceRange}</span>
+              ) : (
+                <span className="text-xs text-slate-500">Contact for pricing</span>
+              )}
+              {service.yearsExperience && service.yearsExperience > 0 && (
+                <span className="text-xs text-slate-500">
+                  {service.yearsExperience}+ yrs exp
+                </span>
+              )}
+            </div>
           </div>
         </Link>
       ))}
