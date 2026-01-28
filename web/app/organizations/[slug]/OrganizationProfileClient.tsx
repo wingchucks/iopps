@@ -921,34 +921,76 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
     );
   }
 
+  // Helper to check if deadline is urgent
+  const getDeadlineStatus = (date: Scholarship['deadline']) => {
+    if (!date) return null;
+    let d: Date;
+    if (typeof date === 'string') d = new Date(date);
+    else if (date instanceof Date) d = date;
+    else if ('toDate' in date) d = date.toDate();
+    else return null;
+
+    const now = new Date();
+    const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { text: 'Closed', urgent: true, closed: true };
+    if (diffDays === 0) return { text: 'Closes today!', urgent: true };
+    if (diffDays <= 7) return { text: `${diffDays} days left`, urgent: true };
+    if (diffDays <= 30) return { text: `${diffDays} days left`, urgent: false };
+    return { text: formatDate(date), urgent: false };
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {scholarships.map((scholarship) => {
-        const deadlineStr = formatDate(scholarship.deadline);
+        const deadlineStatus = getDeadlineStatus(scholarship.deadline);
         const amountStr = formatAmount(scholarship.amount);
         return (
           <Link
             key={scholarship.id}
             href={`/scholarships/${scholarship.id}`}
-            className="group rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
           >
+            {/* Header with icon and amount */}
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <AcademicCapIcon className="h-5 w-5 text-amber-400" />
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                <AcademicCapIcon className="h-6 w-6 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
+                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
                   {scholarship.title}
                 </h3>
                 {amountStr && (
-                  <p className="text-sm text-teal-400 mt-1">{amountStr}</p>
+                  <p className="text-lg font-bold text-teal-400 mt-1">{amountStr}</p>
                 )}
               </div>
             </div>
-            {deadlineStr && (
-              <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+
+            {/* Tags */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {scholarship.level && (
+                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                  {scholarship.level}
+                </span>
+              )}
+              {scholarship.type && (
+                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs text-purple-400 capitalize">
+                  {scholarship.type}
+                </span>
+              )}
+              {scholarship.region && (
+                <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">
+                  {scholarship.region}
+                </span>
+              )}
+            </div>
+
+            {/* Deadline footer */}
+            {deadlineStatus && !deadlineStatus.closed && (
+              <div className={`mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-1.5 text-xs ${
+                deadlineStatus.urgent ? 'text-amber-400' : 'text-slate-500'
+              }`}>
                 <CalendarIcon className="h-3.5 w-3.5" />
-                Deadline: {deadlineStr}
+                {deadlineStatus.urgent ? deadlineStatus.text : `Deadline: ${deadlineStatus.text}`}
               </div>
             )}
           </Link>
