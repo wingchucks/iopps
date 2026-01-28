@@ -103,6 +103,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [copied, setCopied] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [hasActiveServices, setHasActiveServices] = useState(true); // Default true to avoid flicker
 
   // Story is read-only on public profile - editing happens via Edit Profile
   const currentStory = org.story || '';
@@ -112,6 +113,20 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const isAdmin = role === 'admin';
   const canEdit = isOwner || isAdmin;
 
+  // Check if org has active services (for tab visibility)
+  useEffect(() => {
+    async function checkActiveServices() {
+      if (canEdit) return; // Owner always sees tab
+      try {
+        const services = await listUserServices(org.userId);
+        const activeCount = services.filter(s => s.status === 'active').length;
+        setHasActiveServices(activeCount > 0);
+      } catch {
+        setHasActiveServices(false);
+      }
+    }
+    checkActiveServices();
+  }, [org.userId, canEdit]);
 
   // Check if profile requires authentication to view
   const isPrivateProfile = org.publicationStatus !== 'PUBLISHED' || org.status !== 'approved';
@@ -133,7 +148,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       tabs.push({ id: 'programs', label: 'Programs & Scholarships', icon: AcademicCapIcon });
     }
 
-    if (enabledModules.includes('sell')) {
+    if (enabledModules.includes('sell') && (canEdit || hasActiveServices)) {
       tabs.push({ id: 'offerings', label: 'Products & Services', icon: BuildingStorefrontIcon });
     }
 
@@ -146,7 +161,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
     }
 
     return tabs;
-  }, [enabledModules]);
+  }, [enabledModules, canEdit, hasActiveServices]);
 
   // Track page view
   useEffect(() => {
@@ -792,8 +807,8 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
     async function fetchServices() {
       try {
         const data = await listUserServices(org.userId);
-        // Only show approved services for public view
-        setServices(canEdit ? data : data.filter(s => s.status === 'approved'));
+        // Only show active services for public view
+        setServices(canEdit ? data : data.filter(s => s.status === 'active'));
       } catch (error) {
         console.error('Error loading services:', error);
       } finally {
