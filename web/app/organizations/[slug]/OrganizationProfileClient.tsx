@@ -24,6 +24,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
+import CompanyIntroVideo from '@/components/employer/CompanyIntroVideo';
 import type {
   OrganizationProfile,
   OrganizationModule,
@@ -104,6 +105,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const [copied, setCopied] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [hasActiveServices, setHasActiveServices] = useState(true); // Default true to avoid flicker
+  const [jobCount, setJobCount] = useState(0);
 
   // Story is read-only on public profile - editing happens via Edit Profile
   const currentStory = org.story || '';
@@ -127,6 +129,19 @@ export function OrganizationProfileClient({ organization: org }: Props) {
     }
     checkActiveServices();
   }, [org.userId, canEdit]);
+
+  // Fetch job count for Quick Facts
+  useEffect(() => {
+    async function fetchJobCount() {
+      try {
+        const jobs = await listEmployerJobs(org.userId);
+        setJobCount(jobs.filter(j => j.active).length);
+      } catch {
+        setJobCount(0);
+      }
+    }
+    fetchJobCount();
+  }, [org.userId]);
 
   // Check if profile requires authentication to view
   const isPrivateProfile = org.publicationStatus !== 'PUBLISHED' || org.status !== 'approved';
@@ -306,6 +321,15 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
           {/* Actions */}
           <div className="absolute top-4 right-4 flex gap-2">
+            {(org.contactEmail || org.contactPhone) && (
+              <a
+                href={org.contactEmail ? `mailto:${org.contactEmail}` : `tel:${org.contactPhone}`}
+                className="flex items-center gap-1.5 rounded-full bg-teal-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              >
+                <EnvelopeIcon className="h-4 w-4" />
+                Contact
+              </a>
+            )}
             <button
               onClick={handleShare}
               className="flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1.5 text-sm text-white hover:bg-slate-800 transition-colors"
@@ -456,6 +480,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             org={org}
             canEdit={canEdit}
             currentStory={currentStory}
+            jobCount={jobCount}
           />
         )}
         {activeTab === 'jobs' && (
@@ -479,16 +504,45 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   );
 }
 
+// Helper to format relative time
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+  }
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+  }
+  const years = Math.floor(diffDays / 365);
+  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+}
+
 // Tab Components
 function OverviewTab({
   org,
   canEdit,
   currentStory,
+  jobCount,
 }: {
   org: OrganizationProfile;
   canEdit: boolean;
   currentStory: string;
+  jobCount: number;
 }) {
+  // Format member since date
+  const memberSince = org.createdAt
+    ? (typeof org.createdAt === 'object' && 'toDate' in org.createdAt
+        ? org.createdAt.toDate()
+        : new Date(org.createdAt as unknown as string))
+    : null;
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       {/* Main Content */}
@@ -529,6 +583,14 @@ function OverviewTab({
           </section>
         )}
 
+        {/* Company Intro Video */}
+        {org.companyIntroVideo?.videoUrl && (
+          <CompanyIntroVideo
+            video={org.companyIntroVideo}
+            organizationName={org.organizationName}
+          />
+        )}
+
         {/* TRC Commitment */}
         {org.trcAlignment?.commitmentStatement && (
           <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
@@ -558,6 +620,18 @@ function OverviewTab({
         <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
           <h3 className="text-sm font-semibold text-white mb-4">Quick Facts</h3>
           <dl className="space-y-3 text-sm">
+            {memberSince && (
+              <div className="flex justify-between">
+                <dt className="text-slate-400">Member Since</dt>
+                <dd className="text-white">{memberSince.getFullYear()}</dd>
+              </div>
+            )}
+            {jobCount > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-slate-400">Jobs Posted</dt>
+                <dd className="text-white">{jobCount}</dd>
+              </div>
+            )}
             {org.foundedYear && (
               <div className="flex justify-between">
                 <dt className="text-slate-400">Founded</dt>
@@ -665,6 +739,11 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {jobs.map((job) => {
         const salary = formatSalary(job.salaryRange);
+        const postedDate = job.createdAt
+          ? (typeof job.createdAt === 'object' && 'toDate' in job.createdAt
+              ? job.createdAt.toDate()
+              : new Date(job.createdAt as unknown as string))
+          : null;
         return (
           <Link
             key={job.id}
@@ -676,7 +755,15 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
                 <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
                   {job.title}
                 </h3>
-                <p className="text-sm text-slate-400 mt-1">{job.location || 'Remote'}</p>
+                <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
+                  <span>{job.location || 'Remote'}</span>
+                  {postedDate && (
+                    <>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-slate-500">{formatTimeAgo(postedDate)}</span>
+                    </>
+                  )}
+                </div>
               </div>
               {!job.active && canEdit && (
                 <span className="flex-shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
