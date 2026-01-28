@@ -1464,18 +1464,38 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
   const formatGrantDate = (date: BusinessGrant['deadline']) => {
     if (!date) return null;
-    if (typeof date === 'string') return new Date(date).toLocaleDateString();
-    if (date instanceof Date) return date.toLocaleDateString();
-    if ('toDate' in date) return date.toDate().toLocaleDateString();
+    if (typeof date === 'string') return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (date instanceof Date) return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if ('toDate' in date) return date.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return null;
   };
 
   const formatGrantAmount = (amount: BusinessGrant['amount']) => {
     if (!amount) return null;
     if (amount.display) return amount.display;
+    if (amount.min && amount.max) return `$${amount.min.toLocaleString()} - $${amount.max.toLocaleString()}`;
     if (amount.max) return `Up to $${amount.max.toLocaleString()}`;
     if (amount.min) return `From $${amount.min.toLocaleString()}`;
     return null;
+  };
+
+  // Check deadline urgency
+  const getDeadlineStatus = (date: BusinessGrant['deadline']) => {
+    if (!date) return null;
+    let d: Date;
+    if (typeof date === 'string') d = new Date(date);
+    else if (date instanceof Date) d = date;
+    else if ('toDate' in date) d = date.toDate();
+    else return null;
+
+    const now = new Date();
+    const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { text: 'Closed', urgent: true, closed: true };
+    if (diffDays === 0) return { text: 'Closes today!', urgent: true };
+    if (diffDays === 1) return { text: 'Closes tomorrow', urgent: true };
+    if (diffDays <= 7) return { text: `${diffDays} days left`, urgent: true };
+    if (diffDays <= 30) return { text: `${diffDays} days left`, urgent: false };
+    return { text: formatGrantDate(date), urgent: false };
   };
 
   if (loading) {
@@ -1508,39 +1528,97 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {grants.map((grant) => {
         const amountStr = formatGrantAmount(grant.amount);
-        const deadlineStr = formatGrantDate(grant.deadline);
+        const deadlineStatus = getDeadlineStatus(grant.deadline);
+        const eligibility = grant.eligibility || {};
         return (
           <Link
             key={grant.id}
-            href={`/grants/${grant.slug || grant.id}`}
-            className="group rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+            href={`/business/funding/${grant.slug || grant.id}`}
+            className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-emerald-500/50 transition-colors"
           >
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <CurrencyDollarIcon className="h-5 w-5 text-emerald-400" />
+            {/* Header with gradient */}
+            <div className="relative h-24 bg-gradient-to-br from-emerald-900/40 to-slate-800 p-4">
+              {/* Featured badge */}
+              {grant.featured && (
+                <span className="absolute top-2 left-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+                  Featured
+                </span>
+              )}
+              {/* Provider logo or icon */}
+              <div className="absolute bottom-0 translate-y-1/2 left-4">
+                <div className="h-12 w-12 rounded-xl border-2 border-slate-800 bg-slate-700 overflow-hidden shadow-lg flex items-center justify-center">
+                  {grant.providerLogo ? (
+                    <Image
+                      src={grant.providerLogo}
+                      alt={grant.provider}
+                      width={48}
+                      height={48}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <CurrencyDollarIcon className="h-6 w-6 text-emerald-400" />
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
-                  {grant.title}
-                </h3>
-                {amountStr && (
-                  <p className="text-sm text-emerald-400 mt-1">{amountStr}</p>
+              {/* Amount display */}
+              {amountStr && (
+                <div className="absolute top-2 right-2">
+                  <span className="rounded-lg bg-emerald-500/90 px-2.5 py-1 text-sm font-bold text-white shadow-sm">
+                    {amountStr}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 p-4 pt-8">
+              <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
+                {grant.title}
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">{grant.provider}</p>
+
+              {/* Eligibility badges */}
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {grant.grantType && (
+                  <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                    {grant.grantType.replace(/-/g, ' ')}
+                  </span>
+                )}
+                {eligibility.indigenousOwned && (
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
+                    Indigenous-Owned
+                  </span>
+                )}
+                {eligibility.womenOwned && (
+                  <span className="rounded-full bg-pink-500/10 px-2 py-0.5 text-xs text-pink-400">
+                    Women-Owned
+                  </span>
+                )}
+                {eligibility.youthOwned && (
+                  <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">
+                    Youth-Owned
+                  </span>
                 )}
               </div>
+
+              {/* Provinces if applicable */}
+              {eligibility.provinces && eligibility.provinces.length > 0 && eligibility.provinces.length <= 3 && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                  <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span>{eligibility.provinces.join(', ')}</span>
+                </div>
+              )}
+
+              {/* Deadline footer */}
+              {deadlineStatus && !deadlineStatus.closed && (
+                <div className={`mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-1.5 text-xs ${
+                  deadlineStatus.urgent ? 'text-amber-400' : 'text-slate-500'
+                }`}>
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {deadlineStatus.urgent ? deadlineStatus.text : `Deadline: ${deadlineStatus.text}`}
+                </div>
+              )}
             </div>
-            {deadlineStr && (
-              <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-                <CalendarIcon className="h-3.5 w-3.5" />
-                Deadline: {deadlineStr}
-              </div>
-            )}
-            {grant.grantType && (
-              <div className="mt-2">
-                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
-                  {grant.grantType.replace(/-/g, ' ')}
-                </span>
-              </div>
-            )}
           </Link>
         );
       })}
