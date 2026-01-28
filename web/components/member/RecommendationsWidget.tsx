@@ -217,7 +217,7 @@ export default function RecommendationsWidget({
           {/* Top Event */}
           {events[0] && (
             <Link
-              href={`/events/${events[0].item.id}`}
+              href={`/community/events/${events[0].item.id}`}
               className="flex items-start gap-3 p-3 rounded-xl border border-slate-700 hover:bg-slate-800/50 transition-colors group"
             >
               <div className="p-2 rounded-lg bg-purple-500/20">
