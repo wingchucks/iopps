@@ -40,12 +40,12 @@ interface OverviewTabProps {
 const INTENT_ACTIONS: Record<UserIntent, { href: string; icon: React.ReactNode; label: string; description: string; color: string }[]> = {
     "find-job": [
         { href: "/careers", icon: <Briefcase className="h-5 w-5" />, label: "Browse Jobs", description: "Find your next opportunity", color: "emerald" },
-        { href: "/training", icon: <TrendingUp className="h-5 w-5" />, label: "Training Programs", description: "Build new skills", color: "cyan" },
+        { href: "/careers/programs", icon: <TrendingUp className="h-5 w-5" />, label: "Training Programs", description: "Build new skills", color: "cyan" },
         { href: "/members/discover", icon: <Users className="h-5 w-5" />, label: "Network", description: "Connect with professionals", color: "blue" },
     ],
     "explore-careers": [
         { href: "/careers", icon: <Briefcase className="h-5 w-5" />, label: "Explore Careers", description: "See what's out there", color: "emerald" },
-        { href: "/training", icon: <GraduationCap className="h-5 w-5" />, label: "Skills Training", description: "Develop your career", color: "amber" },
+        { href: "/careers/programs", icon: <GraduationCap className="h-5 w-5" />, label: "Skills Training", description: "Develop your career", color: "amber" },
         { href: "/education", icon: <Building2 className="h-5 w-5" />, label: "Education Programs", description: "Formal education paths", color: "purple" },
     ],
     "attend-events": [
