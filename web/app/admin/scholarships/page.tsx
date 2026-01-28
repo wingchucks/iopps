@@ -9,10 +9,7 @@ import {
   query,
   getDocs,
   orderBy,
-  doc,
-  updateDoc,
-  deleteDoc,
-  serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Scholarship } from "@/lib/types";
@@ -20,7 +17,20 @@ import toast from "react-hot-toast";
 
 interface ScholarshipWithEmployer extends Scholarship {
   employerLogoUrl?: string;
+  expiredAt?: Timestamp | null;
+  expirationReason?: string;
+  deletedAt?: Timestamp | null;
 }
+
+type AdminAction =
+  | "force_publish"
+  | "force_unpublish"
+  | "mark_expired"
+  | "reopen"
+  | "flag_spam"
+  | "unflag_spam"
+  | "delete"
+  | "restore";
 
 import { Suspense } from "react";
 
@@ -32,10 +42,74 @@ function AdminScholarshipsContent() {
 
   const [loading, setLoading] = useState(true);
   const [scholarships, setScholarships] = useState<ScholarshipWithEmployer[]>([]);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">(
-    statusFilter === "active" ? "active" : statusFilter === "inactive" ? "inactive" : "all"
+  type FilterType = "all" | "active" | "inactive" | "expired" | "spam" | "deleted";
+  const [filter, setFilter] = useState<FilterType>(
+    (statusFilter as FilterType) || "all"
   );
   const [processing, setProcessing] = useState<string | null>(null);
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [reasonModalOpen, setReasonModalOpen] = useState<{ scholarshipId: string; action: AdminAction } | null>(null);
+  const [reason, setReason] = useState("");
+
+  // Helper to check if scholarship deadline has passed
+  const isExpired = (scholarship: ScholarshipWithEmployer): boolean => {
+    if (!scholarship.deadline) return false;
+    const deadline = scholarship.deadline instanceof Timestamp
+      ? scholarship.deadline.toDate()
+      : typeof scholarship.deadline === "object" && "seconds" in scholarship.deadline
+        ? new Date((scholarship.deadline as { seconds: number }).seconds * 1000)
+        : new Date(scholarship.deadline as string);
+    return deadline < new Date();
+  };
+
+  // Perform admin action via API
+  async function performAdminAction(scholarshipId: string, action: AdminAction, actionReason?: string) {
+    if (!user) return;
+
+    try {
+      setProcessing(scholarshipId);
+      const token = await user.getIdToken();
+      if (!token) {
+        toast.error("Authentication error. Please try again.");
+        return;
+      }
+
+      const response = await fetch(`/api/admin/scholarships/${scholarshipId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action, reason: actionReason }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to perform action");
+      }
+
+      toast.success(`Successfully performed ${action.replace("_", " ")}`);
+      await loadScholarships();
+    } catch (error) {
+      console.error("Error performing admin action:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to perform action");
+    } finally {
+      setProcessing(null);
+      setActionMenuOpen(null);
+      setReasonModalOpen(null);
+      setReason("");
+    }
+  }
+
+  // Handle action that may require reason
+  function handleAction(scholarshipId: string, action: AdminAction) {
+    if (action === "flag_spam" || action === "delete" || action === "mark_expired") {
+      setReasonModalOpen({ scholarshipId, action });
+    } else {
+      performAdminAction(scholarshipId, action);
+    }
+  }
 
   useEffect(() => {
     if (authLoading) return;
@@ -91,61 +165,6 @@ function AdminScholarshipsContent() {
     }
   }
 
-  async function toggleScholarshipStatus(
-    scholarshipId: string,
-    currentStatus: boolean
-  ) {
-    if (!user) return;
-
-    try {
-      setProcessing(scholarshipId);
-      const scholarshipRef = doc(db!, "scholarships", scholarshipId);
-      await updateDoc(scholarshipRef, {
-        active: !currentStatus,
-        updatedAt: serverTimestamp(),
-      });
-
-      // Update local state
-      setScholarships((prev) =>
-        prev.map((scholarship) =>
-          scholarship.id === scholarshipId
-            ? { ...scholarship, active: !currentStatus }
-            : scholarship
-        )
-      );
-    } catch (error) {
-      console.error("Error toggling scholarship status:", error);
-      toast.error("Failed to update scholarship status. Please try again.");
-    } finally {
-      setProcessing(null);
-    }
-  }
-
-  async function deleteScholarship(scholarshipId: string, scholarshipTitle: string) {
-    if (!user) return;
-
-    const confirmed = confirm(
-      `Are you sure you want to delete the scholarship "${scholarshipTitle}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setProcessing(scholarshipId);
-      const scholarshipRef = doc(db!, "scholarships", scholarshipId);
-      await deleteDoc(scholarshipRef);
-
-      // Update local state
-      setScholarships((prev) =>
-        prev.filter((scholarship) => scholarship.id !== scholarshipId)
-      );
-    } catch (error) {
-      console.error("Error deleting scholarship:", error);
-      toast.error("Failed to delete scholarship. Please try again.");
-    } finally {
-      setProcessing(null);
-    }
-  }
 
   if (authLoading || loading) {
     return (
@@ -162,14 +181,32 @@ function AdminScholarshipsContent() {
   }
 
   const filteredScholarships = scholarships.filter((scholarship) => {
-    if (filter === "all") return true;
-    if (filter === "active") return scholarship.active === true;
-    if (filter === "inactive") return scholarship.active === false;
-    return true;
+    // Always exclude permanently deleted unless viewing deleted
+    if (scholarship.deletedAt && filter !== "deleted") return false;
+
+    switch (filter) {
+      case "all":
+        return !scholarship.deletedAt;
+      case "active":
+        return scholarship.active === true && !scholarship.adminOverride?.flaggedAsSpam;
+      case "inactive":
+        return scholarship.active === false && !scholarship.adminOverride?.flaggedAsSpam && !scholarship.deletedAt;
+      case "expired":
+        return isExpired(scholarship) || scholarship.expiredAt != null;
+      case "spam":
+        return scholarship.adminOverride?.flaggedAsSpam === true;
+      case "deleted":
+        return scholarship.deletedAt != null;
+      default:
+        return true;
+    }
   });
 
-  const activeCount = scholarships.filter((s) => s.active === true).length;
-  const inactiveCount = scholarships.filter((s) => s.active === false).length;
+  const activeCount = scholarships.filter((s) => s.active === true && !s.adminOverride?.flaggedAsSpam && !s.deletedAt).length;
+  const inactiveCount = scholarships.filter((s) => s.active === false && !s.adminOverride?.flaggedAsSpam && !s.deletedAt).length;
+  const expiredCount = scholarships.filter((s) => isExpired(s) || s.expiredAt != null).length;
+  const spamCount = scholarships.filter((s) => s.adminOverride?.flaggedAsSpam === true).length;
+  const deletedCount = scholarships.filter((s) => s.deletedAt != null).length;
 
   return (
     <div className="min-h-screen bg-[#020306]">
@@ -216,7 +253,7 @@ function AdminScholarshipsContent() {
               : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
               }`}
           >
-            All ({scholarships.length})
+            All ({scholarships.filter(s => !s.deletedAt).length})
           </button>
           <button
             onClick={() => setFilter("active")}
@@ -236,6 +273,37 @@ function AdminScholarshipsContent() {
           >
             Inactive ({inactiveCount})
           </button>
+          <button
+            onClick={() => setFilter("expired")}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "expired"
+              ? "bg-amber-500 text-slate-900"
+              : "border border-slate-700 text-slate-300 hover:border-amber-500"
+              }`}
+          >
+            Expired ({expiredCount})
+          </button>
+          {spamCount > 0 && (
+            <button
+              onClick={() => setFilter("spam")}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "spam"
+                ? "bg-red-500 text-white"
+                : "border border-red-500/50 text-red-400 hover:border-red-500"
+                }`}
+            >
+              Spam ({spamCount})
+            </button>
+          )}
+          {deletedCount > 0 && (
+            <button
+              onClick={() => setFilter("deleted")}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "deleted"
+                ? "bg-slate-600 text-white"
+                : "border border-slate-600 text-slate-400 hover:border-slate-500"
+                }`}
+            >
+              Deleted ({deletedCount})
+            </button>
+          )}
         </div>
 
         {/* Scholarships List */}
@@ -277,14 +345,36 @@ function AdminScholarshipsContent() {
                                 {scholarship.provider || scholarship.employerName}
                               </p>
                             </div>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
-                                ? "bg-green-500/10 text-green-400"
-                                : "bg-slate-500/10 text-slate-400"
-                                }`}
-                            >
-                              {isActive ? "Active" : "Inactive"}
-                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
+                                  ? "bg-green-500/10 text-green-400"
+                                  : "bg-slate-500/10 text-slate-400"
+                                  }`}
+                              >
+                                {isActive ? "Active" : "Inactive"}
+                              </span>
+                              {isExpired(scholarship) && (
+                                <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
+                                  Expired
+                                </span>
+                              )}
+                              {scholarship.adminOverride?.flaggedAsSpam && (
+                                <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400">
+                                  Spam
+                                </span>
+                              )}
+                              {scholarship.adminOverride?.forcePublished && (
+                                <span className="rounded-full bg-purple-500/10 px-3 py-1 text-xs font-medium text-purple-400">
+                                  Force Published
+                                </span>
+                              )}
+                              {scholarship.deletedAt && (
+                                <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-400">
+                                  Deleted
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
@@ -339,40 +429,101 @@ function AdminScholarshipsContent() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 lg:flex-col">
+                    <div className="flex gap-2 lg:flex-col relative">
                       <Link
                         href={`/education/scholarships/${scholarship.id}`}
                         className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
-                        View Scholarship
+                        View
                       </Link>
 
-                      <button
-                        onClick={() =>
-                          toggleScholarshipStatus(scholarship.id, isActive)
-                        }
-                        disabled={isProcessing}
-                        className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${isActive
-                          ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
-                          : "bg-green-600 text-white hover:bg-green-500"
-                          }`}
-                      >
-                        {isProcessing
-                          ? "Processing..."
-                          : isActive
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
+                      {/* Quick Actions */}
+                      {!scholarship.deletedAt && (
+                        <>
+                          {isActive ? (
+                            <button
+                              onClick={() => handleAction(scholarship.id, "force_unpublish")}
+                              disabled={isProcessing}
+                              className="rounded-md border border-slate-600 px-4 py-2 text-sm text-slate-400 transition hover:bg-slate-800 disabled:opacity-50"
+                            >
+                              {isProcessing ? "..." : "Unpublish"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleAction(scholarship.id, "force_publish")}
+                              disabled={isProcessing}
+                              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:opacity-50"
+                            >
+                              {isProcessing ? "..." : "Publish"}
+                            </button>
+                          )}
+                        </>
+                      )}
 
-                      <button
-                        onClick={() =>
-                          deleteScholarship(scholarship.id, scholarship.title)
-                        }
-                        disabled={isProcessing}
-                        className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
+                      {/* More Actions Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setActionMenuOpen(actionMenuOpen === scholarship.id ? null : scholarship.id)}
+                          className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-slate-600"
+                        >
+                          More ▼
+                        </button>
+
+                        {actionMenuOpen === scholarship.id && (
+                          <div className="absolute right-0 top-full mt-1 z-10 w-48 rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg">
+                            {!scholarship.deletedAt && (
+                              <>
+                                {isExpired(scholarship) && !scholarship.adminOverride?.forcePublished && (
+                                  <button
+                                    onClick={() => handleAction(scholarship.id, "reopen")}
+                                    className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-800"
+                                  >
+                                    🔓 Reopen Scholarship
+                                  </button>
+                                )}
+                                {!isExpired(scholarship) && (
+                                  <button
+                                    onClick={() => handleAction(scholarship.id, "mark_expired")}
+                                    className="w-full px-4 py-2 text-left text-sm text-amber-400 hover:bg-slate-800"
+                                  >
+                                    ⏰ Mark as Expired
+                                  </button>
+                                )}
+                                {scholarship.adminOverride?.flaggedAsSpam ? (
+                                  <button
+                                    onClick={() => handleAction(scholarship.id, "unflag_spam")}
+                                    className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-slate-800"
+                                  >
+                                    ✓ Remove Spam Flag
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleAction(scholarship.id, "flag_spam")}
+                                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-slate-800"
+                                  >
+                                    🚩 Flag as Spam
+                                  </button>
+                                )}
+                                <hr className="my-1 border-slate-700" />
+                                <button
+                                  onClick={() => handleAction(scholarship.id, "delete")}
+                                  className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </>
+                            )}
+                            {scholarship.deletedAt && (
+                              <button
+                                onClick={() => handleAction(scholarship.id, "restore")}
+                                className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-slate-800"
+                              >
+                                ↩️ Restore
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -381,6 +532,77 @@ function AdminScholarshipsContent() {
           )}
         </div>
       </div>
+
+      {/* Reason Modal */}
+      {reasonModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6">
+            <h3 className="text-lg font-semibold text-white">
+              {reasonModalOpen.action === "flag_spam" && "Flag as Spam"}
+              {reasonModalOpen.action === "delete" && "Delete Scholarship"}
+              {reasonModalOpen.action === "mark_expired" && "Mark as Expired"}
+            </h3>
+            <p className="mt-2 text-sm text-slate-400">
+              {reasonModalOpen.action === "flag_spam" &&
+                "This will hide the scholarship and flag it for review."}
+              {reasonModalOpen.action === "delete" &&
+                "This will soft-delete the scholarship. It can be restored later."}
+              {reasonModalOpen.action === "mark_expired" &&
+                "This will mark the scholarship as expired and hide it from listings."}
+            </p>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-300">
+                Reason (optional)
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                placeholder="Enter reason for this action..."
+                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setReasonModalOpen(null);
+                  setReason("");
+                }}
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 transition hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  performAdminAction(
+                    reasonModalOpen.scholarshipId,
+                    reasonModalOpen.action,
+                    reason
+                  )
+                }
+                disabled={processing === reasonModalOpen.scholarshipId}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
+                  reasonModalOpen.action === "delete" || reasonModalOpen.action === "flag_spam"
+                    ? "bg-red-600 text-white hover:bg-red-500"
+                    : "bg-amber-600 text-white hover:bg-amber-500"
+                }`}
+              >
+                {processing ? "Processing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Click outside to close action menu */}
+      {actionMenuOpen && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setActionMenuOpen(null)}
+        />
+      )}
     </div>
   );
 }
