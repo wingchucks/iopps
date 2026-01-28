@@ -1171,8 +1171,42 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
   const formatEventDate = (date: Conference['startDate'] | PowwowEvent['startDate']) => {
     if (!date) return null;
-    if (typeof date === 'string') return new Date(date).toLocaleDateString();
-    if ('toDate' in date) return date.toDate().toLocaleDateString();
+    if (typeof date === 'string') return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if ('toDate' in date) return date.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return null;
+  };
+
+  // Get event status (upcoming, happening now, or past)
+  const getEventStatus = (startDate: Conference['startDate'], endDate: Conference['endDate']) => {
+    if (!startDate) return null;
+    const now = new Date();
+    let start: Date;
+    let end: Date | null = null;
+
+    if (typeof startDate === 'string') start = new Date(startDate);
+    else if ('toDate' in startDate) start = startDate.toDate();
+    else return null;
+
+    if (endDate) {
+      if (typeof endDate === 'string') end = new Date(endDate);
+      else if ('toDate' in endDate) end = endDate.toDate();
+    }
+
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfStart = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+
+    if (end) {
+      const startOfEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      if (startOfToday >= startOfStart && startOfToday <= startOfEnd) {
+        return { text: 'Happening Now', color: 'emerald' };
+      }
+    } else if (startOfToday.getTime() === startOfStart.getTime()) {
+      return { text: 'Today', color: 'emerald' };
+    }
+
+    const diffDays = Math.ceil((startOfStart.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) return { text: 'Tomorrow', color: 'amber' };
+    if (diffDays > 1 && diffDays <= 7) return { text: `In ${diffDays} days`, color: 'blue' };
     return null;
   };
 
@@ -1211,39 +1245,95 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
         <div>
           <h3 className="text-lg font-semibold text-white mb-4">Conferences</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {conferences.map((conf) => (
-              <Link
-                key={conf.id}
-                href={`/conferences/${conf.id}`}
-                className="group rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
-              >
-                {conf.imageUrl && (
-                  <div className="relative h-32 bg-slate-700">
-                    <Image
-                      src={conf.imageUrl}
-                      alt={conf.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-4">
-                  <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
-                    {conf.title}
-                  </h4>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {formatEventDate(conf.startDate)}
-                  </div>
-                  {conf.location && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                      <MapPinIcon className="h-3.5 w-3.5" />
-                      {conf.location}
+            {conferences.map((conf) => {
+              const status = getEventStatus(conf.startDate, conf.endDate);
+              return (
+                <Link
+                  key={conf.id}
+                  href={`/conferences/${conf.id}`}
+                  className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+                >
+                  {/* Cover Image */}
+                  <div className="relative h-36 bg-gradient-to-br from-purple-900/30 to-slate-800">
+                    {conf.imageUrl ? (
+                      <Image
+                        src={conf.imageUrl}
+                        alt={conf.title}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CalendarIcon className="h-12 w-12 text-purple-500/30" />
+                      </div>
+                    )}
+                    {/* Overlay badges */}
+                    <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
+                      {conf.featured && (
+                        <span className="rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+                          Featured
+                        </span>
+                      )}
+                      {status && (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm ${
+                          status.color === 'emerald' ? 'bg-emerald-500/90' :
+                          status.color === 'amber' ? 'bg-amber-500/90' : 'bg-blue-500/90'
+                        }`}>
+                          {status.text}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
-              </Link>
-            ))}
+                    {/* Format badge */}
+                    {conf.format && (
+                      <div className="absolute top-2 right-2">
+                        <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                          {conf.format}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-4">
+                    <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
+                      {conf.title}
+                    </h4>
+
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>{formatEventDate(conf.startDate)}</span>
+                        {conf.endDate && conf.endDate !== conf.startDate && (
+                          <span>- {formatEventDate(conf.endDate)}</span>
+                        )}
+                      </div>
+                      {conf.location && (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{conf.location}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between">
+                      {conf.cost ? (
+                        <span className={`text-xs font-medium ${
+                          conf.cost.toLowerCase().includes('free') ? 'text-emerald-400' : 'text-slate-400'
+                        }`}>
+                          {conf.cost}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500">See details</span>
+                      )}
+                      {conf.viewsCount && conf.viewsCount > 0 && (
+                        <span className="text-xs text-slate-500">{conf.viewsCount} views</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1253,39 +1343,99 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
         <div>
           <h3 className="text-lg font-semibold text-white mb-4">Pow Wows</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {powwows.map((powwow) => (
-              <Link
-                key={powwow.id}
-                href={`/powwows/${powwow.id}`}
-                className="group rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
-              >
-                {powwow.imageUrl && (
-                  <div className="relative h-32 bg-slate-700">
-                    <Image
-                      src={powwow.imageUrl}
-                      alt={powwow.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-4">
-                  <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors truncate">
-                    {powwow.name}
-                  </h4>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                    {formatEventDate(powwow.startDate)}
-                  </div>
-                  {powwow.location && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                      <MapPinIcon className="h-3.5 w-3.5" />
-                      {powwow.location}
+            {powwows.map((powwow) => {
+              const status = getEventStatus(powwow.startDate || null, powwow.endDate || null);
+              return (
+                <Link
+                  key={powwow.id}
+                  href={`/powwows/${powwow.id}`}
+                  className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-rose-500/50 transition-colors"
+                >
+                  {/* Cover Image */}
+                  <div className="relative h-36 bg-gradient-to-br from-rose-900/30 to-slate-800">
+                    {powwow.imageUrl ? (
+                      <Image
+                        src={powwow.imageUrl}
+                        alt={powwow.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-4xl">
+                        🪶
+                      </div>
+                    )}
+                    {/* Overlay badges */}
+                    <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
+                      {powwow.featured && (
+                        <span className="rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+                          Featured
+                        </span>
+                      )}
+                      {status && (
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm ${
+                          status.color === 'emerald' ? 'bg-emerald-500/90' :
+                          status.color === 'amber' ? 'bg-amber-500/90' : 'bg-blue-500/90'
+                        }`}>
+                          {status.text}
+                        </span>
+                      )}
+                      {powwow.livestream && (
+                        <span className="rounded-full bg-red-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                          Livestream
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
-              </Link>
-            ))}
+                    {/* Event type badge */}
+                    {powwow.eventType && (
+                      <div className="absolute top-2 right-2">
+                        <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                          {powwow.eventType}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-4">
+                    <h4 className="font-semibold text-white group-hover:text-rose-400 transition-colors line-clamp-2">
+                      {powwow.name}
+                    </h4>
+                    {powwow.host && (
+                      <p className="text-xs text-slate-400 mt-1">Hosted by {powwow.host}</p>
+                    )}
+
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>
+                          {powwow.dateRange || formatEventDate(powwow.startDate)}
+                          {!powwow.dateRange && powwow.endDate && powwow.endDate !== powwow.startDate && (
+                            <> - {formatEventDate(powwow.endDate)}</>
+                          )}
+                        </span>
+                      </div>
+                      {powwow.location && (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{powwow.location}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Season tag */}
+                    {powwow.season && (
+                      <div className="mt-3 pt-3 border-t border-slate-700/50">
+                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-xs text-rose-400 capitalize">
+                          {powwow.season}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
