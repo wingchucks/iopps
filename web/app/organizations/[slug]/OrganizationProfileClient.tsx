@@ -931,6 +931,144 @@ function OverviewTab({
           </section>
         )}
 
+        {/* Connect With Us */}
+        {(org.contactEmail || org.contactPhone || org.links?.website) && (
+          <section className="rounded-2xl bg-gradient-to-br from-teal-900/20 to-slate-800/50 border border-teal-500/20 p-5">
+            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <EnvelopeIcon className="h-4 w-4 text-teal-400" />
+              Connect With Us
+            </h3>
+            <div className="space-y-3">
+              {org.contactEmail && (
+                <a
+                  href={`mailto:${org.contactEmail}`}
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors group"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
+                    <EnvelopeIcon className="h-4 w-4 text-teal-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500">Email</p>
+                    <p className="text-sm text-white truncate group-hover:text-teal-400 transition-colors">
+                      {org.contactEmail}
+                    </p>
+                  </div>
+                </a>
+              )}
+              {org.contactPhone && (
+                <a
+                  href={`tel:${org.contactPhone}`}
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors group"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
+                    <PhoneIcon className="h-4 w-4 text-teal-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500">Phone</p>
+                    <p className="text-sm text-white group-hover:text-teal-400 transition-colors">
+                      {org.contactPhone}
+                    </p>
+                  </div>
+                </a>
+              )}
+              {org.links?.website && (
+                <a
+                  href={org.links.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors group"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
+                    <GlobeAltIcon className="h-4 w-4 text-teal-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500">Website</p>
+                    <p className="text-sm text-white truncate group-hover:text-teal-400 transition-colors">
+                      {org.links.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </p>
+                  </div>
+                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 text-slate-500" />
+                </a>
+              )}
+            </div>
+
+            {/* Social Links Row */}
+            {(org.links?.linkedin || org.links?.instagram || org.links?.facebook || org.links?.twitter) && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <p className="text-xs text-slate-500 mb-2">Follow Us</p>
+                <div className="flex gap-2">
+                  {org.links.linkedin && (
+                    <a
+                      href={org.links.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      title="LinkedIn"
+                    >
+                      <SocialIcons.linkedin className="h-4 w-4" />
+                    </a>
+                  )}
+                  {org.links.instagram && (
+                    <a
+                      href={org.links.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      title="Instagram"
+                    >
+                      <SocialIcons.instagram className="h-4 w-4" />
+                    </a>
+                  )}
+                  {org.links.facebook && (
+                    <a
+                      href={org.links.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      title="Facebook"
+                    >
+                      <SocialIcons.facebook className="h-4 w-4" />
+                    </a>
+                  )}
+                  {org.links.twitter && (
+                    <a
+                      href={org.links.twitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      title="X (Twitter)"
+                    >
+                      <SocialIcons.twitter className="h-4 w-4" />
+                    </a>
+                  )}
+                  {org.links.youtube && (
+                    <a
+                      href={org.links.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      title="YouTube"
+                    >
+                      <SocialIcons.youtube className="h-4 w-4" />
+                    </a>
+                  )}
+                  {org.links.tiktok && (
+                    <a
+                      href={org.links.tiktok}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      title="TikTok"
+                    >
+                      <SocialIcons.tiktok className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* Team Section (Owner only) */}
         {canEdit && (
           <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
