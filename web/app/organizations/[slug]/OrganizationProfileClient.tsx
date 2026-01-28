@@ -134,7 +134,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
     }
 
     if (enabledModules.includes('sell')) {
-      tabs.push({ id: 'offerings', label: 'Offerings', icon: BuildingStorefrontIcon });
+      tabs.push({ id: 'offerings', label: 'Products & Services', icon: BuildingStorefrontIcon });
     }
 
     if (enabledModules.includes('host')) {
