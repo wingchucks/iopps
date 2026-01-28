@@ -129,6 +129,18 @@ export {
 } from "./scholarships";
 export type { ExtendedScholarshipInput } from "./scholarships";
 
+// Scholarship Analytics (CTA tracking, bot protection, admin audit)
+export {
+  trackScholarshipApplyClick,
+  getScholarshipApplyClickStats,
+  getOrganizationScholarshipAnalytics,
+  logScholarshipAdminAction,
+  getScholarshipAdminAuditLog,
+  getScholarshipsExpiringSoon,
+  getOrCreateSessionId,
+  generateFingerprintHash,
+} from "./scholarship-analytics";
+
 // Powwows
 export {
   createPowwowEvent,

@@ -7,6 +7,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { createScholarship, getEmployerProfile, updateScholarship } from "@/lib/firestore";
 import { PosterUploader } from "@/components/PosterUploader";
 import type { ScholarshipExtractedData } from "@/lib/googleAi";
+import type { ScholarshipApplicationMethod } from "@/lib/types";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
@@ -25,6 +26,12 @@ export default function NewScholarshipPage() {
   const [error, setError] = useState<string | null>(null);
   const [showUploader, setShowUploader] = useState(true);
   const [posterFile, setPosterFile] = useState<File | null>(null);
+
+  // Application method fields
+  const [applicationMethod, setApplicationMethod] = useState<ScholarshipApplicationMethod | "">("");
+  const [applicationUrl, setApplicationUrl] = useState("");
+  const [applicationEmail, setApplicationEmail] = useState("");
+  const [applicationInstructions, setApplicationInstructions] = useState("");
 
   // Handle data extracted from poster
   const handlePosterDataExtracted = (data: ScholarshipExtractedData) => {
@@ -89,6 +96,37 @@ export default function NewScholarshipPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Validate application method
+    if (!applicationMethod) {
+      setError("Please select an application method.");
+      return;
+    }
+
+    if (applicationMethod === "external_link" && !applicationUrl) {
+      setError("Please provide an application URL for external applications.");
+      return;
+    }
+
+    if (applicationMethod === "external_link" && applicationUrl) {
+      // Validate URL format
+      try {
+        const url = new URL(applicationUrl);
+        if (!url.protocol.startsWith("http")) {
+          setError("Application URL must start with https://");
+          return;
+        }
+      } catch {
+        setError("Please enter a valid application URL (e.g., https://example.com/apply)");
+        return;
+      }
+    }
+
+    if (applicationMethod === "email" && !applicationEmail) {
+      setError("Please provide an email address for email applications.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -114,6 +152,10 @@ export default function NewScholarshipPage() {
         level,
         region: region || undefined,
         type,
+        applicationMethod,
+        applicationUrl: applicationMethod === "external_link" ? applicationUrl : undefined,
+        applicationEmail: applicationMethod === "email" ? applicationEmail : undefined,
+        applicationInstructions: applicationMethod === "institution_portal" ? applicationInstructions : undefined,
       });
 
       // Upload poster if exists
@@ -323,6 +365,87 @@ export default function NewScholarshipPage() {
             placeholder="e.g., Canada-wide, Ontario, Alberta"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
+        </div>
+
+        {/* Application Method Section */}
+        <div className="mt-8 pt-6 border-t border-slate-800">
+          <h3 className="text-lg font-semibold text-white mb-4">
+            How do applicants apply? *
+          </h3>
+          <p className="text-sm text-slate-400 mb-4">
+            Let applicants know how to submit their application for this scholarship.
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-200">
+              Application Method *
+            </label>
+            <select
+              required
+              value={applicationMethod}
+              onChange={(e) => setApplicationMethod(e.target.value as ScholarshipApplicationMethod)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            >
+              <option value="">Select application method</option>
+              <option value="external_link">External Application Link</option>
+              <option value="email">Email Application</option>
+              <option value="institution_portal">Apply via Institution Portal</option>
+              <option value="instructions_provided">Instructions Provided in Description</option>
+            </select>
+          </div>
+
+          {applicationMethod === "external_link" && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-200">
+                Application URL *
+              </label>
+              <input
+                type="url"
+                required={applicationMethod === "external_link"}
+                value={applicationUrl}
+                onChange={(e) => setApplicationUrl(e.target.value)}
+                placeholder="https://example.com/apply"
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Enter the full URL where applicants can submit their application
+              </p>
+            </div>
+          )}
+
+          {applicationMethod === "email" && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-200">
+                Application Email *
+              </label>
+              <input
+                type="email"
+                required={applicationMethod === "email"}
+                value={applicationEmail}
+                onChange={(e) => setApplicationEmail(e.target.value)}
+                placeholder="scholarships@organization.com"
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Applicants will be directed to send their application to this email
+              </p>
+            </div>
+          )}
+
+          {applicationMethod === "institution_portal" && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-200">
+                Application Instructions
+              </label>
+              <textarea
+                value={applicationInstructions}
+                onChange={(e) => setApplicationInstructions(e.target.value)}
+                rows={3}
+                placeholder="e.g., Log in to your student portal and navigate to Financial Aid > Scholarships"
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              />
+            </div>
+          )}
         </div>
 
         <div className="pt-4">

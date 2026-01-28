@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import ShareButtons from "@/components/ShareButtons";
 import { useAuth } from "@/components/AuthProvider";
 import { createScholarshipApplication, getMemberProfile } from "@/lib/firestore";
+import {
+  trackScholarshipApplyClick,
+  isScholarshipExpired,
+  getOrCreateSessionId,
+  generateFingerprintHash,
+} from "@/lib/firestore/scholarship-analytics";
 import type { Scholarship, MemberProfile } from "@/lib/types";
 
 interface ScholarshipDetailClientProps {
@@ -26,6 +32,28 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if scholarship is expired
+  const isExpired = isScholarshipExpired(scholarship);
+
+  // Track apply button clicks with rate limiting
+  const handleApplyClick = useCallback(async () => {
+    if (!scholarship.applicationUrl || isExpired) return;
+
+    // Track the click (with built-in rate limiting and bot protection)
+    const sessionId = getOrCreateSessionId();
+    const fingerprintHash = generateFingerprintHash();
+
+    await trackScholarshipApplyClick(scholarship.id, scholarship.employerId, {
+      source: "web",
+      userId: user?.uid,
+      sessionId,
+      fingerprintHash,
+    });
+
+    // Open the application URL in a new tab
+    window.open(scholarship.applicationUrl, "_blank", "noopener,noreferrer");
+  }, [scholarship.id, scholarship.employerId, scholarship.applicationUrl, isExpired, user?.uid]);
 
   // Load member profile for community members
   useEffect(() => {
@@ -150,14 +178,68 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               </span>
             )}
             {deadline && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-base font-medium text-amber-300">
+              <span className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-base font-medium ${
+                isExpired
+                  ? "border-red-400/30 bg-red-500/10 text-red-300"
+                  : "border-amber-400/30 bg-amber-500/10 text-amber-300"
+              }`}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Deadline: {deadline}
+                {isExpired ? "Deadline Passed" : `Deadline: ${deadline}`}
+              </span>
+            )}
+            {isExpired && (
+              <span className="inline-flex items-center gap-2 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-base font-semibold text-red-300">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Expired
               </span>
             )}
           </div>
+
+          {/* Apply CTA Button for External Links */}
+          {scholarship.applicationMethod === "external_link" && scholarship.applicationUrl && (
+            <div className="mt-6">
+              {isExpired ? (
+                <button
+                  disabled
+                  className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-6 py-3 text-base font-semibold text-slate-400 cursor-not-allowed"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  Application Closed
+                </button>
+              ) : (
+                <button
+                  onClick={handleApplyClick}
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Apply for this Scholarship
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Email Application CTA */}
+          {scholarship.applicationMethod === "email" && scholarship.applicationEmail && !isExpired && (
+            <div className="mt-6">
+              <a
+                href={`mailto:${scholarship.applicationEmail}?subject=Scholarship Application: ${encodeURIComponent(scholarship.title)}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Email Application
+              </a>
+            </div>
+          )}
 
           {/* Share Buttons */}
           <div className="mt-6 pt-6 border-t border-slate-800">
@@ -184,101 +266,124 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
           </div>
         </div>
 
-        {/* Application Section */}
-        {isCommunityMember && user ? (
+        {/* Application Instructions for Institution Portal */}
+        {scholarship.applicationMethod === "institution_portal" && scholarship.applicationInstructions && (
           <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
-            <h2 className="text-xl font-bold text-slate-200">
-              Apply for this {scholarship.type}
-            </h2>
-
-            {success ? (
-              <div className="mt-6 rounded-lg border border-green-500/40 bg-green-500/10 p-6 text-center">
-                <p className="text-lg font-semibold text-green-400">
-                  Application submitted successfully!
-                </p>
-                <p className="mt-2 text-sm text-slate-300">
-                  Redirecting to your applications...
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-200">
-                    Education Background <span className="text-red-400">*</span>
-                  </label>
-                  <textarea
-                    required
-                    value={education}
-                    onChange={(e) => setEducation(e.target.value)}
-                    rows={4}
-                    placeholder="Describe your current education status, institution, program, year of study, GPA, etc."
-                    className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-200">
-                    Personal Statement / Essay <span className="text-red-400">*</span>
-                  </label>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Share your goals, achievements, community involvement, and why you should be selected for this {scholarship.type.toLowerCase()}.
-                  </p>
-                  <textarea
-                    required
-                    value={essay}
-                    onChange={(e) => setEssay(e.target.value)}
-                    rows={10}
-                    placeholder="Write your personal statement here..."
-                    className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
-                  />
-                </div>
-
-                {error && (
-                  <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {submitting ? "Submitting..." : "Submit Application"}
-                </button>
-              </form>
-            )}
-          </div>
-        ) : !user ? (
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8 text-center">
-            <h3 className="text-lg font-bold text-slate-200">
-              Sign in to apply
-            </h3>
-            <p className="mt-2 text-slate-400">
-              Create a community member account to apply for this {scholarship.type.toLowerCase()}.
-            </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <Link
-                href="/login"
-                className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
-              >
-                Create Account
-              </Link>
+            <h2 className="text-xl font-bold text-slate-200">How to Apply</h2>
+            <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/50 p-4">
+              <p className="text-sm text-slate-300 whitespace-pre-wrap">
+                {scholarship.applicationInstructions}
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8 text-center">
-            <p className="text-slate-400">
-              Switch to a community member account to apply for scholarships.
-            </p>
-          </div>
         )}
+
+        {/* Application Section - Only show internal form if no external method is set */}
+        {!scholarship.applicationMethod || scholarship.applicationMethod === "instructions_provided" ? (
+          isCommunityMember && user ? (
+            <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8">
+              <h2 className="text-xl font-bold text-slate-200">
+                Apply for this {scholarship.type}
+              </h2>
+
+              {isExpired ? (
+                <div className="mt-6 rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-center">
+                  <p className="text-lg font-semibold text-red-400">
+                    Application period has ended
+                  </p>
+                  <p className="mt-2 text-sm text-slate-300">
+                    The deadline for this scholarship has passed.
+                  </p>
+                </div>
+              ) : success ? (
+                <div className="mt-6 rounded-lg border border-green-500/40 bg-green-500/10 p-6 text-center">
+                  <p className="text-lg font-semibold text-green-400">
+                    Application submitted successfully!
+                  </p>
+                  <p className="mt-2 text-sm text-slate-300">
+                    Redirecting to your applications...
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200">
+                      Education Background <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      required
+                      value={education}
+                      onChange={(e) => setEducation(e.target.value)}
+                      rows={4}
+                      placeholder="Describe your current education status, institution, program, year of study, GPA, etc."
+                      className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-200">
+                      Personal Statement / Essay <span className="text-red-400">*</span>
+                    </label>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Share your goals, achievements, community involvement, and why you should be selected for this {scholarship.type.toLowerCase()}.
+                    </p>
+                    <textarea
+                      required
+                      value={essay}
+                      onChange={(e) => setEssay(e.target.value)}
+                      rows={10}
+                      placeholder="Write your personal statement here..."
+                      className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {submitting ? "Submitting..." : "Submit Application"}
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : !user ? (
+            <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8 text-center">
+              <h3 className="text-lg font-bold text-slate-200">
+                Sign in to apply
+              </h3>
+              <p className="mt-2 text-slate-400">
+                Create a community member account to apply for this {scholarship.type.toLowerCase()}.
+              </p>
+              <div className="mt-6 flex justify-center gap-3">
+                <Link
+                  href="/login"
+                  className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                >
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-slate-800 bg-[#08090C] p-8 text-center">
+              <p className="text-slate-400">
+                Switch to a community member account to apply for scholarships.
+              </p>
+            </div>
+          )
+        ) : null}
 
         {/* Provider Information */}
         {scholarship.employerName && (

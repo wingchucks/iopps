@@ -845,6 +845,13 @@ export interface JobAlert {
   lastSent?: Timestamp | null;
 }
 
+// Application method for scholarships
+export type ScholarshipApplicationMethod =
+  | 'external_link'
+  | 'email'
+  | 'institution_portal'
+  | 'instructions_provided';
+
 export interface Scholarship {
   id: string;
   employerId: string;
@@ -861,8 +868,61 @@ export interface Scholarship {
   imageUrl?: string;
   imagePath?: string;
   createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
   active: boolean;
-  status?: "active" | "upcoming" | "closed";
+  status?: "active" | "upcoming" | "closed" | "expired";
+
+  // Application method fields
+  applicationMethod?: ScholarshipApplicationMethod;
+  applicationUrl?: string; // Required if applicationMethod === 'external_link'
+  applicationEmail?: string; // Optional contact email
+  applicationInstructions?: string; // Optional instructions text
+
+  // Analytics
+  applyClickCount?: number;
+  viewCount?: number;
+
+  // Admin override fields
+  adminOverride?: {
+    forcePublished?: boolean;
+    forceUnpublished?: boolean;
+    reopenedAt?: Timestamp | null;
+    reopenedBy?: string;
+    flaggedAsSpam?: boolean;
+    flaggedAt?: Timestamp | null;
+    flaggedBy?: string;
+  };
+
+  // Soft delete
+  deletedAt?: Timestamp | null;
+  deletedBy?: string;
+}
+
+// Scholarship apply click event for analytics
+export interface ScholarshipApplyClickEvent {
+  id: string;
+  scholarshipId: string;
+  organizationId: string;
+  timestamp: Timestamp | null;
+  source: 'web' | 'mobile';
+  userType: 'anonymous' | 'logged-in';
+  userId?: string;
+  sessionId: string;
+  fingerprintHash: string; // Privacy-safe hash
+  dedupeKey: string; // For rate limiting
+}
+
+// Admin action audit log for scholarships
+export interface ScholarshipAdminAuditLog {
+  id: string;
+  adminUserId: string;
+  adminEmail?: string;
+  actionType: 'force_publish' | 'force_unpublish' | 'mark_expired' | 'reopen' | 'edit' | 'flag_spam' | 'delete' | 'restore';
+  scholarshipId: string;
+  timestamp: Timestamp | null;
+  reason?: string;
+  beforeSnapshot?: Partial<Scholarship>;
+  afterSnapshot?: Partial<Scholarship>;
 }
 
 export interface ScholarshipApplication {
