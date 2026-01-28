@@ -561,6 +561,7 @@ function OverviewTab({
               description="Tell visitors about your organization, mission, and what makes you unique."
               ctaText="Add Description"
               ctaHref="/organization/profile"
+              icon={<BuildingOffice2Icon className="h-7 w-7" />}
             />
           ) : null}
         </section>
@@ -579,6 +580,7 @@ function OverviewTab({
                 description="Share your organization's journey, values, and connection to community."
                 ctaText="Edit Profile"
                 ctaHref="/organization/onboarding?step=3"
+                icon={<HeartIcon className="h-7 w-7" />}
               />
             ) : null}
           </section>
@@ -733,6 +735,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             description="Reach thousands of Indigenous professionals actively seeking opportunities. Post your first job today."
             ctaText="Post a Job"
             ctaHref="/organization/jobs/new"
+            icon={<BriefcaseIcon className="h-7 w-7" />}
           />
         ) : (
           <p className="text-slate-400">No job openings at this time.</p>
@@ -847,6 +850,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             description="Showcase your commitment to Indigenous education. Add scholarships and training programs to attract diverse talent."
             ctaText="Add Scholarship"
             ctaHref="/organization/scholarships/new"
+            icon={<AcademicCapIcon className="h-7 w-7" />}
           />
         ) : (
           <p className="text-slate-400">No programs available at this time.</p>
@@ -928,6 +932,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             description="Showcase what you offer. List your products and services to connect with potential customers and partners."
             ctaText="Add Product or Service"
             ctaHref="/organization/services/new"
+            icon={<BuildingStorefrontIcon className="h-7 w-7" />}
           />
         ) : (
           <p className="text-slate-400">No products or services available at this time.</p>
@@ -1023,6 +1028,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
             description="Build connections with the community. Host conferences, networking events, or cultural gatherings."
             ctaText="Create Event"
             ctaHref="/organization/conferences/new"
+            icon={<CalendarIcon className="h-7 w-7" />}
           />
         ) : (
           <p className="text-slate-400">No upcoming events.</p>
@@ -1172,6 +1178,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
             description="Support Indigenous entrepreneurs. Share grants, loans, and funding programs to help businesses grow."
             ctaText="Add Funding"
             ctaHref="/organization/grants/new"
+            icon={<CurrencyDollarIcon className="h-7 w-7" />}
           />
         ) : (
           <p className="text-slate-400">No funding opportunities available at this time.</p>
@@ -1231,18 +1238,25 @@ function EmptyStateCard({
   ctaText,
   ctaHref,
   onCtaClick,
+  icon,
 }: {
   title: string;
   description: string;
   ctaText: string;
   ctaHref?: string;
   onCtaClick?: () => void;
+  icon?: React.ReactNode;
 }) {
   const buttonClass =
     "inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors";
 
   return (
-    <div className="flex flex-col items-center py-4">
+    <div className="flex flex-col items-center py-6">
+      {icon && (
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-700/50 text-slate-400">
+          {icon}
+        </div>
+      )}
       <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
       <p className="text-sm text-slate-400 mb-4 max-w-sm text-center">{description}</p>
       {onCtaClick ? (
