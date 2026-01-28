@@ -21,6 +21,8 @@ import {
   PencilIcon,
   EyeIcon,
   ArrowTopRightOnSquareIcon,
+  UserGroupIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
@@ -46,7 +48,9 @@ import {
   listEmployerConferences,
   listEmployerPowwows,
   listOrganizationGrants,
+  getTeamMembers,
 } from '@/lib/firestore';
+import type { TeamMember } from '@/lib/types';
 
 // Tab types
 type ProfileTab = 'overview' | 'jobs' | 'programs' | 'offerings' | 'events' | 'funding';
@@ -623,12 +627,43 @@ function OverviewTab({
   currentStory: string;
   jobCount: number;
 }) {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+
+  // Fetch team members if owner
+  useEffect(() => {
+    if (!canEdit) return;
+    setLoadingTeam(true);
+    getTeamMembers(org.userId)
+      .then(setTeamMembers)
+      .catch(() => setTeamMembers([]))
+      .finally(() => setLoadingTeam(false));
+  }, [canEdit, org.userId]);
+
   // Format member since date
   const memberSince = org.createdAt
     ? (typeof org.createdAt === 'object' && 'toDate' in org.createdAt
         ? org.createdAt.toDate()
         : new Date(org.createdAt as unknown as string))
     : null;
+
+  // Check for verification details
+  const verification = org.indigenousVerification;
+  const hasVerificationDetails = verification?.status === 'approved' && (
+    verification.nationAffiliation ||
+    verification.certifications?.length ||
+    verification.isIndigenousLed
+  );
+
+  // Check for TRC details beyond just the statement
+  const trc = org.trcAlignment;
+  const hasTrcDetails = trc && (
+    trc.hasIndigenousHiringStrategy ||
+    trc.leadershipTrainingComplete ||
+    trc.isIndigenousOwned ||
+    trc.commitmentStatement
+  );
+
   return (
     <div className="grid gap-8 lg:grid-cols-3">
       {/* Main Content */}
@@ -684,24 +719,141 @@ function OverviewTab({
           <EmployerInterviewSection employer={org as any} />
         )}
 
+        {/* Indigenous Verification Details */}
+        {hasVerificationDetails && (
+          <section className="rounded-2xl bg-gradient-to-br from-amber-900/20 to-slate-800/50 border border-amber-500/20 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20">
+                <ShieldCheckIcon className="h-5 w-5 text-amber-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">Verified Indigenous Business</h2>
+                {verification?.reviewedAt && (
+                  <p className="text-xs text-slate-400">
+                    Verified {typeof verification.reviewedAt === 'object' && 'toDate' in verification.reviewedAt
+                      ? verification.reviewedAt.toDate().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                      : ''}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {verification?.nationAffiliation && (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 text-sm">Nation:</span>
+                  <span className="text-white font-medium">{verification.nationAffiliation}</span>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {verification?.isIndigenousOwned && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm text-amber-400 border border-amber-500/20">
+                    <CheckBadgeIcon className="h-4 w-4" />
+                    Majority Indigenous-Owned (51%+)
+                  </span>
+                )}
+                {verification?.isIndigenousLed && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5 text-sm text-amber-400 border border-amber-500/20">
+                    <CheckBadgeIcon className="h-4 w-4" />
+                    Indigenous Leadership
+                  </span>
+                )}
+              </div>
+
+              {verification?.certifications && verification.certifications.length > 0 && (
+                <div className="pt-3 border-t border-slate-700/50">
+                  <p className="text-xs text-slate-400 mb-2">Certifications</p>
+                  <div className="flex flex-wrap gap-2">
+                    {verification.certifications.map((cert) => (
+                      <span
+                        key={cert}
+                        className="inline-flex items-center rounded-full bg-slate-700/50 px-3 py-1 text-xs text-slate-300"
+                      >
+                        {cert}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* TRC Commitment */}
-        {org.trcAlignment?.commitmentStatement && (
-          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">TRC Commitment</h2>
-            <p className="text-slate-300">{org.trcAlignment.commitmentStatement}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {org.trcAlignment.hasIndigenousHiringStrategy && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/10 px-3 py-1 text-xs text-teal-400">
-                  <CheckBadgeIcon className="h-3.5 w-3.5" />
-                  Indigenous Hiring Strategy
-                </span>
-              )}
-              {org.trcAlignment.leadershipTrainingComplete && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/10 px-3 py-1 text-xs text-teal-400">
-                  <CheckBadgeIcon className="h-3.5 w-3.5" />
-                  Leadership Training
-                </span>
-              )}
+        {hasTrcDetails && (
+          <section className="rounded-2xl bg-gradient-to-br from-purple-900/20 to-slate-800/50 border border-purple-500/20 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20">
+                <HeartIcon className="h-5 w-5 text-purple-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">TRC Commitment</h2>
+            </div>
+
+            {trc?.commitmentStatement && (
+              <p className="text-slate-300 mb-4">{trc.commitmentStatement}</p>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className={`rounded-xl p-3 border ${
+                trc?.hasIndigenousHiringStrategy
+                  ? 'bg-emerald-500/10 border-emerald-500/20'
+                  : 'bg-slate-800/50 border-slate-700/50'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  {trc?.hasIndigenousHiringStrategy ? (
+                    <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border border-slate-600" />
+                  )}
+                  <span className={`text-sm font-medium ${
+                    trc?.hasIndigenousHiringStrategy ? 'text-emerald-400' : 'text-slate-500'
+                  }`}>
+                    Hiring Strategy
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">Indigenous hiring initiatives</p>
+              </div>
+
+              <div className={`rounded-xl p-3 border ${
+                trc?.leadershipTrainingComplete
+                  ? 'bg-emerald-500/10 border-emerald-500/20'
+                  : 'bg-slate-800/50 border-slate-700/50'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  {trc?.leadershipTrainingComplete ? (
+                    <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border border-slate-600" />
+                  )}
+                  <span className={`text-sm font-medium ${
+                    trc?.leadershipTrainingComplete ? 'text-emerald-400' : 'text-slate-500'
+                  }`}>
+                    Leadership Training
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">Cultural competency training</p>
+              </div>
+
+              <div className={`rounded-xl p-3 border ${
+                trc?.isIndigenousOwned
+                  ? 'bg-emerald-500/10 border-emerald-500/20'
+                  : 'bg-slate-800/50 border-slate-700/50'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  {trc?.isIndigenousOwned ? (
+                    <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border border-slate-600" />
+                  )}
+                  <span className={`text-sm font-medium ${
+                    trc?.isIndigenousOwned ? 'text-emerald-400' : 'text-slate-500'
+                  }`}>
+                    Indigenous-Owned
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">Majority Indigenous ownership</p>
+              </div>
             </div>
           </section>
         )}
@@ -766,6 +918,60 @@ function OverviewTab({
                 </span>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Team Section (Owner only) */}
+        {canEdit && (
+          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <UserGroupIcon className="h-4 w-4 text-slate-400" />
+                Team Members
+              </h3>
+              <Link
+                href="/organization/team"
+                className="text-xs text-teal-400 hover:text-teal-300"
+              >
+                Manage
+              </Link>
+            </div>
+            {loadingTeam ? (
+              <div className="flex justify-center py-4">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+              </div>
+            ) : teamMembers.length > 0 ? (
+              <div className="space-y-3">
+                {teamMembers.slice(0, 5).map((member) => (
+                  <div key={member.id} className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-sm font-medium text-white">
+                      {member.displayName?.charAt(0) || member.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">
+                        {member.displayName || member.email}
+                      </p>
+                      <p className="text-xs text-slate-500 capitalize">{member.role}</p>
+                    </div>
+                  </div>
+                ))}
+                {teamMembers.length > 5 && (
+                  <p className="text-xs text-slate-500 pt-2">
+                    +{teamMembers.length - 5} more team members
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-xs text-slate-500 mb-2">No team members yet</p>
+                <Link
+                  href="/organization/team/invite"
+                  className="text-xs text-teal-400 hover:text-teal-300"
+                >
+                  Invite team members
+                </Link>
+              </div>
+            )}
           </section>
         )}
       </div>
