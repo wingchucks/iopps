@@ -392,7 +392,9 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
     return { id: docSnap.id, ...docSnap.data() } as OrganizationProfile;
   }
 
-  // Second try: lookup by slug with only approved status (for legacy data without publicationStatus)
+  // Second try: lookup by slug with only approved status
+  // If status is approved, show the profile regardless of publicationStatus
+  // (publicationStatus may not have been updated when admin approved)
   const fallbackQuery = query(
     collection(firestore, employerCollection),
     where("slug", "==", slug),
@@ -404,33 +406,27 @@ export async function getPublicOrganizationBySlug(slug: string): Promise<Organiz
   if (!fallbackSnap.empty) {
     const docSnap = fallbackSnap.docs[0];
     const data = docSnap.data();
-    // Allow if publicationStatus is missing (legacy) or PUBLISHED
-    if (!data.publicationStatus || data.publicationStatus === "PUBLISHED") {
-      console.log(`[getPublicOrganizationBySlug] Found approved profile via fallback for slug "${slug}"`);
-      return { id: docSnap.id, ...data } as OrganizationProfile;
-    }
+    // Approved status is the source of truth - show profile
+    console.log(`[getPublicOrganizationBySlug] Found approved profile via fallback for slug "${slug}", publicationStatus: ${data.publicationStatus || 'not set'}`);
+    return { id: docSnap.id, ...data } as OrganizationProfile;
   }
 
-  // Third try: lookup by document ID with same status checks
+  // Third try: lookup by document ID (in case slug IS the document ID)
   // Wrapped in try-catch because Firestore security rules may block access
   try {
     const ref = doc(firestore, employerCollection, slug);
     const docSnap = await getDoc(ref);
     if (docSnap.exists()) {
       const data = docSnap.data();
-      // Verify the organization is approved (required by security rules)
-      // Also check publicationStatus if set, but allow legacy docs without it
+      // Approved status is the source of truth
       if (data.status === "approved") {
-        // If publicationStatus exists, it must be PUBLISHED
-        // If not set (legacy data), allow access for approved employers
-        if (!data.publicationStatus || data.publicationStatus === "PUBLISHED") {
-          return { id: docSnap.id, ...data } as OrganizationProfile;
-        }
+        console.log(`[getPublicOrganizationBySlug] Found approved profile by doc ID for "${slug}"`);
+        return { id: docSnap.id, ...data } as OrganizationProfile;
       }
     }
   } catch (error) {
     // Permission denied or other error - document may exist but not accessible
-    console.log(`[getPublicOrganizationBySlug] Fallback lookup failed for "${slug}":`, error);
+    console.log(`[getPublicOrganizationBySlug] Doc ID lookup failed for "${slug}":`, error);
   }
 
   return null;
