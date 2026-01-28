@@ -861,6 +861,9 @@ function OverviewTab({
 
       {/* Sidebar */}
       <div className="space-y-6">
+        {/* Profile Strength (Owner only) */}
+        {canEdit && <ProfileStrengthCard org={org} />}
+
         {/* Quick Facts */}
         <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
           <h3 className="text-sm font-semibold text-white mb-4">Quick Facts</h3>
@@ -902,6 +905,13 @@ function OverviewTab({
               </div>
             )}
           </dl>
+
+          {/* Activity Indicator */}
+          {org.updatedAt && (
+            <div className="mt-4 pt-4 border-t border-slate-700/50">
+              <ActivityIndicator updatedAt={org.updatedAt} />
+            </div>
+          )}
         </section>
 
         {/* Categories */}
@@ -1914,6 +1924,145 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
         );
       })}
     </div>
+  );
+}
+
+// Activity Indicator Component
+function ActivityIndicator({ updatedAt }: { updatedAt: OrganizationProfile['updatedAt'] }) {
+  if (!updatedAt) return null;
+
+  const date = typeof updatedAt === 'object' && 'toDate' in updatedAt
+    ? updatedAt.toDate()
+    : new Date(updatedAt as unknown as string);
+
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+  let statusText: string;
+  let statusColor: string;
+  let dotColor: string;
+
+  if (diffDays <= 7) {
+    statusText = 'Very Active';
+    statusColor = 'text-emerald-400';
+    dotColor = 'bg-emerald-400';
+  } else if (diffDays <= 30) {
+    statusText = 'Recently Active';
+    statusColor = 'text-teal-400';
+    dotColor = 'bg-teal-400';
+  } else if (diffDays <= 90) {
+    statusText = 'Active';
+    statusColor = 'text-slate-400';
+    dotColor = 'bg-slate-400';
+  } else {
+    return null; // Don't show if inactive for too long
+  }
+
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-slate-500">Activity</span>
+      <span className={`flex items-center gap-1.5 text-xs font-medium ${statusColor}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${dotColor} ${diffDays <= 7 ? 'animate-pulse' : ''}`} />
+        {statusText}
+      </span>
+    </div>
+  );
+}
+
+// Profile Strength Card Component (Owner only)
+function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
+  // Calculate profile completeness
+  const items = [
+    { id: 'logo', label: 'Logo', completed: !!org.logoUrl, weight: 15 },
+    { id: 'banner', label: 'Banner', completed: !!org.bannerUrl, weight: 10 },
+    { id: 'description', label: 'Description', completed: !!(org.description && org.description.length >= 50), weight: 15 },
+    { id: 'location', label: 'Location', completed: !!(org.city || org.location), weight: 10 },
+    { id: 'industry', label: 'Industry', completed: !!org.industry, weight: 10 },
+    { id: 'website', label: 'Website', completed: !!(org.links?.website || org.website), weight: 10 },
+    { id: 'contact', label: 'Contact info', completed: !!(org.contactEmail || org.contactPhone), weight: 10 },
+    { id: 'story', label: 'Company story', completed: !!(org.story && org.story.length >= 50), weight: 10 },
+    { id: 'video', label: 'Intro video', completed: !!org.companyIntroVideo?.videoUrl, weight: 10 },
+  ];
+
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  const completedWeight = items.filter(i => i.completed).reduce((sum, item) => sum + item.weight, 0);
+  const score = Math.round((completedWeight / totalWeight) * 100);
+  const incompleteItems = items.filter(i => !i.completed);
+
+  const getScoreColor = (s: number) => {
+    if (s >= 80) return 'text-emerald-400';
+    if (s >= 60) return 'text-amber-400';
+    if (s >= 40) return 'text-orange-400';
+    return 'text-red-400';
+  };
+
+  const getProgressColor = (s: number) => {
+    if (s >= 80) return 'from-emerald-500 to-teal-400';
+    if (s >= 60) return 'from-amber-500 to-yellow-400';
+    if (s >= 40) return 'from-orange-500 to-amber-400';
+    return 'from-red-500 to-orange-400';
+  };
+
+  if (score === 100) {
+    return (
+      <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20">
+            <CheckBadgeIcon className="h-5 w-5 text-emerald-400" />
+          </div>
+          <div>
+            <p className="font-semibold text-emerald-300">Profile Complete!</p>
+            <p className="text-xs text-emerald-200/70">Your profile is fully optimized.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-white">Profile Strength</h3>
+        <span className={`text-xl font-bold ${getScoreColor(score)}`}>{score}%</span>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-700 mb-4">
+        <div
+          className={`h-full rounded-full bg-gradient-to-r ${getProgressColor(score)} transition-all duration-500`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+
+      {/* Quick wins */}
+      {incompleteItems.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-slate-500">Missing:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {incompleteItems.slice(0, 4).map((item) => (
+              <span
+                key={item.id}
+                className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-400"
+              >
+                <span className="text-slate-500">+{item.weight}</span>
+                {item.label}
+              </span>
+            ))}
+            {incompleteItems.length > 4 && (
+              <span className="text-xs text-slate-500">+{incompleteItems.length - 4} more</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      <Link
+        href="/organization/profile"
+        className="mt-4 flex items-center justify-center gap-1.5 w-full rounded-lg bg-teal-500/10 border border-teal-500/20 py-2 text-xs font-medium text-teal-400 hover:bg-teal-500/20 transition-colors"
+      >
+        <PencilIcon className="h-3.5 w-3.5" />
+        Complete Profile
+      </Link>
+    </section>
   );
 }
 
