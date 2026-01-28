@@ -253,14 +253,21 @@ function OnboardingContent() {
   };
 
   const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[Onboarding] Cover image upload triggered');
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    console.log('[Onboarding] File selected:', file?.name, file?.size, file?.type);
+    if (!file || !user) {
+      console.log('[Onboarding] No file or user, aborting. File:', !!file, 'User:', !!user);
+      return;
+    }
 
     setUploadingCover(true);
     setError('');
     setSuccessMessage('');
     try {
+      console.log('[Onboarding] Starting cover image upload for user:', user.uid);
       const result = await uploadImage(file, user.uid, 'cover');
+      console.log('[Onboarding] Cover image uploaded successfully:', result.url);
       updateFormData({ coverImageUrl: result.url });
       setSuccessMessage('Cover image uploaded successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
