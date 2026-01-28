@@ -25,6 +25,7 @@ import {
 import { PageShell } from '@/components/PageShell';
 import { useAuth } from '@/components/AuthProvider';
 import CompanyIntroVideo from '@/components/employer/CompanyIntroVideo';
+import EmployerInterviewSection from '@/components/employer/EmployerInterviewSection';
 import type {
   OrganizationProfile,
   OrganizationModule,
@@ -591,6 +592,11 @@ function OverviewTab({
           />
         )}
 
+        {/* Employer Interviews */}
+        {org.interviews && org.interviews.length > 0 && (
+          <EmployerInterviewSection employer={org as any} />
+        )}
+
         {/* TRC Commitment */}
         {org.trcAlignment?.commitmentStatement && (
           <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
@@ -724,7 +730,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
         {canEdit ? (
           <EmptyStateCard
             title="No jobs posted yet"
-            description="Post your first job to start attracting Indigenous talent."
+            description="Reach thousands of Indigenous professionals actively seeking opportunities. Post your first job today."
             ctaText="Post a Job"
             ctaHref="/organization/jobs/new"
           />
@@ -838,7 +844,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
         {canEdit ? (
           <EmptyStateCard
             title="No programs listed"
-            description="Add your educational programs and scholarships."
+            description="Showcase your commitment to Indigenous education. Add scholarships and training programs to attract diverse talent."
             ctaText="Add Scholarship"
             ctaHref="/organization/scholarships/new"
           />
@@ -918,9 +924,9 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
       <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
-            title="No offerings listed"
-            description="List your products and services for the community to discover."
-            ctaText="Add Offering"
+            title="No products or services listed"
+            description="Showcase what you offer. List your products and services to connect with potential customers and partners."
+            ctaText="Add Product or Service"
             ctaHref="/organization/services/new"
           />
         ) : (
@@ -1014,7 +1020,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
         {canEdit ? (
           <EmptyStateCard
             title="No events scheduled"
-            description="Create conferences, pow wows, or other events."
+            description="Build connections with the community. Host conferences, networking events, or cultural gatherings."
             ctaText="Create Event"
             ctaHref="/organization/conferences/new"
           />
@@ -1163,7 +1169,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
         {canEdit ? (
           <EmptyStateCard
             title="No funding opportunities"
-            description="Share grants and funding opportunities for Indigenous businesses."
+            description="Support Indigenous entrepreneurs. Share grants, loans, and funding programs to help businesses grow."
             ctaText="Add Funding"
             ctaHref="/organization/grants/new"
           />
