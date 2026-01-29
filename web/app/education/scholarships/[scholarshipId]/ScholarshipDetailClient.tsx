@@ -177,7 +177,17 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                 {scholarship.amount}
               </span>
             )}
-            {deadline && (
+            {/* Recurring Schedule Badge */}
+            {scholarship.isRecurring && scholarship.recurringSchedule && (
+              <span className="inline-flex items-center gap-2 rounded-lg border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-base font-medium text-blue-300">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Recurring Deadlines: {scholarship.recurringSchedule}
+              </span>
+            )}
+            {/* Single Deadline - only show if not recurring with schedule */}
+            {deadline && !(scholarship.isRecurring && scholarship.recurringSchedule) && (
               <span className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-base font-medium ${
                 isExpired
                   ? "border-red-400/30 bg-red-500/10 text-red-300"
@@ -189,7 +199,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                 {isExpired ? "Deadline Passed" : `Deadline: ${deadline}`}
               </span>
             )}
-            {isExpired && (
+            {isExpired && !(scholarship.isRecurring && scholarship.recurringSchedule) && (
               <span className="inline-flex items-center gap-2 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-base font-semibold text-red-300">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, AcademicCapIcon, CurrencyDollarIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, AcademicCapIcon, CurrencyDollarIcon, CalendarIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { listScholarships } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
@@ -453,6 +453,10 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
   const deadline = formatDeadline(scholarship.deadline);
   const urgency = getDeadlineUrgency(scholarship.deadline);
+  const isExpired = urgency === "expired";
+
+  // For recurring scholarships, show the schedule instead of single deadline
+  const showRecurringSchedule = scholarship.isRecurring && scholarship.recurringSchedule;
 
   return (
     <Link
@@ -469,6 +473,14 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
           <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
             <CurrencyDollarIcon className="h-3 w-3" />
             High Value
+          </div>
+        )}
+
+        {/* Recurring Badge */}
+        {scholarship.isRecurring && !featured && (
+          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-blue-500/20 border border-blue-500/30 px-2.5 py-1 text-xs font-semibold text-blue-300">
+            <ArrowPathIcon className="h-3 w-3" />
+            Recurring
           </div>
         )}
 
@@ -513,27 +525,57 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
           )}
         </div>
 
-        {/* Deadline */}
-        {deadline && (
+        {/* Deadline / Recurring Schedule */}
+        {(deadline || showRecurringSchedule) && (
           <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
             <div className="flex items-center gap-1.5 text-sm">
-              <CalendarIcon className="h-4 w-4 text-slate-400" />
-              <span className={`font-medium ${urgency === "expired"
-                ? "text-red-400"
-                : urgency === "urgent"
-                  ? "text-orange-400"
-                  : urgency === "soon"
-                    ? "text-yellow-400"
-                    : "text-slate-300"
-                }`}>
-                {urgency === "expired" ? "Expired" : `Due ${deadline}`}
-              </span>
+              {showRecurringSchedule ? (
+                <>
+                  <ArrowPathIcon className="h-4 w-4 text-blue-400" />
+                  <span className="font-medium text-blue-300">
+                    Deadlines: {scholarship.recurringSchedule}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CalendarIcon className="h-4 w-4 text-slate-400" />
+                  <span className={`font-medium ${urgency === "expired"
+                    ? "text-red-400"
+                    : urgency === "urgent"
+                      ? "text-orange-400"
+                      : urgency === "soon"
+                        ? "text-yellow-400"
+                        : "text-slate-300"
+                    }`}>
+                    {urgency === "expired" ? "Expired" : `Due ${deadline}`}
+                  </span>
+                </>
+              )}
             </div>
-            {urgency === "urgent" && (
+            {!showRecurringSchedule && urgency === "urgent" && (
               <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-semibold text-orange-300">
                 Closing Soon
               </span>
             )}
+          </div>
+        )}
+
+        {/* Apply Now Button */}
+        {scholarship.applicationMethod === "external_link" && scholarship.applicationUrl && !isExpired && (
+          <div className="mt-4 pt-3 border-t border-slate-700/50">
+            <span
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(scholarship.applicationUrl!, "_blank", "noopener,noreferrer");
+              }}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] cursor-pointer"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Apply Now
+            </span>
           </div>
         )}
       </div>

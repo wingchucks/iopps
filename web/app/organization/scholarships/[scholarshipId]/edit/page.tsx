@@ -1,19 +1,22 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import { createScholarship, getEmployerProfile, updateScholarship } from "@/lib/firestore";
-import { PosterUploader } from "@/components/PosterUploader";
-import type { ScholarshipExtractedData } from "@/lib/googleAi";
-import type { ScholarshipApplicationMethod } from "@/lib/types";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { getScholarship, updateScholarship } from "@/lib/firestore";
+import type { ScholarshipApplicationMethod, Scholarship } from "@/lib/types";
 
-export default function NewScholarshipPage() {
+export default function EditScholarshipPage() {
   const router = useRouter();
-  const { user, role, loading } = useAuth();
+  const params = useParams();
+  const scholarshipId = params.scholarshipId as string;
+  const { user, role, loading: authLoading } = useAuth();
+
+  const [loading, setLoading] = useState(true);
+  const [scholarship, setScholarship] = useState<Scholarship | null>(null);
+
+  // Form fields
   const [title, setTitle] = useState("");
   const [provider, setProvider] = useState("");
   const [description, setDescription] = useState("");
@@ -22,10 +25,9 @@ export default function NewScholarshipPage() {
   const [level, setLevel] = useState("");
   const [region, setRegion] = useState("");
   const [type, setType] = useState("");
+  const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUploader, setShowUploader] = useState(true);
-  const [posterFile, setPosterFile] = useState<File | null>(null);
 
   // Application method fields
   const [applicationMethod, setApplicationMethod] = useState<ScholarshipApplicationMethod | "">("");
@@ -37,23 +39,59 @@ export default function NewScholarshipPage() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringSchedule, setRecurringSchedule] = useState("");
 
-  // Handle data extracted from poster
-  const handlePosterDataExtracted = (data: ScholarshipExtractedData) => {
-    if (data.title) setTitle(data.title);
-    if (data.provider) setProvider(data.provider);
-    if (data.description) setDescription(data.description);
-    if (data.amount) setAmount(data.amount);
-    if (data.deadline) setDeadline(data.deadline);
-    if (data.level) setLevel(data.level);
-    if (data.region) setRegion(data.region);
-    if (data.type) setType(data.type);
-  };
+  // Load scholarship data
+  useEffect(() => {
+    async function loadScholarship() {
+      if (!scholarshipId) return;
 
-  const handlePosterSelect = (file: File) => {
-    setPosterFile(file);
-  };
+      try {
+        const data = await getScholarship(scholarshipId);
+        if (data) {
+          setScholarship(data);
+          setTitle(data.title || "");
+          setProvider(data.provider || "");
+          setDescription(data.description || "");
+          setAmount(typeof data.amount === "string" ? data.amount : "");
+          setLevel(data.level || "");
+          setRegion(data.region || "");
+          setType(data.type || "");
+          setActive(data.active !== false);
+          setApplicationMethod(data.applicationMethod || "");
+          setApplicationUrl(data.applicationUrl || "");
+          setApplicationEmail(data.applicationEmail || "");
+          setApplicationInstructions(data.applicationInstructions || "");
+          setIsRecurring(data.isRecurring || false);
+          setRecurringSchedule(data.recurringSchedule || "");
 
-  if (loading) {
+          // Handle deadline conversion
+          if (data.deadline) {
+            try {
+              const deadlineDate =
+                typeof data.deadline === "object" && "toDate" in data.deadline
+                  ? data.deadline.toDate()
+                  : typeof data.deadline === "string"
+                  ? new Date(data.deadline)
+                  : data.deadline;
+              if (deadlineDate instanceof Date && !isNaN(deadlineDate.getTime())) {
+                setDeadline(deadlineDate.toISOString().split("T")[0]);
+              }
+            } catch {
+              // Leave deadline empty if parsing fails
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load scholarship:", err);
+        setError("Failed to load scholarship data");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadScholarship();
+  }, [scholarshipId]);
+
+  if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
         <p className="text-sm text-slate-300">Loading...</p>
@@ -64,20 +102,16 @@ export default function NewScholarshipPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Please sign in
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
         <p className="text-sm text-slate-300">
-          Employers must be signed in to create scholarships.
+          You must be signed in to edit scholarships.
         </p>
-        <div className="flex gap-3">
-          <Link
-            href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
-          >
-            Login
-          </Link>
-        </div>
+        <Link
+          href="/login"
+          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+        >
+          Login
+        </Link>
       </div>
     );
   }
@@ -91,15 +125,52 @@ export default function NewScholarshipPage() {
           Employer access required
         </h1>
         <p className="text-sm text-slate-300">
-          Switch to an employer account to create scholarships.
+          Switch to an employer account to edit scholarships.
         </p>
+      </div>
+    );
+  }
+
+  if (!scholarship) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Scholarship not found
+        </h1>
+        <p className="text-sm text-slate-300">
+          The scholarship you&apos;re looking for doesn&apos;t exist or has been removed.
+        </p>
+        <Link
+          href="/organization/scholarships"
+          className="text-sm text-[#14B8A6] hover:underline"
+        >
+          ← Back to Scholarships
+        </Link>
+      </div>
+    );
+  }
+
+  // Check ownership (unless super admin)
+  if (!isSuperAdmin && scholarship.employerId !== user.uid) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Access denied</h1>
+        <p className="text-sm text-slate-300">
+          You don&apos;t have permission to edit this scholarship.
+        </p>
+        <Link
+          href="/organization/scholarships"
+          className="text-sm text-[#14B8A6] hover:underline"
+        >
+          ← Back to Scholarships
+        </Link>
       </div>
     );
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !scholarshipId) return;
 
     // Validate application method
     if (!applicationMethod) {
@@ -133,29 +204,18 @@ export default function NewScholarshipPage() {
 
     setSaving(true);
     setError(null);
-    try {
-      let providerName = provider;
-      if (!providerName) {
-        const profile = await getEmployerProfile(user.uid);
-        providerName =
-          profile?.organizationName ??
-          user.displayName ??
-          user.email ??
-          "Employer";
-        setProvider(providerName);
-      }
 
-      const newScholarshipId = await createScholarship({
-        employerId: user.uid,
-        employerName: providerName,
+    try {
+      await updateScholarship(scholarshipId, {
         title,
-        provider: providerName,
+        provider,
         description,
         amount: amount || undefined,
         deadline: deadline || undefined,
         level,
         region: region || undefined,
         type,
+        active,
         applicationMethod,
         applicationUrl: applicationMethod === "external_link" ? applicationUrl : null,
         applicationEmail: applicationMethod === "email" ? applicationEmail : undefined,
@@ -164,29 +224,10 @@ export default function NewScholarshipPage() {
         recurringSchedule: isRecurring && recurringSchedule ? recurringSchedule : null,
       });
 
-      // Upload poster if exists
-      if (posterFile && storage) {
-        try {
-          // Secure Path: scholarships/{employerId}/{scholarshipId}/documents/{fileName}
-          const storagePath = `scholarships/${user.uid}/${newScholarshipId}/documents/${posterFile.name}`;
-          const storageRef = ref(storage, storagePath);
-          await uploadBytes(storageRef, posterFile);
-          const downloadURL = await getDownloadURL(storageRef);
-
-          // Update scholarship with image URL
-          await updateScholarship(newScholarshipId, {
-            imageUrl: downloadURL,
-            imagePath: storagePath
-          });
-        } catch (uploadError) {
-          console.error("Failed to upload poster:", uploadError);
-        }
-      }
-
       router.push("/organization/scholarships");
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Could not create scholarship.");
+      setError(err instanceof Error ? err.message : "Could not update scholarship.");
     } finally {
       setSaving(false);
     }
@@ -203,48 +244,15 @@ export default function NewScholarshipPage() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Create a Scholarship or Grant
-      </h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Edit Scholarship</h1>
       <p className="mt-2 text-sm text-slate-300">
-        Share scholarship and grant opportunities with Indigenous students and community members.
+        Update the details of your scholarship listing.
       </p>
 
       {error && (
         <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           {error}
         </p>
-      )}
-
-      {/* AI Poster Uploader */}
-      {showUploader && (
-        <div className="mt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Quick Fill with AI
-            </h2>
-            <button
-              type="button"
-              onClick={() => setShowUploader(false)}
-              className="text-sm text-slate-400 hover:text-white"
-            >
-              Skip this step
-            </button>
-          </div>
-          <p className="mb-4 text-sm text-slate-400">
-            Upload a scholarship poster or flyer and our AI will automatically extract the details.
-          </p>
-          <PosterUploader
-            eventType="scholarship"
-            onDataExtracted={handlePosterDataExtracted as any}
-            onFileSelect={handlePosterSelect}
-          />
-          <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-sm text-slate-500">or fill manually below</span>
-            <div className="h-px flex-1 bg-slate-800" />
-          </div>
-        </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -273,9 +281,6 @@ export default function NewScholarshipPage() {
             placeholder="e.g., Indigenous Education Foundation"
             className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
           />
-          <p className="mt-1 text-xs text-slate-500">
-            Leave blank to use your organization name
-          </p>
         </div>
 
         <div>
@@ -409,6 +414,24 @@ export default function NewScholarshipPage() {
           />
         </div>
 
+        {/* Status Toggle */}
+        <div className="pt-4 border-t border-slate-800">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={(e) => setActive(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+            />
+            <span className="text-sm font-medium text-slate-200">
+              Active (visible to students)
+            </span>
+          </label>
+          <p className="text-xs text-slate-500 ml-7">
+            Uncheck to hide this scholarship from public listings.
+          </p>
+        </div>
+
         {/* Application Method Section */}
         <div className="mt-8 pt-6 border-t border-slate-800">
           <h3 className="text-lg font-semibold text-white mb-4">
@@ -450,7 +473,7 @@ export default function NewScholarshipPage() {
                 className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
               />
               <p className="mt-1 text-xs text-slate-500">
-                Enter the full URL where applicants can submit their application
+                Enter the full URL where applicants can submit their application (must be https://)
               </p>
             </div>
           )}
@@ -490,14 +513,20 @@ export default function NewScholarshipPage() {
           )}
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 flex gap-3">
           <button
             type="submit"
             disabled={saving}
             className="rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
           >
-            {saving ? "Creating..." : "Create Scholarship"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
+          <Link
+            href="/organization/scholarships"
+            className="rounded-md border border-slate-700 bg-slate-800 px-6 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700 transition-colors"
+          >
+            Cancel
+          </Link>
         </div>
       </form>
     </div>

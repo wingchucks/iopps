@@ -13,6 +13,7 @@ import {
   XCircleIcon,
   CurrencyDollarIcon,
   ClockIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
@@ -160,7 +161,12 @@ export default function EducateScholarshipsPage() {
                     {scholarship.description}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                    {scholarship.deadline && (
+                    {scholarship.isRecurring && scholarship.recurringSchedule ? (
+                      <span className="flex items-center gap-1 text-blue-400">
+                        <ArrowPathIcon className="w-3.5 h-3.5" />
+                        Recurring: {scholarship.recurringSchedule}
+                      </span>
+                    ) : scholarship.deadline && (
                       <span className="flex items-center gap-1">
                         <ClockIcon className="w-3.5 h-3.5" />
                         Deadline: {format(

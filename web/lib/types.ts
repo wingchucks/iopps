@@ -874,9 +874,13 @@ export interface Scholarship {
 
   // Application method fields
   applicationMethod?: ScholarshipApplicationMethod;
-  applicationUrl?: string; // Required if applicationMethod === 'external_link'
+  applicationUrl?: string | null; // Required if applicationMethod === 'external_link', must be https://
   applicationEmail?: string; // Optional contact email
   applicationInstructions?: string; // Optional instructions text
+
+  // Recurring deadline fields
+  isRecurring?: boolean; // If true, deadline repeats annually
+  recurringSchedule?: string | null; // e.g., "August 1, November 1, February 1"
 
   // Analytics
   applyClickCount?: number;
