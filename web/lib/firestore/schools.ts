@@ -34,8 +34,12 @@ type SchoolInput = Omit<School, "id" | "createdAt" | "updatedAt" | "isPublished"
 
 export async function createSchool(input: SchoolInput): Promise<string> {
   const ref = collection(db!, schoolsCollection);
+  // Filter out undefined values - Firestore doesn't accept them
+  const cleanInput = Object.fromEntries(
+    Object.entries(input).filter(([, v]) => v !== undefined)
+  );
   const docRef = await addDoc(ref, {
-    ...input,
+    ...cleanInput,
     isPublished: input.isPublished ?? false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
