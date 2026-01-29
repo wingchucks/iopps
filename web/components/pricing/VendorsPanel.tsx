@@ -1,13 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/components/AuthProvider";
 import PricingCard from "./PricingCard";
 
 export default function VendorsPanel() {
-  const { role } = useAuth();
-  const isCommunityMember = role === "community";
-
   return (
     <div>
       <div className="mb-6">
@@ -50,8 +46,8 @@ export default function VendorsPanel() {
             "Customer inquiries",
             "Free forever",
           ]}
-          buttonText={isCommunityMember ? "Create Account" : "List Your Business"}
-          buttonHref={isCommunityMember ? "/register" : "/organization/shop/setup"}
+          buttonText="List Your Business"
+          buttonHref="/organization/shop/setup"
         />
 
         {/* Featured Business */}
@@ -69,8 +65,8 @@ export default function VendorsPanel() {
             "Homepage carousel rotation",
             "Monthly performance insights",
           ]}
-          buttonText={isCommunityMember ? "Create Account" : "Get Featured"}
-          buttonHref={isCommunityMember ? "/register" : "/organization/shop/setup?plan=featured"}
+          buttonText="Get Featured"
+          buttonHref="/organization/shop/setup?plan=featured"
         />
 
         {/* Business + Jobs Bundle */}
@@ -87,8 +83,8 @@ export default function VendorsPanel() {
             "Save $100 vs separate",
             "Perfect for growing businesses",
           ]}
-          buttonText={isCommunityMember ? "Create Account" : "Get Bundle"}
-          buttonHref={isCommunityMember ? "/register" : "/organization/shop/setup?plan=bundle"}
+          buttonText="Get Bundle"
+          buttonHref="/organization/shop/setup?plan=bundle"
         />
       </div>
 
