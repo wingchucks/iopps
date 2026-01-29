@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, ReactNode, Fragment } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 
@@ -72,8 +73,35 @@ export function EntityActionsMenu({
   size = "sm",
 }: EntityActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure we're on client for portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Calculate menu position when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuWidth = 160; // min-w-[160px]
+      
+      let left = align === "right" ? rect.right - menuWidth : rect.left;
+      // Keep menu on screen
+      if (left < 8) left = 8;
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = window.innerWidth - menuWidth - 8;
+      }
+      
+      setMenuPosition({
+        top: rect.bottom + 4,
+        left,
+      });
+    }
+  }, [isOpen, align]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -196,12 +224,11 @@ export function EntityActionsMenu({
             <EllipsisVerticalIcon className={iconSizeClasses[size]} aria-hidden="true" />
           </button>
 
-          {isOpen && (
+          {isOpen && mounted && createPortal(
             <div
               ref={menuRef}
-              className={`absolute top-full z-50 mt-1 min-w-[160px] rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl ${
-                align === "right" ? "right-0" : "left-0"
-              }`}
+              className="fixed z-[9999] min-w-[160px] rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl"
+              style={{ top: menuPosition.top, left: menuPosition.left }}
               role="menu"
             >
               {visibleActions.map((actionOrGroup, index) => {
@@ -237,7 +264,8 @@ export function EntityActionsMenu({
                   />
                 );
               })}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       )}
