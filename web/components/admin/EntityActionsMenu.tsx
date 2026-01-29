@@ -77,6 +77,15 @@ export function EntityActionsMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [mounted, setMounted] = useState(false);
+  const lastToggleRef = useRef(0);
+
+  const toggleMenu = () => {
+    // Debounce to prevent double-firing from touch + click
+    const now = Date.now();
+    if (now - lastToggleRef.current < 300) return;
+    lastToggleRef.current = now;
+    setIsOpen(prev => !prev);
+  };
 
   // Ensure we're on client for portal
   useEffect(() => {
@@ -210,12 +219,18 @@ export function EntityActionsMenu({
           <button
             ref={buttonRef}
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
-              setIsOpen(!isOpen);
+              toggleMenu();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleMenu();
             }}
             disabled={processing}
-            className={`inline-flex items-center justify-center rounded-md border border-slate-700 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 ${
-              size === "sm" ? "p-1.5" : "p-2"
+            className={`inline-flex items-center justify-center rounded-md border border-slate-700 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${
+              size === "sm" ? "p-2.5" : "p-3"
             }`}
             aria-label="Actions menu"
             aria-haspopup="true"
