@@ -10,6 +10,41 @@ export const runtime = "nodejs";
 const canadianIndigenousSchools = [
   // SASKATCHEWAN
   {
+    name: "Saskatchewan Indian Institute of Technologies",
+    shortName: "SIIT",
+    slug: "siit",
+    type: "polytechnic" as const,
+    established: 1976,
+    website: "https://siit.ca",
+    description: "Saskatchewan Indian Institute of Technologies (SIIT) is a First Nation-governed, credit-granting post-secondary institution serving Indigenous learners across Saskatchewan. With over 30 academic and quick skills programs, 3 campuses, and 35+ community learning sites, SIIT has graduated over 60,000 alumni. 90% of students are Indigenous, and 65%+ of staff and faculty are Indigenous. SIIT also operates 9 JobConnections employment centres across the province.",
+    headOffice: {
+      address: "Suite 100, 103A Packham Avenue",
+      city: "Saskatoon",
+      province: "Saskatchewan",
+      postalCode: "S7N 4K4",
+    },
+    campuses: [
+      { id: "saskatoon", name: "Saskatoon Campus", city: "Saskatoon", province: "Saskatchewan", isMain: true },
+      { id: "regina", name: "Regina Campus", city: "Regina", province: "Saskatchewan", isMain: false },
+      { id: "pa", name: "Prince Albert Campus", city: "Prince Albert", province: "Saskatchewan", isMain: false },
+    ],
+    indigenousServices: {
+      elderInResidence: true,
+      culturalCoordinators: true,
+      academicCoaches: true,
+      languagePrograms: ["Cree", "Dene", "Saulteaux", "Dakota", "Nakota"],
+      culturalProgramming: true,
+      ceremonySpace: true,
+    },
+    stats: { 
+      indigenousStudentPercentage: 90,
+      totalAlumni: 60000,
+      communityLearningSites: 35,
+    },
+    verification: { isVerified: true, indigenousControlled: true },
+    contact: { email: "info@siit.ca", phone: "306-244-4444" },
+  },
+  {
     name: "First Nations University of Canada",
     shortName: "FNUniv",
     slug: "fnuniv",
