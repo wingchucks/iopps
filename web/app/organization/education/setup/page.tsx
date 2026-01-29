@@ -169,6 +169,7 @@ export default function SchoolSetupPage() {
         ...(logoUrl ? { logoUrl } : {}),
         ...(bannerUrl ? { bannerUrl } : {}),
         isPublished: false,
+        active: true,  // Required for school detail page to work
       };
 
       await createSchool(schoolData);
