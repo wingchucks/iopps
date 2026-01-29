@@ -800,7 +800,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
             return (
               <div
                 key={employer.id}
-                className="overflow-hidden rounded-lg border border-slate-800 bg-[#08090C] transition-all hover:border-slate-700"
+                className="rounded-lg border border-slate-800 bg-[#08090C] transition-all hover:border-slate-700"
               >
                 <div className="p-6">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
