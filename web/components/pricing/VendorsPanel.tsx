@@ -30,7 +30,7 @@ export default function VendorsPanel() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3 max-w-4xl">
+      <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
         {/* Free Listing */}
         <PricingCard
           title="Free Business Listing"
@@ -67,23 +67,6 @@ export default function VendorsPanel() {
           buttonHref="/organization/shop/setup?plan=featured"
         />
 
-        {/* Business + Jobs Bundle */}
-        <PricingCard
-          title="Business + Jobs Bundle"
-          price="$200"
-          period="/ year"
-          badge="BEST VALUE"
-          features={[
-            "Featured Business included",
-            "3 job posting credits",
-            "Priority support",
-            "Analytics dashboard",
-            "Save $100 vs separate",
-            "Perfect for growing businesses",
-          ]}
-          buttonText="Get Bundle"
-          buttonHref="/organization/shop/setup?plan=bundle"
-        />
       </div>
 
       {/* Benefits highlight */}
