@@ -2155,6 +2155,9 @@ export interface School {
 
   // Status for approval workflow
   status?: "pending" | "approved" | "rejected" | "deleted";
+  
+  // Active flag for school detail page visibility
+  active?: boolean;
 
   // Claim status for pre-populated schools
   claimStatus?: "unclaimed" | "pending_claim" | "claimed";
