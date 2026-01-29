@@ -62,8 +62,6 @@ export default function VendorsPanel() {
             "Featured badge on listing",
             "Priority placement in directory",
             "Highlighted in search results",
-            "Homepage carousel rotation",
-            "Monthly performance insights",
           ]}
           buttonText="Get Featured"
           buttonHref="/organization/shop/setup?plan=featured"
