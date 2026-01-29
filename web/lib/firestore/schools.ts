@@ -141,15 +141,17 @@ export async function listSchools(options: ListSchoolsOptions = {}): Promise<Sch
       constraints.push(where("verification.indigenousControlled", "==", options.indigenousControlled));
     }
 
-    constraints.push(orderBy("name", "asc"));
-
+    // Note: orderBy removed to avoid composite index requirement
+    // Sorting done client-side instead
     if (options.limitCount) {
       constraints.push(limit(options.limitCount));
     }
 
     const q = query(ref, ...constraints);
     const snap = await getDocs(q);
-    return snap.docs.map((docSnap) => docSnap.data() as School);
+    const schools = snap.docs.map((docSnap) => docSnap.data() as School);
+    // Sort by name client-side
+    return schools.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   } catch {
     return [];
   }
