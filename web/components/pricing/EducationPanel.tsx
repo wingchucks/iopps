@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import PricingCard from "./PricingCard";
-import { TRAINING_PRODUCTS, SCHOOL_PRODUCTS, SCHOOL_ADDON_PRODUCTS } from "@/lib/stripe";
+import { TRAINING_PRODUCTS, SCHOOL_PRODUCTS } from "@/lib/stripe";
 
 export default function EducationPanel() {
   const { role } = useAuth();
@@ -16,99 +16,80 @@ export default function EducationPanel() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-50">For Schools & Education Institutions</h2>
           <p className="mt-2 text-slate-400">
-            List your school, programs, scholarships, and jobs. Basic listing is always free.
+            Partner with IOPPS to showcase your school, programs, scholarships, and job opportunities to Indigenous learners across Canada.
           </p>
         </div>
 
-        {/* Free Listing Callout */}
-        <div className="max-w-4xl rounded-xl border border-green-500/20 bg-green-500/5 p-6 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-500/20">
-              <svg className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-100">Basic School Profile is FREE</h3>
-              <p className="mt-1 text-sm text-slate-400">
-                Get started with a school profile, 3 programs, and 1 scholarship at no cost. Upgrade anytime for more features.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* School Pricing Tiers */}
-        <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2">
-          {/* Basic - FREE */}
+        {/* School Partner Plan */}
+        <div className="max-w-2xl">
           <PricingCard
-            title={SCHOOL_PRODUCTS.BASIC.name}
-            price="FREE"
-            period=""
-            features={SCHOOL_PRODUCTS.BASIC.features}
-            buttonText={isCommunityMember ? "Create Account" : "Get Started Free"}
-            buttonHref={isCommunityMember ? "/register" : "/organization/education/setup"}
-          />
-
-          {/* Standard */}
-          <PricingCard
-            title={SCHOOL_PRODUCTS.STANDARD.name}
-            price={`$${SCHOOL_PRODUCTS.STANDARD.price / 100}`}
+            title={SCHOOL_PRODUCTS.PARTNER.name}
+            price={`$${SCHOOL_PRODUCTS.PARTNER.price / 100}`}
             period="/ year"
-            features={SCHOOL_PRODUCTS.STANDARD.features}
-            buttonText={isCommunityMember ? "Create Account" : "Choose Standard"}
-            buttonHref={isCommunityMember ? "/register" : "/organization/education/setup?plan=standard"}
-          />
-
-          {/* Premium - Highlighted */}
-          <PricingCard
-            title={SCHOOL_PRODUCTS.PREMIUM.name}
-            price={`$${SCHOOL_PRODUCTS.PREMIUM.price / 100}`}
-            period="/ year"
-            badge="POPULAR"
+            badge="UNLIMITED EVERYTHING"
             highlighted={true}
-            features={SCHOOL_PRODUCTS.PREMIUM.features}
-            buttonText={isCommunityMember ? "Create Account" : "Choose Premium"}
-            buttonHref={isCommunityMember ? "/register" : "/organization/education/setup?plan=premium"}
-          />
-
-          {/* Enterprise */}
-          <PricingCard
-            title={SCHOOL_PRODUCTS.ENTERPRISE.name}
-            price={`$${SCHOOL_PRODUCTS.ENTERPRISE.price / 100}`}
-            period="/ year"
-            badge="BEST VALUE"
-            features={SCHOOL_PRODUCTS.ENTERPRISE.features}
-            buttonText="Contact Us"
+            features={SCHOOL_PRODUCTS.PARTNER.features}
+            buttonText="Contact IOPPS"
             buttonHref="/contact"
           />
         </div>
 
-        {/* Add-ons Section */}
-        <div className="mt-10">
-          <h3 className="text-lg font-semibold text-slate-200 mb-4">À La Carte Add-ons</h3>
-          <p className="text-sm text-slate-400 mb-6">
-            Need something extra? Purchase individual items anytime.
-          </p>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 max-w-4xl">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h4 className="font-semibold text-slate-100">Single Job Post</h4>
-              <p className="text-[#14B8A6] font-bold text-lg">${SCHOOL_ADDON_PRODUCTS.SINGLE_JOB.price / 100}</p>
-              <p className="text-xs text-slate-400 mt-1">School rate (save $25)</p>
+        {/* 3 Month Trial Callout */}
+        <div className="mt-8 max-w-2xl rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#14B8A6]/20">
+              <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h4 className="font-semibold text-slate-100">Featured Program</h4>
-              <p className="text-[#14B8A6] font-bold text-lg">${SCHOOL_ADDON_PRODUCTS.FEATURED_PROGRAM.price / 100}</p>
-              <p className="text-xs text-slate-400 mt-1">60 days visibility</p>
+            <div>
+              <h3 className="font-semibold text-slate-100">3-Month Trial Available</h3>
+              <p className="mt-1 text-sm text-slate-400">
+                Want to try before you commit? Contact us to discuss a 3-month trial period for your institution.
+              </p>
+              <Link 
+                href="/contact" 
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#14B8A6]/80 transition"
+              >
+                Request Trial
+              </Link>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h4 className="font-semibold text-slate-100">Extra Scholarship</h4>
-              <p className="text-[#14B8A6] font-bold text-lg">${SCHOOL_ADDON_PRODUCTS.ADDITIONAL_SCHOLARSHIP.price / 100}</p>
-              <p className="text-xs text-slate-400 mt-1">Per listing</p>
+          </div>
+        </div>
+
+        {/* What's Included Grid */}
+        <div className="mt-10 max-w-3xl">
+          <h3 className="text-lg font-semibold text-slate-200 mb-6">Everything You Need</h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+              <div className="text-2xl mb-2">💼</div>
+              <h4 className="font-semibold text-slate-100">Unlimited Jobs</h4>
+              <p className="text-xs text-slate-400 mt-1">Post as many positions as you need</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h4 className="font-semibold text-slate-100">Recruitment Event</h4>
-              <p className="text-[#14B8A6] font-bold text-lg">${SCHOOL_ADDON_PRODUCTS.RECRUITMENT_EVENT.price / 100}</p>
-              <p className="text-xs text-slate-400 mt-1">90 days listing</p>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+              <div className="text-2xl mb-2">📚</div>
+              <h4 className="font-semibold text-slate-100">Unlimited Programs</h4>
+              <p className="text-xs text-slate-400 mt-1">Showcase all your courses & certifications</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+              <div className="text-2xl mb-2">🎁</div>
+              <h4 className="font-semibold text-slate-100">Unlimited Scholarships</h4>
+              <p className="text-xs text-slate-400 mt-1">List all awards & financial aid</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+              <div className="text-2xl mb-2">🎓</div>
+              <h4 className="font-semibold text-slate-100">School Profile</h4>
+              <p className="text-xs text-slate-400 mt-1">Full branded presence on IOPPS</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+              <div className="text-2xl mb-2">⭐</div>
+              <h4 className="font-semibold text-slate-100">Featured Placement</h4>
+              <p className="text-xs text-slate-400 mt-1">Priority visibility in directory</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-center">
+              <div className="text-2xl mb-2">📊</div>
+              <h4 className="font-semibold text-slate-100">Analytics</h4>
+              <p className="text-xs text-slate-400 mt-1">Track engagement & inquiries</p>
             </div>
           </div>
         </div>
@@ -179,7 +160,7 @@ export default function EducationPanel() {
       {/* Talk to us CTA */}
       <div className="mt-12 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center">
         <p className="text-slate-300">
-          Need a custom solution or have questions about our education packages?
+          Questions about school partnerships or training programs?
         </p>
         <Link
           href="/contact"

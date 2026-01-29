@@ -193,113 +193,31 @@ export type TalentPoolProductType = keyof typeof TALENT_POOL_PRODUCTS;
 
 // School/Education Institution products
 export const SCHOOL_PRODUCTS = {
-    BASIC: {
-        name: "Basic School Profile",
-        price: 0, // FREE
-        duration: 365, // days
-        featured: false,
-        description: "List your school for free with essential features",
-        features: [
-            "School profile page",
-            "Up to 3 program listings",
-            "1 scholarship listing",
-            "Basic contact information",
-            "Standard directory placement",
-        ],
-        programLimit: 3,
-        scholarshipLimit: 1,
-        jobCredits: 0,
-    },
-    STANDARD: {
-        name: "Standard School Plan",
-        price: 50000, // $500.00 per year
-        duration: 365, // days
-        featured: false,
-        description: "Grow your reach with unlimited programs and job posting credits",
-        features: [
-            "Everything in Basic",
-            "Unlimited program listings",
-            "Up to 5 scholarship listings",
-            "3 job posting credits",
-            "Featured in school directory",
-            "School logo & branding",
-            "Inquiry management dashboard",
-        ],
-        programLimit: -1, // unlimited
-        scholarshipLimit: 5,
-        jobCredits: 3,
-    },
-    PREMIUM: {
-        name: "Premium School Plan",
-        price: 150000, // $1,500.00 per year
+    PARTNER: {
+        name: "School Partner",
+        price: 450000, // $4,500.00 per year
         duration: 365, // days
         featured: true,
-        description: "Maximum visibility with unlimited everything and premium features",
+        trialAvailable: true,
+        trialDays: 90, // 3 month trial - contact IOPPS
+        description: "Complete school partnership with unlimited everything",
         features: [
-            "Everything in Standard",
-            "Unlimited scholarships",
+            "Full school profile page",
             "Unlimited job postings",
-            "Homepage featured placement",
+            "Unlimited program listings",
+            "Unlimited scholarship listings",
+            "Unlimited training program listings",
+            "Featured placement in school directory",
+            "Homepage carousel rotation",
             "Recruitment event listings",
-            "Advanced analytics dashboard",
-            "Priority customer support",
-            "Social media promotion",
+            "Analytics dashboard",
+            "Priority support",
         ],
         programLimit: -1, // unlimited
         scholarshipLimit: -1, // unlimited
         jobCredits: -1, // unlimited
     },
-    ENTERPRISE: {
-        name: "Enterprise School Plan",
-        price: 300000, // $3,000.00 per year
-        duration: 365, // days
-        featured: true,
-        description: "Custom solution for multi-campus institutions",
-        features: [
-            "Everything in Premium",
-            "Multi-campus support",
-            "Dedicated account manager",
-            "Custom integrations",
-            "API access",
-            "Co-branded recruitment events",
-            "Quarterly strategy sessions",
-            "Custom reporting",
-        ],
-        programLimit: -1,
-        scholarshipLimit: -1,
-        jobCredits: -1,
-    },
 } as const;
 
 export type SchoolProductType = keyof typeof SCHOOL_PRODUCTS;
-
-// School add-on products (à la carte)
-export const SCHOOL_ADDON_PRODUCTS = {
-    SINGLE_JOB: {
-        name: "Single Job Post (School Rate)",
-        price: 10000, // $100.00 - discounted from $125
-        duration: 30,
-        description: "Post a single job at the discounted school rate",
-    },
-    FEATURED_PROGRAM: {
-        name: "Featured Program (60 Days)",
-        price: 7500, // $75.00
-        duration: 60,
-        description: "Boost a program with featured badge and priority placement",
-    },
-    ADDITIONAL_SCHOLARSHIP: {
-        name: "Additional Scholarship Listing",
-        price: 2500, // $25.00
-        duration: 365,
-        description: "Add more scholarship listings beyond your plan limit",
-    },
-    RECRUITMENT_EVENT: {
-        name: "Recruitment Event Listing",
-        price: 15000, // $150.00
-        duration: 90,
-        description: "List and promote a recruitment event, open house, or info session",
-    },
-} as const;
-
-export type SchoolAddonProductType = keyof typeof SCHOOL_ADDON_PRODUCTS;
 
