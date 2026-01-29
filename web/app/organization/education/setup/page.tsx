@@ -161,13 +161,13 @@ export default function SchoolSetupPage() {
           city,
           province,
           address: address || "",
-          postalCode: postalCode || undefined,
+          ...(postalCode ? { postalCode } : {}),
         },
         campuses: [],
-        location: city || province ? { city, province, address: address || undefined, postalCode: postalCode || undefined } : undefined,
+        ...(city || province ? { location: { city, province, ...(address ? { address } : {}), ...(postalCode ? { postalCode } : {}) } } : {}),
         indigenousFocused,
-        logoUrl: logoUrl || undefined,
-        bannerUrl: bannerUrl || undefined,
+        ...(logoUrl ? { logoUrl } : {}),
+        ...(bannerUrl ? { bannerUrl } : {}),
         isPublished: false,
       };
 
