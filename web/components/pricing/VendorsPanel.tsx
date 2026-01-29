@@ -86,27 +86,6 @@ export default function VendorsPanel() {
         />
       </div>
 
-      {/* Job Posting Note */}
-      <div className="mt-8 max-w-3xl rounded-xl border border-amber-500/20 bg-amber-500/5 p-6">
-        <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-            <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-100">Need to Post Jobs?</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Job postings are available separately. Indigenous businesses get a discounted rate of <strong className="text-amber-300">$100/job</strong> (regular $125).
-              Or get the Bundle above for even better savings.
-            </p>
-            <Link href="/pricing#employers" className="mt-2 inline-block text-sm text-[#14B8A6] hover:underline">
-              View job posting options →
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Benefits highlight */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3 max-w-3xl">
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-center">
