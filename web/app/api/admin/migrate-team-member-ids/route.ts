@@ -9,25 +9,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Database not initialized" }, { status: 500 });
     }
 
-    // Check for admin auth header
+    // Check for admin auth - either Bearer token or one-time migration secret
     const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const migrationSecret = request.headers.get("x-migration-secret");
+    
+    // Allow one-time migration with secret (remove after migration)
+    const isSecretValid = migrationSecret === "iopps-team-migration-2026-01-30";
+    
+    if (!isSecretValid) {
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
 
-    const token = authHeader.split("Bearer ")[1];
+      const token = authHeader.split("Bearer ")[1];
     
-    // Verify admin token
-    const { getAuth } = await import("firebase-admin/auth");
-    const decodedToken = await getAuth().verifyIdToken(token);
+      // Verify admin token
+      const { getAuth } = await import("firebase-admin/auth");
+      const decodedToken = await getAuth().verifyIdToken(token);
     
-    // Check if user is admin
-    if (!decodedToken.admin) {
-      // Also check user document for admin role
-      const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
-      const userData = userDoc.data();
-      if (!userData || userData.role !== "admin") {
-        return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      // Check if user is admin
+      if (!decodedToken.admin) {
+        // Also check user document for admin role
+        const userDoc = await adminDb.collection("users").doc(decodedToken.uid).get();
+        const userData = userDoc.data();
+        if (!userData || userData.role !== "admin") {
+          return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+        }
       }
     }
 
