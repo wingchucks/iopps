@@ -62,13 +62,13 @@ service cloud.firestore {
         );
     }
 
-      // Note: This checks if the user's ID is in the employer's teamMembers array
+      // Check if user's ID is in the employer's teamMemberIds array (flat UID list)
     function isTeamMemberOf(employerId) {
-       return false; // TEMPORARILY DISABLED: Syntax error with [*] operator
-       // return isSignedIn() &&
-       //   exists(/databases/$(database)/documents/employers/$(employerId)) &&
-       //   get(/databases/$(database)/documents/employers/$(employerId)).data.teamMembers != null &&
-       //   request.auth.uid in get(/databases/$(database)/documents/employers/$(employerId)).data.teamMembers[*].id;
+       let employerData = get(/databases/$(database)/documents/employers/$(employerId)).data;
+       return isSignedIn() &&
+         exists(/databases/$(database)/documents/employers/$(employerId)) &&
+         employerData.teamMemberIds != null &&
+         request.auth.uid in employerData.teamMemberIds;
     }
 
     // Helper: Check if user is owner or team member

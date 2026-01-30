@@ -63,6 +63,7 @@ export async function addTeamMember(
 
   await updateDoc(employerRef, {
     teamMembers: arrayUnion(teamMember),
+    teamMemberIds: arrayUnion(member.id), // Flat array for security rules
     updatedAt: serverTimestamp(),
   });
 }
@@ -86,6 +87,7 @@ export async function removeTeamMember(
   // Remove the specific member
   await updateDoc(employerRef, {
     teamMembers: arrayRemove(memberToRemove),
+    teamMemberIds: arrayRemove(memberId), // Flat array for security rules
     updatedAt: serverTimestamp(),
   });
 }

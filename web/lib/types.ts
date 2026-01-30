@@ -257,6 +257,7 @@ export interface EmployerProfile {
   indigenousVerification?: IndigenousVerification;
   // Team Access
   teamMembers?: TeamMember[];
+  teamMemberIds?: string[]; // Flat array of UIDs for Firestore security rules
   teamSettings?: TeamSettings;
   // Notification Preferences
   notificationPreferences?: EmployerNotificationPreferences;
