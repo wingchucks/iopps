@@ -107,13 +107,14 @@ Our campuses in Regina, Saskatoon, and Prince Albert, along with eight Career Ce
     youtube: "https://youtube.com/@siitsask",
   },
 
-  logoUrl: "https://siit.ca/wp-content/uploads/2023/01/SIIT-Logo.png",
-  bannerUrl: "https://siit.ca/wp-content/uploads/2023/05/siit-campus-banner.jpg",
+  logoUrl: "https://siit.ca/wp-content/uploads/2021/03/siit_logo-sm.png",
+  bannerUrl: "https://siit.ca/wp-content/uploads/2025/02/1-Where-do-I-start.jpg.webp",
 
   isPublished: true,
   indigenousFocused: true,
   isVerified: true,
   status: "approved" as const,
+  active: true, // Required for page query
 };
 
 // SIIT Programs
@@ -434,26 +435,39 @@ export async function POST(request: Request) {
       await schoolRef.update({ id: schoolId });
     }
 
-    // Delete existing SIIT programs to avoid duplicates
+    // Delete existing SIIT programs from sub-collection to avoid duplicates
     const existingPrograms = await firestore
-      .collection("educationPrograms")
-      .where("schoolId", "==", schoolId)
+      .collection("schools")
+      .doc(schoolId)
+      .collection("programs")
       .get();
 
     const deletePromises = existingPrograms.docs.map((doc) => doc.ref.delete());
     await Promise.all(deletePromises);
 
-    // Create programs
+    // Also clean up legacy educationPrograms collection entries
+    const legacyPrograms = await firestore
+      .collection("educationPrograms")
+      .where("schoolId", "==", schoolId)
+      .get();
+    const legacyDeletePromises = legacyPrograms.docs.map((doc) => doc.ref.delete());
+    await Promise.all(legacyDeletePromises);
+
+    // Create programs as sub-collection under school
     const programPromises = siitPrograms.map(async (program) => {
-      const programRef = await firestore.collection("educationPrograms").add({
-        ...program,
-        schoolId,
-        schoolName: siitSchool.name,
-        viewsCount: Math.floor(Math.random() * 500) + 100, // Random view count for demo
-        savesCount: Math.floor(Math.random() * 50) + 10,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      const programRef = await firestore
+        .collection("schools")
+        .doc(schoolId)
+        .collection("programs")
+        .add({
+          ...program,
+          schoolId,
+          schoolName: siitSchool.name,
+          viewsCount: Math.floor(Math.random() * 500) + 100, // Random view count for demo
+          savesCount: Math.floor(Math.random() * 50) + 10,
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
       return programRef.id;
     });
 

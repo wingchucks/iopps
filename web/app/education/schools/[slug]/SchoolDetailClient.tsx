@@ -87,10 +87,23 @@ export default function SchoolDetailClient({
       </nav>
 
       {/* School Header */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 mb-8">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden mb-8">
+        {/* Banner Image */}
+        {school.bannerUrl && (
+          <div className="h-48 sm:h-64 w-full overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={school.bannerUrl} 
+              alt={`${school.name} banner`} 
+              className="h-full w-full object-cover"
+            />
+          </div>
+        )}
+        
+        <div className="p-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Logo/Icon */}
-          <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 shrink-0">
+          <div className={`flex h-24 w-24 items-center justify-center rounded-2xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 shrink-0 ${school.bannerUrl ? '-mt-16 bg-slate-900 shadow-lg' : ''}`}>
             {school.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={school.logoUrl} alt={school.name} className="h-full w-full object-contain p-2" />
@@ -150,6 +163,7 @@ export default function SchoolDetailClient({
               )}
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -225,9 +239,54 @@ export default function SchoolDetailClient({
               {school.headOffice?.address && (
                 <p>📍 {school.headOffice.address}, {school.headOffice.city}, {school.headOffice.province}</p>
               )}
-              {school.contact?.admissionsEmail && <p>✉️ {school.contact.admissionsEmail}</p>}
-              {school.contact?.admissionsPhone && <p>📞 {school.contact.admissionsPhone}</p>}
+              {school.contact?.email && <p>✉️ {school.contact.email}</p>}
+              {school.contact?.admissionsEmail && school.contact.admissionsEmail !== school.contact?.email && (
+                <p>✉️ Admissions: {school.contact.admissionsEmail}</p>
+              )}
+              {school.contact?.phone && <p>📞 {school.contact.phone}</p>}
+              {school.contact?.admissionsPhone && school.contact.admissionsPhone !== school.contact?.phone && (
+                <p>📞 Toll-free: {school.contact.admissionsPhone}</p>
+              )}
             </div>
+            
+            {/* Social Links */}
+            {school.social && Object.keys(school.social).length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-800">
+                <h3 className="text-sm font-semibold text-slate-400 mb-3">Follow</h3>
+                <div className="flex flex-wrap gap-3">
+                  {school.social.facebook && (
+                    <a href={school.social.facebook} target="_blank" rel="noopener noreferrer" 
+                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                      <span>📘</span> Facebook
+                    </a>
+                  )}
+                  {school.social.instagram && (
+                    <a href={school.social.instagram} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                      <span>📷</span> Instagram
+                    </a>
+                  )}
+                  {school.social.twitter && (
+                    <a href={school.social.twitter} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                      <span>𝕏</span> Twitter
+                    </a>
+                  )}
+                  {school.social.linkedin && (
+                    <a href={school.social.linkedin} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                      <span>💼</span> LinkedIn
+                    </a>
+                  )}
+                  {school.social.youtube && (
+                    <a href={school.social.youtube} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                      <span>▶️</span> YouTube
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
