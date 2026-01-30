@@ -107,7 +107,7 @@ Our campuses in Regina, Saskatoon, and Prince Albert, along with eight Career Ce
     youtube: "https://youtube.com/@siitsask",
   },
 
-  logoUrl: "/logos/siit-logo.png",
+  logoUrl: "", // External logo blocked by referrer policy - using fallback emoji
   bannerUrl: "https://siit.ca/wp-content/uploads/2025/02/1-Where-do-I-start.jpg.webp",
 
   isPublished: true,
@@ -445,7 +445,15 @@ export async function POST(request: Request) {
     const deletePromises = existingPrograms.docs.map((doc) => doc.ref.delete());
     await Promise.all(deletePromises);
 
-    // Also clean up legacy educationPrograms collection entries
+    // Clean up existing programs from education_programs collection
+    const existingEduPrograms = await firestore
+      .collection("education_programs")
+      .where("schoolId", "==", schoolId)
+      .get();
+    const eduDeletePromises = existingEduPrograms.docs.map((doc) => doc.ref.delete());
+    await Promise.all(eduDeletePromises);
+
+    // Also clean up legacy educationPrograms collection entries (old name)
     const legacyPrograms = await firestore
       .collection("educationPrograms")
       .where("schoolId", "==", schoolId)
@@ -453,22 +461,35 @@ export async function POST(request: Request) {
     const legacyDeletePromises = legacyPrograms.docs.map((doc) => doc.ref.delete());
     await Promise.all(legacyDeletePromises);
 
-    // Create programs as sub-collection under school
+    // Create programs in BOTH locations:
+    // 1. Sub-collection under school (for school page display)
+    // 2. Top-level education_programs collection (for program detail pages)
     const programPromises = siitPrograms.map(async (program) => {
-      const programRef = await firestore
+      const programData = {
+        ...program,
+        schoolId,
+        schoolName: siitSchool.name,
+        active: true, // Required for queries
+        viewsCount: Math.floor(Math.random() * 500) + 100,
+        savesCount: Math.floor(Math.random() * 50) + 10,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+
+      // Store in sub-collection for school page
+      const subCollectionRef = await firestore
         .collection("schools")
         .doc(schoolId)
         .collection("programs")
-        .add({
-          ...program,
-          schoolId,
-          schoolName: siitSchool.name,
-          viewsCount: Math.floor(Math.random() * 500) + 100, // Random view count for demo
-          savesCount: Math.floor(Math.random() * 50) + 10,
-          createdAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      return programRef.id;
+        .add(programData);
+
+      // Store in top-level collection for program detail page
+      await firestore
+        .collection("education_programs")
+        .doc(subCollectionRef.id) // Use same ID for consistency
+        .set(programData);
+
+      return subCollectionRef.id;
     });
 
     const programIds = await Promise.all(programPromises);
