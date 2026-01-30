@@ -5,6 +5,10 @@ import { db as adminDb } from "@/lib/firebase-admin";
 // Migrates existing employers to add teamMemberIds array for security rules
 export async function POST(request: NextRequest) {
   try {
+    if (!adminDb) {
+      return NextResponse.json({ error: "Database not initialized" }, { status: 500 });
+    }
+
     // Check for admin auth header
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -91,6 +95,10 @@ export async function POST(request: NextRequest) {
 // GET - Check migration status
 export async function GET(request: NextRequest) {
   try {
+    if (!adminDb) {
+      return NextResponse.json({ error: "Database not initialized" }, { status: 500 });
+    }
+
     const employersSnapshot = await adminDb.collection("employers").get();
     
     let withTeamMembers = 0;
