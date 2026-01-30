@@ -2,30 +2,27 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { listSchools, listEducationPrograms, listScholarships } from "@/lib/firestore";
-import type { School, EducationProgram, Scholarship } from "@/lib/types";
+import { listSchools, listScholarships } from "@/lib/firestore";
+import type { School, Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
 
-type EducationTab = 'programs' | 'schools' | 'scholarships';
+type EducationTab = 'schools' | 'scholarships';
 
 function EducationContent() {
   const [schools, setSchools] = useState<School[]>([]);
-  const [programs, setPrograms] = useState<EducationProgram[]>([]);
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<EducationTab>('programs');
+  const [activeTab, setActiveTab] = useState<EducationTab>('schools');
 
   useEffect(() => {
     (async () => {
       try {
-        const [schoolData, programData, scholarshipData] = await Promise.all([
+        const [schoolData, scholarshipData] = await Promise.all([
           listSchools({ publishedOnly: true, limitCount: 4 }),
-          listEducationPrograms({ publishedOnly: true, limitCount: 6 }),
           listScholarships(),
         ]);
         setSchools(schoolData);
-        setPrograms(programData);
         setScholarships(scholarshipData.filter(s => s.active).slice(0, 3));
       } catch (err) {
         console.error("Failed to load education data", err);
@@ -70,16 +67,6 @@ function EducationContent() {
         {/* Tab Pills */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex rounded-full bg-slate-900/50 p-1 border border-slate-800 backdrop-blur-sm">
-            <button
-              onClick={() => setActiveTab('programs')}
-              className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
-                activeTab === 'programs'
-                  ? 'bg-[#14B8A6] text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Programs
-            </button>
             <button
               onClick={() => setActiveTab('schools')}
               className={`px-6 py-2 rounded-full text-sm font-semibold transition-all ${
@@ -147,81 +134,6 @@ function EducationContent() {
                 <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-48" />
               ))}
             </div>
-          ) : activeTab === 'programs' ? (
-            // Programs Tab Content
-            programs.length > 0 ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {programs.map((program) => (
-                  <Link
-                    key={program.id}
-                    href={`/education/programs/${program.slug || program.id}`}
-                    className="group relative flex flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:shadow-lg hover:shadow-[#14B8A6]/5"
-                  >
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 text-2xl group-hover:scale-110 transition-transform duration-300">
-                        🎓
-                      </div>
-                      {/* Connection Signal */}
-                      <div className="flex items-center gap-1.5 rounded-full bg-slate-800/80 px-2.5 py-1 backdrop-blur-sm border border-slate-700">
-                        <div className="flex -space-x-1.5">
-                          {[...Array(2)].map((_, i) => (
-                            <div key={i} className={`inline-block h-4 w-4 rounded-full ring-1 ring-slate-800 ${['bg-emerald-400', 'bg-blue-400'][i % 2]
-                              }`} />
-                          ))}
-                        </div>
-                        <span className="text-[10px] font-medium text-slate-300">8 connections attended</span>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="mb-4">
-                      <h3 className="font-bold text-xl text-white mb-1 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
-                        {program.name}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-slate-400">
-                        <span className="font-medium text-slate-300">{program.schoolName}</span>
-                        <span>•</span>
-                        <span>{program.credential || 'Diploma'}</span>
-                        <span>•</span>
-                        <span>{program.duration?.value ? `${program.duration.value} ${program.duration.unit}` : '2 years'}</span>
-                      </div>
-                    </div>
-
-                    {/* Insight Bar (Img 0 "From your Nation") */}
-                    <div className="mt-auto mb-5">
-                      <div className="relative h-9 w-full overflow-hidden rounded-lg bg-slate-800/50 border border-slate-700/50">
-                        {/* Progress Fill */}
-                        <div className="absolute top-0 left-0 h-full w-[65%] bg-[#14B8A6]/10" />
-                        <div className="absolute inset-0 flex items-center px-3">
-                          <span className="flex h-2 w-2 rounded-full bg-[#14B8A6] mr-2 shadow-[0_0_8px_rgba(20,184,166,0.5)] animate-pulse" />
-                          <span className="text-xs font-semibold text-[#14B8A6]">
-                            <span className="font-bold text-white">23</span> from your Nation graduated
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* CTA */}
-                    <div className="flex items-center justify-between border-t border-slate-800 pt-4 mt-2">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
-                        <svg className="w-4 h-4 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.013 8.013 0 01-5.626-2.32C4.246 18.765 4.246 12 7.374 5.679A8.013 8.013 0 0113 3c4.418 0 8 3.582 8 9z" />
-                        </svg>
-                        Ask a Student
-                      </div>
-                      <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 transition-transform">
-                        View Program →
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-                <p className="text-slate-400">Programs coming soon!</p>
-              </div>
-            )
           ) : activeTab === 'schools' ? (
             // Schools Tab Content
             schools.length > 0 ? (
