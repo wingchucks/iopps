@@ -107,7 +107,7 @@ Our campuses in Regina, Saskatoon, and Prince Albert, along with eight Career Ce
     youtube: "https://youtube.com/@siitsask",
   },
 
-  logoUrl: "https://siit.ca/wp-content/uploads/2021/03/siit_logo-sm.png",
+  logoUrl: "/logos/siit-logo.png",
   bannerUrl: "https://siit.ca/wp-content/uploads/2025/02/1-Where-do-I-start.jpg.webp",
 
   isPublished: true,
