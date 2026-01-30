@@ -52,6 +52,8 @@ export default function NewProgramPage() {
   const [educationRequirement, setEducationRequirement] = useState("");
   const [prerequisites, setPrerequisites] = useState("");
   const [applicationUrl, setApplicationUrl] = useState("");
+  const [indigenousFocused, setIndigenousFocused] = useState(false);
+  const [isPublished, setIsPublished] = useState(true);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +177,9 @@ export default function NewProgramPage() {
         fullTime,
         partTimeAvailable,
         communityDelivery,
+        indigenousFocused,
+        isPublished,
+        status: isPublished ? "approved" : "draft",
         tuition:
           domesticTuition || internationalTuition
             ? {
@@ -404,6 +409,23 @@ export default function NewProgramPage() {
                 <span className="text-sm text-slate-200">Community delivery available</span>
               </label>
             </div>
+
+            <div className="mt-4 p-4 rounded-lg border border-violet-500/30 bg-violet-500/10">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={indigenousFocused}
+                  onChange={(e) => setIndigenousFocused(e.target.checked)}
+                  className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                />
+                <div>
+                  <span className="text-sm font-medium text-violet-200">Indigenous-Focused Program</span>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Check this if the program has Indigenous content, perspectives, or is designed specifically for Indigenous learners
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* Tuition */}
@@ -507,6 +529,29 @@ export default function NewProgramPage() {
             </div>
           </div>
 
+          {/* Publish Setting */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+              Visibility
+            </h2>
+            <label className="flex items-center gap-3 p-4 rounded-lg border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600 transition-colors">
+              <input
+                type="checkbox"
+                checked={isPublished}
+                onChange={(e) => setIsPublished(e.target.checked)}
+                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-200">Publish immediately</span>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {isPublished
+                    ? "This program will be visible on the public programs page right away"
+                    : "Save as draft - you can publish later from your dashboard"}
+                </p>
+              </div>
+            </label>
+          </div>
+
           {/* Submit */}
           <div className="pt-4 border-t border-slate-800">
             <button
@@ -514,11 +559,8 @@ export default function NewProgramPage() {
               disabled={saving}
               className="rounded-md bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-2.5 text-sm font-semibold text-white hover:from-teal-600 hover:to-cyan-600 transition-colors disabled:opacity-60"
             >
-              {saving ? "Creating..." : "Create Program"}
+              {saving ? "Creating..." : isPublished ? "Create & Publish Program" : "Save as Draft"}
             </button>
-            <p className="mt-2 text-xs text-slate-500">
-              Your program will start as a draft. Publish it when you&apos;re ready.
-            </p>
           </div>
         </form>
       </div>

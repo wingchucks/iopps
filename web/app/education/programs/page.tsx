@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
 import { EmptyState } from "@/components/EmptyState";
@@ -52,6 +53,7 @@ const DELIVERY_METHODS: { value: ProgramDelivery | ""; label: string }[] = [
 ];
 
 export default function EducationProgramsPage() {
+  const router = useRouter();
   const [programs, setPrograms] = useState<EducationProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,6 +62,12 @@ export default function EducationProgramsPage() {
   const [deliveryMethod, setDeliveryMethod] = useState<ProgramDelivery | "">("");
   const [indigenousFocused, setIndigenousFocused] = useState(false);
   const [showFilters, setShowFilters] = useState(true); // Default to open for inline variant
+
+  const handleSchoolClick = useCallback((e: React.MouseEvent, schoolId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/education/schools/${schoolId}`);
+  }, [router]);
 
   useEffect(() => {
     loadPrograms();
@@ -238,9 +246,12 @@ export default function EducationProgramsPage() {
                   </div>
                 </div>
 
-                <p className="text-xs font-semibold text-[#14B8A6] uppercase mb-1">
+                <button
+                  onClick={(e) => handleSchoolClick(e, program.schoolId)}
+                  className="text-xs font-semibold text-[#14B8A6] uppercase mb-1 hover:underline text-left"
+                >
                   {program.schoolName}
-                </p>
+                </button>
 
                 <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
                   {program.name}

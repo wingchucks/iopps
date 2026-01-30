@@ -2293,6 +2293,9 @@ export interface EducationProgram {
   // Display
   featured?: boolean;
   credential?: string; // Alias for level display
+
+  // Status for approval workflow
+  status?: "draft" | "pending" | "approved" | "rejected";
 }
 
 // Education Event (open houses, info sessions, campus tours)
