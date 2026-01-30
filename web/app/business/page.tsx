@@ -7,7 +7,7 @@ import { PageShell } from "@/components/PageShell";
 import { VendorCard } from "@/components/shop";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
-import { getFeaturedVendors, getVendors } from "@/lib/firebase/shop";
+import { getFeaturedVendors, getActiveVendors } from "@/lib/firebase/shop";
 import type { Vendor } from "@/lib/types";
 import { MagnifyingGlassIcon, CheckBadgeIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
@@ -58,7 +58,7 @@ export default function BusinessPage() {
         setError(null);
         const [featured, all] = await Promise.all([
           getFeaturedVendors(6),
-          getVendors({ limit: 50 }),
+          getActiveVendors(),
         ]);
         setFeaturedVendors(featured);
         setAllVendors(all);
@@ -225,9 +225,9 @@ export default function BusinessPage() {
                   <div className="relative rounded-2xl overflow-hidden border border-teal-500/30 bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900">
                     {/* Cover image area */}
                     <div className="h-32 bg-gradient-to-r from-teal-600 to-cyan-600 relative">
-                      {spotlightBusiness.bannerUrl && (
+                      {spotlightBusiness.coverImageUrl && (
                         <Image
-                          src={spotlightBusiness.bannerUrl}
+                          src={spotlightBusiness.coverImageUrl}
                           alt=""
                           fill
                           className="object-cover"
