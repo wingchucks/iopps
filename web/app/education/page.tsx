@@ -105,7 +105,10 @@ function EducationContent() {
 
         {/* Scholarship Deadline Alert (Img 0 Style) */}
         {scholarships.length > 0 && (
-          <div className="mb-8 rounded-2xl bg-gradient-to-r from-amber-500/90 to-orange-500/90 p-5 shadow-lg border border-amber-400/50 relative overflow-hidden group hover:-translate-y-0.5 transition-all">
+          <Link
+            href={`/education/scholarships/${scholarships[0].id}`}
+            className="mb-8 rounded-2xl bg-gradient-to-r from-amber-500/90 to-orange-500/90 p-5 shadow-lg border border-amber-400/50 relative overflow-hidden group hover:-translate-y-0.5 transition-all block"
+          >
             <div className="absolute top-0 right-0 p-3 opacity-10">
               <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2V8h2v6z" /></svg>
             </div>
@@ -127,13 +130,13 @@ function EducationContent() {
                   </p>
                 </div>
               </div>
-              <button className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
+              <span className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-colors">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </span>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* Tab Content */}
