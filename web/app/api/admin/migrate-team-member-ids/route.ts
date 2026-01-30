@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { db as adminDb } from "@/lib/firebase-admin";
 
 // POST /api/admin/migrate-team-member-ids
 // Migrates existing employers to add teamMemberIds array for security rules
