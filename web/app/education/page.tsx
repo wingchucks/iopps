@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import { listSchools, listScholarships } from "@/lib/firestore";
 import type { School, Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
@@ -9,17 +9,49 @@ import OceanWaveHero from "@/components/OceanWaveHero";
 
 type EducationTab = 'schools' | 'scholarships';
 
+// School type filter options
+const SCHOOL_TYPE_OPTIONS = [
+  { value: '', label: 'All Types' },
+  { value: 'university', label: 'University' },
+  { value: 'college', label: 'College' },
+  { value: 'technical', label: 'Technical/Trades' },
+  { value: 'indigenous', label: 'Indigenous Institution' },
+  { value: 'online', label: 'Online/Distance' },
+] as const;
+
+// Canadian provinces and territories
+const PROVINCE_OPTIONS = [
+  { value: '', label: 'All Provinces' },
+  { value: 'AB', label: 'Alberta' },
+  { value: 'BC', label: 'British Columbia' },
+  { value: 'MB', label: 'Manitoba' },
+  { value: 'NB', label: 'New Brunswick' },
+  { value: 'NL', label: 'Newfoundland and Labrador' },
+  { value: 'NS', label: 'Nova Scotia' },
+  { value: 'NT', label: 'Northwest Territories' },
+  { value: 'NU', label: 'Nunavut' },
+  { value: 'ON', label: 'Ontario' },
+  { value: 'PE', label: 'Prince Edward Island' },
+  { value: 'QC', label: 'Quebec' },
+  { value: 'SK', label: 'Saskatchewan' },
+  { value: 'YT', label: 'Yukon' },
+] as const;
+
 function EducationContent() {
   const [schools, setSchools] = useState<School[]>([]);
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<EducationTab>('schools');
 
+  // Filter state
+  const [schoolTypeFilter, setSchoolTypeFilter] = useState('');
+  const [provinceFilter, setProvinceFilter] = useState('');
+
   useEffect(() => {
     (async () => {
       try {
         const [schoolData, scholarshipData] = await Promise.all([
-          listSchools({ publishedOnly: true, limitCount: 4 }),
+          listSchools({ publishedOnly: true }),
           listScholarships(),
         ]);
         setSchools(schoolData);
@@ -31,6 +63,35 @@ function EducationContent() {
       }
     })();
   }, []);
+
+  // Filter schools based on selected filters
+  const filteredSchools = useMemo(() => {
+    return schools.filter((school) => {
+      // Type filter
+      if (schoolTypeFilter) {
+        const schoolType = school.type || '';
+        if (schoolTypeFilter === 'technical') {
+          if (schoolType !== 'polytechnic' && schoolType !== 'training_provider') return false;
+        } else if (schoolTypeFilter === 'indigenous') {
+          if (schoolType !== 'tribal_college') return false;
+        } else if (schoolTypeFilter === 'online') {
+          // Check if school has online delivery or is marked as online
+          // For now, filter based on type containing 'online' or delivery method
+          return false; // No schools will match until we have online data
+        } else {
+          if (schoolType !== schoolTypeFilter) return false;
+        }
+      }
+
+      // Province filter
+      if (provinceFilter) {
+        const schoolProvince = school.location?.province || school.headOffice?.province || '';
+        if (schoolProvince !== provinceFilter) return false;
+      }
+
+      return true;
+    });
+  }, [schools, schoolTypeFilter, provinceFilter]);
 
   return (
     <div className="min-h-screen text-slate-100">
@@ -126,6 +187,62 @@ function EducationContent() {
           </Link>
         )}
 
+        {/* School Filters - Only show on Schools tab */}
+        {activeTab === 'schools' && (
+          <div className="mb-6 flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 sm:flex-none sm:w-48">
+              <select
+                value={schoolTypeFilter}
+                onChange={(e) => setSchoolTypeFilter(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2.5 pr-10 text-sm text-white backdrop-blur-sm transition-colors hover:border-slate-600 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
+              >
+                {SCHOOL_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value} className="bg-slate-800">
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            <div className="relative flex-1 sm:flex-none sm:w-48">
+              <select
+                value={provinceFilter}
+                onChange={(e) => setProvinceFilter(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2.5 pr-10 text-sm text-white backdrop-blur-sm transition-colors hover:border-slate-600 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
+              >
+                {PROVINCE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value} className="bg-slate-800">
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            {(schoolTypeFilter || provinceFilter) && (
+              <button
+                onClick={() => {
+                  setSchoolTypeFilter('');
+                  setProvinceFilter('');
+                }}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-slate-300 transition-colors hover:border-red-500/50 hover:text-red-400"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Tab Content */}
         <section className="mb-12">
           {loading ? (
@@ -136,9 +253,9 @@ function EducationContent() {
             </div>
           ) : activeTab === 'schools' ? (
             // Schools Tab Content
-            schools.length > 0 ? (
+            filteredSchools.length > 0 ? (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {schools.map((school) => (
+                {filteredSchools.map((school) => (
                   <Link
                     key={school.id}
                     href={`/education/schools/${school.slug || school.id}`}
@@ -170,7 +287,22 @@ function EducationContent() {
               </div>
             ) : (
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-                <p className="text-slate-400">Schools coming soon!</p>
+                {schoolTypeFilter || provinceFilter ? (
+                  <>
+                    <p className="text-slate-400 mb-4">No schools match your filters.</p>
+                    <button
+                      onClick={() => {
+                        setSchoolTypeFilter('');
+                        setProvinceFilter('');
+                      }}
+                      className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0d9488]"
+                    >
+                      Clear Filters
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-slate-400">Schools coming soon!</p>
+                )}
               </div>
             )
           ) : (
