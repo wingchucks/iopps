@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { EmployerProfile, OrganizationModule } from '@/lib/types';
+import { MODULE_CONFIG } from './constants';
 import {
   HomeIcon,
   UserCircleIcon,
@@ -197,7 +198,7 @@ export default function NavigationSidebar({
 
             {/* HIRE Module */}
             {enabledModules.includes('hire') && (
-              <NavGroup title="Hire" color="blue">
+              <NavGroup title="Hire" color={MODULE_CONFIG.hire.navColor}>
                 <NavItem
                   href="/organization/hire/jobs"
                   label="Jobs"
@@ -226,7 +227,7 @@ export default function NavigationSidebar({
 
             {/* SELL Module */}
             {enabledModules.includes('sell') && (
-              <NavGroup title="Sell" color="teal">
+              <NavGroup title="Sell" color={MODULE_CONFIG.sell.navColor}>
                 <NavItem
                   href="/organization/sell/offerings"
                   label="Products & Services"
@@ -246,7 +247,7 @@ export default function NavigationSidebar({
 
             {/* EDUCATE Module */}
             {enabledModules.includes('educate') && (
-              <NavGroup title="Educate" color="purple">
+              <NavGroup title="Educate" color={MODULE_CONFIG.educate.navColor}>
                 <NavItem
                   href="/organization/educate/programs"
                   label="Programs"
@@ -274,7 +275,7 @@ export default function NavigationSidebar({
 
             {/* HOST Module */}
             {enabledModules.includes('host') && (
-              <NavGroup title="Host" color="amber">
+              <NavGroup title="Host" color={MODULE_CONFIG.host.navColor}>
                 <NavItem
                   href="/organization/host/conferences"
                   label="Conferences"
@@ -294,7 +295,7 @@ export default function NavigationSidebar({
 
             {/* FUNDING Module */}
             {enabledModules.includes('funding') && (
-              <NavGroup title="Funding Opportunities" color="pink">
+              <NavGroup title="Funding Opportunities" color={MODULE_CONFIG.funding.navColor}>
                 <NavItem
                   href="/organization/funding/opportunities"
                   label="Opportunities"

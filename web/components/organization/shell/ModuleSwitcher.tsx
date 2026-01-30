@@ -3,23 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import type { OrganizationModule } from '@/lib/types';
-import {
-  ChevronDownIcon,
-  BriefcaseIcon,
-  ShoppingBagIcon,
-  AcademicCapIcon,
-  CalendarDaysIcon,
-  SparklesIcon,
-  PlusIcon,
-} from '@heroicons/react/24/outline';
-
-const MODULE_INFO: Record<OrganizationModule, { name: string; icon: React.ElementType; color: string }> = {
-  hire: { name: 'Hire', icon: BriefcaseIcon, color: 'text-blue-400' },
-  sell: { name: 'Sell', icon: ShoppingBagIcon, color: 'text-accent' },
-  educate: { name: 'Educate', icon: AcademicCapIcon, color: 'text-purple-400' },
-  host: { name: 'Host', icon: CalendarDaysIcon, color: 'text-amber-400' },
-  funding: { name: 'Funding', icon: SparklesIcon, color: 'text-pink-400' },
-};
+import { ChevronDownIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { MODULE_CONFIG } from './constants';
 
 interface ModuleSwitcherProps {
   enabledModules: OrganizationModule[];
@@ -53,7 +38,7 @@ export default function ModuleSwitcher({
     return null;
   }
 
-  const currentInfo = currentModule ? MODULE_INFO[currentModule] : null;
+  const currentInfo = currentModule ? MODULE_CONFIG[currentModule] : null;
   const CurrentIcon = currentInfo?.icon;
 
   // Compact mode for mobile
@@ -71,7 +56,7 @@ export default function ModuleSwitcher({
         {isOpen && (
           <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 py-1">
             {enabledModules.map(module => {
-              const info = MODULE_INFO[module];
+              const info = MODULE_CONFIG[module];
               const Icon = info.icon;
               const isActive = module === currentModule;
 
@@ -118,7 +103,7 @@ export default function ModuleSwitcher({
       <span className="text-xs text-slate-500 mr-1">Module:</span>
 
       {enabledModules.map(module => {
-        const info = MODULE_INFO[module];
+        const info = MODULE_CONFIG[module];
         const Icon = info.icon;
         const isActive = module === currentModule;
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { OrganizationModule } from '@/lib/types';
+import { MODULE_CONFIG } from './constants';
 import {
   HomeIcon,
   InboxIcon,
@@ -11,6 +12,7 @@ import {
   Squares2X2Icon,
   CreditCardIcon,
   Cog6ToothIcon,
+  UsersIcon,
   QuestionMarkCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
@@ -88,13 +90,14 @@ interface MenuItemProps {
   icon: React.ElementType;
   onClick: () => void;
   external?: boolean;
+  colorClass?: string;
 }
 
-function MenuItem({ href, label, description, icon: Icon, onClick, external }: MenuItemProps) {
+function MenuItem({ href, label, description, icon: Icon, onClick, external, colorClass }: MenuItemProps) {
   const content = (
     <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-900/50 hover:bg-slate-800 transition-colors">
-      <div className="p-2 rounded-lg bg-slate-800">
-        <Icon className="w-5 h-5 text-slate-400" />
+      <div className={`p-2 rounded-lg ${colorClass || 'bg-slate-800'}`}>
+        <Icon className={`w-5 h-5 ${colorClass ? 'text-white' : 'text-slate-400'}`} />
       </div>
       <div className="flex-1">
         <p className="font-medium text-slate-200">{label}</p>
@@ -118,6 +121,15 @@ function MenuItem({ href, label, description, icon: Icon, onClick, external }: M
   );
 }
 
+function MenuDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 px-2 pt-4 pb-2">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
+      <div className="flex-1 h-px bg-slate-800" />
+    </div>
+  );
+}
+
 interface MobileNavBarProps {
   currentPath: string;
   badges?: {
@@ -131,6 +143,7 @@ interface MobileNavBarProps {
 export default function MobileNavBar({
   currentPath,
   badges = {},
+  enabledModules,
 }: MobileNavBarProps) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
@@ -142,6 +155,15 @@ export default function MobileNavBar({
   };
 
   const isMoreActive = isActive('/organization/settings') || isActive('/organization/billing') || isActive('/organization/team');
+
+  // Module color classes for menu items
+  const moduleColorClasses: Record<OrganizationModule, string> = {
+    hire: 'bg-blue-500/20',
+    sell: 'bg-teal-500/20',
+    educate: 'bg-purple-500/20',
+    host: 'bg-amber-500/20',
+    funding: 'bg-pink-500/20',
+  };
 
   return (
     <>
@@ -194,14 +216,14 @@ export default function MobileNavBar({
           />
 
           {/* Bottom Sheet */}
-          <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 rounded-t-3xl animate-in slide-in-from-bottom duration-300 safe-area-pb">
+          <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 rounded-t-3xl animate-in slide-in-from-bottom duration-300 safe-area-pb max-h-[80vh] overflow-y-auto">
             {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
+            <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-slate-950">
               <div className="w-12 h-1 rounded-full bg-slate-700" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pb-4">
+            <div className="flex items-center justify-between px-6 pb-4 sticky top-6 bg-slate-950">
               <h3 className="text-lg font-semibold text-slate-100">More Options</h3>
               <button
                 onClick={() => setShowMoreMenu(false)}
@@ -212,25 +234,93 @@ export default function MobileNavBar({
             </div>
 
             {/* Menu Items */}
-            <div className="px-4 pb-6 space-y-2">
+            <div className="px-4 pb-6 space-y-1">
+              {/* Core Section */}
               <MenuItem
                 href="/organization/billing"
                 label="Pricing"
-                description="View plans and manage subscriptions"
+                description="View plans and subscriptions"
                 icon={CreditCardIcon}
+                onClick={() => setShowMoreMenu(false)}
+              />
+              <MenuItem
+                href="/organization/team"
+                label="Team"
+                description="Manage team members"
+                icon={UsersIcon}
                 onClick={() => setShowMoreMenu(false)}
               />
               <MenuItem
                 href="/organization/settings"
                 label="Settings"
-                description="Account and organization settings"
+                description="Account and preferences"
                 icon={Cog6ToothIcon}
                 onClick={() => setShowMoreMenu(false)}
               />
+
+              {/* Modules Section - Only show if modules are enabled */}
+              {enabledModules.length > 0 && (
+                <>
+                  <MenuDivider label="Modules" />
+                  {enabledModules.includes('hire') && (
+                    <MenuItem
+                      href="/organization/hire/jobs"
+                      label="Jobs"
+                      description="Manage job postings"
+                      icon={MODULE_CONFIG.hire.icon}
+                      onClick={() => setShowMoreMenu(false)}
+                      colorClass={moduleColorClasses.hire}
+                    />
+                  )}
+                  {enabledModules.includes('sell') && (
+                    <MenuItem
+                      href="/organization/sell/offerings"
+                      label="Products & Services"
+                      description="Manage offerings"
+                      icon={MODULE_CONFIG.sell.icon}
+                      onClick={() => setShowMoreMenu(false)}
+                      colorClass={moduleColorClasses.sell}
+                    />
+                  )}
+                  {enabledModules.includes('educate') && (
+                    <MenuItem
+                      href="/organization/educate/programs"
+                      label="Programs"
+                      description="Education & training"
+                      icon={MODULE_CONFIG.educate.icon}
+                      onClick={() => setShowMoreMenu(false)}
+                      colorClass={moduleColorClasses.educate}
+                    />
+                  )}
+                  {enabledModules.includes('host') && (
+                    <MenuItem
+                      href="/organization/host/events"
+                      label="Events"
+                      description="Conferences & events"
+                      icon={MODULE_CONFIG.host.icon}
+                      onClick={() => setShowMoreMenu(false)}
+                      colorClass={moduleColorClasses.host}
+                    />
+                  )}
+                  {enabledModules.includes('funding') && (
+                    <MenuItem
+                      href="/organization/funding/opportunities"
+                      label="Funding"
+                      description="Funding opportunities"
+                      icon={MODULE_CONFIG.funding.icon}
+                      onClick={() => setShowMoreMenu(false)}
+                      colorClass={moduleColorClasses.funding}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* Help Section */}
+              <MenuDivider label="Support" />
               <MenuItem
-                href="mailto:nathan.arias@iopps.ca?subject=IOPPS Help Request"
+                href="mailto:support@iopps.ca?subject=Help%20Request"
                 label="Help"
-                description="Contact support for assistance"
+                description="Contact support"
                 icon={QuestionMarkCircleIcon}
                 onClick={() => setShowMoreMenu(false)}
                 external
