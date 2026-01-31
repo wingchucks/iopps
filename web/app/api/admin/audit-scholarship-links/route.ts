@@ -17,6 +17,8 @@ export async function GET() {
         id: doc.id,
         title: data.title || data.name,
         applicationUrl: data.applicationUrl || data.applyUrl || data.url || null,
+        applicationMethod: data.applicationMethod || null,
+        applicationEmail: data.applicationEmail || null,
         websiteUrl: data.websiteUrl || data.website || null,
         active: data.active,
       };
@@ -24,11 +26,27 @@ export async function GET() {
 
     const withLinks = scholarships.filter(s => s.applicationUrl);
     const missingLinks = scholarships.filter(s => !s.applicationUrl);
+    
+    // Count by application method
+    const byMethod: Record<string, number> = {};
+    scholarships.forEach(s => {
+      const method = s.applicationMethod || 'none';
+      byMethod[method] = (byMethod[method] || 0) + 1;
+    });
+    
+    // Flag scholarships that might allow internal applications
+    const potentialInternalApps = scholarships.filter(s => 
+      !s.applicationMethod || 
+      (s.applicationMethod !== 'external_link' && s.applicationMethod !== 'email')
+    );
 
     return NextResponse.json({
       total: scholarships.length,
       withLinks: withLinks.length,
       missingLinks: missingLinks.length,
+      byMethod,
+      potentialInternalApps: potentialInternalApps.length,
+      needsReview: potentialInternalApps,
       missing: missingLinks,
       all: scholarships,
     });
