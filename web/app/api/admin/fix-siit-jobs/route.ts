@@ -42,11 +42,11 @@ export async function POST(request: NextRequest) {
         data.title?.toLowerCase().includes("siit");
       
       if (isSiitJob) {
-        // Update to proper SIIT employer info
+        // Update to proper SIIT employer info and REMOVE employerId so it doesn't show IOPPS JR profile
         await db.collection("jobs").doc(doc.id).update({
           companyName: siitName,
           employerName: siitName,
-          // Keep employerId if it's already SIIT's, otherwise set to school ID
+          employerId: null, // Clear employerId so job page shows company name, not IOPPS JR profile
           ...(siitSchoolId && { schoolId: siitSchoolId }),
         });
         
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
           id: doc.id,
           title: data.title,
           oldEmployer: data.companyName || data.employerName || "unknown",
+          oldEmployerId: data.employerId || null,
           newEmployer: siitName,
         });
         updated++;
@@ -87,7 +88,7 @@ export async function GET() {
 
     const jobsSnap = await db.collection("jobs").get();
     
-    const siitJobs: { id: string; title: string; companyName: string; employerName: string }[] = [];
+    const siitJobs: { id: string; title: string; companyName: string; employerName: string; employerId: string | null }[] = [];
     
     jobsSnap.docs.forEach(doc => {
       const data = doc.data();
@@ -106,6 +107,7 @@ export async function GET() {
           title: data.title,
           companyName: data.companyName || null,
           employerName: data.employerName || null,
+          employerId: data.employerId || null,
         });
       }
     });
