@@ -45,9 +45,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }
 
         // Check if profile is incomplete (missing required fields for approval)
+        // Only require org name and description - logo is optional
         const isProfileIncomplete = !employerProfile.organizationName || 
-          !employerProfile.description || 
-          !employerProfile.logoUrl;
+          !employerProfile.description;
         
         // If incomplete AND not already approved, redirect to onboarding
         if (isProfileIncomplete && employerProfile.status !== 'approved') {
