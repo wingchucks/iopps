@@ -110,7 +110,6 @@ export default function EmployersPanel() {
             "Featured spotlight on job board",
             "Top positioning in search results",
             "Employer logo & branding",
-            "7 days Talent Pool access",
             "Posting analytics",
             DIRECTORY_VISIBILITY_BULLETS.FEATURED_JOB,
           ]}

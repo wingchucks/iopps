@@ -145,35 +145,10 @@ export const TRAINING_PRODUCTS = {
 
 export type TrainingProductType = keyof typeof TRAINING_PRODUCTS;
 
-// Talent Pool Access products (for viewing resumes and messaging candidates)
-export const TALENT_POOL_PRODUCTS = {
-    MONTHLY: {
-        name: "Talent Pool Access - Monthly",
-        price: 9900, // $99.00 CAD per month
-        duration: 30, // days
-        description: "Access Indigenous talent pool, view resumes, and message candidates directly",
-        features: [
-            "View all community member resumes",
-            "Unlimited direct messaging to candidates",
-            "Search and filter talent by skills and location",
-            "Download resumes for offline review",
-        ],
-    },
-    ANNUAL: {
-        name: "Talent Pool Access - Annual",
-        price: 89900, // $899.00 CAD per year (save ~$290)
-        duration: 365, // days
-        description: "Full year of talent pool access with priority support",
-        features: [
-            "All monthly features included",
-            "Priority customer support",
-            "Save $290 vs monthly billing",
-            "Early access to new talent features",
-        ],
-    },
-} as const;
-
-export type TalentPoolProductType = keyof typeof TALENT_POOL_PRODUCTS;
+// Talent Pool Access - DISABLED FOR NOW
+// TODO: Re-enable when talent pool feature is ready
+// export const TALENT_POOL_PRODUCTS = { ... }
+// export type TalentPoolProductType = keyof typeof TALENT_POOL_PRODUCTS;
 
 // School/Education Institution products
 export const SCHOOL_PRODUCTS = {
