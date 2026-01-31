@@ -24,8 +24,8 @@ export default function EducationPanel() {
         <div className="max-w-2xl">
           <PricingCard
             title={SCHOOL_PRODUCTS.PARTNER.name}
-            price={`$${SCHOOL_PRODUCTS.PARTNER.price / 100}`}
-            period="/ year"
+            price="Contact Us"
+            period=""
             badge="UNLIMITED EVERYTHING"
             highlighted={true}
             features={SCHOOL_PRODUCTS.PARTNER.features}
