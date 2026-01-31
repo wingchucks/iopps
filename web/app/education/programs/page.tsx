@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
 import { EmptyState } from "@/components/EmptyState";
-// API-based loading instead of client-side Firestore to avoid index issues
-import type { EducationProgram, ProgramCategory, ProgramLevel, ProgramDelivery } from "@/lib/types";
+import type { UnifiedEducationListing, ProgramSource, ProgramLevel, ProgramDelivery } from "@/lib/types";
 import {
   SearchBarRow,
   FiltersDrawer,
@@ -15,10 +14,19 @@ import {
   DiscoveryGrid,
   LoadingGrid,
   FilterGroup,
-  DiscoveryBadge,
+  LoadMoreButton,
 } from "@/components/discovery";
+import { UnifiedProgramCard } from "@/components/education";
 
-const CATEGORIES: { value: ProgramCategory | ""; label: string }[] = [
+// Source options - which type of provider
+const SOURCE_OPTIONS: { value: ProgramSource | ""; label: string }[] = [
+  { value: "", label: "All Sources" },
+  { value: "school", label: "Schools & Colleges" },
+  { value: "provider", label: "Training Providers" },
+];
+
+// Unified categories that work across both program types
+const CATEGORIES: { value: string; label: string }[] = [
   { value: "", label: "All Categories" },
   { value: "Business & Management", label: "Business" },
   { value: "Technology & IT", label: "Technology" },
@@ -34,8 +42,9 @@ const CATEGORIES: { value: ProgramCategory | ""; label: string }[] = [
   { value: "Other", label: "Other" },
 ];
 
+// Academic credential levels (only shown for school programs)
 const LEVELS: { value: ProgramLevel | ""; label: string }[] = [
-  { value: "", label: "All Levels" },
+  { value: "", label: "All Credentials" },
   { value: "certificate", label: "Certificate" },
   { value: "diploma", label: "Diploma" },
   { value: "bachelor", label: "Bachelor's Degree" },
@@ -45,134 +54,210 @@ const LEVELS: { value: ProgramLevel | ""; label: string }[] = [
   { value: "apprenticeship", label: "Apprenticeship" },
 ];
 
-const DELIVERY_METHODS: { value: ProgramDelivery | ""; label: string }[] = [
+// Delivery format options
+const FORMAT_OPTIONS: { value: ProgramDelivery | ""; label: string }[] = [
   { value: "", label: "All Formats" },
   { value: "in-person", label: "In-Person" },
   { value: "online", label: "Online" },
   { value: "hybrid", label: "Hybrid" },
 ];
 
-export default function EducationProgramsPage() {
+const PAGE_SIZE = 24;
+
+function UnifiedProgramsContent() {
   const router = useRouter();
-  const [programs, setPrograms] = useState<EducationProgram[]>([]);
+  const searchParams = useSearchParams();
+
+  // Read initial source from URL params (for redirects from careers)
+  const initialSource = (searchParams.get("source") as ProgramSource | null) || "";
+
+  const [programs, setPrograms] = useState<UnifiedEducationListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
+  // Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState<ProgramCategory | "">("");
+  const [source, setSource] = useState<ProgramSource | "">(initialSource);
+  const [category, setCategory] = useState("");
   const [level, setLevel] = useState<ProgramLevel | "">("");
-  const [deliveryMethod, setDeliveryMethod] = useState<ProgramDelivery | "">("");
+  const [format, setFormat] = useState<ProgramDelivery | "">("");
   const [indigenousFocused, setIndigenousFocused] = useState(false);
-  const [showFilters, setShowFilters] = useState(true); // Default to open for inline variant
+  const [fundingAvailable, setFundingAvailable] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
-  const handleSchoolClick = useCallback((e: React.MouseEvent, schoolId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(`/education/schools/${schoolId}`);
-  }, [router]);
+  // Navigate to provider page
+  const handleProviderClick = useCallback(
+    (e: React.MouseEvent, providerId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Check if it's a school or organization
+      const program = programs.find((p) => p.providerId === providerId);
+      if (program?.providerType === "school") {
+        router.push(`/education/schools/${providerId}`);
+      } else {
+        router.push(`/directory/${providerId}`);
+      }
+    },
+    [router, programs]
+  );
 
-  useEffect(() => {
-    loadPrograms();
-  }, [category, level, deliveryMethod, indigenousFocused]);
+  // Load programs from unified API
+  async function loadPrograms(isLoadMore = false) {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setOffset(0);
+    }
 
-  async function loadPrograms() {
-    setLoading(true);
     try {
-      // Use API instead of direct Firestore to avoid index issues
       const params = new URLSearchParams();
+      if (source) params.set("source", source);
       if (category) params.set("category", category);
-      if (level) params.set("level", level);
-      if (deliveryMethod) params.set("deliveryMethod", deliveryMethod);
+      if (level && source !== "provider") params.set("level", level);
+      if (format) params.set("format", format);
       if (indigenousFocused) params.set("indigenousFocused", "true");
-      
-      const url = `/api/education/programs${params.toString() ? `?${params.toString()}` : ""}`;
+      if (fundingAvailable && source !== "school") params.set("fundingAvailable", "true");
+      if (searchQuery) params.set("search", searchQuery);
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(isLoadMore ? offset + PAGE_SIZE : 0));
+
+      const url = `/api/education/unified-programs${params.toString() ? `?${params.toString()}` : ""}`;
       const res = await fetch(url);
       const data = await res.json();
-      setPrograms(data.programs || []);
+
+      if (isLoadMore) {
+        setPrograms((prev) => [...prev, ...(data.programs || [])]);
+        setOffset((prev) => prev + PAGE_SIZE);
+      } else {
+        setPrograms(data.programs || []);
+        setOffset(0);
+      }
+
+      setTotal(data.total || 0);
+      setHasMore(data.hasMore || false);
     } catch (error) {
       console.error("Failed to load programs:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
 
-  const filteredPrograms = programs.filter((program) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      program.name.toLowerCase().includes(query) ||
-      program.schoolName?.toLowerCase().includes(query) ||
-      program.description?.toLowerCase().includes(query)
-    );
-  });
+  // Reload when filters change
+  useEffect(() => {
+    loadPrograms(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, category, level, format, indigenousFocused, fundingAvailable]);
 
-  const hasFilters = Boolean(searchQuery || category || level || deliveryMethod || indigenousFocused);
+  // Debounced search
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      loadPrograms(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  const hasFilters = Boolean(
+    searchQuery || source || category || level || format || indigenousFocused || fundingAvailable
+  );
 
   const clearFilters = () => {
     setSearchQuery("");
+    setSource("");
     setCategory("");
     setLevel("");
-    setDeliveryMethod("");
+    setFormat("");
     setIndigenousFocused(false);
-  };
-
-  const getCategoryIcon = (cat?: ProgramCategory) => {
-    switch (cat) {
-      case "Business & Management": return "💼";
-      case "Technology & IT": return "💻";
-      case "Healthcare & Nursing": return "🏥";
-      case "Trades & Industrial": return "🔧";
-      case "Arts & Design": return "🎨";
-      case "Sciences": return "🔬";
-      case "Education & Teaching": return "📖";
-      case "Law & Justice": return "⚖️";
-      case "Social Work & Community": return "🤝";
-      case "Indigenous Studies": return "🪶";
-      case "Environment & Natural Resources": return "🌿";
-      case "Engineering": return "⚙️";
-      case "Agriculture": return "🌾";
-      case "Hospitality & Tourism": return "🏨";
-      default: return "📚";
-    }
+    setFundingAvailable(false);
   };
 
   // Build filter groups for FiltersDrawer
   const filterGroups: FilterGroup[] = [
+    {
+      id: "source",
+      label: "Source",
+      type: "chips",
+      options: SOURCE_OPTIONS.map((s) => ({ label: s.label, value: s.value })),
+      value: source,
+      onChange: (v) => {
+        setSource(v as ProgramSource | "");
+        // Clear level if switching to training providers
+        if (v === "provider") {
+          setLevel("");
+        }
+        // Clear funding if switching to schools
+        if (v === "school") {
+          setFundingAvailable(false);
+        }
+      },
+    },
     {
       id: "category",
       label: "Category",
       type: "select",
       options: CATEGORIES.map((c) => ({ label: c.label, value: c.value })),
       value: category,
-      onChange: (v) => setCategory(v as ProgramCategory | ""),
+      onChange: (v) => setCategory(v as string),
     },
+    // Only show credential filter when not filtering to training providers only
+    ...(source !== "provider"
+      ? [
+          {
+            id: "level",
+            label: "Credential",
+            type: "select" as const,
+            options: LEVELS.map((l) => ({ label: l.label, value: l.value })),
+            value: level,
+            onChange: (v: string | string[] | boolean) => setLevel(v as ProgramLevel | ""),
+          },
+        ]
+      : []),
     {
-      id: "level",
-      label: "Level",
-      type: "select",
-      options: LEVELS.map((l) => ({ label: l.label, value: l.value })),
-      value: level,
-      onChange: (v) => setLevel(v as ProgramLevel | ""),
-    },
-    {
-      id: "delivery",
+      id: "format",
       label: "Format",
       type: "select",
-      options: DELIVERY_METHODS.map((d) => ({ label: d.label, value: d.value })),
-      value: deliveryMethod,
-      onChange: (v) => setDeliveryMethod(v as ProgramDelivery | ""),
+      options: FORMAT_OPTIONS.map((f) => ({ label: f.label, value: f.value })),
+      value: format,
+      onChange: (v) => setFormat(v as ProgramDelivery | ""),
     },
     {
       id: "indigenous",
-      label: "Focus",
+      label: "Indigenous Focus",
       type: "checkbox",
       options: [{ label: "Indigenous-Focused Programs", value: "indigenous" }],
       value: indigenousFocused,
       onChange: (v) => setIndigenousFocused(v as boolean),
     },
+    // Only show funding filter when not filtering to schools only
+    ...(source !== "school"
+      ? [
+          {
+            id: "funding",
+            label: "Funding",
+            type: "checkbox" as const,
+            options: [{ label: "Funding Available", value: "funding" }],
+            value: fundingAvailable,
+            onChange: (v: string | string[] | boolean) => setFundingAvailable(v as boolean),
+          },
+        ]
+      : []),
   ];
+
+  // Determine dynamic title based on active source filter
+  const getTitle = () => {
+    if (source === "school") return "School Programs";
+    if (source === "provider") return "Training Programs";
+    return "All Programs";
+  };
 
   return (
     <div className="min-h-screen text-slate-100">
-      {/* Breadcrumb - Above Hero */}
+      {/* Breadcrumb */}
       <div className="bg-slate-900/50">
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
           <nav className="text-sm text-slate-400">
@@ -189,15 +274,15 @@ export default function EducationProgramsPage() {
         </div>
       </div>
 
-      {/* Ocean Wave Hero */}
+      {/* Hero */}
       <OceanWaveHero
-        eyebrow="Education"
+        eyebrow="Education & Training"
         title="Explore Programs"
-        subtitle="Find degrees, diplomas, certificates, and courses from Indigenous-serving institutions."
+        subtitle="Discover academic degrees, diplomas, certificates, and professional training from Indigenous-serving institutions and training providers."
         size="md"
       >
         <SearchBarRow
-          placeholder="Search programs..."
+          placeholder="Search programs, schools, skills..."
           value={searchQuery}
           onChange={setSearchQuery}
           onFiltersClick={() => setShowFilters(!showFilters)}
@@ -207,7 +292,7 @@ export default function EducationProgramsPage() {
       </OceanWaveHero>
 
       <PageShell>
-        {/* Filters - Inline Variant (always visible by default) */}
+        {/* Filters */}
         <FiltersDrawer
           isOpen={showFilters}
           filters={filterGroups}
@@ -218,66 +303,43 @@ export default function EducationProgramsPage() {
 
         {/* Results Header */}
         <ResultsHeader
-          title="All Programs"
-          count={filteredPrograms.length}
+          title={getTitle()}
+          count={total}
           loading={loading}
           hasFilters={hasFilters}
         />
 
         {/* Programs Grid */}
         {loading ? (
-          <LoadingGrid count={9} height="h-64" />
-        ) : filteredPrograms.length > 0 ? (
-          <DiscoveryGrid>
-            {filteredPrograms.map((program) => (
-              <Link
-                key={program.id}
-                href={`/education/programs/${program.slug || program.id}`}
-                className="group rounded-2xl border border-slate-700 bg-slate-800/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
-                    <span className="text-xl">{getCategoryIcon(program.category)}</span>
+          <LoadingGrid count={9} height="h-72" />
+        ) : programs.length > 0 ? (
+          <>
+            <DiscoveryGrid>
+              {programs.map((program) => (
+                <UnifiedProgramCard
+                  key={program.id}
+                  program={program}
+                  onProviderClick={handleProviderClick}
+                />
+              ))}
+            </DiscoveryGrid>
+
+            {/* Load More */}
+            {hasMore && (
+              <div className="mt-8">
+                {loadingMore ? (
+                  <div className="flex justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-[#14B8A6]" />
                   </div>
-                  <div className="flex flex-col gap-1 items-end">
-                    <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 capitalize">
-                      {program.level}
-                    </span>
-                    {program.indigenousFocused && (
-                      <DiscoveryBadge variant="indigenous-focused" size="sm" />
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => handleSchoolClick(e, program.schoolId)}
-                  className="text-xs font-semibold text-[#14B8A6] uppercase mb-1 hover:underline text-left"
-                >
-                  {program.schoolName}
-                </button>
-
-                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
-                  {program.name}
-                </h3>
-
-                <p className="text-sm text-slate-400 mb-3 line-clamp-2">
-                  {program.description || "Explore this program and its opportunities."}
-                </p>
-
-                <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-4">
-                  {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
-                  <span className="capitalize">📍 {program.deliveryMethod}</span>
-                </div>
-
-                <div className="pt-4 border-t border-slate-700/50 flex justify-between items-center">
-                  <span className="text-xs text-slate-500 capitalize">{program.category}</span>
-                  <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
-                    View Program →
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </DiscoveryGrid>
+                ) : (
+                  <LoadMoreButton
+                    onClick={() => loadPrograms(true)}
+                    label="Load more programs"
+                  />
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState
             icon="education"
@@ -294,19 +356,51 @@ export default function EducationProgramsPage() {
         {/* CTA Section */}
         <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Looking for Training Programs?
+            Are you an educator or training provider?
           </h2>
           <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-            Check out our Careers section for professional training, trades programs, and skill-building courses.
+            List your programs on IOPPS to reach Indigenous learners across Canada.
           </p>
-          <Link
-            href="/careers/programs"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
-          >
-            Browse Training Programs
-          </Link>
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/organization/education/setup"
+              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            >
+              List Academic Programs
+            </Link>
+            <Link
+              href="/organization/training/new"
+              className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6] px-6 py-3 font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/10 transition-colors"
+            >
+              Add Training Program
+            </Link>
+          </div>
         </section>
       </PageShell>
     </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function UnifiedProgramsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen text-slate-100">
+          <div className="bg-slate-900/50">
+            <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+              <nav className="text-sm text-slate-400">
+                <span>Home → Education → Programs</span>
+              </nav>
+            </div>
+          </div>
+          <div className="py-16 text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-[#14B8A6]" />
+          </div>
+        </div>
+      }
+    >
+      <UnifiedProgramsContent />
+    </Suspense>
   );
 }

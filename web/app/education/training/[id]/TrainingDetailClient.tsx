@@ -23,7 +23,6 @@ import {
   ArrowTopRightOnSquareIcon,
   CheckBadgeIcon,
   CurrencyDollarIcon,
-  CalendarIcon,
   GlobeAltIcon,
   UserGroupIcon,
   ChevronLeftIcon,
@@ -107,8 +106,8 @@ export default function TrainingDetailClient({
             This program may have been removed or is no longer available.
           </p>
           <Link
-            href="/careers/programs"
-            className="mt-6 inline-block rounded-lg bg-purple-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-purple-600"
+            href="/education/programs?source=provider"
+            className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
             Browse Training Programs
           </Link>
@@ -175,17 +174,25 @@ export default function TrainingDetailClient({
   return (
     <PageShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Back Link */}
-        <Link
-          href="/careers/programs"
-          className="inline-flex items-center gap-1 text-slate-400 hover:text-purple-400 transition-colors mb-6"
-        >
-          <ChevronLeftIcon className="h-4 w-4" />
-          Back to Training Programs
-        </Link>
+        {/* Breadcrumb */}
+        <nav className="text-sm text-slate-400 mb-6">
+          <Link href="/" className="hover:text-white transition-colors">
+            Home
+          </Link>
+          <span className="mx-2">→</span>
+          <Link href="/education" className="hover:text-white transition-colors">
+            Education
+          </Link>
+          <span className="mx-2">→</span>
+          <Link href="/education/programs?source=provider" className="hover:text-white transition-colors">
+            Training Programs
+          </Link>
+          <span className="mx-2">→</span>
+          <span className="text-white">{program.title}</span>
+        </nav>
 
         {/* Header Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-indigo-600 to-violet-700 px-6 py-10 sm:px-12 sm:py-16 mb-8">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#14B8A6] via-teal-600 to-emerald-700 px-6 py-10 sm:px-12 sm:py-16 mb-8">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <svg
@@ -210,6 +217,9 @@ export default function TrainingDetailClient({
           <div className="relative">
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-amber-100 border border-amber-400/30">
+                Training Provider
+              </span>
               {program.featured && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-sm font-bold text-white shadow-lg">
                   <StarIcon className="h-4 w-4" />
@@ -221,20 +231,20 @@ export default function TrainingDetailClient({
                 {getFormatLabel(program.format)}
               </span>
               {program.indigenousFocused && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/30 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-teal-100">
+                <span className="inline-flex items-center gap-1 rounded-full bg-teal-800/50 backdrop-blur-sm px-3 py-1 text-sm font-semibold text-teal-100 border border-teal-400/30">
                   <CheckBadgeIcon className="h-4 w-4" />
                   Indigenous-Focused
                 </span>
               )}
               {program.category && (
-                <span className="rounded-full bg-purple-500/30 backdrop-blur-sm px-3 py-1 text-sm font-medium text-purple-100">
+                <span className="rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
                   {program.category}
                 </span>
               )}
             </div>
 
             {/* Provider */}
-            <p className="text-purple-200 font-medium mb-2">
+            <p className="text-teal-100 font-medium mb-2">
               {program.providerName}
             </p>
 
@@ -244,7 +254,7 @@ export default function TrainingDetailClient({
             </h1>
 
             {/* Quick Info */}
-            <div className="mt-6 flex flex-wrap gap-6 text-purple-100">
+            <div className="mt-6 flex flex-wrap gap-6 text-teal-100">
               {program.duration && (
                 <div className="flex items-center gap-2">
                   <ClockIcon className="h-5 w-5" />
@@ -272,7 +282,7 @@ export default function TrainingDetailClient({
             <div className="mt-8 flex flex-wrap gap-4">
               <button
                 onClick={handleEnrollClick}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-purple-700 shadow-xl shadow-purple-900/30 transition-all hover:bg-purple-50 hover:scale-105"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-teal-700 shadow-xl shadow-teal-900/30 transition-all hover:bg-teal-50 hover:scale-105"
               >
                 Learn More & Enroll
                 <ArrowTopRightOnSquareIcon className="h-5 w-5" />
@@ -343,7 +353,7 @@ export default function TrainingDetailClient({
                     {program.skills.map((skill, i) => (
                       <span
                         key={i}
-                        className="rounded-full bg-purple-500/20 px-4 py-2 text-sm font-medium text-purple-300"
+                        className="rounded-full bg-[#14B8A6]/20 px-4 py-2 text-sm font-medium text-[#14B8A6]"
                       >
                         {skill}
                       </span>
@@ -489,7 +499,7 @@ export default function TrainingDetailClient({
               <div className="mt-6 space-y-3">
                 <button
                   onClick={handleEnrollClick}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 px-6 py-3 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#14B8A6] to-emerald-500 px-6 py-3 font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30"
                 >
                   Enroll Now
                   <ArrowTopRightOnSquareIcon className="h-5 w-5" />
@@ -535,7 +545,7 @@ export default function TrainingDetailClient({
                     className="rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6] to-emerald-500">
                     <AcademicCapIcon className="h-8 w-8 text-white" />
                   </div>
                 )}
@@ -557,7 +567,7 @@ export default function TrainingDetailClient({
                   href={program.providerWebsite}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 text-sm text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
                 >
                   <GlobeAltIcon className="h-4 w-4" />
                   Visit Provider Website
@@ -572,12 +582,11 @@ export default function TrainingDetailClient({
                 Looking for More?
               </h3>
               <p className="text-sm text-slate-400 mb-4">
-                Browse more training programs to find the right fit for your
-                career goals.
+                Browse more programs to find the right fit for your learning goals.
               </p>
               <Link
-                href="/careers/programs"
-                className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors font-medium"
+                href="/education/programs"
+                className="inline-flex items-center gap-2 text-[#14B8A6] hover:text-[#16cdb8] transition-colors font-medium"
               >
                 View All Programs
                 <svg

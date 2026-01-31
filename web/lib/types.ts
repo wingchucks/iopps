@@ -1704,6 +1704,74 @@ export interface MemberTrainingInterest {
 }
 
 // ============================================
+// UNIFIED EDUCATION LISTING (Academic + Training)
+// ============================================
+
+// Source of the program
+export type ProgramSource = "school" | "provider";
+
+// Type of program
+export type UnifiedProgramType = "academic" | "training";
+
+// Unified education listing for discovery pages
+export interface UnifiedEducationListing {
+  id: string;
+  source: ProgramSource;
+  programType: UnifiedProgramType;
+
+  // Common fields
+  title: string;
+  slug?: string;
+  description: string;
+  shortDescription?: string;
+
+  // Provider info (normalized)
+  providerName: string;
+  providerId: string;
+  providerType: "school" | "organization";
+
+  // Classification
+  category?: string;
+  level?: ProgramLevel; // Only for academic programs
+  skills?: string[]; // Only for training programs
+  certificationOffered?: string; // Training programs
+
+  // Delivery
+  format: "in-person" | "online" | "hybrid";
+  duration?: string;
+  location?: string;
+  region?: NorthAmericanRegion;
+
+  // Cost
+  costDisplay?: string; // Unified display string (e.g., "Free", "$500", "Contact for pricing")
+  fundingAvailable?: boolean; // Training programs
+  tuition?: ProgramTuition; // Academic programs (structured)
+
+  // Indigenous focus
+  indigenousFocused?: boolean;
+
+  // Enrollment
+  enrollmentType: "internal" | "external";
+  applicationUrl?: string; // Academic programs
+  enrollmentUrl?: string; // Training programs (external redirect)
+
+  // Status
+  featured?: boolean;
+  isOngoing?: boolean; // Training programs with continuous enrollment
+  startDate?: Date | string | null;
+
+  // Media
+  imageUrl?: string;
+
+  // Analytics
+  viewCount?: number;
+
+  // Original reference (for navigation to detail page)
+  originalId: string;
+  originalCollection: "education_programs" | "training_programs";
+}
+
+// ============================================
 // INDIGENOUS MARKETPLACE - SERVICES
 // ============================================
 
