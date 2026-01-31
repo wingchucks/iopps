@@ -19,10 +19,17 @@ export async function POST(request: NextRequest) {
 
     for (const doc of snapshot.docs) {
       const data = doc.data();
+      const updates: Record<string, any> = {};
+      
       if (data.isPublished !== true) {
-        await db.collection("education_programs").doc(doc.id).update({
-          isPublished: true,
-        });
+        updates.isPublished = true;
+      }
+      if (data.status !== "approved") {
+        updates.status = "approved";
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        await db.collection("education_programs").doc(doc.id).update(updates);
         updated++;
       }
     }
@@ -52,16 +59,23 @@ export async function GET() {
     const snapshot = await db.collection("education_programs").get();
     let published = 0;
     let unpublished = 0;
+    let approved = 0;
+    let notApproved = 0;
 
     snapshot.docs.forEach(doc => {
-      if (doc.data().isPublished === true) published++;
+      const data = doc.data();
+      if (data.isPublished === true) published++;
       else unpublished++;
+      if (data.status === "approved") approved++;
+      else notApproved++;
     });
 
     return NextResponse.json({
       total: snapshot.size,
       published,
       unpublished,
+      approved,
+      notApproved,
     });
 
   } catch (error) {
