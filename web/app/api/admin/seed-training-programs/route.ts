@@ -489,6 +489,24 @@ function generateSlug(title: string, provider: string): string {
   return base;
 }
 
+// Helper to categorize programs based on title/description
+function categorizeProgram(title: string): string {
+  const t = (title || '').toLowerCase();
+  
+  if (/nurs|health|medical|care aide|personal support|paramedic|pharmacy/.test(t)) return 'healthcare';
+  if (/business|admin|management|entrepreneur|accounting|finance/.test(t)) return 'business';
+  if (/weld|electri|plumb|carpenter|construct|trades|hvac|mechanic|heavy equipment/.test(t)) return 'trades';
+  if (/tech|comput|software|developer|cyber|data|it /.test(t)) return 'technology';
+  if (/teach|education|early childhood|ece |instructor/.test(t)) return 'education';
+  if (/social work|counsel|mental health|addiction|community/.test(t)) return 'social-services';
+  if (/language|fluency|indigenous studies|culture/.test(t)) return 'culture';
+  if (/art|design|media|film|music/.test(t)) return 'arts';
+  if (/environment|resource|natural|mining/.test(t)) return 'environment';
+  if (/law|justice|legal|police/.test(t)) return 'legal';
+  if (/culinary|cook|hospitality|tourism/.test(t)) return 'hospitality';
+  return 'other';
+}
+
 // POST /api/admin/seed-training-programs
 export async function POST(request: NextRequest) {
   try {
@@ -501,49 +519,90 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { force } = await request.json().catch(() => ({ force: false }));
+    const body = await request.json().catch(() => ({}));
+    const { force, programs: customPrograms } = body;
 
-    // Check if programs already exist
-    const existingSnap = await db.collection("training_programs").limit(1).get();
-    
-    if (!existingSnap.empty && !force) {
-      const countSnap = await db.collection("training_programs").count().get();
-      return NextResponse.json({ 
-        message: "Training programs already exist. Use force: true to add more.",
-        existingCount: countSnap.data().count 
-      });
-    }
+    // Use custom programs if provided, otherwise use national programs
+    const programsToSeed = customPrograms && Array.isArray(customPrograms) && customPrograms.length > 0
+      ? customPrograms
+      : NATIONAL_TRAINING_PROGRAMS;
 
-    // Seed programs
-    const batch = db.batch();
-    const programIds: string[] = [];
-
-    for (const program of NATIONAL_TRAINING_PROGRAMS) {
-      const ref = db.collection("training_programs").doc();
-      const slug = generateSlug(program.title, program.provider);
+    // Check if programs already exist (only if using default programs)
+    if (!customPrograms) {
+      const existingSnap = await db.collection("training_programs").limit(1).get();
       
-      batch.set(ref, {
-        ...program,
-        slug,
-        status: "approved",
-        isPublished: true,
-        active: true,
-        viewCount: 0,
-        clickCount: 0,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      programIds.push(ref.id);
+      if (!existingSnap.empty && !force) {
+        const countSnap = await db.collection("training_programs").count().get();
+        return NextResponse.json({ 
+          message: "Training programs already exist. Use force: true to add more.",
+          existingCount: countSnap.data().count 
+        });
+      }
     }
 
-    await batch.commit();
+    // Seed programs in batches
+    const BATCH_SIZE = 400;
+    const programIds: string[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < programsToSeed.length; i += BATCH_SIZE) {
+      const batch = db.batch();
+      const chunk = programsToSeed.slice(i, i + BATCH_SIZE);
+
+      for (const program of chunk) {
+        try {
+          const ref = db.collection("training_programs").doc();
+          const slug = generateSlug(program.title || program.programName, program.provider || program.institution);
+          
+          batch.set(ref, {
+            // Map fields from scraped data to expected schema
+            title: program.title || program.programName || 'Untitled Program',
+            provider: program.provider || program.institution || 'Unknown Institution',
+            providerLogo: program.providerLogo || program.logoUrl || program.institutionLogo || null,
+            providerWebsite: program.providerWebsite || program.institutionWebsite || null,
+            category: program.category || categorizeProgram(program.title || program.programName),
+            type: program.type || program.programType?.toLowerCase() || 'training',
+            level: program.level || 'beginner',
+            format: program.format || 'in-person',
+            duration: program.duration || null,
+            description: program.description || '',
+            skills: program.skills || [],
+            field: program.field || null,
+            eligibility: program.eligibility || program.requirements || program.prerequisites || null,
+            fundingAvailable: program.fundingAvailable ?? (program.tuition?.toLowerCase().includes('free') || program.cost?.toLowerCase().includes('free')) ?? false,
+            fundingSource: program.fundingSource || null,
+            cost: program.cost || program.tuition || null,
+            region: program.region || program.location || 'Canada',
+            applyUrl: program.applyUrl || program.applicationUrl || null,
+            startDates: program.startDates || program.startDate || null,
+            featured: program.featured || false,
+            slug,
+            status: "approved",
+            isPublished: true,
+            active: true,
+            viewCount: 0,
+            clickCount: 0,
+            importedFrom: customPrograms ? 'manual-seed' : 'national-programs',
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          programIds.push(ref.id);
+        } catch (err) {
+          errors.push(`Error processing: ${program.title || program.programName} - ${String(err)}`);
+        }
+      }
+
+      await batch.commit();
+    }
 
     return NextResponse.json({
       success: true,
-      programsCreated: NATIONAL_TRAINING_PROGRAMS.length,
-      programIds,
-      categories: [...new Set(NATIONAL_TRAINING_PROGRAMS.map(p => p.category))],
-      providers: [...new Set(NATIONAL_TRAINING_PROGRAMS.map(p => p.provider))],
+      programsCreated: programIds.length,
+      programsSubmitted: programsToSeed.length,
+      programIds: programIds.slice(0, 20),
+      errors: errors.slice(0, 10),
+      categories: [...new Set(programsToSeed.map((p: any) => p.category || categorizeProgram(p.title || p.programName)))],
+      providers: [...new Set(programsToSeed.map((p: any) => p.provider || p.institution))],
     });
 
   } catch (error) {

@@ -190,7 +190,7 @@ export default function RegisterPage() {
         setSuccess(true);
       } catch (verifyError) {
         console.error("Email verification error:", verifyError);
-        router.push(role === "employer" ? "/organization/dashboard" : "/member/dashboard");
+        router.push(role === "employer" ? "/organization/onboarding" : "/member/dashboard");
       }
     } catch (err) {
       console.error(err);
@@ -289,7 +289,7 @@ export default function RegisterPage() {
         });
       }
 
-      router.push(selectedRole === "employer" ? "/organization/dashboard" : "/member/dashboard");
+      router.push(selectedRole === "employer" ? "/organization/onboarding" : "/member/dashboard");
     } catch (err) {
       console.error(err);
       setError("Failed to update role. Please try again.");

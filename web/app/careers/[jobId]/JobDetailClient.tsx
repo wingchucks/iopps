@@ -322,7 +322,30 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             )}
 
             {/* Application Section */}
-            {isCommunityMember && user ? (
+            {/* External Job - Link to employer's site */}
+            {job.applicationLink ? (
+              <div className="mt-8 rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8" id="apply">
+                <h2 className="text-xl font-bold text-slate-200 text-center mb-6">
+                  Apply for this position
+                </h2>
+                <div className="text-center">
+                  <a
+                    href={job.applicationLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-8 py-4 font-semibold text-slate-900 transition-all hover:bg-[#16cdb8] hover:scale-[1.02]"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Apply on {job.employerName || "Employer"}&apos;s Website
+                  </a>
+                  <p className="mt-4 text-sm text-slate-400">
+                    You will be redirected to the employer&apos;s website to complete your application.
+                  </p>
+                </div>
+              </div>
+            ) : isCommunityMember && user ? (
               <div className="mt-8 rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8" id="apply">
                 <h2 className="text-xl font-bold text-slate-200 text-center mb-6">
                   Apply for this position

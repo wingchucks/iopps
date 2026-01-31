@@ -39,9 +39,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         const employerProfile = await getEmployerProfile(user.uid);
 
         if (!employerProfile) {
-          // Redirect to setup if no profile exists
-          router.push('/organization/setup');
+          // Redirect to onboarding if no profile exists
+          router.push('/organization/onboarding');
           return;
+        }
+
+        // Check if profile is incomplete (missing required fields for approval)
+        const isProfileIncomplete = !employerProfile.organizationName || 
+          !employerProfile.description || 
+          !employerProfile.logoUrl;
+        
+        // If incomplete AND not already approved, redirect to onboarding
+        if (isProfileIncomplete && employerProfile.status !== 'approved') {
+          // Allow access to settings page even if incomplete
+          if (!pathname.includes('/settings')) {
+            router.push('/organization/onboarding');
+            return;
+          }
         }
 
         setProfile(employerProfile);

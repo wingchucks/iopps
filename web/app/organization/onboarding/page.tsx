@@ -381,13 +381,12 @@ function OnboardingContent() {
     if (!user || !formData.organizationName) return;
     if (!validateStep(1) || !validateStep(2)) return;
 
-    // Validate About and Story fields before publishing
+    // Validate About field before publishing (Story is optional)
     const aboutTrimmed = formData.description.trim();
-    const storyTrimmed = formData.story.trim();
 
-    if (!aboutTrimmed || !storyTrimmed) {
+    if (!aboutTrimmed) {
       setError(
-        `Complete "About" (max ${ABOUT_MAX_CHARS} chars) and "Our Story" (max ${STORY_MAX_CHARS} chars) to publish your profile.`
+        `Add a brief "About" description (max ${ABOUT_MAX_CHARS} chars) to submit your profile for approval.`
       );
       // Navigate to branding step if not there
       if (step !== 3) setStep(3);
@@ -400,8 +399,8 @@ function OnboardingContent() {
       return;
     }
 
-    if (storyTrimmed.length > STORY_MAX_CHARS) {
-      setError(`Our Story must be ${STORY_MAX_CHARS} characters or less (currently ${storyTrimmed.length}).`);
+    if (formData.story.trim().length > STORY_MAX_CHARS) {
+      setError(`Our Story must be ${STORY_MAX_CHARS} characters or less.`);
       if (step !== 3) setStep(3);
       return;
     }
@@ -840,7 +839,7 @@ function OnboardingContent() {
             {/* Our Story */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                Our Story *
+                Our Story <span className="text-slate-500 font-normal">(optional)</span>
               </label>
               <textarea
                 value={formData.story}
@@ -857,7 +856,7 @@ function OnboardingContent() {
                 }`}
               />
               <div className="mt-1 flex justify-between text-xs">
-                <span className="text-slate-500">Required for publishing</span>
+                <span className="text-slate-500">Share your journey (optional)</span>
                 <span className={formData.story.length > STORY_MAX_CHARS ? 'text-red-400' : 'text-slate-500'}>
                   {formData.story.length} / {STORY_MAX_CHARS}
                 </span>
