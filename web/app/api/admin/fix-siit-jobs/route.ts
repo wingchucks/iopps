@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Find jobs that mention SIIT but have wrong employer
     const jobsSnap = await db.collection("jobs").get();
     let updated = 0;
-    const updates: { id: string; title: string; oldEmployer: string; newEmployer: string }[] = [];
+    const updates: { id: string; title: string; oldEmployer: string; oldEmployerId: string | null; newEmployer: string }[] = [];
 
     for (const doc of jobsSnap.docs) {
       const data = doc.data();
