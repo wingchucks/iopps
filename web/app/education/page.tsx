@@ -55,7 +55,7 @@ function EducationContent() {
           listScholarships(),
         ]);
         setSchools(schoolData);
-        setScholarships(scholarshipData.filter(s => s.active).slice(0, 3));
+        setScholarships(scholarshipData.filter(s => s.active));
       } catch (err) {
         console.error("Failed to load education data", err);
       } finally {
@@ -308,46 +308,59 @@ function EducationContent() {
           ) : (
             // Scholarships Tab Content
             scholarships.length > 0 ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {scholarships.map((scholarship) => (
+              <>
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {scholarships.map((scholarship) => (
+                    <Link
+                      key={scholarship.id}
+                      href={`/education/scholarships/${scholarship.id}`}
+                      className="group relative flex flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:shadow-lg hover:shadow-[#14B8A6]/5"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-2xl group-hover:scale-110 transition-transform duration-300 mb-4">
+                        💰
+                      </div>
+                      <h3 className="font-bold text-xl text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+                        {scholarship.title}
+                      </h3>
+                      <p className="text-sm text-slate-400 mb-2 line-clamp-2">
+                        {scholarship.description || 'Scholarship opportunity'}
+                      </p>
+                      <p className="text-lg font-bold text-[#14B8A6] mb-4">
+                        ${scholarship.amount?.toLocaleString()}
+                      </p>
+                      <div className="mt-auto flex items-center justify-between border-t border-slate-800 pt-4">
+                        <span className="text-xs text-slate-500">
+                          {scholarship.deadline
+                            ? `Deadline: ${
+                                scholarship.deadline instanceof Date
+                                  ? scholarship.deadline.toLocaleDateString()
+                                  : typeof scholarship.deadline === 'string'
+                                    ? new Date(scholarship.deadline).toLocaleDateString()
+                                    : 'toDate' in scholarship.deadline
+                                      ? scholarship.deadline.toDate().toLocaleDateString()
+                                      : 'Open'
+                              }`
+                            : 'Open'}
+                        </span>
+                        <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 transition-transform">
+                          Apply →
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-8 text-center">
                   <Link
-                    key={scholarship.id}
-                    href={`/education/scholarships/${scholarship.id}`}
-                    className="group relative flex flex-col rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:shadow-lg hover:shadow-[#14B8A6]/5"
+                    href="/education/scholarships"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6] bg-[#14B8A6]/10 px-6 py-3 text-sm font-semibold text-[#14B8A6] transition-all hover:bg-[#14B8A6] hover:text-white"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-2xl group-hover:scale-110 transition-transform duration-300 mb-4">
-                      💰
-                    </div>
-                    <h3 className="font-bold text-xl text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
-                      {scholarship.title}
-                    </h3>
-                    <p className="text-sm text-slate-400 mb-2 line-clamp-2">
-                      {scholarship.description || 'Scholarship opportunity'}
-                    </p>
-                    <p className="text-lg font-bold text-[#14B8A6] mb-4">
-                      ${scholarship.amount?.toLocaleString()}
-                    </p>
-                    <div className="mt-auto flex items-center justify-between border-t border-slate-800 pt-4">
-                      <span className="text-xs text-slate-500">
-                        {scholarship.deadline
-                          ? `Deadline: ${
-                              scholarship.deadline instanceof Date
-                                ? scholarship.deadline.toLocaleDateString()
-                                : typeof scholarship.deadline === 'string'
-                                  ? new Date(scholarship.deadline).toLocaleDateString()
-                                  : 'toDate' in scholarship.deadline
-                                    ? scholarship.deadline.toDate().toLocaleDateString()
-                                    : 'Open'
-                            }`
-                          : 'Open'}
-                      </span>
-                      <span className="text-sm font-semibold text-[#14B8A6] group-hover:translate-x-1 transition-transform">
-                        Apply →
-                      </span>
-                    </div>
+                    View All Scholarships
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
                   </Link>
-                ))}
-              </div>
+                </div>
+              </>
             ) : (
               <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
                 <p className="text-slate-400">Scholarships coming soon!</p>
