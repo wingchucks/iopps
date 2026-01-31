@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 // POST /api/admin/fix-siit-jobs
 // Updates SIIT jobs to have correct employer info (SIIT, not IOPPS JR)
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
         await db.collection("jobs").doc(doc.id).update({
           companyName: siitName,
           employerName: siitName,
-          employerId: null, // Clear employerId so job page shows company name, not IOPPS JR profile
+          employerId: FieldValue.delete(), // Remove employerId so job page doesn't show IOPPS JR profile
           ...(siitSchoolId && { schoolId: siitSchoolId }),
         });
         
