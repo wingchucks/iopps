@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
 import OceanWaveHero from "@/components/OceanWaveHero";
 import { EmptyState } from "@/components/EmptyState";
-import { listEducationPrograms } from "@/lib/firestore";
+// API-based loading instead of client-side Firestore to avoid index issues
 import type { EducationProgram, ProgramCategory, ProgramLevel, ProgramDelivery } from "@/lib/types";
 import {
   SearchBarRow,
@@ -76,14 +76,17 @@ export default function EducationProgramsPage() {
   async function loadPrograms() {
     setLoading(true);
     try {
-      const programList = await listEducationPrograms({
-        publishedOnly: true,
-        category: category || undefined,
-        level: level || undefined,
-        deliveryMethod: deliveryMethod || undefined,
-        indigenousFocused: indigenousFocused || undefined,
-      });
-      setPrograms(programList);
+      // Use API instead of direct Firestore to avoid index issues
+      const params = new URLSearchParams();
+      if (category) params.set("category", category);
+      if (level) params.set("level", level);
+      if (deliveryMethod) params.set("deliveryMethod", deliveryMethod);
+      if (indigenousFocused) params.set("indigenousFocused", "true");
+      
+      const url = `/api/education/programs${params.toString() ? `?${params.toString()}` : ""}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setPrograms(data.programs || []);
     } catch (error) {
       console.error("Failed to load programs:", error);
     } finally {
