@@ -106,56 +106,40 @@ export type ConferenceProductType = keyof typeof CONFERENCE_PRODUCTS;
 // Shop Indigenous vendor products
 export const VENDOR_PRODUCTS = {
     MONTHLY: {
-        name: "Monthly Vendor Listing",
-        price: 5000, // $50.00 per month
+        name: "Featured Business",
+        price: 2500, // $25.00 per month
         duration: 30, // days
-        featured: false,
-        recurring: true,
-        firstMonthFree: true,
-        description: "Your Indigenous-owned business listed in Shop Indigenous marketplace",
-        features: [
-            "Your Indigenous-owned business listed in Shop Indigenous",
-            "Products, services, images, descriptions",
-            "Direct contact links & social links",
-            "FIRST MONTH FREE",
-            "Renews monthly at $50/month",
-        ],
-    },
-    ANNUAL: {
-        name: "Annual Vendor Plan",
-        price: 40000, // $400.00 per year (save $200)
-        duration: 365, // days
         featured: true,
-        recurring: false,
+        recurring: true,
         firstMonthFree: false,
-        description: "Save $200 vs monthly with priority placement in Shop Indigenous marketplace",
+        description: "Boost your visibility in Shop Indigenous marketplace",
         features: [
-            "Save $200 vs monthly",
-            "Includes all features above",
-            "Priority placement inside the Shop Indigenous marketplace",
-            "Annual discounted rate",
+            "Everything in Free listing",
+            "Featured badge on listing",
+            "Priority placement in directory",
+            "Highlighted in search results",
         ],
     },
 } as const;
 
-export type VendorProductType = keyof typeof VENDOR_PRODUCTS;
+export type VendorProductType = "MONTHLY"; // Only monthly option now
 
 // Training Program product configurations
 // NOTE: Training program listing is FREE. These are visibility upgrades only.
 export const TRAINING_PRODUCTS = {
     FEATURED_60: {
-        name: "Featured Training Program (60 Days)",
+        name: "Program Listing (60 Days)",
         price: 15000, // $150.00 CAD
         duration: 60, // days
         featured: true,
-        description: "Boost your training program visibility with featured badge and priority placement for 60 days. Listing is always free.",
+        description: "List your 3+ month program with featured badge and priority placement for 60 days.",
     },
     FEATURED_90: {
-        name: "Featured Training Program (90 Days)",
+        name: "Program Listing (90 Days)",
         price: 22500, // $225.00 CAD
         duration: 90, // days
         featured: true,
-        description: "Extended visibility with featured badge and top positioning for 90 days. Listing is always free.",
+        description: "List your 3+ month program with featured badge and top positioning for 90 days.",
     },
 } as const;
 
