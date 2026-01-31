@@ -103,56 +103,82 @@ export default function EducationPanel() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-slate-50">For Training Providers</h2>
           <p className="mt-2 text-slate-400">
-            List your training programs for free. Pay only for featured visibility and premium placement.
+            List your short-term training programs for free. Longer programs (3+ months) require a listing fee.
           </p>
         </div>
 
-        {/* Free Listing Info */}
-        <div className="max-w-3xl rounded-xl border border-blue-500/20 bg-blue-500/5 p-6 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-500/20">
-              <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        {/* Pricing Tiers */}
+        <div className="max-w-3xl space-y-4 mb-8">
+          {/* Free Tier */}
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20">
+                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-100">Programs Under 3 Months</h3>
+                  <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">FREE</span>
+                </div>
+                <p className="mt-1 text-sm text-slate-400">
+                  Workshops, short courses, certifications, and training programs under 3 months can be listed at no cost.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-slate-100">Listing Is Always Free</h3>
-              <p className="mt-1 text-sm text-slate-400">
-                All training programs can be listed at no cost with standard placement. Featured options below provide premium visibility.
-              </p>
+          </div>
+
+          {/* Paid Tier */}
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+                <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-100">Programs 3+ Months</h3>
+                  <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">PAID</span>
+                </div>
+                <p className="mt-1 text-sm text-slate-400">
+                  Longer programs, diplomas, certificates, and multi-month training require a listing fee.
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Featured Options */}
-        <h3 className="text-lg font-semibold text-slate-200 mb-4">Boost Your Visibility</h3>
+        {/* Listing Options for 3+ Month Programs */}
+        <h3 className="text-lg font-semibold text-slate-200 mb-4">Listing Options for 3+ Month Programs</h3>
         <div className="grid gap-6 md:grid-cols-2 max-w-3xl">
           <PricingCard
-            title={TRAINING_PRODUCTS.FEATURED_60.name}
+            title="60-Day Listing"
             price={`$${TRAINING_PRODUCTS.FEATURED_60.price / 100}`}
             features={[
+              "Full program listing on IOPPS",
               "Featured badge on listing",
-              "Priority placement in directory",
-              "Highlighted to job seekers",
-              "Increased visibility for 60 days",
+              "Priority placement in search",
+              "Visible for 60 days",
             ]}
-            buttonText={isCommunityMember ? "Create Account" : "Feature for 60 Days"}
-            buttonHref={isCommunityMember ? "/register" : "/organization/training?featured=60"}
+            buttonText={isCommunityMember ? "Create Account" : "List Your Program"}
+            buttonHref={isCommunityMember ? "/register" : "/organization/training/new"}
           />
 
           <PricingCard
-            title={TRAINING_PRODUCTS.FEATURED_90.name}
+            title="90-Day Listing"
             price={`$${TRAINING_PRODUCTS.FEATURED_90.price / 100}`}
-            badge="RECOMMENDED"
+            badge="BEST VALUE"
             highlighted={true}
             features={[
+              "Full program listing on IOPPS",
               "Featured badge on listing",
-              "Top positioning in directory",
-              "Maximum visibility for 90 days",
-              "Best value for longer campaigns",
+              "Top placement in search results",
+              "Extended visibility for 90 days",
             ]}
-            buttonText={isCommunityMember ? "Create Account" : "Feature for 90 Days"}
-            buttonHref={isCommunityMember ? "/register" : "/organization/training?featured=90"}
+            buttonText={isCommunityMember ? "Create Account" : "List Your Program"}
+            buttonHref={isCommunityMember ? "/register" : "/organization/training/new"}
           />
         </div>
       </div>

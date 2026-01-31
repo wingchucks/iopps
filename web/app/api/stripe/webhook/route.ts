@@ -485,6 +485,60 @@ export async function POST(request: NextRequest) {
                     break;
                 }
 
+                // Handle training program listing (3+ month programs require payment)
+                if (type === "training_program_listing" && userId) {
+                    const durationDays = metadata.durationDays ? parseInt(metadata.durationDays, 10) : 60;
+                    const programDataStr = metadata.programData;
+                    
+                    if (!programDataStr) {
+                        console.error("Missing programData in training_program_listing metadata");
+                        break;
+                    }
+
+                    let programData;
+                    try {
+                        programData = JSON.parse(programDataStr);
+                    } catch (parseErr) {
+                        console.error("Failed to parse programData:", parseErr);
+                        break;
+                    }
+
+                    // Calculate expiration date for the listing
+                    const expiresAt = new Date();
+                    expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+                    // Create the training program
+                    const programRef = await db.collection("training_programs").add({
+                        ...programData,
+                        organizationId: userId,
+                        status: "approved", // Auto-approve since they paid
+                        active: true,
+                        featured: true, // Featured since they paid
+                        featuredAt: new Date(),
+                        featuredExpiresAt: expiresAt,
+                        listingExpiresAt: expiresAt,
+                        paymentStatus: "paid",
+                        paymentId: session.payment_intent as string,
+                        productType: productType || "FEATURED_60",
+                        amountPaid: session.amount_total,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        viewCount: 0,
+                        clickCount: 0,
+                    });
+
+                    // Save payment record
+                    await savePaymentRecord(
+                        db,
+                        session,
+                        "training_program_listing",
+                        `Training Program Listing (${durationDays} days): ${programData.title || "Training Program"}`
+                    );
+
+                    console.log(`Training program ${programRef.id} created and activated for ${durationDays} days`);
+                    break;
+                }
+
                 // Handle Talent Pool Access purchase
                 if (type === "talent_pool" && userId) {
                     const tier = metadata.tier as "MONTHLY" | "ANNUAL";

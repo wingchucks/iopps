@@ -9,6 +9,8 @@ import {
   getEmployerProfile,
 } from "@/lib/firestore";
 import type { TrainingFormat, EmployerProfile } from "@/lib/types";
+import { TRAINING_PRODUCTS } from "@/lib/stripe";
+import toast from "react-hot-toast";
 
 const CATEGORIES = [
   { value: "", label: "Select a category" },
@@ -31,6 +33,13 @@ const FORMATS: { value: TrainingFormat; label: string }[] = [
   { value: "hybrid", label: "Hybrid (Online + In-Person)" },
 ];
 
+const DURATION_UNITS = [
+  { value: "days", label: "Days" },
+  { value: "weeks", label: "Weeks" },
+  { value: "months", label: "Months" },
+  { value: "years", label: "Years" },
+];
+
 export default function NewTrainingProgramPage() {
   const router = useRouter();
   const { user, role, loading } = useAuth();
@@ -44,7 +53,12 @@ export default function NewTrainingProgramPage() {
   const [providerWebsite, setProviderWebsite] = useState("");
   const [enrollmentUrl, setEnrollmentUrl] = useState("");
   const [format, setFormat] = useState<TrainingFormat>("online");
-  const [duration, setDuration] = useState("");
+  
+  // Structured duration
+  const [durationValue, setDurationValue] = useState<number | "">("");
+  const [durationUnit, setDurationUnit] = useState<"days" | "weeks" | "months" | "years">("weeks");
+  const [isSelfPaced, setIsSelfPaced] = useState(false);
+  
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("");
   const [skills, setSkills] = useState("");
@@ -57,6 +71,10 @@ export default function NewTrainingProgramPage() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Paywall modal
+  const [showPaywallModal, setShowPaywallModal] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   // Load employer profile
   useEffect(() => {
@@ -78,6 +96,35 @@ export default function NewTrainingProgramPage() {
     };
     loadProfile();
   }, [user, providerName]);
+
+  // Calculate if duration is 3+ months
+  const isDurationThreeMonthsOrMore = (): boolean => {
+    if (isSelfPaced || durationValue === "" || durationValue === 0) {
+      return false; // Self-paced or no duration = free
+    }
+    
+    const value = Number(durationValue);
+    
+    switch (durationUnit) {
+      case "days":
+        return value >= 90; // ~3 months
+      case "weeks":
+        return value >= 12; // ~3 months
+      case "months":
+        return value >= 3;
+      case "years":
+        return true; // Any year is 3+ months
+      default:
+        return false;
+    }
+  };
+
+  // Format duration string for display/storage
+  const getDurationString = (): string => {
+    if (isSelfPaced) return "Self-paced";
+    if (durationValue === "" || durationValue === 0) return "";
+    return `${durationValue} ${durationUnit}`;
+  };
 
   if (loading) {
     return (
@@ -135,6 +182,19 @@ export default function NewTrainingProgramPage() {
       return;
     }
 
+    // Check if 3+ months - show paywall
+    if (isDurationThreeMonthsOrMore()) {
+      setShowPaywallModal(true);
+      return;
+    }
+
+    // Free listing for programs under 3 months
+    await createProgramDirectly();
+  };
+
+  const createProgramDirectly = async () => {
+    if (!user) return;
+
     setSaving(true);
     setError(null);
 
@@ -165,7 +225,8 @@ export default function NewTrainingProgramPage() {
           providerName: finalProviderName,
           providerWebsite: providerWebsite || undefined,
           format,
-          duration: duration || undefined,
+          duration: getDurationString() || undefined,
+          durationMonths: isDurationThreeMonthsOrMore() ? calculateDurationInMonths() : undefined,
           location: format !== "online" ? location : undefined,
           category: category || undefined,
           skills: skillsArray.length > 0 ? skillsArray : undefined,
@@ -175,13 +236,14 @@ export default function NewTrainingProgramPage() {
           fundingAvailable,
           scholarshipInfo: fundingAvailable ? scholarshipInfo : undefined,
           ongoing,
-          status: "pending", // Will be overridden based on verification
+          status: "pending",
           featured: false,
           active: true,
         },
         isVerified
       );
 
+      toast.success("Training program created!");
       router.push("/organization/training");
     } catch (err) {
       console.error(err);
@@ -190,6 +252,68 @@ export default function NewTrainingProgramPage() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const calculateDurationInMonths = (): number => {
+    if (isSelfPaced || durationValue === "") return 0;
+    const value = Number(durationValue);
+    switch (durationUnit) {
+      case "days": return Math.ceil(value / 30);
+      case "weeks": return Math.ceil(value / 4);
+      case "months": return value;
+      case "years": return value * 12;
+      default: return 0;
+    }
+  };
+
+  const handlePaymentOption = async (productType: "FEATURED_60" | "FEATURED_90") => {
+    if (!user) return;
+
+    setProcessingPayment(true);
+
+    try {
+      // Create checkout session with program data in metadata
+      const response = await fetch("/api/stripe/checkout-training-program", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productType,
+          programData: {
+            title,
+            description,
+            shortDescription: shortDescription || undefined,
+            enrollmentUrl,
+            providerName: providerName || employerProfile?.organizationName || user.displayName || "Training Provider",
+            providerWebsite: providerWebsite || undefined,
+            format,
+            duration: getDurationString() || undefined,
+            durationMonths: calculateDurationInMonths(),
+            location: format !== "online" ? location : undefined,
+            category: category || undefined,
+            skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+            certificationOffered: certificationOffered || undefined,
+            indigenousFocused,
+            cost: cost || undefined,
+            fundingAvailable,
+            scholarshipInfo: fundingAvailable ? scholarshipInfo : undefined,
+            ongoing,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Error creating checkout:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
+      setProcessingPayment(false);
     }
   };
 
@@ -218,6 +342,14 @@ export default function NewTrainingProgramPage() {
           <strong>How it works:</strong> Your training program will be listed on
           IOPPS. When users click &quot;Enroll&quot;, they&apos;ll be redirected
           to your external enrollment page.
+        </p>
+      </div>
+
+      {/* Pricing Notice */}
+      <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+        <p className="text-sm text-amber-200">
+          <strong>📌 Pricing:</strong> Programs under 3 months are <strong>FREE</strong> to list. 
+          Programs 3 months or longer require a listing fee ($150 for 60 days or $225 for 90 days visibility).
         </p>
       </div>
 
@@ -371,15 +503,58 @@ export default function NewTrainingProgramPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-200">
-                Duration
+                Duration *
               </label>
-              <input
-                type="text"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="e.g., 12 weeks, 40 hours, Self-paced"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
-              />
+              
+              {/* Self-paced checkbox */}
+              <label className="mt-2 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={isSelfPaced}
+                  onChange={(e) => setIsSelfPaced(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                />
+                <span className="text-sm text-slate-300">Self-paced (no set duration)</span>
+              </label>
+
+              {/* Duration inputs */}
+              {!isSelfPaced && (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={durationValue}
+                    onChange={(e) => setDurationValue(e.target.value ? parseInt(e.target.value) : "")}
+                    placeholder="e.g., 12"
+                    className="w-24 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  />
+                  <select
+                    value={durationUnit}
+                    onChange={(e) => setDurationUnit(e.target.value as typeof durationUnit)}
+                    className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  >
+                    {DURATION_UNITS.map((u) => (
+                      <option key={u.value} value={u.value}>
+                        {u.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Duration pricing indicator */}
+              {!isSelfPaced && durationValue !== "" && (
+                <div className={`mt-2 rounded-md px-3 py-2 text-xs ${
+                  isDurationThreeMonthsOrMore() 
+                    ? "bg-amber-500/10 border border-amber-500/30 text-amber-300"
+                    : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
+                }`}>
+                  {isDurationThreeMonthsOrMore() 
+                    ? "💰 This program requires a listing fee ($150-$225)"
+                    : "✓ This program qualifies for FREE listing"
+                  }
+                </div>
+              )}
 
               {format !== "online" && (
                 <div className="mt-4">
@@ -539,14 +714,144 @@ export default function NewTrainingProgramPage() {
             disabled={saving}
             className="rounded-md bg-gradient-to-r from-purple-500 to-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:from-purple-600 hover:to-indigo-600 transition-colors disabled:opacity-60"
           >
-            {saving ? "Creating..." : "Create Training Program"}
+            {saving ? "Creating..." : isDurationThreeMonthsOrMore() ? "Continue to Payment" : "Create Training Program"}
           </button>
           <p className="mt-2 text-xs text-slate-500">
-            Your program will be reviewed before appearing publicly. Verified
-            organizations are auto-approved.
+            {isDurationThreeMonthsOrMore() 
+              ? "Programs 3+ months require a listing fee. You'll be redirected to payment."
+              : "Your program will be reviewed before appearing publicly. Verified organizations are auto-approved."
+            }
           </p>
         </div>
       </form>
+
+      {/* Paywall Modal */}
+      {showPaywallModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  Program Listing Fee Required
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  Programs 3 months or longer require a listing fee
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPaywallModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-slate-800/50 p-3">
+              <p className="text-sm text-slate-300">
+                <strong>{title}</strong>
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Duration: {getDurationString()}
+              </p>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {/* 60 Day Option */}
+              <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      60-Day Listing
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Your program visible for 60 days with featured badge
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-white">
+                      ${(TRAINING_PRODUCTS.FEATURED_60.price / 100).toFixed(0)}
+                    </p>
+                    <p className="text-xs text-slate-400">CAD</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handlePaymentOption("FEATURED_60")}
+                  disabled={processingPayment}
+                  className="mt-4 w-full rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 py-2.5 font-semibold text-white hover:from-purple-600 hover:to-indigo-600 disabled:opacity-50 transition-colors"
+                >
+                  {processingPayment ? "Processing..." : "List for 60 Days - $150"}
+                </button>
+              </div>
+
+              {/* 90 Day Option */}
+              <div className="relative rounded-xl border border-emerald-500/50 bg-emerald-500/10 p-4">
+                <div className="absolute -top-3 left-4 rounded-full bg-emerald-500 px-3 py-0.5 text-xs font-bold text-white">
+                  BEST VALUE
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-white">
+                      90-Day Listing
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Extended visibility for 90 days with featured placement
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-white">
+                      ${(TRAINING_PRODUCTS.FEATURED_90.price / 100).toFixed(0)}
+                    </p>
+                    <p className="text-xs text-slate-400">CAD</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handlePaymentOption("FEATURED_90")}
+                  disabled={processingPayment}
+                  className="mt-4 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2.5 font-semibold text-white hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 transition-colors"
+                >
+                  {processingPayment ? "Processing..." : "List for 90 Days - $225"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-lg bg-slate-800/50 p-4">
+              <h4 className="font-medium text-emerald-400">What&apos;s included:</h4>
+              <ul className="mt-2 space-y-2 text-sm text-slate-300">
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Full program listing on IOPPS
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Featured badge on your program
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Priority placement in search results
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Click tracking & analytics
+                </li>
+              </ul>
+            </div>
+
+            <p className="mt-4 text-center text-xs text-slate-500">
+              Secure payment powered by Stripe
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
