@@ -7,10 +7,15 @@ import { useAuth } from "@/components/AuthProvider";
 import {
   createTrainingProgram,
   getEmployerProfile,
+  listOrganizationTrainingPrograms,
 } from "@/lib/firestore";
-import type { TrainingFormat, EmployerProfile } from "@/lib/types";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import type { TrainingFormat, EmployerProfile, School } from "@/lib/types";
 import { TRAINING_PRODUCTS } from "@/lib/stripe";
 import toast from "react-hot-toast";
+
+const SCHOOL_PROGRAM_LIMIT = 20; // School Partners can post up to 20 programs
 
 const CATEGORIES = [
   { value: "", label: "Select a category" },
@@ -75,8 +80,16 @@ export default function NewTrainingProgramPage() {
   // Paywall modal
   const [showPaywallModal, setShowPaywallModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // School subscription state
+  const [schoolSubscription, setSchoolSubscription] = useState<{
+    active: boolean;
+    programsPosted: number;
+    programsRemaining: number;
+  } | null>(null);
+  const [loadingSchool, setLoadingSchool] = useState(false);
 
-  // Load employer profile
+  // Load employer profile and school subscription
   useEffect(() => {
     const loadProfile = async () => {
       if (user) {
@@ -88,6 +101,42 @@ export default function NewTrainingProgramPage() {
             if (!providerName && profile.organizationName) {
               setProviderName(profile.organizationName);
             }
+            
+            // Check for school subscription
+            const schoolId = profile.modules?.educate?.schoolId;
+            if (schoolId) {
+              setLoadingSchool(true);
+              try {
+                const schoolDoc = await getDoc(doc(db, "schools", schoolId));
+                if (schoolDoc.exists()) {
+                  const school = schoolDoc.data() as School;
+                  const subscription = school.subscription;
+                  
+                  // Check if subscription is active
+                  const now = new Date();
+                  const expiresAt = subscription?.expiresAt 
+                    ? (subscription.expiresAt as any).toDate?.() || new Date(subscription.expiresAt as any)
+                    : null;
+                  const isActive = subscription && expiresAt && expiresAt > now;
+                  
+                  if (isActive) {
+                    // Count existing programs
+                    const existingPrograms = await listOrganizationTrainingPrograms(user.uid);
+                    const programsPosted = existingPrograms.length;
+                    
+                    setSchoolSubscription({
+                      active: true,
+                      programsPosted,
+                      programsRemaining: Math.max(0, SCHOOL_PROGRAM_LIMIT - programsPosted),
+                    });
+                  }
+                }
+              } catch (schoolErr) {
+                console.error("Failed to load school subscription:", schoolErr);
+              } finally {
+                setLoadingSchool(false);
+              }
+            }
           }
         } catch (err) {
           console.error("Failed to load employer profile:", err);
@@ -96,6 +145,11 @@ export default function NewTrainingProgramPage() {
     };
     loadProfile();
   }, [user, providerName]);
+
+  // Check if school subscription covers this program (bypasses 3-month rule)
+  const isSchoolSubscriptionCovered = (): boolean => {
+    return !!(schoolSubscription?.active && schoolSubscription.programsRemaining > 0);
+  };
 
   // Calculate if duration is 3+ months
   const isDurationThreeMonthsOrMore = (): boolean => {
@@ -182,13 +236,15 @@ export default function NewTrainingProgramPage() {
       return;
     }
 
-    // Check if 3+ months - show paywall
-    if (isDurationThreeMonthsOrMore()) {
+    // Check if 3+ months - but school partners with remaining slots bypass this
+    if (isDurationThreeMonthsOrMore() && !isSchoolSubscriptionCovered()) {
       setShowPaywallModal(true);
       return;
     }
 
-    // Free listing for programs under 3 months
+    // Free listing for:
+    // 1. Programs under 3 months
+    // 2. School Partners with remaining program slots
     await createProgramDirectly();
   };
 
@@ -346,12 +402,23 @@ export default function NewTrainingProgramPage() {
       </div>
 
       {/* Pricing Notice */}
-      <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-        <p className="text-sm text-amber-200">
-          <strong>📌 Pricing:</strong> Programs under 3 months are <strong>FREE</strong> to list. 
-          Programs 3 months or longer require a listing fee ($150 for 60 days or $225 for 90 days visibility).
-        </p>
-      </div>
+      {schoolSubscription?.active ? (
+        <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+          <p className="text-sm text-emerald-200">
+            <strong>🎓 School Partner:</strong> You have <strong>{schoolSubscription.programsRemaining}</strong> of {SCHOOL_PROGRAM_LIMIT} program slots remaining. 
+            {schoolSubscription.programsRemaining > 0 
+              ? " All programs are included with your subscription!"
+              : " You've reached your program limit. Contact IOPPS to upgrade."}
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-amber-200">
+            <strong>📌 Pricing:</strong> Programs under 3 months are <strong>FREE</strong> to list. 
+            Programs 3 months or longer require a listing fee ($150 for 60 days or $225 for 90 days visibility).
+          </p>
+        </div>
+      )}
 
       {error && (
         <p className="mt-4 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
@@ -545,12 +612,14 @@ export default function NewTrainingProgramPage() {
               {/* Duration pricing indicator */}
               {!isSelfPaced && durationValue !== "" && (
                 <div className={`mt-2 rounded-md px-3 py-2 text-xs ${
-                  isDurationThreeMonthsOrMore() 
+                  isDurationThreeMonthsOrMore() && !isSchoolSubscriptionCovered()
                     ? "bg-amber-500/10 border border-amber-500/30 text-amber-300"
                     : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
                 }`}>
                   {isDurationThreeMonthsOrMore() 
-                    ? "💰 This program requires a listing fee ($150-$225)"
+                    ? (isSchoolSubscriptionCovered()
+                        ? "✓ Included with your School Partner subscription"
+                        : "💰 This program requires a listing fee ($150-$225)")
                     : "✓ This program qualifies for FREE listing"
                   }
                 </div>
@@ -711,15 +780,22 @@ export default function NewTrainingProgramPage() {
         <div className="pt-4 border-t border-slate-800">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || (schoolSubscription?.active && schoolSubscription.programsRemaining === 0)}
             className="rounded-md bg-gradient-to-r from-purple-500 to-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:from-purple-600 hover:to-indigo-600 transition-colors disabled:opacity-60"
           >
-            {saving ? "Creating..." : isDurationThreeMonthsOrMore() ? "Continue to Payment" : "Create Training Program"}
+            {saving 
+              ? "Creating..." 
+              : (isDurationThreeMonthsOrMore() && !isSchoolSubscriptionCovered()) 
+                ? "Continue to Payment" 
+                : "Create Training Program"
+            }
           </button>
           <p className="mt-2 text-xs text-slate-500">
-            {isDurationThreeMonthsOrMore() 
-              ? "Programs 3+ months require a listing fee. You'll be redirected to payment."
-              : "Your program will be reviewed before appearing publicly. Verified organizations are auto-approved."
+            {schoolSubscription?.active && schoolSubscription.programsRemaining === 0
+              ? "You've reached your program limit. Contact IOPPS to add more."
+              : isDurationThreeMonthsOrMore() && !isSchoolSubscriptionCovered()
+                ? "Programs 3+ months require a listing fee. You'll be redirected to payment."
+                : "Your program will be reviewed before appearing publicly. Verified organizations are auto-approved."
             }
           </p>
         </div>
