@@ -134,7 +134,7 @@ export async function sendMessage(params: {
     updatedAt: serverTimestamp(),
   });
 
-  return { id: messageRef.id, ...messageData } as Message;
+  return { id: messageRef.id, ...messageData } as unknown as Message;
 }
 
 export async function getConversationMessages(
@@ -307,7 +307,7 @@ export async function getOrCreatePeerConversation(params: {
   if (p2Avatar) conversationData.participant2Avatar = p2Avatar;
 
   const docRef = await addDoc(collection(db!, conversationsCollection), conversationData);
-  return { id: docRef.id, ...conversationData };
+  return { id: docRef.id, ...conversationData } as PeerConversation;
 }
 
 /**
@@ -393,7 +393,7 @@ export async function sendPeerMessage(params: {
     updatedAt: serverTimestamp(),
   });
 
-  return { id: messageRef.id, ...messageData } as Message;
+  return { id: messageRef.id, ...messageData } as unknown as Message;
 }
 
 /**

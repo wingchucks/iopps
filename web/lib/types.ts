@@ -243,6 +243,9 @@ export interface EmployerProfile {
   freePostingGrantedBy?: string;
   // Enhanced free posting grant
   freePostingGrant?: FreePostingGrant;
+  // Job credits (from credit purchases)
+  jobCredits?: number;
+  lastCreditPurchase?: Timestamp | null;
   // Organization Capabilities (legacy - for multi-mode dashboard)
   capabilities?: OrganizationCapability[];
   // NEW: Module-based dashboard system
