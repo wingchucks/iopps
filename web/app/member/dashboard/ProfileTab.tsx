@@ -58,7 +58,7 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
     if (profile) {
       setDisplayName(profile.displayName || "");
       setAvatarUrl(profile.avatarUrl || profile.photoURL || "");
-      setBio(profile.bio || "");
+      setBio((profile.bio || "").slice(0, 500)); // Enforce 500 char limit on load
       setLocation(profile.location || "");
       setSkills(profile.skills || []);
       setExperience(profile.experience || []);

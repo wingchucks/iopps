@@ -81,17 +81,19 @@ export default function JobAlertsTab() {
 
         try {
             setProcessing(true);
-            const alertData = {
+            // Build alertData without undefined values (Firestore doesn't accept undefined)
+            const alertData: Record<string, unknown> = {
                 memberId: user.uid,
-                alertName: alertName || undefined,
-                keyword: keyword || undefined,
-                location: location || undefined,
-                employmentType: employmentType || undefined,
-                remoteOnly: remoteOnly || undefined,
-                indigenousOnly: indigenousOnly || undefined,
                 frequency,
                 active: true,
             };
+            if (alertName) alertData.alertName = alertName;
+            if (keyword) alertData.keyword = keyword;
+            if (location) alertData.location = location;
+            if (employmentType) alertData.employmentType = employmentType;
+            if (remoteOnly) alertData.remoteOnly = remoteOnly;
+            if (indigenousOnly) alertData.indigenousOnly = indigenousOnly;
+
             const newAlertId = await createJobAlert(alertData);
 
             // Construct the alert object for local state

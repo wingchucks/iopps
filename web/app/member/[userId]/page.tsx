@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getMemberProfile } from "@/lib/firestore";
+import { getMemberProfileServer } from "@/lib/firestore/server-members";
 import PublicProfileView from "./PublicProfileView";
 
 interface PageProps {
@@ -10,7 +10,7 @@ interface PageProps {
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { userId } = await params;
-  const profile = await getMemberProfile(userId);
+  const profile = await getMemberProfileServer(userId);
 
   if (!profile) {
     return {
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PublicProfilePage({ params }: PageProps) {
   const { userId } = await params;
-  const profile = await getMemberProfile(userId);
+  const profile = await getMemberProfileServer(userId);
 
   if (!profile) {
     notFound();

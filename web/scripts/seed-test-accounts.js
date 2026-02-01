@@ -155,11 +155,7 @@ async function createMemberAccount(db, auth) {
     photoURL: null,
     tagline:
       "Indigenous Education Consultant | Curriculum Developer | Community Advocate",
-    bio: `Sarah Whitebear is a passionate Indigenous education consultant with over 12 years of experience developing culturally responsive curricula and training programs. Originally from Muskeg Lake Cree Nation in Treaty 6 territory, Sarah combines traditional knowledge with modern educational practices to create meaningful learning experiences.
-
-Her work focuses on integrating Indigenous perspectives into mainstream education, developing cultural competency training for organizations, and advocating for equitable access to educational resources for Indigenous communities. Sarah is fluent in Cree (Nehiyaw) and is actively involved in language revitalization efforts.
-
-When not consulting, Sarah enjoys beading, participating in community ceremonies, and mentoring the next generation of Indigenous educators.`,
+    bio: `Indigenous education consultant with 12+ years developing culturally responsive curricula. From Muskeg Lake Cree Nation, Treaty 6 territory. Combines traditional knowledge with modern educational practices. Focused on integrating Indigenous perspectives into education and cultural competency training. Fluent in Cree (Nehiyaw) and active in language revitalization. Passionate about mentoring the next generation of Indigenous educators.`, // 498 chars
     location: "Saskatoon, Saskatchewan",
     indigenousAffiliation: "Cree (Nehiyaw) - Muskeg Lake Cree Nation, Treaty 6",
 
