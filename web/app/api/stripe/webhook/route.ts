@@ -204,6 +204,31 @@ export async function POST(request: NextRequest) {
                         console.log(`Bundled ${talentPoolDays} days talent pool access for user ${userId}`);
                     }
 
+                    // Check if employer is pending and auto-approve on payment
+                    const employerDoc = await employerRef.get();
+                    const employerData = employerDoc.exists ? employerDoc.data() : null;
+
+                    if (employerData?.status === "pending") {
+                        updateData.status = "approved";
+                        updateData.approvedAt = new Date();
+                        updateData.approvalMethod = "payment"; // Track auto-approval via payment
+                        console.log(`Auto-approving employer ${userId} via subscription purchase`);
+
+                        // Also activate any jobs that were waiting for employer approval
+                        const pendingJobs = await db.collection("jobs")
+                            .where("employerId", "==", userId)
+                            .where("pendingEmployerApproval", "==", true)
+                            .get();
+
+                        for (const pendingJobDoc of pendingJobs.docs) {
+                            await pendingJobDoc.ref.update({
+                                active: true,
+                                pendingEmployerApproval: false,
+                            });
+                            console.log(`Activated pending job ${pendingJobDoc.id} after employer approval`);
+                        }
+                    }
+
                     await employerRef.update(updateData);
 
                     // Save payment record
@@ -344,8 +369,37 @@ export async function POST(request: NextRequest) {
 
                     console.log(`Job ${jobId} activated successfully`);
 
-                    // Recompute directory visibility (job publish extends visibility)
+                    // Auto-approve pending employers on successful payment
+                    // Payment = trust signal, no need for manual approval
                     if (jobData?.employerId) {
+                        const employerRef = db.collection("employers").doc(jobData.employerId);
+                        const employerDoc = await employerRef.get();
+                        const employerData = employerDoc.exists ? employerDoc.data() : null;
+
+                        if (employerData?.status === "pending") {
+                            await employerRef.update({
+                                status: "approved",
+                                approvedAt: new Date(),
+                                approvalMethod: "payment", // Track that this was auto-approved via payment
+                            });
+                            console.log(`Auto-approved employer ${jobData.employerId} via job payment`);
+
+                            // Also activate any jobs that were waiting for employer approval
+                            const pendingJobs = await db.collection("jobs")
+                                .where("employerId", "==", jobData.employerId)
+                                .where("pendingEmployerApproval", "==", true)
+                                .get();
+
+                            for (const pendingJobDoc of pendingJobs.docs) {
+                                await pendingJobDoc.ref.update({
+                                    active: true,
+                                    pendingEmployerApproval: false,
+                                });
+                                console.log(`Activated pending job ${pendingJobDoc.id} after employer approval`);
+                            }
+                        }
+
+                        // Recompute directory visibility (job publish extends visibility)
                         await recomputeVisibility(jobData.employerId);
                     }
 

@@ -631,18 +631,18 @@ function NewJobPageContent() {
     <div className="min-h-screen bg-[#020306] pb-20">
       {/* Pending Employer Banner */}
       {employerStatus === "pending" && (
-        <div className="border-b border-amber-500/30 bg-amber-500/5">
+        <div className="border-b border-emerald-500/30 bg-emerald-500/5">
           <div className="mx-auto max-w-5xl px-4 py-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 mt-0.5">
-                <svg className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-amber-200">Your account is pending approval</p>
-                <p className="text-sm text-amber-300/80 mt-0.5">
-                  You can create jobs, but they won&apos;t be visible to job seekers until your organization is approved. We&apos;ll notify you by email once approved.
+                <p className="font-medium text-emerald-200">Ready to post your first job!</p>
+                <p className="text-sm text-emerald-300/80 mt-0.5">
+                  Purchase a job ad to get started. Your account will be <span className="font-medium">automatically approved</span> once payment is complete, and your job will go live immediately.
                 </p>
               </div>
             </div>
