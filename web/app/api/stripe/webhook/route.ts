@@ -149,8 +149,9 @@ export async function POST(request: NextRequest) {
                 const { type, productType, userId, jobId, conferenceId, vendorId, programId, duration, featured, jobCredits, featuredJobCredits, unlimitedPosts, talentPoolAccessDays } = metadata;
 
                 // Validate required metadata
-                if (!type) {
-                    console.error("Missing required metadata: type");
+                // Note: jobId without type is still allowed for backward compatibility
+                if (!type && !jobId) {
+                    console.error("Missing required metadata: type (and no jobId fallback)");
                     return NextResponse.json(
                         { error: "Invalid payment session: missing type" },
                         { status: 400 }
@@ -383,7 +384,8 @@ export async function POST(request: NextRequest) {
                 }
 
                 // Handle job posting payment
-                if (jobId) {
+                // Handles both type === "job" and legacy jobId-only payments
+                if (type === "job" || jobId) {
                     const durationDays = duration ? parseInt(duration, 10) : 30;
                     const talentPoolDays = talentPoolAccessDays ? parseInt(talentPoolAccessDays, 10) : 0;
                     // Calculate expiration date

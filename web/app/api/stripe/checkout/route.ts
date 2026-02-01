@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
                 success_url: returnUrl || `${request.nextUrl.origin}/organization/jobs/new?credited=true`,
                 cancel_url: `${request.nextUrl.origin}/organization/subscribe?canceled=true`,
                 metadata: {
-                    type: "job_credit", // Special type for credit purchase
+                    type: "job_credit",
                     productType,
                     userId,
                     duration: product.duration.toString(),
@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
             success_url: returnUrl || `${request.nextUrl.origin}/organization/jobs/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${request.nextUrl.origin}/organization/jobs/new?canceled=true`,
             metadata: {
+                type: "job", // Job posting payment
                 productType,
                 userId,
                 jobId,
