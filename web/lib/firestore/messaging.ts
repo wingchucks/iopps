@@ -368,6 +368,7 @@ export async function sendPeerMessage(params: {
   const conversation = conversationSnap.data() as PeerConversation;
   const isParticipant1 = conversation.participant1Id === params.senderId;
 
+  // Include both participant IDs for Firestore security rules
   const messageData = {
     conversationId: params.conversationId,
     senderId: params.senderId,
@@ -375,6 +376,8 @@ export async function sendPeerMessage(params: {
     content: params.content,
     read: false,
     createdAt: serverTimestamp(),
+    // Add participantIds for security rule validation
+    participantIds: [conversation.participant1Id, conversation.participant2Id],
   };
 
   const messageRef = await addDoc(collection(db!, messagesCollection), messageData);

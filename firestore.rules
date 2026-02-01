@@ -648,24 +648,24 @@ service cloud.firestore {
     }
 
     // ===========================================================================
-    // MESSAGES
+    // MESSAGES (supports both employer/member and peer-to-peer conversations)
     // ===========================================================================
     match /messages/{messageId} {
-      // Only participants of the conversation can read their own messages
-      allow read: if isSignedIn() && (
-        resource.data.senderId == request.auth.uid ||
-        resource.data.recipientId == request.auth.uid ||
-        isAdminOrModerator()
-      );
+      // Helper to check if user is a message participant
+      function isMessageParticipant() {
+        return resource.data.senderId == request.auth.uid ||
+               resource.data.recipientId == request.auth.uid ||
+               (resource.data.participantIds != null && request.auth.uid in resource.data.participantIds);
+      }
 
-      // Authenticated users can create messages in their conversations (must be sender)
+      // Participants can read their messages
+      allow read: if isSignedIn() && (isMessageParticipant() || isAdminOrModerator());
+
+      // Authenticated users can create messages (must be sender)
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
 
-      // Only the recipient can mark as read, or conversation participants can update
-      allow update: if isSignedIn() && (
-        resource.data.senderId == request.auth.uid ||
-        resource.data.recipientId == request.auth.uid
-      );
+      // Participants can update (mark as read, etc.)
+      allow update: if isSignedIn() && isMessageParticipant();
 
       // Only admins can delete
       allow delete: if isAdmin();
