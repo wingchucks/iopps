@@ -198,12 +198,19 @@ service cloud.firestore {
           request.resource.data.active == false
         )
       );
-      // Job update rules: Owner, team members, or approved employers can update
+      // Job update rules:
+      // - Owner, team members, or approved employers can update all fields
+      // - Signed-in users can ONLY increment viewsCount (analytics)
       allow update: if isAdminOrModerator() || (
         isOwnerOrTeamMember(resource.data.employerId) && (
           isApprovedEmployer() ||
           request.resource.data.active == false
         )
+      ) || (
+        // Allow view count increment by any signed-in user
+        isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewsCount']) &&
+        request.resource.data.viewsCount == resource.data.viewsCount + 1
       );
       allow delete: if isOwnerOrTeamMember(resource.data.employerId) || isAdminOrModerator();
     }
@@ -1125,11 +1132,8 @@ service cloud.firestore {
     // USER BADGES (Achievement System)
     // ===========================================================================
     match /user_badges/{badgeId} {
-      // Users can read badges where they are the owner
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-
-      // Admins can read all badges
-      allow read: if isAdminOrModerator();
+      // Public read - badges are displayed on public profiles
+      allow read: if true;
 
       // Users can create badges for themselves (when earning them)
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
