@@ -33,6 +33,8 @@ function NewJobPageContent() {
   const [subscription, setSubscription] = useState<SubscriptionInfo>(null);
   const [freePostingEnabled, setFreePostingEnabled] = useState(false);
   const [employerStatus, setEmployerStatus] = useState<string>("approved");
+  const [jobCredits, setJobCredits] = useState(0);
+  const [lastCreditPurchase, setLastCreditPurchase] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -312,9 +314,19 @@ function NewJobPageContent() {
       try {
         const profile = await getEmployerProfile(user.uid);
         if (profile) {
+          // Redirect pending employers to subscribe page (payment required first)
+          if (profile.status === "pending") {
+            router.push("/organization/subscribe");
+            return;
+          }
+
           setOrganizationName(profile.organizationName);
           setFreePostingEnabled(!!profile.freePostingEnabled);
           setEmployerStatus(profile.status || "approved");
+          
+          // Load job credits (from credit purchases)
+          setJobCredits(profile.jobCredits || 0);
+          setLastCreditPurchase(profile.lastCreditPurchase || null);
 
           // First try: check subscription field on employer document
           let subscriptionFound = false;
@@ -563,7 +575,44 @@ function NewJobPageContent() {
         return;
       }
 
-      // Single
+      // Use prepaid job credit if available
+      if (jobCredits > 0 && productType === "SINGLE") {
+        const creditDetails = lastCreditPurchase || {};
+        const durationDays = creditDetails.duration || 30;
+        const expires = new Date(); expires.setDate(expires.getDate() + durationDays);
+        const isFeatured = creditDetails.featured || false;
+        
+        const id = await createJobPosting({ 
+          ...jobPayload, 
+          active: !isScheduled, 
+          paymentStatus: 'paid', 
+          productType: 'CREDIT',
+          featured: isFeatured,
+          expiresAt: expires 
+        });
+        
+        // Decrement job credit via API
+        const idToken = await user.getIdToken();
+        await fetch("/api/employer/use-credit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+          body: JSON.stringify({ jobId: id })
+        });
+
+        // Notify admin of new job posting
+        if (!isScheduled) {
+          fetch("/api/admin/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
+          }).catch(() => { });
+        }
+        clearDraft();
+        router.push(`/organization/jobs/success?job_id=${id}&credit=true${isScheduled ? '&scheduled=true' : ''}`);
+        return;
+      }
+
+      // Single - no credits, need to pay
       const id = await createJobPosting({ ...jobPayload, active: false, paymentStatus: 'pending', productType: 'SINGLE' });
       const idToken = await user.getIdToken();
       const res = await fetch("/api/stripe/checkout", {
@@ -629,27 +678,6 @@ function NewJobPageContent() {
 
   return (
     <div className="min-h-screen bg-[#020306] pb-20">
-      {/* Pending Employer Banner */}
-      {employerStatus === "pending" && (
-        <div className="border-b border-emerald-500/30 bg-emerald-500/5">
-          <div className="mx-auto max-w-5xl px-4 py-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-emerald-200">Ready to post your first job!</p>
-                <p className="text-sm text-emerald-300/80 mt-0.5">
-                  Purchase a job ad to get started. Your account will be <span className="font-medium">automatically approved</span> once payment is complete, and your job will go live immediately.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="border-b border-slate-800 bg-[#08090C] py-8">
         <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -1169,6 +1197,18 @@ function NewJobPageContent() {
                   <button onClick={() => handlePostJob("FREE_POSTING")} disabled={submitting} className="w-full rounded-lg bg-emerald-500 py-3 font-bold text-white hover:bg-emerald-600">
                     {submitting ? "Posting..." : "Post Free (Admin)"}
                   </button>
+                ) : jobCredits > 0 ? (
+                  <>
+                    <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">
+                      <div className="text-sm text-emerald-400 font-medium mb-1">Job Credit Available</div>
+                      <div className="text-xs text-slate-400">
+                        You have {jobCredits} prepaid job credit{jobCredits > 1 ? 's' : ''} to use
+                      </div>
+                    </div>
+                    <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-[#14B8A6] py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
+                      {submitting ? "Posting..." : "Post using Credit"}
+                    </button>
+                  </>
                 ) : subscription && (subscription.unlimitedPosts || subscription.remainingCredits > 0) ? (
                   <>
                     <div className="rounded-lg bg-slate-900 p-4 border border-emerald-500/30">

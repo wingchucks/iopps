@@ -201,12 +201,21 @@ export default function OrganizationShell({
               <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 lg:p-6">
                 <div className="flex items-start gap-3">
                   <BoltIcon className="h-6 w-6 lg:h-8 lg:w-8 text-emerald-400 flex-shrink-0" />
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-emerald-200">Ready to Get Started!</h3>
                     <p className="text-sm text-emerald-300/80 mt-1">
-                      Post a job to get started! Your account will be <span className="font-medium">automatically approved</span> once 
-                      payment is complete, and your job will go live immediately.
+                      Choose a plan to activate your account and start posting jobs. Your account will be 
+                      <span className="font-medium"> automatically approved</span> once payment is complete.
                     </p>
+                    <Link
+                      href="/organization/subscribe"
+                      className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
+                    >
+                      Choose a Plan
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
               </div>

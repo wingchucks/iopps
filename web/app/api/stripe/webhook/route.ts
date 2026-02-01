@@ -292,6 +292,96 @@ export async function POST(request: NextRequest) {
                     break;
                 }
 
+                // Handle job credit purchase (payment before posting)
+                // This auto-approves the employer and grants them a job credit
+                if (type === "job_credit" && userId) {
+                    const durationDays = duration ? parseInt(duration, 10) : 30;
+                    const talentPoolDays = talentPoolAccessDays ? parseInt(talentPoolAccessDays, 10) : 0;
+                    const isFeatured = featured === "true";
+
+                    const employerRef = db.collection("employers").doc(userId);
+                    const employerDoc = await employerRef.get();
+                    const employerData = employerDoc.exists ? employerDoc.data() : null;
+
+                    if (!employerData) {
+                        console.error(`Employer ${userId} not found for job credit purchase`);
+                        break;
+                    }
+
+                    // Build update data
+                    const updateData: Record<string, unknown> = {
+                        // Grant job credit
+                        jobCredits: (employerData.jobCredits || 0) + 1,
+                        // Store credit details for when they use it
+                        lastCreditPurchase: {
+                            purchasedAt: new Date(),
+                            duration: durationDays,
+                            featured: isFeatured,
+                            paymentId: session.payment_intent as string,
+                            amountPaid: session.amount_total,
+                        },
+                    };
+
+                    // Auto-approve pending employers
+                    if (employerData.status === "pending") {
+                        updateData.status = "approved";
+                        updateData.approvedAt = new Date();
+                        updateData.approvalMethod = "payment";
+                        console.log(`Auto-approving employer ${userId} via job credit purchase`);
+
+                        // Also activate any jobs that were waiting for employer approval
+                        const pendingJobs = await db.collection("jobs")
+                            .where("employerId", "==", userId)
+                            .where("pendingEmployerApproval", "==", true)
+                            .get();
+
+                        for (const pendingJobDoc of pendingJobs.docs) {
+                            await pendingJobDoc.ref.update({
+                                active: true,
+                                pendingEmployerApproval: false,
+                            });
+                            console.log(`Activated pending job ${pendingJobDoc.id} after employer approval`);
+                        }
+                    }
+
+                    // Grant bonus talent pool access if included
+                    if (talentPoolDays > 0) {
+                        const existing = employerData.talentPoolAccess;
+                        let newExpiration = new Date();
+                        if (existing?.active && existing?.expiresAt) {
+                            const existingExpires = existing.expiresAt.toDate ? existing.expiresAt.toDate() : new Date(existing.expiresAt);
+                            if (existingExpires > new Date()) {
+                                newExpiration = existingExpires;
+                            }
+                        }
+                        newExpiration.setDate(newExpiration.getDate() + talentPoolDays);
+
+                        updateData.talentPoolAccess = {
+                            active: true,
+                            tier: existing?.tier || "bonus",
+                            purchasedAt: existing?.purchasedAt || new Date(),
+                            expiresAt: newExpiration,
+                        };
+                    }
+
+                    await employerRef.update(updateData);
+
+                    // Save payment record
+                    await savePaymentRecord(
+                        db,
+                        session,
+                        "job_credit",
+                        isFeatured ? "Featured Job Credit" : "Job Credit"
+                    );
+
+                    console.log(`Job credit granted to employer ${userId}`);
+
+                    // Recompute directory visibility
+                    await recomputeVisibility(userId);
+
+                    break;
+                }
+
                 // Handle job posting payment
                 if (jobId) {
                     const durationDays = duration ? parseInt(duration, 10) : 30;
