@@ -9,9 +9,13 @@ export const runtime = 'nodejs';
 export const maxDuration = 60; // 60 second timeout for complex webhook operations
 
 //  Lazy-load firebase-admin to prevent build-time initialization errors
-function getFirebaseAdmin() {
-    const { db } = require("@/lib/firebase-admin");
-    return db;
+async function getFirebaseAdmin() {
+    const { initAdmin, db } = require("@/lib/firebase-admin");
+    // Ensure Firebase is initialized before returning db
+    await initAdmin();
+    // Re-import to get the updated db reference after initialization
+    const firebaseAdmin = require("@/lib/firebase-admin");
+    return firebaseAdmin.db;
 }
 
 // Lazy-load visibility recompute function
@@ -118,8 +122,8 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // Get Firebase admin
-    const db = getFirebaseAdmin();
+    // Get Firebase admin (await to ensure initialization completes)
+    const db = await getFirebaseAdmin();
     if (!db) {
         console.error("Firebase Admin not initialized");
         return NextResponse.json(
