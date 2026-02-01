@@ -410,15 +410,16 @@ function NewJobPageContent() {
       errors.description = `Description must be at least 50 characters (currently ${formData.description.trim().length})`;
     }
 
-    // Closing Date validation
+    // Closing Date validation - must be at least tomorrow
     if (!formData.closingDate) {
       errors.closingDate = "Closing date is required";
     } else {
-      const closingDate = new Date(formData.closingDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (closingDate < today) {
-        errors.closingDate = "Closing date must be in the future";
+      const closingDate = new Date(formData.closingDate + "T00:00:00");
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      if (closingDate < tomorrow) {
+        errors.closingDate = "Closing date must be at least tomorrow";
       }
     }
 
@@ -1008,7 +1009,7 @@ function NewJobPageContent() {
                         setFormData(prev => ({ ...prev, closingDate: date }));
                       }}
                       placeholder="Select closing date"
-                      minDate={new Date()}
+                      minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
                       error={!!validationErrors.closingDate}
                     />
                     {validationErrors.closingDate && <p className="mt-1 text-sm text-red-400">{validationErrors.closingDate}</p>}
