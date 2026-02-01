@@ -283,20 +283,28 @@ export async function getOrCreatePeerConversation(params: {
   // Determine which user info goes where based on sorted order
   const user1IsFirst = params.userId1 === participant1Id;
 
-  const conversationData: Omit<PeerConversation, "id"> = {
+  // Build conversation data, excluding undefined values (Firestore doesn't accept undefined)
+  const conversationData: Record<string, unknown> = {
     type: "peer",
     participant1Id,
-    participant1Name: user1IsFirst ? params.user1Name : params.user2Name,
-    participant1Avatar: user1IsFirst ? params.user1Avatar : params.user2Avatar,
     participant2Id,
-    participant2Name: user1IsFirst ? params.user2Name : params.user1Name,
-    participant2Avatar: user1IsFirst ? params.user2Avatar : params.user1Avatar,
     participant1UnreadCount: 0,
     participant2UnreadCount: 0,
     status: "active",
-    createdAt: serverTimestamp() as Timestamp,
-    updatedAt: serverTimestamp() as Timestamp,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   };
+
+  // Only add optional fields if they have values
+  const p1Name = user1IsFirst ? params.user1Name : params.user2Name;
+  const p1Avatar = user1IsFirst ? params.user1Avatar : params.user2Avatar;
+  const p2Name = user1IsFirst ? params.user2Name : params.user1Name;
+  const p2Avatar = user1IsFirst ? params.user2Avatar : params.user1Avatar;
+
+  if (p1Name) conversationData.participant1Name = p1Name;
+  if (p1Avatar) conversationData.participant1Avatar = p1Avatar;
+  if (p2Name) conversationData.participant2Name = p2Name;
+  if (p2Avatar) conversationData.participant2Avatar = p2Avatar;
 
   const docRef = await addDoc(collection(db!, conversationsCollection), conversationData);
   return { id: docRef.id, ...conversationData };
