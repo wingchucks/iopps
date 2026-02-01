@@ -314,12 +314,6 @@ function NewJobPageContent() {
       try {
         const profile = await getEmployerProfile(user.uid);
         if (profile) {
-          // Redirect pending employers to subscribe page (payment required first)
-          if (profile.status === "pending") {
-            router.push("/organization/subscribe");
-            return;
-          }
-
           setOrganizationName(profile.organizationName);
           setFreePostingEnabled(!!profile.freePostingEnabled);
           setEmployerStatus(profile.status || "approved");

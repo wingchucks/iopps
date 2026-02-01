@@ -198,24 +198,32 @@ export default function OrganizationShell({
 
             {/* Pending Approval Banner */}
             {profile.status === 'pending' && (
-              <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 lg:p-6">
+              <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 lg:p-6">
                 <div className="flex items-start gap-3">
-                  <BoltIcon className="h-6 w-6 lg:h-8 lg:w-8 text-emerald-400 flex-shrink-0" />
+                  <ClockIcon className="h-6 w-6 lg:h-8 lg:w-8 text-amber-400 flex-shrink-0" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-emerald-200">Ready to Get Started!</h3>
-                    <p className="text-sm text-emerald-300/80 mt-1">
-                      Choose a plan to activate your account and start posting jobs. Your account will be 
-                      <span className="font-medium"> automatically approved</span> once payment is complete.
+                    <h3 className="font-semibold text-amber-200">Account Pending Approval</h3>
+                    <p className="text-sm text-amber-300/80 mt-1">
+                      Your organization is being reviewed. You can post jobs now, but they won&apos;t be visible until approved.
                     </p>
-                    <Link
-                      href="/organization/subscribe"
-                      className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
-                    >
-                      Choose a Plan
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </Link>
+                    <p className="text-sm text-emerald-300 mt-2">
+                      <BoltIcon className="h-4 w-4 inline mr-1" />
+                      <span className="font-medium">Skip the wait:</span> Purchase any ad to get instant approval!
+                    </p>
+                    <div className="flex flex-wrap gap-3 mt-3">
+                      <Link
+                        href="/organization/subscribe"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-400 transition-colors"
+                      >
+                        Get Instant Approval
+                      </Link>
+                      <Link
+                        href="/organization/jobs/new"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 text-white text-sm font-semibold hover:bg-slate-600 transition-colors"
+                      >
+                        Post a Job
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
