@@ -755,9 +755,9 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
           Get your Indigenous-owned business in front of customers across North America.
         </p>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="max-w-md mx-auto">
           {/* Monthly Plan */}
-          <div className="relative rounded-2xl bg-slate-800/50 border border-slate-700 p-6 hover:border-teal-500/50 transition-colors">
+          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-teal-500/50 p-6">
             <div className="absolute -top-3 left-6">
               <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white">
                 First Month Free
@@ -772,7 +772,7 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
             <p className="mt-2 text-sm text-slate-400">{VENDOR_PRODUCTS.MONTHLY.description}</p>
 
             <ul className="mt-4 space-y-2">
-              {VENDOR_PRODUCTS.MONTHLY.features.map((feature, i) => (
+              {VENDOR_PRODUCTS.MONTHLY.features.map((feature: string, i: number) => (
                 <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                   <CheckCircleIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
                   {feature}
@@ -783,43 +783,9 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
             <button
               onClick={() => handleSubscribe('MONTHLY')}
               disabled={loading}
-              className="mt-6 w-full rounded-lg bg-slate-700 py-3 font-semibold text-white hover:bg-slate-600 transition-colors disabled:opacity-50"
-            >
-              {loading && selectedPlan === 'MONTHLY' ? 'Processing...' : 'Start Free Trial'}
-            </button>
-          </div>
-
-          {/* Annual Plan */}
-          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-teal-500/50 p-6">
-            <div className="absolute -top-3 left-6">
-              <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1 text-xs font-semibold text-white">
-                <SparklesIcon className="h-3 w-3" />
-                Best Value
-              </span>
-            </div>
-
-            <h4 className="text-lg font-bold text-white mt-2">{VENDOR_PRODUCTS.ANNUAL.name}</h4>
-            <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-white">${VENDOR_PRODUCTS.ANNUAL.price / 100}</span>
-              <span className="text-slate-400">/year</span>
-            </div>
-            <p className="mt-2 text-sm text-slate-400">{VENDOR_PRODUCTS.ANNUAL.description}</p>
-
-            <ul className="mt-4 space-y-2">
-              {VENDOR_PRODUCTS.ANNUAL.features.map((feature, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
-                  <CheckCircleIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => handleSubscribe('ANNUAL')}
-              disabled={loading}
               className="mt-6 w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 py-3 font-semibold text-white shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30 transition-all disabled:opacity-50"
             >
-              {loading && selectedPlan === 'ANNUAL' ? 'Processing...' : 'Subscribe Now'}
+              {loading && selectedPlan === 'MONTHLY' ? 'Processing...' : 'Start Free Trial'}
             </button>
           </div>
         </div>

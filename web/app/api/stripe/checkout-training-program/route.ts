@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin";
 import Stripe from "stripe";
 import { TRAINING_PRODUCTS } from "@/lib/stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia",
+  apiVersion: "2025-11-17.clover",
 });
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Firebase Admin is initialized
+    if (!adminAuth || !adminDb) {
+      console.error("Firebase Admin not initialized - check environment variables");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 503 }
+      );
+    }
+
     // Verify authentication
     const authHeader = request.headers.get("Authorization");
     const cookieHeader = request.cookies.get("__session")?.value;

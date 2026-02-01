@@ -103,8 +103,8 @@ export default function NewTrainingProgramPage() {
             }
             
             // Check for school subscription
-            const schoolId = profile.modules?.educate?.schoolId;
-            if (schoolId) {
+            const schoolId = profile.moduleSettings?.educate?.schoolId;
+            if (schoolId && db) {
               setLoadingSchool(true);
               try {
                 const schoolDoc = await getDoc(doc(db, "schools", schoolId));

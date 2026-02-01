@@ -145,10 +145,35 @@ export const TRAINING_PRODUCTS = {
 
 export type TrainingProductType = keyof typeof TRAINING_PRODUCTS;
 
-// Talent Pool Access - DISABLED FOR NOW
-// TODO: Re-enable when talent pool feature is ready
-// export const TALENT_POOL_PRODUCTS = { ... }
-// export type TalentPoolProductType = keyof typeof TALENT_POOL_PRODUCTS;
+// Talent Pool Access - Feature temporarily disabled in UI but exports kept for build
+export const TALENT_POOL_PRODUCTS = {
+    MONTHLY: {
+        name: "Talent Pool Monthly Access",
+        price: 9900, // $99.00 CAD
+        duration: 30, // days
+        description: "Browse and contact Indigenous talent for 30 days",
+        features: [
+            "Browse all talent profiles",
+            "Contact candidates directly",
+            "Save favorite candidates",
+            "Advanced search filters",
+        ],
+    },
+    ANNUAL: {
+        name: "Talent Pool Annual Access",
+        price: 89900, // $899.00 CAD
+        duration: 365, // days
+        description: "Browse and contact Indigenous talent for 12 months (save $289)",
+        features: [
+            "Everything in Monthly",
+            "Priority support",
+            "Early access to new features",
+            "Bulk messaging tools",
+        ],
+    },
+} as const;
+
+export type TalentPoolProductType = keyof typeof TALENT_POOL_PRODUCTS;
 
 // School/Education Institution products
 export const SCHOOL_PRODUCTS = {

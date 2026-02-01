@@ -1650,6 +1650,7 @@ export interface TrainingProgram {
   // Format & Duration
   format: TrainingFormat;
   duration?: string; // e.g., "6 weeks", "40 hours"
+  durationMonths?: number; // Calculated duration in months for pricing rules
   durationType?: TrainingDuration;
   startDate?: Timestamp | string | null;
   endDate?: Timestamp | string | null;
