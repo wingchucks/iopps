@@ -5,18 +5,28 @@
 
 import * as dotenv from "dotenv";
 import * as path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
-import * as admin from "firebase-admin";
+import admin from "firebase-admin";
 
 // Initialize Firebase Admin
+const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+if (!base64) {
+    console.error("FIREBASE_SERVICE_ACCOUNT_BASE64 not found in environment");
+    process.exit(1);
+}
+
 const serviceAccount = JSON.parse(
-    Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64!, "base64").toString("utf-8")
+    Buffer.from(base64, "base64").toString("utf-8")
 );
 
-if (!admin.apps.length) {
+if (admin.apps?.length === 0 || !admin.apps?.length) {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
     });
@@ -25,7 +35,7 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 async function applyTestCredits() {
-    const testEmail = "test@iopps.ca";
+    const testEmail = "nathan.arias@iopps.ca";
     
     console.log(`Looking for employer with email: ${testEmail}`);
     
@@ -84,9 +94,8 @@ async function applyCreditsToEmployer(employerId: string, currentData: any) {
     console.log(`\nEmployer: ${employerId}`);
     console.log(`  Current jobCredits: ${currentData.jobCredits || 0}`);
     
-    // Calculate credits to add based on the $125 payment (1 credit per $125)
-    // Looking at the payments: 7 succeeded payments of $125 each = 7 credits
-    const creditsToAdd = 7;
+    // This was a $1 test payment - just add 1 test credit
+    const creditsToAdd = 1;
     const newCredits = (currentData.jobCredits || 0) + creditsToAdd;
     
     console.log(`  Adding ${creditsToAdd} credits (from 7 test payments of $125)`);
@@ -102,7 +111,7 @@ async function applyCreditsToEmployer(employerId: string, currentData: any) {
     await db.collection("employers").doc(employerId).collection("creditHistory").add({
         type: "purchase",
         credits: creditsToAdd,
-        amount: 87500, // 7 x $125 = $875 in cents
+        amount: 100, // $1 test payment in cents
         currency: "cad",
         description: "Manual credit application for failed test webhooks",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),

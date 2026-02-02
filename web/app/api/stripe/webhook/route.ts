@@ -10,12 +10,20 @@ export const maxDuration = 60; // 60 second timeout for complex webhook operatio
 
 //  Lazy-load firebase-admin to prevent build-time initialization errors
 async function getFirebaseAdmin() {
-    const { initAdmin, db } = require("@/lib/firebase-admin");
-    // Ensure Firebase is initialized before returning db
+    const { initAdmin } = await import("@/lib/firebase-admin");
+    const { getFirestore } = await import("firebase-admin/firestore");
+    
+    // Ensure Firebase is initialized
     await initAdmin();
-    // Re-import to get the updated db reference after initialization
-    const firebaseAdmin = require("@/lib/firebase-admin");
-    return firebaseAdmin.db;
+    
+    // Get Firestore instance directly (don't rely on exported db which may be stale)
+    const { getApps } = await import("firebase-admin/app");
+    if (!getApps().length) {
+        console.error("Firebase Admin failed to initialize - no apps registered");
+        return null;
+    }
+    
+    return getFirestore();
 }
 
 // Lazy-load visibility recompute function
