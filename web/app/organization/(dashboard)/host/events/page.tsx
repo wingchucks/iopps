@@ -18,10 +18,18 @@ import { format, isPast, isFuture } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 
 // Helper to parse date fields that can be Timestamp | string | null
+// Handles timezone correctly by treating date-only strings as local time
 function parseDate(date: Timestamp | string | null | undefined): Date | null {
   if (!date) return null;
   if (date instanceof Date) return date;
-  if (typeof date === 'string') return new Date(date);
+  if (typeof date === 'string') {
+    // If it's a date-only string (YYYY-MM-DD), parse as local time not UTC
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [year, month, day] = date.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    return new Date(date);
+  }
   if (date && typeof (date as Timestamp).toDate === 'function') {
     return (date as Timestamp).toDate();
   }

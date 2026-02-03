@@ -36,10 +36,20 @@ type CostValue = typeof COST_OPTIONS[number]["value"];
 
 type MaybeDate = string | Date | { toDate: () => Date } | null | undefined;
 
+// Helper to parse date string as local time (not UTC) for date-only strings
+const parseDateString = (value: string): Date => {
+  // If it's a date-only string (YYYY-MM-DD), parse as local time not UTC
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(value);
+};
+
 const getTimeValue = (value: MaybeDate, fallback = Number.MAX_SAFE_INTEGER) => {
   if (!value) return fallback;
   if (typeof value === "string") {
-    const ms = new Date(value).getTime();
+    const ms = parseDateString(value).getTime();
     return Number.isNaN(ms) ? fallback : ms;
   }
   if (value instanceof Date) return value.getTime();
@@ -55,7 +65,7 @@ const formatDate = (value: MaybeDate): string | null => {
   try {
     let date: Date;
     if (typeof value === "string") {
-      date = new Date(value);
+      date = parseDateString(value);
     } else if (value instanceof Date) {
       date = value;
     } else if (typeof value === "object" && "toDate" in value) {

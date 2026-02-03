@@ -1,108 +1,100 @@
-"use client";
+'use client';
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
-export interface KeyboardShortcut {
+interface ShortcutConfig {
   key: string;
   ctrl?: boolean;
+  meta?: boolean;
   shift?: boolean;
-  alt?: boolean;
   action: () => void;
   description: string;
 }
 
-interface UseKeyboardShortcutsOptions {
-  shortcuts: KeyboardShortcut[];
-  enabled?: boolean;
-}
+export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]) {
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Don't trigger if user is typing in an input
+    const target = event.target as HTMLElement;
+    if (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable
+    ) {
+      return;
+    }
 
-/**
- * Hook for registering keyboard shortcuts.
- *
- * Shortcuts are disabled when the user is typing in an input, textarea, or contenteditable element.
- *
- * Usage:
- * ```tsx
- * useKeyboardShortcuts({
- *   shortcuts: [
- *     { key: "n", action: () => handleNew(), description: "Create new item" },
- *     { key: "s", ctrl: true, action: () => handleSave(), description: "Save" },
- *     { key: "/", action: () => focusSearch(), description: "Focus search" },
- *     { key: "Escape", action: () => closeModal(), description: "Close modal" },
- *   ],
- * });
- * ```
- */
-export function useKeyboardShortcuts({ shortcuts, enabled = true }: UseKeyboardShortcutsOptions) {
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!enabled) return;
+    for (const shortcut of shortcuts) {
+      const keyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
+      const ctrlMatch = shortcut.ctrl ? event.ctrlKey || event.metaKey : !event.ctrlKey && !event.metaKey;
+      const shiftMatch = shortcut.shift ? event.shiftKey : !event.shiftKey;
 
-      // Don't trigger shortcuts when typing in inputs
-      const target = event.target as HTMLElement;
-      const isTyping =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable ||
-        target.closest('[contenteditable="true"]');
-
-      // Allow Escape to work even in inputs
-      if (isTyping && event.key !== "Escape") {
-        return;
+      if (keyMatch && ctrlMatch && shiftMatch) {
+        event.preventDefault();
+        shortcut.action();
+        break;
       }
-
-      for (const shortcut of shortcuts) {
-        const keyMatches = event.key.toLowerCase() === shortcut.key.toLowerCase();
-        const ctrlMatches = shortcut.ctrl ? event.ctrlKey || event.metaKey : !event.ctrlKey && !event.metaKey;
-        const shiftMatches = shortcut.shift ? event.shiftKey : !event.shiftKey;
-        const altMatches = shortcut.alt ? event.altKey : !event.altKey;
-
-        if (keyMatches && ctrlMatches && shiftMatches && altMatches) {
-          event.preventDefault();
-          shortcut.action();
-          break;
-        }
-      }
-    },
-    [shortcuts, enabled]
-  );
+    }
+  }, [shortcuts]);
 
   useEffect(() => {
-    if (!enabled) return;
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown, enabled]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 }
 
-/**
- * Common dashboard shortcuts configuration
- */
-export const DASHBOARD_SHORTCUTS = {
-  NEW: { key: "n", description: "Create new" },
-  SAVE: { key: "s", ctrl: true, description: "Save" },
-  SEARCH: { key: "/", description: "Focus search" },
-  CLOSE: { key: "Escape", description: "Close modal/dialog" },
-  HELP: { key: "?", shift: true, description: "Show shortcuts" },
-} as const;
+// Pre-configured shortcuts for organization dashboard
+export function useOrganizationShortcuts(options?: { onSearch?: () => void }) {
+  const router = useRouter();
 
-/**
- * Component to display keyboard shortcuts help
- */
-export function getShortcutDisplay(shortcut: Pick<KeyboardShortcut, "key" | "ctrl" | "shift" | "alt">): string {
-  const parts: string[] = [];
+  const shortcuts: ShortcutConfig[] = [
+    {
+      key: 'n',
+      action: () => router.push('/organization/hire/jobs/new'),
+      description: 'New Job',
+    },
+    {
+      key: 'i',
+      action: () => router.push('/organization/inbox'),
+      description: 'Go to Inbox',
+    },
+    {
+      key: 'a',
+      action: () => router.push('/organization/analytics'),
+      description: 'Go to Analytics',
+    },
+    {
+      key: 'h',
+      action: () => router.push('/organization'),
+      description: 'Go to Home',
+    },
+    {
+      key: 'j',
+      action: () => router.push('/organization/hire/jobs'),
+      description: 'Go to Jobs',
+    },
+    {
+      key: 's',
+      action: () => router.push('/organization/settings'),
+      description: 'Go to Settings',
+    },
+    {
+      key: '/',
+      action: () => options?.onSearch?.(),
+      description: 'Search',
+    },
+    {
+      key: '?',
+      shift: true,
+      action: () => {
+        // This will be handled by the component to show shortcuts modal
+        window.dispatchEvent(new CustomEvent('show-shortcuts-modal'));
+      },
+      description: 'Show Shortcuts',
+    },
+  ];
 
-  if (shortcut.ctrl) parts.push("Ctrl");
-  if (shortcut.alt) parts.push("Alt");
-  if (shortcut.shift) parts.push("Shift");
+  useKeyboardShortcuts(shortcuts);
 
-  // Format special keys nicely
-  let keyDisplay = shortcut.key;
-  if (shortcut.key === "Escape") keyDisplay = "Esc";
-  if (shortcut.key === " ") keyDisplay = "Space";
-  if (shortcut.key === "/") keyDisplay = "/";
-
-  parts.push(keyDisplay.toUpperCase());
-
-  return parts.join(" + ");
+  return shortcuts;
 }

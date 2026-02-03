@@ -74,7 +74,13 @@ function PowwowsContent() {
       if (typeof event.startDate === "object" && "toDate" in event.startDate) {
         eventDate = event.startDate.toDate();
       } else if (typeof event.startDate === "string") {
-        eventDate = new Date(event.startDate);
+        // If it's a date-only string (YYYY-MM-DD), parse as local time not UTC
+        if (/^\d{4}-\d{2}-\d{2}$/.test(event.startDate)) {
+          const [year, month, day] = event.startDate.split('-').map(Number);
+          eventDate = new Date(year, month - 1, day);
+        } else {
+          eventDate = new Date(event.startDate);
+        }
       }
     }
 
@@ -152,9 +158,20 @@ function PowwowsContent() {
   const formatDate = (value: PowwowEvent["startDate"]) => {
     if (!value) return null;
     try {
-      const date = typeof value === "object" && "toDate" in value
-        ? value.toDate()
-        : new Date(value);
+      let date: Date;
+      if (typeof value === "object" && "toDate" in value) {
+        date = value.toDate();
+      } else if (typeof value === "string") {
+        // If it's a date-only string (YYYY-MM-DD), parse as local time not UTC
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          const [year, month, day] = value.split('-').map(Number);
+          date = new Date(year, month - 1, day);
+        } else {
+          date = new Date(value);
+        }
+      } else {
+        date = new Date(value);
+      }
       return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",

@@ -98,7 +98,15 @@ export default function PassportPage() {
         const recentApps = applications.filter((app) => {
             const date = app.createdAt;
             if (!date) return false;
-            const timestamp = typeof date === 'object' && 'toDate' in date ? date.toDate().getTime() : new Date(date).getTime();
+            let timestamp: number;
+            if (typeof date === 'object' && 'toDate' in date) {
+                timestamp = date.toDate().getTime();
+            } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                const [year, month, day] = date.split('-').map(Number);
+                timestamp = new Date(year, month - 1, day).getTime();
+            } else {
+                timestamp = new Date(date).getTime();
+            }
             return timestamp >= last30Days;
         });
 

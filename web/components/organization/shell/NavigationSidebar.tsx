@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { EmployerProfile, OrganizationModule } from '@/lib/types';
 import { MODULE_CONFIG } from './constants';
+import SidebarSearch from './SidebarSearch';
+import { HelpButton } from './HelpDrawer';
 import {
   HomeIcon,
   UserCircleIcon,
@@ -41,7 +44,7 @@ function NavItem({ href, label, icon: Icon, badge, active, onClick }: NavItemPro
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
         active
           ? 'bg-accent/10 text-accent border border-accent/20'
           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -132,6 +135,9 @@ export default function NavigationSidebar({
           </div>
         </div>
       </div>
+
+      {/* Search */}
+      <SidebarSearch enabledModules={enabledModules} onNavigate={onNavigate} />
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto space-y-6 pr-1 custom-scrollbar">
@@ -325,13 +331,7 @@ export default function NavigationSidebar({
 
       {/* Help Section - Fixed at bottom */}
       <div className="flex-shrink-0 pt-4 border-t border-slate-800">
-        <a
-          href="mailto:support@iopps.ca?subject=Help%20Request"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all"
-        >
-          <QuestionMarkCircleIcon className="w-5 h-5" />
-          <span className="text-sm font-medium">Need help?</span>
-        </a>
+        <HelpButton />
       </div>
     </div>
   );

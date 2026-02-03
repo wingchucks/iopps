@@ -8,7 +8,11 @@ import type { EmployerProfile, OrganizationModule, OrganizationProfile } from '@
 import NavigationSidebar from './NavigationSidebar';
 import MobileNavBar from './MobileNavBar';
 import ModuleSwitcher from './ModuleSwitcher';
-import { Bars3Icon, XMarkIcon, ClockIcon, XCircleIcon, PencilSquareIcon, BoltIcon } from '@heroicons/react/24/outline';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal';
+import WelcomeTour from './WelcomeTour';
+import MobileAppBanner from './MobileAppBanner';
+import { useOrganizationShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { Bars3Icon, XMarkIcon, ClockIcon, XCircleIcon, PencilSquareIcon, BoltIcon, BellIcon } from '@heroicons/react/24/outline';
 
 interface OrganizationShellProps {
   children: React.ReactNode;
@@ -34,6 +38,9 @@ export default function OrganizationShell({
     applications: 0,
     inquiries: 0,
   });
+
+  // Enable keyboard shortcuts
+  useOrganizationShortcuts();
 
   // Determine current module from path
   const getCurrentModule = (): OrganizationModule | null => {
@@ -160,6 +167,29 @@ export default function OrganizationShell({
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Notification Bell */}
+              <Link
+                href="/organization/inbox"
+                className="relative p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                title="Inbox"
+              >
+                <BellIcon className="w-5 h-5" />
+                {badges.inbox > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold rounded-full bg-accent text-slate-950">
+                    {badges.inbox > 99 ? '99+' : badges.inbox}
+                  </span>
+                )}
+              </Link>
+              
+              {/* Keyboard Shortcuts Hint */}
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('show-shortcuts-modal'))}
+                className="hidden xl:flex items-center gap-1 px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors text-xs"
+                title="Keyboard Shortcuts"
+              >
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">?</kbd>
+              </button>
+              
               <Link
                 href={`/organizations/${(profile as OrganizationProfile).slug || profile.id}`}
                 target="_blank"
@@ -263,6 +293,15 @@ export default function OrganizationShell({
         badges={badges}
         enabledModules={enabledModules}
       />
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal />
+
+      {/* Welcome Tour for First-Time Users */}
+      <WelcomeTour userId={userId} />
+
+      {/* Mobile App Banner */}
+      <MobileAppBanner userId={userId} />
     </div>
   );
 }
