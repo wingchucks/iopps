@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // Character limits for profile fields
-const ABOUT_MAX_CHARS = 750;
+const ABOUT_MAX_CHARS = 3000;
 const STORY_MAX_CHARS = 500;
 
 // Generate URL-friendly slug from organization name

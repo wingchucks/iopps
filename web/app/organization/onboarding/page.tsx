@@ -117,7 +117,7 @@ function deriveOrgType(modules: OrganizationModule[], badge: OrgType | 'AUTO'): 
 type Step = 1 | 2 | 3 | 4;
 
 // Character limits for profile fields
-const ABOUT_MAX_CHARS = 750;
+const ABOUT_MAX_CHARS = 3000;
 const STORY_MAX_CHARS = 500;
 
 interface FormData {
