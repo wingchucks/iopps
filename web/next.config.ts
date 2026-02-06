@@ -142,12 +142,7 @@ const nextConfig: NextConfig = {
         destination: "/business/:path*",
         permanent: true,
       },
-      // Business root to Organizations directory redirect
-      {
-        source: "/business",
-        destination: "/organizations",
-        permanent: true,
-      },
+      // NOTE: /business is now Shop Indigenous page - no redirect
       // Businesses to Organizations redirects (URL rename)
       {
         source: "/businesses",
