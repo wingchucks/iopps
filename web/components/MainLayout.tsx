@@ -13,7 +13,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   // Don't show main site header/footer for admin routes or app feed
   const isAdminRoute = pathname?.startsWith("/admin");
   const isBuilderRoute = pathname?.includes("/edit") && pathname?.includes("/organization");
-  const isAppFeed = pathname?.startsWith("/hub");
+  const isAppFeed = pathname === "/" || pathname?.startsWith("/hub");
 
   if (isAdminRoute || isBuilderRoute || isAppFeed) {
     // These routes have their own layout - just render children
