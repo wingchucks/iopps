@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
-import { PageShell } from '@/components/PageShell';
+import { FeedLayout } from '@/components/opportunity-graph';
 import { ServiceCard } from '@/components/shop';
 import { listServices, getFeaturedServices } from '@/lib/firestore';
 import { useAuth } from '@/components/AuthProvider';
@@ -59,7 +59,7 @@ export default function ServicesPage() {
   const hasFilters = search || category || region || servesRemote !== null;
 
   return (
-    <PageShell>
+    <FeedLayout activeNav="business" fullWidth>
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 px-6 py-16 sm:px-12 sm:py-24 mb-12">
         {/* Background Pattern */}
@@ -75,18 +75,18 @@ export default function ServicesPage() {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-purple-400/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-indigo-200">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm text-indigo-600">
             <BriefcaseIcon className="h-5 w-5" />
             Indigenous Marketplace
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             Professional Services
           </h1>
-          <p className="mt-4 text-lg text-indigo-100 sm:text-xl">
+          <p className="mt-4 text-lg text-indigo-600 sm:text-xl">
             Connect with Indigenous-owned professional service providers.
             From consulting to legal services, find the expertise you need.
           </p>
@@ -94,18 +94,18 @@ export default function ServicesPage() {
           {/* Search Bar */}
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search services..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full rounded-full bg-white/20 backdrop-blur-sm border border-white/30 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+              className="flex items-center justify-center gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-6 py-3 text-white transition-colors hover:bg-white/20"
             >
               <FunnelIcon className="h-5 w-5" />
               Filters
@@ -121,13 +121,13 @@ export default function ServicesPage() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
+        <div className="mb-8 rounded-2xl bg-white backdrop-blur-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Filters</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Clear all
@@ -137,14 +137,14 @@ export default function ServicesPage() {
 
           {/* Categories */}
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-slate-400 mb-3">Category</h4>
+            <h4 className="text-sm font-medium text-slate-500 mb-3">Category</h4>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setCategory(null)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   category === null
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 All Categories
@@ -156,7 +156,7 @@ export default function ServicesPage() {
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     category === cat
                       ? 'bg-indigo-500 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   {cat}
@@ -167,14 +167,14 @@ export default function ServicesPage() {
 
           {/* Remote Services */}
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-slate-400 mb-3">Availability</h4>
+            <h4 className="text-sm font-medium text-slate-500 mb-3">Availability</h4>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setServesRemote(null)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   servesRemote === null
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 All
@@ -184,7 +184,7 @@ export default function ServicesPage() {
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   servesRemote === true
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 Remote Available
@@ -194,14 +194,14 @@ export default function ServicesPage() {
 
           {/* Regions */}
           <div>
-            <h4 className="text-sm font-medium text-slate-400 mb-3">Region</h4>
+            <h4 className="text-sm font-medium text-slate-500 mb-3">Region</h4>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
               <button
                 onClick={() => setRegion(null)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   region === null
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 All Regions
@@ -213,7 +213,7 @@ export default function ServicesPage() {
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     region === r
                       ? 'bg-indigo-500 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   {r}
@@ -233,7 +233,7 @@ export default function ServicesPage() {
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white">Featured Services</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Featured Services</h2>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featuredServices.map((service) => (
@@ -246,10 +246,10 @@ export default function ServicesPage() {
       {/* All Services */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-slate-900">
             {hasFilters ? 'Search Results' : 'All Services'}
           </h2>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-slate-500">
             {loading ? 'Loading...' : `${services.length} ${services.length === 1 ? 'service' : 'services'}`}
           </span>
         </div>
@@ -257,16 +257,16 @@ export default function ServicesPage() {
         {loading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-72" />
+              <div key={i} className="animate-pulse rounded-2xl bg-slate-100 h-72" />
             ))}
           </div>
         ) : services.length === 0 ? (
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
+          <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
               <BriefcaseIcon className="h-8 w-8 text-slate-500" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No services found</h3>
-            <p className="text-slate-400 mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No services found</h3>
+            <p className="text-slate-500 mb-4">
               {hasFilters
                 ? "Try adjusting your filters or search terms."
                 : "Be the first to list your professional services!"}
@@ -291,11 +291,11 @@ export default function ServicesPage() {
 
       {/* CTA Section - Only for employers/admins */}
       {canListServices && (
-        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Offer Professional Services?
           </h2>
-          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
             Join our growing network of Indigenous professional service providers. Showcase your expertise and connect with clients across North America.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
@@ -310,13 +310,13 @@ export default function ServicesPage() {
             </Link>
             <Link
               href="/business"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/50 px-8 py-3 text-lg font-semibold text-white transition-all hover:bg-slate-700"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3 text-lg font-semibold text-slate-900 transition-all hover:bg-slate-50"
             >
               Browse Products
             </Link>
           </div>
         </section>
       )}
-    </PageShell>
+    </FeedLayout>
   );
 }
