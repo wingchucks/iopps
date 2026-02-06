@@ -302,7 +302,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-teal-500 border-r-transparent"></div>
-          <p className="mt-4 text-slate-400">Redirecting...</p>
+          <p className="mt-4 text-slate-500">Redirecting...</p>
         </div>
       </div>
     );
@@ -343,12 +343,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
       {/* Dormant/Hidden Banner - shown to owners when org is approved but not directory-visible */}
       {!isDraft && canEdit && org.status === 'approved' && org.isDirectoryVisible === false && (
-        <div className="mb-6 rounded-xl bg-slate-100 border border-slate-600 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="mb-6 rounded-xl bg-slate-100 border border-slate-300 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <EyeIcon className="h-5 w-5 text-slate-400 mt-0.5 sm:mt-0 flex-shrink-0" />
+            <EyeIcon className="h-5 w-5 text-slate-500 mt-0.5 sm:mt-0 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-slate-300">Hidden from Directory</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm font-medium text-slate-600">Hidden from Directory</p>
+              <p className="text-xs text-slate-500">
                 Your organization is not visible in the public directory.
                 {org.visibilityReason === 'expired' && (
                   <> Post a job or subscribe to a plan to appear in search results.</>
@@ -414,7 +414,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                 TRC Committed
               </span>
             )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-slate-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-slate-600">
               <Icon className="h-4 w-4" />
               {ORG_TYPE_LABELS[org.orgType || 'EMPLOYER']}
             </span>
@@ -433,7 +433,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-sm text-white hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-sm text-slate-900 hover:bg-slate-100 transition-colors"
             >
               <ShareIcon className="h-4 w-4" />
               {copied ? 'Copied!' : 'Share'}
@@ -473,12 +473,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
           {/* Name and Details */}
           <div className="pt-12 sm:pt-16 sm:ml-36">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
               {org.organizationName}
             </h1>
 
             {org.tagline && (
-              <p className="mt-2 text-lg text-slate-300">{org.tagline}</p>
+              <p className="mt-2 text-lg text-slate-600">{org.tagline}</p>
             )}
 
             {/* Stats Row */}
@@ -490,7 +490,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                       <BriefcaseIcon className="h-4 w-4 text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-white">{jobCount}</p>
+                      <p className="text-lg font-bold text-slate-900">{jobCount}</p>
                       <p className="text-xs text-slate-500">Active Jobs</p>
                     </div>
                   </div>
@@ -501,7 +501,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                       <CalendarIcon className="h-4 w-4 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-white">{eventCount}</p>
+                      <p className="text-lg font-bold text-slate-900">{eventCount}</p>
                       <p className="text-xs text-slate-500">Events</p>
                     </div>
                   </div>
@@ -512,7 +512,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                       <AcademicCapIcon className="h-4 w-4 text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-white">{scholarshipCount}</p>
+                      <p className="text-lg font-bold text-slate-900">{scholarshipCount}</p>
                       <p className="text-xs text-slate-500">Scholarships</p>
                     </div>
                   </div>
@@ -520,10 +520,10 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                 {org.createdAt && (
                   <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
-                      <CheckBadgeIcon className="h-4 w-4 text-slate-400" />
+                      <CheckBadgeIcon className="h-4 w-4 text-slate-500" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-white">
+                      <p className="text-lg font-bold text-slate-900">
                         {typeof org.createdAt === 'object' && 'toDate' in org.createdAt
                           ? org.createdAt.toDate().getFullYear()
                           : new Date(org.createdAt as unknown as string).getFullYear()}
@@ -536,7 +536,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
 
             {/* Location & Industry */}
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-400">
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-500">
               {(org.city || org.province || org.location) && (
                 <span className="flex items-center gap-1.5">
                   <MapPinIcon className="h-4 w-4" />
@@ -560,7 +560,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                   href={links.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <GlobeAltIcon className="h-4 w-4" />
                   Website
@@ -570,7 +570,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               {links.email && (
                 <a
                   href={`mailto:${links.email}`}
-                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <EnvelopeIcon className="h-4 w-4" />
                   Email
@@ -579,7 +579,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               {links.phone && (
                 <a
                   href={`tel:${links.phone}`}
-                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <PhoneIcon className="h-4 w-4" />
                   Call
@@ -595,7 +595,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                     href={value}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center rounded-full bg-slate-100 p-2 text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    className="flex items-center justify-center rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                     title={key.charAt(0).toUpperCase() + key.slice(1)}
                   >
                     <IconComponent className="h-4 w-4" />
@@ -618,7 +618,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-teal-500 text-white'
-                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <TabIcon className="h-4 w-4" />
@@ -664,21 +664,21 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             {/* Close button */}
             <button
               onClick={() => setShowIntroVideoModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-900"
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
 
-            <h2 className="text-xl font-bold text-white mb-2">
+            <h2 className="text-xl font-bold text-slate-900 mb-2">
               {introVideoUrl ? 'Edit Intro Video' : 'Add Intro Video'}
             </h2>
-            <p className="text-sm text-slate-400 mb-6">
+            <p className="text-sm text-slate-500 mb-6">
               Add a short YouTube or Vimeo video to introduce your organization
             </p>
 
             {/* URL Input */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-white mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Video URL
               </label>
               <div className="relative">
@@ -691,7 +691,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                     setIntroVideoError('');
                   }}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className={`w-full rounded-xl bg-slate-100 border pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
+                  className={`w-full rounded-xl bg-slate-100 border pl-10 pr-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
                     introVideoError ? 'border-red-500' : 'border-slate-200 focus:border-teal-500'
                   }`}
                 />
@@ -722,7 +722,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowIntroVideoModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-900"
+                  className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900"
                 >
                   Cancel
                 </button>
@@ -830,10 +830,10 @@ function OverviewTab({
       <div className="lg:col-span-2 space-y-8">
         {/* About */}
         <section className="rounded-2xl bg-white border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">About</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">About</h2>
           {org.description ? (
             <div className="prose prose-sm max-w-none">
-              <p className="text-slate-300 whitespace-pre-wrap">{org.description}</p>
+              <p className="text-slate-600 whitespace-pre-wrap">{org.description}</p>
             </div>
           ) : canEdit ? (
             <EmptyStateCard
@@ -849,10 +849,10 @@ function OverviewTab({
         {/* Story */}
         {(currentStory || canEdit) && (
           <section className="rounded-2xl bg-white border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Our Story</h2>
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Our Story</h2>
             {currentStory ? (
               <div className="prose prose-sm max-w-none">
-                <p className="text-slate-300 whitespace-pre-wrap">{currentStory}</p>
+                <p className="text-slate-600 whitespace-pre-wrap">{currentStory}</p>
               </div>
             ) : canEdit ? (
               <EmptyStateCard
@@ -878,7 +878,7 @@ function OverviewTab({
         {introVideoUrl ? (
           <section className="rounded-2xl bg-white border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                 <VideoCameraIcon className="h-5 w-5 text-teal-400" />
                 Quick Intro
               </h2>
@@ -905,10 +905,10 @@ function OverviewTab({
           <section className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6">
             <div className="text-center py-4">
               <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                <VideoCameraIcon className="h-6 w-6 text-slate-400" />
+                <VideoCameraIcon className="h-6 w-6 text-slate-500" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-1">Add a 10-Second Intro Video</h3>
-              <p className="text-sm text-slate-400 mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 mb-1">Add a 10-Second Intro Video</h3>
+              <p className="text-sm text-slate-500 mb-4">
                 Help visitors get to know your organization quickly with a short intro video
               </p>
               <button
@@ -929,15 +929,15 @@ function OverviewTab({
 
         {/* Indigenous Verification Details */}
         {hasVerificationDetails && (
-          <section className="rounded-2xl bg-gradient-to-br from-amber-900/20 to-slate-800/50 border border-amber-500/20 p-6">
+          <section className="rounded-2xl bg-gradient-to-br from-amber-50 to-white border border-amber-500/20 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20">
                 <ShieldCheckIcon className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">Verified Indigenous Business</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Verified Indigenous Business</h2>
                 {verification?.reviewedAt && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Verified {typeof verification.reviewedAt === 'object' && 'toDate' in verification.reviewedAt
                       ? verification.reviewedAt.toDate().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
                       : ''}
@@ -949,8 +949,8 @@ function OverviewTab({
             <div className="space-y-3">
               {verification?.nationAffiliation && (
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-sm">Nation:</span>
-                  <span className="text-white font-medium">{verification.nationAffiliation}</span>
+                  <span className="text-slate-500 text-sm">Nation:</span>
+                  <span className="text-slate-900 font-medium">{verification.nationAffiliation}</span>
                 </div>
               )}
 
@@ -971,12 +971,12 @@ function OverviewTab({
 
               {verification?.certifications && verification.certifications.length > 0 && (
                 <div className="pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-400 mb-2">Certifications</p>
+                  <p className="text-xs text-slate-500 mb-2">Certifications</p>
                   <div className="flex flex-wrap gap-2">
                     {verification.certifications.map((cert) => (
                       <span
                         key={cert}
-                        className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-300"
+                        className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600"
                       >
                         {cert}
                       </span>
@@ -990,16 +990,16 @@ function OverviewTab({
 
         {/* TRC Commitment */}
         {hasTrcDetails && (
-          <section className="rounded-2xl bg-gradient-to-br from-purple-900/20 to-slate-800/50 border border-purple-500/20 p-6">
+          <section className="rounded-2xl bg-gradient-to-br from-purple-50 to-white border border-purple-500/20 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20">
                 <HeartIcon className="h-5 w-5 text-purple-400" />
               </div>
-              <h2 className="text-lg font-semibold text-white">TRC Commitment</h2>
+              <h2 className="text-lg font-semibold text-slate-900">TRC Commitment</h2>
             </div>
 
             {trc?.commitmentStatement && (
-              <p className="text-slate-300 mb-4">{trc.commitmentStatement}</p>
+              <p className="text-slate-600 mb-4">{trc.commitmentStatement}</p>
             )}
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -1012,7 +1012,7 @@ function OverviewTab({
                   {trc?.hasIndigenousHiringStrategy ? (
                     <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-slate-600" />
+                    <div className="h-4 w-4 rounded-full border border-slate-300" />
                   )}
                   <span className={`text-sm font-medium ${
                     trc?.hasIndigenousHiringStrategy ? 'text-emerald-400' : 'text-slate-500'
@@ -1020,7 +1020,7 @@ function OverviewTab({
                     Hiring Strategy
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">Indigenous hiring initiatives</p>
+                <p className="text-xs text-slate-500">Indigenous hiring initiatives</p>
               </div>
 
               <div className={`rounded-xl p-3 border ${
@@ -1032,7 +1032,7 @@ function OverviewTab({
                   {trc?.leadershipTrainingComplete ? (
                     <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-slate-600" />
+                    <div className="h-4 w-4 rounded-full border border-slate-300" />
                   )}
                   <span className={`text-sm font-medium ${
                     trc?.leadershipTrainingComplete ? 'text-emerald-400' : 'text-slate-500'
@@ -1040,7 +1040,7 @@ function OverviewTab({
                     Leadership Training
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">Cultural competency training</p>
+                <p className="text-xs text-slate-500">Cultural competency training</p>
               </div>
 
               <div className={`rounded-xl p-3 border ${
@@ -1052,7 +1052,7 @@ function OverviewTab({
                   {trc?.isIndigenousOwned ? (
                     <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-slate-600" />
+                    <div className="h-4 w-4 rounded-full border border-slate-300" />
                   )}
                   <span className={`text-sm font-medium ${
                     trc?.isIndigenousOwned ? 'text-emerald-400' : 'text-slate-500'
@@ -1060,7 +1060,7 @@ function OverviewTab({
                     Indigenous-Owned
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">Majority Indigenous ownership</p>
+                <p className="text-xs text-slate-500">Majority Indigenous ownership</p>
               </div>
             </div>
           </section>
@@ -1074,42 +1074,42 @@ function OverviewTab({
 
         {/* Quick Facts */}
         <section className="rounded-2xl bg-white border border-slate-200 p-6">
-          <h3 className="text-sm font-semibold text-white mb-4">Quick Facts</h3>
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">Quick Facts</h3>
           <dl className="space-y-3 text-sm">
             {memberSince && (
               <div className="flex justify-between">
-                <dt className="text-slate-400">Member Since</dt>
-                <dd className="text-white">{memberSince.getFullYear()}</dd>
+                <dt className="text-slate-500">Member Since</dt>
+                <dd className="text-slate-900">{memberSince.getFullYear()}</dd>
               </div>
             )}
             {jobCount > 0 && (
               <div className="flex justify-between">
-                <dt className="text-slate-400">Jobs Posted</dt>
-                <dd className="text-white">{jobCount}</dd>
+                <dt className="text-slate-500">Jobs Posted</dt>
+                <dd className="text-slate-900">{jobCount}</dd>
               </div>
             )}
             {org.foundedYear && (
               <div className="flex justify-between">
-                <dt className="text-slate-400">Founded</dt>
-                <dd className="text-white">{org.foundedYear}</dd>
+                <dt className="text-slate-500">Founded</dt>
+                <dd className="text-slate-900">{org.foundedYear}</dd>
               </div>
             )}
             {org.companySize && (
               <div className="flex justify-between">
-                <dt className="text-slate-400">Team Size</dt>
-                <dd className="text-white">{org.companySize}</dd>
+                <dt className="text-slate-500">Team Size</dt>
+                <dd className="text-slate-900">{org.companySize}</dd>
               </div>
             )}
             {org.industry && (
               <div className="flex justify-between">
-                <dt className="text-slate-400">Industry</dt>
-                <dd className="text-white capitalize">{org.industry.replace('-', ' ')}</dd>
+                <dt className="text-slate-500">Industry</dt>
+                <dd className="text-slate-900 capitalize">{org.industry.replace('-', ' ')}</dd>
               </div>
             )}
             {org.nation && (
               <div className="flex justify-between">
-                <dt className="text-slate-400">Nation</dt>
-                <dd className="text-white">{org.nation}</dd>
+                <dt className="text-slate-500">Nation</dt>
+                <dd className="text-slate-900">{org.nation}</dd>
               </div>
             )}
           </dl>
@@ -1125,12 +1125,12 @@ function OverviewTab({
         {/* Categories */}
         {org.categories && org.categories.length > 0 && (
           <section className="rounded-2xl bg-white border border-slate-200 p-6">
-            <h3 className="text-sm font-semibold text-white mb-4">Categories</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-4">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {org.categories.map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-300"
+                  className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600"
                 >
                   {cat}
                 </span>
@@ -1141,8 +1141,8 @@ function OverviewTab({
 
         {/* Connect With Us */}
         {(org.contactEmail || org.contactPhone || org.links?.website) && (
-          <section className="rounded-2xl bg-gradient-to-br from-teal-900/20 to-slate-800/50 border border-teal-500/20 p-5">
-            <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <section className="rounded-2xl bg-gradient-to-br from-teal-50 to-white border border-teal-500/20 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <EnvelopeIcon className="h-4 w-4 text-teal-400" />
               Connect With Us
             </h3>
@@ -1157,7 +1157,7 @@ function OverviewTab({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-500">Email</p>
-                    <p className="text-sm text-white truncate group-hover:text-teal-400 transition-colors">
+                    <p className="text-sm text-slate-900 truncate group-hover:text-teal-400 transition-colors">
                       {org.contactEmail}
                     </p>
                   </div>
@@ -1173,7 +1173,7 @@ function OverviewTab({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-500">Phone</p>
-                    <p className="text-sm text-white group-hover:text-teal-400 transition-colors">
+                    <p className="text-sm text-slate-900 group-hover:text-teal-400 transition-colors">
                       {org.contactPhone}
                     </p>
                   </div>
@@ -1191,7 +1191,7 @@ function OverviewTab({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-slate-500">Website</p>
-                    <p className="text-sm text-white truncate group-hover:text-teal-400 transition-colors">
+                    <p className="text-sm text-slate-900 truncate group-hover:text-teal-400 transition-colors">
                       {org.links.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     </p>
                   </div>
@@ -1210,7 +1210,7 @@ function OverviewTab({
                       href={org.links.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                       title="LinkedIn"
                     >
                       <SocialIcons.linkedin className="h-4 w-4" />
@@ -1221,7 +1221,7 @@ function OverviewTab({
                       href={org.links.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                       title="Instagram"
                     >
                       <SocialIcons.instagram className="h-4 w-4" />
@@ -1232,7 +1232,7 @@ function OverviewTab({
                       href={org.links.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                       title="Facebook"
                     >
                       <SocialIcons.facebook className="h-4 w-4" />
@@ -1243,7 +1243,7 @@ function OverviewTab({
                       href={org.links.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                       title="X (Twitter)"
                     >
                       <SocialIcons.twitter className="h-4 w-4" />
@@ -1254,7 +1254,7 @@ function OverviewTab({
                       href={org.links.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                       title="YouTube"
                     >
                       <SocialIcons.youtube className="h-4 w-4" />
@@ -1265,7 +1265,7 @@ function OverviewTab({
                       href={org.links.tiktok}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                       title="TikTok"
                     >
                       <SocialIcons.tiktok className="h-4 w-4" />
@@ -1281,8 +1281,8 @@ function OverviewTab({
         {canEdit && (
           <section className="rounded-2xl bg-white border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <UserGroupIcon className="h-4 w-4 text-slate-400" />
+              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <UserGroupIcon className="h-4 w-4 text-slate-500" />
                 Team Members
               </h3>
               <Link
@@ -1304,7 +1304,7 @@ function OverviewTab({
                       {member.displayName?.charAt(0) || member.email.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">
+                      <p className="text-sm text-slate-900 truncate">
                         {member.displayName || member.email}
                       </p>
                       <p className="text-xs text-slate-500 capitalize">{member.role}</p>
@@ -1385,7 +1385,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             icon={<BriefcaseIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-400">No job openings at this time.</p>
+          <p className="text-slate-500">No job openings at this time.</p>
         )}
       </div>
     );
@@ -1457,10 +1457,10 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
 
             {/* Title and location */}
             <div className="flex-1">
-              <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
+              <h3 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
                 {job.title}
               </h3>
-              <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
+              <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
                 <span className="truncate">{job.location || 'Location flexible'}</span>
                 {postedDate && (
                   <>
@@ -1474,7 +1474,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {job.employmentType && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
                   {job.employmentType.replace('-', ' ')}
                 </span>
               )}
@@ -1562,7 +1562,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             icon={<AcademicCapIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-400">No programs available at this time.</p>
+          <p className="text-slate-500">No programs available at this time.</p>
         )}
       </div>
     );
@@ -1603,7 +1603,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
                 <AcademicCapIcon className="h-6 w-6 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
+                <h3 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
                   {scholarship.title}
                 </h3>
                 {amountStr && (
@@ -1615,7 +1615,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             {/* Tags */}
             <div className="mt-3 flex flex-wrap gap-2">
               {scholarship.level && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
                   {scholarship.level}
                 </span>
               )}
@@ -1686,7 +1686,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             icon={<BuildingStorefrontIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-400">No products or services available at this time.</p>
+          <p className="text-slate-500">No products or services available at this time.</p>
         )}
       </div>
     );
@@ -1746,17 +1746,17 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
 
           {/* Content */}
           <div className="flex-1 p-4 pt-7">
-            <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
+            <h3 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
               {service.title}
             </h3>
             {service.tagline && (
-              <p className="text-xs text-slate-400 mt-1 line-clamp-2">{service.tagline}</p>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{service.tagline}</p>
             )}
 
             {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {service.category && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
                   {service.category.replace(/-/g, ' ')}
                 </span>
               )}
@@ -1879,7 +1879,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
             icon={<CalendarIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-400">No upcoming events.</p>
+          <p className="text-slate-500">No upcoming events.</p>
         )}
       </div>
     );
@@ -1890,7 +1890,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
       {/* Conferences */}
       {conferences.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Conferences</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Conferences</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {conferences.map((conf) => {
               const status = getEventStatus(conf.startDate, conf.endDate);
@@ -1901,7 +1901,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                   className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-teal-500/50 transition-colors"
                 >
                   {/* Cover Image */}
-                  <div className="relative h-36 bg-gradient-to-br from-purple-900/30 to-slate-800">
+                  <div className="relative h-36 bg-gradient-to-br from-purple-50 to-slate-100">
                     {conf.imageUrl ? (
                       <Image
                         src={conf.imageUrl}
@@ -1933,7 +1933,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     {/* Format badge */}
                     {conf.format && (
                       <div className="absolute top-2 right-2">
-                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-600 capitalize">
                           {conf.format}
                         </span>
                       </div>
@@ -1942,12 +1942,12 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
                   {/* Content */}
                   <div className="flex-1 p-4">
-                    <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-2">
+                    <h4 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
                       {conf.title}
                     </h4>
 
                     <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>{formatEventDate(conf.startDate)}</span>
                         {conf.endDate && conf.endDate !== conf.startDate && (
@@ -1955,7 +1955,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                         )}
                       </div>
                       {conf.location && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
                           <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate">{conf.location}</span>
                         </div>
@@ -1966,7 +1966,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
                       {conf.cost ? (
                         <span className={`text-xs font-medium ${
-                          conf.cost.toLowerCase().includes('free') ? 'text-emerald-400' : 'text-slate-400'
+                          conf.cost.toLowerCase().includes('free') ? 'text-emerald-400' : 'text-slate-500'
                         }`}>
                           {conf.cost}
                         </span>
@@ -1988,7 +1988,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
       {/* Pow Wows */}
       {powwows.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Pow Wows</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Pow Wows</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {powwows.map((powwow) => {
               const status = getEventStatus(powwow.startDate || null, powwow.endDate || null);
@@ -1999,7 +1999,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                   className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-rose-500/50 transition-colors"
                 >
                   {/* Cover Image */}
-                  <div className="relative h-36 bg-gradient-to-br from-rose-900/30 to-slate-800">
+                  <div className="relative h-36 bg-gradient-to-br from-rose-50 to-slate-100">
                     {powwow.imageUrl ? (
                       <Image
                         src={powwow.imageUrl}
@@ -2037,7 +2037,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     {/* Event type badge */}
                     {powwow.eventType && (
                       <div className="absolute top-2 right-2">
-                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-600 capitalize">
                           {powwow.eventType}
                         </span>
                       </div>
@@ -2046,15 +2046,15 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
                   {/* Content */}
                   <div className="flex-1 p-4">
-                    <h4 className="font-semibold text-white group-hover:text-rose-400 transition-colors line-clamp-2">
+                    <h4 className="font-semibold text-slate-900 group-hover:text-rose-400 transition-colors line-clamp-2">
                       {powwow.name}
                     </h4>
                     {powwow.host && (
-                      <p className="text-xs text-slate-400 mt-1">Hosted by {powwow.host}</p>
+                      <p className="text-xs text-slate-500 mt-1">Hosted by {powwow.host}</p>
                     )}
 
                     <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>
                           {powwow.dateRange || formatEventDate(powwow.startDate)}
@@ -2064,7 +2064,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                         </span>
                       </div>
                       {powwow.location && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
                           <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate">{powwow.location}</span>
                         </div>
@@ -2165,7 +2165,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
             icon={<CurrencyDollarIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-400">No funding opportunities available at this time.</p>
+          <p className="text-slate-500">No funding opportunities available at this time.</p>
         )}
       </div>
     );
@@ -2184,7 +2184,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
             className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-emerald-500/50 transition-colors"
           >
             {/* Header with gradient */}
-            <div className="relative h-24 bg-gradient-to-br from-emerald-900/40 to-slate-800 p-4">
+            <div className="relative h-24 bg-gradient-to-br from-emerald-50 to-slate-100 p-4">
               {/* Featured badge */}
               {grant.featured && (
                 <span className="absolute top-2 left-2 rounded-full bg-amber-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm">
@@ -2219,15 +2219,15 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
             {/* Content */}
             <div className="flex-1 p-4 pt-8">
-              <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
+              <h3 className="font-semibold text-slate-900 group-hover:text-emerald-400 transition-colors line-clamp-2">
                 {grant.title}
               </h3>
-              <p className="text-xs text-slate-400 mt-1">{grant.provider}</p>
+              <p className="text-xs text-slate-500 mt-1">{grant.provider}</p>
 
               {/* Eligibility badges */}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {grant.grantType && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
                     {grant.grantType.replace(/-/g, ' ')}
                   </span>
                 )}
@@ -2298,7 +2298,7 @@ function ActivityIndicator({ updatedAt }: { updatedAt: OrganizationProfile['upda
     dotColor = 'bg-teal-400';
   } else if (diffDays <= 90) {
     statusText = 'Active';
-    statusColor = 'text-slate-400';
+    statusColor = 'text-slate-500';
     dotColor = 'bg-slate-400';
   } else {
     return null; // Don't show if inactive for too long
@@ -2368,7 +2368,7 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
   return (
     <section className="rounded-2xl bg-white border border-slate-200 p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-white">Profile Strength</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Profile Strength</h3>
         <span className={`text-xl font-bold ${getScoreColor(score)}`}>{score}%</span>
       </div>
 
@@ -2388,7 +2388,7 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
             {incompleteItems.slice(0, 4).map((item) => (
               <span
                 key={item.id}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-400"
+                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
               >
                 <span className="text-slate-500">+{item.weight}</span>
                 {item.label}
@@ -2434,12 +2434,12 @@ function EmptyStateCard({
   return (
     <div className="flex flex-col items-center py-6">
       {icon && (
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-      <p className="text-sm text-slate-400 mb-4 max-w-sm text-center">{description}</p>
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+      <p className="text-sm text-slate-500 mb-4 max-w-sm text-center">{description}</p>
       {onCtaClick ? (
         <button onClick={onCtaClick} className={buttonClass}>
           {ctaText}

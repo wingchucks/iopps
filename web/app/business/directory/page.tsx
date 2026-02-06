@@ -154,7 +154,7 @@ export default function BusinessDirectoryPage() {
   };
 
   return (
-    <FeedLayout activeNav="business" fullWidth>
+    <FeedLayout activeNav="feed" fullWidth>
       <SectionHeader title="Business Directory" subtitle="Discover and connect with Indigenous-owned businesses" icon="briefcase" />
 
       {/* Hero Section */}
@@ -187,7 +187,7 @@ export default function BusinessDirectoryPage() {
           {/* Search Bar */}
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search businesses..."
@@ -216,8 +216,8 @@ export default function BusinessDirectoryPage() {
               onClick={() => setBusinessType('all')}
               className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 businessType === 'all'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-white text-slate-900'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               All Businesses
@@ -227,7 +227,7 @@ export default function BusinessDirectoryPage() {
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 businessType === 'products'
                   ? 'bg-teal-500 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               <BuildingStorefrontIcon className="h-4 w-4" />
@@ -238,7 +238,7 @@ export default function BusinessDirectoryPage() {
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 businessType === 'services'
                   ? 'bg-indigo-500 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
               <BriefcaseIcon className="h-4 w-4" />
@@ -343,7 +343,7 @@ export default function BusinessDirectoryPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center shadow-sm">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-            <MagnifyingGlassIcon className="h-8 w-8 text-slate-400" />
+            <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
           </div>
           <h3 className="text-lg font-semibold text-slate-900 mb-2">No businesses found</h3>
           <p className="text-slate-500 mb-4">
