@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0a; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .poster { width: 1080px; height: 1920px; background: linear-gradient(160deg, #0f0f1a 0%, #1a1a2e 25%, #16213e 50%, #1a1a2e 75%, #0f0f1a 100%); padding: 80px 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center; position: relative; overflow: hidden; }
+    .orb1 { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(0, 212, 170, 0.35) 0%, transparent 70%); top: -100px; right: -150px; filter: blur(60px); }
+    .orb2 { position: absolute; width: 500px; height: 500px; background: radial-gradient(circle, rgba(102, 51, 255, 0.3) 0%, transparent 70%); bottom: 300px; left: -100px; filter: blur(50px); }
+    .orb3 { position: absolute; width: 350px; height: 350px; background: radial-gradient(circle, rgba(102, 51, 255, 0.25) 0%, transparent 70%); bottom: -50px; right: -50px; filter: blur(45px); }
+    .corner-tl { position: absolute; top: 40px; left: 40px; width: 80px; height: 80px; border-top: 4px solid rgba(0, 212, 170, 0.6); border-left: 4px solid rgba(0, 212, 170, 0.6); }
+    .corner-br { position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px; border-bottom: 4px solid rgba(102, 51, 255, 0.6); border-right: 4px solid rgba(102, 51, 255, 0.6); }
+    .top-section { position: relative; z-index: 10; width: 100%; }
+    .hiring-badge { display: inline-block; background: linear-gradient(135deg, #00d4aa, #00f5c4); color: #0f0f1a; font-size: 32px; font-weight: 900; padding: 16px 50px; border-radius: 50px; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 50px; }
+    .company-name { color: #ffffff; font-size: 48px; font-weight: 700; margin-bottom: 15px; opacity: 0.9; }
+    .company-logo { width: 120px; height: 120px; background: #ffffff; border-radius: 24px; margin: 0 auto 40px; display: flex; align-items: center; justify-content: center; font-size: 50px; font-weight: 900; color: #1a5276; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .mid-section { position: relative; z-index: 10; width: 100%; }
+    .job-title { font-size: 64px; font-weight: 900; line-height: 1.15; background: linear-gradient(135deg, #00d4aa 0%, #00f5c4 50%, #6633ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 40px; letter-spacing: -2px; }
+    .divider { width: 180px; height: 6px; background: linear-gradient(90deg, #00d4aa, #6633ff); margin: 0 auto 40px; border-radius: 3px; box-shadow: 0 0 30px rgba(0, 212, 170, 0.4); }
+    .details { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+    .detail-item { display: flex; align-items: center; gap: 14px; color: rgba(255, 255, 255, 0.85); font-size: 38px; font-weight: 600; }
+    .detail-icon { font-size: 38px; }
+    .bottom-section { position: relative; z-index: 10; width: 100%; }
+    .apply-text { color: rgba(255, 255, 255, 0.7); font-size: 34px; font-weight: 600; margin-bottom: 30px; letter-spacing: 1px; }
+    .cta-button { display: inline-block; background: linear-gradient(135deg, #00d4aa, #00f5c4); color: #0f0f1a; font-size: 36px; font-weight: 900; padding: 22px 60px; border-radius: 50px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 40px; box-shadow: 0 0 40px rgba(0, 212, 170, 0.5); }
+    .branding { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+    .branding img { width: 140px; height: 140px; filter: drop-shadow(0 0 30px rgba(0, 212, 170, 0.8)); }
+    .branding .site { background: linear-gradient(135deg, #00d4aa, #00f5c4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 900; font-size: 52px; }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="orb1"></div><div class="orb2"></div><div class="orb3"></div>
+    <div class="corner-tl"></div><div class="corner-br"></div>
+    <div class="top-section">
+      <div class="hiring-badge">🔥 Now Hiring</div>
+      <div class="company-logo">W</div>
+      <div class="company-name">Westland Insurance</div>
+    </div>
+    <div class="mid-section">
+      <div class="job-title">Commercial Insurance Advisor</div>
+      <div class="divider"></div>
+      <div class="details">
+        <div class="detail-item"><span class="detail-icon">📍</span> Swift Current, SK</div>
+        <div class="detail-item"><span class="detail-icon">⏰</span> Full-Time</div>
+        <div class="detail-item"><span class="detail-icon">📈</span> 2-5 Years Experience</div>
+        <div class="detail-item"><span class="detail-icon">🎓</span> Level 2 License or CAIB/CIP</div>
+      </div>
+    </div>
+    <div class="bottom-section">
+      <div class="apply-text">Find this opportunity on</div>
+      <div class="branding">
+        <img src="../../web/public/logo.png" alt="IOPPS">
+        <span class="site">IOPPS.CA</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

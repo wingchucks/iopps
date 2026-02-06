@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { EmployerProfile, IndustryType, CompanySize } from "@/lib/types";
 import {
@@ -137,7 +137,7 @@ export default function EditEmployerPage() {
       // Delete old logo if exists
       if (logoUrl) {
         try {
-          const oldLogoRef = ref(storage, `employers/${employerId}/logo`);
+          const oldLogoRef = storageRef(storage, `employers/${employerId}/logo`);
           await deleteObject(oldLogoRef);
         } catch (e) {
           // Ignore if old logo doesn't exist
@@ -145,7 +145,7 @@ export default function EditEmployerPage() {
       }
 
       // Upload new logo
-      const logoRef = ref(storage, `employers/${employerId}/logo`);
+      const logoRef = storageRef(storage, `employers/${employerId}/logo`);
       await uploadBytes(logoRef, file);
       const newLogoUrl = await getDownloadURL(logoRef);
 
@@ -177,7 +177,7 @@ export default function EditEmployerPage() {
 
       // Delete from storage
       try {
-        const logoRef = ref(storage, `employers/${employerId}/logo`);
+        const logoRef = storageRef(storage, `employers/${employerId}/logo`);
         await deleteObject(logoRef);
       } catch (e) {
         // Ignore if doesn't exist
