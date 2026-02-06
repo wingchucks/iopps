@@ -3,7 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface ShortcutConfig {
+export interface ShortcutConfig {
   key: string;
   ctrl?: boolean;
   meta?: boolean;
@@ -11,6 +11,9 @@ interface ShortcutConfig {
   action: () => void;
   description: string;
 }
+
+// Alias for backwards compatibility
+export type KeyboardShortcut = ShortcutConfig;
 
 export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]) {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
