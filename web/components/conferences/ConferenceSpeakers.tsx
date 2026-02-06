@@ -33,8 +33,8 @@ function SpeakerCard({
       ref={cardRef}
       className={`rounded-xl border transition-all ${
         isHighlighted
-          ? "border-[#14B8A6] bg-[#14B8A6]/5 ring-2 ring-[#14B8A6]/30"
-          : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
+          ? "border-[#0D9488] bg-[#0D9488]/5 ring-2 ring-[#0D9488]/30"
+          : "border-slate-200 bg-slate-50 hover:border-slate-300"
       }`}
     >
       <button
@@ -50,7 +50,7 @@ function SpeakerCard({
               className="h-16 w-16 rounded-xl object-cover"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-slate-800 text-lg font-bold text-slate-400">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#0D9488]/20 to-slate-100 text-lg font-bold text-slate-500">
               {speaker.name
                 .split(" ")
                 .map((n) => n[0])
@@ -63,12 +63,12 @@ function SpeakerCard({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-100">{speaker.name}</h3>
+          <h3 className="font-semibold text-slate-800">{speaker.name}</h3>
           {speaker.title && (
-            <p className="text-sm text-slate-400">{speaker.title}</p>
+            <p className="text-sm text-slate-500">{speaker.title}</p>
           )}
           {speaker.organization && (
-            <p className="text-sm text-[#14B8A6]">{speaker.organization}</p>
+            <p className="text-sm text-[#0D9488]">{speaker.organization}</p>
           )}
           {speaker.nation && (
             <p className="mt-1 text-xs text-slate-500">{speaker.nation}</p>
@@ -80,13 +80,13 @@ function SpeakerCard({
               {speaker.topics.slice(0, 3).map((topic, index) => (
                 <span
                   key={index}
-                  className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400"
+                  className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
                 >
                   {topic}
                 </span>
               ))}
               {speaker.topics.length > 3 && (
-                <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
                   +{speaker.topics.length - 3}
                 </span>
               )}
@@ -112,11 +112,11 @@ function SpeakerCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-slate-800 px-4 py-4">
+        <div className="border-t border-slate-200 px-4 py-4">
           {/* Bio */}
           {speaker.bio && (
             <div className="mb-4">
-              <p className="text-sm leading-relaxed text-slate-300">
+              <p className="text-sm leading-relaxed text-slate-600">
                 {speaker.bio}
               </p>
             </div>
@@ -132,15 +132,15 @@ function SpeakerCard({
                 {sessions.map((session, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900 p-2 text-sm"
+                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm"
                   >
                     <div className="text-xs text-slate-500">
                       <span className="block">{session.day}</span>
-                      <span className="font-medium text-slate-400">
+                      <span className="font-medium text-slate-500">
                         {session.time}
                       </span>
                     </div>
-                    <span className="text-slate-300">{session.title}</span>
+                    <span className="text-slate-600">{session.title}</span>
                   </div>
                 ))}
               </div>
@@ -157,7 +157,7 @@ function SpeakerCard({
                   href={speaker.linkedinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-[#0077B5] hover:text-[#0077B5]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-[#0077B5] hover:text-[#0077B5]"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -174,7 +174,7 @@ function SpeakerCard({
                   href={speaker.twitterUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-slate-500 hover:text-slate-900"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -191,7 +191,7 @@ function SpeakerCard({
                   href={speaker.websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -254,11 +254,11 @@ export default function ConferenceSpeakers({
   };
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-200">Speakers</h2>
-          <p className="mt-1 text-sm text-slate-400">
+          <h2 className="text-xl font-bold text-slate-700">Speakers</h2>
+          <p className="mt-1 text-sm text-slate-500">
             Meet the {speakers.length} speaker{speakers.length > 1 ? "s" : ""}{" "}
             presenting at this conference
           </p>

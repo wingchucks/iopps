@@ -27,9 +27,9 @@ export default function ConferenceVenue({
   )}`;
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
-      <h2 className="text-xl font-bold text-slate-200">Venue & Travel</h2>
-      <p className="mt-1 text-sm text-slate-400">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+      <h2 className="text-xl font-bold text-slate-700">Venue & Travel</h2>
+      <p className="mt-1 text-sm text-slate-500">
         Everything you need to know about getting there
       </p>
 
@@ -37,7 +37,7 @@ export default function ConferenceVenue({
         {/* Map & Location */}
         <div className="space-y-4">
           {/* Map Embed or Placeholder */}
-          <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-700 bg-slate-900">
+          <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-300 bg-slate-50">
             {venue.mapUrl ? (
               <iframe
                 src={venue.mapUrl}
@@ -52,10 +52,10 @@ export default function ConferenceVenue({
                 href={googleMapsSearchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-800 to-slate-900 transition-colors hover:from-slate-700 hover:to-slate-800"
+                className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-100 to-slate-50 transition-colors hover:from-slate-200 hover:to-slate-100"
               >
                 <svg
-                  className="h-12 w-12 text-[#14B8A6]"
+                  className="h-12 w-12 text-[#0D9488]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -73,7 +73,7 @@ export default function ConferenceVenue({
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-slate-300">
+                <span className="text-sm font-medium text-slate-600">
                   View on Google Maps
                 </span>
               </a>
@@ -81,20 +81,20 @@ export default function ConferenceVenue({
           </div>
 
           {/* Venue Card */}
-          <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
-            <h3 className="font-semibold text-slate-100">{venue.name}</h3>
+          <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
+            <h3 className="font-semibold text-slate-800">{venue.name}</h3>
             {fullAddress && (
-              <p className="mt-1 text-sm text-slate-400">{fullAddress}</p>
+              <p className="mt-1 text-sm text-slate-500">{fullAddress}</p>
             )}
             {!fullAddress && location && (
-              <p className="mt-1 text-sm text-slate-400">{location}</p>
+              <p className="mt-1 text-sm text-slate-500">{location}</p>
             )}
 
             <a
               href={venue.mapUrl || googleMapsSearchUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#14B8A6] hover:underline"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#0D9488] hover:underline"
             >
               <svg
                 className="h-4 w-4"
@@ -118,9 +118,9 @@ export default function ConferenceVenue({
         <div className="space-y-4">
           {/* Parking */}
           {venue.parkingInfo && (
-            <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+            <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
                   <svg
                     className="h-5 w-5 text-blue-400"
                     fill="none"
@@ -136,8 +136,8 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-200">Parking</h4>
-                  <p className="text-sm text-slate-400">{venue.parkingInfo}</p>
+                  <h4 className="font-medium text-slate-700">Parking</h4>
+                  <p className="text-sm text-slate-500">{venue.parkingInfo}</p>
                 </div>
               </div>
             </div>
@@ -145,9 +145,9 @@ export default function ConferenceVenue({
 
           {/* Public Transit */}
           {venue.transitInfo && (
-            <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+            <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
                   <svg
                     className="h-5 w-5 text-green-400"
                     fill="none"
@@ -163,8 +163,8 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-200">Public Transit</h4>
-                  <p className="text-sm text-slate-400">{venue.transitInfo}</p>
+                  <h4 className="font-medium text-slate-700">Public Transit</h4>
+                  <p className="text-sm text-slate-500">{venue.transitInfo}</p>
                 </div>
               </div>
             </div>
@@ -172,9 +172,9 @@ export default function ConferenceVenue({
 
           {/* Nearby Hotels */}
           {venue.nearbyHotels && (
-            <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+            <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
                   <svg
                     className="h-5 w-5 text-purple-400"
                     fill="none"
@@ -190,8 +190,8 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-200">Nearby Hotels</h4>
-                  <p className="text-sm text-slate-400">{venue.nearbyHotels}</p>
+                  <h4 className="font-medium text-slate-700">Nearby Hotels</h4>
+                  <p className="text-sm text-slate-500">{venue.nearbyHotels}</p>
                 </div>
               </div>
             </div>
@@ -199,11 +199,11 @@ export default function ConferenceVenue({
 
           {/* Accessibility */}
           {(venue.accessibilityInfo || (accessibilityFeatures && accessibilityFeatures.length > 0)) && (
-            <div className="rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-4">
+            <div className="rounded-xl border border-[#0D9488]/30 bg-[#0D9488]/5 p-4">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#14B8A6]/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0D9488]/10">
                   <svg
-                    className="h-5 w-5 text-[#14B8A6]"
+                    className="h-5 w-5 text-[#0D9488]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -217,9 +217,9 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-200">Accessibility</h4>
+                  <h4 className="font-medium text-slate-700">Accessibility</h4>
                   {venue.accessibilityInfo && (
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-slate-500">
                       {venue.accessibilityInfo}
                     </p>
                   )}
@@ -228,7 +228,7 @@ export default function ConferenceVenue({
                       {accessibilityFeatures.map((feature, index) => (
                         <span
                           key={index}
-                          className="inline-flex items-center gap-1 rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-2 py-0.5 text-xs text-[#14B8A6]"
+                          className="inline-flex items-center gap-1 rounded-full border border-[#0D9488]/30 bg-[#0D9488]/10 px-2 py-0.5 text-xs text-[#0D9488]"
                         >
                           <svg
                             className="h-3 w-3"
