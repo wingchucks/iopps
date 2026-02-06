@@ -18,14 +18,14 @@ const VIEW_PREFERENCE_KEY = "iopps-map-view-preference";
  */
 export default function ViewToggle({ view, onChange, disabled = false }: ViewToggleProps) {
   return (
-    <div className="flex items-center bg-slate-800 rounded-lg p-1">
+    <div className="flex items-center bg-slate-100 rounded-lg p-1">
       <button
         onClick={() => onChange("map")}
         disabled={disabled}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
           view === "map"
-            ? "bg-slate-700 text-white"
-            : "text-slate-400 hover:text-white"
+            ? "bg-white text-slate-900 shadow-sm"
+            : "text-slate-500 hover:text-slate-900"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <MapIcon className="w-4 h-4" />
@@ -36,8 +36,8 @@ export default function ViewToggle({ view, onChange, disabled = false }: ViewTog
         disabled={disabled}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
           view === "list"
-            ? "bg-slate-700 text-white"
-            : "text-slate-400 hover:text-white"
+            ? "bg-white text-slate-900 shadow-sm"
+            : "text-slate-500 hover:text-slate-900"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <ListBulletIcon className="w-4 h-4" />
@@ -89,10 +89,10 @@ export function MobileViewToggle({
     <button
       onClick={() => onChange(nextView)}
       disabled={disabled}
-      className="flex items-center justify-center w-12 h-12 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex items-center justify-center w-12 h-12 bg-white hover:bg-slate-100 border border-slate-200 rounded-full shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title={label}
     >
-      <Icon className="w-5 h-5 text-white" />
+      <Icon className="w-5 h-5 text-slate-900" />
     </button>
   );
 }

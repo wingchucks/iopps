@@ -187,7 +187,7 @@ export default function LocationSearch({
       {/* Search Input */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
             ref={inputRef}
             type="text"
@@ -196,14 +196,14 @@ export default function LocationSearch({
             onFocus={() => setShowSuggestions(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full pl-9 pr-8 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           />
           {query && (
             <button
               onClick={handleClear}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded transition-colors"
             >
-              <XMarkIcon className="w-4 h-4 text-slate-400" />
+              <XMarkIcon className="w-4 h-4 text-slate-500" />
             </button>
           )}
         </div>
@@ -212,7 +212,7 @@ export default function LocationSearch({
         <select
           value={radius}
           onChange={(e) => handleRadiusChange(parseInt(e.target.value) as RadiusOption)}
-          className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           {radiusOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -224,7 +224,7 @@ export default function LocationSearch({
 
       {/* Suggestions Dropdown */}
       {showDropdown && (
-        <div className="absolute z-50 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {/* Search Results */}
           {suggestions.length > 0 && (
             <div>
@@ -237,8 +237,8 @@ export default function LocationSearch({
                   onClick={() => handleSelect(city)}
                   className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
                     index === highlightedIndex
-                      ? "bg-slate-700 text-white"
-                      : "text-slate-300 hover:bg-slate-700"
+                      ? "bg-slate-100 text-slate-900"
+                      : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
                   <MapPinIcon className="w-4 h-4 text-slate-500" />
@@ -260,8 +260,8 @@ export default function LocationSearch({
                   onClick={() => handleSelect(city)}
                   className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
                     index === highlightedIndex
-                      ? "bg-slate-700 text-white"
-                      : "text-slate-300 hover:bg-slate-700"
+                      ? "bg-slate-100 text-slate-900"
+                      : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
                   <MapPinIcon className="w-4 h-4 text-slate-500" />
