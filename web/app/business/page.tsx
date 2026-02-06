@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
 import { PageShell } from "@/components/PageShell";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import { VendorCard } from "@/components/shop";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
@@ -88,85 +89,25 @@ export default function BusinessPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-400/20 via-transparent to-transparent" />
-        
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }} />
-
-        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
-          {/* Eyebrow */}
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🏪</span>
-            <p className="text-sm font-bold uppercase tracking-wider text-white/90">
-              Shop Indigenous
-            </p>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-            Support Indigenous Businesses
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-lg text-white/80 max-w-2xl mb-6">
-            Discover authentic Indigenous-owned businesses across Turtle Island. 
-            Every purchase supports Indigenous entrepreneurs and communities.
-          </p>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-6 mb-8">
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-                <span className="text-lg">🏢</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{totalBusinesses}+</p>
-                <p className="text-xs text-white/70">Businesses Listed</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-                <CheckBadgeIcon className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">100%</p>
-                <p className="text-xs text-white/70">Indigenous-Owned</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-                <MapPinIcon className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">Canada-wide</p>
-                <p className="text-xs text-white/70">Coast to Coast</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="max-w-xl">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name, category, or location..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white py-3.5 pl-12 pr-4 text-slate-900 placeholder-slate-500 shadow-xl focus:outline-none focus:ring-4 focus:ring-white/30"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      <SimplePageHeader
+        title="Shop Indigenous"
+        subtitle="Discover authentic Indigenous-owned businesses across Turtle Island. Every purchase supports Indigenous entrepreneurs and communities."
+      />
 
       <PageShell>
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-xl">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name, category, or location..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg bg-slate-800 border border-slate-700 py-3 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
         {loading ? (
           // Loading skeleton
           <div className="space-y-8 py-8">
