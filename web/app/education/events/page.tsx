@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PageShell } from "@/components/PageShell";
+import { FeedLayout } from "@/components/opportunity-graph";
 import { listEducationEvents } from "@/lib/firestore";
 import type { EducationEvent, EducationEventType, EducationEventFormat } from "@/lib/types";
 
@@ -110,18 +110,18 @@ export default function EducationEventsPage() {
   };
 
   return (
-    <PageShell>
+    <FeedLayout activeNav="education">
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
+      <nav className="mb-8 text-sm text-slate-500">
+        <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
         <span className="mx-2">→</span>
-        <Link href="/education" className="hover:text-white transition-colors">
+        <Link href="/education" className="hover:text-slate-900 transition-colors">
           Education
         </Link>
         <span className="mx-2">→</span>
-        <span className="text-white">Events</span>
+        <span className="text-slate-900">Events</span>
       </nav>
 
       {/* Hero Section */}
@@ -129,16 +129,16 @@ export default function EducationEventsPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
           Education
         </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl">
+        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-slate-900 sm:text-5xl">
           Education Events
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
           Open houses, info sessions, campus tours, and more from Indigenous-serving institutions.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-8">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 mb-8">
         <div className="grid gap-4 md:grid-cols-2">
           {/* Event Type */}
           <div>
@@ -148,7 +148,7 @@ export default function EducationEventsPage() {
             <select
               value={eventType}
               onChange={(e) => setEventType(e.target.value as EducationEventType | "")}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-[#14B8A6] focus:outline-none"
             >
               {EVENT_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -166,7 +166,7 @@ export default function EducationEventsPage() {
             <select
               value={eventFormat}
               onChange={(e) => setEventFormat(e.target.value as EducationEventFormat | "")}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-[#14B8A6] focus:outline-none"
             >
               {EVENT_FORMATS.map((format) => (
                 <option key={format.value} value={format.value}>
@@ -180,7 +180,7 @@ export default function EducationEventsPage() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-400">
+        <p className="text-slate-500">
           {loading ? "Loading..." : `${events.length} upcoming events`}
         </p>
         {(eventType || eventFormat) && (
@@ -200,7 +200,7 @@ export default function EducationEventsPage() {
       {loading ? (
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-32" />
+            <div key={i} className="animate-pulse rounded-2xl bg-slate-50 h-32" />
           ))}
         </div>
       ) : events.length > 0 ? (
@@ -209,14 +209,14 @@ export default function EducationEventsPage() {
             <Link
               key={event.id}
               href={`/education/events/${event.id}`}
-              className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+              className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50"
             >
               {/* Date Box */}
               <div className="flex flex-col items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 p-4 shrink-0 w-20">
                 <span className="text-xs font-semibold text-[#14B8A6] uppercase">
                   {getDatePart(event.startDatetime, "month")}
                 </span>
-                <span className="text-2xl font-bold text-white">
+                <span className="text-2xl font-bold text-slate-900">
                   {getDatePart(event.startDatetime, "day")}
                 </span>
               </div>
@@ -227,16 +227,16 @@ export default function EducationEventsPage() {
                   <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
                     {event.type?.replace("_", " ")}
                   </span>
-                  <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 capitalize">
+                  <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 capitalize">
                     {event.format}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
+                <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#14B8A6] transition-colors">
                   {event.name}
                 </h3>
 
-                <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-400">
+                <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
                   <span className="text-[#14B8A6] font-medium">{event.schoolName}</span>
                   <span>🕐 {formatEventTime(event.startDatetime)}</span>
                   {event.location && <span>📍 {event.location}</span>}
@@ -251,10 +251,10 @@ export default function EducationEventsPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
           <span className="text-5xl mb-4 block">📅</span>
-          <h3 className="text-xl font-bold text-white mb-2">No Upcoming Events</h3>
-          <p className="text-slate-400 mb-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No Upcoming Events</h3>
+          <p className="text-slate-500 mb-6">
             {eventType || eventFormat
               ? "Try adjusting your filters."
               : "Check back soon for education events from schools."}
@@ -269,11 +269,11 @@ export default function EducationEventsPage() {
       )}
 
       {/* CTA Section */}
-      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
+      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Hosting an Education Event?
         </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+        <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
           List your open house, info session, or campus tour on IOPPS to reach Indigenous students.
         </p>
         <Link
@@ -283,6 +283,6 @@ export default function EducationEventsPage() {
           Post an Event
         </Link>
       </section>
-    </PageShell>
+    </FeedLayout>
   );
 }
