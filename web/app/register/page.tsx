@@ -302,12 +302,12 @@ export default function RegisterPage() {
     <>
       {/* Role Selector Modal for Google Sign-In */}
       {showRoleSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/50 animate-fade-in">
-            <h2 className="text-xl font-semibold text-slate-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-lg animate-fade-in">
+            <h2 className="text-xl font-semibold text-slate-900">
               Choose your account type
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-500">
               Select how you&apos;ll be using IOPPS
             </p>
 
@@ -333,12 +333,12 @@ export default function RegisterPage() {
 
       {/* Intent Selector Modal for Google Sign-In (Employers) */}
       {showIntentSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 shadow-lg shadow-black/50 animate-fade-in">
-            <h2 className="text-xl font-semibold text-slate-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-lg animate-fade-in">
+            <h2 className="text-xl font-semibold text-slate-900">
               What would you like to do on IOPPS?
             </h2>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-500">
               Help us customize your experience
             </p>
 
@@ -347,12 +347,12 @@ export default function RegisterPage() {
                 <button
                   key={option.id}
                   onClick={() => handleIntentSelection(option.id)}
-                  className="flex items-start gap-3 rounded-xl border border-slate-700 bg-slate-800/50 p-4 text-left transition hover:border-teal-500/50 hover:bg-slate-800"
+                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-teal-500/50 hover:bg-slate-100"
                 >
-                  <option.icon className="h-6 w-6 flex-shrink-0 text-teal-400" />
+                  <option.icon className="h-6 w-6 flex-shrink-0 text-teal-500" />
                   <div>
-                    <p className="font-medium text-slate-200">{option.title}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">{option.description}</p>
+                    <p className="font-medium text-slate-800">{option.title}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
                   </div>
                 </button>
               ))}
@@ -364,7 +364,7 @@ export default function RegisterPage() {
                 setShowRoleSelector(true);
                 setPendingGoogleRole(null);
               }}
-              className="mt-4 text-sm text-slate-500 hover:text-slate-300"
+              className="mt-4 text-sm text-slate-500 hover:text-slate-700"
             >
               ← Back to role selection
             </button>
@@ -374,16 +374,16 @@ export default function RegisterPage() {
 
       <AuthLayout title="Register" subtitle="Create your IOPPS account">
         {error && (
-          <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
         {success ? (
-          <div className="rounded-2xl border border-green-500/40 bg-green-500/10 p-6 text-green-200 animate-fade-in">
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-green-800 animate-fade-in">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -398,7 +398,7 @@ export default function RegisterPage() {
                 sign in here
               </Link>.
             </p>
-            <p className="mt-4 text-xs text-green-300">
+            <p className="mt-4 text-xs text-green-600">
               Don&apos;t see the email? Check your spam folder or{" "}
               <button
                 onClick={() => {
@@ -410,7 +410,7 @@ export default function RegisterPage() {
                   setRole(null);
                   setEmployerIntent(null);
                 }}
-                className="underline hover:text-green-100"
+                className="underline hover:text-green-800"
               >
                 try again
               </button>.
@@ -426,10 +426,10 @@ export default function RegisterPage() {
 
             <AuthDivider text="Or register with email" />
 
-            <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+            <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
               {/* Step 1: Account Type Selection - FIRST */}
               <div>
-                <p className="block text-sm font-medium text-slate-200 mb-3">
+                <p className="block text-sm font-medium text-slate-700 mb-3">
                   I am signing up as:
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -456,7 +456,7 @@ export default function RegisterPage() {
               {/* Intent Selection for Employers */}
               {role === "employer" && (
                 <div className="animate-fade-in">
-                  <p className="block text-sm font-medium text-slate-200 mb-3">
+                  <p className="block text-sm font-medium text-slate-700 mb-3">
                     What would you like to do on IOPPS?
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -467,16 +467,16 @@ export default function RegisterPage() {
                         onClick={() => setEmployerIntent(option.id)}
                         className={`flex items-start gap-3 rounded-xl border p-3 text-left transition ${
                           employerIntent === option.id
-                            ? "border-teal-500 bg-teal-500/10"
-                            : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                            ? "border-teal-500 bg-teal-50"
+                            : "border-slate-200 bg-slate-50 hover:border-slate-300"
                         }`}
                       >
                         <option.icon className={`h-5 w-5 flex-shrink-0 ${
-                          employerIntent === option.id ? "text-teal-400" : "text-slate-500"
+                          employerIntent === option.id ? "text-teal-500" : "text-slate-500"
                         }`} />
                         <div>
                           <p className={`text-sm font-medium ${
-                            employerIntent === option.id ? "text-teal-400" : "text-slate-300"
+                            employerIntent === option.id ? "text-teal-600" : "text-slate-700"
                           }`}>{option.title}</p>
                           <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
                         </div>
@@ -488,7 +488,7 @@ export default function RegisterPage() {
 
               {/* Step 2: Account Details - Only show after role is selected */}
               {role && (
-                <div className="space-y-5 animate-fade-in pt-2 border-t border-slate-800">
+                <div className="space-y-5 animate-fade-in pt-2 border-t border-slate-200">
                   <AuthInput
                     label={role === "employer" ? "Organization Name" : "Your Full Name"}
                     type="text"
@@ -557,14 +557,14 @@ export default function RegisterPage() {
 
               {/* Prompt to select role if not selected */}
               {!role && (
-                <div className="text-center py-4 px-6 rounded-xl bg-slate-800/50 border border-slate-700">
-                  <p className="text-sm text-slate-400">
+                <div className="text-center py-4 px-6 rounded-xl bg-slate-50 border border-slate-200">
+                  <p className="text-sm text-slate-500">
                     Select an account type above to continue
                   </p>
                 </div>
               )}
 
-              <p className="text-center text-xs text-slate-400">
+              <p className="text-center text-xs text-slate-500">
                 By creating an account you agree to our{" "}
                 <Link href="/privacy" className="text-[#14B8A6] hover:underline">
                   Privacy Policy
@@ -575,7 +575,7 @@ export default function RegisterPage() {
                 </Link>
               </p>
 
-              <p className="text-center text-sm text-slate-400">
+              <p className="text-center text-sm text-slate-500">
                 Already have an account?{" "}
                 <Link href="/login" className="font-semibold text-[#14B8A6] hover:underline">
                   Log in

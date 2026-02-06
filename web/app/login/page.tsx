@@ -94,7 +94,7 @@ export default function LoginPage() {
   return (
     <AuthLayout title="Sign In" subtitle="Welcome back">
       {error && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
       )}
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
       <AuthDivider />
 
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <AuthInput
           label="Email"
           type="email"
@@ -153,7 +153,7 @@ export default function LoginPage() {
           )}
         </button>
 
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-slate-500">
           Don&apos;t have an account?{" "}
           <Link href="/register" className="font-semibold text-[#14B8A6] hover:underline">
             Create account
