@@ -73,11 +73,12 @@ export function OpportunityFeed({
       return;
     }
 
+    const uid = user.uid;
     async function loadSavedItems() {
       try {
         const [savedJobIds, savedConferenceIds] = await Promise.all([
-          listSavedJobIds(user.uid).catch(() => []),
-          listSavedConferenceIds(user.uid).catch(() => []),
+          listSavedJobIds(uid).catch(() => []),
+          listSavedConferenceIds(uid).catch(() => []),
         ]);
         setSavedIds(new Set([...savedJobIds, ...savedConferenceIds]));
       } catch (err) {
