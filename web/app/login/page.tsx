@@ -17,7 +17,7 @@ import {
 
 // Helper to get redirect path based on user role
 async function getRedirectPath(userId: string): Promise<string> {
-  if (!db) return "/member/dashboard";
+  if (!db) return "/hub";
 
   try {
     const userDoc = await getDoc(doc(db, "users", userId));
@@ -34,7 +34,8 @@ async function getRedirectPath(userId: string): Promise<string> {
     console.error("Error fetching user role:", error);
   }
 
-  return "/member/dashboard";
+  // Default to the Opportunity Graph feed for members
+  return "/hub";
 }
 
 export default function LoginPage() {
@@ -80,7 +81,7 @@ export default function LoginPage() {
         const redirectPath = await getRedirectPath(auth.currentUser.uid);
         router.push(redirectPath);
       } else {
-        router.push("/member/dashboard");
+        router.push("/hub");
       }
     } catch (err) {
       console.error(err);

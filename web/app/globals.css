@@ -290,3 +290,14 @@ button,
 .pause-on-hover:hover {
   animation-play-state: paused;
 }
+
+/* ===== IOPPS SOCIAL OPPORTUNITY GRAPH ===== */
+
+@keyframes ioppsPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-iopps-pulse {
+  animation: ioppsPulse 1.5s ease-in-out infinite;
+}

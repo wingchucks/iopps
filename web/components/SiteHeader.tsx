@@ -8,7 +8,9 @@ import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
 import { getUnreadMessageCount } from "@/lib/firestore";
 
+// Updated nav links with Feed first
 const navLinks = [
+  { href: "/hub", label: "Feed" },
   { href: "/careers", label: "Careers" },
   { href: "/organizations", label: "Directory" },
   { href: "/education", label: "Education" },

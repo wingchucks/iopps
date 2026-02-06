@@ -670,6 +670,16 @@ export default function OrganizationDashboardHome() {
             ) : (
               <>
                 <Link
+                  href="/hub"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-teal-500/10 to-slate-900/50 border border-teal-500/20 hover:border-teal-500/40 transition-colors"
+                >
+                  <SparklesIcon className="w-5 h-5 text-teal-400" />
+                  <div>
+                    <span className="text-slate-200">Preview Opportunity Feed</span>
+                    <p className="text-xs text-slate-500">See how your postings appear</p>
+                  </div>
+                </Link>
+                <Link
                   href="/organization/inbox"
                   className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 hover:bg-slate-900 transition-colors"
                 >

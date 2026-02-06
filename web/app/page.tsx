@@ -56,22 +56,31 @@ export default function Home() {
         subtitle="Your platform for careers, education, business, conferences, community events, and live streams."
         size="lg"
       >
-        {!user && (
-          <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
+          {user ? (
             <Link
-              href="/register"
+              href="/hub"
               className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
             >
-              Join Free
+              Explore Opportunity Feed →
             </Link>
-            <Link
-              href="/login"
-              className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-            >
-              Sign In
-            </Link>
-          </div>
-        )}
+          ) : (
+            <>
+              <Link
+                href="/hub"
+                className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Browse Opportunities
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                Join Free
+              </Link>
+            </>
+          )}
+        </div>
       </OceanWaveHero>
 
       {/* Trusted Partners */}

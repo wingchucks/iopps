@@ -10,12 +10,13 @@ import { BackToTop } from "./BackToTop";
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Don't show main site header/footer for admin routes
+  // Don't show main site header/footer for admin routes or app feed
   const isAdminRoute = pathname?.startsWith("/admin");
   const isBuilderRoute = pathname?.includes("/edit") && pathname?.includes("/organization");
+  const isAppFeed = pathname?.startsWith("/hub");
 
-  if (isAdminRoute || isBuilderRoute) {
-    // Admin/builder routes have their own layout - just render children
+  if (isAdminRoute || isBuilderRoute || isAppFeed) {
+    // These routes have their own layout - just render children
     return <>{children}</>;
   }
 
