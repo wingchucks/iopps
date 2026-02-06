@@ -57,7 +57,7 @@ export default function ConferenceHero({
   return (
     <div className="relative">
       {/* Banner Image */}
-      <div className="relative h-64 sm:h-80 lg:h-96 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900">
+      <div className="relative h-64 sm:h-80 lg:h-96 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50">
         {heroImageUrl && !imageError ? (
           <Image
             src={heroImageUrl}
@@ -69,11 +69,11 @@ export default function ConferenceHero({
           />
         ) : (
           /* Branded fallback with gradient and icon */
-          <div className="absolute inset-0 bg-gradient-to-br from-[#14B8A6]/30 via-blue-900/50 to-slate-900 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0D9488]/30 via-blue-900/50 to-slate-50 flex items-center justify-center">
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
                 <svg
-                  className="h-10 w-10 text-white/70"
+                  className="h-10 w-10 text-slate-900/70"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -86,13 +86,13 @@ export default function ConferenceHero({
                   />
                 </svg>
               </div>
-              <p className="text-lg font-medium text-white/60">Conference</p>
+              <p className="text-lg font-medium text-slate-900/60">Conference</p>
             </div>
           </div>
         )}
 
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08090C] via-[#08090C]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-transparent" />
 
         {/* Top Badges */}
         <div className="absolute left-4 right-4 top-4 flex flex-wrap items-start justify-between gap-2">
@@ -110,7 +110,7 @@ export default function ConferenceHero({
               </span>
             )}
             {conference.trc92Commitment && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#14B8A6]/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-lg">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0D9488]/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg">
                 TRC #92
               </span>
             )}
@@ -120,7 +120,7 @@ export default function ConferenceHero({
               </span>
             )}
             {conference.eventType && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-50/80 px-3 py-1.5 text-xs font-medium text-slate-900 backdrop-blur-sm">
                 {conference.eventType === "hybrid" && (
                   <svg
                     className="h-3.5 w-3.5"
@@ -177,8 +177,8 @@ export default function ConferenceHero({
             onClick={handleSave}
             className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-sm transition-all ${
               isSaved
-                ? "border-[#14B8A6] bg-[#14B8A6]/20 text-[#14B8A6]"
-                : "border-white/20 bg-slate-900/80 text-white hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                ? "border-[#0D9488] bg-[#0D9488]/20 text-[#0D9488]"
+                : "border-white/20 bg-slate-50/80 text-slate-900 hover:border-[#0D9488] hover:text-[#0D9488]"
             } ${saveAnimating ? "scale-110" : ""}`}
           >
             <svg
@@ -201,24 +201,24 @@ export default function ConferenceHero({
 
       {/* Content Overlay */}
       <div className="relative -mt-24 px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
           {/* Organizer */}
           {(conference.employerName || conference.organizerName) && (
-            <p className="text-sm font-medium uppercase tracking-wider text-[#14B8A6]">
+            <p className="text-sm font-medium uppercase tracking-wider text-[#0D9488]">
               {conference.organizerName || conference.employerName}
             </p>
           )}
 
           {/* Title */}
-          <h1 className="mt-2 text-2xl font-bold text-slate-50 sm:text-3xl lg:text-4xl">
+          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
             {conference.title}
           </h1>
 
           {/* Meta Info */}
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-300">
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
             <div className="flex items-center gap-2">
               <svg
-                className="h-5 w-5 text-[#14B8A6]"
+                className="h-5 w-5 text-[#0D9488]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -235,7 +235,7 @@ export default function ConferenceHero({
 
             <div className="flex items-center gap-2">
               <svg
-                className="h-5 w-5 text-[#14B8A6]"
+                className="h-5 w-5 text-[#0D9488]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -259,7 +259,7 @@ export default function ConferenceHero({
             {conference.speakers && conference.speakers.length > 0 && (
               <div className="flex items-center gap-2">
                 <svg
-                  className="h-5 w-5 text-[#14B8A6]"
+                  className="h-5 w-5 text-[#0D9488]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -278,7 +278,7 @@ export default function ConferenceHero({
             {conference.expectedAttendees && (
               <div className="flex items-center gap-2">
                 <svg
-                  className="h-5 w-5 text-[#14B8A6]"
+                  className="h-5 w-5 text-[#0D9488]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -301,7 +301,7 @@ export default function ConferenceHero({
               {conference.topics.map((topic, index) => (
                 <span
                   key={index}
-                  className="rounded-full border border-slate-700 bg-slate-800/50 px-3 py-1 text-xs text-slate-300"
+                  className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs text-slate-600"
                 >
                   {topic}
                 </span>
@@ -316,7 +316,7 @@ export default function ConferenceHero({
                 href={conference.registrationLink || conference.registrationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#0D9488] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#0F766E]"
               >
                 Register Now
                 <svg
@@ -339,7 +339,7 @@ export default function ConferenceHero({
           </div>
 
           {/* Share & Cost Row */}
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800 pt-6">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-6">
             <ShareButtons
               item={{
                 id: conference.id,
@@ -351,8 +351,8 @@ export default function ConferenceHero({
 
             {conference.cost && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Registration:</span>
-                <span className="rounded-lg border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1.5 text-sm font-semibold text-[#14B8A6]">
+                <span className="text-sm text-slate-500">Registration:</span>
+                <span className="rounded-lg border border-[#0D9488]/30 bg-[#0D9488]/10 px-3 py-1.5 text-sm font-semibold text-[#0D9488]">
                   {conference.cost}
                 </span>
               </div>

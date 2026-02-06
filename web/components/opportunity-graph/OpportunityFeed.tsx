@@ -32,6 +32,7 @@ import {
   vendorToOpportunity,
 } from "./adapters";
 import { Icon } from "./Icon";
+import type { OpportunityType } from "./tokens";
 
 type FeedTab = "all" | "jobs" | "education" | "shop" | "events" | "live";
 
@@ -41,6 +42,16 @@ interface OpportunityFeedProps {
   showTabs?: boolean;
   showSearch?: boolean;
   className?: string;
+  /** Only fetch and show these content types. If omitted, fetches everything. */
+  contentTypes?: OpportunityType[];
+  /** Custom filter bar rendered above the feed cards (below tabs if shown). */
+  filterBar?: React.ReactNode;
+  /** Custom empty state message. */
+  emptyMessage?: string;
+  /** Show the welcome banner and quick composer. Defaults to true. */
+  showBanner?: boolean;
+  /** Show the featured section. Defaults to true. */
+  showFeatured?: boolean;
 }
 
 const tabs: { id: FeedTab; label: string; icon: string }[] = [
@@ -58,6 +69,11 @@ export function OpportunityFeed({
   showTabs = true,
   showSearch = false,
   className = "",
+  contentTypes,
+  filterBar,
+  emptyMessage,
+  showBanner = true,
+  showFeatured = true,
 }: OpportunityFeedProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<FeedTab>(initialTab);
@@ -89,22 +105,26 @@ export function OpportunityFeed({
     loadSavedItems();
   }, [user]);
 
-  // Fetch data from all sources
+  // Fetch data from all sources (or only requested types)
   useEffect(() => {
     async function loadFeed() {
       setLoading(true);
       setError(null);
 
+      // Helper: should we fetch this type?
+      const shouldFetch = (types: OpportunityType[]) =>
+        !contentTypes || contentTypes.some((t) => types.includes(t));
+
       try {
-        // Fetch all content types in parallel
+        // Only fetch content types that are needed
         const [jobs, scholarships, conferences, powwows, livestreams, training, vendors] = await Promise.all([
-          listJobPostings({ activeOnly: true }).catch(() => []),
-          listScholarships().catch(() => []),
-          listConferences().catch(() => []),
-          listPowwowEvents().catch(() => []),
-          listLiveStreams().catch(() => []),
-          listTrainingPrograms().catch(() => []),
-          listApprovedVendors().catch(() => []),
+          shouldFetch(["job"]) ? listJobPostings({ activeOnly: true }).catch(() => []) : Promise.resolve([]),
+          shouldFetch(["scholarship"]) ? listScholarships().catch(() => []) : Promise.resolve([]),
+          shouldFetch(["conference", "event"]) ? listConferences().catch(() => []) : Promise.resolve([]),
+          shouldFetch(["event"]) ? listPowwowEvents().catch(() => []) : Promise.resolve([]),
+          shouldFetch(["livestream"]) ? listLiveStreams().catch(() => []) : Promise.resolve([]),
+          shouldFetch(["program"]) ? listTrainingPrograms().catch(() => []) : Promise.resolve([]),
+          shouldFetch(["product", "service"]) ? listApprovedVendors().catch(() => []) : Promise.resolve([]),
         ]);
 
         // Convert to OpportunityItems
@@ -161,7 +181,8 @@ export function OpportunityFeed({
     }
 
     loadFeed();
-  }, [maxItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxItems, contentTypes?.join(",")]);
 
   // Filter items based on active tab
   const filteredItems = useMemo(() => {
@@ -228,7 +249,7 @@ export function OpportunityFeed({
   return (
     <div className={className}>
       {/* Welcome Banner (for guests) */}
-      {!user && (
+      {showBanner && !user && (
         <div
           style={{
             background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentDk} 100%)`,
@@ -303,7 +324,7 @@ export function OpportunityFeed({
       )}
 
       {/* Quick Composer (for logged-in users) */}
-      {user && (
+      {showBanner && user && (
         <div
           style={{
             background: colors.surface,
@@ -352,7 +373,7 @@ export function OpportunityFeed({
       )}
 
       {/* Featured Section */}
-      {featuredItems.length > 0 && !loading && activeTab === "all" && (
+      {showFeatured && featuredItems.length > 0 && !loading && activeTab === "all" && (
         <div style={{ marginBottom: 20 }}>
           <div
             style={{
@@ -529,6 +550,9 @@ export function OpportunityFeed({
         </div>
       )}
 
+      {/* Custom Filter Bar */}
+      {filterBar && <div style={{ marginBottom: 16 }}>{filterBar}</div>}
+
       {/* Loading State */}
       {loading && (
         <div
@@ -634,7 +658,7 @@ export function OpportunityFeed({
           }}
         >
           <p style={{ color: colors.textSoft, fontSize: 14, margin: 0 }}>
-            No opportunities found. Check back later!
+            {emptyMessage || "No opportunities found. Check back later!"}
           </p>
         </div>
       )}
