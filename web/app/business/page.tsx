@@ -1,345 +1,127 @@
+/**
+ * IOPPS Business/Shop Page — Social Feed Pattern
+ *
+ * Indigenous-owned businesses displayed through the unified feed layout.
+ */
+
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { useEffect, useState, useMemo } from "react";
-import { PageShell } from "@/components/PageShell";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
-import { VendorCard } from "@/components/shop";
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorState } from "@/components/ErrorState";
-import { getFeaturedVendors, getActiveVendors } from "@/lib/firebase/shop";
-import type { Vendor } from "@/lib/types";
-import { MagnifyingGlassIcon, CheckBadgeIcon, MapPinIcon } from "@heroicons/react/24/outline";
-import { StarIcon } from "@heroicons/react/24/solid";
+import {
+  FeedLayout,
+  OpportunityFeed,
+  SectionHeader,
+  colors,
+} from "@/components/opportunity-graph";
 
-// Business categories with icons and colors
 const CATEGORIES = [
-  { icon: "🎨", label: "Arts & Crafts", value: "art", color: "from-pink-500/20 to-rose-500/20", count: 0 },
-  { icon: "💎", label: "Jewelry", value: "jewelry", color: "from-cyan-500/20 to-blue-500/20", count: 0 },
-  { icon: "👕", label: "Apparel", value: "clothing", color: "from-purple-500/20 to-violet-500/20", count: 0 },
-  { icon: "🍞", label: "Food & Beverage", value: "food", color: "from-amber-500/20 to-orange-500/20", count: 0 },
-  { icon: "🏗️", label: "Construction", value: "construction", color: "from-slate-500/20 to-gray-500/20", count: 0 },
-  { icon: "💼", label: "Professional Services", value: "professional", color: "from-blue-500/20 to-indigo-500/20", count: 0 },
-  { icon: "🌿", label: "Health & Wellness", value: "health", color: "from-emerald-500/20 to-teal-500/20", count: 0 },
-  { icon: "📸", label: "Media & Creative", value: "media", color: "from-fuchsia-500/20 to-pink-500/20", count: 0 },
-  { icon: "🛠️", label: "Trades & Services", value: "trades", color: "from-orange-500/20 to-red-500/20", count: 0 },
-  { icon: "🎁", label: "Retail & Gifts", value: "retail", color: "from-teal-500/20 to-cyan-500/20", count: 0 },
+  { icon: "🎨", label: "Arts & Crafts", value: "art" },
+  { icon: "💎", label: "Jewelry", value: "jewelry" },
+  { icon: "👕", label: "Apparel", value: "clothing" },
+  { icon: "🍞", label: "Food & Beverage", value: "food" },
+  { icon: "💼", label: "Professional", value: "professional" },
+  { icon: "🌿", label: "Health & Wellness", value: "health" },
+  { icon: "📸", label: "Media & Creative", value: "media" },
+  { icon: "🛠️", label: "Trades", value: "trades" },
 ];
 
-export default function BusinessPage() {
-  const [featuredVendors, setFeaturedVendors] = useState<Vendor[]>([]);
-  const [allVendors, setAllVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [search, setSearch] = useState("");
-  const [totalBusinesses, setTotalBusinesses] = useState(0);
-
-  // Filter vendors based on search
-  const filteredVendors = useMemo(() => {
-    if (!search.trim()) return allVendors;
-    const searchLower = search.toLowerCase();
-    return allVendors.filter(
-      (v) =>
-        v.businessName?.toLowerCase().includes(searchLower) ||
-        v.tagline?.toLowerCase().includes(searchLower) ||
-        v.description?.toLowerCase().includes(searchLower) ||
-        v.location?.toLowerCase().includes(searchLower) ||
-        v.nation?.toLowerCase().includes(searchLower) ||
-        v.category?.toLowerCase().includes(searchLower)
-    );
-  }, [allVendors, search]);
-
-  const isSearching = search.trim().length > 0;
-  const spotlightBusiness = featuredVendors[0];
-
-  useEffect(() => {
-    (async () => {
-      try {
-        setError(null);
-        const [featured, all] = await Promise.all([
-          getFeaturedVendors(6),
-          getActiveVendors(),
-        ]);
-        setFeaturedVendors(featured);
-        setAllVendors(all);
-        setTotalBusinesses(all.length);
-      } catch (err) {
-        console.error("Failed to load vendors:", err);
-        setError(err instanceof Error ? err : new Error("Failed to load data"));
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-950 pt-20">
-        <PageShell>
-          <ErrorState
-            title="Unable to load businesses"
-            description="We encountered a problem loading the business directory. Please try again."
-            onRetry={() => window.location.reload()}
-          />
-        </PageShell>
-      </div>
-    );
-  }
-
+function BusinessRightSidebar() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <SimplePageHeader
-        title="Shop Indigenous"
-        subtitle="Discover authentic Indigenous-owned businesses across Turtle Island. Every purchase supports Indigenous entrepreneurs and communities."
-      />
-
-      <PageShell>
-        {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-xl">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name, category, or location..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 py-3 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
+    <>
+      {/* Categories */}
+      <div
+        style={{
+          background: colors.surface,
+          borderRadius: 12,
+          border: `1px solid ${colors.border}`,
+          overflow: "hidden",
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            padding: "14px 16px",
+            borderBottom: `1px solid ${colors.borderLt}`,
+            fontSize: 14,
+            fontWeight: 700,
+            color: colors.text,
+          }}
+        >
+          Browse by Category
         </div>
-        {loading ? (
-          // Loading skeleton
-          <div className="space-y-8 py-8">
-            <div className="h-48 bg-slate-800/50 rounded-2xl animate-pulse" />
-            <div className="grid grid-cols-5 gap-4">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="h-24 bg-slate-800/50 rounded-xl animate-pulse" />
-              ))}
-            </div>
-            <div className="grid grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-slate-800/50 rounded-2xl animate-pulse" />
-              ))}
-            </div>
-          </div>
-        ) : allVendors.length === 0 ? (
-          // Empty state
-          <div className="py-12">
-            <EmptyState
-              icon="shop"
-              title="No businesses listed yet"
-              description="Be the first to showcase your Indigenous-owned business on IOPPS."
-              ctaLabel="List Your Business FREE"
-              ctaHref="/organization/shop/setup"
-            />
-          </div>
-        ) : isSearching && filteredVendors.length === 0 ? (
-          // No search results
-          <div className="py-12">
-            <EmptyState
-              icon="search"
-              title="No results found"
-              description={`No businesses match "${search}". Try a different search term.`}
-              ctaLabel="Clear Search"
-              onCta={() => setSearch("")}
-            />
-          </div>
-        ) : (
-          // Main content
-          <div className="py-8 space-y-12">
-            
-            {/* Featured Business Spotlight - only show when not searching */}
-            {!isSearching && spotlightBusiness && (
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <StarIcon className="h-5 w-5 text-amber-400" />
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-amber-400">
-                    Featured Business
-                  </h2>
-                </div>
-                
-                <Link 
-                  href={`/business/${spotlightBusiness.slug}`}
-                  className="block group"
-                >
-                  <div className="relative rounded-2xl overflow-hidden border border-teal-500/30 bg-gradient-to-br from-teal-500/10 via-slate-900 to-slate-900">
-                    {/* Cover image area */}
-                    <div className="h-32 bg-gradient-to-r from-teal-600 to-cyan-600 relative">
-                      {spotlightBusiness.coverImageUrl && (
-                        <Image
-                          src={spotlightBusiness.coverImageUrl}
-                          alt=""
-                          fill
-                          className="object-cover"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="relative px-6 pb-6 -mt-10">
-                      <div className="flex items-end gap-4">
-                        {/* Logo */}
-                        <div className="h-20 w-20 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 border-4 border-slate-900 flex items-center justify-center text-3xl shadow-lg group-hover:scale-105 transition-transform">
-                          {spotlightBusiness.logoUrl ? (
-                            <Image
-                              src={spotlightBusiness.logoUrl}
-                              alt={spotlightBusiness.businessName}
-                              width={80}
-                              height={80}
-                              className="rounded-lg object-cover"
-                            />
-                          ) : (
-                            "🏪"
-                          )}
-                        </div>
-                        
-                        <div className="flex-1 pb-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-2xl font-bold text-white group-hover:text-teal-400 transition-colors">
-                              {spotlightBusiness.businessName}
-                            </h3>
-                            {spotlightBusiness.verified && (
-                              <CheckBadgeIcon className="h-6 w-6 text-teal-400" />
-                            )}
-                          </div>
-                          <p className="text-slate-400">
-                            {spotlightBusiness.tagline || spotlightBusiness.category}
-                          </p>
-                        </div>
+        {CATEGORIES.map((cat, i) => (
+          <Link
+            key={cat.value}
+            href={`/business/directory?category=${cat.value}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 16px",
+              fontSize: 13,
+              color: colors.textMd,
+              textDecoration: "none",
+              borderBottom: i < CATEGORIES.length - 1 ? `1px solid ${colors.bg}` : "none",
+            }}
+          >
+            <span>{cat.icon}</span>
+            {cat.label}
+          </Link>
+        ))}
+      </div>
 
-                        <div className="hidden sm:flex gap-3 pb-1">
-                          <span className="px-4 py-2 rounded-full bg-teal-500/20 text-teal-400 text-sm font-semibold">
-                            Visit Profile →
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Details */}
-                      <div className="mt-4 flex flex-wrap gap-4 text-sm">
-                        {spotlightBusiness.nation && (
-                          <span className="flex items-center gap-1.5 text-slate-400">
-                            <span>🪶</span> {spotlightBusiness.nation}
-                          </span>
-                        )}
-                        {spotlightBusiness.location && (
-                          <span className="flex items-center gap-1.5 text-slate-400">
-                            <MapPinIcon className="h-4 w-4" /> {spotlightBusiness.location}
-                          </span>
-                        )}
-                        {spotlightBusiness.category && (
-                          <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs">
-                            {spotlightBusiness.category}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </section>
-            )}
+      {/* Vendor CTA */}
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${colors.orange} 0%, ${colors.pink} 100%)`,
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 16,
+          color: "#fff",
+        }}
+      >
+        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
+          Own an Indigenous Business?
+        </div>
+        <p style={{ fontSize: 13, opacity: 0.9, marginBottom: 12, lineHeight: 1.5 }}>
+          List your business for FREE and connect with customers across Canada.
+        </p>
+        <Link
+          href="/organization/shop/setup"
+          style={{
+            display: "inline-block",
+            padding: "8px 16px",
+            borderRadius: 8,
+            background: "#fff",
+            color: colors.orange,
+            fontSize: 13,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
+        >
+          List Your Business
+        </Link>
+      </div>
+    </>
+  );
+}
 
-            {/* Categories Grid - only show when not searching */}
-            {!isSearching && (
-              <section>
-                <h2 className="text-lg font-bold text-white mb-4">
-                  Browse by Category
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  {CATEGORIES.map((cat) => (
-                    <Link
-                      key={cat.value}
-                      href={`/business/directory?category=${cat.value}`}
-                      className="group flex flex-col items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-teal-500/50 hover:bg-slate-800/50 hover:-translate-y-1"
-                    >
-                      <div
-                        className={`h-12 w-12 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-2xl group-hover:scale-110 transition-transform`}
-                      >
-                        {cat.icon}
-                      </div>
-                      <span className="text-sm text-slate-300 font-medium text-center">
-                        {cat.label}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Business Directory */}
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">
-                  {isSearching ? `Results for "${search}"` : "All Businesses"}
-                </h2>
-                {isSearching ? (
-                  <span className="text-sm text-slate-400">
-                    {filteredVendors.length} {filteredVendors.length === 1 ? "result" : "results"}
-                  </span>
-                ) : (
-                  <Link
-                    href="/business/directory"
-                    className="text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors"
-                  >
-                    View All →
-                  </Link>
-                )}
-              </div>
-
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {(isSearching ? filteredVendors : allVendors.slice(0, 9)).map((vendor) => (
-                  <VendorCard 
-                    key={vendor.id} 
-                    vendor={vendor} 
-                    featured={vendor.featured} 
-                  />
-                ))}
-              </div>
-
-              {!isSearching && allVendors.length > 9 && (
-                <div className="mt-8 text-center">
-                  <Link
-                    href="/business/directory"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-slate-700 bg-slate-800/50 text-white font-semibold hover:bg-slate-800 hover:border-slate-600 transition-all"
-                  >
-                    View All {allVendors.length} Businesses →
-                  </Link>
-                </div>
-              )}
-            </section>
-
-            {/* For Vendors CTA */}
-            <section className="rounded-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-teal-600 to-cyan-600 p-8 sm:p-12">
-                <div className="max-w-2xl">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-                    Own an Indigenous Business?
-                  </h2>
-                  <p className="text-white/80 mb-6">
-                    List your business on IOPPS for FREE and connect with customers 
-                    across Canada who want to support Indigenous entrepreneurs.
-                  </p>
-                  <div className="flex flex-wrap gap-4">
-                    <Link
-                      href="/organization/shop/setup"
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-teal-700 font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
-                    >
-                      List Your Business FREE
-                    </Link>
-                    <Link
-                      href="/pricing#vendors"
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition-all"
-                    >
-                      View Pricing Options
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-      </PageShell>
-    </div>
+export default function BusinessPage() {
+  return (
+    <FeedLayout rightSidebar={<BusinessRightSidebar />}>
+      <SectionHeader
+        title="Shop Indigenous"
+        subtitle="Discover authentic Indigenous-owned businesses across Turtle Island."
+        icon="🛍"
+      />
+      <OpportunityFeed
+        contentTypes={["product", "service"]}
+        showTabs={false}
+        showBanner={false}
+        showFeatured={true}
+        maxItems={30}
+        emptyMessage="No businesses listed yet. Check back soon!"
+      />
+    </FeedLayout>
   );
 }

@@ -28,5 +28,11 @@ export type {
 // Adapters
 export { jobToOpportunity, scholarshipToOpportunity, eventToOpportunity } from "./adapters";
 
+// Filters
+export { FilterBar, SearchInput, FilterSelect, FilterChips, SectionHeader } from "./FilterBar";
+
+// Layout
+export { FeedLayout } from "./FeedLayout";
+
 // Feed
 export { OpportunityFeed } from "./OpportunityFeed";

@@ -11,21 +11,35 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   // Admin routes have their own layout
   const isAdminRoute = pathname?.startsWith("/admin");
   
-  // Homepage has its own complete layout with header built-in
-  const isHomepage = pathname === "/";
-  
+  // Pages using FeedLayout have their own complete layout with header
+  const isFeedRoute =
+    pathname === "/" ||
+    pathname?.startsWith("/careers") ||
+    pathname?.startsWith("/education") ||
+    pathname?.startsWith("/business") ||
+    pathname?.startsWith("/community") ||
+    pathname?.startsWith("/live") ||
+    pathname?.startsWith("/map") ||
+    pathname?.startsWith("/conferences") ||
+    pathname?.startsWith("/search") ||
+    pathname?.startsWith("/saved") ||
+    pathname?.startsWith("/about") ||
+    pathname?.startsWith("/privacy") ||
+    pathname?.startsWith("/terms") ||
+    pathname?.startsWith("/contact");
+
   // Organization dashboard pages have their own layout
   const isOrgDashboard = pathname?.startsWith("/organization");
-  
-  // Member dashboard pages have their own layout  
+
+  // Member dashboard pages have their own layout
   const isMemberDashboard = pathname?.startsWith("/member");
 
   if (isAdminRoute) {
     return <>{children}</>;
   }
 
-  // These routes have their own complete layouts
-  if (isHomepage || isOrgDashboard || isMemberDashboard) {
+  // These routes have their own complete layouts (FeedLayout or dashboard)
+  if (isFeedRoute || isOrgDashboard || isMemberDashboard) {
     return (
       <>
         {children}

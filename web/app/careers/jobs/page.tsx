@@ -1,344 +1,124 @@
+/**
+ * IOPPS Jobs Listing Page — Social Feed Pattern
+ *
+ * Dedicated jobs view through the unified feed layout.
+ */
+
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { PageShell } from "@/components/PageShell";
-import { listJobPostings, listSavedJobIds, toggleSavedJob } from "@/lib/firestore";
-import { useAuth } from "@/components/AuthProvider";
-import type { JobPosting } from "@/lib/types";
-import { HeartIcon } from "@heroicons/react/24/outline";
-import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
-import toast from "react-hot-toast";
+import {
+  FeedLayout,
+  OpportunityFeed,
+  SectionHeader,
+  colors,
+  Icon,
+} from "@/components/opportunity-graph";
 
-const EMPLOYMENT_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "Full-time", label: "Full-time" },
-  { value: "Part-time", label: "Part-time" },
-  { value: "Contract", label: "Contract" },
-  { value: "Temporary", label: "Temporary" },
-  { value: "Internship", label: "Internship" },
-];
-
-export default function JobsPage() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const [jobs, setJobs] = useState<JobPosting[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [employmentType, setEmploymentType] = useState("");
-  const [remoteOnly, setRemoteOnly] = useState(false);
-  const [indigenousOnly, setIndigenousOnly] = useState(false);
-  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
-  const [savingJobId, setSavingJobId] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadJobs();
-  }, [employmentType, remoteOnly, indigenousOnly]);
-
-  // Load saved job IDs for current user
-  useEffect(() => {
-    if (user) {
-      listSavedJobIds(user.uid)
-        .then((ids) => setSavedJobIds(new Set(ids)))
-        .catch(console.error);
-    } else {
-      setSavedJobIds(new Set());
-    }
-  }, [user]);
-
-  async function loadJobs() {
-    setLoading(true);
-    try {
-      const jobList = await listJobPostings({
-        activeOnly: true,
-        employmentType: employmentType || undefined,
-        remoteOnly: remoteOnly || undefined,
-        indigenousOnly: indigenousOnly || undefined,
-      });
-      setJobs(jobList);
-    } catch (error) {
-      console.error("Failed to load jobs:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const filteredJobs = jobs.filter((job) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      job.title.toLowerCase().includes(query) ||
-      job.employerName?.toLowerCase().includes(query) ||
-      job.location?.toLowerCase().includes(query) ||
-      job.description?.toLowerCase().includes(query)
-    );
-  });
-
-  const formatSalary = (job: JobPosting): string | null => {
-    if (!job.salaryRange) return null;
-    if (typeof job.salaryRange === "string") return job.salaryRange;
-    if (job.salaryRange.min || job.salaryRange.max) {
-      const currency = job.salaryRange.currency || "CAD";
-      if (job.salaryRange.min && job.salaryRange.max) {
-        return `$${job.salaryRange.min.toLocaleString()} - $${job.salaryRange.max.toLocaleString()} ${currency}`;
-      }
-      if (job.salaryRange.min) return `From $${job.salaryRange.min.toLocaleString()} ${currency}`;
-      if (job.salaryRange.max) return `Up to $${job.salaryRange.max.toLocaleString()} ${currency}`;
-    }
-    return null;
-  };
-
-  const handleToggleSave = async (e: React.MouseEvent, jobId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!user) {
-      router.push(`/login?redirect=/careers/jobs`);
-      return;
-    }
-
-    setSavingJobId(jobId);
-    const isCurrentlySaved = savedJobIds.has(jobId);
-
-    try {
-      await toggleSavedJob(user.uid, jobId, !isCurrentlySaved);
-      setSavedJobIds((prev) => {
-        const next = new Set(prev);
-        if (isCurrentlySaved) {
-          next.delete(jobId);
-        } else {
-          next.add(jobId);
-        }
-        return next;
-      });
-      toast.success(isCurrentlySaved ? "Job removed from saved" : "Job saved!");
-    } catch (err) {
-      console.error("Failed to toggle save:", err);
-      toast.error("Failed to save job. Please try again.");
-    } finally {
-      setSavingJobId(null);
-    }
-  };
-
+function JobsRightSidebar() {
   return (
-    <PageShell>
-      {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
-          Home
-        </Link>
-        <span className="mx-2">→</span>
-        <Link href="/careers" className="hover:text-white transition-colors">
-          Careers
-        </Link>
-        <span className="mx-2">→</span>
-        <span className="text-white">Jobs</span>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="relative text-center mb-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
-          Careers
-        </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl">
-          Find Your Next Opportunity
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          Browse career opportunities from employers committed to Indigenous hiring across North America.
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Search */}
-          <div className="md:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
-              Search Jobs
-            </label>
-            <input
-              type="text"
-              placeholder="Job title, company, or location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
-            />
-          </div>
-
-          {/* Employment Type */}
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
-              Job Type
-            </label>
-            <select
-              value={employmentType}
-              onChange={(e) => setEmploymentType(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none cursor-pointer"
-            >
-              {EMPLOYMENT_TYPES.map((type) => (
-                <option
-                  key={type.value}
-                  value={type.value}
-                  className="bg-slate-900 text-white py-2"
-                >
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Checkboxes */}
-          <div className="flex flex-col justify-end gap-3">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={remoteOnly}
-                onChange={(e) => setRemoteOnly(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
-              />
-              Remote Only
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={indigenousOnly}
-                onChange={(e) => setIndigenousOnly(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
-              />
-              Indigenous Preference
-            </label>
-          </div>
+    <>
+      {/* Career Links */}
+      <div
+        style={{
+          background: colors.surface,
+          borderRadius: 12,
+          border: `1px solid ${colors.border}`,
+          overflow: "hidden",
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            padding: "14px 16px",
+            borderBottom: `1px solid ${colors.borderLt}`,
+            fontSize: 14,
+            fontWeight: 700,
+            color: colors.text,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Icon name="briefcase" size={16} color={colors.accent} />
+          Job Tools
         </div>
-      </div>
-
-      {/* Results Count */}
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-400">
-          {loading ? "Loading..." : `${filteredJobs.length} jobs found`}
-        </p>
-        {(searchQuery || employmentType || remoteOnly || indigenousOnly) && (
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setEmploymentType("");
-              setRemoteOnly(false);
-              setIndigenousOnly(false);
-            }}
-            className="text-sm text-[#14B8A6] hover:text-[#16cdb8]"
-          >
-            Clear Filters
-          </button>
-        )}
-      </div>
-
-      {/* Jobs List */}
-      {loading ? (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-32" />
-          ))}
-        </div>
-      ) : filteredJobs.length > 0 ? (
-        <div className="space-y-4">
-          {filteredJobs.map((job) => (
-            <Link
-              key={job.id}
-              href={`/careers/${job.id}`}
-              className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
-            >
-              <div className="flex items-center gap-5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
-                  <span className="text-2xl">💼</span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className="text-lg font-bold text-white group-hover:text-[#14B8A6] transition-colors">
-                      {job.title}
-                    </span>
-                    {job.indigenousPreference && (
-                      <span className="rounded bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-0.5 text-xs font-semibold text-[#14B8A6] uppercase">
-                        Indigenous Preference
-                      </span>
-                    )}
-                    {job.remoteFlag && (
-                      <span className="rounded bg-green-500/20 border border-green-500/40 px-2 py-0.5 text-xs font-semibold text-green-400 uppercase">
-                        Remote
-                      </span>
-                    )}
-                    <span className="rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400 uppercase">
-                      {job.employmentType}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-                    <span className="text-[#14B8A6] font-medium">{job.employerName}</span>
-                    <span>📍 {job.location}</span>
-                    {formatSalary(job) && <span>💰 {formatSalary(job)}</span>}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={(e) => handleToggleSave(e, job.id)}
-                  disabled={savingJobId === job.id}
-                  aria-label={savedJobIds.has(job.id) ? "Remove from saved jobs" : "Save job"}
-                  className={`rounded-lg p-3 transition-all ${
-                    savedJobIds.has(job.id)
-                      ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30"
-                      : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {savingJobId === job.id ? (
-                    <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  ) : savedJobIds.has(job.id) ? (
-                    <HeartSolidIcon className="h-5 w-5" />
-                  ) : (
-                    <HeartIcon className="h-5 w-5" />
-                  )}
-                </button>
-                <span className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors group-hover:bg-[#16cdb8]">
-                  View Job →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-          <span className="text-5xl mb-4 block">🔍</span>
-          <h3 className="text-xl font-bold text-white mb-2">No Jobs Found</h3>
-          <p className="text-slate-400 mb-6">
-            {searchQuery || employmentType || remoteOnly || indigenousOnly
-              ? "Try adjusting your search or filters."
-              : "New job postings will appear here."}
-          </p>
+        {[
+          { label: "All Careers", href: "/careers" },
+          { label: "Training Programs", href: "/careers/programs" },
+          { label: "My Applications", href: "/member/applications" },
+          { label: "Saved Jobs", href: "/saved" },
+          { label: "Job Alerts", href: "/member/alerts" },
+        ].map((link, i) => (
           <Link
-            href="/careers/programs"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            key={i}
+            href={link.href}
+            style={{
+              display: "block",
+              padding: "10px 16px",
+              fontSize: 13,
+              color: colors.accent,
+              textDecoration: "none",
+              borderBottom: `1px solid ${colors.bg}`,
+            }}
           >
-            Browse Training Programs Instead
+            {link.label} →
           </Link>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* CTA Section */}
-      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-          Are You an Employer?
-        </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-          Post your job openings on IOPPS and connect with Indigenous talent across North America.
+      {/* Employer CTA */}
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentDk} 100%)`,
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 16,
+          color: "#fff",
+        }}
+      >
+        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
+          Are you an employer?
+        </div>
+        <p style={{ fontSize: 13, opacity: 0.9, marginBottom: 12, lineHeight: 1.5 }}>
+          Post jobs and connect with Indigenous talent across Canada.
         </p>
         <Link
           href="/organization/jobs/new"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          style={{
+            display: "inline-block",
+            padding: "8px 16px",
+            borderRadius: 8,
+            background: "#fff",
+            color: colors.accent,
+            fontSize: 13,
+            fontWeight: 600,
+            textDecoration: "none",
+          }}
         >
           Post a Job
         </Link>
-      </section>
-    </PageShell>
+      </div>
+    </>
+  );
+}
+
+export default function JobsPage() {
+  return (
+    <FeedLayout activeNav="careers" rightSidebar={<JobsRightSidebar />}>
+      <SectionHeader
+        title="Job Listings"
+        subtitle="Browse career opportunities from employers committed to Indigenous hiring across North America."
+        icon="💼"
+      />
+      <OpportunityFeed
+        contentTypes={["job"]}
+        showTabs={false}
+        showBanner={false}
+        showFeatured={true}
+        maxItems={50}
+        emptyMessage="No job listings found right now. Check back soon!"
+      />
+    </FeedLayout>
   );
 }
