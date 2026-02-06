@@ -75,7 +75,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
     },
   ], [careerType, handleNewItem]);
 
-  useKeyboardShortcuts({ shortcuts });
+  useKeyboardShortcuts(shortcuts);
 
   useEffect(() => {
     if (!user) return;
