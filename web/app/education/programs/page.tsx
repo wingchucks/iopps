@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import type { UnifiedEducationListing, ProgramSource, ProgramLevel, ProgramDelivery } from "@/lib/types";
 import {
@@ -274,24 +274,20 @@ function UnifiedProgramsContent() {
         </div>
       </div>
 
-      {/* Hero */}
-      <OceanWaveHero
-        eyebrow="Education & Training"
+      {/* Header */}
+      <SimplePageHeader
         title="Explore Programs"
-        subtitle="Discover academic degrees, diplomas, certificates, and professional training from Indigenous-serving institutions and training providers."
-        size="md"
-      >
+        subtitle="Discover academic degrees, diplomas, certificates, and professional training."
+      />
+
+      <PageShell>
         <SearchBarRow
           placeholder="Search programs, schools, skills..."
           value={searchQuery}
           onChange={setSearchQuery}
           onFiltersClick={() => setShowFilters(!showFilters)}
           hasActiveFilters={hasFilters}
-          variant="hero"
         />
-      </OceanWaveHero>
-
-      <PageShell>
         {/* Filters */}
         <FiltersDrawer
           isOpen={showFilters}

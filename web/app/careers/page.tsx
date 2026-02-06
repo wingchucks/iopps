@@ -408,12 +408,10 @@ export default function CareersPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <OceanWaveHero
-            eyebrow="Careers"
-            title="Find Your Path. Build Your Future."
-            subtitle="Discover career opportunities with employers committed to Indigenous hiring, and training programs to build your skills."
-            size="md"
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          <SimplePageHeader
+            title="Careers"
+            subtitle="Discover career opportunities with employers committed to Indigenous hiring."
           />
           <PageShell>
             <div className="grid gap-6 md:grid-cols-3 mb-12">

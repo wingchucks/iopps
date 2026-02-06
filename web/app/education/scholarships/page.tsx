@@ -6,7 +6,7 @@ import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, AcademicCapIcon, CurrencyDo
 import { listScholarships } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 const AWARD_TYPES = ["All", "Scholarship", "Grant", "Bursary"] as const;
 const EDUCATION_LEVELS = ["All", "High School", "Post-secondary", "Graduate", "Community"] as const;
@@ -154,42 +154,38 @@ function ScholarshipsContent() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Education"
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
         title="Scholarships & Funding"
-        subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants from organizations across Turtle Island."
-        size="md"
-      >
+        subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants."
+      />
+
+      <PageShell>
         {/* Search Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/60" />
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search scholarships..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-full bg-white/10 backdrop-blur-sm border border-white/20 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="w-full rounded-lg bg-slate-800 border border-slate-700 py-3 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 py-3 text-white transition-colors hover:bg-white/20"
+            className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 border border-slate-700 px-6 py-3 text-white transition-colors hover:bg-slate-700"
           >
             <FunnelIcon className="h-5 w-5" />
             Filters
             {hasFilters && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-900">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
                 !
               </span>
             )}
           </button>
         </div>
-      </OceanWaveHero>
-
-      <PageShell>
         {/* Breadcrumb */}
         <nav className="mb-8 text-sm text-slate-400">
           <Link href="/" className="hover:text-white transition-colors">
@@ -587,12 +583,10 @@ export default function ScholarshipsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <OceanWaveHero
-            eyebrow="Education"
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          <SimplePageHeader
             title="Scholarships & Funding"
-            subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants from organizations across Turtle Island."
-            size="md"
+            subtitle="Funding Indigenous learners and community leaders."
           />
           <PageShell>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

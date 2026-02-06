@@ -399,12 +399,10 @@ export default function EducationPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <OceanWaveHero
-            eyebrow="Education"
-            title="Learn. Grow. Achieve Your Dreams."
-            subtitle="Explore schools, programs, and scholarships designed to support Indigenous learners on their educational journey."
-            size="md"
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          <SimplePageHeader
+            title="Education"
+            subtitle="Explore schools, programs, and scholarships for Indigenous learners."
           />
           <PageShell>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
