@@ -16,7 +16,7 @@ import { colors } from "./tokens";
 import { Icon, IconName } from "./Icon";
 import { Avatar } from "./Avatar";
 
-type NavId = "feed" | "careers" | "education" | "events" | "live" | "nations";
+type NavId = "feed" | "careers" | "education" | "events" | "live" | "nations" | "business" | "community" | "organizations" | "pricing";
 
 interface FeedLayoutProps {
   children: React.ReactNode;
