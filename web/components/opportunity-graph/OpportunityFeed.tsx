@@ -21,7 +21,7 @@ import {
   listSavedConferenceIds,
 } from "@/lib/firestore";
 import { useAuth } from "@/components/AuthProvider";
-import { colors } from "./tokens";
+import { colors, typeConfig } from "./tokens";
 import { OpportunityCard, OpportunityItem } from "./OpportunityCard";
 import { 
   jobToOpportunity, 
@@ -231,7 +231,7 @@ export function OpportunityFeed({
       {!user && (
         <div
           style={{
-            background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentHover} 100%)`,
+            background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.accentDk} 100%)`,
             borderRadius: 16,
             padding: 24,
             marginBottom: 16,
@@ -378,7 +378,7 @@ export function OpportunityFeed({
             {featuredItems.map((item) => (
               <a
                 key={`featured-${item.id}`}
-                href={item.url}
+                href={item.href}
                 style={{
                   flex: "0 0 280px",
                   scrollSnapAlign: "start",
@@ -397,18 +397,18 @@ export function OpportunityFeed({
                       width: 40,
                       height: 40,
                       borderRadius: 10,
-                      background: TYPE_CONFIG[item.type]?.bgColor || colors.accentBg,
+                      background: typeConfig[item.type]?.bg || colors.accentBg,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: 18,
                     }}
                   >
-                    {TYPE_CONFIG[item.type]?.emoji || "📋"}
+                    {typeConfig[item.type]?.emoji || "📋"}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, color: colors.textMuted }}>
-                      {item.org?.name || "IOPPS"}
+                      {item.author?.name || "IOPPS"}
                     </div>
                     <div
                       style={{
@@ -423,7 +423,7 @@ export function OpportunityFeed({
                     </div>
                   </div>
                 </div>
-                {item.subtitle && (
+                {item.meta?.mode && (
                   <div
                     style={{
                       fontSize: 12,
@@ -431,7 +431,7 @@ export function OpportunityFeed({
                       marginBottom: 8,
                     }}
                   >
-                    📍 {item.subtitle}
+                    📍 {item.meta.mode}
                   </div>
                 )}
                 <div
@@ -439,13 +439,13 @@ export function OpportunityFeed({
                     display: "inline-block",
                     padding: "4px 10px",
                     borderRadius: 12,
-                    background: TYPE_CONFIG[item.type]?.bgColor || colors.accentBg,
-                    color: TYPE_CONFIG[item.type]?.color || colors.accent,
+                    background: typeConfig[item.type]?.bg || colors.accentBg,
+                    color: typeConfig[item.type]?.color || colors.accent,
                     fontSize: 11,
                     fontWeight: 600,
                   }}
                 >
-                  {TYPE_CONFIG[item.type]?.label || "Opportunity"}
+                  {typeConfig[item.type]?.label || "Opportunity"}
                 </div>
               </a>
             ))}

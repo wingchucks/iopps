@@ -49,6 +49,7 @@ export interface OpportunityMeta {
   status?: "live" | "replay" | "upcoming";
   duration?: string;
   viewers?: number;
+  platform?: string;
 }
 
 export interface OpportunityEngagement {
@@ -70,6 +71,8 @@ export interface OpportunityItem {
   social?: string; // "12 people from your network saved this"
   saved?: boolean;
   href?: string; // link to detail page
+  live?: boolean; // currently live (livestreams)
+  featured?: boolean; // editorially featured
 }
 
 interface OpportunityCardProps {
