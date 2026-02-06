@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState, useMemo } from "react";
 import { listSchools, listScholarships } from "@/lib/firestore";
 import type { School, Scholarship } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 type EducationTab = 'schools' | 'scholarships';
 
@@ -94,35 +94,27 @@ function EducationContent() {
   }, [schools, schoolTypeFilter, provinceFilter]);
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Education"
-        title={
-          <>
-            Learn. Grow.
-            <br />
-            Achieve Your Dreams.
-          </>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
+        title="Education"
+        subtitle="Explore schools, programs, and scholarships designed to support Indigenous learners."
+        actions={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/education/schools"
+              className="rounded-full bg-teal-500 px-5 py-2 text-sm font-bold text-white hover:bg-teal-600 transition"
+            >
+              Browse Schools
+            </Link>
+            <Link
+              href="/education/programs"
+              className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+            >
+              Find Programs
+            </Link>
+          </div>
         }
-        subtitle="Explore schools, programs, and scholarships designed to support Indigenous learners on their educational journey."
-        size="md"
-      >
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/education/schools"
-            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Browse Schools
-          </Link>
-          <Link
-            href="/education/programs"
-            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-          >
-            Find Programs
-          </Link>
-        </div>
-      </OceanWaveHero>
+      />
 
       <PageShell>
         {/* Tab Pills */}

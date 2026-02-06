@@ -8,7 +8,7 @@ import { listPowwowEvents } from "@/lib/firestore";
 import type { PowwowEvent, PowwowEventType, NorthAmericanRegion } from "@/lib/types";
 import { POWWOW_EVENT_TYPES, NORTH_AMERICAN_REGIONS } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import {
   SearchBarRow,
@@ -234,25 +234,20 @@ function PowwowsContent() {
   ];
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Pow Wows & Events"
-        title="Celebrate Together"
-        subtitle="Celebrations & gatherings across Turtle Island. Find pow wows, sports events, and cultural gatherings hosted by Nations, communities, and partners across North America."
-        size="md"
-      >
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
+        title="Pow Wows & Events"
+        subtitle="Celebrations & gatherings across Turtle Island. Find pow wows, sports events, and cultural gatherings."
+      />
+
+      <PageShell>
         <SearchBarRow
           placeholder="Search events..."
           value={search}
           onChange={setSearch}
           onFiltersClick={() => setShowFilters(!showFilters)}
           hasActiveFilters={hasFilters}
-          variant="hero"
         />
-      </OceanWaveHero>
-
-      <PageShell>
         {/* Filters Panel */}
         <FiltersDrawer
           isOpen={showFilters}
@@ -479,12 +474,10 @@ export default function PowwowsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <OceanWaveHero
-            eyebrow="Pow Wows & Events"
-            title="Celebrate Together"
-            subtitle="Celebrations & gatherings across Turtle Island. Find pow wows, sports events, and cultural gatherings hosted by Nations, communities, and partners across North America."
-            size="md"
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          <SimplePageHeader
+            title="Pow Wows & Events"
+            subtitle="Celebrations & gatherings across Turtle Island."
           />
           <PageShell>
             <LoadingGrid count={6} height="h-80" />

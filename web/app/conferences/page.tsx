@@ -6,7 +6,7 @@ import { CalendarDaysIcon, MapPinIcon, TicketIcon } from "@heroicons/react/24/ou
 import { listConferences } from "@/lib/firestore";
 import type { Conference } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import {
   SearchBarRow,
@@ -215,25 +215,20 @@ function ConferencesContent() {
   ];
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Conferences & Summits"
-        title="Connect & Learn"
-        subtitle="Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits, and professional gatherings from organizations across Turtle Island."
-        size="md"
-      >
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
+        title="Conferences & Summits"
+        subtitle="Connect, learn, and celebrate Indigenous leadership. Explore professional gatherings from organizations across Turtle Island."
+      />
+
+      <PageShell>
         <SearchBarRow
           placeholder="Search conferences..."
           value={search}
           onChange={setSearch}
           onFiltersClick={() => setShowFilters(!showFilters)}
           hasActiveFilters={hasFilters}
-          variant="hero"
         />
-      </OceanWaveHero>
-
-      <PageShell>
         {/* Filters Panel */}
         <FiltersDrawer
           isOpen={showFilters}
@@ -438,12 +433,10 @@ export default function ConferencesPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <OceanWaveHero
-            eyebrow="Conferences & Summits"
-            title="Connect & Learn"
-            subtitle="Connect, learn, and celebrate Indigenous leadership. Explore conferences, summits, and professional gatherings from organizations across Turtle Island."
-            size="md"
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          <SimplePageHeader
+            title="Conferences & Summits"
+            subtitle="Connect, learn, and celebrate Indigenous leadership."
           />
           <PageShell>
             <LoadingGrid count={6} height="h-72" />

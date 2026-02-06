@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { useAuth } from "@/components/AuthProvider";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import {
   PricingTabs,
   EmployersPanel,
@@ -38,31 +38,29 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Pricing & Plans"
-        title="Partner with IOPPS"
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
+        title="Pricing & Plans"
         subtitle="Choose the plan that fits your needs. Employers, schools, event organizers, and vendors all have options designed for their goals."
-        size="sm"
-      >
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/contact"
-            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Talk to IOPPS
-          </Link>
-          {!shouldHideEmployerButton && (
+        actions={
+          <div className="flex flex-wrap gap-3">
             <Link
-              href="/register"
-              className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+              href="/contact"
+              className="rounded-full bg-teal-500 px-5 py-2 text-sm font-bold text-white hover:bg-teal-600 transition"
             >
-              Create Account
+              Talk to IOPPS
             </Link>
-          )}
-        </div>
-      </OceanWaveHero>
+            {!shouldHideEmployerButton && (
+              <Link
+                href="/register"
+                className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+              >
+                Create Account
+              </Link>
+            )}
+          </div>
+        }
+      />
 
       <PageShell>
         {/* Quick audience selector hint */}

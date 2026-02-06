@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { listEmployers } from "@/lib/firestore";
 import type { EmployerProfile, IndustryType, OrganizationProfile } from "@/lib/types";
@@ -110,25 +110,20 @@ export default function OrganizationsPage() {
   ];
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Partner Organizations"
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
         title="Organization Directory"
         subtitle="Discover organizations committed to Indigenous employment and community development."
-        size="md"
-      >
+      />
+
+      <PageShell>
         <SearchBarRow
           placeholder="Search organizations..."
           value={search}
           onChange={setSearch}
           onFiltersClick={() => setShowFilters(!showFilters)}
           hasActiveFilters={!!hasFilters}
-          variant="hero"
         />
-      </OceanWaveHero>
-
-      <PageShell>
         {/* Filters Panel */}
         <FiltersDrawer
           isOpen={showFilters}

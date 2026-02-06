@@ -15,7 +15,7 @@ import { listLiveStreams } from "@/lib/firestore";
 import type { LiveStreamEvent } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
 import { YouTubeSection } from "@/components/YouTubeSection";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 type StreamStatus = "Live Now" | "Upcoming" | "Replay";
 
@@ -94,11 +94,10 @@ function LiveStreamsContent() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      <OceanWaveHero
-        title="IOPPS LIVESTREAM"
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
+        title="IOPPS Live"
         subtitle="Watch our official live streams, pow wows, and events directly from the source."
-        size="md"
       />
 
       <PageShell>
@@ -509,11 +508,10 @@ export default function LivePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <OceanWaveHero
-            title="IOPPS LIVESTREAM"
-            subtitle="Watch our official live streams, pow wows, and events directly from the source."
-            size="md"
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+          <SimplePageHeader
+            title="IOPPS Live"
+            subtitle="Watch our official live streams, pow wows, and events."
           />
           <PageShell>
             <div className="mx-auto max-w-7xl">

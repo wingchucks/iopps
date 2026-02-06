@@ -7,7 +7,7 @@ import { listJobPostings, listTrainingPrograms, listSavedJobIds, toggleSavedJob 
 import { useAuth } from "@/components/AuthProvider";
 import type { JobPosting, TrainingProgram } from "@/lib/types";
 import { PageShell } from "@/components/PageShell";
-import OceanWaveHero from "@/components/OceanWaveHero";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 import { DashboardEntryCTA } from "@/components/auth/DashboardEntryCTA";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
@@ -131,35 +131,27 @@ function CareersContent() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Ocean Wave Hero */}
-      <OceanWaveHero
-        eyebrow="Careers"
-        title={
-          <>
-            Find Your Path.{" "}
-            <br />
-            Build Your Future.
-          </>
-        }
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <SimplePageHeader
+        title="Careers"
         subtitle="Discover career opportunities with employers committed to Indigenous hiring, and training programs to build your skills."
-        size="md"
-      >
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/careers/jobs"
-            className="rounded-full bg-white px-6 py-3 text-sm font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Browse Jobs
-          </Link>
-          <Link
-            href="/careers/programs"
-            className="rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
-          >
-            View Training
-          </Link>
-        </div>
-      </OceanWaveHero>
+        actions={
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/careers/jobs"
+              className="rounded-full bg-teal-500 px-5 py-2 text-sm font-bold text-white hover:bg-teal-600 transition"
+            >
+              Browse Jobs
+            </Link>
+            <Link
+              href="/careers/programs"
+              className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+            >
+              View Training
+            </Link>
+          </div>
+        }
+      />
 
       <PageShell>
 
