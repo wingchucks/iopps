@@ -8,6 +8,7 @@ import type { NetworkingRecommendation } from "@/lib/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ConnectionButton } from "@/components/social/ConnectionButton";
+import { FeedLayout } from "@/components/opportunity-graph";
 import {
   Users,
   Sparkles,
@@ -75,7 +76,7 @@ export default function DiscoverPage() {
     if (score >= 70) return "text-emerald-400";
     if (score >= 50) return "text-blue-400";
     if (score >= 30) return "text-amber-400";
-    return "text-slate-400";
+    return "text-slate-500";
   };
 
   const getMatchLabel = (score: number) => {
@@ -87,29 +88,31 @@ export default function DiscoverPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="text-center p-8 rounded-2xl border border-slate-800 bg-slate-900/50 max-w-md">
-          <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Sign in to Discover</h2>
-          <p className="text-slate-400 mb-6">
-            Connect with Indigenous professionals who share your interests and goals.
-          </p>
-          <Link href="/login">
-            <Button className="bg-emerald-500 hover:bg-emerald-600">Sign In</Button>
-          </Link>
+      <FeedLayout activeNav="community" fullWidth>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center p-8 rounded-2xl border border-slate-200 bg-white max-w-md">
+            <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign in to Discover</h2>
+            <p className="text-slate-500 mb-6">
+              Connect with Indigenous professionals who share your interests and goals.
+            </p>
+            <Link href="/login">
+              <Button className="bg-emerald-500 hover:bg-emerald-600">Sign In</Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </FeedLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <FeedLayout activeNav="community" fullWidth>
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b border-slate-200 bg-white">
         <div className="container max-w-6xl mx-auto px-4 py-6">
           <Link
             href="/members"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-4"
+            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Directory
@@ -120,8 +123,8 @@ export default function DiscoverPage() {
                 <Sparkles className="h-8 w-8 text-purple-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">People You May Know</h1>
-                <p className="text-slate-400 text-sm">
+                <h1 className="text-2xl font-bold text-slate-900">People You May Know</h1>
+                <p className="text-slate-500 text-sm">
                   Personalized recommendations based on your profile
                 </p>
               </div>
@@ -130,7 +133,7 @@ export default function DiscoverPage() {
               variant="outline"
               onClick={refreshRecommendations}
               disabled={refreshing}
-              className="border-slate-700"
+              className="border-slate-200"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
@@ -147,8 +150,8 @@ export default function DiscoverPage() {
         ) : recommendations.length === 0 ? (
           <div className="text-center py-20">
             <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No recommendations yet</h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No recommendations yet</h3>
+            <p className="text-slate-500 mb-6 max-w-md mx-auto">
               Complete your profile with your skills, experience, and interests to get personalized
               connection recommendations.
             </p>
@@ -161,7 +164,7 @@ export default function DiscoverPage() {
             {/* High Match Section */}
             {recommendations.filter(r => r.matchScore >= 50).length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <Star className="h-5 w-5 text-amber-400" />
                   Top Matches
                 </h2>
@@ -172,11 +175,11 @@ export default function DiscoverPage() {
                     .map((person) => (
                       <div
                         key={person.userId}
-                        className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 hover:border-emerald-500/30 transition-all"
+                        className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-emerald-500/30 transition-all"
                       >
                         <div className="flex items-start gap-4">
                           <Link href={`/member/${person.userId}`}>
-                            <Avatar className="h-14 w-14 border-2 border-slate-800 hover:border-emerald-500/50 transition-colors">
+                            <Avatar className="h-14 w-14 border-2 border-white hover:border-emerald-500/50 transition-colors">
                               <AvatarImage src={person.avatarUrl} />
                               <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
                                 {getInitials(person.displayName)}
@@ -185,12 +188,12 @@ export default function DiscoverPage() {
                           </Link>
                           <div className="flex-1 min-w-0">
                             <Link href={`/member/${person.userId}`}>
-                              <h3 className="font-semibold text-white truncate hover:text-emerald-400 transition-colors">
+                              <h3 className="font-semibold text-slate-900 truncate hover:text-emerald-400 transition-colors">
                                 {person.displayName}
                               </h3>
                             </Link>
                             {person.tagline && (
-                              <p className="text-sm text-slate-400 truncate">{person.tagline}</p>
+                              <p className="text-sm text-slate-500 truncate">{person.tagline}</p>
                             )}
                             <div className="flex items-center gap-2 mt-1">
                               <span className={`text-sm font-medium ${getMatchColor(person.matchScore)}`}>
@@ -209,7 +212,7 @@ export default function DiscoverPage() {
                             {person.matchReasons.slice(0, 2).map((reason, i) => (
                               <div
                                 key={i}
-                                className="flex items-center gap-2 text-sm text-slate-400"
+                                className="flex items-center gap-2 text-sm text-slate-500"
                               >
                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                                 {reason}
@@ -247,7 +250,7 @@ export default function DiscoverPage() {
                             className="flex-1"
                           />
                           <Link href={`/member/${person.userId}`}>
-                            <Button variant="ghost" size="sm" className="text-slate-400">
+                            <Button variant="ghost" size="sm" className="text-slate-500">
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -261,7 +264,7 @@ export default function DiscoverPage() {
             {/* Other Recommendations */}
             {recommendations.filter(r => r.matchScore < 50).length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <UserPlus className="h-5 w-5 text-blue-400" />
                   More Suggestions
                 </h2>
@@ -271,10 +274,10 @@ export default function DiscoverPage() {
                     .map((person) => (
                       <div
                         key={person.userId}
-                        className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 hover:border-slate-700 transition-all flex items-center gap-4"
+                        className="rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 transition-all flex items-center gap-4"
                       >
                         <Link href={`/member/${person.userId}`}>
-                          <Avatar className="h-12 w-12 border-2 border-slate-800">
+                          <Avatar className="h-12 w-12 border-2 border-white">
                             <AvatarImage src={person.avatarUrl} />
                             <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-sm">
                               {getInitials(person.displayName)}
@@ -283,11 +286,11 @@ export default function DiscoverPage() {
                         </Link>
                         <div className="flex-1 min-w-0">
                           <Link href={`/member/${person.userId}`}>
-                            <h3 className="font-medium text-white hover:text-emerald-400 transition-colors">
+                            <h3 className="font-medium text-slate-900 hover:text-emerald-400 transition-colors">
                               {person.displayName}
                             </h3>
                           </Link>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mt-0.5">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
                             {person.tagline && (
                               <span className="truncate max-w-[200px]">{person.tagline}</span>
                             )}
@@ -309,7 +312,7 @@ export default function DiscoverPage() {
                           </span>
                           <ConnectionButton
                             targetUserId={person.userId}
-                            className="px-3 py-1.5 text-sm border-slate-600"
+                            className="px-3 py-1.5 text-sm border-slate-200"
                           />
                         </div>
                       </div>
@@ -319,27 +322,27 @@ export default function DiscoverPage() {
             )}
 
             {/* Tips Section */}
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-              <h3 className="font-semibold text-white mb-4">Improve Your Recommendations</h3>
+            <section className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h3 className="font-semibold text-slate-900 mb-4">Improve Your Recommendations</h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                <div className="p-4 rounded-xl bg-white border border-slate-200">
                   <Briefcase className="h-8 w-8 text-blue-400 mb-3" />
-                  <h4 className="font-medium text-white mb-1">Add Your Experience</h4>
-                  <p className="text-sm text-slate-400">
+                  <h4 className="font-medium text-slate-900 mb-1">Add Your Experience</h4>
+                  <p className="text-sm text-slate-500">
                     Connect with others who've worked at similar companies or in similar roles.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                <div className="p-4 rounded-xl bg-white border border-slate-200">
                   <Building2 className="h-8 w-8 text-purple-400 mb-3" />
-                  <h4 className="font-medium text-white mb-1">List Your Skills</h4>
-                  <p className="text-sm text-slate-400">
+                  <h4 className="font-medium text-slate-900 mb-1">List Your Skills</h4>
+                  <p className="text-sm text-slate-500">
                     Find professionals with complementary or shared skills.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                <div className="p-4 rounded-xl bg-white border border-slate-200">
                   <GraduationCap className="h-8 w-8 text-amber-400 mb-3" />
-                  <h4 className="font-medium text-white mb-1">Add Your Education</h4>
-                  <p className="text-sm text-slate-400">
+                  <h4 className="font-medium text-slate-900 mb-1">Add Your Education</h4>
+                  <p className="text-sm text-slate-500">
                     Connect with alumni from your school or program.
                   </p>
                 </div>
@@ -354,6 +357,6 @@ export default function DiscoverPage() {
           </div>
         )}
       </div>
-    </div>
+    </FeedLayout>
   );
 }

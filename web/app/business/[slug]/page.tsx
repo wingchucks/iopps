@@ -14,7 +14,7 @@ import {
   ClockIcon,
   EyeIcon,
 } from '@heroicons/react/24/outline';
-import { PageShell } from '@/components/PageShell';
+import { FeedLayout } from '@/components/opportunity-graph';
 import { getVendorBySlug, getVendorBySlugAnyStatus, getVendorProducts, incrementVendorViews } from '@/lib/firebase/shop';
 import type { Vendor, VendorProduct } from '@/lib/types';
 import { generateVendorSchema, buildMetadata } from '@/lib/seo';
@@ -81,22 +81,22 @@ function StatusBanner({ status }: { status: string }) {
   const statusConfig = {
     draft: {
       icon: EyeIcon,
-      bgColor: 'bg-amber-500/10 border-amber-500/30',
-      textColor: 'text-amber-400',
+      bgColor: 'bg-amber-50 border-amber-200',
+      textColor: 'text-amber-600',
       title: 'Preview Mode - Draft Listing',
       message: 'This listing is not yet published. Only you can see this preview.',
     },
     pending: {
       icon: ClockIcon,
-      bgColor: 'bg-blue-500/10 border-blue-500/30',
-      textColor: 'text-blue-400',
+      bgColor: 'bg-blue-50 border-blue-200',
+      textColor: 'text-blue-600',
       title: 'Preview Mode - Pending Approval',
       message: 'This listing is awaiting admin approval before it becomes visible to the public.',
     },
     suspended: {
       icon: ExclamationTriangleIcon,
-      bgColor: 'bg-red-500/10 border-red-500/30',
-      textColor: 'text-red-400',
+      bgColor: 'bg-red-50 border-red-200',
+      textColor: 'text-red-600',
       title: 'Listing Suspended',
       message: 'This listing has been suspended. Please contact support for more information.',
     },
@@ -111,7 +111,7 @@ function StatusBanner({ status }: { status: string }) {
         <Icon className={`h-6 w-6 flex-shrink-0 ${config.textColor}`} />
         <div>
           <h3 className={`font-semibold ${config.textColor}`}>{config.title}</h3>
-          <p className="mt-1 text-sm text-slate-400">{config.message}</p>
+          <p className="mt-1 text-sm text-slate-500">{config.message}</p>
         </div>
       </div>
     </div>
@@ -163,21 +163,21 @@ async function VendorPage({ params, searchParams }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(vendorSchema) }}
       />
-      <PageShell className="pb-24">
+      <FeedLayout activeNav="business" fullWidth>
         {/* Status Banner for non-active vendors */}
         <StatusBanner status={vendor.status} />
 
         {/* Back Link */}
         <Link
           href="/business"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-teal-400 mb-6"
+          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-teal-600 mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Indigenous Marketplace
         </Link>
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-slate-800/50 border border-slate-700 mb-8">
+        <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 mb-8">
           {/* Cover Image */}
           <div className="relative h-64 sm:h-80 overflow-hidden">
             {vendor.coverImageUrl ? (
@@ -215,7 +215,7 @@ async function VendorPage({ params, searchParams }: Props) {
                 />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent" />
 
             {/* Badges */}
             <div className="absolute top-4 right-4 flex gap-2">
@@ -240,7 +240,7 @@ async function VendorPage({ params, searchParams }: Props) {
           <div className="relative px-6 pb-6 sm:px-8">
             {/* Logo */}
             <div className="absolute -top-12 left-6 sm:left-8">
-              <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+              <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-white bg-slate-100 shadow-xl">
                 {vendor.logoUrl ? (
                   <Image
                     src={vendor.logoUrl}
@@ -264,13 +264,13 @@ async function VendorPage({ params, searchParams }: Props) {
             <div className="pt-16 sm:pt-4 sm:pl-32">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-white">{vendor.businessName}</h1>
+                  <h1 className="text-3xl font-bold text-slate-900">{vendor.businessName}</h1>
                   {vendor.tagline && (
-                    <p className="mt-1 text-lg text-slate-400">{vendor.tagline}</p>
+                    <p className="mt-1 text-lg text-slate-500">{vendor.tagline}</p>
                   )}
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <span
-                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white"
+                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-slate-900"
                       style={{ backgroundColor: `${vendor.themeColor || '#14b8a6'}33`, color: vendor.themeColor || '#2dd4bf' }}
                     >
                       {vendor.category}
@@ -288,7 +288,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-pink-500/20 hover:text-pink-400"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-pink-50 hover:text-pink-600"
                     >
                       <InstagramIcon className="h-5 w-5" />
                     </a>
@@ -298,7 +298,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-blue-500/20 hover:text-blue-400"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
                     >
                       <FacebookIcon className="h-5 w-5" />
                     </a>
@@ -308,7 +308,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={`https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-slate-500/20 hover:text-white"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
                     >
                       <TikTokIcon className="h-5 w-5" />
                     </a>
@@ -318,7 +318,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-400 transition-colors hover:bg-teal-500/20 hover:text-teal-400"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-teal-50 hover:text-teal-600"
                     >
                       <GlobeAltIcon className="h-5 w-5" />
                     </a>
@@ -333,23 +333,23 @@ async function VendorPage({ params, searchParams }: Props) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About */}
-            <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">About</h2>
-              <p className="text-slate-300 whitespace-pre-wrap">{vendor.description}</p>
+            <section className="rounded-2xl bg-white border border-slate-200 p-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-4">About</h2>
+              <p className="text-slate-600 whitespace-pre-wrap">{vendor.description}</p>
             </section>
 
             {/* Community Story */}
             {vendor.communityStory && (
-              <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-                <h2 className="text-xl font-bold text-white mb-4">Our Story</h2>
-                <p className="text-slate-300 whitespace-pre-wrap">{vendor.communityStory}</p>
+              <section className="rounded-2xl bg-white border border-slate-200 p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-4">Our Story</h2>
+                <p className="text-slate-600 whitespace-pre-wrap">{vendor.communityStory}</p>
               </section>
             )}
 
             {/* Products */}
             {products.length > 0 && (
-              <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-                <h2 className="text-xl font-bold text-white mb-6">Products & Services</h2>
+              <section className="rounded-2xl bg-white border border-slate-200 p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-6">Products & Services</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {products.map((product) => (
                     <ProductCard key={product.id} product={product} themeColor={vendor.themeColor} />
@@ -360,8 +360,8 @@ async function VendorPage({ params, searchParams }: Props) {
 
             {/* Gallery */}
             {vendor.galleryImages && vendor.galleryImages.length > 0 && (
-              <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-                <h2 className="text-xl font-bold text-white mb-6">Gallery</h2>
+              <section className="rounded-2xl bg-white border border-slate-200 p-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-6">Gallery</h2>
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {vendor.galleryImages.map((image, index) => (
                     <div key={index} className="relative aspect-square overflow-hidden rounded-xl">
@@ -381,11 +381,11 @@ async function VendorPage({ params, searchParams }: Props) {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Contact Card */}
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Contact</h3>
+            <div className="rounded-2xl bg-white border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Contact</h3>
               <div className="space-y-3">
                 {vendor.location && (
-                  <div className="flex items-start gap-3 text-slate-300">
+                  <div className="flex items-start gap-3 text-slate-600">
                     <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
                     <div>
                       <p>{vendor.location}</p>
@@ -396,7 +396,7 @@ async function VendorPage({ params, searchParams }: Props) {
                 {vendor.email && (
                   <a
                     href={`mailto:${vendor.email}`}
-                    className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
+                    className="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors"
                   >
                     <EnvelopeIcon className="h-5 w-5 text-slate-500" />
                     {vendor.email}
@@ -405,7 +405,7 @@ async function VendorPage({ params, searchParams }: Props) {
                 {vendor.phone && (
                   <a
                     href={`tel:${vendor.phone}`}
-                    className="flex items-center gap-3 text-slate-300 hover:text-teal-400 transition-colors"
+                    className="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors"
                   >
                     <PhoneIcon className="h-5 w-5 text-slate-500" />
                     {vendor.phone}
@@ -429,8 +429,8 @@ async function VendorPage({ params, searchParams }: Props) {
             </div>
 
             {/* Shipping Info */}
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Shipping & Location</h3>
+            <div className="rounded-2xl bg-white border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Shipping & Location</h3>
               <div className="space-y-3">
                 {vendor.offersShipping && (
                   <div className="flex items-center gap-3" style={{ color: vendor.themeColor || '#2dd4bf' }}>
@@ -439,12 +439,12 @@ async function VendorPage({ params, searchParams }: Props) {
                   </div>
                 )}
                 {vendor.onlineOnly ? (
-                  <div className="flex items-center gap-3 text-slate-400">
+                  <div className="flex items-center gap-3 text-slate-500">
                     <GlobeAltIcon className="h-5 w-5" />
                     <span>Online only</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 text-slate-400">
+                  <div className="flex items-center gap-3 text-slate-500">
                     <MapPinIcon className="h-5 w-5" />
                     <span>Physical location available</span>
                   </div>
@@ -462,7 +462,7 @@ async function VendorPage({ params, searchParams }: Props) {
             )}
           </div>
         </div>
-      </PageShell>
+      </FeedLayout>
     </>
   );
 }
@@ -471,8 +471,8 @@ function ProductCard({ product, themeColor }: { product: VendorProduct; themeCol
   const color = themeColor || '#2dd4bf'; // Default teal-400
   return (
     <div
-      className="group overflow-hidden rounded-xl bg-slate-700/50 border border-slate-600 transition-all hover:border-opacity-100"
-      style={{ borderColor: 'rgba(71, 85, 105, 1)' }} // Default border
+      className="group overflow-hidden rounded-xl bg-white border border-slate-200 transition-all hover:border-opacity-100"
+      style={{ borderColor: 'rgba(226, 232, 240, 1)' }} // Default border
     >
       {product.imageUrl && (
         <div className="relative h-40 overflow-hidden">
@@ -485,18 +485,18 @@ function ProductCard({ product, themeColor }: { product: VendorProduct; themeCol
         </div>
       )}
       <div className="p-4">
-        <h4 className="font-semibold text-white group-hover:text-teal-400 transition-colors" style={{ color: undefined }} /* We want hover effect */>
+        <h4 className="font-semibold text-slate-900 group-hover:text-teal-600 transition-colors" style={{ color: undefined }} /* We want hover effect */>
           {product.name}
         </h4>
-        <p className="mt-1 text-sm text-slate-400 line-clamp-2">{product.description}</p>
+        <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.description}</p>
         {(product.priceDisplay || product.price) && (
           <p className="mt-2 font-semibold" style={{ color }}>
             {product.priceDisplay || `$${(product.price! / 100).toFixed(2)}`}
           </p>
         )}
         <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-          {product.madeToOrder && <span className="rounded bg-slate-600 px-2 py-0.5">Made to order</span>}
-          {!product.inStock && <span className="rounded bg-amber-500/20 text-amber-400 px-2 py-0.5">Out of stock</span>}
+          {product.madeToOrder && <span className="rounded bg-slate-100 px-2 py-0.5">Made to order</span>}
+          {!product.inStock && <span className="rounded bg-amber-50 text-amber-600 px-2 py-0.5">Out of stock</span>}
         </div>
       </div>
     </div>

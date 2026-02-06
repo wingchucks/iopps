@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PageShell } from "@/components/PageShell";
+import { FeedLayout } from "@/components/opportunity-graph";
 import { useAuth } from "@/components/AuthProvider";
 import { saveSchool, unsaveSchool, incrementSchoolViews } from "@/lib/firestore";
 import type { School, EducationProgram, Scholarship, EducationEvent } from "@/lib/types";
@@ -68,42 +68,42 @@ export default function SchoolDetailClient({
   ];
 
   return (
-    <PageShell>
+    <FeedLayout activeNav="education" fullWidth>
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
+      <nav className="mb-8 text-sm text-slate-500">
+        <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
         <span className="mx-2">→</span>
-        <Link href="/education" className="hover:text-white transition-colors">
+        <Link href="/education" className="hover:text-slate-900 transition-colors">
           Education
         </Link>
         <span className="mx-2">→</span>
-        <Link href="/education/schools" className="hover:text-white transition-colors">
+        <Link href="/education/schools" className="hover:text-slate-900 transition-colors">
           Schools
         </Link>
         <span className="mx-2">→</span>
-        <span className="text-white">{school.name}</span>
+        <span className="text-slate-900">{school.name}</span>
       </nav>
 
       {/* School Header */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden mb-8">
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden mb-8">
         {/* Banner Image */}
         {school.bannerUrl && (
           <div className="h-48 sm:h-64 w-full overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src={school.bannerUrl} 
-              alt={`${school.name} banner`} 
+            <img
+              src={school.bannerUrl}
+              alt={`${school.name} banner`}
               className="h-full w-full object-cover"
             />
           </div>
         )}
-        
+
         <div className="p-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Logo/Icon */}
-          <div className={`flex h-24 w-24 items-center justify-center rounded-2xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 shrink-0 ${school.bannerUrl ? '-mt-16 bg-slate-900 shadow-lg' : ''}`}>
+          <div className={`flex h-24 w-24 items-center justify-center rounded-2xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 shrink-0 ${school.bannerUrl ? '-mt-16 bg-white shadow-lg' : ''}`}>
             {school.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={school.logoUrl} alt={school.name} className="h-full w-full object-contain p-2" />
@@ -121,18 +121,18 @@ export default function SchoolDetailClient({
                 </span>
               )}
               {school.verification?.indigenousControlled && (
-                <span className="rounded-md bg-amber-500/20 border border-amber-500/40 px-2 py-1 text-xs font-semibold text-amber-400">
+                <span className="rounded-md bg-amber-50 border border-amber-300 px-2 py-1 text-xs font-semibold text-amber-600">
                   Indigenous-Controlled
                 </span>
               )}
-              <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300 capitalize">
+              <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 capitalize">
                 {school.type?.replace("_", " ")}
               </span>
             </div>
 
-            <h1 className="text-3xl font-bold text-white mb-2">{school.name}</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">{school.name}</h1>
 
-            <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-4">
+            <div className="flex flex-wrap gap-4 text-sm text-slate-500 mb-4">
               <span>📍 {school.headOffice?.city}, {school.headOffice?.province}</span>
               {school.stats?.totalPrograms && <span>📚 {school.stats.totalPrograms} programs</span>}
               {school.stats?.indigenousStudentPercentage && (
@@ -146,7 +146,7 @@ export default function SchoolDetailClient({
                 disabled={!user || savingState === "saving"}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${isSaved
                   ? "bg-[#14B8A6]/20 border border-[#14B8A6]/40 text-[#14B8A6]"
-                  : "bg-slate-800 border border-slate-700 text-white hover:border-[#14B8A6]/50"
+                  : "bg-slate-100 border border-slate-200 text-slate-900 hover:border-[#14B8A6]/50"
                   }`}
               >
                 {savingState === "saving" ? "..." : isSaved ? "✓ Saved" : "Save School"}
@@ -168,19 +168,19 @@ export default function SchoolDetailClient({
       </div>
 
       {/* Tabs */}
-      <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-800 pb-px">
+      <div className="mb-8 flex gap-2 overflow-x-auto border-b border-slate-200 pb-px">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${activeTab === tab.id
               ? "border-b-2 border-[#14B8A6] bg-[#14B8A6]/10 text-[#14B8A6]"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+              : "border-b-2 border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-600"
               }`}
           >
             {tab.label}
             {tab.count !== null && (
-              <span className="ml-2 rounded-full bg-slate-800 px-2 py-0.5 text-xs">
+              <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs">
                 {tab.count}
               </span>
             )}
@@ -193,39 +193,39 @@ export default function SchoolDetailClient({
         <div className="space-y-8">
           {/* Description */}
           {school.description && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">About</h2>
-              <p className="text-slate-300 whitespace-pre-wrap">{school.description}</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-4">About</h2>
+              <p className="text-slate-600 whitespace-pre-wrap">{school.description}</p>
             </div>
           )}
 
           {/* Indigenous Services */}
           {school.indigenousServices && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Indigenous Student Services</h2>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-4">Indigenous Student Services</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {school.indigenousServices.studentCentre && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
-                    <span className="text-slate-300">{school.indigenousServices.studentCentre.name || "Indigenous Student Centre"}</span>
+                    <span className="text-slate-600">{school.indigenousServices.studentCentre.name || "Indigenous Student Centre"}</span>
                   </div>
                 )}
                 {school.indigenousServices.elderInResidence && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
-                    <span className="text-slate-300">Elder-in-Residence Program</span>
+                    <span className="text-slate-600">Elder-in-Residence Program</span>
                   </div>
                 )}
                 {school.indigenousServices.ceremonySpace && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
-                    <span className="text-slate-300">Dedicated Cultural Spaces</span>
+                    <span className="text-slate-600">Dedicated Cultural Spaces</span>
                   </div>
                 )}
                 {school.indigenousServices.psychologists && (
                   <div className="flex items-start gap-3">
                     <span className="text-[#14B8A6]">✓</span>
-                    <span className="text-slate-300">Indigenous Counselling Services</span>
+                    <span className="text-slate-600">Indigenous Counselling Services</span>
                   </div>
                 )}
               </div>
@@ -233,9 +233,9 @@ export default function SchoolDetailClient({
           )}
 
           {/* Contact Info */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Contact</h2>
-            <div className="space-y-3 text-slate-300">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Contact</h2>
+            <div className="space-y-3 text-slate-600">
               {school.headOffice?.address && (
                 <p>📍 {school.headOffice.address}, {school.headOffice.city}, {school.headOffice.province}</p>
               )}
@@ -248,39 +248,39 @@ export default function SchoolDetailClient({
                 <p>📞 Toll-free: {school.contact.admissionsPhone}</p>
               )}
             </div>
-            
+
             {/* Social Links */}
             {school.social && Object.keys(school.social).length > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-800">
-                <h3 className="text-sm font-semibold text-slate-400 mb-3">Follow</h3>
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-500 mb-3">Follow</h3>
                 <div className="flex flex-wrap gap-3">
                   {school.social.facebook && (
-                    <a href={school.social.facebook} target="_blank" rel="noopener noreferrer" 
-                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                    <a href={school.social.facebook} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">
                       <span>📘</span> Facebook
                     </a>
                   )}
                   {school.social.instagram && (
                     <a href={school.social.instagram} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                       className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">
                       <span>📷</span> Instagram
                     </a>
                   )}
                   {school.social.twitter && (
                     <a href={school.social.twitter} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                       className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">
                       <span>𝕏</span> Twitter
                     </a>
                   )}
                   {school.social.linkedin && (
                     <a href={school.social.linkedin} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                       className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">
                       <span>💼</span> LinkedIn
                     </a>
                   )}
                   {school.social.youtube && (
                     <a href={school.social.youtube} target="_blank" rel="noopener noreferrer"
-                       className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
+                       className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors">
                       <span>▶️</span> YouTube
                     </a>
                   )}
@@ -299,18 +299,18 @@ export default function SchoolDetailClient({
                 <Link
                   key={program.id}
                   href={`/education/programs/${program.slug || program.id}`}
-                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className="text-xs font-semibold text-[#14B8A6] uppercase">{program.category}</span>
-                    <span className="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 capitalize">
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 capitalize">
                       {program.level}
                     </span>
                   </div>
-                  <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+                  <h3 className="font-bold text-slate-900 mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
                     {program.name}
                   </h3>
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                  <div className="flex flex-wrap gap-2 text-xs text-slate-500">
                     {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
                     <span className="capitalize">📍 {program.deliveryMethod}</span>
                   </div>
@@ -318,8 +318,8 @@ export default function SchoolDetailClient({
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-              <p className="text-slate-400">No programs listed yet.</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <p className="text-slate-500">No programs listed yet.</p>
             </div>
           )}
         </div>
@@ -333,13 +333,13 @@ export default function SchoolDetailClient({
                 <Link
                   key={scholarship.id}
                   href={`/education/scholarships/${scholarship.id}`}
-                  className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50"
                 >
                   <div>
-                    <h3 className="font-bold text-white mb-1 group-hover:text-[#14B8A6] transition-colors">
+                    <h3 className="font-bold text-slate-900 mb-1 group-hover:text-[#14B8A6] transition-colors">
                       {scholarship.title}
                     </h3>
-                    <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                    <div className="flex flex-wrap gap-4 text-sm text-slate-500">
                       {scholarship.amount && (
                         <span className="text-[#14B8A6] font-medium">
                           {scholarship.amount}
@@ -362,8 +362,8 @@ export default function SchoolDetailClient({
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-              <p className="text-slate-400">No scholarships listed yet.</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <p className="text-slate-500">No scholarships listed yet.</p>
             </div>
           )}
         </div>
@@ -377,20 +377,20 @@ export default function SchoolDetailClient({
                 <Link
                   key={event.id}
                   href={`/education/events/${event.id}`}
-                  className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
                       {event.type}
                     </span>
-                    <span className="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 capitalize">
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 capitalize">
                       {event.format}
                     </span>
                   </div>
-                  <h3 className="font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors">
+                  <h3 className="font-bold text-slate-900 mb-2 group-hover:text-[#14B8A6] transition-colors">
                     {event.name}
                   </h3>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-500">
                     📅 {event.startDatetime && (
                       typeof event.startDatetime === 'string'
                         ? new Date(event.startDatetime).toLocaleDateString()
@@ -404,12 +404,12 @@ export default function SchoolDetailClient({
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-              <p className="text-slate-400">No upcoming events.</p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+              <p className="text-slate-500">No upcoming events.</p>
             </div>
           )}
         </div>
       )}
-    </PageShell>
+    </FeedLayout>
   );
 }

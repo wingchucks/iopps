@@ -114,17 +114,17 @@ function UnsubscribeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020306] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-8 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8 text-center">
           {/* Loading State */}
           {status === "loading" && (
             <>
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-800">
-                <EnvelopeIcon className="h-8 w-8 text-slate-400 animate-pulse" />
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                <EnvelopeIcon className="h-8 w-8 text-slate-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-100">Processing...</h1>
-              <p className="mt-2 text-slate-400">Please wait while we process your request.</p>
+              <h1 className="text-2xl font-bold text-slate-900">Processing...</h1>
+              <p className="mt-2 text-slate-500">Please wait while we process your request.</p>
             </>
           )}
 
@@ -134,10 +134,10 @@ function UnsubscribeContent() {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
                 <EnvelopeIcon className="h-8 w-8 text-amber-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-100">Unsubscribe</h1>
-              <p className="mt-4 text-slate-400">
-                You're about to unsubscribe <span className="text-slate-200">{verifiedEmail}</span> from{" "}
-                <span className="text-slate-200">{getTypeLabel(type)}</span>.
+              <h1 className="text-2xl font-bold text-slate-900">Unsubscribe</h1>
+              <p className="mt-4 text-slate-500">
+                You're about to unsubscribe <span className="text-slate-800">{verifiedEmail}</span> from{" "}
+                <span className="text-slate-800">{getTypeLabel(type)}</span>.
               </p>
               <button
                 onClick={handleUnsubscribe}
@@ -160,15 +160,15 @@ function UnsubscribeContent() {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
                 <CheckCircleIcon className="h-8 w-8 text-green-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-100">Unsubscribed</h1>
-              <p className="mt-4 text-slate-400">{message}</p>
+              <h1 className="text-2xl font-bold text-slate-900">Unsubscribed</h1>
+              <p className="mt-4 text-slate-500">{message}</p>
               <p className="mt-2 text-sm text-slate-500">
                 You'll still receive important account notifications.
               </p>
               <div className="mt-6 space-y-3">
                 <Link
                   href="/member/email-preferences"
-                  className="block w-full rounded-lg border border-slate-700 px-4 py-3 font-medium text-slate-200 transition hover:bg-slate-800"
+                  className="block w-full rounded-lg border border-slate-200 px-4 py-3 font-medium text-slate-800 transition hover:bg-slate-100"
                 >
                   Manage Email Preferences
                 </Link>
@@ -188,8 +188,8 @@ function UnsubscribeContent() {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
                 <ExclamationCircleIcon className="h-8 w-8 text-red-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-100">Something went wrong</h1>
-              <p className="mt-4 text-slate-400">{message}</p>
+              <h1 className="text-2xl font-bold text-slate-900">Something went wrong</h1>
+              <p className="mt-4 text-slate-500">{message}</p>
               <div className="mt-6 space-y-3">
                 <Link
                   href="/member/email-preferences"
@@ -199,7 +199,7 @@ function UnsubscribeContent() {
                 </Link>
                 <Link
                   href="/"
-                  className="block w-full rounded-lg border border-slate-700 px-4 py-3 font-medium text-slate-200 transition hover:bg-slate-800"
+                  className="block w-full rounded-lg border border-slate-200 px-4 py-3 font-medium text-slate-800 transition hover:bg-slate-100"
                 >
                   Return to IOPPS
                 </Link>
@@ -224,8 +224,8 @@ export default function UnsubscribePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#020306] flex items-center justify-center">
-          <p className="text-slate-400">Loading...</p>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <p className="text-slate-500">Loading...</p>
         </div>
       }
     >

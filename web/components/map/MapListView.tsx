@@ -61,7 +61,7 @@ export default function MapListView({
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="bg-slate-800/50 rounded-xl p-4 animate-pulse"
+            className="bg-white rounded-xl p-4 animate-pulse"
           >
             <div className="h-4 bg-slate-700 rounded w-1/4 mb-3" />
             <div className="h-5 bg-slate-700 rounded w-3/4 mb-2" />
@@ -76,7 +76,7 @@ export default function MapListView({
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <MapPinIcon className="w-12 h-12 text-slate-600 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-300 mb-2">
+        <h3 className="text-lg font-semibold text-slate-600 mb-2">
           No opportunities found
         </h3>
         <p className="text-sm text-slate-500 max-w-md">
@@ -89,8 +89,8 @@ export default function MapListView({
   return (
     <div className="flex flex-col h-full">
       {/* Sort Controls */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
-        <span className="text-sm text-slate-400">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+        <span className="text-sm text-slate-500">
           {opportunities.length} {opportunities.length === 1 ? "result" : "results"}
         </span>
         <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export default function MapListView({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="text-sm bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="text-sm bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           >
             <option value="distance">Distance</option>
             <option value="title">Name</option>
@@ -137,7 +137,7 @@ function OpportunityCard({
 
   return (
     <div
-      className="bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-xl p-4 transition-colors cursor-pointer"
+      className="bg-white hover:bg-slate-100 border border-slate-200 rounded-xl p-4 transition-colors cursor-pointer"
       onClick={onClick}
     >
       {/* Header */}
@@ -158,10 +158,10 @@ function OpportunityCard({
       </div>
 
       {/* Title & Organization */}
-      <h3 className="text-base font-semibold text-white mb-1 line-clamp-2">
+      <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-2">
         {title}
       </h3>
-      <p className="text-sm text-slate-400 mb-2">{organization}</p>
+      <p className="text-sm text-slate-500 mb-2">{organization}</p>
 
       {/* Meta info */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
@@ -181,7 +181,7 @@ function OpportunityCard({
           </span>
         )}
         {meta.employmentType && (
-          <span className="text-slate-400">{meta.employmentType}</span>
+          <span className="text-slate-500">{meta.employmentType}</span>
         )}
       </div>
 

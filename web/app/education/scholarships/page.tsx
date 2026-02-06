@@ -5,8 +5,7 @@ import Link from "next/link";
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, AcademicCapIcon, CurrencyDollarIcon, CalendarIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { listScholarships } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
-import { PageShell } from "@/components/PageShell";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
+import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
 
 const AWARD_TYPES = ["All", "Scholarship", "Grant", "Bursary"] as const;
 const EDUCATION_LEVELS = ["All", "High School", "Post-secondary", "Graduate", "Community"] as const;
@@ -154,28 +153,24 @@ function ScholarshipsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <SimplePageHeader
-        title="Scholarships & Funding"
-        subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants."
-      />
+    <FeedLayout activeNav="education">
+      <SectionHeader title="Scholarships & Funding" subtitle="Funding Indigenous learners and community leaders. Browse scholarships, bursaries, and grants." icon="🎓" />
 
-      <PageShell>
         {/* Search Bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               placeholder="Search scholarships..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 py-3 pl-12 pr-4 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full rounded-lg bg-white border border-slate-200 py-3 pl-12 pr-4 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 border border-slate-700 px-6 py-3 text-white transition-colors hover:bg-slate-700"
+            className="flex items-center justify-center gap-2 rounded-lg bg-white border border-slate-200 px-6 py-3 text-slate-900 transition-colors hover:bg-slate-100"
           >
             <FunnelIcon className="h-5 w-5" />
             Filters
@@ -187,27 +182,27 @@ function ScholarshipsContent() {
           </button>
         </div>
         {/* Breadcrumb */}
-        <nav className="mb-8 text-sm text-slate-400">
-          <Link href="/" className="hover:text-white transition-colors">
+        <nav className="mb-8 text-sm text-slate-500">
+          <Link href="/" className="hover:text-slate-900 transition-colors">
             Home
           </Link>
-          <span className="mx-2">→</span>
-          <Link href="/education" className="hover:text-white transition-colors">
+          <span className="mx-2">&rarr;</span>
+          <Link href="/education" className="hover:text-slate-900 transition-colors">
             Education
           </Link>
-          <span className="mx-2">→</span>
-          <span className="text-white">Scholarships</span>
+          <span className="mx-2">&rarr;</span>
+          <span className="text-slate-900">Scholarships</span>
         </nav>
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="mb-8 rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6">
+          <div className="mb-8 rounded-2xl bg-slate-50 backdrop-blur-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Filters</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
               {hasFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   <XMarkIcon className="h-4 w-4" />
                   Clear all
@@ -218,7 +213,7 @@ function ScholarshipsContent() {
             <div className="grid gap-6 md:grid-cols-3">
               {/* Award Type */}
               <div>
-                <label className="text-sm font-medium text-slate-400 mb-2 block">Award Type</label>
+                <label className="text-sm font-medium text-slate-500 mb-2 block">Award Type</label>
                 <div className="flex flex-wrap gap-2">
                   {AWARD_TYPES.map((type) => (
                     <button
@@ -226,7 +221,7 @@ function ScholarshipsContent() {
                       onClick={() => setAwardType(type)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${awardType === type
                         ? "bg-[#14B8A6] text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >
                       {type}
@@ -237,7 +232,7 @@ function ScholarshipsContent() {
 
               {/* Education Level */}
               <div>
-                <label className="text-sm font-medium text-slate-400 mb-2 block">Education Level</label>
+                <label className="text-sm font-medium text-slate-500 mb-2 block">Education Level</label>
                 <div className="flex flex-wrap gap-2">
                   {EDUCATION_LEVELS.map((lvl) => (
                     <button
@@ -245,7 +240,7 @@ function ScholarshipsContent() {
                       onClick={() => setLevel(lvl)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${level === lvl
                         ? "bg-[#14B8A6] text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >
                       {lvl}
@@ -256,7 +251,7 @@ function ScholarshipsContent() {
 
               {/* Deadline Range */}
               <div>
-                <label className="text-sm font-medium text-slate-400 mb-2 block">Deadline</label>
+                <label className="text-sm font-medium text-slate-500 mb-2 block">Deadline</label>
                 <div className="flex flex-wrap gap-2">
                   {DEADLINE_RANGES.map((range) => (
                     <button
@@ -264,7 +259,7 @@ function ScholarshipsContent() {
                       onClick={() => setDeadlineRange(range.value)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${deadlineRange === range.value
                         ? "bg-[#14B8A6] text-white"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >
                       {range.label}
@@ -283,8 +278,8 @@ function ScholarshipsContent() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
                 <CurrencyDollarIcon className="h-4 w-4 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-white">High-Value Awards</h2>
-              <span className="text-sm text-slate-400">$5,000+</span>
+              <h2 className="text-2xl font-bold text-slate-900">High-Value Awards</h2>
+              <span className="text-sm text-slate-500">$5,000+</span>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featuredScholarships.map((item) => (
@@ -304,10 +299,10 @@ function ScholarshipsContent() {
         {/* All Scholarships */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-slate-900">
               {hasFilters ? "Search Results" : "All Scholarships"}
             </h2>
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-slate-500">
               {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "scholarship" : "scholarships"}`}
             </span>
           </div>
@@ -315,26 +310,26 @@ function ScholarshipsContent() {
           {loading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-64" />
+                <div key={i} className="animate-pulse rounded-2xl bg-slate-50 h-64" />
               ))}
             </div>
           ) : scholarships.length === 0 && !hasFilters ? (
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-                <AcademicCapIcon className="h-8 w-8 text-slate-500" />
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <AcademicCapIcon className="h-8 w-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">No scholarships available yet</h3>
-              <p className="text-slate-400">
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No scholarships available yet</h3>
+              <p className="text-slate-500">
                 Check back soon! Organizations are adding scholarship opportunities regularly.
               </p>
             </div>
           ) : sorted.length === 0 ? (
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-                <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <MagnifyingGlassIcon className="h-8 w-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">No scholarships found</h3>
-              <p className="text-slate-400 mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No scholarships found</h3>
+              <p className="text-slate-500 mb-4">
                 Try adjusting your filters or search terms.
               </p>
               <button
@@ -355,7 +350,7 @@ function ScholarshipsContent() {
                 <div className="mt-10 flex justify-center">
                   <button
                     onClick={() => setDisplayLimit((prev) => prev + 12)}
-                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-8 py-3.5 text-sm font-semibold text-slate-800 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                   >
                     Load more scholarships
                     <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -367,8 +362,6 @@ function ScholarshipsContent() {
             </>
           )}
         </section>
-
-      </PageShell>
 
       {/* CTA Section - Ocean Wave Style */}
       <section className="relative overflow-hidden">
@@ -394,7 +387,7 @@ function ScholarshipsContent() {
           </div>
         </div>
       </section>
-    </div>
+    </FeedLayout>
   );
 }
 
@@ -437,13 +430,13 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
   const getTypeColor = (type: string) => {
     switch (type) {
       case "Scholarship":
-        return "bg-emerald-500/20 text-emerald-300";
+        return "bg-emerald-50 text-emerald-600";
       case "Grant":
-        return "bg-blue-500/20 text-blue-300";
+        return "bg-blue-50 text-blue-600";
       case "Bursary":
-        return "bg-purple-500/20 text-purple-300";
+        return "bg-purple-50 text-purple-600";
       default:
-        return "bg-slate-500/20 text-slate-300";
+        return "bg-slate-50 text-slate-600";
     }
   };
 
@@ -458,12 +451,12 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
     <Link
       href={`/education/scholarships/${scholarship.id}`}
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${featured
-        ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-        : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
+        ? "border-amber-300 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
+        : "border-slate-200 bg-slate-50 hover:border-[#14B8A6]/50"
         }`}
     >
       {/* Header with Amount */}
-      <div className="relative bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/10 px-5 py-6">
+      <div className="relative bg-gradient-to-br from-[#14B8A6]/10 to-cyan-50 px-5 py-6">
         {/* Featured Badge */}
         {featured && (
           <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg">
@@ -474,7 +467,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
         {/* Recurring Badge */}
         {scholarship.isRecurring && !featured && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-blue-500/20 border border-blue-500/30 px-2.5 py-1 text-xs font-semibold text-blue-300">
+          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-blue-50 border border-blue-300 px-2.5 py-1 text-xs font-semibold text-blue-600">
             <ArrowPathIcon className="h-3 w-3" />
             Recurring
           </div>
@@ -497,25 +490,25 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
+        <h3 className="text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
           {scholarship.title}
         </h3>
 
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-slate-500">
           {scholarship.provider}
         </p>
 
-        <p className="mt-3 text-sm text-slate-300 line-clamp-2 flex-1">
+        <p className="mt-3 text-sm text-slate-600 line-clamp-2 flex-1">
           {scholarship.description}
         </p>
 
         {/* Tags */}
         <div className="mt-4 flex flex-wrap gap-2">
-          <span className="rounded-full bg-slate-700/50 px-2.5 py-1 text-xs font-medium text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
             {scholarship.level}
           </span>
           {scholarship.region && (
-            <span className="rounded-full bg-slate-700/50 px-2.5 py-1 text-xs font-medium text-slate-400">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
               {scholarship.region}
             </span>
           )}
@@ -523,25 +516,25 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
         {/* Deadline / Recurring Schedule */}
         {(deadline || showRecurringSchedule) && (
-          <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
+          <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
             <div className="flex items-center gap-1.5 text-sm">
               {showRecurringSchedule ? (
                 <>
                   <ArrowPathIcon className="h-4 w-4 text-blue-400" />
-                  <span className="font-medium text-blue-300">
+                  <span className="font-medium text-blue-600">
                     Deadlines: {scholarship.recurringSchedule}
                   </span>
                 </>
               ) : (
                 <>
-                  <CalendarIcon className="h-4 w-4 text-slate-400" />
+                  <CalendarIcon className="h-4 w-4 text-slate-500" />
                   <span className={`font-medium ${urgency === "expired"
-                    ? "text-red-400"
+                    ? "text-red-600"
                     : urgency === "urgent"
-                      ? "text-orange-400"
+                      ? "text-orange-600"
                       : urgency === "soon"
-                        ? "text-yellow-400"
-                        : "text-slate-300"
+                        ? "text-yellow-600"
+                        : "text-slate-600"
                     }`}>
                     {urgency === "expired" ? "Expired" : `Due ${deadline}`}
                   </span>
@@ -549,7 +542,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
               )}
             </div>
             {!showRecurringSchedule && urgency === "urgent" && (
-              <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-semibold text-orange-300">
+              <span className="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-600">
                 Closing Soon
               </span>
             )}
@@ -558,7 +551,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
         {/* Apply Now Button */}
         {scholarship.applicationMethod === "external_link" && scholarship.applicationUrl && !isExpired && (
-          <div className="mt-4 pt-3 border-t border-slate-700/50">
+          <div className="mt-4 pt-3 border-t border-slate-200">
             <span
               onClick={(e) => {
                 e.preventDefault();
@@ -583,22 +576,21 @@ export default function ScholarshipsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-950 text-slate-100">
-          <SimplePageHeader
+        <FeedLayout activeNav="education">
+          <SectionHeader
             title="Scholarships & Funding"
             subtitle="Funding Indigenous learners and community leaders."
+            icon="🎓"
           />
-          <PageShell>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-72 animate-pulse rounded-2xl bg-slate-800/50"
-                />
-              ))}
-            </div>
-          </PageShell>
-        </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-72 animate-pulse rounded-2xl bg-slate-50"
+              />
+            ))}
+          </div>
+        </FeedLayout>
       }
     >
       <ScholarshipsContent />

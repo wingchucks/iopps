@@ -20,6 +20,7 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
+import { FeedLayout } from "@/components/opportunity-graph";
 import type { MemberProfile } from "@/lib/types";
 
 type ViewMode = "grid" | "list";
@@ -120,14 +121,13 @@ export default function MembersDirectoryPage() {
   const hasActiveFilters = searchQuery || selectedLocation || selectedSkills.length > 0 || availableOnly;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <FeedLayout activeNav="community" fullWidth>
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">Community Directory</h1>
-              <p className="text-slate-400 text-sm mt-1">
+              <h1 className="text-2xl font-bold text-slate-900">Community Directory</h1>
+              <p className="text-slate-500 text-sm mt-1">
                 Connect with {members.length}+ Indigenous professionals
               </p>
             </div>
@@ -139,7 +139,7 @@ export default function MembersDirectoryPage() {
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === "grid"
                     ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-slate-400 hover:bg-slate-800"
+                    : "text-slate-500 hover:bg-slate-100"
                 }`}
               >
                 <Grid3X3 className="h-5 w-5" />
@@ -149,7 +149,7 @@ export default function MembersDirectoryPage() {
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === "list"
                     ? "bg-emerald-500/20 text-emerald-400"
-                    : "text-slate-400 hover:bg-slate-800"
+                    : "text-slate-500 hover:bg-slate-100"
                 }`}
               >
                 <List className="h-5 w-5" />
@@ -167,7 +167,7 @@ export default function MembersDirectoryPage() {
                 placeholder="Search by name, skills, or affiliation..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder-slate-500"
+                className="pl-10 bg-white border-slate-200 text-slate-900 placeholder-slate-500"
               />
             </div>
 
@@ -175,7 +175,7 @@ export default function MembersDirectoryPage() {
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className={`border-slate-700 ${showFilters ? "bg-slate-800" : ""}`}
+              className={`border-slate-200 ${showFilters ? "bg-slate-100" : ""}`}
             >
               <Filter className="h-4 w-4 mr-2" />
               Filters
@@ -188,14 +188,14 @@ export default function MembersDirectoryPage() {
 
           {/* Expanded Filters */}
           {showFilters && (
-            <div className="mt-4 p-4 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
+            <div className="mt-4 p-4 rounded-xl border border-slate-200 bg-white space-y-4">
               {/* Location Filter */}
               <div>
-                <label className="text-sm font-medium text-slate-300 mb-2 block">Location</label>
+                <label className="text-sm font-medium text-slate-600 mb-2 block">Location</label>
                 <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-900"
                 >
                   <option value="">All Locations</option>
                   {LOCATIONS.map((loc) => (
@@ -206,7 +206,7 @@ export default function MembersDirectoryPage() {
 
               {/* Skills Filter */}
               <div>
-                <label className="text-sm font-medium text-slate-300 mb-2 block">Skills</label>
+                <label className="text-sm font-medium text-slate-600 mb-2 block">Skills</label>
                 <div className="flex flex-wrap gap-2">
                   {COMMON_SKILLS.map((skill) => (
                     <button
@@ -215,7 +215,7 @@ export default function MembersDirectoryPage() {
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                         selectedSkills.includes(skill)
                           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                          : "bg-slate-100 text-slate-500 border border-slate-200 hover:border-slate-600"
                       }`}
                     >
                       {skill}
@@ -238,14 +238,14 @@ export default function MembersDirectoryPage() {
                     }`}
                   />
                 </button>
-                <span className="text-sm text-slate-300">Show only available for opportunities</span>
+                <span className="text-sm text-slate-600">Show only available for opportunities</span>
               </div>
 
               {/* Clear Filters */}
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
                 >
                   <X className="h-4 w-4" />
                   Clear all filters
@@ -254,7 +254,6 @@ export default function MembersDirectoryPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Content */}
       <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -265,8 +264,8 @@ export default function MembersDirectoryPage() {
         ) : members.length === 0 ? (
           <div className="text-center py-20">
             <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No members found</h3>
-            <p className="text-slate-400 mb-4">
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No members found</h3>
+            <p className="text-slate-500 mb-4">
               Try adjusting your search or filters
             </p>
             {hasActiveFilters && (
@@ -281,11 +280,11 @@ export default function MembersDirectoryPage() {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-emerald-500/30 transition-all group"
+                className="rounded-2xl border border-slate-200 bg-white overflow-hidden hover:border-emerald-500/30 transition-all group"
               >
                 {/* Banner */}
                 <Link href={`/member/${member.id}`}>
-                  <div className="h-20 bg-gradient-to-br from-slate-800 to-slate-900 relative">
+                  <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-200 relative">
                     <div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
                   </div>
                 </Link>
@@ -293,7 +292,7 @@ export default function MembersDirectoryPage() {
                 <div className="p-4 pt-0 relative">
                   {/* Avatar */}
                   <Link href={`/member/${member.id}`} className="block absolute -top-8 left-4">
-                    <Avatar className="h-16 w-16 border-4 border-slate-900 shadow-lg hover:border-emerald-500/50 transition-colors">
+                    <Avatar className="h-16 w-16 border-4 border-white shadow-lg hover:border-emerald-500/50 transition-colors">
                       <AvatarImage src={member.avatarUrl || member.photoURL} />
                       <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
                         {getInitials(member.displayName)}
@@ -303,7 +302,7 @@ export default function MembersDirectoryPage() {
 
                   <div className="mt-10 mb-4">
                     <Link href={`/member/${member.id}`}>
-                      <h3 className="font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">
+                      <h3 className="font-semibold text-slate-900 truncate group-hover:text-emerald-400 transition-colors">
                         {member.displayName}
                       </h3>
                     </Link>
@@ -327,7 +326,7 @@ export default function MembersDirectoryPage() {
                         {member.skills.slice(0, 3).map((skill) => (
                           <span
                             key={skill}
-                            className="px-2 py-0.5 rounded bg-slate-800 text-xs text-slate-400"
+                            className="px-2 py-0.5 rounded bg-slate-100 text-xs text-slate-500"
                           >
                             {skill}
                           </span>
@@ -352,10 +351,10 @@ export default function MembersDirectoryPage() {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 hover:border-emerald-500/30 transition-all flex items-center gap-4"
+                className="rounded-xl border border-slate-200 bg-white p-4 hover:border-emerald-500/30 transition-all flex items-center gap-4"
               >
                 <Link href={`/member/${member.id}`}>
-                  <Avatar className="h-14 w-14 border-2 border-slate-800 hover:border-emerald-500/50 transition-colors">
+                  <Avatar className="h-14 w-14 border-2 border-white hover:border-emerald-500/50 transition-colors">
                     <AvatarImage src={member.avatarUrl || member.photoURL} />
                     <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
                       {getInitials(member.displayName)}
@@ -365,11 +364,11 @@ export default function MembersDirectoryPage() {
 
                 <div className="flex-1 min-w-0">
                   <Link href={`/member/${member.id}`}>
-                    <h3 className="font-semibold text-white hover:text-emerald-400 transition-colors">
+                    <h3 className="font-semibold text-slate-900 hover:text-emerald-400 transition-colors">
                       {member.displayName}
                     </h3>
                   </Link>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                     {member.indigenousAffiliation && (
                       <span className="text-emerald-400">{member.indigenousAffiliation}</span>
                     )}
@@ -391,7 +390,7 @@ export default function MembersDirectoryPage() {
                       {member.skills.slice(0, 5).map((skill) => (
                         <span
                           key={skill}
-                          className="px-2 py-0.5 rounded bg-slate-800 text-xs text-slate-400"
+                          className="px-2 py-0.5 rounded bg-slate-100 text-xs text-slate-500"
                         >
                           {skill}
                         </span>
@@ -402,7 +401,7 @@ export default function MembersDirectoryPage() {
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Link href={`/member/${member.id}`}>
-                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
+                    <Button variant="ghost" size="sm" className="text-slate-500 hover:text-slate-900">
                       View Profile
                     </Button>
                   </Link>
@@ -424,6 +423,6 @@ export default function MembersDirectoryPage() {
           </div>
         )}
       </div>
-    </div>
+    </FeedLayout>
   );
 }

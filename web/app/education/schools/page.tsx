@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PageShell } from "@/components/PageShell";
+import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
 import { listSchools } from "@/lib/firestore";
 import type { School, SchoolType } from "@/lib/types";
 
@@ -83,39 +83,19 @@ export default function SchoolsPage() {
   };
 
   return (
-    <PageShell>
-      {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-400">
-        <Link href="/" className="hover:text-white transition-colors">
-          Home
-        </Link>
-        <span className="mx-2">→</span>
-        <Link href="/education" className="hover:text-white transition-colors">
-          Education
-        </Link>
-        <span className="mx-2">→</span>
-        <span className="text-white">Schools</span>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="relative text-center mb-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
-          Education
-        </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-white sm:text-5xl">
-          Find Your School
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          Discover Indigenous-serving institutions, tribal colleges, and universities committed to supporting Indigenous students.
-        </p>
-      </div>
+    <FeedLayout activeNav="education">
+      <SectionHeader
+        title="Find Your School"
+        subtitle="Discover Indigenous-serving institutions, tribal colleges, and universities committed to supporting Indigenous students."
+        icon="🏫"
+      />
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-8">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 mb-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Search */}
           <div className="md:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 block">
               Search Schools
             </label>
             <input
@@ -123,19 +103,19 @@ export default function SchoolsPage() {
               placeholder="School name or city..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
 
           {/* School Type */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 block">
               School Type
             </label>
             <select
               value={schoolType}
               onChange={(e) => setSchoolType(e.target.value as SchoolType | "")}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-[#14B8A6] focus:outline-none"
             >
               {SCHOOL_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -147,13 +127,13 @@ export default function SchoolsPage() {
 
           {/* Province */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 block">
               Province/Territory
             </label>
             <select
               value={province}
               onChange={(e) => setProvince(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-[#14B8A6] focus:outline-none"
             >
               {PROVINCES.map((prov) => (
                 <option key={prov.value} value={prov.value}>
@@ -166,12 +146,12 @@ export default function SchoolsPage() {
 
         {/* Checkbox filters */}
         <div className="mt-4 flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
             <input
               type="checkbox"
               checked={indigenousControlled}
               onChange={(e) => setIndigenousControlled(e.target.checked)}
-              className="rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+              className="rounded border-slate-300 bg-slate-100 text-[#14B8A6] focus:ring-[#14B8A6]"
             />
             Indigenous-Controlled Institutions
           </label>
@@ -180,7 +160,7 @@ export default function SchoolsPage() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-400">
+        <p className="text-slate-500">
           {loading ? "Loading..." : `${filteredSchools.length} schools found`}
         </p>
         {(searchQuery || schoolType || province || indigenousControlled) && (
@@ -202,7 +182,7 @@ export default function SchoolsPage() {
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-64" />
+            <div key={i} className="animate-pulse rounded-2xl bg-slate-50 h-64" />
           ))}
         </div>
       ) : filteredSchools.length > 0 ? (
@@ -211,7 +191,7 @@ export default function SchoolsPage() {
             <Link
               key={school.id}
               href={`/education/schools/${school.slug || school.id}`}
-              className="group rounded-2xl border border-slate-800 bg-slate-900/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
@@ -224,30 +204,30 @@ export default function SchoolsPage() {
                     </span>
                   )}
                   {school.verification?.indigenousControlled && (
-                    <span className="rounded-md bg-amber-500/20 border border-amber-500/40 px-2 py-1 text-xs font-semibold text-amber-400">
+                    <span className="rounded-md bg-amber-50 border border-amber-300 px-2 py-1 text-xs font-semibold text-amber-600">
                       Indigenous-Controlled
                     </span>
                   )}
                 </div>
               </div>
 
-              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
+              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
                 {school.name}
               </h3>
 
-              <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+              <p className="text-sm text-slate-500 mb-3 line-clamp-2">
                 {school.description || "Explore programs and opportunities at this institution."}
               </p>
 
-              <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+              <div className="flex flex-wrap gap-3 text-xs text-slate-500">
                 <span>📍 {school.headOffice?.city}, {school.headOffice?.province}</span>
                 {school.stats?.totalPrograms && (
                   <span>📚 {school.stats.totalPrograms} programs</span>
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center">
-                <span className="text-xs text-slate-500 capitalize">{school.type?.replace("_", " ")}</span>
+              <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                <span className="text-xs text-slate-400 capitalize">{school.type?.replace("_", " ")}</span>
                 <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
                   View School →
                 </span>
@@ -256,10 +236,10 @@ export default function SchoolsPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-12 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
           <span className="text-5xl mb-4 block">🔍</span>
-          <h3 className="text-xl font-bold text-white mb-2">No Schools Found</h3>
-          <p className="text-slate-400 mb-6">
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No Schools Found</h3>
+          <p className="text-slate-500 mb-6">
             {searchQuery || schoolType || province || indigenousControlled
               ? "Try adjusting your search or filters."
               : "Schools will appear here once they're added."}
@@ -274,11 +254,11 @@ export default function SchoolsPage() {
       )}
 
       {/* CTA Section */}
-      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">
+      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Are You a School Administrator?
         </h2>
-        <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+        <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
           List your institution on IOPPS and connect with Indigenous students seeking educational opportunities.
         </p>
         <Link
@@ -288,6 +268,6 @@ export default function SchoolsPage() {
           List Your School
         </Link>
       </section>
-    </PageShell>
+    </FeedLayout>
   );
 }

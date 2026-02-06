@@ -5,19 +5,6 @@
   z-index: 1;
 }
 
-/* Dark mode tweaks for Leaflet tiles if needed */
-.dark .leaflet-tile {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
-}
-
-.dark .leaflet-control-attribution {
-  background: rgba(0, 0, 0, 0.5);
-  color: #aaa;
-}
-
-.dark .leaflet-control-attribution a {
-  color: #ccc;
-}
 
 /* Custom Popup Styles */
 .map-popup .leaflet-popup-content-wrapper {

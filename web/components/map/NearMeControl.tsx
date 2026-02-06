@@ -82,7 +82,7 @@ export default function NearMeControl({
         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
           isActive
             ? "bg-blue-600 text-white"
-            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+            : "bg-slate-100 text-slate-600 hover:bg-slate-100"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {loading ? (
@@ -111,7 +111,7 @@ export default function NearMeControl({
 
       {/* Radius Selector Dropdown */}
       {showRadiusSelector && isActive && (
-        <div className="absolute top-full left-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
+        <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
           <div className="px-3 py-1 text-xs text-slate-500 uppercase tracking-wider">
             Radius
           </div>
@@ -122,7 +122,7 @@ export default function NearMeControl({
               className={`w-full px-3 py-1.5 text-left text-sm transition-colors ${
                 radius === opt.value
                   ? "bg-blue-600 text-white"
-                  : "text-slate-300 hover:bg-slate-700"
+                  : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               {opt.label}
@@ -140,7 +140,7 @@ export default function NearMeControl({
 
       {/* Permission Prompt */}
       {permissionState === "prompt" && !loading && !error && !isActive && (
-        <div className="absolute top-full left-0 mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 max-w-[250px] z-50">
+        <div className="absolute top-full left-0 mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-500 max-w-[250px] z-50">
           Click to find opportunities near your location
         </div>
       )}

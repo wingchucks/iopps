@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { PageShell } from "@/components/PageShell";
+import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
 import { useAuth } from "@/components/AuthProvider";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 import {
   PricingTabs,
   EmployersPanel,
@@ -38,34 +37,11 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <SimplePageHeader
-        title="Pricing & Plans"
-        subtitle="Choose the plan that fits your needs. Employers, schools, event organizers, and vendors all have options designed for their goals."
-        actions={
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/contact"
-              className="rounded-full bg-teal-500 px-5 py-2 text-sm font-bold text-white hover:bg-teal-600 transition"
-            >
-              Talk to IOPPS
-            </Link>
-            {!shouldHideEmployerButton && (
-              <Link
-                href="/register"
-                className="rounded-full border border-slate-600 px-5 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
-              >
-                Create Account
-              </Link>
-            )}
-          </div>
-        }
-      />
-
-      <PageShell>
+    <FeedLayout activeNav="pricing">
+      <SectionHeader title="Pricing & Plans" subtitle="Choose the plan that fits your needs" icon="briefcase" />
         {/* Quick audience selector hint */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-500">
             Select your category below to see relevant pricing options
           </p>
         </div>
@@ -74,8 +50,6 @@ export default function PricingPage() {
         <section className="mt-6">
           <PricingTabs>{renderPanel}</PricingTabs>
         </section>
-      </PageShell>
-
       {/* CTA Section - Ocean Wave Style */}
       <section className="relative overflow-hidden">
         <div className="animate-gradient bg-gradient-to-r from-blue-900 via-[#14B8A6]/80 to-cyan-800">
@@ -107,6 +81,6 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
-    </div>
+    </FeedLayout>
   );
 }

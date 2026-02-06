@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PageShell } from "@/components/PageShell";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
+import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
 import { EmptyState } from "@/components/EmptyState";
 import type { UnifiedEducationListing, ProgramSource, ProgramLevel, ProgramDelivery } from "@/lib/types";
 import {
@@ -256,124 +255,106 @@ function UnifiedProgramsContent() {
   };
 
   return (
-    <div className="min-h-screen text-slate-100">
-      {/* Breadcrumb */}
-      <div className="bg-slate-900/50">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-          <nav className="text-sm text-slate-400">
-            <Link href="/" className="hover:text-white transition-colors">
-              Home
-            </Link>
-            <span className="mx-2">→</span>
-            <Link href="/education" className="hover:text-white transition-colors">
-              Education
-            </Link>
-            <span className="mx-2">→</span>
-            <span className="text-white">Programs</span>
-          </nav>
-        </div>
-      </div>
-
+    <FeedLayout activeNav="education">
       {/* Header */}
-      <SimplePageHeader
+      <SectionHeader
         title="Explore Programs"
         subtitle="Discover academic degrees, diplomas, certificates, and professional training."
+        icon="📚"
       />
 
-      <PageShell>
-        <SearchBarRow
-          placeholder="Search programs, schools, skills..."
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onFiltersClick={() => setShowFilters(!showFilters)}
-          hasActiveFilters={hasFilters}
-        />
-        {/* Filters */}
-        <FiltersDrawer
-          isOpen={showFilters}
-          filters={filterGroups}
-          onClearAll={clearFilters}
-          hasActiveFilters={hasFilters}
-          variant="inline"
-        />
+      <SearchBarRow
+        placeholder="Search programs, schools, skills..."
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onFiltersClick={() => setShowFilters(!showFilters)}
+        hasActiveFilters={hasFilters}
+      />
+      {/* Filters */}
+      <FiltersDrawer
+        isOpen={showFilters}
+        filters={filterGroups}
+        onClearAll={clearFilters}
+        hasActiveFilters={hasFilters}
+        variant="inline"
+      />
 
-        {/* Results Header */}
-        <ResultsHeader
-          title={getTitle()}
-          count={total}
-          loading={loading}
-          hasFilters={hasFilters}
-        />
+      {/* Results Header */}
+      <ResultsHeader
+        title={getTitle()}
+        count={total}
+        loading={loading}
+        hasFilters={hasFilters}
+      />
 
-        {/* Programs Grid */}
-        {loading ? (
-          <LoadingGrid count={9} height="h-72" />
-        ) : programs.length > 0 ? (
-          <>
-            <DiscoveryGrid>
-              {programs.map((program) => (
-                <UnifiedProgramCard
-                  key={program.id}
-                  program={program}
-                  onProviderClick={handleProviderClick}
+      {/* Programs Grid */}
+      {loading ? (
+        <LoadingGrid count={9} height="h-72" />
+      ) : programs.length > 0 ? (
+        <>
+          <DiscoveryGrid>
+            {programs.map((program) => (
+              <UnifiedProgramCard
+                key={program.id}
+                program={program}
+                onProviderClick={handleProviderClick}
+              />
+            ))}
+          </DiscoveryGrid>
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="mt-8">
+              {loadingMore ? (
+                <div className="flex justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#14B8A6]" />
+                </div>
+              ) : (
+                <LoadMoreButton
+                  onClick={() => loadPrograms(true)}
+                  label="Load more programs"
                 />
-              ))}
-            </DiscoveryGrid>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <EmptyState
+          icon="education"
+          title="No Programs Found"
+          description={
+            hasFilters
+              ? "Try adjusting your search or filters."
+              : "Programs will appear here once they're added."
+          }
+          action={{ label: "Browse Schools Instead", href: "/education/schools" }}
+        />
+      )}
 
-            {/* Load More */}
-            {hasMore && (
-              <div className="mt-8">
-                {loadingMore ? (
-                  <div className="flex justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-[#14B8A6]" />
-                  </div>
-                ) : (
-                  <LoadMoreButton
-                    onClick={() => loadPrograms(true)}
-                    label="Load more programs"
-                  />
-                )}
-              </div>
-            )}
-          </>
-        ) : (
-          <EmptyState
-            icon="education"
-            title="No Programs Found"
-            description={
-              hasFilters
-                ? "Try adjusting your search or filters."
-                : "Programs will appear here once they're added."
-            }
-            action={{ label: "Browse Schools Instead", href: "/education/schools" }}
-          />
-        )}
-
-        {/* CTA Section */}
-        <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Are you an educator or training provider?
-          </h2>
-          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-            List your programs on IOPPS to reach Indigenous learners across Canada.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/organization/education/setup"
-              className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
-            >
-              List Academic Programs
-            </Link>
-            <Link
-              href="/organization/training/new"
-              className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6] px-6 py-3 font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/10 transition-colors"
-            >
-              Add Training Program
-            </Link>
-          </div>
-        </section>
-      </PageShell>
-    </div>
+      {/* CTA Section */}
+      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          Are you an educator or training provider?
+        </h2>
+        <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+          List your programs on IOPPS to reach Indigenous learners across Canada.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
+          <Link
+            href="/organization/education/setup"
+            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          >
+            List Academic Programs
+          </Link>
+          <Link
+            href="/organization/training/new"
+            className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6] px-6 py-3 font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/10 transition-colors"
+          >
+            Add Training Program
+          </Link>
+        </div>
+      </section>
+    </FeedLayout>
   );
 }
 
@@ -382,16 +363,16 @@ export default function UnifiedProgramsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-100">
-          <div className="bg-slate-900/50">
+        <div className="min-h-screen text-slate-900">
+          <div className="bg-white">
             <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-              <nav className="text-sm text-slate-400">
+              <nav className="text-sm text-slate-500">
                 <span>Home → Education → Programs</span>
               </nav>
             </div>
           </div>
           <div className="py-16 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-[#14B8A6]" />
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#14B8A6]" />
           </div>
         </div>
       }

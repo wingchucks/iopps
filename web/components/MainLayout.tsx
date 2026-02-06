@@ -26,13 +26,17 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     pathname?.startsWith("/about") ||
     pathname?.startsWith("/privacy") ||
     pathname?.startsWith("/terms") ||
-    pathname?.startsWith("/contact");
+    pathname?.startsWith("/contact") ||
+    pathname?.startsWith("/organizations") ||
+    pathname?.startsWith("/employers") ||
+    pathname?.startsWith("/members") ||
+    pathname?.startsWith("/network");
 
-  // Organization dashboard pages have their own layout
-  const isOrgDashboard = pathname?.startsWith("/organization");
+  // Organization dashboard pages have their own layout (singular /organization/)
+  const isOrgDashboard = pathname?.startsWith("/organization/");
 
-  // Member dashboard pages have their own layout
-  const isMemberDashboard = pathname?.startsWith("/member");
+  // Member dashboard pages have their own layout (singular /member/)
+  const isMemberDashboard = pathname?.startsWith("/member/") || pathname === "/member";
 
   if (isAdminRoute) {
     return <>{children}</>;

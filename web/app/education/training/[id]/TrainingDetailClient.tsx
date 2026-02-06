@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
-import { PageShell } from "@/components/PageShell";
+import { FeedLayout } from "@/components/opportunity-graph";
 import ShareButtons from "@/components/ShareButtons";
 import {
   incrementTrainingProgramViews,
@@ -94,15 +94,15 @@ export default function TrainingDetailClient({
 
   if (error || !program) {
     return (
-      <PageShell>
+      <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <AcademicCapIcon className="h-8 w-8 text-slate-500" />
+          <div className="mx-auto h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center mb-4">
+            <AcademicCapIcon className="h-8 w-8 text-slate-400" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-200">
+          <h1 className="text-2xl font-bold text-slate-800">
             {error || "Training program not found"}
           </h1>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-slate-500">
             This program may have been removed or is no longer available.
           </p>
           <Link
@@ -112,7 +112,7 @@ export default function TrainingDetailClient({
             Browse Training Programs
           </Link>
         </div>
-      </PageShell>
+      </FeedLayout>
     );
   }
 
@@ -172,23 +172,23 @@ export default function TrainingDetailClient({
   const endDate = formatDate(program.endDate);
 
   return (
-    <PageShell>
+    <FeedLayout activeNav="education" fullWidth>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="text-sm text-slate-400 mb-6">
-          <Link href="/" className="hover:text-white transition-colors">
+        <nav className="text-sm text-slate-500 mb-6">
+          <Link href="/" className="hover:text-slate-900 transition-colors">
             Home
           </Link>
           <span className="mx-2">→</span>
-          <Link href="/education" className="hover:text-white transition-colors">
+          <Link href="/education" className="hover:text-slate-900 transition-colors">
             Education
           </Link>
           <span className="mx-2">→</span>
-          <Link href="/education/programs?source=provider" className="hover:text-white transition-colors">
+          <Link href="/education/programs?source=provider" className="hover:text-slate-900 transition-colors">
             Training Programs
           </Link>
           <span className="mx-2">→</span>
-          <span className="text-white">{program.title}</span>
+          <span className="text-slate-900">{program.title}</span>
         </nav>
 
         {/* Header Section */}
@@ -282,7 +282,7 @@ export default function TrainingDetailClient({
             <div className="mt-8 flex flex-wrap gap-4">
               <button
                 onClick={handleEnrollClick}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-teal-700 shadow-xl shadow-teal-900/30 transition-all hover:bg-teal-50 hover:scale-105"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-teal-700 shadow-xl shadow-teal-500/15 transition-all hover:bg-teal-50 hover:scale-105"
               >
                 Learn More & Enroll
                 <ArrowTopRightOnSquareIcon className="h-5 w-5" />
@@ -315,7 +315,7 @@ export default function TrainingDetailClient({
         </div>
 
         {/* Share Section */}
-        <div className="rounded-xl border border-slate-800 bg-[#08090C] p-4 mb-8">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 mb-8">
           <ShareButtons
             item={{
               id: program.id,
@@ -331,11 +331,11 @@ export default function TrainingDetailClient({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Main Content */}
           <div className="lg:col-span-8">
-            <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-200">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+              <h2 className="text-xl font-bold text-slate-800">
                 About This Program
               </h2>
-              <div className="mt-4 space-y-4 text-slate-300">
+              <div className="mt-4 space-y-4 text-slate-600">
                 {program.description?.split("\n").map((paragraph, i) => (
                   <p key={i} className="leading-relaxed">
                     {paragraph}
@@ -346,7 +346,7 @@ export default function TrainingDetailClient({
               {/* Skills Section */}
               {program.skills && program.skills.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-200">
+                  <h3 className="text-lg font-bold text-slate-800">
                     Skills You&apos;ll Learn
                   </h3>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -365,16 +365,16 @@ export default function TrainingDetailClient({
               {/* Certification */}
               {program.certificationOffered && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-200">
+                  <h3 className="text-lg font-bold text-slate-800">
                     Certification
                   </h3>
-                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-                    <AcademicCapIcon className="h-6 w-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4">
+                    <AcademicCapIcon className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-emerald-300">
+                      <p className="font-semibold text-emerald-600">
                         {program.certificationOffered}
                       </p>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className="mt-1 text-sm text-slate-500">
                         Earn this certification upon successful completion of
                         the program.
                       </p>
@@ -386,11 +386,11 @@ export default function TrainingDetailClient({
               {/* Funding Info */}
               {program.fundingAvailable && program.scholarshipInfo && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-200">
+                  <h3 className="text-lg font-bold text-slate-800">
                     Funding & Financial Aid
                   </h3>
-                  <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                    <p className="text-slate-300">{program.scholarshipInfo}</p>
+                  <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
+                    <p className="text-slate-600">{program.scholarshipInfo}</p>
                   </div>
                 </div>
               )}
@@ -399,12 +399,12 @@ export default function TrainingDetailClient({
               {program.targetCommunities &&
                 program.targetCommunities.length > 0 && (
                   <div className="mt-8">
-                    <h3 className="text-lg font-bold text-slate-200">
+                    <h3 className="text-lg font-bold text-slate-800">
                       Target Communities
                     </h3>
                     <div className="mt-4 flex items-start gap-3">
-                      <UserGroupIcon className="h-5 w-5 text-teal-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-slate-300">
+                      <UserGroupIcon className="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-slate-600">
                         {program.targetCommunities.join(", ")}
                       </p>
                     </div>
@@ -416,15 +416,15 @@ export default function TrainingDetailClient({
           {/* Sidebar */}
           <div className="lg:col-span-4 space-y-6">
             {/* Program Details Card */}
-            <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <h3 className="text-lg font-bold text-slate-200 mb-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">
                 Program Details
               </h3>
               <div className="space-y-4">
                 {/* Format */}
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Format</span>
-                  <span className="flex items-center gap-2 font-medium text-slate-200">
+                  <span className="text-slate-500">Format</span>
+                  <span className="flex items-center gap-2 font-medium text-slate-800">
                     {getFormatIcon(program.format)}
                     {getFormatLabel(program.format)}
                   </span>
@@ -433,8 +433,8 @@ export default function TrainingDetailClient({
                 {/* Duration */}
                 {program.duration && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Duration</span>
-                    <span className="font-medium text-slate-200">
+                    <span className="text-slate-500">Duration</span>
+                    <span className="font-medium text-slate-800">
                       {program.duration}
                     </span>
                   </div>
@@ -443,8 +443,8 @@ export default function TrainingDetailClient({
                 {/* Dates */}
                 {(startDate || program.ongoing) && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Start Date</span>
-                    <span className="font-medium text-slate-200">
+                    <span className="text-slate-500">Start Date</span>
+                    <span className="font-medium text-slate-800">
                       {program.ongoing ? "Ongoing Enrollment" : startDate}
                     </span>
                   </div>
@@ -452,16 +452,16 @@ export default function TrainingDetailClient({
 
                 {endDate && !program.ongoing && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">End Date</span>
-                    <span className="font-medium text-slate-200">{endDate}</span>
+                    <span className="text-slate-500">End Date</span>
+                    <span className="font-medium text-slate-800">{endDate}</span>
                   </div>
                 )}
 
                 {/* Location */}
                 {program.location && program.format !== "online" && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Location</span>
-                    <span className="font-medium text-slate-200 text-right">
+                    <span className="text-slate-500">Location</span>
+                    <span className="font-medium text-slate-800 text-right">
                       {program.location}
                     </span>
                   </div>
@@ -470,13 +470,13 @@ export default function TrainingDetailClient({
                 {/* Cost */}
                 {program.cost && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Cost</span>
+                    <span className="text-slate-500">Cost</span>
                     <div className="text-right">
-                      <span className="font-medium text-emerald-400">
+                      <span className="font-medium text-emerald-600">
                         {program.cost}
                       </span>
                       {program.fundingAvailable && (
-                        <p className="text-xs text-emerald-300">
+                        <p className="text-xs text-emerald-600">
                           Funding available
                         </p>
                       )}
@@ -487,8 +487,8 @@ export default function TrainingDetailClient({
                 {/* Category */}
                 {program.category && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Category</span>
-                    <span className="font-medium text-slate-200">
+                    <span className="text-slate-500">Category</span>
+                    <span className="font-medium text-slate-800">
                       {program.category}
                     </span>
                   </div>
@@ -499,7 +499,7 @@ export default function TrainingDetailClient({
               <div className="mt-6 space-y-3">
                 <button
                   onClick={handleEnrollClick}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#14B8A6] to-emerald-500 px-6 py-3 font-semibold text-white shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#14B8A6] to-emerald-500 px-6 py-3 font-semibold text-white shadow-lg shadow-teal-500/15 transition-all hover:shadow-xl hover:shadow-teal-500/20"
                 >
                   Enroll Now
                   <ArrowTopRightOnSquareIcon className="h-5 w-5" />
@@ -510,8 +510,8 @@ export default function TrainingDetailClient({
                     disabled={savingState === "saving"}
                     className={`w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold transition-all ${
                       isSaved
-                        ? "bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30"
-                        : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700"
+                        ? "bg-amber-50 text-amber-600 border border-amber-300 hover:bg-amber-500/30"
+                        : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
                     }`}
                   >
                     {isSaved ? (
@@ -531,8 +531,8 @@ export default function TrainingDetailClient({
             </div>
 
             {/* Provider Card */}
-            <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <h3 className="text-lg font-bold text-slate-200 mb-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">
                 Training Provider
               </h3>
               <div className="flex items-center gap-4">
@@ -550,12 +550,12 @@ export default function TrainingDetailClient({
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-slate-200">
+                  <p className="font-semibold text-slate-800">
                     {program.providerName}
                   </p>
                   {program.organizationName &&
                     program.organizationName !== program.providerName && (
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-slate-500">
                         via {program.organizationName}
                       </p>
                     )}
@@ -577,11 +577,11 @@ export default function TrainingDetailClient({
             </div>
 
             {/* Similar Programs Link */}
-            <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
-              <h3 className="text-lg font-bold text-slate-200 mb-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+              <h3 className="text-lg font-bold text-slate-800 mb-2">
                 Looking for More?
               </h3>
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-slate-500 mb-4">
                 Browse more programs to find the right fit for your learning goals.
               </p>
               <Link
@@ -607,6 +607,6 @@ export default function TrainingDetailClient({
           </div>
         </div>
       </div>
-    </PageShell>
+    </FeedLayout>
   );
 }

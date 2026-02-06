@@ -100,7 +100,7 @@ export default function MapClient({
 
   if (!isMounted) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-500">
+      <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-500">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
       </div>
     );
@@ -116,7 +116,7 @@ export default function MapClient({
   return (
     <div className="flex flex-col h-full">
       {/* Filters Header */}
-      <div className="bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 py-3 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b border-slate-200 px-4 py-3 z-10">
         <MapFiltersComponent
           filters={filters}
           onFiltersChange={onFiltersChange}
@@ -128,10 +128,10 @@ export default function MapClient({
       {/* Map Container */}
       <div className="flex-1 relative">
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-              <span className="text-sm text-slate-400">Loading opportunities...</span>
+              <span className="text-sm text-slate-500">Loading opportunities...</span>
             </div>
           </div>
         )}
@@ -141,7 +141,7 @@ export default function MapClient({
           zoom={zoom}
           scrollWheelZoom={true}
           className="h-full w-full"
-          style={{ background: "#0f172a" }}
+          style={{ background: "#f8fafc" }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
