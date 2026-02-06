@@ -148,8 +148,8 @@ export default function ConferenceDetailClient({ conference: initialConference, 
     role === "employer" && user && conference.employerId === user.uid;
 
   return (
-    <FeedLayout activeNav="events" fullWidth className="pb-24 md:pb-10">
-      <div className="mx-auto max-w-7xl">
+    <FeedLayout activeNav="events" fullWidth>
+      <div className="mx-auto max-w-7xl pb-24 md:pb-10">
         {/* Back Link */}
         <Link
           href="/conferences"
