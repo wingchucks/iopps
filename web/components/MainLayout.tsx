@@ -2,25 +2,44 @@
 
 import { usePathname } from "next/navigation";
 import { BackToTop } from "./BackToTop";
+import { AppHeader } from "./AppHeader";
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // New app-style layout - no old site header/footer anywhere
-  // Each page handles its own navigation
+  // Admin routes have their own layout
   const isAdminRoute = pathname?.startsWith("/admin");
+  
+  // Homepage has its own complete layout with header built-in
+  const isHomepage = pathname === "/";
+  
+  // Organization dashboard pages have their own layout
+  const isOrgDashboard = pathname?.startsWith("/organization");
+  
+  // Member dashboard pages have their own layout  
+  const isMemberDashboard = pathname?.startsWith("/member");
 
   if (isAdminRoute) {
-    // Admin routes have their own layout
     return <>{children}</>;
   }
 
-  // All other routes: just render children (no old header/footer)
+  // These routes have their own complete layouts
+  if (isHomepage || isOrgDashboard || isMemberDashboard) {
+    return (
+      <>
+        {children}
+        <BackToTop />
+      </>
+    );
+  }
+
+  // All other routes: add AppHeader
   return (
-    <>
-      {children}
+    <div style={{ minHeight: "100vh", paddingBottom: "70px" }}>
+      <AppHeader />
+      <main>{children}</main>
       <BackToTop />
-    </>
+    </div>
   );
 }
