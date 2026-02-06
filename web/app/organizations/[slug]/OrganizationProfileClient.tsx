@@ -27,7 +27,7 @@ import {
   XMarkIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { PageShell } from '@/components/PageShell';
+import { FeedLayout } from '@/components/opportunity-graph';
 import { useAuth } from '@/components/AuthProvider';
 import CompanyIntroVideo from '@/components/employer/CompanyIntroVideo';
 import EmployerInterviewSection from '@/components/employer/EmployerInterviewSection';
@@ -319,7 +319,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
   const isDraft = org.publicationStatus !== 'PUBLISHED';
 
   return (
-    <PageShell className="max-w-7xl">
+    <FeedLayout activeNav="organizations" fullWidth>
       {/* Draft Banner */}
       {isDraft && canEdit && (
         <div className="mb-6 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 flex items-center justify-between">
@@ -343,7 +343,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
       {/* Dormant/Hidden Banner - shown to owners when org is approved but not directory-visible */}
       {!isDraft && canEdit && org.status === 'approved' && org.isDirectoryVisible === false && (
-        <div className="mb-6 rounded-xl bg-slate-700/50 border border-slate-600 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="mb-6 rounded-xl bg-slate-100 border border-slate-600 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
             <EyeIcon className="h-5 w-5 text-slate-400 mt-0.5 sm:mt-0 flex-shrink-0" />
             <div>
@@ -374,9 +374,9 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       )}
 
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 border border-slate-700 mb-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 border border-slate-200 mb-8">
         {/* Banner */}
-        <div className="relative h-48 sm:h-64 bg-gradient-to-br from-slate-700 to-slate-800">
+        <div className="relative h-48 sm:h-64 bg-gradient-to-br from-slate-100 to-slate-200">
           {org.bannerUrl && (
             <Image
               src={`${org.bannerUrl}${org.bannerUrl.includes('?') ? '&' : '?'}v=${(org as any).bannerUpdatedAt?.seconds || Date.now()}`}
@@ -387,7 +387,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               unoptimized
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent" />
 
           {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
@@ -414,7 +414,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                 TRC Committed
               </span>
             )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/80 px-3 py-1 text-sm font-medium text-slate-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-slate-300">
               <Icon className="h-4 w-4" />
               {ORG_TYPE_LABELS[org.orgType || 'EMPLOYER']}
             </span>
@@ -433,7 +433,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1.5 text-sm text-white hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-sm text-white hover:bg-slate-100 transition-colors"
             >
               <ShareIcon className="h-4 w-4" />
               {copied ? 'Copied!' : 'Share'}
@@ -454,7 +454,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         <div className="relative px-6 pb-6 sm:px-8 sm:pb-8">
           {/* Logo */}
           <div className="absolute -top-16 sm:-top-20">
-            <div className="h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+            <div className="h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-white bg-slate-100 shadow-xl">
               {org.logoUrl ? (
                 <Image
                   src={org.logoUrl}
@@ -519,7 +519,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                 )}
                 {org.createdAt && (
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-700/50">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
                       <CheckBadgeIcon className="h-4 w-4 text-slate-400" />
                     </div>
                     <div>
@@ -560,7 +560,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                   href={links.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <GlobeAltIcon className="h-4 w-4" />
                   Website
@@ -570,7 +570,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               {links.email && (
                 <a
                   href={`mailto:${links.email}`}
-                  className="flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <EnvelopeIcon className="h-4 w-4" />
                   Email
@@ -579,7 +579,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               {links.phone && (
                 <a
                   href={`tel:${links.phone}`}
-                  className="flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                 >
                   <PhoneIcon className="h-4 w-4" />
                   Call
@@ -595,7 +595,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                     href={value}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center rounded-full bg-slate-800 p-2 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                    className="flex items-center justify-center rounded-full bg-slate-100 p-2 text-slate-300 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                     title={key.charAt(0).toUpperCase() + key.slice(1)}
                   >
                     <IconComponent className="h-4 w-4" />
@@ -608,7 +608,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-700/50">
+      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
         {availableTabs.map((tab) => {
           const TabIcon = tab.icon;
           return (
@@ -618,7 +618,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-teal-500 text-white'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <TabIcon className="h-4 w-4" />
@@ -660,11 +660,11 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       {/* Intro Video Modal */}
       {showIntroVideoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white border border-slate-200 p-6 shadow-xl">
             {/* Close button */}
             <button
               onClick={() => setShowIntroVideoModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-900"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
@@ -691,8 +691,8 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                     setIntroVideoError('');
                   }}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className={`w-full rounded-xl bg-slate-800 border pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
-                    introVideoError ? 'border-red-500' : 'border-slate-700 focus:border-teal-500'
+                  className={`w-full rounded-xl bg-slate-100 border pl-10 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
+                    introVideoError ? 'border-red-500' : 'border-slate-200 focus:border-teal-500'
                   }`}
                 />
               </div>
@@ -722,7 +722,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowIntroVideoModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-900"
                 >
                   Cancel
                 </button>
@@ -746,7 +746,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         </div>
       )}
 
-    </PageShell>
+    </FeedLayout>
   );
 }
 
@@ -829,10 +829,10 @@ function OverviewTab({
       {/* Main Content */}
       <div className="lg:col-span-2 space-y-8">
         {/* About */}
-        <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+        <section className="rounded-2xl bg-white border border-slate-200 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">About</h2>
           {org.description ? (
-            <div className="prose prose-invert prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none">
               <p className="text-slate-300 whitespace-pre-wrap">{org.description}</p>
             </div>
           ) : canEdit ? (
@@ -848,10 +848,10 @@ function OverviewTab({
 
         {/* Story */}
         {(currentStory || canEdit) && (
-          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <section className="rounded-2xl bg-white border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Our Story</h2>
             {currentStory ? (
-              <div className="prose prose-invert prose-sm max-w-none">
+              <div className="prose prose-sm max-w-none">
                 <p className="text-slate-300 whitespace-pre-wrap">{currentStory}</p>
               </div>
             ) : canEdit ? (
@@ -876,7 +876,7 @@ function OverviewTab({
 
         {/* 10-Second Intro Video */}
         {introVideoUrl ? (
-          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <section className="rounded-2xl bg-white border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <VideoCameraIcon className="h-5 w-5 text-teal-400" />
@@ -902,9 +902,9 @@ function OverviewTab({
             />
           </section>
         ) : canEdit ? (
-          <section className="rounded-2xl border-2 border-dashed border-slate-700 bg-slate-800/30 p-6">
+          <section className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6">
             <div className="text-center py-4">
-              <div className="mx-auto h-12 w-12 rounded-full bg-slate-700/50 flex items-center justify-center mb-3">
+              <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
                 <VideoCameraIcon className="h-6 w-6 text-slate-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-1">Add a 10-Second Intro Video</h3>
@@ -970,13 +970,13 @@ function OverviewTab({
               </div>
 
               {verification?.certifications && verification.certifications.length > 0 && (
-                <div className="pt-3 border-t border-slate-700/50">
+                <div className="pt-3 border-t border-slate-200">
                   <p className="text-xs text-slate-400 mb-2">Certifications</p>
                   <div className="flex flex-wrap gap-2">
                     {verification.certifications.map((cert) => (
                       <span
                         key={cert}
-                        className="inline-flex items-center rounded-full bg-slate-700/50 px-3 py-1 text-xs text-slate-300"
+                        className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-300"
                       >
                         {cert}
                       </span>
@@ -1006,7 +1006,7 @@ function OverviewTab({
               <div className={`rounded-xl p-3 border ${
                 trc?.hasIndigenousHiringStrategy
                   ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-slate-800/50 border-slate-700/50'
+                  : 'bg-white border-slate-200'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {trc?.hasIndigenousHiringStrategy ? (
@@ -1026,7 +1026,7 @@ function OverviewTab({
               <div className={`rounded-xl p-3 border ${
                 trc?.leadershipTrainingComplete
                   ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-slate-800/50 border-slate-700/50'
+                  : 'bg-white border-slate-200'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {trc?.leadershipTrainingComplete ? (
@@ -1046,7 +1046,7 @@ function OverviewTab({
               <div className={`rounded-xl p-3 border ${
                 trc?.isIndigenousOwned
                   ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-slate-800/50 border-slate-700/50'
+                  : 'bg-white border-slate-200'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {trc?.isIndigenousOwned ? (
@@ -1073,7 +1073,7 @@ function OverviewTab({
         {canEdit && <ProfileStrengthCard org={org} />}
 
         {/* Quick Facts */}
-        <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+        <section className="rounded-2xl bg-white border border-slate-200 p-6">
           <h3 className="text-sm font-semibold text-white mb-4">Quick Facts</h3>
           <dl className="space-y-3 text-sm">
             {memberSince && (
@@ -1116,7 +1116,7 @@ function OverviewTab({
 
           {/* Activity Indicator */}
           {org.updatedAt && (
-            <div className="mt-4 pt-4 border-t border-slate-700/50">
+            <div className="mt-4 pt-4 border-t border-slate-200">
               <ActivityIndicator updatedAt={org.updatedAt} />
             </div>
           )}
@@ -1124,13 +1124,13 @@ function OverviewTab({
 
         {/* Categories */}
         {org.categories && org.categories.length > 0 && (
-          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <section className="rounded-2xl bg-white border border-slate-200 p-6">
             <h3 className="text-sm font-semibold text-white mb-4">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {org.categories.map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex rounded-full bg-slate-700/50 px-3 py-1 text-xs text-slate-300"
+                  className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-300"
                 >
                   {cat}
                 </span>
@@ -1150,7 +1150,7 @@ function OverviewTab({
               {org.contactEmail && (
                 <a
                   href={`mailto:${org.contactEmail}`}
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
                     <EnvelopeIcon className="h-4 w-4 text-teal-400" />
@@ -1166,7 +1166,7 @@ function OverviewTab({
               {org.contactPhone && (
                 <a
                   href={`tel:${org.contactPhone}`}
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
                     <PhoneIcon className="h-4 w-4 text-teal-400" />
@@ -1184,7 +1184,7 @@ function OverviewTab({
                   href={org.links.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
                     <GlobeAltIcon className="h-4 w-4 text-teal-400" />
@@ -1202,7 +1202,7 @@ function OverviewTab({
 
             {/* Social Links Row */}
             {(org.links?.linkedin || org.links?.instagram || org.links?.facebook || org.links?.twitter) && (
-              <div className="mt-4 pt-4 border-t border-slate-700/50">
+              <div className="mt-4 pt-4 border-t border-slate-200">
                 <p className="text-xs text-slate-500 mb-2">Follow Us</p>
                 <div className="flex gap-2">
                   {org.links.linkedin && (
@@ -1210,7 +1210,7 @@ function OverviewTab({
                       href={org.links.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                       title="LinkedIn"
                     >
                       <SocialIcons.linkedin className="h-4 w-4" />
@@ -1221,7 +1221,7 @@ function OverviewTab({
                       href={org.links.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                       title="Instagram"
                     >
                       <SocialIcons.instagram className="h-4 w-4" />
@@ -1232,7 +1232,7 @@ function OverviewTab({
                       href={org.links.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                       title="Facebook"
                     >
                       <SocialIcons.facebook className="h-4 w-4" />
@@ -1243,7 +1243,7 @@ function OverviewTab({
                       href={org.links.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                       title="X (Twitter)"
                     >
                       <SocialIcons.twitter className="h-4 w-4" />
@@ -1254,7 +1254,7 @@ function OverviewTab({
                       href={org.links.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                       title="YouTube"
                     >
                       <SocialIcons.youtube className="h-4 w-4" />
@@ -1265,7 +1265,7 @@ function OverviewTab({
                       href={org.links.tiktok}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                       title="TikTok"
                     >
                       <SocialIcons.tiktok className="h-4 w-4" />
@@ -1279,7 +1279,7 @@ function OverviewTab({
 
         {/* Team Section (Owner only) */}
         {canEdit && (
-          <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <section className="rounded-2xl bg-white border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <UserGroupIcon className="h-4 w-4 text-slate-400" />
@@ -1375,7 +1375,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
 
   if (jobs.length === 0) {
     return (
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No jobs posted yet"
@@ -1427,7 +1427,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
           <Link
             key={job.id}
             href={`/jobs/${job.id}`}
-            className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-white border border-slate-200 p-5 hover:border-teal-500/50 transition-colors"
           >
             {/* Header with badges */}
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -1474,7 +1474,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {job.employmentType && (
-                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
                   {job.employmentType.replace('-', ' ')}
                 </span>
               )}
@@ -1492,7 +1492,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
 
             {/* Footer with deadline and applicants */}
             {(closingText || (job.applicationsCount && job.applicationsCount > 0)) && (
-              <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-500">
+              <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
                 {closingText && (
                   <span className="text-amber-400">{closingText}</span>
                 )}
@@ -1552,7 +1552,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
 
   if (scholarships.length === 0) {
     return (
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No programs listed"
@@ -1595,7 +1595,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
           <Link
             key={scholarship.id}
             href={`/scholarships/${scholarship.id}`}
-            className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 p-5 hover:border-teal-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-white border border-slate-200 p-5 hover:border-teal-500/50 transition-colors"
           >
             {/* Header with icon and amount */}
             <div className="flex items-start gap-3">
@@ -1615,7 +1615,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             {/* Tags */}
             <div className="mt-3 flex flex-wrap gap-2">
               {scholarship.level && (
-                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
                   {scholarship.level}
                 </span>
               )}
@@ -1633,7 +1633,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
 
             {/* Deadline footer */}
             {deadlineStatus && !deadlineStatus.closed && (
-              <div className={`mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-1.5 text-xs ${
+              <div className={`mt-3 pt-3 border-t border-slate-200 flex items-center gap-1.5 text-xs ${
                 deadlineStatus.urgent ? 'text-amber-400' : 'text-slate-500'
               }`}>
                 <CalendarIcon className="h-3.5 w-3.5" />
@@ -1676,7 +1676,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
 
   if (services.length === 0) {
     return (
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No products or services listed"
@@ -1698,10 +1698,10 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
         <Link
           key={service.id}
           href={`/business/services/${service.id}`}
-          className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+          className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-teal-500/50 transition-colors"
         >
           {/* Cover Image */}
-          <div className="relative h-36 bg-gradient-to-br from-slate-700 to-slate-800">
+          <div className="relative h-36 bg-gradient-to-br from-slate-100 to-slate-200">
             {service.coverImageUrl ? (
               <Image
                 src={service.coverImageUrl}
@@ -1731,7 +1731,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             {/* Logo overlay */}
             {service.logoUrl && (
               <div className="absolute -bottom-5 left-4">
-                <div className="h-10 w-10 rounded-lg border-2 border-slate-800 bg-slate-700 overflow-hidden shadow-lg">
+                <div className="h-10 w-10 rounded-lg border-2 border-slate-200 bg-slate-100 overflow-hidden shadow-lg">
                   <Image
                     src={service.logoUrl}
                     alt={service.businessName}
@@ -1756,7 +1756,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {service.category && (
-                <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
                   {service.category.replace(/-/g, ' ')}
                 </span>
               )}
@@ -1773,7 +1773,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             </div>
 
             {/* Footer with price and experience */}
-            <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between">
+            <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
               {service.priceRange ? (
                 <span className="text-sm font-medium text-teal-400">{service.priceRange}</span>
               ) : (
@@ -1869,7 +1869,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
   if (!hasEvents) {
     return (
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No events scheduled"
@@ -1898,7 +1898,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                 <Link
                   key={conf.id}
                   href={`/conferences/${conf.id}`}
-                  className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-teal-500/50 transition-colors"
+                  className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-teal-500/50 transition-colors"
                 >
                   {/* Cover Image */}
                   <div className="relative h-36 bg-gradient-to-br from-purple-900/30 to-slate-800">
@@ -1933,7 +1933,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     {/* Format badge */}
                     {conf.format && (
                       <div className="absolute top-2 right-2">
-                        <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
                           {conf.format}
                         </span>
                       </div>
@@ -1963,7 +1963,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-3 pt-3 border-t border-slate-700/50 flex items-center justify-between">
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
                       {conf.cost ? (
                         <span className={`text-xs font-medium ${
                           conf.cost.toLowerCase().includes('free') ? 'text-emerald-400' : 'text-slate-400'
@@ -1996,7 +1996,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                 <Link
                   key={powwow.id}
                   href={`/powwows/${powwow.id}`}
-                  className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-rose-500/50 transition-colors"
+                  className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-rose-500/50 transition-colors"
                 >
                   {/* Cover Image */}
                   <div className="relative h-36 bg-gradient-to-br from-rose-900/30 to-slate-800">
@@ -2037,7 +2037,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     {/* Event type badge */}
                     {powwow.eventType && (
                       <div className="absolute top-2 right-2">
-                        <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-300 capitalize">
                           {powwow.eventType}
                         </span>
                       </div>
@@ -2073,7 +2073,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
                     {/* Season tag */}
                     {powwow.season && (
-                      <div className="mt-3 pt-3 border-t border-slate-700/50">
+                      <div className="mt-3 pt-3 border-t border-slate-200">
                         <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-xs text-rose-400 capitalize">
                           {powwow.season}
                         </span>
@@ -2155,7 +2155,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
   if (grants.length === 0) {
     return (
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 text-center">
+      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No funding opportunities"
@@ -2181,7 +2181,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
           <Link
             key={grant.id}
             href={`/business/funding/${grant.slug || grant.id}`}
-            className="group flex flex-col rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden hover:border-emerald-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-emerald-500/50 transition-colors"
           >
             {/* Header with gradient */}
             <div className="relative h-24 bg-gradient-to-br from-emerald-900/40 to-slate-800 p-4">
@@ -2193,7 +2193,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
               )}
               {/* Provider logo or icon */}
               <div className="absolute bottom-0 translate-y-1/2 left-4">
-                <div className="h-12 w-12 rounded-xl border-2 border-slate-800 bg-slate-700 overflow-hidden shadow-lg flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl border-2 border-slate-200 bg-slate-100 overflow-hidden shadow-lg flex items-center justify-center">
                   {grant.providerLogo ? (
                     <Image
                       src={grant.providerLogo}
@@ -2227,7 +2227,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
               {/* Eligibility badges */}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {grant.grantType && (
-                  <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300 capitalize">
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-300 capitalize">
                     {grant.grantType.replace(/-/g, ' ')}
                   </span>
                 )}
@@ -2258,7 +2258,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
               {/* Deadline footer */}
               {deadlineStatus && !deadlineStatus.closed && (
-                <div className={`mt-3 pt-3 border-t border-slate-700/50 flex items-center gap-1.5 text-xs ${
+                <div className={`mt-3 pt-3 border-t border-slate-200 flex items-center gap-1.5 text-xs ${
                   deadlineStatus.urgent ? 'text-amber-400' : 'text-slate-500'
                 }`}>
                   <CalendarIcon className="h-3.5 w-3.5" />
@@ -2366,14 +2366,14 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
   }
 
   return (
-    <section className="rounded-2xl bg-slate-800/50 border border-slate-700 p-5">
+    <section className="rounded-2xl bg-white border border-slate-200 p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-white">Profile Strength</h3>
         <span className={`text-xl font-bold ${getScoreColor(score)}`}>{score}%</span>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-700 mb-4">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 mb-4">
         <div
           className={`h-full rounded-full bg-gradient-to-r ${getProgressColor(score)} transition-all duration-500`}
           style={{ width: `${score}%` }}
@@ -2388,7 +2388,7 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
             {incompleteItems.slice(0, 4).map((item) => (
               <span
                 key={item.id}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-400"
+                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-400"
               >
                 <span className="text-slate-500">+{item.weight}</span>
                 {item.label}
@@ -2434,7 +2434,7 @@ function EmptyStateCard({
   return (
     <div className="flex flex-col items-center py-6">
       {icon && (
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-700/50 text-slate-400">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
           {icon}
         </div>
       )}

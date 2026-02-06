@@ -3,8 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { PageShell } from "@/components/PageShell";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
+import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
 import { EmptyState } from "@/components/EmptyState";
 import { listEmployers } from "@/lib/firestore";
 import type { EmployerProfile, IndustryType, OrganizationProfile } from "@/lib/types";
@@ -110,13 +109,8 @@ export default function OrganizationsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <SimplePageHeader
-        title="Organization Directory"
-        subtitle="Discover organizations committed to Indigenous employment and community development."
-      />
-
-      <PageShell>
+    <FeedLayout activeNav="organizations">
+      <SectionHeader title="Organization Directory" subtitle="Discover organizations committed to Indigenous employment and community development" icon="briefcase" />
         <SearchBarRow
           placeholder="Search organizations..."
           value={search}
@@ -160,10 +154,10 @@ export default function OrganizationsPage() {
               <Link
                 key={org.id}
                 href={org.slug ? `/organizations/${org.slug}` : `/employers/${org.id}`}
-                className="group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
+                className="group relative block overflow-hidden rounded-2xl bg-white border border-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
               >
                 {/* Banner/Cover */}
-                <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800">
+                <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                   {org.bannerUrl ? (
                     <Image
                       src={org.bannerUrl}
@@ -174,11 +168,11 @@ export default function OrganizationsPage() {
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-[#14B8A6]/20 to-cyan-600/20" />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
 
                   {/* Logo */}
                   <div className="absolute -bottom-8 left-4">
-                    <div className="h-16 w-16 overflow-hidden rounded-xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+                    <div className="h-16 w-16 overflow-hidden rounded-xl border-4 border-white bg-white shadow-xl">
                       {org.logoUrl ? (
                         <Image
                           src={org.logoUrl}
@@ -199,7 +193,7 @@ export default function OrganizationsPage() {
                 {/* Content */}
                 <div className="p-4 pt-10">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-[#14B8A6] transition-colors line-clamp-1">
+                    <h3 className="text-lg font-semibold text-slate-900 group-hover:text-[#14B8A6] transition-colors line-clamp-1">
                       {org.organizationName}
                     </h3>
                     {org.status === "approved" && (
@@ -208,7 +202,7 @@ export default function OrganizationsPage() {
                   </div>
 
                   {org.description && (
-                    <p className="mt-2 text-sm text-slate-400 line-clamp-2">
+                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">
                       {org.description}
                     </p>
                   )}
@@ -222,7 +216,7 @@ export default function OrganizationsPage() {
                       </span>
                     )}
                     {org.companySize && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium text-slate-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
                         <UsersIcon className="h-3 w-3" />
                         {org.companySize}
                       </span>
@@ -245,11 +239,11 @@ export default function OrganizationsPage() {
         )}
 
         {/* CTA Section */}
-        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Looking for Opportunities?
           </h2>
-          <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
+          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
             Browse job openings and training programs from organizations committed to Indigenous employment.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
@@ -262,13 +256,12 @@ export default function OrganizationsPage() {
             </Link>
             <Link
               href="/careers/programs"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800/50 px-8 py-3 text-lg font-semibold text-white transition-all hover:bg-slate-700"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3 text-lg font-semibold text-slate-900 transition-all hover:bg-slate-50"
             >
               View Training Programs
             </Link>
           </div>
         </section>
-      </PageShell>
-    </div>
+    </FeedLayout>
   );
 }
