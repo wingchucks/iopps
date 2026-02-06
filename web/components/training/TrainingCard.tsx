@@ -66,7 +66,7 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
                     <div className="flex items-center gap-1.5 mb-2 text-sm font-medium text-teal-400/90">
                         {program.providerName}
                         {program.status === 'approved' && (
-                            <CheckBadgeIcon className="h-4 w-4 text-blue-400" title="Verified Provider" />
+                            <span title="Verified Provider"><CheckBadgeIcon className="h-4 w-4 text-blue-400" /></span>
                         )}
                     </div>
                 )}

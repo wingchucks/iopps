@@ -46,6 +46,15 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]) {
   }, [handleKeyDown]);
 }
 
+export function getShortcutDisplay(shortcut: ShortcutConfig): string {
+  const parts: string[] = [];
+  if (shortcut.ctrl) parts.push('Ctrl');
+  if (shortcut.meta) parts.push('⌘');
+  if (shortcut.shift) parts.push('Shift');
+  parts.push(shortcut.key.length === 1 ? shortcut.key.toUpperCase() : shortcut.key);
+  return parts.join(' + ');
+}
+
 // Pre-configured shortcuts for organization dashboard
 export function useOrganizationShortcuts(options?: { onSearch?: () => void }) {
   const router = useRouter();

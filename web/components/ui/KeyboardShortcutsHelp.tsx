@@ -15,21 +15,19 @@ interface KeyboardShortcutsHelpProps {
 export function KeyboardShortcutsHelp({ shortcuts }: KeyboardShortcutsHelpProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  useKeyboardShortcuts({
-    shortcuts: [
-      {
-        key: "?",
-        shift: true,
-        action: () => setIsOpen(true),
-        description: "Show keyboard shortcuts",
-      },
-      {
-        key: "Escape",
-        action: () => setIsOpen(false),
-        description: "Close",
-      },
-    ],
-  });
+  useKeyboardShortcuts([
+    {
+      key: "?",
+      shift: true,
+      action: () => setIsOpen(true),
+      description: "Show keyboard shortcuts",
+    },
+    {
+      key: "Escape",
+      action: () => setIsOpen(false),
+      description: "Close",
+    },
+  ]);
 
   if (!isOpen) return null;
 
