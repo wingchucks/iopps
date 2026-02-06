@@ -102,7 +102,7 @@ export default function PassportPage() {
             if (typeof date === 'object' && 'toDate' in date) {
                 timestamp = date.toDate().getTime();
             } else if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                const [year, month, day] = date.split('-').map(Number);
+                const [year, month, day] = (date as string).split('-').map(Number);
                 timestamp = new Date(year, month - 1, day).getTime();
             } else {
                 timestamp = new Date(date).getTime();
