@@ -119,6 +119,7 @@ interface EngagementButtonProps {
   activeColor?: string;
   onClick?: (e: React.MouseEvent) => void;
   className?: string;
+  "aria-label"?: string;
 }
 
 export function EngagementButton({
@@ -128,10 +129,12 @@ export function EngagementButton({
   activeColor = colors.red,
   onClick,
   className = "",
+  "aria-label": ariaLabel,
 }: EngagementButtonProps) {
   return (
     <button
       onClick={onClick}
+      aria-label={ariaLabel}
       style={{
         display: "flex",
         alignItems: "center",

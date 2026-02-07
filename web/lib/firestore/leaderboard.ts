@@ -3,10 +3,7 @@ import {
   collection,
   getDocs,
   query,
-  where,
-  orderBy,
   limit,
-  Timestamp,
   checkFirebase,
   memberCollection,
 } from "./shared";
@@ -44,6 +41,47 @@ export interface LeaderboardData {
 }
 
 export type LeaderboardType = "overall" | "connections" | "contributors" | "streak";
+
+// ============================================
+// LEADERBOARD CACHE
+// ============================================
+
+interface CachedLeaderboard {
+  data: LeaderboardData;
+  type: LeaderboardType;
+  maxEntries: number;
+  currentUserId?: string;
+  timestamp: number;
+}
+
+let leaderboardCache: CachedLeaderboard | null = null;
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+function getCachedLeaderboard(
+  type: LeaderboardType,
+  maxEntries: number,
+  currentUserId?: string
+): LeaderboardData | null {
+  if (
+    leaderboardCache &&
+    Date.now() - leaderboardCache.timestamp < CACHE_TTL &&
+    leaderboardCache.type === type &&
+    leaderboardCache.maxEntries === maxEntries &&
+    leaderboardCache.currentUserId === currentUserId
+  ) {
+    return leaderboardCache.data;
+  }
+  return null;
+}
+
+function setCachedLeaderboard(
+  data: LeaderboardData,
+  type: LeaderboardType,
+  maxEntries: number,
+  currentUserId?: string
+): void {
+  leaderboardCache = { data, type, maxEntries, currentUserId, timestamp: Date.now() };
+}
 
 // ============================================
 // SCORING WEIGHTS
@@ -104,6 +142,10 @@ export async function getLeaderboard(
   maxEntries: number = 25,
   currentUserId?: string
 ): Promise<LeaderboardData> {
+  // Check cache first to avoid expensive per-member score calculations
+  const cached = getCachedLeaderboard(type, maxEntries, currentUserId);
+  if (cached) return cached;
+
   const firestore = checkFirebase();
   if (!firestore) {
     return {
@@ -191,13 +233,18 @@ export async function getLeaderboard(
     // Return top entries
     const topEntries = entries.slice(0, maxEntries);
 
-    return {
+    const result: LeaderboardData = {
       entries: topEntries,
       totalParticipants: entries.length,
       lastUpdated: new Date(),
       userRank,
       userEntry,
     };
+
+    // Cache the result to avoid recalculating on every page load
+    setCachedLeaderboard(result, type, maxEntries, currentUserId);
+
+    return result;
   } catch (error) {
     console.error("Error getting leaderboard:", error);
     return {

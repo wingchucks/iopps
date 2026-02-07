@@ -14,7 +14,7 @@ interface ProgressBarProps {
 
 export function ProgressBar({ steps, current, className }: ProgressBarProps) {
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full", className)} role="group" aria-label="Progress">
       <div className="flex">
         {steps.map((step, i) => (
           <div key={step.label} className="flex-1 flex flex-col items-center">
@@ -28,6 +28,7 @@ export function ProgressBar({ steps, current, className }: ProgressBarProps) {
                 />
               )}
               <div
+                {...(i === current ? { "aria-current": "step" as const } : {})}
                 className={cn(
                   "z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors",
                   i < current

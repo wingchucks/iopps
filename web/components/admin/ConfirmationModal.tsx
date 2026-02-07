@@ -171,10 +171,10 @@ export function ConfirmationModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-shrink-0 rounded-lg p-1 text-foreground0 hover:bg-surface hover:text-[var(--text-secondary)] disabled:opacity-50"
+            className="flex-shrink-0 rounded-lg p-2 text-foreground0 hover:bg-surface hover:text-[var(--text-secondary)] disabled:opacity-50"
             aria-label="Close"
           >
-            <XMarkIcon className="h-5 w-5" />
+            <XMarkIcon className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 

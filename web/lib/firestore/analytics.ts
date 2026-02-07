@@ -96,7 +96,8 @@ export async function getOutboundClickStats(
       collection(firestore, outboundClicksCollection),
       where("organizationId", "==", organizationId),
       where("createdAt", ">=", startTimestamp),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      limit(1000)
     );
 
     const snap = await getDocs(clicksQuery);
@@ -167,7 +168,8 @@ export async function getProfileViewStats(
       collection(firestore, profileViewsCollection),
       where("organizationId", "==", organizationId),
       where("createdAt", ">=", startTimestamp),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      limit(1000)
     );
 
     const snap = await getDocs(viewsQuery);
@@ -337,7 +339,8 @@ export async function getTotalProfileViews(organizationId: string): Promise<numb
   try {
     const viewsQuery = query(
       collection(firestore, profileViewsCollection),
-      where("organizationId", "==", organizationId)
+      where("organizationId", "==", organizationId),
+      limit(1000)
     );
 
     const snap = await getDocs(viewsQuery);
@@ -358,7 +361,8 @@ export async function getTotalOutboundClicks(organizationId: string): Promise<nu
   try {
     const clicksQuery = query(
       collection(firestore, outboundClicksCollection),
-      where("organizationId", "==", organizationId)
+      where("organizationId", "==", organizationId),
+      limit(1000)
     );
 
     const snap = await getDocs(clicksQuery);

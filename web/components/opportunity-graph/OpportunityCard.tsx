@@ -118,9 +118,12 @@ export function OpportunityCard({ item, compact = false, onNavigate, onSave }: O
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(); } }}
       style={{
         background: colors.surface,
         borderRadius: 12,
@@ -188,6 +191,11 @@ export function OpportunityCard({ item, compact = false, onNavigate, onSave }: O
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span
                   onClick={handleAuthorClick}
+                  {...(item.author.id ? {
+                    role: "button" as const,
+                    tabIndex: 0,
+                    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleAuthorClick(e as unknown as React.MouseEvent); } },
+                  } : {})}
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
@@ -291,13 +299,15 @@ export function OpportunityCard({ item, compact = false, onNavigate, onSave }: O
               active={saved}
               activeColor={colors.red}
               onClick={handleSave}
+              aria-label={saved ? "Unsave" : "Save"}
             />
             <EngagementButton
               icon="chat"
               label={item.engagement?.comments || ""}
+              aria-label="Comments"
             />
-            <EngagementButton icon="share" />
-            <EngagementButton icon="bookmark" />
+            <EngagementButton icon="share" aria-label="Share" />
+            <EngagementButton icon="bookmark" aria-label="Bookmark" />
           </div>
 
           {config.cta && (
@@ -310,7 +320,7 @@ export function OpportunityCard({ item, compact = false, onNavigate, onSave }: O
                 Watch Replay
               </Button>
             ) : (
-              <Button variant="primary" size="sm" icon={config.ctaIcon as any}>
+              <Button variant="primary" size="sm" icon={config.ctaIcon as React.ReactNode}>
                 {config.cta}
               </Button>
             )

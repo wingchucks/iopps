@@ -69,6 +69,7 @@ export function SearchInput({ value, onChange, placeholder = "Search..." }: Sear
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder}
         style={{
           flex: 1,
           border: "none",
@@ -162,6 +163,7 @@ export function FilterChips({ value, onChange, options }: FilterChipsProps) {
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
+            aria-pressed={isActive}
             style={{
               padding: "6px 14px",
               borderRadius: 20,

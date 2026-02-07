@@ -16,6 +16,7 @@ import {
   startAfter,
   updateDoc,
   where,
+  writeBatch,
   db,
   jobsCollection,
   savedJobsCollection,
@@ -79,16 +80,16 @@ export async function clearPendingEmployerApprovalFlag(employerId: string): Prom
     );
 
     const snapshot = await getDocs(q);
-    let count = 0;
 
+    if (snapshot.empty) return 0;
+
+    const batch = writeBatch(firestore);
     for (const docSnapshot of snapshot.docs) {
-      await updateDoc(docSnapshot.ref, {
-        pendingEmployerApproval: false,
-      });
-      count++;
+      batch.update(docSnapshot.ref, { pendingEmployerApproval: false });
     }
+    await batch.commit();
 
-    return count;
+    return snapshot.size;
   } catch (error) {
     console.error("[clearPendingEmployerApprovalFlag] Error:", error);
     return 0;

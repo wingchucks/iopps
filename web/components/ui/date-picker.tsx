@@ -148,6 +148,7 @@ export function DatePicker({
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -176,13 +177,15 @@ export function DatePicker({
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1.5 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
+                className="p-2 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
+                aria-label="Previous month"
               >
                 <svg
                   className="w-5 h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -198,13 +201,15 @@ export function DatePicker({
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1.5 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
+                className="p-2 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
+                aria-label="Next month"
               >
                 <svg
                   className="w-5 h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
