@@ -40,7 +40,7 @@ const BOTTOM_NAV: { icon: IconName; label: string; href: string | ((loggedIn: bo
   { icon: "briefcase", label: "Jobs", href: "/careers" },
   { icon: "search", label: "Search", href: "/search" },
   { icon: "bell", label: "Alerts", href: (loggedIn) => loggedIn ? "/member/dashboard?tab=alerts" : "/login" },
-  { icon: "user", label: "Profile", href: (loggedIn) => loggedIn ? "/member/dashboard" : "/login" },
+  { icon: "user", label: "Profile", href: (loggedIn) => loggedIn ? "/member/profile" : "/login" },
 ];
 
 function resolveHref(href: string | ((loggedIn: boolean) => string), loggedIn: boolean): string {
@@ -138,8 +138,8 @@ export function FeedLayout({
                 <div>
                   <div className="feed-user-name">{isLoggedIn ? userName : "Welcome!"}</div>
                   <div className="feed-user-cta">
-                    {isLoggedIn ? (
-                      <Link href="/member/dashboard">View profile</Link>
+                    {isLoggedIn && user ? (
+                      <Link href={`/member/${user.uid}`}>View profile</Link>
                     ) : (
                       <>
                         <Link href="/login">Sign in</Link> to save jobs

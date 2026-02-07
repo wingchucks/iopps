@@ -101,8 +101,8 @@ export default function AppPage() {
                 <div>
                   <div className="hub-user-name">{isLoggedIn ? userName : "Welcome!"}</div>
                   <div className="hub-user-cta">
-                    {isLoggedIn ? (
-                      <Link href="/member/dashboard">View profile</Link>
+                    {isLoggedIn && user ? (
+                      <Link href={`/member/${user.uid}`}>View profile</Link>
                     ) : (
                       <><Link href="/login">Sign in</Link> to save jobs</>
                     )}
