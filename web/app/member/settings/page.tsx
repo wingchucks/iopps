@@ -14,6 +14,7 @@ import {
   User,
   Key,
   Bell,
+  Eye,
   Mail,
   Database,
   Shield,
@@ -213,6 +214,11 @@ function SettingsHubContent() {
               icon={Bell}
               label="Notification Settings"
               href="/member/settings/notifications"
+            />
+            <SettingsLink
+              icon={Eye}
+              label="Privacy & Visibility"
+              href="/member/settings/privacy"
             />
             <SettingsLink
               icon={Mail}
