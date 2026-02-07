@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getEmployerProfile } from "@/lib/firestore";
+import { SUBSCRIPTION_PRODUCTS } from "@/lib/stripe";
 import { CheckIcon, BoltIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 export default function SubscribePage() {
@@ -16,7 +17,7 @@ export default function SubscribePage() {
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (!user) {
       router.push("/login?redirect=/organization/subscribe");
       return;
@@ -52,15 +53,14 @@ export default function SubscribePage() {
     loadProfile();
   }, [user, role, authLoading, router]);
 
-  const handleCheckout = async (productType: string) => {
+  const handleCheckout = async (productType: string, tier?: string) => {
     if (!user) return;
-    
-    setCheckoutLoading(productType);
+
+    const loadingKey = tier ? `${productType}-${tier}` : productType;
+    setCheckoutLoading(loadingKey);
     try {
       const idToken = await user.getIdToken();
-      
-      // For single job, we need to create a placeholder job first
-      // For subscription, we go directly to subscription checkout
+
       if (productType === "subscription") {
         const res = await fetch("/api/stripe/checkout-subscription", {
           method: "POST",
@@ -69,7 +69,7 @@ export default function SubscribePage() {
             Authorization: `Bearer ${idToken}`,
           },
           body: JSON.stringify({
-            tier: "TIER1", // Growth Plan
+            tier: tier || "TIER1",
             returnUrl: `${window.location.origin}/organization/jobs/new?subscribed=true`,
           }),
         });
@@ -81,7 +81,7 @@ export default function SubscribePage() {
         const { url } = await res.json();
         window.location.href = url;
       } else {
-        // Single job credit purchase - pay first, then post
+        // Single job credit purchase
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: {
@@ -90,7 +90,7 @@ export default function SubscribePage() {
           },
           body: JSON.stringify({
             productType: "SINGLE",
-            creditPurchase: true, // Flag for credit purchase without jobId
+            creditPurchase: true,
             returnUrl: `${window.location.origin}/organization/jobs/new?credited=true`,
           }),
         });
@@ -121,9 +121,12 @@ export default function SubscribePage() {
     );
   }
 
+  const tier1 = SUBSCRIPTION_PRODUCTS.TIER1;
+  const tier2 = SUBSCRIPTION_PRODUCTS.TIER2;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="max-w-5xl mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-6">
@@ -138,34 +141,34 @@ export default function SubscribePage() {
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Pricing Cards - 3 columns */}
+        <div className="grid md:grid-cols-3 gap-6">
           {/* Single Job */}
           <div className="relative rounded-2xl border border-slate-700 bg-slate-900/50 p-8">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-white mb-2">Single Job Post</h3>
               <p className="text-slate-400 text-sm">Perfect for occasional hiring needs</p>
             </div>
-            
+
             <div className="mb-6">
               <span className="text-4xl font-bold text-white">$99</span>
               <span className="text-slate-400 ml-2">/ job</span>
             </div>
 
             <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-3 text-slate-300">
+              <li className="flex items-center gap-3 text-slate-300 text-sm">
                 <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                 30-day job listing
               </li>
-              <li className="flex items-center gap-3 text-slate-300">
+              <li className="flex items-center gap-3 text-slate-300 text-sm">
                 <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                 Instant account approval
               </li>
-              <li className="flex items-center gap-3 text-slate-300">
+              <li className="flex items-center gap-3 text-slate-300 text-sm">
                 <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                 Indigenous talent reach
               </li>
-              <li className="flex items-center gap-3 text-slate-300">
+              <li className="flex items-center gap-3 text-slate-300 text-sm">
                 <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                 Application tracking
               </li>
@@ -174,7 +177,7 @@ export default function SubscribePage() {
             <button
               onClick={() => handleCheckout("single")}
               disabled={checkoutLoading !== null}
-              className="w-full py-3 px-6 rounded-xl border border-slate-600 bg-slate-800 text-white font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-6 rounded-xl border border-slate-600 bg-slate-800 text-white font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {checkoutLoading === "single" ? (
                 <span className="flex items-center justify-center gap-2">
@@ -187,7 +190,46 @@ export default function SubscribePage() {
             </button>
           </div>
 
-          {/* Growth Plan */}
+          {/* TIER1 - Growth Plan */}
+          <div className="relative rounded-2xl border border-slate-700 bg-slate-900/50 p-8">
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-white mb-2">{tier1.name} Plan</h3>
+              <p className="text-slate-400 text-sm">{tier1.description}</p>
+            </div>
+
+            <div className="mb-6">
+              <span className="text-4xl font-bold text-white">
+                ${(tier1.price / 100).toLocaleString()}
+              </span>
+              <span className="text-slate-400 ml-2">/ year</span>
+            </div>
+
+            <ul className="space-y-3 mb-8">
+              {tier1.features.map((feature, i) => (
+                <li key={i} className="flex items-center gap-3 text-slate-300 text-sm">
+                  <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => handleCheckout("subscription", "TIER1")}
+              disabled={checkoutLoading !== null}
+              className="w-full py-3 px-6 rounded-xl border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 font-semibold hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {checkoutLoading === "subscription-TIER1" ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                `Get ${tier1.name} Plan`
+              )}
+            </button>
+          </div>
+
+          {/* TIER2 - Unlimited Plan */}
           <div className="relative rounded-2xl border-2 border-emerald-500/50 bg-gradient-to-b from-emerald-500/10 to-transparent p-8">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <span className="px-4 py-1 rounded-full bg-emerald-500 text-white text-xs font-bold uppercase tracking-wide">
@@ -197,52 +239,40 @@ export default function SubscribePage() {
 
             <div className="mb-6">
               <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                Growth Plan
+                {tier2.name} Plan
                 <SparklesIcon className="h-5 w-5 text-emerald-400" />
               </h3>
-              <p className="text-slate-400 text-sm">For organizations with ongoing hiring</p>
+              <p className="text-slate-400 text-sm">{tier2.description}</p>
             </div>
-            
+
             <div className="mb-6">
-              <span className="text-4xl font-bold text-white">$499</span>
+              <span className="text-4xl font-bold text-white">
+                ${(tier2.price / 100).toLocaleString()}
+              </span>
               <span className="text-slate-400 ml-2">/ year</span>
             </div>
 
             <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-3 text-slate-300">
-                <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                <strong className="text-white">12 job posts</strong> included
-              </li>
-              <li className="flex items-center gap-3 text-slate-300">
-                <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                Instant account approval
-              </li>
-              <li className="flex items-center gap-3 text-slate-300">
-                <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                Priority employer profile
-              </li>
-              <li className="flex items-center gap-3 text-slate-300">
-                <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                Talent pool access (90 days)
-              </li>
-              <li className="flex items-center gap-3 text-slate-300">
-                <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                Analytics dashboard
-              </li>
+              {tier2.features.map((feature, i) => (
+                <li key={i} className="flex items-center gap-3 text-slate-300 text-sm">
+                  <CheckIcon className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  {feature}
+                </li>
+              ))}
             </ul>
 
             <button
-              onClick={() => handleCheckout("subscription")}
+              onClick={() => handleCheckout("subscription", "TIER2")}
               disabled={checkoutLoading !== null}
-              className="w-full py-3 px-6 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-6 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              {checkoutLoading === "subscription" ? (
+              {checkoutLoading === "subscription-TIER2" ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Processing...
                 </span>
               ) : (
-                "Get Growth Plan"
+                `Get ${tier2.name} Plan`
               )}
             </button>
           </div>
@@ -251,7 +281,7 @@ export default function SubscribePage() {
         {/* Trust Signals */}
         <div className="mt-12 text-center">
           <p className="text-slate-500 text-sm">
-            Secure payment powered by Stripe • Cancel anytime • 
+            Secure payment powered by Stripe • Cancel anytime •
             <Link href="/contact" className="text-emerald-400 hover:underline ml-1">
               Questions? Contact us
             </Link>

@@ -182,6 +182,7 @@ export type { UpsertVendorResult } from "./vendors";
 // Livestreams
 export {
   createLiveStream,
+  getLiveStream,
   listLiveStreams,
   updateLiveStream,
 } from "./livestreams";

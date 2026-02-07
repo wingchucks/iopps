@@ -88,11 +88,26 @@ function formatDate(date: any): string {
   });
 }
 
+interface Payment {
+  id: string;
+  type: string;
+  description: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string | null;
+  receiptUrl: string | null;
+  invoiceUrl: string | null;
+}
+
 export default function SubscriptionPage() {
   const { user, role, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
 
   useEffect(() => {
     if (!user || role !== "employer") {
@@ -113,7 +128,52 @@ export default function SubscriptionPage() {
         setLoading(false);
       }
     })();
+
+    // Load payment history
+    (async () => {
+      try {
+        setPaymentsLoading(true);
+        const idToken = await user.getIdToken();
+        const res = await fetch("/api/billing/payments", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPayments(data.payments || []);
+        }
+      } catch (err) {
+        console.error("Error loading payments:", err);
+      } finally {
+        setPaymentsLoading(false);
+      }
+    })();
   }, [user, role]);
+
+  const handleManageBilling = async () => {
+    if (!user) return;
+    try {
+      setBillingLoading(true);
+      const idToken = await user.getIdToken();
+      const res = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          returnUrl: `${window.location.origin}/organization/subscription`,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to create portal session");
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      console.error("Error opening billing portal:", err);
+      alert("Unable to open billing portal. Please try again.");
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   // Loading state
   if (authLoading || loading) {
@@ -509,10 +569,18 @@ export default function SubscriptionPage() {
                   Update payment method and billing information
                 </p>
                 <button
-                  disabled
-                  className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-500 cursor-not-allowed opacity-50"
+                  onClick={handleManageBilling}
+                  disabled={billingLoading}
+                  className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800 disabled:opacity-50"
                 >
-                  Coming Soon
+                  {billingLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                      Opening...
+                    </span>
+                  ) : (
+                    "Manage Billing"
+                  )}
                 </button>
               </div>
 
@@ -545,6 +613,66 @@ export default function SubscriptionPage() {
                   View Profile
                 </Link>
               </div>
+            </div>
+
+            {/* Payment History */}
+            <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+              <h2 className="text-xl font-semibold text-slate-50 mb-6">
+                Payment History
+              </h2>
+
+              {paymentsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-3 border-[#14B8A6] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : payments.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-6">
+                  No payment records found.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {payments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between rounded-xl border border-slate-700/50 bg-slate-800/30 px-4 py-3"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-200 truncate">
+                          {payment.description || payment.type || "Payment"}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {payment.createdAt
+                            ? new Date(payment.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )
+                            : "N/A"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-semibold text-slate-200">
+                          ${(payment.amount / 100).toFixed(2)}{" "}
+                          {payment.currency.toUpperCase()}
+                        </span>
+                        {(payment.receiptUrl || payment.invoiceUrl) && (
+                          <a
+                            href={payment.receiptUrl || payment.invoiceUrl || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-[#14B8A6] hover:text-[#16cdb8] transition-colors"
+                          >
+                            Receipt
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

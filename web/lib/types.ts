@@ -1249,6 +1249,8 @@ export interface LiveStreamEvent {
   startTime: string;
   status: "Live Now" | "Upcoming" | "Replay" | string;
   platform: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
   createdAt?: Timestamp | null;
   active: boolean;
 }

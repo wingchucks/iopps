@@ -34,8 +34,6 @@ function SettingsHubContent() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [resettingPassword, setResettingPassword] = useState(false);
-  const [exportingData, setExportingData] = useState(false);
-
   useEffect(() => {
     if (!user) return;
 
@@ -65,36 +63,6 @@ function SettingsHubContent() {
       toast.error("Error sending password reset email. Please try again.");
     } finally {
       setResettingPassword(false);
-    }
-  };
-
-  const handleExportData = async () => {
-    if (!user) return;
-
-    try {
-      setExportingData(true);
-      const idToken = await user.getIdToken();
-      const response = await fetch("/api/member/export-data", {
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-
-      if (!response.ok) throw new Error("Export failed");
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `iopps-data-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Your data has been exported!");
-    } catch (error) {
-      console.error("Error exporting data:", error);
-      toast.error("Error exporting data. Please try again.");
-    } finally {
-      setExportingData(false);
     }
   };
 
@@ -236,11 +204,10 @@ function SettingsHubContent() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 p-2 pt-0">
-            <SettingsButton
+            <SettingsLink
               icon={Download}
               label="Export My Data"
-              onClick={handleExportData}
-              loading={exportingData}
+              href="/member/settings/data-export"
             />
             <SettingsLink
               icon={Shield}

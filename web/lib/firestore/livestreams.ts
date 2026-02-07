@@ -3,6 +3,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -46,6 +47,21 @@ export async function listLiveStreams(): Promise<LiveStreamEvent[]> {
     return snap.docs.map((docSnap) => docSnap.data() as LiveStreamEvent);
   } catch {
     return [];
+  }
+}
+
+export async function getLiveStream(
+  id: string
+): Promise<LiveStreamEvent | null> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return null;
+    const ref = doc(firestore, liveStreamsCollection, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    return snap.data() as LiveStreamEvent;
+  } catch {
+    return null;
   }
 }
 
