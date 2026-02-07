@@ -196,7 +196,7 @@ export default function OrganizationSignupPage() {
             <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
               Register Your Organization
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-foreground0">
               Get started with IOPPS for your organization
             </p>
           </div>
@@ -220,7 +220,7 @@ export default function OrganizationSignupPage() {
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-slate-50 px-4 text-slate-400">
+                <span className="bg-slate-50 px-4 text-[var(--text-muted)]">
                   Or register with email
                 </span>
               </div>
@@ -299,7 +299,7 @@ export default function OrganizationSignupPage() {
               <button
                 type="submit"
                 disabled={loading || googleLoading}
-                className="w-full rounded-full bg-teal-600 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -314,7 +314,7 @@ export default function OrganizationSignupPage() {
                 )}
               </button>
 
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center text-xs text-foreground0">
                 By creating an account you agree to our{" "}
                 <Link href="/privacy" className="text-teal-600 hover:underline">
                   Privacy Policy
@@ -326,7 +326,7 @@ export default function OrganizationSignupPage() {
               </p>
             </form>
 
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm text-foreground0">
               Already have an account?{" "}
               <Link
                 href="/login"

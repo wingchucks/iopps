@@ -37,7 +37,7 @@ export default function CreatePostFab() {
             id: "update",
             label: "Share Update",
             icon: PencilSquareIcon,
-            color: "bg-[#14B8A6]",
+            color: "bg-accent",
             delay: 0,
         },
     ];

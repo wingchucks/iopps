@@ -233,8 +233,8 @@ export default function AdminJobEditPage() {
   if (authLoading || loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-slate-800" />
-        <div className="h-96 animate-pulse rounded-xl bg-slate-800" />
+        <div className="h-8 w-48 animate-pulse rounded bg-surface" />
+        <div className="h-96 animate-pulse rounded-xl bg-surface" />
       </div>
     );
   }
@@ -249,13 +249,13 @@ export default function AdminJobEditPage() {
       <div>
         <Link
           href="/admin/jobs"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#14B8A6]"
+          className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Jobs
         </Link>
-        <h1 className="mt-4 text-2xl font-bold text-slate-100">Edit Job</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="mt-4 text-2xl font-bold text-foreground">Edit Job</h1>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Posted by: {job.employerName}
         </p>
       </div>
@@ -263,12 +263,12 @@ export default function AdminJobEditPage() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-slate-100">Basic Information</h2>
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Job Title <span className="text-red-400">*</span>
             </label>
             <input
@@ -277,14 +277,14 @@ export default function AdminJobEditPage() {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g., Senior Software Developer"
-              className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
 
           {/* Category & Employment Type */}
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Category
               </label>
               <CategorySelect
@@ -293,7 +293,7 @@ export default function AdminJobEditPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Employment Type
               </label>
               <EmploymentTypeSelect
@@ -305,7 +305,7 @@ export default function AdminJobEditPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Job Description <span className="text-red-400">*</span>
             </label>
             <RichTextEditor
@@ -318,8 +318,8 @@ export default function AdminJobEditPage() {
         </div>
 
         {/* Location */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-slate-100">Location</h2>
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Location</h2>
           <LocationTypeSelector
             locationType={formData.locationType}
             locationAddress={formData.location}
@@ -329,8 +329,8 @@ export default function AdminJobEditPage() {
         </div>
 
         {/* Salary */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-slate-100">Salary Range</h2>
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Salary Range</h2>
           <SalaryRangeInput
             value={formData.salaryRange}
             onChange={(salaryRange) => setFormData({ ...formData, salaryRange })}
@@ -338,8 +338,8 @@ export default function AdminJobEditPage() {
         </div>
 
         {/* Application Method */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-slate-100">How to Apply</h2>
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">How to Apply</h2>
           <ApplicationMethodSelector
             method={formData.applicationMethod}
             email={formData.applicationEmail}
@@ -351,80 +351,80 @@ export default function AdminJobEditPage() {
         </div>
 
         {/* Requirements & Preferences */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-slate-100">Requirements & Preferences</h2>
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Requirements & Preferences</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600">
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)]">
               <input
                 type="checkbox"
                 checked={formData.indigenousPreference}
                 onChange={(e) => setFormData({ ...formData, indigenousPreference: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
               />
               <div>
-                <span className="text-slate-200 font-medium">Indigenous Preference</span>
-                <p className="text-xs text-slate-400">Preference given to Indigenous applicants</p>
+                <span className="text-foreground font-medium">Indigenous Preference</span>
+                <p className="text-xs text-[var(--text-muted)]">Preference given to Indigenous applicants</p>
               </div>
             </label>
 
-            <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600">
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)]">
               <input
                 type="checkbox"
                 checked={formData.cpicRequired}
                 onChange={(e) => setFormData({ ...formData, cpicRequired: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
               />
               <div>
-                <span className="text-slate-200 font-medium">CPIC Required</span>
-                <p className="text-xs text-slate-400">Criminal record check required</p>
+                <span className="text-foreground font-medium">CPIC Required</span>
+                <p className="text-xs text-[var(--text-muted)]">Criminal record check required</p>
               </div>
             </label>
 
-            <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600">
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)]">
               <input
                 type="checkbox"
                 checked={formData.willTrain}
                 onChange={(e) => setFormData({ ...formData, willTrain: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
               />
               <div>
-                <span className="text-slate-200 font-medium">Will Train</span>
-                <p className="text-xs text-slate-400">Employer will provide training</p>
+                <span className="text-foreground font-medium">Will Train</span>
+                <p className="text-xs text-[var(--text-muted)]">Employer will provide training</p>
               </div>
             </label>
 
-            <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600">
+            <label className="flex items-center gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)]">
               <input
                 type="checkbox"
                 checked={formData.driversLicense}
                 onChange={(e) => setFormData({ ...formData, driversLicense: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
               />
               <div>
-                <span className="text-slate-200 font-medium">Driver&apos;s License</span>
-                <p className="text-xs text-slate-400">Valid driver&apos;s license required</p>
+                <span className="text-foreground font-medium">Driver&apos;s License</span>
+                <p className="text-xs text-[var(--text-muted)]">Valid driver&apos;s license required</p>
               </div>
             </label>
           </div>
         </div>
 
         {/* Posting Options */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-slate-100">Posting Options</h2>
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Posting Options</h2>
 
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Expiration Date
               </label>
               <input
                 type="date"
                 value={formData.closingDate}
                 onChange={(e) => setFormData({ ...formData, closingDate: e.target.value })}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground focus:border-[#14B8A6] focus:outline-none"
               />
-              <p className="text-xs text-slate-500 mt-1">Leave empty for no expiration</p>
+              <p className="text-xs text-foreground0 mt-1">Leave empty for no expiration</p>
             </div>
           </div>
 
@@ -434,18 +434,18 @@ export default function AdminJobEditPage() {
                 type="checkbox"
                 checked={formData.featured}
                 onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
               />
-              <span className="text-slate-300">Featured Job</span>
+              <span className="text-[var(--text-secondary)]">Featured Job</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.active}
                 onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
               />
-              <span className="text-slate-300">Active (Visible on site)</span>
+              <span className="text-[var(--text-secondary)]">Active (Visible on site)</span>
             </label>
           </div>
         </div>
@@ -455,14 +455,14 @@ export default function AdminJobEditPage() {
           <button
             type="button"
             onClick={() => router.push("/admin/jobs")}
-            className="rounded-xl border border-slate-700 px-6 py-3 text-slate-300 transition hover:border-slate-600"
+            className="rounded-xl border border-[var(--card-border)] px-6 py-3 text-[var(--text-secondary)] transition hover:border-[var(--card-border)]"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-[#14B8A6] px-8 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8] disabled:opacity-50"
+            className="rounded-xl bg-accent px-8 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

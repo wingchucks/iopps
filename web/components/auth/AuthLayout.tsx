@@ -13,7 +13,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Branding (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 xl:px-20 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border-r border-slate-800/50">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 xl:px-20 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 border-r border-[var(--card-border)]/50">
         <div className="max-w-md">
           <Link href="/" className="inline-block">
             <Image
@@ -26,10 +26,10 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             />
           </Link>
 
-          <h2 className="mt-10 text-3xl font-bold text-slate-50 tracking-tight">
+          <h2 className="mt-10 text-3xl font-bold text-foreground tracking-tight">
             Empowering Indigenous Success
           </h2>
-          <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+          <p className="mt-4 text-lg text-[var(--text-muted)] leading-relaxed">
             Whether you're seeking opportunities or looking to connect with Indigenous talent, join Canada's premier Indigenous platform.
           </p>
 
@@ -63,7 +63,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             <p className="text-xs uppercase tracking-[0.4em] text-accent">
               {title}
             </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-slate-50">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">
               {subtitle}
             </h1>
           </div>
@@ -86,7 +86,7 @@ function FeatureItem({ text }: { text: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <span className="text-slate-300">{text}</span>
+      <span className="text-[var(--text-secondary)]">{text}</span>
     </div>
   );
 }

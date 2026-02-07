@@ -72,7 +72,7 @@ export default function NewEducationEventPage() {
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export default function NewEducationEventPage() {
         </h1>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Login
         </Link>
@@ -111,12 +111,12 @@ export default function NewEducationEventPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           School profile required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You need to create a school profile before adding events.
         </p>
         <Link
           href="/organization/education/school/new"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Create School Profile
         </Link>
@@ -172,7 +172,7 @@ export default function NewEducationEventPage() {
         <div className="mb-6">
           <Link
             href="/organization/dashboard?tab=education"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard
           </Link>
@@ -181,7 +181,7 @@ export default function NewEducationEventPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Create Education Event
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Add an event for {school.name}.
         </p>
 
@@ -194,12 +194,12 @@ export default function NewEducationEventPage() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           {/* Basic Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Event Details
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Event Title *
               </label>
               <input
@@ -208,12 +208,12 @@ export default function NewEducationEventPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Fall 2025 Open House"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Description *
               </label>
               <textarea
@@ -222,20 +222,20 @@ export default function NewEducationEventPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Describe what attendees will experience at this event..."
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Event Type *
                 </label>
                 <select
                   required
                   value={eventType}
                   onChange={(e) => setEventType(e.target.value as EducationEventType)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 >
                   {EVENT_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -246,14 +246,14 @@ export default function NewEducationEventPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Format *
                 </label>
                 <select
                   required
                   value={format}
                   onChange={(e) => setFormat(e.target.value as EducationEventFormat)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 >
                   {EVENT_FORMATS.map((fmt) => (
                     <option key={fmt.value} value={fmt.value}>
@@ -267,13 +267,13 @@ export default function NewEducationEventPage() {
 
           {/* Date & Time */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Date & Time
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Start Date *
                 </label>
                 <input
@@ -281,45 +281,45 @@ export default function NewEducationEventPage() {
                   required
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Start Time
                 </label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   End Time
                 </label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -327,13 +327,13 @@ export default function NewEducationEventPage() {
 
           {/* Location */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Location
             </h2>
 
             {format !== "online" && (
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Physical Location {format === "in-person" && "*"}
                 </label>
                 <input
@@ -342,14 +342,14 @@ export default function NewEducationEventPage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g., Main Campus, Building A, Room 101"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             )}
 
             {format !== "in-person" && (
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Virtual Meeting Link {format === "online" && "*"}
                 </label>
                 <input
@@ -358,9 +358,9 @@ export default function NewEducationEventPage() {
                   value={virtualLink}
                   onChange={(e) => setVirtualLink(e.target.value)}
                   placeholder="https://zoom.us/j/..."
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground0">
                   This link will be shared with registered attendees
                 </p>
               </div>
@@ -369,7 +369,7 @@ export default function NewEducationEventPage() {
 
           {/* Registration */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Registration
             </h2>
 
@@ -378,9 +378,9 @@ export default function NewEducationEventPage() {
                 type="checkbox"
                 checked={registrationRequired}
                 onChange={(e) => setRegistrationRequired(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <span className="text-sm text-slate-200">
+              <span className="text-sm text-foreground">
                 Registration is required for this event
               </span>
             </label>
@@ -388,7 +388,7 @@ export default function NewEducationEventPage() {
             {registrationRequired && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Registration URL
                   </label>
                   <input
@@ -396,12 +396,12 @@ export default function NewEducationEventPage() {
                     value={registrationUrl}
                     onChange={(e) => setRegistrationUrl(e.target.value)}
                     placeholder="https://your-school.ca/register"
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Maximum Capacity
                   </label>
                   <input
@@ -410,7 +410,7 @@ export default function NewEducationEventPage() {
                     onChange={(e) => setCapacity(e.target.value)}
                     placeholder="e.g., 100"
                     min="1"
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -418,7 +418,7 @@ export default function NewEducationEventPage() {
           </div>
 
           {/* Submit */}
-          <div className="pt-4 border-t border-slate-800">
+          <div className="pt-4 border-t border-[var(--card-border)]">
             <button
               type="submit"
               disabled={saving}
@@ -426,7 +426,7 @@ export default function NewEducationEventPage() {
             >
               {saving ? "Creating..." : "Create Event"}
             </button>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-foreground0">
               Your event will start as a draft. Publish it when you&apos;re ready.
             </p>
           </div>

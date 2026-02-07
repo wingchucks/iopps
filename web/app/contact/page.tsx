@@ -77,7 +77,7 @@ export default function ContactPage() {
         {/* Contact Form */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
           <h2 className="text-2xl font-bold text-slate-900">Send us a message</h2>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-foreground0">
             Fill out the form below and we&apos;ll get back to you within two business days.
           </p>
 

@@ -14,7 +14,7 @@ export default function TermsOfServicePage() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-slate-900">
             Terms of Service
           </h1>
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-foreground0">
             Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function TermsOfServicePage() {
               <li>Fulfill orders and commitments in a timely manner</li>
               <li>Comply with all applicable business laws and regulations</li>
             </ul>
-            <p className="text-sm text-slate-500 mt-4 italic">
+            <p className="text-sm text-foreground0 mt-4 italic">
               Note: IOPPS is a marketplace platform. All transactions are directly between vendors and customers.
             </p>
           </section>

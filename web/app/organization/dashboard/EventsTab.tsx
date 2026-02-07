@@ -89,7 +89,7 @@ function getDateStatusDisplay(status: DateStatus): { label: string; className: s
     case "ended":
       return {
         label: "Ended",
-        className: "bg-slate-600/20 text-slate-400",
+        className: "bg-slate-600/20 text-[var(--text-muted)]",
       };
     case "happening":
       return {
@@ -275,7 +275,7 @@ export default function EventsTab() {
           <CalendarDaysIcon className="h-8 w-8 text-purple-400" />
           <div>
             <h2 className="text-2xl font-bold text-white">Events</h2>
-            <p className="mt-1 text-slate-400">
+            <p className="mt-1 text-[var(--text-muted)]">
               Manage conferences, pow wows, sports, and cultural events
             </p>
           </div>
@@ -283,12 +283,12 @@ export default function EventsTab() {
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-px overflow-x-auto">
         <button
           onClick={() => setEventType("powwows")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${eventType === "powwows"
             ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <FireIcon className="h-4 w-4" />
@@ -298,7 +298,7 @@ export default function EventsTab() {
           onClick={() => setEventType("conferences")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${eventType === "conferences"
             ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BuildingOfficeIcon className="h-4 w-4" />
@@ -316,7 +316,7 @@ export default function EventsTab() {
               placeholder={`Search ${eventType === "powwows" ? "events" : "conferences"}...`}
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+              className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
             />
           </div>
           <div>
@@ -324,7 +324,7 @@ export default function EventsTab() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className="rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+              className="rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
             >
               <option value="all">All</option>
               <option value="active">Active</option>
@@ -359,12 +359,12 @@ export default function EventsTab() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
             </div>
           ) : filteredPowwows.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
               <FireIcon className="mx-auto h-12 w-12 text-slate-600" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword || statusFilter !== "all" ? "No events found" : "No events yet"}
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {keyword || statusFilter !== "all"
                   ? "Try adjusting your search or filter"
                   : "Create your first event to share with the community."}
@@ -384,7 +384,7 @@ export default function EventsTab() {
               {filteredPowwows.map((event) => (
                 <div
                   key={event.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -404,7 +404,7 @@ export default function EventsTab() {
                           </span>
                         )}
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
                         <span className="flex items-center gap-1.5">
                           <MapPinIcon className="h-4 w-4" />
                           {event.location}
@@ -416,13 +416,13 @@ export default function EventsTab() {
                           </span>
                         )}
                         {event.host && (
-                          <span className="text-slate-500">
+                          <span className="text-foreground0">
                             Hosted by {event.host}
                           </span>
                         )}
                       </div>
                       {event.description && (
-                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {event.description}
                         </p>
                       )}
@@ -444,15 +444,15 @@ export default function EventsTab() {
                       {/* Active/Inactive status badge */}
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${event.active !== false
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-slate-700 text-slate-400"
+                          ? "bg-accent/20 text-accent"
+                          : "bg-slate-700 text-[var(--text-muted)]"
                           }`}
                       >
                         {event.active !== false ? "Active" : "Paused"}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/community/${event.id}`}
                       className="rounded-lg px-3 py-1.5 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors"
@@ -478,7 +478,7 @@ export default function EventsTab() {
                     </button>
                     <button
                       onClick={() => handleTogglePowwowStatus(event.id, event.active !== false)}
-                      className="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                      className="rounded-lg px-3 py-1.5 text-sm text-[var(--text-muted)] hover:bg-slate-700 hover:text-white transition-colors"
                     >
                       {event.active !== false ? "Pause" : "Activate"}
                     </button>
@@ -504,12 +504,12 @@ export default function EventsTab() {
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
             </div>
           ) : filteredConferences.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
               <BuildingOfficeIcon className="mx-auto h-12 w-12 text-slate-600" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword || statusFilter !== "all" ? "No conferences found" : "No conferences yet"}
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {keyword || statusFilter !== "all"
                   ? "Try adjusting your search or filter"
                   : "Create your first conference to share with professionals."}
@@ -529,7 +529,7 @@ export default function EventsTab() {
               {filteredConferences.map((conf) => (
                 <div
                   key={conf.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -539,7 +539,7 @@ export default function EventsTab() {
                       <p className="mt-1 text-sm text-indigo-400">
                         {conf.organizerName}
                       </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
                         <span className="flex items-center gap-1.5">
                           <MapPinIcon className="h-4 w-4" />
                           {conf.location || "TBD"}
@@ -552,11 +552,11 @@ export default function EventsTab() {
                               : 'TBD'}
                         </span>
                         {conf.registrationUrl && (
-                          <span className="text-emerald-400">Registration open</span>
+                          <span className="text-accent">Registration open</span>
                         )}
                       </div>
                       {conf.description && (
-                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {conf.description}
                         </p>
                       )}
@@ -578,15 +578,15 @@ export default function EventsTab() {
                       {/* Active/Inactive status badge */}
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${conf.active !== false
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-slate-700 text-slate-400"
+                          ? "bg-accent/20 text-accent"
+                          : "bg-slate-700 text-[var(--text-muted)]"
                           }`}
                       >
                         {conf.active !== false ? "Active" : "Paused"}
                       </span>
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/organization/conferences/${conf.id}/edit`}
                       className="rounded-lg px-3 py-1.5 text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
@@ -733,18 +733,18 @@ function CreateEventModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 shadow-xl my-8 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-2xl rounded-2xl bg-surface border border-[var(--card-border)] shadow-xl my-8 max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-slate-700 bg-slate-900">
+        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-[var(--card-border)] bg-surface">
           <div>
             <h3 className="text-xl font-bold text-white">Create Event</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Share pow wows, sports events, and cultural gatherings
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-white transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -768,12 +768,12 @@ function CreateEventModal({
                 <button
                   type="button"
                   onClick={() => setShowUploader(false)}
-                  className="text-sm text-slate-400 hover:text-white"
+                  className="text-sm text-[var(--text-muted)] hover:text-white"
                 >
                   Skip
                 </button>
               </div>
-              <p className="mb-4 text-sm text-slate-400">
+              <p className="mb-4 text-sm text-[var(--text-muted)]">
                 Upload an event poster or flyer and our AI will automatically extract the event details.
               </p>
               <PosterUploader
@@ -782,7 +782,7 @@ function CreateEventModal({
               />
               <div className="my-6 flex items-center gap-4">
                 <div className="h-px flex-1 bg-slate-700" />
-                <span className="text-sm text-slate-500">or fill manually</span>
+                <span className="text-sm text-foreground0">or fill manually</span>
                 <div className="h-px flex-1 bg-slate-700" />
               </div>
             </div>
@@ -791,14 +791,14 @@ function CreateEventModal({
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Event Type *
               </label>
               <select
                 required
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value as PowwowEventType)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none mb-4"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none mb-4"
               >
                 <option value="">Select event type...</option>
                 {POWWOW_EVENT_TYPES.map((type) => (
@@ -806,7 +806,7 @@ function CreateEventModal({
                 ))}
               </select>
 
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Event Name *
               </label>
               <input
@@ -815,12 +815,12 @@ function CreateEventModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Annual Traditional Pow Wow or Sports Tournament"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Host Organization / Nation
               </label>
               <input
@@ -828,12 +828,12 @@ function CreateEventModal({
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
                 placeholder="e.g., First Nations Community Center"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Description *
               </label>
               <textarea
@@ -842,12 +842,12 @@ function CreateEventModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the event, activities, categories, and what attendees can expect..."
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Location *
               </label>
               <input
@@ -856,37 +856,37 @@ function CreateEventModal({
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g., Community Grounds, Edmonton, AB"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Date Range (if dates are tentative)
               </label>
               <input
@@ -894,19 +894,19 @@ function CreateEventModal({
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
                 placeholder="e.g., June 15-17, 2024 or Summer 2024"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Season
                 </label>
                 <select
                   value={season}
                   onChange={(e) => setSeason(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
                 >
                   <option value="">Select season</option>
                   <option value="spring">Spring</option>
@@ -916,13 +916,13 @@ function CreateEventModal({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Registration Status
                 </label>
                 <select
                   value={registrationStatus}
                   onChange={(e) => setRegistrationStatus(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white focus:border-purple-500 focus:outline-none"
                 >
                   <option value="open">Open</option>
                   <option value="closed">Closed</option>
@@ -938,20 +938,20 @@ function CreateEventModal({
                 id="livestream-modal"
                 checked={livestream}
                 onChange={(e) => setLivestream(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <label htmlFor="livestream-modal" className="text-sm text-slate-300">
+              <label htmlFor="livestream-modal" className="text-sm text-[var(--text-secondary)]">
                 This event will be livestreamed
               </label>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700 mt-6">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[var(--card-border)] mt-6">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="px-4 py-2 rounded-lg text-slate-300 hover:text-white transition-colors"
+                className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
               >
                 Cancel
               </button>

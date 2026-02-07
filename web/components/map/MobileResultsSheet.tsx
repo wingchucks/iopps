@@ -123,7 +123,7 @@ export default function MobileResultsSheet({
         onClick={handleToggle}
       >
         <div className="w-12 h-1.5 bg-slate-300 rounded-full mb-2" />
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-foreground0">
           <span>
             {opportunities.length} {opportunities.length === 1 ? "result" : "results"}
           </span>
@@ -176,11 +176,11 @@ export function CollapsedPreview({
   return (
     <div className="px-4 py-2">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-slate-500">
+        <span className="text-foreground0">
           {count} {count === 1 ? "opportunity" : "opportunities"} found
         </span>
         {topResult && (
-          <span className="text-emerald-400 font-medium truncate max-w-[50%]">
+          <span className="text-accent font-medium truncate max-w-[50%]">
             {topResult.title}
           </span>
         )}

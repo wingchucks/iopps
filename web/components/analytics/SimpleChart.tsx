@@ -78,7 +78,7 @@ export function LineChart({
   if (data.length === 0) {
     return (
       <div className={`flex items-center justify-center ${className}`} style={{ height }}>
-        <p className="text-sm text-slate-500">No data available</p>
+        <p className="text-sm text-foreground0">No data available</p>
       </div>
     );
   }
@@ -167,7 +167,7 @@ export function LineChart({
         {data
           .filter((_, i) => i % Math.ceil(data.length / 6) === 0)
           .map((d, i) => (
-            <span key={i} className="text-xs text-slate-500">
+            <span key={i} className="text-xs text-foreground0">
               {d.label}
             </span>
           ))}
@@ -194,7 +194,7 @@ export function BarChart({
   if (data.length === 0) {
     return (
       <div className={`flex items-center justify-center ${className}`} style={{ height }}>
-        <p className="text-sm text-slate-500">No data available</p>
+        <p className="text-sm text-foreground0">No data available</p>
       </div>
     );
   }
@@ -214,10 +214,10 @@ export function BarChart({
         {data.map((item, i) => (
           <div key={i} className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-slate-300">{item.label}</span>
-              <span className="font-semibold text-slate-200">{item.value}</span>
+              <span className="font-medium text-[var(--text-secondary)]">{item.label}</span>
+              <span className="font-semibold text-foreground">{item.value}</span>
             </div>
-            <div className="h-3 overflow-hidden rounded-full bg-slate-800/50">
+            <div className="h-3 overflow-hidden rounded-full bg-surface">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#14B8A6] to-[#0D9488] shadow-[0_0_12px_rgba(20,184,166,0.4)] transition-all duration-500"
                 style={{
@@ -246,7 +246,7 @@ export function BarChart({
               className="group relative flex flex-1 flex-col items-center justify-end"
             >
               {/* Tooltip on hover */}
-              <div className="absolute -top-10 hidden rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-100 shadow-lg group-hover:block">
+              <div className="absolute -top-10 hidden rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-foreground shadow-lg group-hover:block">
                 {item.value}
               </div>
 
@@ -269,7 +269,7 @@ export function BarChart({
         {data.map((item, i) => (
           <div
             key={i}
-            className="flex-1 text-center text-xs text-slate-500"
+            className="flex-1 text-center text-xs text-foreground0"
           >
             {item.label}
           </div>
@@ -330,7 +330,7 @@ export function PieChart({
   if (data.length === 0) {
     return (
       <div className={`flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
-        <p className="text-sm text-slate-500">No data</p>
+        <p className="text-sm text-foreground0">No data</p>
       </div>
     );
   }
@@ -401,8 +401,8 @@ export function PieChart({
         {/* Center text for donut */}
         {donut && (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <p className="text-3xl font-bold text-slate-100">{total}</p>
-            <p className="text-xs text-slate-500">Total</p>
+            <p className="text-3xl font-bold text-foreground">{total}</p>
+            <p className="text-xs text-foreground0">Total</p>
           </div>
         )}
       </div>
@@ -416,7 +416,7 @@ export function PieChart({
                 className="h-3 w-3 rounded-sm"
                 style={{ backgroundColor: segment.color }}
               />
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[var(--text-muted)]">
                 {segment.label} ({segment.percentage.toFixed(1)}%)
               </span>
             </div>

@@ -124,7 +124,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
     <FeedLayout activeNav="education" fullWidth>
       <div className="mx-auto max-w-4xl py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-slate-500">
+        <nav className="mb-6 text-sm text-foreground0">
           <Link href="/" className="hover:text-slate-900 transition-colors">
             Home
           </Link>
@@ -143,7 +143,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
         {/* Scholarship Header */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
+            <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
               {scholarship.type}
             </span>
             <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
@@ -215,7 +215,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               {isExpired ? (
                 <button
                   disabled
-                  className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-6 py-3 text-base font-semibold text-slate-500 cursor-not-allowed"
+                  className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-6 py-3 text-base font-semibold text-foreground0 cursor-not-allowed"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -225,7 +225,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               ) : (
                 <button
                   onClick={handleApplyClick}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -241,7 +241,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
             <div className="mt-6">
               <a
                 href={`mailto:${scholarship.applicationEmail}?subject=Scholarship Application: ${encodeURIComponent(scholarship.title)}`}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -334,7 +334,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                     <label className="block text-sm font-medium text-slate-800">
                       Personal Statement / Essay <span className="text-red-600">*</span>
                     </label>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-foreground0">
                       Share your goals, achievements, community involvement, and why you should be selected for this {scholarship.type.toLowerCase()}.
                     </p>
                     <textarea
@@ -356,7 +356,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submitting ? "Submitting..." : "Submit Application"}
                   </button>
@@ -368,13 +368,13 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               <h3 className="text-lg font-bold text-slate-800">
                 Sign in to apply
               </h3>
-              <p className="mt-2 text-slate-500">
+              <p className="mt-2 text-foreground0">
                 Create a community member account to apply for this {scholarship.type.toLowerCase()}.
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <Link
                   href="/login"
-                  className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                  className="rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
                 >
                   Sign In
                 </Link>
@@ -388,7 +388,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
             </div>
           ) : (
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 text-center">
-              <p className="text-slate-500">
+              <p className="text-foreground0">
                 Switch to a community member account to apply for scholarships.
               </p>
             </div>
@@ -398,7 +398,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
         {/* Provider Information */}
         {scholarship.employerName && (
           <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
               Provided By
             </h3>
             <p className="mt-2 text-lg font-semibold text-slate-800">

@@ -86,7 +86,7 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
 
     if (status === 'pending_received') {
         return (
-            <Button variant="primary" size="sm" onClick={handleAccept} className={`gap-2 bg-emerald-600 hover:bg-emerald-700 ${className}`}>
+            <Button variant="primary" size="sm" onClick={handleAccept} className={`gap-2 bg-accent hover:bg-emerald-700 ${className}`}>
                 <UserPlus className="h-4 w-4" />
                 Respond
             </Button>
@@ -95,7 +95,7 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
 
     return (
         <>
-            <Button size="sm" onClick={() => setShowMessageModal(true)} className={`gap-2 bg-slate-900 text-white hover:bg-slate-800 ${className}`}>
+            <Button size="sm" onClick={() => setShowMessageModal(true)} className={`gap-2 bg-surface text-white hover:bg-surface ${className}`}>
                 <UserPlus className="h-4 w-4" />
                 Connect
             </Button>
@@ -106,14 +106,14 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
                     onClick={() => setShowMessageModal(false)}
                 >
                     <div
-                        className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl"
+                        className="w-full max-w-sm rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-slate-100">Send Connection Request</h2>
+                            <h2 className="text-lg font-bold text-foreground">Send Connection Request</h2>
                             <button
                                 onClick={() => setShowMessageModal(false)}
-                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                                className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
                             >
                                 <X className="h-5 w-5" />
                             </button>
@@ -121,7 +121,7 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                                     Add a message (optional)
                                 </label>
                                 <textarea
@@ -129,10 +129,10 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
                                     onChange={(e) => setMessage(e.target.value)}
                                     rows={3}
                                     placeholder="Introduce yourself or say why you'd like to connect..."
-                                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none resize-none"
+                                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none resize-none"
                                     maxLength={300}
                                 />
-                                <p className="mt-1 text-xs text-slate-500 text-right">
+                                <p className="mt-1 text-xs text-foreground0 text-right">
                                     {message.length}/300
                                 </p>
                             </div>
@@ -140,14 +140,14 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
                             <div className="flex gap-3 justify-end">
                                 <button
                                     onClick={() => setShowMessageModal(false)}
-                                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                                    className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleConnect}
                                     disabled={loading}
-                                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-50"
+                                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors disabled:opacity-50"
                                 >
                                     {loading ? "Sending..." : "Send Request"}
                                 </button>

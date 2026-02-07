@@ -159,7 +159,7 @@ function ScholarshipsContent() {
         {/* Search Bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground0" />
             <input
               type="text"
               placeholder="Search scholarships..."
@@ -175,14 +175,14 @@ function ScholarshipsContent() {
             <FunnelIcon className="h-5 w-5" />
             Filters
             {hasFilters && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">
                 !
               </span>
             )}
           </button>
         </div>
         {/* Breadcrumb */}
-        <nav className="mb-8 text-sm text-slate-500">
+        <nav className="mb-8 text-sm text-foreground0">
           <Link href="/" className="hover:text-slate-900 transition-colors">
             Home
           </Link>
@@ -202,7 +202,7 @@ function ScholarshipsContent() {
               {hasFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1 text-sm text-foreground0 hover:text-slate-900 transition-colors"
                 >
                   <XMarkIcon className="h-4 w-4" />
                   Clear all
@@ -213,14 +213,14 @@ function ScholarshipsContent() {
             <div className="grid gap-6 md:grid-cols-3">
               {/* Award Type */}
               <div>
-                <label className="text-sm font-medium text-slate-500 mb-2 block">Award Type</label>
+                <label className="text-sm font-medium text-foreground0 mb-2 block">Award Type</label>
                 <div className="flex flex-wrap gap-2">
                   {AWARD_TYPES.map((type) => (
                     <button
                       key={type}
                       onClick={() => setAwardType(type)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${awardType === type
-                        ? "bg-[#14B8A6] text-white"
+                        ? "bg-accent text-white"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >
@@ -232,14 +232,14 @@ function ScholarshipsContent() {
 
               {/* Education Level */}
               <div>
-                <label className="text-sm font-medium text-slate-500 mb-2 block">Education Level</label>
+                <label className="text-sm font-medium text-foreground0 mb-2 block">Education Level</label>
                 <div className="flex flex-wrap gap-2">
                   {EDUCATION_LEVELS.map((lvl) => (
                     <button
                       key={lvl}
                       onClick={() => setLevel(lvl)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${level === lvl
-                        ? "bg-[#14B8A6] text-white"
+                        ? "bg-accent text-white"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >
@@ -251,14 +251,14 @@ function ScholarshipsContent() {
 
               {/* Deadline Range */}
               <div>
-                <label className="text-sm font-medium text-slate-500 mb-2 block">Deadline</label>
+                <label className="text-sm font-medium text-foreground0 mb-2 block">Deadline</label>
                 <div className="flex flex-wrap gap-2">
                   {DEADLINE_RANGES.map((range) => (
                     <button
                       key={range.value}
                       onClick={() => setDeadlineRange(range.value)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${deadlineRange === range.value
-                        ? "bg-[#14B8A6] text-white"
+                        ? "bg-accent text-white"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >
@@ -279,7 +279,7 @@ function ScholarshipsContent() {
                 <CurrencyDollarIcon className="h-4 w-4 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-slate-900">High-Value Awards</h2>
-              <span className="text-sm text-slate-500">$5,000+</span>
+              <span className="text-sm text-foreground0">$5,000+</span>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featuredScholarships.map((item) => (
@@ -302,7 +302,7 @@ function ScholarshipsContent() {
             <h2 className="text-2xl font-bold text-slate-900">
               {hasFilters ? "Search Results" : "All Scholarships"}
             </h2>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-foreground0">
               {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "scholarship" : "scholarships"}`}
             </span>
           </div>
@@ -316,25 +316,25 @@ function ScholarshipsContent() {
           ) : scholarships.length === 0 && !hasFilters ? (
             <div className="rounded-2xl bg-slate-50 border border-slate-200 p-12 text-center">
               <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                <AcademicCapIcon className="h-8 w-8 text-slate-400" />
+                <AcademicCapIcon className="h-8 w-8 text-[var(--text-muted)]" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">No scholarships available yet</h3>
-              <p className="text-slate-500">
+              <p className="text-foreground0">
                 Check back soon! Organizations are adding scholarship opportunities regularly.
               </p>
             </div>
           ) : sorted.length === 0 ? (
             <div className="rounded-2xl bg-slate-50 border border-slate-200 p-12 text-center">
               <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                <MagnifyingGlassIcon className="h-8 w-8 text-slate-400" />
+                <MagnifyingGlassIcon className="h-8 w-8 text-[var(--text-muted)]" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">No scholarships found</h3>
-              <p className="text-slate-500 mb-4">
+              <p className="text-foreground0 mb-4">
                 Try adjusting your filters or search terms.
               </p>
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-white hover:bg-[#0d9488] transition-colors"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-[#0d9488] transition-colors"
               >
                 Clear filters
               </button>
@@ -494,7 +494,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
           {scholarship.title}
         </h3>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-foreground0">
           {scholarship.provider}
         </p>
 
@@ -508,7 +508,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
             {scholarship.level}
           </span>
           {scholarship.region && (
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-foreground0">
               {scholarship.region}
             </span>
           )}
@@ -527,7 +527,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
                 </>
               ) : (
                 <>
-                  <CalendarIcon className="h-4 w-4 text-slate-500" />
+                  <CalendarIcon className="h-4 w-4 text-foreground0" />
                   <span className={`font-medium ${urgency === "expired"
                     ? "text-red-600"
                     : urgency === "urgent"
@@ -558,7 +558,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
                 e.stopPropagation();
                 window.open(scholarship.applicationUrl!, "_blank", "noopener,noreferrer");
               }}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] cursor-pointer"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

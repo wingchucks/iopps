@@ -17,13 +17,13 @@ import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; icon: React.ElementType }> = {
   submitted: { label: 'New', color: 'bg-blue-900/30 text-blue-400', icon: ClockIcon },
-  reviewed: { label: 'Reviewed', color: 'bg-slate-800 text-slate-400', icon: DocumentTextIcon },
+  reviewed: { label: 'Reviewed', color: 'bg-surface text-[var(--text-muted)]', icon: DocumentTextIcon },
   shortlisted: { label: 'Shortlisted', color: 'bg-amber-900/30 text-amber-400', icon: StarIcon },
   interviewing: { label: 'Interviewing', color: 'bg-purple-900/30 text-purple-400', icon: UserIcon },
   offered: { label: 'Offered', color: 'bg-cyan-900/30 text-cyan-400', icon: DocumentTextIcon },
   rejected: { label: 'Rejected', color: 'bg-red-900/30 text-red-400', icon: XCircleIcon },
   hired: { label: 'Hired', color: 'bg-green-900/30 text-green-400', icon: CheckCircleIcon },
-  withdrawn: { label: 'Withdrawn', color: 'bg-slate-800 text-slate-500', icon: XCircleIcon },
+  withdrawn: { label: 'Withdrawn', color: 'bg-surface text-foreground0', icon: XCircleIcon },
 };
 
 export default function HireApplicationsPage() {
@@ -70,8 +70,8 @@ export default function HireApplicationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Applications</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Applications</h1>
+        <p className="text-[var(--text-muted)] mt-1">
           Review and manage job applications
         </p>
       </div>
@@ -83,7 +83,7 @@ export default function HireApplicationsPage() {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'all'
               ? 'bg-accent/10 text-accent border border-accent/20'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           All ({applications.length})
@@ -99,7 +99,7 @@ export default function HireApplicationsPage() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 filter === status
                   ? config.color + ' border border-current/20'
-                  : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+                  : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
               }`}
             >
               {config.label} ({count})
@@ -112,10 +112,10 @@ export default function HireApplicationsPage() {
       {filteredApplications.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
           <DocumentTextIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'all' ? 'No applications yet' : `No ${STATUS_CONFIG[filter as ApplicationStatus].label.toLowerCase()} applications`}
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto">
+          <p className="text-foreground0 max-w-md mx-auto">
             {filter === 'all'
               ? 'Applications will appear here when candidates apply to your jobs.'
               : 'No applications match this filter.'}
@@ -131,18 +131,18 @@ export default function HireApplicationsPage() {
               <Link
                 key={app.id}
                 href="/organization/applications"
-                className="block bg-card border border-card-border rounded-xl p-4 hover:border-slate-700 transition-colors"
+                className="block bg-card border border-card-border rounded-xl p-4 hover:border-[var(--card-border)] transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
-                      <UserIcon className="w-5 h-5 text-slate-500" />
+                    <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
+                      <UserIcon className="w-5 h-5 text-foreground0" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-200">
+                      <p className="font-semibold text-foreground">
                         {app.memberDisplayName || app.memberEmail || 'Anonymous'}
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-foreground0">
                         Applied {app.createdAt
                           ? formatDistanceToNow(
                               app.createdAt instanceof Date

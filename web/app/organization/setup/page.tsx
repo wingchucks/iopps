@@ -94,7 +94,7 @@ export default function EmployerSetupPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -105,19 +105,19 @@ export default function EmployerSetupPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employers must sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Sign in or create an employer account to set up your profile.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-teal-400 hover:text-teal-300"
+            className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground hover:border-teal-400 hover:text-teal-300"
           >
             Register
           </Link>
@@ -132,7 +132,7 @@ export default function EmployerSetupPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           This area is only for employers. Switch to an employer account or
           create one if you&apos;d like to post opportunities.
         </p>
@@ -149,15 +149,15 @@ export default function EmployerSetupPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           Employer profile
         </h1>
-        <p className="mt-3 text-sm text-slate-400 sm:text-base">
+        <p className="mt-3 text-sm text-[var(--text-muted)] sm:text-base">
           Tell the community about your organization. This information will show
           on job postings and dashboards.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Organization name
           </label>
           <input
@@ -165,11 +165,11 @@ export default function EmployerSetupPage() {
             required
             value={organizationName}
             onChange={(e) => setOrganizationName(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Website
           </label>
           <input
@@ -177,11 +177,11 @@ export default function EmployerSetupPage() {
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder="https://example.com"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Location
           </label>
           <input
@@ -189,29 +189,29 @@ export default function EmployerSetupPage() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="City / Territory, Province"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
             placeholder="Share your mission, values, and how you support Indigenous success."
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Organization logo
           </label>
           <div className="mt-2 flex flex-col gap-3">
-            <label className="flex cursor-pointer flex-col text-xs text-slate-200">
-              <span className="mb-2 rounded-md border border-slate-700 bg-slate-900 px-4 py-2 text-center text-sm hover:border-teal-500">
+            <label className="flex cursor-pointer flex-col text-xs text-foreground">
+              <span className="mb-2 rounded-md border border-[var(--card-border)] bg-surface px-4 py-2 text-center text-sm hover:border-accent">
                 {uploadingLogo ? "Uploading..." : "Choose logo file"}
               </span>
               <input
@@ -223,7 +223,7 @@ export default function EmployerSetupPage() {
               />
             </label>
             {uploadingLogo && (
-              <p className="text-xs text-slate-400">Uploading logo...</p>
+              <p className="text-xs text-[var(--text-muted)]">Uploading logo...</p>
             )}
             {logoFileName && (
               <p className="text-xs text-teal-300">
@@ -235,7 +235,7 @@ export default function EmployerSetupPage() {
                 <img
                   src={logoUrl}
                   alt="Organization logo"
-                  className="h-20 w-auto rounded-md border border-slate-700 object-contain"
+                  className="h-20 w-auto rounded-md border border-[var(--card-border)] object-contain"
                 />
                 <a
                   href={logoUrl}
@@ -248,7 +248,7 @@ export default function EmployerSetupPage() {
               </div>
             )}
           </div>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             Upload a PNG, JPG, or SVG file. Recommended size: 200x200px or larger.
           </p>
         </div>
@@ -259,7 +259,7 @@ export default function EmployerSetupPage() {
           </p>
         )}
         {successMessage && (
-          <p className="rounded-md border border-[#14B8A6]/40 bg-[#14B8A6]/10 px-3 py-2 text-sm text-[#14B8A6]">
+          <p className="rounded-md border border-[#14B8A6]/40 bg-accent/10 px-3 py-2 text-sm text-[#14B8A6]">
             {successMessage}
           </p>
         )}
@@ -267,7 +267,7 @@ export default function EmployerSetupPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>

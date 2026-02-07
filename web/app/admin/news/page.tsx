@@ -101,18 +101,18 @@ function ArticleForm({
   saving: boolean;
 }) {
   const inputClass =
-    "w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500";
-  const labelClass = "block text-sm font-medium text-slate-300 mb-1";
+    "w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500";
+  const labelClass = "block text-sm font-medium text-[var(--text-secondary)] mb-1";
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6 mb-6">
+    <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6 mb-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-slate-100">
+        <h2 className="text-lg font-semibold text-foreground">
           {isEditing ? "Edit Article" : "New Article"}
         </h2>
         <button
           onClick={onCancel}
-          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+          className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
         >
           <XMarkIcon className="h-5 w-5" />
         </button>
@@ -222,18 +222,18 @@ function ArticleForm({
               type="checkbox"
               checked={form.featured}
               onChange={(e) => setForm({ ...form, featured: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+              className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
             />
-            <span className="text-sm text-slate-300">Featured</span>
+            <span className="text-sm text-[var(--text-secondary)]">Featured</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={form.businessIdea}
               onChange={(e) => setForm({ ...form, businessIdea: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+              className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
             />
-            <span className="text-sm text-slate-300">Business Idea</span>
+            <span className="text-sm text-[var(--text-secondary)]">Business Idea</span>
           </label>
         </div>
 
@@ -253,17 +253,17 @@ function ArticleForm({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-800">
+      <div className="flex items-center gap-3 mt-6 pt-4 border-t border-[var(--card-border)]">
         <button
           onClick={onSubmit}
           disabled={saving || !form.title || !form.excerpt || !form.source || !form.sourceUrl}
-          className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "Saving..." : isEditing ? "Update Article" : "Create Article"}
         </button>
         <button
           onClick={onCancel}
-          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+          className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
         >
           Cancel
         </button>
@@ -435,8 +435,8 @@ export default function AdminNewsPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Indigenous News</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold text-foreground">Indigenous News</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Manage curated news articles for the community
           </p>
         </div>
@@ -445,7 +445,7 @@ export default function AdminNewsPage() {
             cancelForm();
             setShowForm(true);
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-500"
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent"
         >
           <PlusIcon className="h-4 w-4" />
           New Article
@@ -472,8 +472,8 @@ export default function AdminNewsPage() {
             onClick={() => setFilter(f)}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               filter === f
-                ? "bg-teal-600/20 text-teal-400"
-                : "text-slate-400 hover:bg-slate-800 hover:text-slate-300"
+                ? "bg-accent/20 text-accent"
+                : "text-[var(--text-muted)] hover:bg-surface hover:text-[var(--text-secondary)]"
             }`}
           >
             {f === "all" ? "All" : f === "published" ? "Published" : "Drafts"}
@@ -496,29 +496,29 @@ export default function AdminNewsPage() {
           icon={<NewspaperIcon className="h-12 w-12" />}
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#08090C]">
+        <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-surface">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800 text-left">
-                  <th className="px-4 py-3 font-medium text-slate-400">Title</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 md:table-cell">Category</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 sm:table-cell">Status</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 lg:table-cell">Source</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 lg:table-cell">Date</th>
-                  <th className="px-4 py-3 font-medium text-slate-400 text-right">Actions</th>
+                <tr className="border-b border-[var(--card-border)] text-left">
+                  <th className="px-4 py-3 font-medium text-[var(--text-muted)]">Title</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] md:table-cell">Category</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] sm:table-cell">Status</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] lg:table-cell">Source</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] lg:table-cell">Date</th>
+                  <th className="px-4 py-3 font-medium text-[var(--text-muted)] text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-[var(--card-border)]/50">
                 {filteredArticles.map((article) => (
                   <tr key={article.id} className="hover:bg-slate-800/30 transition">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div>
-                          <div className="font-medium text-slate-200 line-clamp-1">
+                          <div className="font-medium text-foreground line-clamp-1">
                             {article.title}
                           </div>
-                          <div className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                          <div className="text-xs text-foreground0 line-clamp-1 mt-0.5">
                             {article.excerpt}
                           </div>
                         </div>
@@ -535,7 +535,7 @@ export default function AdminNewsPage() {
                       </div>
                     </td>
                     <td className="hidden px-4 py-3 md:table-cell">
-                      <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-300 capitalize">
+                      <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] capitalize">
                         {article.category}
                       </span>
                     </td>
@@ -545,10 +545,10 @@ export default function AdminNewsPage() {
                         variant={article.status === "published" ? "success" : "warning"}
                       />
                     </td>
-                    <td className="hidden px-4 py-3 text-slate-400 lg:table-cell">
+                    <td className="hidden px-4 py-3 text-[var(--text-muted)] lg:table-cell">
                       {article.source}
                     </td>
-                    <td className="hidden px-4 py-3 text-slate-400 lg:table-cell whitespace-nowrap">
+                    <td className="hidden px-4 py-3 text-[var(--text-muted)] lg:table-cell whitespace-nowrap">
                       {formatDate(article.publishedAt || article.createdAt)}
                     </td>
                     <td className="px-4 py-3">
@@ -558,14 +558,14 @@ export default function AdminNewsPage() {
                           className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
                             article.status === "published"
                               ? "text-amber-400 hover:bg-amber-500/10"
-                              : "text-emerald-400 hover:bg-emerald-500/10"
+                              : "text-accent hover:bg-accent/10"
                           }`}
                         >
                           {article.status === "published" ? "Unpublish" : "Publish"}
                         </button>
                         <button
                           onClick={() => startEdit(article)}
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+                          className="rounded-md p-1.5 text-[var(--text-muted)] hover:bg-surface hover:text-white"
                           title="Edit"
                         >
                           <PencilSquareIcon className="h-4 w-4" />
@@ -584,7 +584,7 @@ export default function AdminNewsPage() {
                               },
                             })
                           }
-                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-400"
+                          className="rounded-md p-1.5 text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
                           title="Delete"
                         >
                           <TrashIcon className="h-4 w-4" />

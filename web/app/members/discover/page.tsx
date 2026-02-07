@@ -73,10 +73,10 @@ export default function DiscoverPage() {
   };
 
   const getMatchColor = (score: number) => {
-    if (score >= 70) return "text-emerald-400";
+    if (score >= 70) return "text-accent";
     if (score >= 50) return "text-blue-400";
     if (score >= 30) return "text-amber-400";
-    return "text-slate-500";
+    return "text-foreground0";
   };
 
   const getMatchLabel = (score: number) => {
@@ -93,11 +93,11 @@ export default function DiscoverPage() {
           <div className="text-center p-8 rounded-2xl border border-slate-200 bg-white max-w-md">
             <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign in to Discover</h2>
-            <p className="text-slate-500 mb-6">
+            <p className="text-foreground0 mb-6">
               Connect with Indigenous professionals who share your interests and goals.
             </p>
             <Link href="/login">
-              <Button className="bg-emerald-500 hover:bg-emerald-600">Sign In</Button>
+              <Button className="bg-accent hover:bg-accent">Sign In</Button>
             </Link>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function DiscoverPage() {
         <div className="container max-w-6xl mx-auto px-4 py-6">
           <Link
             href="/members"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-slate-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Directory
@@ -124,7 +124,7 @@ export default function DiscoverPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">People You May Know</h1>
-                <p className="text-slate-500 text-sm">
+                <p className="text-foreground0 text-sm">
                   Personalized recommendations based on your profile
                 </p>
               </div>
@@ -145,13 +145,13 @@ export default function DiscoverPage() {
       <div className="container max-w-6xl mx-auto px-4 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-accent" />
           </div>
         ) : recommendations.length === 0 ? (
           <div className="text-center py-20">
             <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
             <h3 className="text-xl font-semibold text-slate-900 mb-2">No recommendations yet</h3>
-            <p className="text-slate-500 mb-6 max-w-md mx-auto">
+            <p className="text-foreground0 mb-6 max-w-md mx-auto">
               Complete your profile with your skills, experience, and interests to get personalized
               connection recommendations.
             </p>
@@ -175,11 +175,11 @@ export default function DiscoverPage() {
                     .map((person) => (
                       <div
                         key={person.userId}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-emerald-500/30 transition-all"
+                        className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-accent/30 transition-all"
                       >
                         <div className="flex items-start gap-4">
                           <Link href={`/member/${person.userId}`}>
-                            <Avatar className="h-14 w-14 border-2 border-white hover:border-emerald-500/50 transition-colors">
+                            <Avatar className="h-14 w-14 border-2 border-white hover:border-accent/50 transition-colors">
                               <AvatarImage src={person.avatarUrl} />
                               <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
                                 {getInitials(person.displayName)}
@@ -188,18 +188,18 @@ export default function DiscoverPage() {
                           </Link>
                           <div className="flex-1 min-w-0">
                             <Link href={`/member/${person.userId}`}>
-                              <h3 className="font-semibold text-slate-900 truncate hover:text-emerald-400 transition-colors">
+                              <h3 className="font-semibold text-slate-900 truncate hover:text-accent transition-colors">
                                 {person.displayName}
                               </h3>
                             </Link>
                             {person.tagline && (
-                              <p className="text-sm text-slate-500 truncate">{person.tagline}</p>
+                              <p className="text-sm text-foreground0 truncate">{person.tagline}</p>
                             )}
                             <div className="flex items-center gap-2 mt-1">
                               <span className={`text-sm font-medium ${getMatchColor(person.matchScore)}`}>
                                 {person.matchScore}% match
                               </span>
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-foreground0">
                                 • {getMatchLabel(person.matchScore)}
                               </span>
                             </div>
@@ -212,7 +212,7 @@ export default function DiscoverPage() {
                             {person.matchReasons.slice(0, 2).map((reason, i) => (
                               <div
                                 key={i}
-                                className="flex items-center gap-2 text-sm text-slate-500"
+                                className="flex items-center gap-2 text-sm text-foreground0"
                               >
                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                                 {reason}
@@ -227,7 +227,7 @@ export default function DiscoverPage() {
                             {person.sharedSkills.slice(0, 3).map((skill) => (
                               <span
                                 key={skill}
-                                className="px-2 py-0.5 rounded bg-emerald-500/10 text-xs text-emerald-400"
+                                className="px-2 py-0.5 rounded bg-accent/10 text-xs text-accent"
                               >
                                 {skill}
                               </span>
@@ -237,7 +237,7 @@ export default function DiscoverPage() {
 
                         {/* Indigenous Affiliation */}
                         {person.indigenousAffiliation && (
-                          <p className="mt-3 text-xs text-emerald-400 flex items-center gap-1">
+                          <p className="mt-3 text-xs text-accent flex items-center gap-1">
                             <Users className="h-3 w-3" />
                             {person.indigenousAffiliation}
                           </p>
@@ -250,7 +250,7 @@ export default function DiscoverPage() {
                             className="flex-1"
                           />
                           <Link href={`/member/${person.userId}`}>
-                            <Button variant="ghost" size="sm" className="text-slate-500">
+                            <Button variant="ghost" size="sm" className="text-foreground0">
                               <ChevronRight className="h-4 w-4" />
                             </Button>
                           </Link>
@@ -286,22 +286,22 @@ export default function DiscoverPage() {
                         </Link>
                         <div className="flex-1 min-w-0">
                           <Link href={`/member/${person.userId}`}>
-                            <h3 className="font-medium text-slate-900 hover:text-emerald-400 transition-colors">
+                            <h3 className="font-medium text-slate-900 hover:text-accent transition-colors">
                               {person.displayName}
                             </h3>
                           </Link>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-0.5">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground0 mt-0.5">
                             {person.tagline && (
                               <span className="truncate max-w-[200px]">{person.tagline}</span>
                             )}
                             {person.indigenousAffiliation && (
-                              <span className="text-emerald-400">
+                              <span className="text-accent">
                                 {person.indigenousAffiliation}
                               </span>
                             )}
                           </div>
                           {person.matchReasons[0] && (
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-foreground0 mt-1">
                               {person.matchReasons[0]}
                             </p>
                           )}
@@ -328,27 +328,27 @@ export default function DiscoverPage() {
                 <div className="p-4 rounded-xl bg-white border border-slate-200">
                   <Briefcase className="h-8 w-8 text-blue-400 mb-3" />
                   <h4 className="font-medium text-slate-900 mb-1">Add Your Experience</h4>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Connect with others who've worked at similar companies or in similar roles.
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-white border border-slate-200">
                   <Building2 className="h-8 w-8 text-purple-400 mb-3" />
                   <h4 className="font-medium text-slate-900 mb-1">List Your Skills</h4>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Find professionals with complementary or shared skills.
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-white border border-slate-200">
                   <GraduationCap className="h-8 w-8 text-amber-400 mb-3" />
                   <h4 className="font-medium text-slate-900 mb-1">Add Your Education</h4>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Connect with alumni from your school or program.
                   </p>
                 </div>
               </div>
               <Link href="/member/dashboard?tab=profile" className="inline-block mt-4">
-                <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                <Button variant="outline" className="border-accent/30 text-accent hover:bg-accent/10">
                   Update Your Profile
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>

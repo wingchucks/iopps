@@ -70,11 +70,11 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
   const getAvailabilityInfo = (availability?: string) => {
     switch (availability) {
       case "yes":
-        return { label: "Actively Looking", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+        return { label: "Actively Looking", color: "bg-accent/20 text-accent border-accent/30" };
       case "maybe":
         return { label: "Open to Opportunities", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
       case "no":
-        return { label: "Not Available", color: "bg-slate-500/20 text-slate-400 border-slate-500/30" };
+        return { label: "Not Available", color: "bg-slate-500/20 text-[var(--text-muted)] border-slate-500/30" };
       default:
         return null;
     }
@@ -125,12 +125,12 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
 
       <div className="container max-w-4xl mx-auto px-4 -mt-24 pb-12">
         {/* Profile Header Card */}
-        <Card className="bg-slate-900/90 border-slate-800 backdrop-blur-sm mb-6">
+        <Card className="bg-slate-900/90 border-[var(--card-border)] backdrop-blur-sm mb-6">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row gap-6">
               {/* Avatar */}
               <div className="flex-shrink-0">
-                <Avatar className="h-32 w-32 border-4 border-slate-800 shadow-xl">
+                <Avatar className="h-32 w-32 border-4 border-[var(--card-border)] shadow-xl">
                   <AvatarImage src={profile.avatarUrl || profile.photoURL} />
                   <AvatarFallback className="text-3xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
                     {getInitials(profile.displayName)}
@@ -146,18 +146,18 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                       {profile.displayName || "IOPPS Member"}
                     </h1>
                     {profile.tagline && (
-                      <p className="text-slate-400 mt-1">{profile.tagline}</p>
+                      <p className="text-[var(--text-muted)] mt-1">{profile.tagline}</p>
                     )}
 
                     <div className="flex flex-wrap items-center gap-3 mt-3 text-sm">
                       {profile.location && (
-                        <span className="flex items-center gap-1.5 text-slate-400">
+                        <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
                           <MapPin className="h-4 w-4" />
                           {profile.location}
                         </span>
                       )}
                       {profile.indigenousAffiliation && (
-                        <span className="flex items-center gap-1.5 text-emerald-400">
+                        <span className="flex items-center gap-1.5 text-accent">
                           <Users className="h-4 w-4" />
                           {profile.indigenousAffiliation}
                         </span>
@@ -196,7 +196,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                         <ConnectionButton targetUserId={profile.userId} />
                         <Button
                           variant="outline"
-                          className="border-slate-700 hover:bg-slate-800"
+                          className="border-[var(--card-border)] hover:bg-surface"
                           onClick={handleStartConversation}
                           disabled={startingChat}
                         >
@@ -221,29 +221,29 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
           <div className="lg:col-span-2 space-y-6">
             {/* About Section */}
             {profile.bio && (
-              <Card className="bg-slate-900/50 border-slate-800">
+              <Card className="bg-surface border-[var(--card-border)]">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold text-white mb-4">About</h2>
-                  <p className="text-slate-300 whitespace-pre-wrap">{profile.bio}</p>
+                  <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{profile.bio}</p>
                 </CardContent>
               </Card>
             )}
 
             {/* Experience Section */}
             {profile.experience && profile.experience.length > 0 && (
-              <Card className="bg-slate-900/50 border-slate-800">
+              <Card className="bg-surface border-[var(--card-border)]">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Briefcase className="h-5 w-5 text-emerald-400" />
+                    <Briefcase className="h-5 w-5 text-accent" />
                     Work Experience
                   </h2>
                   <div className="space-y-6">
                     {profile.experience.map((exp: WorkExperience) => (
-                      <div key={exp.id} className="relative pl-6 border-l-2 border-slate-700">
-                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-emerald-500/20 border-2 border-emerald-500" />
+                      <div key={exp.id} className="relative pl-6 border-l-2 border-[var(--card-border)]">
+                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-accent/20 border-2 border-accent" />
                         <h3 className="font-semibold text-white">{exp.position}</h3>
-                        <p className="text-emerald-400">{exp.company}</p>
-                        <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                        <p className="text-accent">{exp.company}</p>
+                        <div className="flex items-center gap-2 text-sm text-foreground0 mt-1">
                           <Calendar className="h-3.5 w-3.5" />
                           {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
                           {exp.location && (
@@ -255,7 +255,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                           )}
                         </div>
                         {exp.description && (
-                          <p className="mt-2 text-slate-400 text-sm">{exp.description}</p>
+                          <p className="mt-2 text-[var(--text-muted)] text-sm">{exp.description}</p>
                         )}
                       </div>
                     ))}
@@ -266,27 +266,27 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
 
             {/* Education Section */}
             {profile.education && profile.education.length > 0 && (
-              <Card className="bg-slate-900/50 border-slate-800">
+              <Card className="bg-surface border-[var(--card-border)]">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <GraduationCap className="h-5 w-5 text-emerald-400" />
+                    <GraduationCap className="h-5 w-5 text-accent" />
                     Education
                   </h2>
                   <div className="space-y-6">
                     {profile.education.map((edu: Education) => (
-                      <div key={edu.id} className="relative pl-6 border-l-2 border-slate-700">
-                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-teal-500/20 border-2 border-teal-500" />
+                      <div key={edu.id} className="relative pl-6 border-l-2 border-[var(--card-border)]">
+                        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-accent/20 border-2 border-accent" />
                         <h3 className="font-semibold text-white">{edu.degree}</h3>
-                        <p className="text-teal-400">{edu.institution}</p>
+                        <p className="text-accent">{edu.institution}</p>
                         {edu.fieldOfStudy && (
-                          <p className="text-sm text-slate-400">{edu.fieldOfStudy}</p>
+                          <p className="text-sm text-[var(--text-muted)]">{edu.fieldOfStudy}</p>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                        <div className="flex items-center gap-2 text-sm text-foreground0 mt-1">
                           <Calendar className="h-3.5 w-3.5" />
                           {formatDate(edu.startDate)} - {edu.current ? "Present" : formatDate(edu.endDate)}
                         </div>
                         {edu.description && (
-                          <p className="mt-2 text-slate-400 text-sm">{edu.description}</p>
+                          <p className="mt-2 text-[var(--text-muted)] text-sm">{edu.description}</p>
                         )}
                       </div>
                     ))}
@@ -297,23 +297,23 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
 
             {/* Portfolio Section */}
             {profile.portfolio && profile.portfolio.length > 0 && (
-              <Card className="bg-slate-900/50 border-slate-800">
+              <Card className="bg-surface border-[var(--card-border)]">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold text-white mb-4">Portfolio & Projects</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {profile.portfolio.map((item: PortfolioItem) => (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-slate-700 bg-slate-800/50 p-4 hover:border-emerald-500/30 transition-colors"
+                        className="rounded-xl border border-[var(--card-border)] bg-surface p-4 hover:border-accent/30 transition-colors"
                       >
                         <h3 className="font-semibold text-white">{item.title}</h3>
-                        <p className="mt-1 text-sm text-slate-400 line-clamp-2">{item.description}</p>
+                        <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-2">{item.description}</p>
                         {item.url && (
                           <a
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300"
+                            className="mt-2 inline-flex items-center gap-1 text-sm text-accent hover:text-emerald-300"
                           >
                             View Project <ExternalLink className="h-3.5 w-3.5" />
                           </a>
@@ -323,7 +323,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                             {item.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300"
+                                className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-[var(--text-secondary)]"
                               >
                                 {tag}
                               </span>
@@ -342,14 +342,14 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
           <div className="space-y-6">
             {/* Skills */}
             {profile.skills && profile.skills.length > 0 && (
-              <Card className="bg-slate-900/50 border-slate-800">
+              <Card className="bg-surface border-[var(--card-border)]">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold text-white mb-4">Skills</h2>
                   <div className="flex flex-wrap gap-2">
                     {profile.skills.map((skill) => (
                       <span
                         key={skill}
-                        className="rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-3 py-1 text-sm text-emerald-300 border border-emerald-500/20"
+                        className="rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-3 py-1 text-sm text-emerald-300 border border-accent/20"
                       >
                         {skill}
                       </span>
@@ -361,12 +361,12 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
 
             {/* Contact Info (if public) */}
             {profile.messagingHandle && (
-              <Card className="bg-slate-900/50 border-slate-800">
+              <Card className="bg-surface border-[var(--card-border)]">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold text-white mb-4">Contact</h2>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-slate-300">
-                      <MessageSquare className="h-4 w-4 text-slate-500" />
+                    <div className="flex items-center gap-3 text-[var(--text-secondary)]">
+                      <MessageSquare className="h-4 w-4 text-foreground0" />
                       <span>{profile.messagingHandle}</span>
                     </div>
                   </div>
@@ -376,11 +376,11 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
 
             {/* Empty State - Prompt to connect */}
             {!isOwnProfile && (
-              <Card className="bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border-emerald-500/20">
+              <Card className="bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border-accent/20">
                 <CardContent className="p-6 text-center">
-                  <Users className="h-10 w-10 mx-auto text-emerald-400 mb-3" />
+                  <Users className="h-10 w-10 mx-auto text-accent mb-3" />
                   <h3 className="font-semibold text-white mb-2">Connect with {profile.displayName?.split(" ")[0] || "this member"}</h3>
-                  <p className="text-sm text-slate-400 mb-4">
+                  <p className="text-sm text-[var(--text-muted)] mb-4">
                     Build your professional network in the Indigenous community
                   </p>
                   <ConnectionButton targetUserId={profile.userId} className="w-full" />
@@ -393,7 +393,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
               <Card className="bg-amber-500/10 border-amber-500/20">
                 <CardContent className="p-6">
                   <h3 className="font-semibold text-amber-400 mb-2">Complete Your Profile</h3>
-                  <p className="text-sm text-slate-400 mb-4">
+                  <p className="text-sm text-[var(--text-muted)] mb-4">
                     A complete profile helps you stand out to employers and connect with the community.
                   </p>
                   <Link href="/member/dashboard?tab=profile">

@@ -117,7 +117,7 @@ export default function MapFiltersComponent({
         {/* Expand/Collapse button */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="px-2 py-1.5 rounded-full text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all"
+          className="px-2 py-1.5 rounded-full text-sm text-foreground0 hover:text-slate-900 hover:bg-slate-100 transition-all"
         >
           <ChevronDownIcon
             className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
@@ -128,7 +128,7 @@ export default function MapFiltersComponent({
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="px-2 py-1.5 rounded-full text-sm text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all flex items-center gap-1"
+            className="px-2 py-1.5 rounded-full text-sm text-foreground0 hover:text-red-500 hover:bg-red-50 transition-all flex items-center gap-1"
           >
             <XMarkIcon className="w-4 h-4" />
             Clear
@@ -141,7 +141,7 @@ export default function MapFiltersComponent({
         <div className="pt-2 border-t border-slate-200 space-y-3">
           {/* Type toggles - only show types with content */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-slate-500 uppercase tracking-wider py-1.5">
+            <span className="text-xs text-foreground0 uppercase tracking-wider py-1.5">
               Filter by type:
             </span>
             {(Object.keys(contentTypeLabels) as MapContentType[])
@@ -166,7 +166,7 @@ export default function MapFiltersComponent({
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-50 ${
                       isActive
                         ? "text-white"
-                        : "bg-slate-100 text-slate-500 hover:bg-slate-100"
+                        : "bg-slate-100 text-foreground0 hover:bg-slate-100"
                     }`}
                     style={isActive ? { backgroundColor: color } : undefined}
                   >
@@ -187,7 +187,7 @@ export default function MapFiltersComponent({
                 }
                 className="w-4 h-4 rounded border-slate-300 bg-white text-amber-500 focus:ring-amber-500 focus:ring-offset-white"
               />
-              <span className="text-sm text-slate-500">Featured only</span>
+              <span className="text-sm text-foreground0">Featured only</span>
             </label>
           </div>
         </div>

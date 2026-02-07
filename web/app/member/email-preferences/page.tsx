@@ -139,9 +139,9 @@ function EmailPreferencesContent() {
   // Show loading while fetching preferences (auth handled by ProtectedRoute)
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl">
-          <p className="text-slate-400">Loading email preferences...</p>
+          <p className="text-[var(--text-muted)]">Loading email preferences...</p>
         </div>
       </div>
     );
@@ -152,14 +152,14 @@ function EmailPreferencesContent() {
 
   if (error && !preferences) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl">
           <div className="rounded-lg border border-red-800 bg-red-950/30 p-4 text-red-400">
             {error}
           </div>
           <button
             onClick={loadPreferences}
-            className="mt-4 rounded-lg bg-[#14B8A6] px-4 py-2 font-medium text-slate-900"
+            className="mt-4 rounded-lg bg-accent px-4 py-2 font-medium text-slate-900"
           >
             Try Again
           </button>
@@ -173,22 +173,22 @@ function EmailPreferencesContent() {
   const isUnsubscribed = preferences.unsubscribedAll;
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-3xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/member/dashboard"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Back to Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Email Preferences
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Control what emails you receive from IOPPS
               </p>
             </div>
@@ -211,7 +211,7 @@ function EmailPreferencesContent() {
         )}
 
         {/* Global Unsubscribe */}
-        <div className={`mb-8 rounded-xl border p-6 ${isUnsubscribed ? "border-red-800/50 bg-red-950/20" : "border-slate-800 bg-[#08090C]"}`}>
+        <div className={`mb-8 rounded-xl border p-6 ${isUnsubscribed ? "border-red-800/50 bg-red-950/20" : "border-[var(--card-border)] bg-surface"}`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               {isUnsubscribed ? (
@@ -220,10 +220,10 @@ function EmailPreferencesContent() {
                 <BellIcon className="h-8 w-8 text-[#14B8A6]" />
               )}
               <div>
-                <h2 className="text-lg font-semibold text-slate-100">
+                <h2 className="text-lg font-semibold text-foreground">
                   {isUnsubscribed ? "You've unsubscribed from all marketing emails" : "Email Notifications Active"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                   {isUnsubscribed
                     ? "You will only receive essential account notifications. Click to resubscribe."
                     : "You're receiving personalized updates based on your preferences below."
@@ -236,7 +236,7 @@ function EmailPreferencesContent() {
               disabled={saving}
               className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
                 isUnsubscribed
-                  ? "bg-[#14B8A6] text-slate-900 hover:bg-[#0D9488]"
+                  ? "bg-accent text-slate-900 hover:bg-[#0D9488]"
                   : "border border-red-800 text-red-400 hover:bg-red-950/50"
               }`}
             >
@@ -257,7 +257,7 @@ function EmailPreferencesContent() {
             onToggle={() => handleToggle("jobAlertsEnabled")}
             saving={saving}
           >
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-foreground0">
               Manage your job alerts on the{" "}
               <Link href="/member/alerts" className="text-[#14B8A6] hover:underline">
                 Job Alerts page
@@ -348,8 +348,8 @@ function EmailPreferencesContent() {
           />
 
           {/* Divider */}
-          <div className="border-t border-slate-800 pt-6">
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
+          <div className="border-t border-[var(--card-border)] pt-6">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground0">
               Account Notifications
             </h3>
           </div>
@@ -376,8 +376,8 @@ function EmailPreferencesContent() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 rounded-lg border border-slate-800 bg-[#08090C] p-6 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="mt-12 rounded-lg border border-[var(--card-border)] bg-surface p-6 text-center">
+          <p className="text-sm text-[var(--text-muted)]">
             Need help? Contact us at{" "}
             <a href="mailto:support@iopps.ca" className="text-[#14B8A6] hover:underline">
               support@iopps.ca
@@ -408,15 +408,15 @@ function PreferenceSection({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#08090C] p-5">
+    <div className="rounded-xl border border-[var(--card-border)] bg-surface p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className={`${enabled ? "text-[#14B8A6]" : "text-slate-600"}`}>
             {icon}
           </div>
           <div>
-            <h3 className="font-semibold text-slate-100">{title}</h3>
-            <p className="mt-1 text-sm text-slate-400">{description}</p>
+            <h3 className="font-semibold text-foreground">{title}</h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{description}</p>
             {children && <div className="mt-3">{children}</div>}
           </div>
         </div>
@@ -424,7 +424,7 @@ function PreferenceSection({
           onClick={onToggle}
           disabled={saving}
           className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
-            enabled ? "bg-[#14B8A6]" : "bg-slate-700"
+            enabled ? "bg-accent" : "bg-slate-700"
           }`}
         >
           <div
@@ -457,8 +457,8 @@ function FrequencySelect({
           disabled={disabled}
           className={`rounded-full px-3 py-1 text-xs font-medium transition disabled:opacity-50 ${
             value === option.value
-              ? "bg-[#14B8A6] text-slate-900"
-              : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+              ? "bg-accent text-slate-900"
+              : "bg-surface text-[var(--text-muted)] hover:bg-slate-700"
           }`}
         >
           {option.label}

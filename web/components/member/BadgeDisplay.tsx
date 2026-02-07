@@ -130,7 +130,7 @@ export default function BadgeDisplay({
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-10 w-10 rounded-full bg-slate-800 animate-pulse"
+            className="h-10 w-10 rounded-full bg-surface animate-pulse"
           />
         ))}
       </div>
@@ -157,12 +157,12 @@ export default function BadgeDisplay({
           );
         })}
         {badges.length > maxDisplay && (
-          <span className="text-xs text-slate-500 ml-1">+{badges.length - maxDisplay}</span>
+          <span className="text-xs text-foreground0 ml-1">+{badges.length - maxDisplay}</span>
         )}
 
         {/* Badge Detail Dialog */}
         <Dialog open={!!selectedBadge} onOpenChange={() => setSelectedBadge(null)}>
-          <DialogContent className="bg-slate-900 border-slate-800">
+          <DialogContent className="bg-surface border-[var(--card-border)]">
             <DialogHeader>
               <DialogTitle className="text-white">Badge Details</DialogTitle>
             </DialogHeader>
@@ -177,12 +177,12 @@ export default function BadgeDisplay({
                   })()}
                 </div>
                 <h3 className="text-xl font-bold text-white">{selectedBadge.name}</h3>
-                <p className="text-slate-400 mt-2">{selectedBadge.description}</p>
+                <p className="text-[var(--text-muted)] mt-2">{selectedBadge.description}</p>
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize bg-gradient-to-r ${getTierColor(selectedBadge.tier)} text-white`}>
                     {selectedBadge.tier}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent">
                     +{selectedBadge.points} pts
                   </span>
                 </div>
@@ -218,7 +218,7 @@ export default function BadgeDisplay({
                   >
                     <Icon className="h-7 w-7 text-white" />
                   </div>
-                  <span className="text-xs text-slate-400 mt-2 text-center truncate w-full">
+                  <span className="text-xs text-[var(--text-muted)] mt-2 text-center truncate w-full">
                     {userBadge.badge.name}
                   </span>
                 </button>
@@ -245,17 +245,17 @@ export default function BadgeDisplay({
                 return (
                   <div
                     key={item.badge.id}
-                    className="flex items-center gap-4 p-3 rounded-xl bg-slate-800/50 border border-slate-700"
+                    className="flex items-center gap-4 p-3 rounded-xl bg-surface border border-[var(--card-border)]"
                   >
                     <div className="p-2 rounded-full bg-slate-700">
-                      <Icon className="h-5 w-5 text-slate-400" />
+                      <Icon className="h-5 w-5 text-[var(--text-muted)]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-white truncate">
                           {item.badge.name}
                         </span>
-                        <span className="text-xs text-slate-500">{item.progress}%</span>
+                        <span className="text-xs text-foreground0">{item.progress}%</span>
                       </div>
                       <div className="h-1.5 w-full rounded-full bg-slate-700 overflow-hidden">
                         <div
@@ -275,8 +275,8 @@ export default function BadgeDisplay({
       {showProgress && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Lock className="h-5 w-5 text-slate-500" />
-            <h3 className="font-semibold text-slate-400">Locked Badges</h3>
+            <Lock className="h-5 w-5 text-foreground0" />
+            <h3 className="font-semibold text-[var(--text-muted)]">Locked Badges</h3>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
             {progress
@@ -290,10 +290,10 @@ export default function BadgeDisplay({
                     onClick={() => setSelectedBadge(item.badge)}
                     className="group flex flex-col items-center opacity-50 hover:opacity-75 transition-opacity"
                   >
-                    <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center border-2 border-slate-700">
+                    <div className="w-14 h-14 rounded-full bg-surface flex items-center justify-center border-2 border-[var(--card-border)]">
                       <Icon className="h-7 w-7 text-slate-600" />
                     </div>
-                    <span className="text-xs text-slate-500 mt-2 text-center truncate w-full">
+                    <span className="text-xs text-foreground0 mt-2 text-center truncate w-full">
                       {item.badge.name}
                     </span>
                   </button>
@@ -307,8 +307,8 @@ export default function BadgeDisplay({
       {badges.length === 0 && !showProgress && (
         <div className="text-center py-8">
           <Award className="h-12 w-12 mx-auto text-slate-600 mb-3" />
-          <p className="text-slate-400">No badges earned yet</p>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-[var(--text-muted)]">No badges earned yet</p>
+          <p className="text-sm text-foreground0 mt-1">
             Complete your profile and engage with the community to earn badges!
           </p>
         </div>
@@ -316,7 +316,7 @@ export default function BadgeDisplay({
 
       {/* Badge Detail Dialog */}
       <Dialog open={!!selectedBadge} onOpenChange={() => setSelectedBadge(null)}>
-        <DialogContent className="bg-slate-900 border-slate-800">
+        <DialogContent className="bg-surface border-[var(--card-border)]">
           <DialogHeader>
             <DialogTitle className="text-white">Badge Details</DialogTitle>
           </DialogHeader>
@@ -331,16 +331,16 @@ export default function BadgeDisplay({
                 })()}
               </div>
               <h3 className="text-xl font-bold text-white">{selectedBadge.name}</h3>
-              <p className="text-slate-400 mt-2">{selectedBadge.description}</p>
+              <p className="text-[var(--text-muted)] mt-2">{selectedBadge.description}</p>
               <div className="flex items-center justify-center gap-3 mt-4">
                 <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize bg-gradient-to-r ${getTierColor(selectedBadge.tier)} text-white`}>
                   {selectedBadge.tier}
                 </span>
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent border border-accent/20">
                   +{selectedBadge.points} points
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-4">
+              <p className="text-xs text-foreground0 mt-4">
                 Requirement: {selectedBadge.requirement.threshold}{" "}
                 {selectedBadge.requirement.type.replace("_", " ")}
               </p>

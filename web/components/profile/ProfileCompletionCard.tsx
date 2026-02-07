@@ -38,8 +38,8 @@ const STRENGTH_CONFIG: Record<StrengthLevel, { label: string; color: string; bgC
   },
   strong: {
     label: "Strong",
-    color: "text-emerald-400",
-    bgColor: "bg-emerald-500",
+    color: "text-accent",
+    bgColor: "bg-accent",
     minPercent: 70,
   },
   "all-star": {
@@ -175,16 +175,16 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
 
   if (compact) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-300">Profile Strength</span>
+            <span className="text-sm font-medium text-[var(--text-secondary)]">Profile Strength</span>
             <span className={`text-xs font-bold ${strengthConfig.color}`}>{strengthConfig.label}</span>
           </div>
           <span className="text-sm font-bold text-white">{completionPercent}%</span>
         </div>
 
-        <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-2 w-full rounded-full bg-surface overflow-hidden">
           <div
             className={`h-full transition-all duration-500 ${strengthConfig.bgColor}`}
             style={{ width: `${completionPercent}%` }}
@@ -194,7 +194,7 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
         {nextRecommendation && (
           <button
             onClick={onNavigateToProfile}
-            className="mt-3 flex items-center gap-2 text-xs text-slate-400 hover:text-emerald-400 transition-colors"
+            className="mt-3 flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-accent transition-colors"
           >
             <AlertCircle className="h-3 w-3" />
             <span>Next: Add {nextRecommendation.label.toLowerCase()}</span>
@@ -205,18 +205,18 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
   }
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur">
+    <div className="rounded-3xl border border-[var(--card-border)] bg-surface p-6 backdrop-blur">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="text-lg font-bold text-white">Profile Strength</h3>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             {completionPercent === 100
               ? "Your profile is complete!"
               : `Complete your profile to stand out to employers`}
           </p>
         </div>
-        <div className={`px-3 py-1 rounded-full text-sm font-bold ${strengthConfig.color} bg-slate-800`}>
+        <div className={`px-3 py-1 rounded-full text-sm font-bold ${strengthConfig.color} bg-surface`}>
           {strengthConfig.label}
         </div>
       </div>
@@ -262,16 +262,16 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
         {/* Stats */}
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Completed</span>
-            <span className="text-emerald-400 font-medium">{completedSections.length} of {sections.length} sections</span>
+            <span className="text-[var(--text-muted)]">Completed</span>
+            <span className="text-accent font-medium">{completedSections.length} of {sections.length} sections</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Weight</span>
-            <span className="text-slate-300 font-medium">{completedWeight} / {totalWeight} points</span>
+            <span className="text-[var(--text-muted)]">Weight</span>
+            <span className="text-[var(--text-secondary)] font-medium">{completedWeight} / {totalWeight} points</span>
           </div>
           {completionPercent < 100 && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">To {STRENGTH_CONFIG[completionPercent < 40 ? "medium" : completionPercent < 70 ? "strong" : "all-star"].label}</span>
+              <span className="text-[var(--text-muted)]">To {STRENGTH_CONFIG[completionPercent < 40 ? "medium" : completionPercent < 70 ? "strong" : "all-star"].label}</span>
               <span className="text-amber-400 font-medium">
                 {completionPercent < 40 ? 40 - completionPercent : completionPercent < 70 ? 70 - completionPercent : 100 - completionPercent}% more
               </span>
@@ -283,7 +283,7 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
       {/* Expandable Section List */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between py-3 border-t border-slate-800 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+        className="w-full flex items-center justify-between py-3 border-t border-[var(--card-border)] text-sm font-medium text-[var(--text-secondary)] hover:text-white transition-colors"
       >
         <span>{expanded ? "Hide" : "Show"} Details</span>
         {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -304,11 +304,11 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-slate-200">{section.label}</p>
+                    <p className="font-medium text-foreground">{section.label}</p>
                     <span className="text-xs text-amber-400">+{section.weight}%</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">{section.tip}</p>
-                  <p className="text-xs text-emerald-400 mt-1">{section.benefit}</p>
+                  <p className="text-xs text-foreground0 mt-0.5">{section.tip}</p>
+                  <p className="text-xs text-accent mt-1">{section.benefit}</p>
                 </div>
               </div>
             );
@@ -320,15 +320,15 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
             return (
               <div
                 key={section.id}
-                className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3"
+                className="flex items-center gap-3 rounded-xl border border-accent/20 bg-accent/5 p-3"
               >
-                <div className="rounded-lg bg-emerald-500/20 p-2 flex-shrink-0">
-                  <Check className="h-4 w-4 text-emerald-400" />
+                <div className="rounded-lg bg-accent/20 p-2 flex-shrink-0">
+                  <Check className="h-4 w-4 text-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-300">{section.label}</p>
+                  <p className="font-medium text-[var(--text-secondary)]">{section.label}</p>
                 </div>
-                <span className="text-xs text-emerald-400 flex-shrink-0">Complete</span>
+                <span className="text-xs text-accent flex-shrink-0">Complete</span>
               </div>
             );
           })}
@@ -348,7 +348,7 @@ export function ProfileCompletionCard({ profile, onNavigateToProfile, compact = 
       {completionPercent === 100 && (
         <div className="mt-4 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 p-4 text-center">
           <p className="text-purple-400 font-medium">Your profile is complete!</p>
-          <p className="text-xs text-slate-400 mt-1">You're more likely to be discovered by employers</p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">You're more likely to be discovered by employers</p>
         </div>
       )}
     </div>

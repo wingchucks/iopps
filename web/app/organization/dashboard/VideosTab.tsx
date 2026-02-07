@@ -305,7 +305,7 @@ export default function VideosTab() {
 
   if (loading) {
     return (
-      <div className="text-center text-slate-400">Loading videos...</div>
+      <div className="text-center text-[var(--text-muted)]">Loading videos...</div>
     );
   }
 
@@ -318,22 +318,22 @@ export default function VideosTab() {
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-red-500/10 p-8 shadow-xl shadow-purple-900/20">
         <h2 className="text-2xl font-bold text-white">Video Management</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Manage your company intro video, IOPPS interviews, and promotional videos
         </p>
 
         {/* Video Types Explanation */}
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl bg-slate-900/30 p-4 border border-emerald-500/20">
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-accent/20">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
-                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20">
+                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                 </svg>
               </div>
               <h4 className="font-semibold text-emerald-300 text-sm">Company Intro</h4>
             </div>
-            <p className="text-xs text-slate-400">Your featured video that appears prominently on your profile. First impression for candidates.</p>
+            <p className="text-xs text-[var(--text-muted)]">Your featured video that appears prominently on your profile. First impression for candidates.</p>
           </div>
 
           <div className="rounded-xl bg-slate-900/30 p-4 border border-purple-500/20">
@@ -345,19 +345,19 @@ export default function VideosTab() {
               </div>
               <h4 className="font-semibold text-purple-300 text-sm">Promotional Videos</h4>
             </div>
-            <p className="text-xs text-slate-400">Additional videos showcasing team culture, office tours, employee testimonials, and more.</p>
+            <p className="text-xs text-[var(--text-muted)]">Additional videos showcasing team culture, office tours, employee testimonials, and more.</p>
           </div>
 
-          <div className="rounded-xl bg-slate-900/30 p-4 border border-teal-500/20">
+          <div className="rounded-xl bg-slate-900/30 p-4 border border-accent/20">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/20">
-                <svg className="h-4 w-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20">
+                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
               <h4 className="font-semibold text-teal-300 text-sm">IOPPS Interviews</h4>
             </div>
-            <p className="text-xs text-slate-400">Professional interviews conducted by IOPPS. Contact us to schedule yours!</p>
+            <p className="text-xs text-[var(--text-muted)]">Professional interviews conducted by IOPPS. Contact us to schedule yours!</p>
           </div>
         </div>
       </div>
@@ -366,17 +366,17 @@ export default function VideosTab() {
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <div className="mb-6">
           <h3 className="text-xl font-semibold text-white">Company Intro Video</h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             A video introducing your organization to potential candidates
           </p>
         </div>
 
         {profile?.companyIntroVideo ? (
-          <div className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6">
+          <div className="rounded-xl border border-accent/20 bg-surface p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
-                  <svg className="h-7 w-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-accent/20">
+                  <svg className="h-7 w-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -385,11 +385,11 @@ export default function VideosTab() {
                   <h4 className="font-semibold text-white">
                     {profile.companyIntroVideo.title || "Company Introduction"}
                   </h4>
-                  <span className="mt-1 inline-block rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-400">
+                  <span className="mt-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
                     {profile.companyIntroVideo.videoProvider || "video"}
                   </span>
                   {profile.companyIntroVideo.description && (
-                    <p className="mt-2 text-sm text-slate-300 line-clamp-2">
+                    <p className="mt-2 text-sm text-[var(--text-secondary)] line-clamp-2">
                       {profile.companyIntroVideo.description}
                     </p>
                   )}
@@ -397,7 +397,7 @@ export default function VideosTab() {
                     href={profile.companyIntroVideo.videoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex text-sm text-emerald-400 hover:text-emerald-300"
+                    className="mt-2 inline-flex text-sm text-accent hover:text-emerald-300"
                   >
                     Watch video
                   </a>
@@ -406,7 +406,7 @@ export default function VideosTab() {
               <div className="flex gap-2">
                 <button
                   onClick={openIntroModal}
-                  className="rounded-lg bg-emerald-500/20 px-3 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30"
+                  className="rounded-lg bg-accent/20 px-3 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-accent/30"
                 >
                   Edit
                 </button>
@@ -420,18 +420,18 @@ export default function VideosTab() {
             </div>
           </div>
         ) : (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-800">
-              <svg className="h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="rounded-xl bg-surface p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface">
+              <svg className="h-8 w-8 text-foreground0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-[var(--text-muted)]">
               Add a video to introduce your organization to potential candidates
             </p>
             <button
               onClick={openIntroModal}
-              className="mt-4 rounded-xl bg-emerald-500/20 px-6 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30"
+              className="mt-4 rounded-xl bg-accent/20 px-6 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-accent/30"
             >
               Add Intro Video
             </button>
@@ -444,7 +444,7 @@ export default function VideosTab() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-white">Promotional Videos</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Your own videos showcasing your organization, culture, and team
             </p>
           </div>
@@ -457,16 +457,16 @@ export default function VideosTab() {
         </div>
 
         {promoVideos.length === 0 ? (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+          <div className="rounded-xl bg-surface p-8 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10">
               <svg className="h-8 w-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-[var(--text-muted)]">
               Add videos to showcase your organization culture and team
             </p>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-foreground0">
               Use the &quot;+ Add Video&quot; button above to get started
             </p>
           </div>
@@ -475,7 +475,7 @@ export default function VideosTab() {
             {promoVideos.map((video) => (
               <div
                 key={video.id}
-                className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
+                className="rounded-xl border border-purple-500/20 bg-surface p-6"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
@@ -489,11 +489,11 @@ export default function VideosTab() {
                       <h4 className="font-semibold text-white">
                         {video.title || "Untitled Video"}
                       </h4>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">
                         {video.videoProvider} {video.viewsCount ? `| ${video.viewsCount} views` : ""}
                       </p>
                       {video.description && (
-                        <p className="mt-2 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-2 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {video.description}
                         </p>
                       )}
@@ -532,19 +532,19 @@ export default function VideosTab() {
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         <div className="mb-6">
           <h3 className="text-xl font-semibold text-white">IOPPS Interviews</h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Videos from interviews conducted by IOPPS (added by IOPPS admin)
           </p>
         </div>
 
         {ioppsInterviews.length === 0 ? (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal-500/10">
-              <svg className="h-8 w-8 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="rounded-xl bg-surface p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
+              <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <p className="mt-4 text-slate-400">
+            <p className="mt-4 text-[var(--text-muted)]">
               No IOPPS interviews yet. Contact IOPPS to schedule an interview!
             </p>
           </div>
@@ -553,12 +553,12 @@ export default function VideosTab() {
             {ioppsInterviews.map((interview) => (
               <div
                 key={interview.id}
-                className="rounded-xl border border-teal-500/20 bg-slate-900/50 p-6"
+                className="rounded-xl border border-accent/20 bg-surface p-6"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-teal-500/20">
-                      <svg className="h-6 w-6 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent/20">
+                      <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -568,15 +568,15 @@ export default function VideosTab() {
                         <h4 className="font-semibold text-white">
                           {interview.title || "IOPPS Interview"}
                         </h4>
-                        <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-xs text-teal-400">
+                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
                           IOPPS
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">
                         {interview.videoProvider} {interview.viewsCount ? `| ${interview.viewsCount} views` : ""}
                       </p>
                       {interview.description && (
-                        <p className="mt-2 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-2 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {interview.description}
                         </p>
                       )}
@@ -584,7 +584,7 @@ export default function VideosTab() {
                         href={interview.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-2 inline-flex text-sm text-teal-400 hover:text-teal-300"
+                        className="mt-2 inline-flex text-sm text-accent hover:text-teal-300"
                       >
                         Watch video
                       </a>
@@ -607,13 +607,13 @@ export default function VideosTab() {
 
             <div className="space-y-6">
               {/* Input Mode Tabs */}
-              <div className="flex rounded-xl bg-slate-900/50 p-1">
+              <div className="flex rounded-xl bg-surface p-1">
                 <button
                   onClick={() => setIntroInputMode("upload")}
                   className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
                     introInputMode === "upload"
-                      ? "bg-emerald-500/20 text-emerald-300"
-                      : "text-slate-400 hover:text-slate-300"
+                      ? "bg-accent/20 text-emerald-300"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                   }`}
                 >
                   <svg className="inline-block h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -625,8 +625,8 @@ export default function VideosTab() {
                   onClick={() => setIntroInputMode("url")}
                   className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
                     introInputMode === "url"
-                      ? "bg-emerald-500/20 text-emerald-300"
-                      : "text-slate-400 hover:text-slate-300"
+                      ? "bg-accent/20 text-emerald-300"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                   }`}
                 >
                   <svg className="inline-block h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -656,30 +656,30 @@ export default function VideosTab() {
                       onClick={() => fileInputRef.current?.click()}
                       className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all ${
                         isDragging
-                          ? "border-emerald-500 bg-emerald-500/10"
-                          : "border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800/50"
+                          ? "border-accent bg-accent/10"
+                          : "border-[var(--card-border)] hover:border-accent/50 hover:bg-surface"
                       }`}
                     >
-                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 mb-4">
-                        <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent/10 mb-4">
+                        <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <p className="text-slate-300 font-medium mb-1">
+                      <p className="text-[var(--text-secondary)] font-medium mb-1">
                         {isDragging ? "Drop your video here" : "Drag & drop your video here"}
                       </p>
-                      <p className="text-slate-500 text-sm mb-4">or click to browse files</p>
+                      <p className="text-foreground0 text-sm mb-4">or click to browse files</p>
                       <p className="text-xs text-slate-600">
                         MP4, WebM, MOV, AVI, MPEG • Max 100MB
                       </p>
                     </div>
                   ) : (
                     /* Selected File Preview */
-                    <div className="rounded-xl border border-emerald-500/30 bg-slate-900/50 p-4">
+                    <div className="rounded-xl border border-accent/30 bg-surface p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500/20">
-                            <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent/20">
+                            <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </div>
@@ -687,7 +687,7 @@ export default function VideosTab() {
                             <p className="text-sm font-medium text-white truncate max-w-[300px]">
                               {introVideoFile.name}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-foreground0">
                               {formatFileSize(introVideoFile.size)}
                             </p>
                           </div>
@@ -697,7 +697,7 @@ export default function VideosTab() {
                             setIntroVideoFile(null);
                             setUploadProgress(0);
                           }}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                          className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white transition-colors"
                         >
                           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -708,11 +708,11 @@ export default function VideosTab() {
                       {/* Upload Progress */}
                       {isUploading && (
                         <div className="mt-4">
-                          <div className="flex justify-between text-xs text-slate-400 mb-1">
+                          <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1">
                             <span>Uploading...</span>
                             <span>{Math.round(uploadProgress)}%</span>
                           </div>
-                          <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                          <div className="h-2 w-full rounded-full bg-surface overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
                               style={{ width: `${uploadProgress}%` }}
@@ -728,7 +728,7 @@ export default function VideosTab() {
               {/* URL Mode */}
               {introInputMode === "url" && (
                 <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                     Video URL *
                   </label>
                   <input
@@ -736,9 +736,9 @@ export default function VideosTab() {
                     value={introVideoUrl}
                     onChange={(e) => setIntroVideoUrl(e.target.value)}
                     placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                    className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+                  <p className="mt-1 text-xs text-foreground0">Supports YouTube, Vimeo, or custom video URLs</p>
                 </div>
               )}
 
@@ -750,7 +750,7 @@ export default function VideosTab() {
               )}
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Title
                 </label>
                 <input
@@ -758,12 +758,12 @@ export default function VideosTab() {
                   value={introTitle}
                   onChange={(e) => setIntroTitle(e.target.value)}
                   placeholder="e.g., Welcome to Our Company"
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Description
                 </label>
                 <textarea
@@ -771,7 +771,7 @@ export default function VideosTab() {
                   onChange={(e) => setIntroDescription(e.target.value)}
                   placeholder="Brief description of the video..."
                   rows={3}
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
               </div>
 
@@ -786,7 +786,7 @@ export default function VideosTab() {
                 <button
                   onClick={closeIntroModal}
                   disabled={isUploading}
-                  className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:border-slate-600 hover:text-white disabled:opacity-50"
+                  className="rounded-xl border border-[var(--card-border)] px-6 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-all hover:border-[var(--card-border)] hover:text-white disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -806,7 +806,7 @@ export default function VideosTab() {
 
             <div className="space-y-6">
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Video URL *
                 </label>
                 <input
@@ -814,13 +814,13 @@ export default function VideosTab() {
                   value={interviewVideoUrl}
                   onChange={(e) => setInterviewVideoUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className="w-full rounded-xl border border-purple-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full rounded-xl border border-purple-500/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
-                <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+                <p className="mt-1 text-xs text-foreground0">Supports YouTube, Vimeo, or custom video URLs</p>
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Title *
                 </label>
                 <input
@@ -828,12 +828,12 @@ export default function VideosTab() {
                   value={interviewTitle}
                   onChange={(e) => setInterviewTitle(e.target.value)}
                   placeholder="e.g., Day in the Life at Our Company"
-                  className="w-full rounded-xl border border-purple-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full rounded-xl border border-purple-500/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Description
                 </label>
                 <textarea
@@ -841,7 +841,7 @@ export default function VideosTab() {
                   onChange={(e) => setInterviewDescription(e.target.value)}
                   placeholder="Brief description of the video..."
                   rows={4}
-                  className="w-full rounded-xl border border-purple-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full rounded-xl border border-purple-500/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
@@ -855,7 +855,7 @@ export default function VideosTab() {
                 </button>
                 <button
                   onClick={closeInterviewModal}
-                  className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+                  className="rounded-xl border border-[var(--card-border)] px-6 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-all hover:border-[var(--card-border)] hover:text-white"
                 >
                   Cancel
                 </button>

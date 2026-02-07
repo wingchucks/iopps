@@ -70,7 +70,7 @@ export default function SchoolDetailClient({
   return (
     <FeedLayout activeNav="education" fullWidth>
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-500">
+      <nav className="mb-8 text-sm text-foreground0">
         <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
@@ -103,7 +103,7 @@ export default function SchoolDetailClient({
         <div className="p-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Logo/Icon */}
-          <div className={`flex h-24 w-24 items-center justify-center rounded-2xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 shrink-0 ${school.bannerUrl ? '-mt-16 bg-white shadow-lg' : ''}`}>
+          <div className={`flex h-24 w-24 items-center justify-center rounded-2xl bg-accent/20 border border-[#14B8A6]/40 shrink-0 ${school.bannerUrl ? '-mt-16 bg-white shadow-lg' : ''}`}>
             {school.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={school.logoUrl} alt={school.name} className="h-full w-full object-contain p-2" />
@@ -116,7 +116,7 @@ export default function SchoolDetailClient({
           <div className="flex-1">
             <div className="flex flex-wrap gap-2 mb-3">
               {school.verification?.isVerified && (
-                <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6]">
+                <span className="rounded-md bg-accent/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6]">
                   Verified
                 </span>
               )}
@@ -132,7 +132,7 @@ export default function SchoolDetailClient({
 
             <h1 className="text-3xl font-bold text-slate-900 mb-2">{school.name}</h1>
 
-            <div className="flex flex-wrap gap-4 text-sm text-slate-500 mb-4">
+            <div className="flex flex-wrap gap-4 text-sm text-foreground0 mb-4">
               <span>📍 {school.headOffice?.city}, {school.headOffice?.province}</span>
               {school.stats?.totalPrograms && <span>📚 {school.stats.totalPrograms} programs</span>}
               {school.stats?.indigenousStudentPercentage && (
@@ -145,7 +145,7 @@ export default function SchoolDetailClient({
                 onClick={handleSaveToggle}
                 disabled={!user || savingState === "saving"}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${isSaved
-                  ? "bg-[#14B8A6]/20 border border-[#14B8A6]/40 text-[#14B8A6]"
+                  ? "bg-accent/20 border border-[#14B8A6]/40 text-[#14B8A6]"
                   : "bg-slate-100 border border-slate-200 text-slate-900 hover:border-[#14B8A6]/50"
                   }`}
               >
@@ -156,7 +156,7 @@ export default function SchoolDetailClient({
                   href={school.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
                 >
                   Visit Website →
                 </a>
@@ -174,8 +174,8 @@ export default function SchoolDetailClient({
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`whitespace-nowrap rounded-t-lg px-4 py-3 text-sm font-medium transition-all ${activeTab === tab.id
-              ? "border-b-2 border-[#14B8A6] bg-[#14B8A6]/10 text-[#14B8A6]"
-              : "border-b-2 border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-600"
+              ? "border-b-2 border-[#14B8A6] bg-accent/10 text-[#14B8A6]"
+              : "border-b-2 border-transparent text-foreground0 hover:border-slate-300 hover:text-slate-600"
               }`}
           >
             {tab.label}
@@ -252,7 +252,7 @@ export default function SchoolDetailClient({
             {/* Social Links */}
             {school.social && Object.keys(school.social).length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-500 mb-3">Follow</h3>
+                <h3 className="text-sm font-semibold text-foreground0 mb-3">Follow</h3>
                 <div className="flex flex-wrap gap-3">
                   {school.social.facebook && (
                     <a href={school.social.facebook} target="_blank" rel="noopener noreferrer"
@@ -310,7 +310,7 @@ export default function SchoolDetailClient({
                   <h3 className="font-bold text-slate-900 mb-2 group-hover:text-[#14B8A6] transition-colors line-clamp-2">
                     {program.name}
                   </h3>
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+                  <div className="flex flex-wrap gap-2 text-xs text-foreground0">
                     {program.duration && <span>⏱ {program.duration.value} {program.duration.unit}</span>}
                     <span className="capitalize">📍 {program.deliveryMethod}</span>
                   </div>
@@ -319,7 +319,7 @@ export default function SchoolDetailClient({
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-              <p className="text-slate-500">No programs listed yet.</p>
+              <p className="text-foreground0">No programs listed yet.</p>
             </div>
           )}
         </div>
@@ -339,7 +339,7 @@ export default function SchoolDetailClient({
                     <h3 className="font-bold text-slate-900 mb-1 group-hover:text-[#14B8A6] transition-colors">
                       {scholarship.title}
                     </h3>
-                    <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                    <div className="flex flex-wrap gap-4 text-sm text-foreground0">
                       {scholarship.amount && (
                         <span className="text-[#14B8A6] font-medium">
                           {scholarship.amount}
@@ -363,7 +363,7 @@ export default function SchoolDetailClient({
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-              <p className="text-slate-500">No scholarships listed yet.</p>
+              <p className="text-foreground0">No scholarships listed yet.</p>
             </div>
           )}
         </div>
@@ -380,7 +380,7 @@ export default function SchoolDetailClient({
                   className="group rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50"
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
+                    <span className="rounded-md bg-accent/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
                       {event.type}
                     </span>
                     <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 capitalize">
@@ -390,7 +390,7 @@ export default function SchoolDetailClient({
                   <h3 className="font-bold text-slate-900 mb-2 group-hover:text-[#14B8A6] transition-colors">
                     {event.name}
                   </h3>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     📅 {event.startDatetime && (
                       typeof event.startDatetime === 'string'
                         ? new Date(event.startDatetime).toLocaleDateString()
@@ -405,7 +405,7 @@ export default function SchoolDetailClient({
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
-              <p className="text-slate-500">No upcoming events.</p>
+              <p className="text-foreground0">No upcoming events.</p>
             </div>
           )}
         </div>

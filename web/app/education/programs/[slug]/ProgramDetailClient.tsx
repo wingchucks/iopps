@@ -81,10 +81,10 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
         <div className="text-center py-16">
           <span className="text-5xl mb-4 block">📚</span>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Program Not Found</h1>
-          <p className="text-slate-500 mb-6">The program you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+          <p className="text-foreground0 mb-6">The program you&apos;re looking for doesn&apos;t exist or has been removed.</p>
           <Link
             href="/education/programs"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
           >
             Browse All Programs
           </Link>
@@ -96,7 +96,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
   return (
     <FeedLayout activeNav="education" fullWidth>
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-500">
+      <nav className="mb-8 text-sm text-foreground0">
         <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
@@ -118,7 +118,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
           {/* Program Header */}
           <div className="rounded-2xl border border-slate-200 bg-white p-8">
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-3 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
+              <span className="rounded-md bg-accent/20 border border-[#14B8A6]/40 px-3 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
                 {program.category}
               </span>
               <span className="rounded-md bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 capitalize">
@@ -142,7 +142,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
               </Link>
             )}
 
-            <div className="flex flex-wrap gap-4 text-sm text-slate-500 mt-4">
+            <div className="flex flex-wrap gap-4 text-sm text-foreground0 mt-4">
               {program.duration && <span>⏱ Duration: {program.duration.value} {program.duration.unit}</span>}
               <span className="capitalize">📍 {program.deliveryMethod}</span>
             </div>
@@ -153,7 +153,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
                 disabled={!user || savingState === "saving"}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
                   isSaved
-                    ? "bg-[#14B8A6]/20 border border-[#14B8A6]/40 text-[#14B8A6]"
+                    ? "bg-accent/20 border border-[#14B8A6]/40 text-[#14B8A6]"
                     : "bg-slate-100 border border-slate-200 text-slate-900 hover:border-[#14B8A6]/50"
                 }`}
               >
@@ -164,7 +164,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
                   href={program.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
                 >
                   View Program &rarr;
                 </a>
@@ -187,13 +187,13 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
               <div className="space-y-4 text-slate-600">
                 {program.admissionRequirements.education && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase mb-1">Minimum Education</h3>
+                    <h3 className="text-sm font-semibold text-foreground0 uppercase mb-1">Minimum Education</h3>
                     <p>{program.admissionRequirements.education}</p>
                   </div>
                 )}
                 {program.admissionRequirements.prerequisites && program.admissionRequirements.prerequisites.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase mb-1">Prerequisites</h3>
+                    <h3 className="text-sm font-semibold text-foreground0 uppercase mb-1">Prerequisites</h3>
                     <ul className="list-disc list-inside">
                       {program.admissionRequirements.prerequisites.map((prereq, i) => (
                         <li key={i}>{prereq}</li>
@@ -203,7 +203,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
                 )}
                 {program.admissionRequirements.englishRequirement && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-500 uppercase mb-1">English Requirement</h3>
+                    <h3 className="text-sm font-semibold text-foreground0 uppercase mb-1">English Requirement</h3>
                     <p>{program.admissionRequirements.englishRequirement}</p>
                   </div>
                 )}
@@ -245,7 +245,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
               <div className="space-y-3">
                 {program.tuition.domestic && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase">Domestic (per {program.tuition.per})</p>
+                    <p className="text-xs text-foreground0 uppercase">Domestic (per {program.tuition.per})</p>
                     <p className="text-xl font-bold text-slate-900">
                       ${program.tuition.domestic.toLocaleString()} CAD
                     </p>
@@ -253,7 +253,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
                 )}
                 {program.tuition.international && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase">International (per {program.tuition.per})</p>
+                    <p className="text-xs text-foreground0 uppercase">International (per {program.tuition.per})</p>
                     <p className="text-xl font-bold text-slate-900">
                       ${program.tuition.international.toLocaleString()} CAD
                     </p>
@@ -274,7 +274,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
                 <p className="font-semibold text-slate-900 group-hover:text-[#14B8A6] transition-colors">
                   {school.name}
                 </p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-foreground0 mt-1">
                   📍 {school.headOffice?.city}, {school.headOffice?.province}
                 </p>
               </Link>
@@ -313,7 +313,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
           {/* Contact */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6">
             <h3 className="text-lg font-bold text-slate-900 mb-4">Have Questions?</h3>
-            <p className="text-sm text-slate-500 mb-4">
+            <p className="text-sm text-foreground0 mb-4">
               Contact the school directly to learn more about this program.
             </p>
             {school?.website && (
@@ -321,7 +321,7 @@ export default function ProgramDetailClient({ program: initialProgram, error: in
                 href={school.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+                className="inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
               >
                 Visit School Website
               </a>

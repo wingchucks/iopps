@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
         <div className="container max-w-6xl mx-auto px-4 py-6">
           <Link
             href="/members"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-slate-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Community
@@ -71,7 +71,7 @@ export default function LeaderboardPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Community Leaderboard</h1>
-              <p className="text-slate-500 text-sm">
+              <p className="text-foreground0 text-sm">
                 Recognize and celebrate our most engaged community members
               </p>
             </div>
@@ -133,20 +133,20 @@ export default function LeaderboardPage() {
                           {entry.displayName}
                         </p>
                         {entry.indigenousAffiliation && (
-                          <p className="text-xs text-emerald-400 truncate">
+                          <p className="text-xs text-accent truncate">
                             {entry.indigenousAffiliation}
                           </p>
                         )}
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-slate-900">{entry.score}</p>
-                        <p className="text-xs text-slate-500">pts</p>
+                        <p className="text-xs text-foreground0">pts</p>
                       </div>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 text-center py-4">
+                <p className="text-sm text-foreground0 text-center py-4">
                   No spotlight data yet
                 </p>
               )}
@@ -155,7 +155,7 @@ export default function LeaderboardPage() {
             {/* Rising Stars */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6">
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="h-5 w-5 text-emerald-400" />
+                <TrendingUp className="h-5 w-5 text-accent" />
                 <h2 className="font-semibold text-slate-900">Rising Stars</h2>
               </div>
 
@@ -183,16 +183,16 @@ export default function LeaderboardPage() {
                         <p className="font-medium text-slate-900 truncate text-sm">
                           {entry.displayName}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-foreground0">
                           {Math.round(entry.breakdown.streak / 5)} day streak
                         </p>
                       </div>
-                      <Sparkles className="h-4 w-4 text-emerald-400" />
+                      <Sparkles className="h-4 w-4 text-accent" />
                     </Link>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 text-center py-4">
+                <p className="text-sm text-foreground0 text-center py-4">
                   No rising stars yet
                 </p>
               )}
@@ -205,28 +205,28 @@ export default function LeaderboardPage() {
                 <h2 className="font-semibold text-slate-900">How Points Work</h2>
               </div>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-slate-500">
+                <div className="flex justify-between text-foreground0">
                   <span>Per connection</span>
                   <span className="text-slate-900">+10 pts</span>
                 </div>
-                <div className="flex justify-between text-slate-500">
+                <div className="flex justify-between text-foreground0">
                   <span>Per post</span>
                   <span className="text-slate-900">+15 pts</span>
                 </div>
-                <div className="flex justify-between text-slate-500">
+                <div className="flex justify-between text-foreground0">
                   <span>Per streak day</span>
                   <span className="text-slate-900">+5 pts</span>
                 </div>
-                <div className="flex justify-between text-slate-500">
+                <div className="flex justify-between text-foreground0">
                   <span>Badge points</span>
                   <span className="text-slate-900">Varies</span>
                 </div>
-                <div className="flex justify-between text-slate-500">
+                <div className="flex justify-between text-foreground0">
                   <span>Per profile view</span>
                   <span className="text-slate-900">+0.5 pts</span>
                 </div>
               </div>
-              <p className="mt-4 text-xs text-slate-500">
+              <p className="mt-4 text-xs text-foreground0">
                 Engage with the community to climb the leaderboard!
               </p>
             </div>

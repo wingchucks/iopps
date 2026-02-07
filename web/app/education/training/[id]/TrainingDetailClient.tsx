@@ -97,17 +97,17 @@ export default function TrainingDetailClient({
       <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center mb-4">
-            <AcademicCapIcon className="h-8 w-8 text-slate-400" />
+            <AcademicCapIcon className="h-8 w-8 text-[var(--text-muted)]" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">
             {error || "Training program not found"}
           </h1>
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-foreground0">
             This program may have been removed or is no longer available.
           </p>
           <Link
             href="/education/programs?source=provider"
-            className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+            className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
             Browse Training Programs
           </Link>
@@ -175,7 +175,7 @@ export default function TrainingDetailClient({
     <FeedLayout activeNav="education" fullWidth>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="text-sm text-slate-500 mb-6">
+        <nav className="text-sm text-foreground0 mb-6">
           <Link href="/" className="hover:text-slate-900 transition-colors">
             Home
           </Link>
@@ -353,7 +353,7 @@ export default function TrainingDetailClient({
                     {program.skills.map((skill, i) => (
                       <span
                         key={i}
-                        className="rounded-full bg-[#14B8A6]/20 px-4 py-2 text-sm font-medium text-[#14B8A6]"
+                        className="rounded-full bg-accent/20 px-4 py-2 text-sm font-medium text-[#14B8A6]"
                       >
                         {skill}
                       </span>
@@ -374,7 +374,7 @@ export default function TrainingDetailClient({
                       <p className="font-semibold text-emerald-600">
                         {program.certificationOffered}
                       </p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-foreground0">
                         Earn this certification upon successful completion of
                         the program.
                       </p>
@@ -423,7 +423,7 @@ export default function TrainingDetailClient({
               <div className="space-y-4">
                 {/* Format */}
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Format</span>
+                  <span className="text-foreground0">Format</span>
                   <span className="flex items-center gap-2 font-medium text-slate-800">
                     {getFormatIcon(program.format)}
                     {getFormatLabel(program.format)}
@@ -433,7 +433,7 @@ export default function TrainingDetailClient({
                 {/* Duration */}
                 {program.duration && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Duration</span>
+                    <span className="text-foreground0">Duration</span>
                     <span className="font-medium text-slate-800">
                       {program.duration}
                     </span>
@@ -443,7 +443,7 @@ export default function TrainingDetailClient({
                 {/* Dates */}
                 {(startDate || program.ongoing) && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Start Date</span>
+                    <span className="text-foreground0">Start Date</span>
                     <span className="font-medium text-slate-800">
                       {program.ongoing ? "Ongoing Enrollment" : startDate}
                     </span>
@@ -452,7 +452,7 @@ export default function TrainingDetailClient({
 
                 {endDate && !program.ongoing && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">End Date</span>
+                    <span className="text-foreground0">End Date</span>
                     <span className="font-medium text-slate-800">{endDate}</span>
                   </div>
                 )}
@@ -460,7 +460,7 @@ export default function TrainingDetailClient({
                 {/* Location */}
                 {program.location && program.format !== "online" && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Location</span>
+                    <span className="text-foreground0">Location</span>
                     <span className="font-medium text-slate-800 text-right">
                       {program.location}
                     </span>
@@ -470,7 +470,7 @@ export default function TrainingDetailClient({
                 {/* Cost */}
                 {program.cost && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Cost</span>
+                    <span className="text-foreground0">Cost</span>
                     <div className="text-right">
                       <span className="font-medium text-emerald-600">
                         {program.cost}
@@ -487,7 +487,7 @@ export default function TrainingDetailClient({
                 {/* Category */}
                 {program.category && (
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Category</span>
+                    <span className="text-foreground0">Category</span>
                     <span className="font-medium text-slate-800">
                       {program.category}
                     </span>
@@ -555,7 +555,7 @@ export default function TrainingDetailClient({
                   </p>
                   {program.organizationName &&
                     program.organizationName !== program.providerName && (
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-foreground0">
                         via {program.organizationName}
                       </p>
                     )}
@@ -581,7 +581,7 @@ export default function TrainingDetailClient({
               <h3 className="text-lg font-bold text-slate-800 mb-2">
                 Looking for More?
               </h3>
-              <p className="text-sm text-slate-500 mb-4">
+              <p className="text-sm text-foreground0 mb-4">
                 Browse more programs to find the right fit for your learning goals.
               </p>
               <Link

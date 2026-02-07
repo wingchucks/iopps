@@ -79,7 +79,7 @@ export default function TrainingTab() {
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-red-500/10 p-8 shadow-xl shadow-amber-900/20">
         <h2 className="text-2xl font-bold text-white">Training Programs</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Track your saved training programs and enrollment history.
         </p>
       </div>
@@ -87,37 +87,37 @@ export default function TrainingTab() {
       {/* Stats */}
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-red-500/10 p-8 shadow-xl shadow-amber-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Saved Programs
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {savedTraining.length}
           </h3>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             {activePrograms.length} active programs
           </p>
         </div>
         <div className="rounded-3xl bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-rose-500/10 p-8 shadow-xl shadow-purple-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Enrollment Clicks
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {trainingHistory.length}
           </h3>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             Programs you explored
           </p>
         </div>
       </div>
 
       {/* View Mode Toggle */}
-      <div className="flex gap-2 rounded-xl bg-slate-800/50 p-1">
+      <div className="flex gap-2 rounded-xl bg-surface p-1">
         <button
           onClick={() => setViewMode("saved")}
           className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
             viewMode === "saved"
               ? "bg-amber-500 text-white"
-              : "text-slate-400 hover:text-white"
+              : "text-[var(--text-muted)] hover:text-white"
           }`}
         >
           <BookmarkIcon className="mr-2 inline h-4 w-4" />
@@ -128,7 +128,7 @@ export default function TrainingTab() {
           className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
             viewMode === "history"
               ? "bg-purple-500 text-white"
-              : "text-slate-400 hover:text-white"
+              : "text-[var(--text-muted)] hover:text-white"
           }`}
         >
           <ClockIcon className="mr-2 inline h-4 w-4" />
@@ -146,13 +146,13 @@ export default function TrainingTab() {
       {/* Content */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 shadow-xl">
         {loading ? (
-          <p className="text-center text-slate-400">Loading training data...</p>
+          <p className="text-center text-[var(--text-muted)]">Loading training data...</p>
         ) : viewMode === "saved" ? (
           savedTraining.length === 0 ? (
-            <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+            <div className="rounded-xl bg-surface p-8 text-center">
               <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <p className="mt-4 text-slate-300">No saved training programs yet.</p>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-4 text-[var(--text-secondary)]">No saved training programs yet.</p>
+              <p className="mt-2 text-sm text-foreground0">
                 Browse training programs and save ones you're interested in.
               </p>
               <Link
@@ -167,11 +167,11 @@ export default function TrainingTab() {
               {savedTraining.map((saved) => (
                 <article
                   key={saved.id}
-                  className="rounded-xl border border-amber-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-amber-500/20 bg-surface p-6"
                 >
                   <div className="flex gap-4">
                     {/* Logo */}
-                    <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-slate-800">
+                    <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-surface">
                       {saved.program?.imageUrl ? (
                         <Image
                           src={saved.program.imageUrl}
@@ -204,7 +204,7 @@ export default function TrainingTab() {
                         <button
                           onClick={() => handleRemoveSaved(saved.programId)}
                           disabled={removingId === saved.programId}
-                          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                          className="rounded-lg p-2 text-foreground0 transition-colors hover:bg-red-500/20 hover:text-red-400"
                           title="Remove from saved"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -212,7 +212,7 @@ export default function TrainingTab() {
                       </div>
 
                       {saved.program?.shortDescription && (
-                        <p className="mt-2 text-sm text-slate-400 line-clamp-2">
+                        <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-2">
                           {saved.program.shortDescription}
                         </p>
                       )}
@@ -226,19 +226,19 @@ export default function TrainingTab() {
                           </span>
                         )}
                         {saved.program?.duration && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium text-slate-300">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                             <ClockIcon className="h-3 w-3" />
                             {saved.program.duration}
                           </span>
                         )}
                         {saved.program?.location && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium text-slate-300">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2.5 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                             <MapPinIcon className="h-3 w-3" />
                             {saved.program.location}
                           </span>
                         )}
                         {!saved.program?.active && (
-                          <span className="rounded-full border border-slate-600 bg-slate-700/30 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                          <span className="rounded-full border border-[var(--card-border)] bg-slate-700/30 px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">
                             Closed
                           </span>
                         )}
@@ -257,7 +257,7 @@ export default function TrainingTab() {
                             href={saved.program.enrollmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-accent transition-colors hover:text-emerald-300"
                           >
                             Enroll now
                             <ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -273,10 +273,10 @@ export default function TrainingTab() {
         ) : (
           // History View
           trainingHistory.length === 0 ? (
-            <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+            <div className="rounded-xl bg-surface p-8 text-center">
               <ClockIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <p className="mt-4 text-slate-300">No enrollment history yet.</p>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-4 text-[var(--text-secondary)]">No enrollment history yet.</p>
+              <p className="mt-2 text-sm text-foreground0">
                 When you click through to enroll in programs, they'll appear here.
               </p>
             </div>
@@ -285,7 +285,7 @@ export default function TrainingTab() {
               {trainingHistory.map((entry) => (
                 <article
                   key={entry.id}
-                  className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-purple-500/20 bg-surface p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -298,7 +298,7 @@ export default function TrainingTab() {
                       <p className="mt-1 text-sm text-purple-400">
                         {entry.organizationName}
                       </p>
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs text-foreground0">
                         Clicked on{" "}
                         {entry.clickedAt
                           ? new Date(
@@ -336,7 +336,7 @@ export default function TrainingTab() {
         </Link>
         <Link
           href="/education/scholarships"
-          className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-6 py-4 text-center text-sm font-semibold text-emerald-400 transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
+          className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-6 py-4 text-center text-sm font-semibold text-accent transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
         >
           Find scholarships →
         </Link>

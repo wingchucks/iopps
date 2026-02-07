@@ -202,7 +202,7 @@ export default function OrganizationsPage() {
                   </div>
 
                   {org.description && (
-                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+                    <p className="mt-2 text-sm text-foreground0 line-clamp-2">
                       {org.description}
                     </p>
                   )}
@@ -210,7 +210,7 @@ export default function OrganizationsPage() {
                   {/* Tags */}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {org.industry && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-2.5 py-0.5 text-xs font-medium text-[#14B8A6]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-[#14B8A6]">
                         <BuildingOfficeIcon className="h-3 w-3" />
                         {INDUSTRIES.find((i) => i.value === org.industry)?.label || org.industry}
                       </span>
@@ -224,7 +224,7 @@ export default function OrganizationsPage() {
                   </div>
 
                   {/* Location */}
-                  <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                  <div className="mt-3 flex items-center gap-3 text-xs text-foreground0">
                     {org.location && (
                       <span className="flex items-center gap-1">
                         <MapPinIcon className="h-3.5 w-3.5" />
@@ -243,7 +243,7 @@ export default function OrganizationsPage() {
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Looking for Opportunities?
           </h2>
-          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+          <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
             Browse job openings and training programs from organizations committed to Indigenous employment.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">

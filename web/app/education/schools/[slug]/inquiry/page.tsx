@@ -146,7 +146,7 @@ export default function SchoolInquiryPage({
     return (
       <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-2xl px-4 py-16">
-          <p className="text-slate-500">Loading...</p>
+          <p className="text-foreground0">Loading...</p>
         </div>
       </FeedLayout>
     );
@@ -157,16 +157,16 @@ export default function SchoolInquiryPage({
       <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-2xl px-4 py-16">
           <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
-            <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-400" />
+            <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-muted)]" />
             <h2 className="mt-4 text-xl font-semibold text-slate-900">
               School Not Found
             </h2>
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-foreground0">
               We couldn&apos;t find the school you&apos;re looking for.
             </p>
             <Link
               href="/education/schools"
-              className="mt-4 inline-block rounded-lg bg-[#14B8A6] px-6 py-2 font-semibold text-white hover:bg-[#0D9488]"
+              className="mt-4 inline-block rounded-lg bg-accent px-6 py-2 font-semibold text-white hover:bg-[#0D9488]"
             >
               Browse Schools
             </Link>
@@ -188,14 +188,14 @@ export default function SchoolInquiryPage({
             <h1 className="text-2xl font-bold text-slate-900 mb-2">
               Inquiry Sent!
             </h1>
-            <p className="text-slate-500 mb-6">
+            <p className="text-foreground0 mb-6">
               Your message has been sent to {school.name}. They will respond to
               you at <strong className="text-slate-900">{email}</strong>.
             </p>
             <div className="flex justify-center gap-4">
               <Link
                 href={`/education/schools/${slug}`}
-                className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-white hover:bg-[#0D9488]"
+                className="rounded-lg bg-accent px-6 py-3 font-semibold text-white hover:bg-[#0D9488]"
               >
                 Back to School Profile
               </Link>
@@ -219,7 +219,7 @@ export default function SchoolInquiryPage({
         <div className="mb-8">
           <Link
             href={`/education/schools/${slug}`}
-            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-slate-900 mb-4"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Back to {school.name}
@@ -232,7 +232,7 @@ export default function SchoolInquiryPage({
                 className="h-14 w-14 rounded-xl object-cover border border-slate-200"
               />
             ) : (
-              <div className="h-14 w-14 rounded-xl bg-[#14B8A6]/10 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-xl bg-accent/10 flex items-center justify-center">
                 <AcademicCapIcon className="h-7 w-7 text-[#14B8A6]" />
               </div>
             )}
@@ -240,7 +240,7 @@ export default function SchoolInquiryPage({
               <h1 className="text-2xl font-bold text-slate-900">
                 Contact {school.name}
               </h1>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-foreground0">
                 Send an inquiry about programs and admissions
               </p>
             </div>
@@ -251,7 +251,7 @@ export default function SchoolInquiryPage({
         {!user && (
           <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <div className="flex items-center gap-3">
-              <UserIcon className="h-5 w-5 text-slate-500" />
+              <UserIcon className="h-5 w-5 text-foreground0" />
               <div className="flex-1">
                 <p className="text-sm text-slate-600">
                   <Link
@@ -318,7 +318,7 @@ export default function SchoolInquiryPage({
               <h2 className="text-lg font-semibold text-slate-900 mb-4">
                 Programs of Interest
               </h2>
-              <p className="text-sm text-slate-500 mb-4">
+              <p className="text-sm text-foreground0 mb-4">
                 Select the programs you&apos;re interested in learning more
                 about.
               </p>
@@ -339,7 +339,7 @@ export default function SchoolInquiryPage({
                       <span className="block text-sm font-medium text-slate-900">
                         {program.name}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-foreground0">
                         {program.credential}
                       </span>
                     </div>
@@ -446,7 +446,7 @@ export default function SchoolInquiryPage({
             <button
               type="submit"
               disabled={sending}
-              className="rounded-lg bg-[#14B8A6] px-6 py-2 font-semibold text-white hover:bg-[#0D9488] disabled:opacity-50"
+              className="rounded-lg bg-accent px-6 py-2 font-semibold text-white hover:bg-[#0D9488] disabled:opacity-50"
             >
               {sending ? "Sending..." : "Send Inquiry"}
             </button>

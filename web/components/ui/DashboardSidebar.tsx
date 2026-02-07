@@ -55,7 +55,7 @@ export default function DashboardSidebar({
   if (!mounted) {
     return (
       <aside className="hidden md:block w-[280px] flex-shrink-0">
-        <div className="sticky top-6 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-4" />
+        <div className="sticky top-6 bg-surface backdrop-blur-sm border border-[var(--card-border)] rounded-2xl p-4" />
       </aside>
     );
   }
@@ -69,7 +69,7 @@ export default function DashboardSidebar({
       <nav
         role="navigation"
         aria-label="Dashboard navigation"
-        className="sticky top-6 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-4 space-y-4"
+        className="sticky top-6 bg-surface backdrop-blur-sm border border-[var(--card-border)] rounded-2xl p-4 space-y-4"
       >
         {/* Header with collapse toggle */}
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
@@ -78,7 +78,7 @@ export default function DashboardSidebar({
             onClick={toggleCollapsed}
             aria-expanded={!collapsed}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-foreground hover:bg-surface transition-colors focus:outline-none focus:ring-2 focus:ring-accent/50"
           >
             <svg
               className={`w-5 h-5 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
@@ -100,12 +100,12 @@ export default function DashboardSidebar({
         {sections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="space-y-1">
             {section.title && !collapsed && (
-              <h3 className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <h3 className="px-3 py-2 text-xs font-semibold text-foreground0 uppercase tracking-wider">
                 {section.title}
               </h3>
             )}
             {collapsed && section.title && sectionIndex > 0 && (
-              <div className="border-t border-slate-800 my-2" />
+              <div className="border-t border-[var(--card-border)] my-2" />
             )}
             {section.items.map((item) => (
               <SidebarItem

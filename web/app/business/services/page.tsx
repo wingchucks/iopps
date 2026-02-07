@@ -94,7 +94,7 @@ export default function ServicesPage() {
           {/* Search Bar */}
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground0" />
               <input
                 type="text"
                 placeholder="Search services..."
@@ -127,7 +127,7 @@ export default function ServicesPage() {
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                className="flex items-center gap-1 text-sm text-foreground0 hover:text-slate-900 transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Clear all
@@ -137,7 +137,7 @@ export default function ServicesPage() {
 
           {/* Categories */}
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-slate-500 mb-3">Category</h4>
+            <h4 className="text-sm font-medium text-foreground0 mb-3">Category</h4>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setCategory(null)}
@@ -167,7 +167,7 @@ export default function ServicesPage() {
 
           {/* Remote Services */}
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-slate-500 mb-3">Availability</h4>
+            <h4 className="text-sm font-medium text-foreground0 mb-3">Availability</h4>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setServesRemote(null)}
@@ -194,7 +194,7 @@ export default function ServicesPage() {
 
           {/* Regions */}
           <div>
-            <h4 className="text-sm font-medium text-slate-500 mb-3">Region</h4>
+            <h4 className="text-sm font-medium text-foreground0 mb-3">Region</h4>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
               <button
                 onClick={() => setRegion(null)}
@@ -249,7 +249,7 @@ export default function ServicesPage() {
           <h2 className="text-2xl font-bold text-slate-900">
             {hasFilters ? 'Search Results' : 'All Services'}
           </h2>
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-foreground0">
             {loading ? 'Loading...' : `${services.length} ${services.length === 1 ? 'service' : 'services'}`}
           </span>
         </div>
@@ -263,10 +263,10 @@ export default function ServicesPage() {
         ) : services.length === 0 ? (
           <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center">
             <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <BriefcaseIcon className="h-8 w-8 text-slate-500" />
+              <BriefcaseIcon className="h-8 w-8 text-foreground0" />
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">No services found</h3>
-            <p className="text-slate-500 mb-4">
+            <p className="text-foreground0 mb-4">
               {hasFilters
                 ? "Try adjusting your filters or search terms."
                 : "Be the first to list your professional services!"}
@@ -295,7 +295,7 @@ export default function ServicesPage() {
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Offer Professional Services?
           </h2>
-          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+          <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
             Join our growing network of Indigenous professional service providers. Showcase your expertise and connect with clients across North America.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">

@@ -56,8 +56,8 @@ export default function MapPopup({ opportunity, onClose }: MapPopupProps) {
         <MetaItem type={type} meta={meta} />
 
         {/* Location */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
-          <MapPinIcon className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-1.5 text-xs text-foreground0">
+          <MapPinIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
           <span>{location}</span>
         </div>
 
@@ -112,14 +112,14 @@ function MetaItem({
       return (
         <>
           {meta.employmentType && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <ClockIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.employmentType}</span>
             </div>
           )}
           {meta.salary && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <CurrencyDollarIcon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <CurrencyDollarIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.salary}</span>
             </div>
           )}
@@ -137,20 +137,20 @@ function MetaItem({
       return (
         <>
           {meta.date && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <CalendarIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.date}</span>
             </div>
           )}
           {meta.venue && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <BuildingOffice2Icon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <BuildingOffice2Icon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.venue}</span>
             </div>
           )}
           {meta.region && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <MapPinIcon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <MapPinIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.region} Region</span>
             </div>
           )}
@@ -161,8 +161,8 @@ function MetaItem({
       return (
         <>
           {meta.campusCount && meta.campusCount > 1 && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <BuildingOffice2Icon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <BuildingOffice2Icon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.campusCount} campuses</span>
             </div>
           )}
@@ -173,14 +173,14 @@ function MetaItem({
       return (
         <>
           {meta.format && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <AcademicCapIcon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <AcademicCapIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span className="capitalize">{meta.format}</span>
             </div>
           )}
           {meta.duration && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <ClockIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span>{meta.duration}</span>
             </div>
           )}
@@ -191,8 +191,8 @@ function MetaItem({
       return (
         <>
           {meta.vendorType && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <BuildingOffice2Icon className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 text-xs text-foreground0">
+              <BuildingOffice2Icon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
               <span className="capitalize">{meta.vendorType}</span>
             </div>
           )}

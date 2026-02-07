@@ -43,7 +43,7 @@ interface MetricCardProps {
 
 function MetricCard({ label, value, subValue, icon, trend, trendValue, color = "teal" }: MetricCardProps) {
   const colorClasses = {
-    teal: "from-teal-500/20 to-teal-500/5 border-teal-500/30",
+    teal: "from-teal-500/20 to-teal-500/5 border-accent/30",
     blue: "from-blue-500/20 to-blue-500/5 border-blue-500/30",
     purple: "from-purple-500/20 to-purple-500/5 border-purple-500/30",
     orange: "from-orange-500/20 to-orange-500/5 border-orange-500/30",
@@ -51,7 +51,7 @@ function MetricCard({ label, value, subValue, icon, trend, trendValue, color = "
   };
 
   const iconColorClasses = {
-    teal: "text-teal-400",
+    teal: "text-accent",
     blue: "text-blue-400",
     purple: "text-purple-400",
     orange: "text-orange-400",
@@ -61,12 +61,12 @@ function MetricCard({ label, value, subValue, icon, trend, trendValue, color = "
   return (
     <div className={`rounded-xl border bg-gradient-to-br p-4 ${colorClasses[color]}`}>
       <div className="flex items-start justify-between">
-        <div className={`p-2 rounded-lg bg-slate-900/50 ${iconColorClasses[color]}`}>
+        <div className={`p-2 rounded-lg bg-surface ${iconColorClasses[color]}`}>
           {icon}
         </div>
         {trend && trendValue && (
           <div className={`flex items-center gap-1 text-xs font-medium ${
-            trend === "up" ? "text-green-400" : trend === "down" ? "text-red-400" : "text-slate-400"
+            trend === "up" ? "text-green-400" : trend === "down" ? "text-red-400" : "text-[var(--text-muted)]"
           }`}>
             {trend === "up" ? (
               <ArrowTrendingUpIcon className="w-3 h-3" />
@@ -78,9 +78,9 @@ function MetricCard({ label, value, subValue, icon, trend, trendValue, color = "
         )}
       </div>
       <div className="mt-3">
-        <p className="text-2xl font-bold text-slate-100">{value}</p>
-        <p className="text-sm text-slate-400">{label}</p>
-        {subValue && <p className="text-xs text-slate-500 mt-1">{subValue}</p>}
+        <p className="text-2xl font-bold text-foreground">{value}</p>
+        <p className="text-sm text-[var(--text-muted)]">{label}</p>
+        {subValue && <p className="text-xs text-foreground0 mt-1">{subValue}</p>}
       </div>
     </div>
   );
@@ -122,15 +122,15 @@ export default function ApplicationAnalytics() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-[#08090C] p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 w-48 bg-slate-800 rounded" />
+          <div className="h-6 w-48 bg-surface rounded" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-24 bg-slate-800 rounded-xl" />
+              <div key={i} className="h-24 bg-surface rounded-xl" />
             ))}
           </div>
-          <div className="h-64 bg-slate-800 rounded-xl" />
+          <div className="h-64 bg-surface rounded-xl" />
         </div>
       </div>
     );
@@ -162,10 +162,10 @@ export default function ApplicationAnalytics() {
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-[#08090C] overflow-hidden">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-surface overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center justify-between p-4 border-b border-slate-800 cursor-pointer hover:bg-slate-800/30 transition-colors"
+        className="flex items-center justify-between p-4 border-b border-[var(--card-border)] cursor-pointer hover:bg-slate-800/30 transition-colors"
         onClick={() => setCollapsed(!collapsed)}
       >
         <div className="flex items-center gap-3">
@@ -173,11 +173,11 @@ export default function ApplicationAnalytics() {
             <ChartBarIcon className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h2 className="font-bold text-slate-100">Application Analytics</h2>
-            <p className="text-xs text-slate-500">Track your recruitment performance</p>
+            <h2 className="font-bold text-foreground">Application Analytics</h2>
+            <p className="text-xs text-foreground0">Track your recruitment performance</p>
           </div>
         </div>
-        <button className="text-slate-400 hover:text-slate-200 transition-colors">
+        <button className="text-[var(--text-muted)] hover:text-foreground transition-colors">
           <svg
             className={`w-5 h-5 transition-transform ${collapsed ? "" : "rotate-180"}`}
             fill="none"
@@ -228,26 +228,26 @@ export default function ApplicationAnalytics() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Timeline Chart */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <h3 className="text-sm font-semibold text-slate-300 mb-4">Applications Over Time</h3>
+            <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/30 p-4">
+              <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-4">Applications Over Time</h3>
               {timelineData.length > 0 && timelineData.some(d => d.value > 0) ? (
                 <LineChart data={timelineData} height={200} showGrid showPoints />
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-sm text-slate-500">
+                <div className="h-[200px] flex items-center justify-center text-sm text-foreground0">
                   No application data yet
                 </div>
               )}
             </div>
 
             {/* Status Distribution */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <h3 className="text-sm font-semibold text-slate-300 mb-4">Status Distribution</h3>
+            <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/30 p-4">
+              <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-4">Status Distribution</h3>
               {statusData.length > 0 ? (
                 <div className="flex justify-center">
                   <PieChart data={statusData} size={180} donut donutThickness={35} showLegend />
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-sm text-slate-500">
+                <div className="h-[200px] flex items-center justify-center text-sm text-foreground0">
                   No application data yet
                 </div>
               )}
@@ -256,8 +256,8 @@ export default function ApplicationAnalytics() {
 
           {/* Conversion Funnel */}
           {funnelData[0]?.value > 0 && (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <h3 className="text-sm font-semibold text-slate-300 mb-4">Recruitment Funnel</h3>
+            <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/30 p-4">
+              <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-4">Recruitment Funnel</h3>
               <BarChart data={funnelData} horizontal />
             </div>
           )}

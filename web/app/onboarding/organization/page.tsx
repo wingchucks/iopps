@@ -123,9 +123,9 @@ interface FormData {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 transition-colors";
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-accent transition-colors";
 const selectClass =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 transition-colors";
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-accent transition-colors";
 const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 export default function OrganizationOnboardingPage() {
@@ -342,9 +342,9 @@ export default function OrganizationOnboardingPage() {
                     disabled={s > step}
                     className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                       s < step
-                        ? "bg-teal-600 text-white"
+                        ? "bg-accent text-white"
                         : s === step
-                        ? "bg-teal-600 text-white ring-4 ring-teal-100"
+                        ? "bg-accent text-white ring-4 ring-teal-100"
                         : "bg-gray-200 text-gray-500"
                     }`}
                   >
@@ -357,14 +357,14 @@ export default function OrganizationOnboardingPage() {
                   {s < 4 && (
                     <div
                       className={`mx-2 h-0.5 flex-1 rounded-full ${
-                        s < step ? "bg-teal-600" : "bg-gray-200"
+                        s < step ? "bg-accent" : "bg-gray-200"
                       }`}
                     />
                   )}
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex justify-between text-xs text-slate-500">
+            <div className="mt-2 flex justify-between text-xs text-foreground0">
               {STEP_LABELS.map((label, i) => (
                 <span
                   key={label}
@@ -392,7 +392,7 @@ export default function OrganizationOnboardingPage() {
                   <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
                     Organization Identity
                   </h1>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-foreground0">
                     Tell us about your organization
                   </p>
                 </div>
@@ -414,7 +414,7 @@ export default function OrganizationOnboardingPage() {
 
                 <div>
                   <label className={labelClass}>
-                    Nation <span className="text-slate-400 font-normal">(optional)</span>
+                    Nation <span className="text-[var(--text-muted)] font-normal">(optional)</span>
                   </label>
                   <input
                     type="text"
@@ -427,7 +427,7 @@ export default function OrganizationOnboardingPage() {
 
                 <div>
                   <label className={labelClass}>
-                    Territory <span className="text-slate-400 font-normal">(optional)</span>
+                    Territory <span className="text-[var(--text-muted)] font-normal">(optional)</span>
                   </label>
                   <TerritorySelect
                     value={formData.territory}
@@ -466,7 +466,7 @@ export default function OrganizationOnboardingPage() {
 
                 <div>
                   <label className={labelClass}>
-                    Website <span className="text-slate-400 font-normal">(optional)</span>
+                    Website <span className="text-[var(--text-muted)] font-normal">(optional)</span>
                   </label>
                   <input
                     type="url"
@@ -486,7 +486,7 @@ export default function OrganizationOnboardingPage() {
                   <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
                     About Your Organization
                   </h1>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-foreground0">
                     Help others learn about what you do
                   </p>
                 </div>
@@ -532,7 +532,7 @@ export default function OrganizationOnboardingPage() {
                     rows={5}
                     className={`${inputClass} resize-none`}
                   />
-                  <p className="mt-1 text-right text-xs text-slate-400">
+                  <p className="mt-1 text-right text-xs text-[var(--text-muted)]">
                     {formData.description.length} / 3,000
                   </p>
                 </div>
@@ -562,7 +562,7 @@ export default function OrganizationOnboardingPage() {
                   <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
                     What would you like to do?
                   </h1>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-foreground0">
                     Select the capabilities you want to enable. You can change these anytime.
                   </p>
                 </div>
@@ -580,15 +580,15 @@ export default function OrganizationOnboardingPage() {
                           onClick={() => toggleModule(module)}
                           className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all ${
                             isSelected
-                              ? "border-teal-500 bg-teal-50 ring-1 ring-teal-500/20"
+                              ? "border-accent bg-teal-50 ring-1 ring-teal-500/20"
                               : "border-gray-200 bg-white hover:border-gray-300"
                           }`}
                         >
                           <div
                             className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${
                               isSelected
-                                ? "bg-teal-600 text-white"
-                                : "bg-slate-100 text-slate-500"
+                                ? "bg-accent text-white"
+                                : "bg-slate-100 text-foreground0"
                             }`}
                           >
                             <Icon className="h-5 w-5" />
@@ -614,14 +614,14 @@ export default function OrganizationOnboardingPage() {
                                 {config.pricing}
                               </span>
                             </div>
-                            <p className="mt-0.5 text-sm text-slate-500">
+                            <p className="mt-0.5 text-sm text-foreground0">
                               {config.description}
                             </p>
                           </div>
                           <div
                             className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                               isSelected
-                                ? "border-teal-600 bg-teal-600"
+                                ? "border-teal-600 bg-accent"
                                 : "border-gray-300 bg-white"
                             }`}
                           >
@@ -644,7 +644,7 @@ export default function OrganizationOnboardingPage() {
                   <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
                     Branding & Contact
                   </h1>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-foreground0">
                     Add your logo and contact information
                   </p>
                 </div>
@@ -664,7 +664,7 @@ export default function OrganizationOnboardingPage() {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <PhotoIcon className="h-8 w-8 text-slate-300" />
+                          <PhotoIcon className="h-8 w-8 text-[var(--text-secondary)]" />
                         </div>
                       )}
                     </div>
@@ -689,7 +689,7 @@ export default function OrganizationOnboardingPage() {
                           disabled={uploading}
                         />
                       </label>
-                      <p className="mt-1.5 text-xs text-slate-400">
+                      <p className="mt-1.5 text-xs text-[var(--text-muted)]">
                         Square, 200x200px min. PNG or JPG, max 2MB
                       </p>
                     </div>
@@ -709,7 +709,7 @@ export default function OrganizationOnboardingPage() {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <PhotoIcon className="h-12 w-12 text-slate-300" />
+                          <PhotoIcon className="h-12 w-12 text-[var(--text-secondary)]" />
                         </div>
                       )}
                     </div>
@@ -733,7 +733,7 @@ export default function OrganizationOnboardingPage() {
                         disabled={uploadingCover}
                       />
                     </label>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-[var(--text-muted)]">
                       Recommended: 1200x400px (3:1 ratio)
                     </p>
                   </div>
@@ -789,7 +789,7 @@ export default function OrganizationOnboardingPage() {
                   <button
                     type="button"
                     onClick={handleSkip}
-                    className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-sm font-medium text-[var(--text-muted)] hover:text-slate-600 transition-colors"
                   >
                     Skip
                   </button>
@@ -799,7 +799,7 @@ export default function OrganizationOnboardingPage() {
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="flex items-center gap-1.5 rounded-full bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 transition-colors"
+                    className="flex items-center gap-1.5 rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 transition-colors"
                   >
                     Continue
                     <ArrowRightIcon className="h-4 w-4" />
@@ -809,7 +809,7 @@ export default function OrganizationOnboardingPage() {
                     type="button"
                     onClick={handleComplete}
                     disabled={loading || uploading || uploadingCover}
-                    className="flex items-center gap-1.5 rounded-full bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <>
@@ -830,7 +830,7 @@ export default function OrganizationOnboardingPage() {
 
           {/* Skip to dashboard */}
           {existingProfile && (
-            <p className="mt-4 text-center text-sm text-slate-400">
+            <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
               <Link
                 href="/organization/dashboard"
                 className="text-teal-600 hover:underline"

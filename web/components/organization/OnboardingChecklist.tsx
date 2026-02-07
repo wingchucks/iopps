@@ -133,10 +133,10 @@ export default function OnboardingChecklist({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-50">
+          <h2 className="text-lg font-bold text-foreground">
             {allComplete ? 'Setup Complete!' : 'Complete Your Setup'}
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-[var(--text-muted)] mt-1">
             {allComplete
               ? 'Great work! Your profile is ready.'
               : `${completedCount} of ${totalCount} steps completed`}
@@ -145,7 +145,7 @@ export default function OnboardingChecklist({
         {showDismiss && onDismiss && (
           <button
             onClick={onDismiss}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-foreground0 hover:text-[var(--text-secondary)] hover:bg-surface transition-colors"
             title="Dismiss"
           >
             <XMarkIcon className="w-5 h-5" />
@@ -155,13 +155,13 @@ export default function OnboardingChecklist({
 
       {/* Progress Bar */}
       <div className="mb-6">
-        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-2 bg-surface rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-accent to-teal-400 rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="text-xs text-slate-500 mt-1.5 text-right">{progressPercent}% complete</p>
+        <p className="text-xs text-foreground0 mt-1.5 text-right">{progressPercent}% complete</p>
       </div>
 
       {/* Approval Status Banner */}
@@ -171,7 +171,7 @@ export default function OnboardingChecklist({
             <ClockIcon className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-amber-300">Pending Approval</p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Your profile is being reviewed. You&apos;ll receive an email once approved, and your
                 profile will appear in the directory.
               </p>
@@ -186,7 +186,7 @@ export default function OnboardingChecklist({
             <ExclamationTriangleIcon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium text-red-300">Profile Not Approved</p>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Please review your profile and update any issues. Contact support if you have
                 questions.
               </p>
@@ -211,33 +211,33 @@ export default function OnboardingChecklist({
               className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                 item.completed
                   ? 'bg-teal-900/20 border border-teal-800/30 opacity-70'
-                  : 'bg-slate-900/50 border border-slate-800 hover:border-accent/50 hover:bg-slate-900'
+                  : 'bg-surface border border-[var(--card-border)] hover:border-accent/50 hover:bg-surface'
               }`}
             >
               <div
                 className={`p-2 rounded-lg ${
-                  item.completed ? 'bg-teal-900/30' : 'bg-slate-800'
+                  item.completed ? 'bg-teal-900/30' : 'bg-surface'
                 }`}
               >
                 {item.completed ? (
                   <CheckCircleIcon className="w-5 h-5 text-accent" />
                 ) : (
-                  <Icon className="w-5 h-5 text-slate-400" />
+                  <Icon className="w-5 h-5 text-[var(--text-muted)]" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p
                   className={`font-medium ${
-                    item.completed ? 'text-slate-400 line-through' : 'text-slate-200'
+                    item.completed ? 'text-[var(--text-muted)] line-through' : 'text-foreground'
                   }`}
                 >
                   {item.title}
                 </p>
-                <p className="text-xs text-slate-500 truncate">{item.description}</p>
+                <p className="text-xs text-foreground0 truncate">{item.description}</p>
               </div>
               {!item.completed && (
                 <svg
-                  className="w-4 h-4 text-slate-500"
+                  className="w-4 h-4 text-foreground0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -257,10 +257,10 @@ export default function OnboardingChecklist({
 
       {/* Preview Profile Button */}
       {isApproved && profile?.id && (
-        <div className="mt-4 pt-4 border-t border-slate-800">
+        <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
           <Link
             href="/organization/profile"
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-surface text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white transition-colors"
           >
             <EyeIcon className="w-4 h-4" />
             View & Edit Profile
@@ -270,7 +270,7 @@ export default function OnboardingChecklist({
 
       {/* Quick Actions for Incomplete */}
       {!allComplete && (
-        <div className="mt-4 pt-4 border-t border-slate-800 flex gap-3">
+        <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex gap-3">
           <Link
             href="/organization/onboarding"
             className="flex-1 text-center py-2.5 rounded-xl bg-accent text-slate-950 font-semibold hover:bg-accent/90 transition-colors"
@@ -279,7 +279,7 @@ export default function OnboardingChecklist({
           </Link>
           <Link
             href="/organization/settings"
-            className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+            className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Settings
           </Link>

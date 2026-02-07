@@ -228,9 +228,9 @@ export default function MemberAlertsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading job alerts...</p>
+          <p className="text-[var(--text-muted)]">Loading job alerts...</p>
         </div>
       </div>
     );
@@ -244,22 +244,22 @@ export default function MemberAlertsPage() {
   const inactiveAlerts = alerts.filter((a) => !a.active);
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/member/dashboard"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Member Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Job Alerts
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Get notified when new jobs match your criteria
               </p>
             </div>
@@ -268,7 +268,7 @@ export default function MemberAlertsPage() {
                 resetForm();
                 setShowCreateForm(true);
               }}
-              className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
             >
               Create Alert
             </button>
@@ -280,14 +280,14 @@ export default function MemberAlertsPage() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Create/Edit Form */}
         {showCreateForm && (
-          <div className="mb-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="mb-8 rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-slate-50">
+              <h2 className="text-xl font-semibold text-foreground">
                 {editingAlert ? "Edit Job Alert" : "Create Job Alert"}
               </h2>
               <button
                 onClick={resetForm}
-                className="text-slate-400 hover:text-slate-300"
+                className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               >
                 <svg
                   className="h-6 w-6"
@@ -307,7 +307,7 @@ export default function MemberAlertsPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Alert Name (Optional)
                 </label>
                 <input
@@ -315,13 +315,13 @@ export default function MemberAlertsPage() {
                   value={alertName}
                   onChange={(e) => setAlertName(e.target.value)}
                   placeholder="e.g., Software Developer Jobs in Vancouver"
-                  className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                     Keywords
                   </label>
                   <input
@@ -329,12 +329,12 @@ export default function MemberAlertsPage() {
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                     placeholder="e.g., developer, engineer, analyst"
-                    className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                     Location
                   </label>
                   <input
@@ -342,19 +342,19 @@ export default function MemberAlertsPage() {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g., Vancouver, BC"
-                    className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Employment Type
                 </label>
                 <select
                   value={employmentType}
                   onChange={(e) => setEmploymentType(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="">All Types</option>
                   <option value="Full-time">Full-time</option>
@@ -367,7 +367,7 @@ export default function MemberAlertsPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                     Min Salary
                   </label>
                   <input
@@ -377,12 +377,12 @@ export default function MemberAlertsPage() {
                       setMinSalary(e.target.value ? Number(e.target.value) : "")
                     }
                     placeholder="e.g., 50000"
-                    className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                     Max Salary
                   </label>
                   <input
@@ -392,41 +392,41 @@ export default function MemberAlertsPage() {
                       setMaxSalary(e.target.value ? Number(e.target.value) : "")
                     }
                     placeholder="e.g., 100000"
-                    className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   <input
                     type="checkbox"
                     checked={remoteOnly}
                     onChange={(e) => setRemoteOnly(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                    className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                   />
                   Remote/Hybrid jobs only
                 </label>
 
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   <input
                     type="checkbox"
                     checked={indigenousOnly}
                     onChange={(e) => setIndigenousOnly(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                    className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                   />
                   Indigenous preference jobs only
                 </label>
               </div>
 
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                <label className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                   Alert Frequency
                 </label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as JobAlertFrequency)}
-                  className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="instant">Instant (as jobs are posted)</option>
                   <option value="daily">Daily digest</option>
@@ -438,7 +438,7 @@ export default function MemberAlertsPage() {
                 <button
                   type="submit"
                   disabled={processing}
-                  className="rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
+                  className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
                 >
                   {processing
                     ? "Saving..."
@@ -449,7 +449,7 @@ export default function MemberAlertsPage() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-md border border-slate-700 px-6 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800"
+                  className="rounded-md border border-[var(--card-border)] px-6 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-surface"
                 >
                   Cancel
                 </button>
@@ -463,7 +463,7 @@ export default function MemberAlertsPage() {
           {/* Active Alerts */}
           {activeAlerts.length > 0 && (
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-slate-50">
+              <h2 className="mb-4 text-lg font-semibold text-foreground">
                 Active Alerts ({activeAlerts.length})
               </h2>
               <div className="space-y-4">
@@ -483,7 +483,7 @@ export default function MemberAlertsPage() {
           {/* Inactive Alerts */}
           {inactiveAlerts.length > 0 && (
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-slate-400">
+              <h2 className="mb-4 text-lg font-semibold text-[var(--text-muted)]">
                 Inactive Alerts ({inactiveAlerts.length})
               </h2>
               <div className="space-y-4">
@@ -502,7 +502,7 @@ export default function MemberAlertsPage() {
 
           {/* Empty State */}
           {alerts.length === 0 && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
               <svg
                 className="mx-auto h-12 w-12 text-slate-600"
                 fill="none"
@@ -516,10 +516,10 @@ export default function MemberAlertsPage() {
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                 />
               </svg>
-              <h3 className="mt-4 text-lg font-semibold text-slate-300">
+              <h3 className="mt-4 text-lg font-semibold text-[var(--text-secondary)]">
                 No job alerts yet
               </h3>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
                 Create your first alert to get notified about new job opportunities.
               </p>
               <button
@@ -527,7 +527,7 @@ export default function MemberAlertsPage() {
                   resetForm();
                   setShowCreateForm(true);
                 }}
-                className="mt-6 rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                className="mt-6 rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
               >
                 Create Your First Alert
               </button>
@@ -557,12 +557,12 @@ function AlertCard({ alert, onEdit, onToggle, onDelete }: AlertCardProps) {
   if (alert.indigenousOnly) filters.push("Indigenous preference only");
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex-1">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-slate-50">
+              <h3 className="text-lg font-semibold text-foreground">
                 {alert.alertName || "Untitled Alert"}
               </h3>
 
@@ -571,7 +571,7 @@ function AlertCard({ alert, onEdit, onToggle, onDelete }: AlertCardProps) {
                   {filters.map((filter, index) => (
                     <span
                       key={index}
-                      className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300"
+                      className="rounded-full bg-surface px-3 py-1 text-xs text-[var(--text-secondary)]"
                     >
                       {filter}
                     </span>
@@ -579,7 +579,7 @@ function AlertCard({ alert, onEdit, onToggle, onDelete }: AlertCardProps) {
                 </div>
               )}
 
-              <div className="mt-3 flex gap-4 text-xs text-slate-500">
+              <div className="mt-3 flex gap-4 text-xs text-foreground0">
                 <span>Frequency: {alert.frequency}</span>
                 {alert.lastSent && (
                   <span>
@@ -594,7 +594,7 @@ function AlertCard({ alert, onEdit, onToggle, onDelete }: AlertCardProps) {
               className={`rounded-full px-3 py-1 text-xs font-medium ${
                 alert.active
                   ? "bg-green-500/10 text-green-400"
-                  : "bg-slate-500/10 text-slate-400"
+                  : "bg-slate-500/10 text-[var(--text-muted)]"
               }`}
             >
               {alert.active ? "Active" : "Inactive"}
@@ -606,7 +606,7 @@ function AlertCard({ alert, onEdit, onToggle, onDelete }: AlertCardProps) {
         <div className="flex gap-2 lg:flex-col">
           <button
             onClick={() => onEdit(alert)}
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+            className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
           >
             Edit
           </button>
@@ -615,7 +615,7 @@ function AlertCard({ alert, onEdit, onToggle, onDelete }: AlertCardProps) {
             onClick={() => onToggle(alert.id, alert.active)}
             className={`rounded-md px-4 py-2 text-sm font-semibold transition ${
               alert.active
-                ? "border border-slate-600 text-slate-400 hover:bg-slate-800"
+                ? "border border-[var(--card-border)] text-[var(--text-muted)] hover:bg-surface"
                 : "bg-green-600 text-white hover:bg-green-500"
             }`}
           >

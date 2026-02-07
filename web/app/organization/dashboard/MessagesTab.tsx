@@ -45,7 +45,7 @@ export default function MessagesTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-slate-400">Loading messages...</div>
+        <div className="text-[var(--text-muted)]">Loading messages...</div>
       </div>
     );
   }
@@ -54,9 +54,9 @@ export default function MessagesTab() {
     return (
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-12 text-center">
         <div className="mx-auto max-w-md">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-800">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface">
             <svg
-              className="h-8 w-8 text-slate-500"
+              className="h-8 w-8 text-foreground0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -72,7 +72,7 @@ export default function MessagesTab() {
           <h3 className="mt-4 text-lg font-semibold text-white">
             No messages yet
           </h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[var(--text-muted)]">
             When candidates apply to your jobs, conversations will appear here.
           </p>
         </div>
@@ -84,17 +84,17 @@ export default function MessagesTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Messages</h2>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-[var(--text-muted)]">
           {conversations.length} conversation
           {conversations.length !== 1 ? "s" : ""}
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+      <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-slate-900/60">
         <div className="grid h-[calc(100vh-400px)] min-h-[500px] md:grid-cols-[320px_1fr]">
           {/* Conversation List */}
-          <div className="border-r border-slate-800 overflow-y-auto">
-            <div className="border-b border-slate-800 p-4">
+          <div className="border-r border-[var(--card-border)] overflow-y-auto">
+            <div className="border-b border-[var(--card-border)] p-4">
               <h3 className="font-semibold text-white">Conversations</h3>
             </div>
             <ConversationList
@@ -116,7 +116,7 @@ export default function MessagesTab() {
                 onMessageSent={handleMessageSent}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-slate-400">
+              <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
                 <div className="text-center">
                   <svg
                     className="mx-auto h-16 w-16 text-slate-600"
@@ -132,7 +132,7 @@ export default function MessagesTab() {
                     />
                   </svg>
                   <p className="mt-4">Select a conversation to view messages</p>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-foreground0">
                     Communicate with applicants about your job postings
                   </p>
                 </div>
@@ -142,11 +142,11 @@ export default function MessagesTab() {
 
           {/* Mobile: Show thread if selected */}
           {selectedConversation && (
-            <div className="absolute inset-0 z-10 bg-[#020306] md:hidden">
+            <div className="absolute inset-0 z-10 bg-background md:hidden">
               <div className="h-full">
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-400"
+                  className="flex items-center gap-2 border-b border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-[var(--text-muted)]"
                 >
                   <svg
                     className="h-5 w-5"

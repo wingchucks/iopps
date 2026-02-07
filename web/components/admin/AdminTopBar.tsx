@@ -45,7 +45,7 @@ const searchTypeConfig: Record<
 > = {
   user: { icon: UserGroupIcon, color: "text-cyan-400", label: "User" },
   member: { icon: UserGroupIcon, color: "text-blue-400", label: "Member" },
-  employer: { icon: BriefcaseIcon, color: "text-teal-400", label: "Employer" },
+  employer: { icon: BriefcaseIcon, color: "text-accent", label: "Employer" },
   job: { icon: DocumentTextIcon, color: "text-green-400", label: "Job" },
   vendor: { icon: BuildingStorefrontIcon, color: "text-purple-400", label: "Vendor" },
   conference: { icon: BuildingOfficeIcon, color: "text-indigo-400", label: "Conference" },
@@ -87,15 +87,15 @@ function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-white"
+        className="flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--card-border)] hover:text-white"
       >
-        <CalendarDaysIcon className="h-4 w-4 text-slate-500" />
+        <CalendarDaysIcon className="h-4 w-4 text-foreground0" />
         <span>{currentLabel}</span>
         <ChevronDownIcon className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-[var(--card-border)] bg-surface py-1 shadow-xl">
           {options.map((option) => (
             <button
               key={option.value}
@@ -105,8 +105,8 @@ function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
               }}
               className={`w-full px-3 py-2 text-left text-sm transition ${
                 value === option.value
-                  ? "bg-teal-500/10 text-teal-400"
-                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                  ? "bg-accent/10 text-accent"
+                  : "text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white"
               }`}
             >
               {option.label}
@@ -146,7 +146,7 @@ function CreateDropdown() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-teal-500"
+        className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white transition hover:bg-accent"
       >
         <PlusIcon className="h-4 w-4" />
         <span className="hidden sm:inline">Create</span>
@@ -154,15 +154,15 @@ function CreateDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[var(--card-border)] bg-surface py-1 shadow-xl">
           {createOptions.map((option) => (
             <Link
               key={option.label}
               href={option.href}
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-700 hover:text-white"
+              className="flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-slate-700 hover:text-white"
             >
-              <option.icon className="h-4 w-4 text-slate-500" />
+              <option.icon className="h-4 w-4 text-foreground0" />
               <span>{option.label}</span>
             </Link>
           ))}
@@ -301,7 +301,7 @@ function GlobalSearch() {
   return (
     <div className="relative flex-1 max-w-md" ref={containerRef}>
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground0" />
         <input
           ref={inputRef}
           type="text"
@@ -314,7 +314,7 @@ function GlobalSearch() {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search users, employers, jobs..."
-          className="w-full rounded-lg border border-slate-700 bg-slate-800/50 py-2 pl-9 pr-16 text-sm text-slate-200 placeholder-slate-500 transition focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-lg border border-[var(--card-border)] bg-surface py-2 pl-9 pr-16 text-sm text-foreground placeholder-slate-500 transition focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
         {query ? (
           <button
@@ -323,25 +323,25 @@ function GlobalSearch() {
               setResults([]);
               inputRef.current?.focus();
             }}
-            className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-300"
+            className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-foreground0 hover:text-[var(--text-secondary)]"
           >
             <XMarkIcon className="h-4 w-4" />
           </button>
         ) : null}
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-slate-600 bg-slate-700 px-1.5 py-0.5 text-xs text-slate-400">
+        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-[var(--card-border)] bg-slate-700 px-1.5 py-0.5 text-xs text-[var(--text-muted)]">
           ⌘K
         </kbd>
       </div>
 
       {/* Search Results Dropdown */}
       {isOpen && (query.length >= 2 || results.length > 0) && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl">
+        <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface py-1 shadow-xl">
           {isSearching ? (
-            <div className="px-3 py-4 text-center text-sm text-slate-500">
+            <div className="px-3 py-4 text-center text-sm text-foreground0">
               Searching...
             </div>
           ) : results.length === 0 ? (
-            <div className="px-3 py-4 text-center text-sm text-slate-500">
+            <div className="px-3 py-4 text-center text-sm text-foreground0">
               No results found for "{query}"
             </div>
           ) : (
@@ -364,15 +364,15 @@ function GlobalSearch() {
                         : "hover:bg-slate-700/50"
                     }`}
                   >
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 ${config.color}`}>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-surface ${config.color}`}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-200 truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {result.title}
                       </p>
                       {result.subtitle && (
-                        <p className="text-xs text-slate-500 truncate">{result.subtitle}</p>
+                        <p className="text-xs text-foreground0 truncate">{result.subtitle}</p>
                       )}
                     </div>
                     <span className={`text-xs font-medium ${config.color}`}>
@@ -406,7 +406,7 @@ export function AdminTopBar({
   };
 
   return (
-    <div className="flex h-16 items-center justify-between border-b border-slate-800 bg-[#08090C] px-6">
+    <div className="flex h-16 items-center justify-between border-b border-[var(--card-border)] bg-surface px-6">
       {/* Global Search */}
       <GlobalSearch />
 

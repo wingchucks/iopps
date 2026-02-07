@@ -48,15 +48,15 @@ interface DeleteModalProps {
 function DeleteUserModal({ user, onConfirm, onCancel, isDeleting }: DeleteModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
           <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-slate-100">Delete User</h3>
-        <p className="mt-2 text-slate-400">
-          Are you sure you want to delete <span className="font-medium text-slate-200">{user.displayName || user.email}</span>?
+        <h3 className="text-xl font-semibold text-foreground">Delete User</h3>
+        <p className="mt-2 text-[var(--text-muted)]">
+          Are you sure you want to delete <span className="font-medium text-foreground">{user.displayName || user.email}</span>?
         </p>
         <div className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
           <strong>Warning:</strong> This will soft-delete the user and all their related data including:
@@ -72,7 +72,7 @@ function DeleteUserModal({ user, onConfirm, onCancel, isDeleting }: DeleteModalP
           <button
             onClick={onCancel}
             disabled={isDeleting}
-            className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-[var(--card-border)] px-4 py-2 text-[var(--text-secondary)] transition hover:bg-surface disabled:opacity-50"
           >
             Cancel
           </button>
@@ -279,7 +279,7 @@ function AdminUsersContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Delete Confirmation Modal */}
       {userToDelete && (
         <DeleteUserModal
@@ -290,13 +290,13 @@ function AdminUsersContent() {
         />
       )}
 
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <Link href="/admin" className="text-sm text-slate-400 hover:text-[#14B8A6]">← Admin Dashboard</Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">User Management</h1>
-              <p className="mt-1 text-sm text-slate-400">{filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""}</p>
+              <Link href="/admin" className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]">← Admin Dashboard</Link>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">User Management</h1>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">{filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""}</p>
             </div>
           </div>
         </div>
@@ -308,21 +308,21 @@ function AdminUsersContent() {
           <AdminSearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Search by email, name, or ID..." />
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+        <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-slate-900/60">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-slate-800 bg-slate-950/60">
+              <thead className="border-b border-[var(--card-border)] bg-background/60">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">User</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Role</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Joined</th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Actions</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">User</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Role</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Joined</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-[var(--card-border)]">
                 {filteredUsers.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400">No users found for this filter.</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-12 text-center text-[var(--text-muted)]">No users found for this filter.</td></tr>
                 ) : (
                   filteredUsers.map((userData) => {
                     const isProcessing = processing === userData.id;
@@ -332,8 +332,8 @@ function AdminUsersContent() {
                       <tr key={userData.id} className="transition hover:bg-slate-900/40">
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-medium text-slate-200">{userData.displayName || userData.email}</p>
-                            {userData.displayName && <p className="mt-1 text-sm text-slate-500">{userData.email}</p>}
+                            <p className="font-medium text-foreground">{userData.displayName || userData.email}</p>
+                            {userData.displayName && <p className="mt-1 text-sm text-foreground0">{userData.email}</p>}
                             <p className="mt-1 text-xs text-slate-600">ID: {userData.id}</p>
                           </div>
                         </td>
@@ -342,7 +342,7 @@ function AdminUsersContent() {
                             value={userData.role}
                             onChange={(e) => updateUserRole(userData.id, e.target.value as UserRole)}
                             disabled={isProcessing || isCurrentUser}
-                            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-1 text-sm text-slate-200 disabled:opacity-50"
+                            className="rounded-md border border-[var(--card-border)] bg-surface px-3 py-1 text-sm text-foreground disabled:opacity-50"
                           >
                             <option value="community">Community</option>
                             <option value="employer">Employer</option>
@@ -353,19 +353,19 @@ function AdminUsersContent() {
                         <td className="px-6 py-4">
                           <StatusBadge status={userData.disabled ? "disabled" : "active"} />
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-400">
+                        <td className="px-6 py-4 text-sm text-[var(--text-muted)]">
                           {userData.createdAt ? new Date(userData.createdAt.seconds * 1000).toLocaleDateString() : "Unknown"}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             {user?.email === "nathan.arias@iopps.ca" && (
-                              <button onClick={() => impersonateUser(userData.id)} disabled={isProcessing || isCurrentUser} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-yellow-500 hover:text-yellow-500 disabled:opacity-50" title="Sign in as this user">Login As</button>
+                              <button onClick={() => impersonateUser(userData.id)} disabled={isProcessing || isCurrentUser} className="rounded-md border border-[var(--card-border)] px-3 py-1 text-xs text-[var(--text-secondary)] transition hover:border-yellow-500 hover:text-yellow-500 disabled:opacity-50" title="Sign in as this user">Login As</button>
                             )}
-                            <button onClick={() => toggleUserStatus(userData.id, userData.disabled || false)} disabled={isProcessing || isCurrentUser} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6] disabled:opacity-50">
+                            <button onClick={() => toggleUserStatus(userData.id, userData.disabled || false)} disabled={isProcessing || isCurrentUser} className="rounded-md border border-[var(--card-border)] px-3 py-1 text-xs text-[var(--text-secondary)] transition hover:border-[#14B8A6] hover:text-[#14B8A6] disabled:opacity-50">
                               {isProcessing ? "..." : userData.disabled ? "Enable" : "Disable"}
                             </button>
                             {userData.role === "employer" && (
-                              <Link href={`/admin/employers?search=${encodeURIComponent(userData.displayName || userData.email || userData.id)}`} className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-[#14B8A6] hover:text-[#14B8A6]">View Profile</Link>
+                              <Link href={`/admin/employers?search=${encodeURIComponent(userData.displayName || userData.email || userData.id)}`} className="rounded-md border border-[var(--card-border)] px-3 py-1 text-xs text-[var(--text-secondary)] transition hover:border-[#14B8A6] hover:text-[#14B8A6]">View Profile</Link>
                             )}
                             {role === "admin" && !isCurrentUser && userData.role !== "admin" && (
                               <button

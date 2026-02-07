@@ -90,7 +90,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
         <div className="mx-auto max-w-4xl py-12 text-center">
           <div className="rounded-2xl border border-slate-200 bg-white p-12">
             <svg
-              className="mx-auto h-16 w-16 text-slate-400"
+              className="mx-auto h-16 w-16 text-[var(--text-muted)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -114,7 +114,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
             <h1 className="mt-6 text-2xl font-bold text-slate-700">
               {isEnded ? "Conference Has Ended" : "Conference Not Found"}
             </h1>
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-foreground0">
               {isEnded
                 ? "This conference has concluded. Check out upcoming conferences below."
                 : "The conference you're looking for might have been removed."}
@@ -153,7 +153,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
         {/* Back Link */}
         <Link
           href="/conferences"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-[#0D9488]"
+          className="inline-flex items-center gap-2 text-sm text-foreground0 transition-colors hover:text-[#0D9488]"
         >
           <svg
             className="h-4 w-4"
@@ -250,7 +250,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
               {/* Target Audience */}
               {conference.targetAudience && conference.targetAudience.length > 0 && (
                 <div className="mt-6 border-t border-slate-200 pt-4">
-                  <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">
+                  <h3 className="text-sm font-medium uppercase tracking-wider text-foreground0">
                     Who Should Attend
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -349,7 +349,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
                   {conference.trc92Commitment && (
                     <div className="rounded-lg border border-[#0D9488]/20 bg-[#0D9488]/5 p-4">
-                      <p className="text-sm leading-relaxed text-slate-500">
+                      <p className="text-sm leading-relaxed text-foreground0">
                         <span className="font-semibold text-[#0D9488]">
                           TRC Call to Action #92:
                         </span>{" "}
@@ -396,7 +396,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
             {conference.sponsors && conference.sponsors.length > 0 && (
               <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
                 <h2 className="text-xl font-bold text-slate-700">Sponsors</h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-foreground0">
                   Thank you to our sponsors for making this event possible
                 </p>
 
@@ -410,7 +410,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
                       return (
                         <div key={tier}>
-                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500 capitalize">
+                          <h3 className="text-sm font-medium uppercase tracking-wider text-foreground0 capitalize">
                             {tier} Sponsors
                           </h3>
                           <div className="mt-3 flex flex-wrap gap-4">
@@ -460,7 +460,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                       <summary className="flex cursor-pointer items-center justify-between p-4 font-medium text-slate-700">
                         {faq.question}
                         <svg
-                          className="h-5 w-5 text-slate-500 transition-transform group-open:rotate-180"
+                          className="h-5 w-5 text-foreground0 transition-transform group-open:rotate-180"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -474,7 +474,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                         </svg>
                       </summary>
                       <div className="border-t border-slate-300 p-4">
-                        <p className="text-sm leading-relaxed text-slate-500">
+                        <p className="text-sm leading-relaxed text-foreground0">
                           {faq.answer}
                         </p>
                       </div>
@@ -493,7 +493,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
               {/* If there's an external registration link, show that */}
               {conference.registrationLink ? (
                 <div className="mt-4">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Registration for this conference is handled externally by the organizers.
                   </p>
                   <a
@@ -518,7 +518,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                     </svg>
                   </a>
                   {conference.contactEmail && (
-                    <p className="mt-4 text-sm text-slate-500">
+                    <p className="mt-4 text-sm text-foreground0">
                       Questions? Contact the organizers at{" "}
                       <a
                         href={`mailto:${conference.contactEmail}?subject=Question about ${conference.title}`}
@@ -532,7 +532,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
               ) : conference.contactEmail ? (
                 /* No registration link - show contact option */
                 <div className="mt-4">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     To register for this conference, please contact the organizers directly.
                   </p>
                   <a
@@ -555,7 +555,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                     Email Organizers to Register
                   </a>
                   {conference.contactPhone && (
-                    <p className="mt-4 text-center text-sm text-slate-500">
+                    <p className="mt-4 text-center text-sm text-foreground0">
                       Or call{" "}
                       <a
                         href={`tel:${conference.contactPhone}`}
@@ -569,7 +569,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
               ) : (
                 /* No registration link and no contact email - show basic info */
                 <div className="mt-4">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Registration details will be posted soon. Check back later or save this conference to receive updates.
                   </p>
                 </div>
@@ -582,7 +582,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                 <h3 className="text-lg font-bold text-slate-700">
                   Join IOPPS to stay updated
                 </h3>
-                <p className="mt-2 text-slate-500">
+                <p className="mt-2 text-foreground0">
                   Create an account to save conferences, get event reminders, and
                   connect with the Indigenous professional community.
                 </p>

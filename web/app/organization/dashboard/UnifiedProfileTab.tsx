@@ -311,15 +311,15 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
     );
   }
 
-  const inputClass = 'w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors';
-  const labelClass = 'mb-2 block text-sm font-medium text-slate-300';
+  const inputClass = 'w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors';
+  const labelClass = 'mb-2 block text-sm font-medium text-[var(--text-secondary)]';
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-800/30 to-slate-900/50 p-8 shadow-xl border border-slate-700/50">
+      <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-800/30 to-slate-900/50 p-8 shadow-xl border border-[var(--card-border)]">
         <h2 className="text-2xl font-bold text-white">Profile & Settings</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Manage your organization profile. Changes apply to both your employer and vendor presence.
         </p>
       </div>
@@ -353,12 +353,12 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
                 </span>
               </h3>
               {employerProfile.status === 'approved' && (
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
                   Your profile is live and visible to the public.
                 </p>
               )}
               {employerProfile.status === 'pending' && (
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
                   Your profile is being reviewed by our team. This typically takes 1-2 business days.
                 </p>
               )}
@@ -382,7 +382,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
       {/* Main Profile Form */}
       <form id="profile-form" onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }} className="space-y-8">
         {/* Basic Info Section */}
-        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 p-6">
+        <div className="rounded-2xl bg-slate-800/30 border border-[var(--card-border)] p-6">
           <h3 className="text-lg font-semibold text-white mb-6">Basic Information</h3>
           <div className="grid gap-6 sm:grid-cols-2">
             {/* Logo Upload */}
@@ -396,7 +396,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
                       alt="Logo"
                       width={80}
                       height={80}
-                      className="rounded-xl object-cover border border-slate-600"
+                      className="rounded-xl object-cover border border-[var(--card-border)]"
                     />
                     <button
                       type="button"
@@ -407,8 +407,8 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-700 border border-slate-600">
-                    <PhotoIcon className="h-8 w-8 text-slate-500" />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-700 border border-[var(--card-border)]">
+                    <PhotoIcon className="h-8 w-8 text-foreground0" />
                   </div>
                 )}
                 <div>
@@ -427,7 +427,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
                   >
                     {uploadingLogo ? 'Uploading...' : logoUrl ? 'Change Logo' : 'Upload Logo'}
                   </button>
-                  <p className="mt-2 text-xs text-slate-500">PNG, JPG, GIF, or WebP. Max 5MB.</p>
+                  <p className="mt-2 text-xs text-foreground0">PNG, JPG, GIF, or WebP. Max 5MB.</p>
                 </div>
               </div>
             </div>
@@ -435,7 +435,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
             {/* Cover Image Upload */}
             <div className="sm:col-span-2">
               <label className={labelClass}>Cover Image / Banner</label>
-              <p className="text-xs text-slate-500 mb-3">Recommended: 1200x400px. Appears on your public profile.</p>
+              <p className="text-xs text-foreground0 mb-3">Recommended: 1200x400px. Appears on your public profile.</p>
               <div className="space-y-3">
                 {bannerUrl ? (
                   <div className="relative rounded-xl overflow-hidden">
@@ -455,10 +455,10 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 border-dashed">
+                  <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-[var(--card-border)] border-dashed">
                     <div className="text-center">
-                      <PhotoIcon className="mx-auto h-10 w-10 text-slate-500" />
-                      <p className="mt-2 text-sm text-slate-500">No cover image</p>
+                      <PhotoIcon className="mx-auto h-10 w-10 text-foreground0" />
+                      <p className="mt-2 text-sm text-foreground0">No cover image</p>
                     </div>
                   </div>
                 )}
@@ -535,7 +535,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
         </div>
 
         {/* Location Section */}
-        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 p-6">
+        <div className="rounded-2xl bg-slate-800/30 border border-[var(--card-border)] p-6">
           <h3 className="text-lg font-semibold text-white mb-6">Location</h3>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
@@ -576,7 +576,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
         </div>
 
         {/* Contact & Social Section */}
-        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 p-6">
+        <div className="rounded-2xl bg-slate-800/30 border border-[var(--card-border)] p-6">
           <h3 className="text-lg font-semibold text-white mb-6">Contact & Social Media</h3>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
@@ -654,7 +654,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
         </div>
 
         {/* Employer Settings (Collapsible) */}
-        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 overflow-hidden">
+        <div className="rounded-2xl bg-slate-800/30 border border-[var(--card-border)] overflow-hidden">
           <button
             type="button"
             onClick={() => setShowEmployerSettings(!showEmployerSettings)}
@@ -666,18 +666,18 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Employer Settings</h3>
-                <p className="text-sm text-slate-400">Industry and hiring preferences</p>
+                <p className="text-sm text-[var(--text-muted)]">Industry and hiring preferences</p>
               </div>
             </div>
             {showEmployerSettings ? (
-              <ChevronUpIcon className="h-5 w-5 text-slate-400" />
+              <ChevronUpIcon className="h-5 w-5 text-[var(--text-muted)]" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-slate-400" />
+              <ChevronDownIcon className="h-5 w-5 text-[var(--text-muted)]" />
             )}
           </button>
 
           {showEmployerSettings && (
-            <div className="border-t border-slate-700/50 p-6">
+            <div className="border-t border-[var(--card-border)] p-6">
               <div>
                 <label className={labelClass}>Industry</label>
                 <select
@@ -707,7 +707,7 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
         </div>
 
         {/* Vendor Settings (Collapsible) */}
-        <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 overflow-hidden">
+        <div className="rounded-2xl bg-slate-800/30 border border-[var(--card-border)] overflow-hidden">
           <button
             type="button"
             onClick={() => setShowVendorSettings(!showVendorSettings)}
@@ -719,18 +719,18 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Vendor Settings</h3>
-                <p className="text-sm text-slate-400">Shop category and shipping options</p>
+                <p className="text-sm text-[var(--text-muted)]">Shop category and shipping options</p>
               </div>
             </div>
             {showVendorSettings ? (
-              <ChevronUpIcon className="h-5 w-5 text-slate-400" />
+              <ChevronUpIcon className="h-5 w-5 text-[var(--text-muted)]" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-slate-400" />
+              <ChevronDownIcon className="h-5 w-5 text-[var(--text-muted)]" />
             )}
           </button>
 
           {showVendorSettings && (
-            <div className="border-t border-slate-700/50 p-6">
+            <div className="border-t border-[var(--card-border)] p-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div>
                   <label className={labelClass}>Business Category</label>
@@ -751,18 +751,18 @@ export default function UnifiedProfileTab({ mode }: UnifiedProfileTabProps) {
                       type="checkbox"
                       checked={offersShipping}
                       onChange={(e) => setOffersShipping(e.target.checked)}
-                      className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-accent focus:ring-accent"
+                      className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-accent"
                     />
-                    <span className="text-slate-300">Offers Shipping</span>
+                    <span className="text-[var(--text-secondary)]">Offers Shipping</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={onlineOnly}
                       onChange={(e) => setOnlineOnly(e.target.checked)}
-                      className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-accent focus:ring-accent"
+                      className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-accent"
                     />
-                    <span className="text-slate-300">Online only (no physical location)</span>
+                    <span className="text-[var(--text-secondary)]">Online only (no physical location)</span>
                   </label>
                 </div>
               </div>

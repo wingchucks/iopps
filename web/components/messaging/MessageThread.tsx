@@ -107,7 +107,7 @@ export default function MessageThread({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-slate-400">Loading messages...</div>
+        <div className="text-[var(--text-muted)]">Loading messages...</div>
       </div>
     );
   }
@@ -115,15 +115,15 @@ export default function MessageThread({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/50 p-4">
+      <div className="border-b border-[var(--card-border)] bg-surface p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#14B8A6]/20 text-[#14B8A6]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20 text-[#14B8A6]">
             {otherName.charAt(0).toUpperCase()}
           </div>
           <div>
             <h3 className="font-semibold text-white">{otherName}</h3>
             {conversation.jobTitle && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 Re: {conversation.jobTitle}
               </p>
             )}
@@ -149,7 +149,7 @@ export default function MessageThread({
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-              <p className="mt-3 text-sm text-slate-400">
+              <p className="mt-3 text-sm text-[var(--text-muted)]">
                 No messages yet. Start the conversation!
               </p>
             </div>
@@ -175,8 +175,8 @@ export default function MessageThread({
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                     isOwn
-                      ? "bg-[#14B8A6] text-slate-900"
-                      : "bg-slate-800 text-slate-100"
+                      ? "bg-accent text-slate-900"
+                      : "bg-surface text-foreground"
                   }`}
                 >
                   <p className="whitespace-pre-wrap break-words text-sm">
@@ -184,7 +184,7 @@ export default function MessageThread({
                   </p>
                   <p
                     className={`mt-1 text-xs ${
-                      isOwn ? "text-slate-700" : "text-slate-500"
+                      isOwn ? "text-slate-700" : "text-foreground0"
                     }`}
                   >
                     {time}
@@ -198,7 +198,7 @@ export default function MessageThread({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t border-slate-800 p-4">
+      <form onSubmit={handleSubmit} className="border-t border-[var(--card-border)] p-4">
         <div className="flex gap-3">
           <textarea
             ref={inputRef}
@@ -207,12 +207,12 @@ export default function MessageThread({
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
+            className="flex-1 resize-none rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
           />
           <button
             type="submit"
             disabled={!newMessage.trim() || sending}
-            className="flex-shrink-0 rounded-lg bg-[#14B8A6] px-4 py-2.5 font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-shrink-0 rounded-lg bg-accent px-4 py-2.5 font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? (
               <svg
@@ -246,7 +246,7 @@ export default function MessageThread({
             )}
           </button>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-foreground0">
           Press Enter to send, Shift+Enter for new line
         </p>
       </form>

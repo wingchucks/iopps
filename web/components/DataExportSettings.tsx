@@ -96,14 +96,14 @@ export default function DataExportSettings() {
   return (
     <div className="space-y-6">
       {/* OCAP/CARE Compliance Banner */}
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+      <div className="rounded-2xl border border-accent/20 bg-accent/5 p-5">
         <div className="flex items-start gap-4">
-          <Shield className="h-6 w-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <Shield className="h-6 w-6 text-accent flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <h3 className="font-semibold text-emerald-300">
               Indigenous Data Sovereignty
             </h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               IOPPS respects OCAP (Ownership, Control, Access, Possession) and
               CARE (Collective benefit, Authority to control, Responsibility,
               Ethics) principles. You have full ownership of your data and can
@@ -111,7 +111,7 @@ export default function DataExportSettings() {
             </p>
             <Link
               href="/privacy"
-              className="mt-2 inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent hover:text-emerald-300 transition-colors"
             >
               Learn more about our data principles
               <ExternalLink className="h-3.5 w-3.5" />
@@ -121,7 +121,7 @@ export default function DataExportSettings() {
       </div>
 
       {/* Format Selector */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4">Export Format</h3>
         <div className="flex gap-4">
           <label className="flex items-center gap-3 cursor-pointer">
@@ -134,8 +134,8 @@ export default function DataExportSettings() {
               className="h-4 w-4 accent-emerald-500"
             />
             <div>
-              <span className="text-sm font-medium text-slate-200">JSON</span>
-              <p className="text-xs text-slate-400">
+              <span className="text-sm font-medium text-foreground">JSON</span>
+              <p className="text-xs text-[var(--text-muted)]">
                 Structured data, best for developers
               </p>
             </div>
@@ -150,8 +150,8 @@ export default function DataExportSettings() {
               className="h-4 w-4 accent-emerald-500"
             />
             <div>
-              <span className="text-sm font-medium text-slate-200">CSV</span>
-              <p className="text-xs text-slate-400">
+              <span className="text-sm font-medium text-foreground">CSV</span>
+              <p className="text-xs text-[var(--text-muted)]">
                 Spreadsheet compatible, opens in Excel
               </p>
             </div>
@@ -160,14 +160,14 @@ export default function DataExportSettings() {
       </div>
 
       {/* Category Selection */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-white">Data Categories</h3>
           <div className="flex gap-3">
             <button
               onClick={selectAll}
               disabled={allSelected}
-              className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-40 disabled:cursor-default"
+              className="text-xs font-medium text-accent hover:text-emerald-300 transition-colors disabled:opacity-40 disabled:cursor-default"
             >
               Select All
             </button>
@@ -175,7 +175,7 @@ export default function DataExportSettings() {
             <button
               onClick={deselectAll}
               disabled={noneSelected}
-              className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-40 disabled:cursor-default"
+              className="text-xs font-medium text-accent hover:text-emerald-300 transition-colors disabled:opacity-40 disabled:cursor-default"
             >
               Deselect All
             </button>
@@ -189,15 +189,15 @@ export default function DataExportSettings() {
               <button
                 key={cat.key}
                 onClick={() => toggle(cat.key)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-800/50"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-surface"
               >
                 {checked ? (
-                  <CheckSquare className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  <CheckSquare className="h-5 w-5 text-accent flex-shrink-0" />
                 ) : (
                   <Square className="h-5 w-5 text-slate-600 flex-shrink-0" />
                 )}
                 <span
-                  className={`text-sm font-medium ${checked ? "text-slate-200" : "text-slate-500"}`}
+                  className={`text-sm font-medium ${checked ? "text-foreground" : "text-foreground0"}`}
                 >
                   {cat.label}
                 </span>
@@ -211,7 +211,7 @@ export default function DataExportSettings() {
       <button
         onClick={handleExport}
         disabled={exporting || noneSelected}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {exporting ? (
           <>

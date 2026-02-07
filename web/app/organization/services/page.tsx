@@ -59,7 +59,7 @@ export default function OrganizationServicesPage() {
     switch (service.status) {
       case "active":
         return (
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
+          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-emerald-300">
             Active
           </span>
         );
@@ -77,7 +77,7 @@ export default function OrganizationServicesPage() {
         );
       case "draft":
         return (
-          <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-slate-400">
+          <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
             Draft
           </span>
         );
@@ -89,7 +89,7 @@ export default function OrganizationServicesPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function OrganizationServicesPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Sign in required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need to be signed in to manage your services.
         </p>
         <Link
@@ -118,7 +118,7 @@ export default function OrganizationServicesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Your Services
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Manage your professional service listings
           </p>
         </div>
@@ -144,13 +144,13 @@ export default function OrganizationServicesPage() {
       </div>
 
       {loadingServices ? (
-        <div className="mt-8 text-slate-400">Loading services...</div>
+        <div className="mt-8 text-[var(--text-muted)]">Loading services...</div>
       ) : services.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="mt-8 rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <BriefcaseIcon className="h-8 w-8 text-slate-500" />
+            <BriefcaseIcon className="h-8 w-8 text-foreground0" />
           </div>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             You haven&apos;t listed any services yet.
           </p>
           <Link
@@ -165,7 +165,7 @@ export default function OrganizationServicesPage() {
           {services.map((service) => (
             <div
               key={service.id}
-              className="rounded-xl border border-slate-800 bg-slate-900/50 p-6"
+              className="rounded-xl border border-[var(--card-border)] bg-surface p-6"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -183,19 +183,19 @@ export default function OrganizationServicesPage() {
                       {service.title}
                     </h3>
                   </div>
-                  <p className="text-sm text-slate-400">{service.businessName}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{service.businessName}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-300">
                       {service.category}
                     </span>
                     {service.location && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                         <MapPinIcon className="h-3 w-3" />
                         {service.location}
                       </span>
                     )}
                     {service.servesRemote && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
                         <GlobeAltIcon className="h-3 w-3" />
                         Remote
                       </span>
@@ -211,7 +211,7 @@ export default function OrganizationServicesPage() {
                   {getStatusBadge(service)}
                   <Link
                     href={`/organization/services/${service.id}/edit`}
-                    className="rounded-md px-3 py-1 text-sm text-slate-300 hover:bg-slate-700/50"
+                    className="rounded-md px-3 py-1 text-sm text-[var(--text-secondary)] hover:bg-slate-700/50"
                   >
                     Edit
                   </Link>
@@ -226,18 +226,18 @@ export default function OrganizationServicesPage() {
               </div>
 
               {service.tagline && (
-                <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                   {service.tagline}
                 </p>
               )}
 
               {/* Stats */}
-              <div className="mt-4 flex items-center gap-6 border-t border-slate-800 pt-4">
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="mt-4 flex items-center gap-6 border-t border-[var(--card-border)] pt-4">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <EyeIcon className="h-4 w-4" />
                   <span>{service.viewCount || 0} views</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <CursorArrowRaysIcon className="h-4 w-4" />
                   <span>{service.contactClicks || 0} contact clicks</span>
                 </div>

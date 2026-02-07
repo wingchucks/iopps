@@ -86,7 +86,7 @@ export default function BusinessFundingPage() {
         );
       case "closed":
         return (
-          <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500">
+          <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-semibold text-foreground0">
             Closed
           </span>
         );
@@ -112,7 +112,7 @@ export default function BusinessFundingPage() {
   return (
     <FeedLayout activeNav="business">
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-500">
+      <nav className="mb-8 text-sm text-foreground0">
         <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
@@ -132,7 +132,7 @@ export default function BusinessFundingPage() {
         <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-slate-900 sm:text-5xl">
           Business Funding & Grants
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground0">
           Discover funding opportunities, grants, and financial programs for Indigenous-owned businesses across North America.
         </p>
       </div>
@@ -142,13 +142,13 @@ export default function BusinessFundingPage() {
         <div className="grid gap-4 md:grid-cols-3">
           {/* Grant Type */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Grant Type
             </label>
             <select
               value={grantType}
               onChange={(e) => setGrantType(e.target.value as BusinessGrantType | "")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-accent focus:outline-none"
             >
               {GRANT_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -160,13 +160,13 @@ export default function BusinessFundingPage() {
 
           {/* Status */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Status
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as BusinessGrantStatus | "")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-accent focus:outline-none"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -178,13 +178,13 @@ export default function BusinessFundingPage() {
 
           {/* Region */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Region
             </label>
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value as NorthAmericanRegion | "")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-accent focus:outline-none"
             >
               <option value="">All Regions</option>
               <optgroup label="Canada">
@@ -205,7 +205,7 @@ export default function BusinessFundingPage() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500">
+        <p className="text-foreground0">
           {loading ? "Loading..." : `${grants.length} funding opportunities`}
         </p>
         {(grantType || status || region) && (
@@ -238,7 +238,7 @@ export default function BusinessFundingPage() {
               className="group flex flex-col sm:flex-row gap-6 rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-teal-300"
             >
               {/* Icon/Logo */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 shrink-0">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 border border-[#14B8A6]/40 shrink-0">
                 {grant.providerLogo ? (
                   <img
                     src={grant.providerLogo}
@@ -273,12 +273,12 @@ export default function BusinessFundingPage() {
                 </p>
 
                 {grant.shortDescription && (
-                  <p className="text-sm text-slate-500 mt-2 line-clamp-2">
+                  <p className="text-sm text-foreground0 mt-2 line-clamp-2">
                     {grant.shortDescription}
                   </p>
                 )}
 
-                <div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
+                <div className="flex flex-wrap gap-4 mt-3 text-sm text-foreground0">
                   {grant.amount?.display && (
                     <span className="text-emerald-600 font-medium">
                       💰 {grant.amount.display}
@@ -304,14 +304,14 @@ export default function BusinessFundingPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
           <span className="text-5xl mb-4 block">💰</span>
           <h3 className="text-xl font-bold text-slate-900 mb-2">No Funding Opportunities</h3>
-          <p className="text-slate-500 mb-6">
+          <p className="text-foreground0 mb-6">
             {grantType || status || region
               ? "Try adjusting your filters."
               : "Check back soon for business funding opportunities."}
           </p>
           <Link
             href="/business"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
           >
             Back to Business
           </Link>
@@ -322,14 +322,14 @@ export default function BusinessFundingPage() {
       <section className="mt-16 grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-3">Indigenous Business Grants</h3>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <p className="text-sm text-foreground0 leading-relaxed">
             Many government and private organizations offer grants specifically for Indigenous-owned businesses.
             These programs support entrepreneurs in starting, growing, and scaling their ventures.
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-3">Application Tips</h3>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <p className="text-sm text-foreground0 leading-relaxed">
             When applying for grants, ensure you have your business registration, financial statements,
             and a clear business plan ready. Many programs also require proof of Indigenous ownership or affiliation.
           </p>
@@ -341,12 +341,12 @@ export default function BusinessFundingPage() {
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Know of a Grant Program?
         </h2>
-        <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+        <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
           Help Indigenous entrepreneurs by suggesting funding programs we should list on IOPPS.
         </p>
         <Link
           href="/contact"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
         >
           Suggest a Grant
         </Link>

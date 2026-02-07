@@ -71,7 +71,7 @@ export default function NewFundingPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function NewFundingPage() {
         </h1>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Login
         </Link>
@@ -184,7 +184,7 @@ export default function NewFundingPage() {
         <div className="mb-6">
           <Link
             href="/organization/dashboard?tab=business"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Business Dashboard
           </Link>
@@ -193,7 +193,7 @@ export default function NewFundingPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Add Funding Opportunity
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Share grants, loans, and funding opportunities for Indigenous businesses.
         </p>
 
@@ -206,12 +206,12 @@ export default function NewFundingPage() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           {/* Basic Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Basic Information
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Funding Title *
               </label>
               <input
@@ -220,12 +220,12 @@ export default function NewFundingPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Indigenous Business Development Grant"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Short Description
               </label>
               <input
@@ -234,12 +234,12 @@ export default function NewFundingPage() {
                 onChange={(e) => setShortDescription(e.target.value)}
                 placeholder="A brief one-liner for cards"
                 maxLength={150}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Full Description *
               </label>
               <textarea
@@ -248,20 +248,20 @@ export default function NewFundingPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
                 placeholder="Describe the funding opportunity in detail..."
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Grant Type *
                 </label>
                 <select
                   required
                   value={grantType}
                   onChange={(e) => setGrantType(e.target.value as BusinessGrantType)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   {GRANT_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -272,14 +272,14 @@ export default function NewFundingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Status *
                 </label>
                 <select
                   required
                   value={status}
                   onChange={(e) => setStatus(e.target.value as BusinessGrantStatus)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="active">Active - Accepting Applications</option>
                   <option value="upcoming">Upcoming - Opens Soon</option>
@@ -291,13 +291,13 @@ export default function NewFundingPage() {
 
           {/* Provider Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Provider Information
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Provider / Organization Name
                 </label>
                 <input
@@ -305,15 +305,15 @@ export default function NewFundingPage() {
                   value={provider}
                   onChange={(e) => setProvider(e.target.value)}
                   placeholder="e.g., Indigenous Services Canada"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground0">
                   Leave blank to use your organization name
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Provider Website
                 </label>
                 <input
@@ -321,7 +321,7 @@ export default function NewFundingPage() {
                   value={providerWebsite}
                   onChange={(e) => setProviderWebsite(e.target.value)}
                   placeholder="https://provider-website.ca"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -329,13 +329,13 @@ export default function NewFundingPage() {
 
           {/* Amount */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Funding Amount
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Minimum Amount ($)
                 </label>
                 <input
@@ -344,12 +344,12 @@ export default function NewFundingPage() {
                   onChange={(e) => setAmountMin(e.target.value)}
                   placeholder="e.g., 5000"
                   min="0"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Maximum Amount ($)
                 </label>
                 <input
@@ -358,12 +358,12 @@ export default function NewFundingPage() {
                   onChange={(e) => setAmountMax(e.target.value)}
                   placeholder="e.g., 50000"
                   min="0"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Display Text
                 </label>
                 <input
@@ -371,7 +371,7 @@ export default function NewFundingPage() {
                   value={amountDisplay}
                   onChange={(e) => setAmountDisplay(e.target.value)}
                   placeholder="e.g., Up to $50,000"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -379,32 +379,32 @@ export default function NewFundingPage() {
 
           {/* Dates */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Important Dates
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Opens On
                 </label>
                 <input
                   type="date"
                   value={openDate}
                   onChange={(e) => setOpenDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Application Deadline
                 </label>
                 <input
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -412,12 +412,12 @@ export default function NewFundingPage() {
 
           {/* Eligibility */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Eligibility
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Eligible Provinces/Territories
               </label>
               <div className="flex flex-wrap gap-2">
@@ -428,15 +428,15 @@ export default function NewFundingPage() {
                     onClick={() => handleProvinceToggle(prov)}
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                       provinces.includes(prov)
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500"
-                        : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                        ? "bg-accent/20 text-emerald-300 border border-accent"
+                        : "bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]"
                     }`}
                   >
                     {prov}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-foreground0">
                 Leave empty if available Canada-wide
               </p>
             </div>
@@ -447,9 +447,9 @@ export default function NewFundingPage() {
                   type="checkbox"
                   checked={indigenousOwned}
                   onChange={(e) => setIndigenousOwned(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
                 />
-                <span className="text-sm text-slate-200">Indigenous-owned required</span>
+                <span className="text-sm text-foreground">Indigenous-owned required</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -457,9 +457,9 @@ export default function NewFundingPage() {
                   type="checkbox"
                   checked={womenOwned}
                   onChange={(e) => setWomenOwned(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
                 />
-                <span className="text-sm text-slate-200">Women-owned preferred</span>
+                <span className="text-sm text-foreground">Women-owned preferred</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -467,14 +467,14 @@ export default function NewFundingPage() {
                   type="checkbox"
                   checked={youthOwned}
                   onChange={(e) => setYouthOwned(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
                 />
-                <span className="text-sm text-slate-200">Youth-owned preferred</span>
+                <span className="text-sm text-foreground">Youth-owned preferred</span>
               </label>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Other Requirements
               </label>
               <textarea
@@ -482,19 +482,19 @@ export default function NewFundingPage() {
                 onChange={(e) => setRequirements(e.target.value)}
                 rows={3}
                 placeholder="Enter each requirement on a new line"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Application */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Application Details
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Application URL
               </label>
               <input
@@ -502,12 +502,12 @@ export default function NewFundingPage() {
                 value={applicationUrl}
                 onChange={(e) => setApplicationUrl(e.target.value)}
                 placeholder="https://apply.example.ca"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Application Process
               </label>
               <textarea
@@ -515,13 +515,13 @@ export default function NewFundingPage() {
                 onChange={(e) => setApplicationProcess(e.target.value)}
                 rows={3}
                 placeholder="Describe how to apply..."
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Contact Email
                 </label>
                 <input
@@ -529,12 +529,12 @@ export default function NewFundingPage() {
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   placeholder="grants@example.ca"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Contact Phone
                 </label>
                 <input
@@ -542,7 +542,7 @@ export default function NewFundingPage() {
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   placeholder="1-800-555-1234"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -555,13 +555,13 @@ export default function NewFundingPage() {
                 type="checkbox"
                 checked={featured}
                 onChange={(e) => setFeatured(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
               />
               <div>
-                <span className="text-sm font-medium text-slate-200">
+                <span className="text-sm font-medium text-foreground">
                   Feature this funding opportunity
                 </span>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-foreground0">
                   Featured opportunities appear prominently on the funding page
                 </p>
               </div>
@@ -569,7 +569,7 @@ export default function NewFundingPage() {
           </div>
 
           {/* Submit */}
-          <div className="pt-4 border-t border-slate-800">
+          <div className="pt-4 border-t border-[var(--card-border)]">
             <button
               type="submit"
               disabled={saving}

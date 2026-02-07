@@ -52,7 +52,7 @@ const sessionTypeConfig: Record<string, { icon: ReactNode; color: string; label:
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    color: "text-slate-500 bg-slate-50 border-slate-500/30",
+    color: "text-foreground0 bg-slate-50 border-slate-500/30",
     label: "Break",
   },
   ceremony: {
@@ -70,7 +70,7 @@ const sessionTypeConfig: Record<string, { icon: ReactNode; color: string; label:
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    color: "text-slate-500 bg-slate-50 border-slate-500/30",
+    color: "text-foreground0 bg-slate-50 border-slate-500/30",
     label: "Session",
   },
 };
@@ -103,7 +103,7 @@ function SessionCard({
         <div className="flex-shrink-0 text-center">
           <p className="text-sm font-bold text-slate-700">{session.time}</p>
           {session.endTime && (
-            <p className="text-xs text-slate-500">{session.endTime}</p>
+            <p className="text-xs text-foreground0">{session.endTime}</p>
           )}
         </div>
 
@@ -117,12 +117,12 @@ function SessionCard({
               {typeConfig.label}
             </span>
             {session.track && (
-              <span className="rounded-full border border-slate-300 bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+              <span className="rounded-full border border-slate-300 bg-slate-100 px-2.5 py-0.5 text-xs text-foreground0">
                 {session.track}
               </span>
             )}
             {session.location && (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-foreground0">
                 @ {session.location}
               </span>
             )}
@@ -166,7 +166,7 @@ function SessionCard({
         {/* Expand Icon */}
         {session.description && (
           <svg
-            className={`h-5 w-5 flex-shrink-0 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            className={`h-5 w-5 flex-shrink-0 text-foreground0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -237,7 +237,7 @@ export default function ConferenceAgenda({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-700">Schedule</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-foreground0">
             {agenda.length} day{agenda.length > 1 ? "s" : ""} of sessions and activities
           </p>
         </div>
@@ -292,7 +292,7 @@ export default function ConferenceAgenda({
       {/* Sessions */}
       <div className="mt-6 space-y-3">
         {filteredSessions.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">
+          <p className="py-8 text-center text-sm text-foreground0">
             No sessions match the selected filter.
           </p>
         ) : (
@@ -309,14 +309,14 @@ export default function ConferenceAgenda({
 
       {/* Legend */}
       <div className="mt-6 border-t border-slate-200 pt-4">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-foreground0">
           Session Types
         </p>
         <div className="flex flex-wrap gap-3">
           {Object.entries(sessionTypeConfig).map(([key, config]) => (
             <div
               key={key}
-              className="flex items-center gap-1.5 text-xs text-slate-500"
+              className="flex items-center gap-1.5 text-xs text-foreground0"
             >
               <span className={config.color.split(" ")[0]}>{config.icon}</span>
               {config.label}

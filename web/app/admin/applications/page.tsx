@@ -257,29 +257,29 @@ function AdminApplicationsContent() {
       case "hired":
         return "bg-green-500/10 text-green-400";
       case "withdrawn":
-        return "bg-slate-500/10 text-slate-400";
+        return "bg-slate-500/10 text-[var(--text-muted)]";
       default:
-        return "bg-slate-500/10 text-slate-400";
+        return "bg-slate-500/10 text-[var(--text-muted)]";
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Admin Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Applications Moderation
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {filteredApplications.length} application
                 {filteredApplications.length !== 1 ? "s" : ""}
               </p>
@@ -295,8 +295,8 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                ? "bg-accent text-slate-900"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
             All ({applications.length})
@@ -305,7 +305,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("submitted")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "submitted"
                 ? "bg-blue-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-blue-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-blue-500"
               }`}
           >
             Submitted ({statusCounts.submitted})
@@ -314,7 +314,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("reviewed")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "reviewed"
                 ? "bg-purple-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-purple-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-purple-500"
               }`}
           >
             Reviewed ({statusCounts.reviewed})
@@ -323,7 +323,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("shortlisted")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "shortlisted"
                 ? "bg-yellow-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-yellow-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-yellow-500"
               }`}
           >
             Shortlisted ({statusCounts.shortlisted})
@@ -332,7 +332,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("interviewing")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "interviewing"
                 ? "bg-indigo-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-indigo-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-indigo-500"
               }`}
           >
             Interviewing ({statusCounts.interviewing})
@@ -341,7 +341,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("offered")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "offered"
                 ? "bg-cyan-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-cyan-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-cyan-500"
               }`}
           >
             Offered ({statusCounts.offered})
@@ -350,7 +350,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("hired")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "hired"
                 ? "bg-green-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-green-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
             Hired ({statusCounts.hired})
@@ -359,7 +359,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("rejected")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "rejected"
                 ? "bg-red-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-red-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-red-500"
               }`}
           >
             Rejected ({statusCounts.rejected})
@@ -368,7 +368,7 @@ function AdminApplicationsContent() {
             onClick={() => setFilter("withdrawn")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "withdrawn"
                 ? "bg-slate-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-slate-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
             Withdrawn ({statusCounts.withdrawn})
@@ -377,8 +377,8 @@ function AdminApplicationsContent() {
 
         {/* Bulk Actions Bar */}
         {selectedIds.size > 0 && (
-          <div className="mb-4 flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3">
-            <span className="text-sm font-medium text-slate-300">
+          <div className="mb-4 flex items-center gap-4 rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3">
+            <span className="text-sm font-medium text-[var(--text-secondary)]">
               {selectedIds.size} selected
             </span>
             <div className="h-4 w-px bg-slate-700" />
@@ -431,7 +431,7 @@ function AdminApplicationsContent() {
             </div>
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="ml-auto text-sm text-slate-400 hover:text-slate-300"
+              className="ml-auto text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             >
               Clear selection
             </button>
@@ -446,9 +446,9 @@ function AdminApplicationsContent() {
                 type="checkbox"
                 checked={filteredApplications.length > 0 && filteredApplications.every((a) => selectedIds.has(a.id))}
                 onChange={toggleSelectAll}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
               />
-              <span className="text-sm text-slate-400">Select all</span>
+              <span className="text-sm text-[var(--text-muted)]">Select all</span>
             </label>
           </div>
         )}
@@ -468,8 +468,8 @@ function AdminApplicationsContent() {
               return (
                 <div
                   key={application.id}
-                  className={`rounded-2xl border bg-slate-900/60 p-6 transition hover:border-slate-700 ${
-                    isSelected ? "border-[#14B8A6]/50 bg-[#14B8A6]/5" : "border-slate-800"
+                  className={`rounded-2xl border bg-slate-900/60 p-6 transition hover:border-[var(--card-border)] ${
+                    isSelected ? "border-[#14B8A6]/50 bg-accent/5" : "border-[var(--card-border)]"
                   }`}
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -479,7 +479,7 @@ function AdminApplicationsContent() {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelect(application.id)}
-                        className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
+                        className="mt-1 h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-0"
                       />
                     </div>
 
@@ -489,13 +489,13 @@ function AdminApplicationsContent() {
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <h3 className="text-xl font-semibold text-slate-50">
+                              <h3 className="text-xl font-semibold text-foreground">
                                 {application.memberDisplayName || "Unknown Member"}
                               </h3>
-                              <p className="mt-1 text-sm text-slate-400">
+                              <p className="mt-1 text-sm text-[var(--text-muted)]">
                                 Applied for: {application.jobTitle}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-foreground0">
                                 {application.employerName}
                               </p>
                             </div>
@@ -510,35 +510,35 @@ function AdminApplicationsContent() {
                           </div>
 
                           {application.memberEmail && (
-                            <p className="mt-2 text-sm text-slate-400">
-                              <span className="text-slate-500">Email:</span>{" "}
+                            <p className="mt-2 text-sm text-[var(--text-muted)]">
+                              <span className="text-foreground0">Email:</span>{" "}
                               {application.memberEmail}
                             </p>
                           )}
 
                           {application.coverLetter && (
                             <div className="mt-3">
-                              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-foreground0">
                                 Cover Letter
                               </p>
-                              <p className="mt-1 text-sm text-slate-300 line-clamp-3">
+                              <p className="mt-1 text-sm text-[var(--text-secondary)] line-clamp-3">
                                 {application.coverLetter}
                               </p>
                             </div>
                           )}
 
                           {application.note && (
-                            <div className="mt-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
-                              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            <div className="mt-3 rounded-lg border border-[var(--card-border)] bg-surface p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-foreground0">
                                 Employer Note
                               </p>
-                              <p className="mt-1 text-sm text-slate-300">
+                              <p className="mt-1 text-sm text-[var(--text-secondary)]">
                                 {application.note}
                               </p>
                             </div>
                           )}
 
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex gap-4 text-xs text-foreground0">
                             <span>
                               Applied:{" "}
                               {application.createdAt
@@ -565,7 +565,7 @@ function AdminApplicationsContent() {
                     <div className="flex gap-2 lg:flex-col">
                       <Link
                         href={`/careers/${application.jobId}`}
-                        className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
+                        className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View Job
                       </Link>
@@ -575,7 +575,7 @@ function AdminApplicationsContent() {
                           href={application.resumeUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
+                          className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                         >
                           View Resume
                         </a>

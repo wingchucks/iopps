@@ -22,13 +22,13 @@ function FieldMappingSelect({
 }: FieldMappingSelectProps) {
     return (
         <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
                 {label} {required && <span className="text-red-400">*</span>}
             </label>
             <select
                 value={fieldMappings[field] || ""}
                 onChange={(e) => onUpdateMapping(field, e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
                 <option value="">Select field</option>
                 {availableFields.map((f) => (
@@ -167,7 +167,7 @@ export default function FeedForm({
                         type="button"
                         onClick={onDetectFields}
                         disabled={!feedUrl || detectingFields}
-                        className="rounded-md bg-teal-600 px-3 py-1 text-xs font-medium text-white hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="rounded-md bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {detectingFields ? "Detecting..." : "Detect Fields"}
                     </button>
@@ -177,7 +177,7 @@ export default function FeedForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Import Name */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                         Import Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -186,20 +186,20 @@ export default function FeedForm({
                         onChange={(e) => setFeedName(e.target.value)}
                         placeholder="e.g., SIGA"
                         required
-                        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                        className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                     />
                 </div>
 
                 {/* Select Employer - Dropdown */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                         Select Employer <span className="text-red-400">*</span>
                     </label>
                     <select
                         value={employerId}
                         onChange={(e) => handleEmployerSelect(e.target.value)}
                         required
-                        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                        className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                     >
                         <option value="">Select an employer...</option>
                         {employers.map((employer) => (
@@ -215,20 +215,20 @@ export default function FeedForm({
                             value={employerName}
                             onChange={(e) => setEmployerName(e.target.value)}
                             placeholder="Enter employer name manually"
-                            className="mt-2 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="mt-2 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                         />
                     )}
                 </div>
 
                 {/* Job Expiration */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                         Job Expiration
                     </label>
                     <select
                         value={jobExpirationType}
                         onChange={(e) => setJobExpirationType(e.target.value as "days" | "feed" | "never")}
-                        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                        className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                     >
                         <option value="feed">Jobs expire if they no longer appear in the feed</option>
                         <option value="days">Jobs expire after X days</option>
@@ -241,7 +241,7 @@ export default function FeedForm({
                             onChange={(e) => setJobExpirationDays(parseInt(e.target.value) || 30)}
                             min={1}
                             max={365}
-                            className="mt-2 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="mt-2 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                             placeholder="Days until expiration"
                         />
                     )}
@@ -249,13 +249,13 @@ export default function FeedForm({
 
                 {/* Sync Frequency */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                         Sync Frequency
                     </label>
                     <select
                         value={syncFrequency}
                         onChange={(e) => setSyncFrequency(e.target.value as "manual" | "hourly" | "daily" | "weekly")}
-                        className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                        className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                     >
                         <option value="manual">Manual only</option>
                         <option value="hourly">Every hour</option>
@@ -267,18 +267,18 @@ export default function FeedForm({
 
             {/* UTM Tracking Tag */}
             <div className="mt-4">
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                     UTM Tracking Tag
-                    <span className="ml-2 text-slate-500 font-normal">(optional)</span>
+                    <span className="ml-2 text-foreground0 font-normal">(optional)</span>
                 </label>
                 <input
                     type="text"
                     value={utmTrackingTag}
                     onChange={(e) => setUtmTrackingTag(e.target.value)}
                     placeholder="utm_source=siga&utm_medium=jobboard&utm_campaign=autoimport"
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground0">
                     Appended to application URLs for analytics tracking
                 </p>
             </div>
@@ -291,10 +291,10 @@ export default function FeedForm({
                         type="checkbox"
                         checked={noIndexByGoogle}
                         onChange={(e) => setNoIndexByGoogle(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500 focus:ring-offset-background"
                     />
-                    <span className="text-sm text-slate-200">No-Index by Google</span>
-                    <span className="text-xs text-slate-500">(prevent jobs from appearing in search)</span>
+                    <span className="text-sm text-foreground">No-Index by Google</span>
+                    <span className="text-xs text-foreground0">(prevent jobs from appearing in search)</span>
                 </label>
 
                 {/* Update Existing Jobs */}
@@ -303,17 +303,17 @@ export default function FeedForm({
                         type="checkbox"
                         checked={updateExistingJobs}
                         onChange={(e) => setUpdateExistingJobs(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500 focus:ring-offset-background"
                     />
-                    <span className="text-sm text-slate-200">Update imported jobs on the next import</span>
-                    <span className="text-xs text-slate-500">(refresh job data instead of skipping duplicates)</span>
+                    <span className="text-sm text-foreground">Update imported jobs on the next import</span>
+                    <span className="text-xs text-foreground0">(refresh job data instead of skipping duplicates)</span>
                 </label>
             </div>
 
             {/* Keyword Filtering Section */}
-            <div className="mt-6 pt-6 border-t border-slate-800">
-                <h3 className="text-lg font-semibold text-slate-100 mb-4">Keyword Filtering</h3>
-                <p className="text-sm text-slate-400 mb-4">
+            <div className="mt-6 pt-6 border-t border-[var(--card-border)]">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Keyword Filtering</h3>
+                <p className="text-sm text-[var(--text-muted)] mb-4">
                     Filter jobs to only import those matching specific keywords. Useful for large feeds like Government of Canada.
                 </p>
 
@@ -322,16 +322,16 @@ export default function FeedForm({
                         type="checkbox"
                         checked={keywordFilterEnabled}
                         onChange={(e) => setKeywordFilterEnabled(e.target.checked)}
-                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500 focus:ring-offset-background"
                     />
-                    <span className="text-sm text-slate-200">Enable keyword filtering</span>
+                    <span className="text-sm text-foreground">Enable keyword filtering</span>
                 </label>
 
                 {keywordFilterEnabled && (
                     <div className="space-y-4 pl-7">
                         {/* Match In */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-200 mb-2">
+                            <label className="block text-sm font-medium text-foreground mb-2">
                                 Search for keywords in:
                             </label>
                             <div className="flex gap-4">
@@ -346,9 +346,9 @@ export default function FeedForm({
                                                 setKeywordFilterMatchIn(keywordFilterMatchIn.filter(m => m !== "title"));
                                             }
                                         }}
-                                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500 focus:ring-offset-background"
                                     />
-                                    <span className="text-sm text-slate-300">Job Title</span>
+                                    <span className="text-sm text-[var(--text-secondary)]">Job Title</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
@@ -361,27 +361,27 @@ export default function FeedForm({
                                                 setKeywordFilterMatchIn(keywordFilterMatchIn.filter(m => m !== "description"));
                                             }
                                         }}
-                                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500 focus:ring-offset-background"
                                     />
-                                    <span className="text-sm text-slate-300">Job Description</span>
+                                    <span className="text-sm text-[var(--text-secondary)]">Job Description</span>
                                 </label>
                             </div>
                         </div>
 
                         {/* Custom Keywords */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-200 mb-1">
+                            <label className="block text-sm font-medium text-foreground mb-1">
                                 Custom Keywords
-                                <span className="ml-2 text-slate-500 font-normal">(optional)</span>
+                                <span className="ml-2 text-foreground0 font-normal">(optional)</span>
                             </label>
                             <input
                                 type="text"
                                 value={keywordFilterKeywords}
                                 onChange={(e) => setKeywordFilterKeywords(e.target.value)}
                                 placeholder="indigenous, first nations, métis, inuit"
-                                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
                             />
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-foreground0">
                                 Comma-separated. Leave empty to use default Indigenous keywords: indigenous, first nation, first nations, métis, metis, inuit, aboriginal, native, fnmi, reconciliation
                             </p>
                         </div>
@@ -390,19 +390,19 @@ export default function FeedForm({
             </div>
 
             {/* Field Mappings Section */}
-            <div className="mt-8 pt-6 border-t border-slate-800">
+            <div className="mt-8 pt-6 border-t border-[var(--card-border)]">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-100">Match XML fields from your feed to job fields</h3>
+                    <h3 className="text-lg font-semibold text-foreground">Match XML fields from your feed to job fields</h3>
                     {availableFields.length > 0 && (
-                        <span className="text-xs text-teal-400 bg-teal-900/30 px-2 py-1 rounded">
+                        <span className="text-xs text-accent bg-teal-900/30 px-2 py-1 rounded">
                             {availableFields.length} fields detected
                         </span>
                     )}
                 </div>
 
                 {availableFields.length === 0 ? (
-                    <div className="rounded-lg bg-slate-800/50 border border-slate-700 p-4 text-center">
-                        <p className="text-sm text-slate-400">
+                    <div className="rounded-lg bg-surface border border-[var(--card-border)] p-4 text-center">
+                        <p className="text-sm text-[var(--text-muted)]">
                             Enter the feed URL above and click &quot;Detect Fields&quot; to discover available XML fields.
                         </p>
                     </div>
@@ -422,7 +422,7 @@ export default function FeedForm({
                         </div>
 
                         {/* Location Fields */}
-                        <h4 className="text-sm font-medium text-slate-300 mb-3">Location Fields</h4>
+                        <h4 className="text-sm font-medium text-[var(--text-secondary)] mb-3">Location Fields</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <FieldMappingSelect label="City or Location" field="location" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                             <FieldMappingSelect label="State" field="state" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
@@ -432,11 +432,11 @@ export default function FeedForm({
                         </div>
 
                         {/* Salary Fields */}
-                        <h4 className="text-sm font-medium text-slate-300 mb-3">Salary Fields</h4>
+                        <h4 className="text-sm font-medium text-[var(--text-secondary)] mb-3">Salary Fields</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FieldMappingSelect label="Salary string" field="salaryString" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                             <div className="md:col-span-2 flex items-center">
-                                <span className="text-slate-500 text-sm">OR</span>
+                                <span className="text-foreground0 text-sm">OR</span>
                             </div>
                             <FieldMappingSelect label="Salary From" field="salaryFrom" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />
                             <FieldMappingSelect label="Salary To" field="salaryTo" fieldMappings={fieldMappings} availableFields={availableFields} onUpdateMapping={updateMapping} />

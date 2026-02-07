@@ -88,7 +88,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
 
   if (loading) {
     return (
-      <div className={`${compact ? "h-12" : "h-32"} rounded-xl bg-slate-800 animate-pulse`} />
+      <div className={`${compact ? "h-12" : "h-32"} rounded-xl bg-surface animate-pulse`} />
     );
   }
 
@@ -101,17 +101,17 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
           status.currentStreak > 0
             ? "bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30"
-            : "bg-slate-800 border border-slate-700"
+            : "bg-surface border border-[var(--card-border)]"
         }`}>
-          <Flame className={`h-4 w-4 ${status.currentStreak > 0 ? "text-orange-400" : "text-slate-500"}`} />
-          <span className={`font-bold ${status.currentStreak > 0 ? "text-orange-400" : "text-slate-500"}`}>
+          <Flame className={`h-4 w-4 ${status.currentStreak > 0 ? "text-orange-400" : "text-foreground0"}`} />
+          <span className={`font-bold ${status.currentStreak > 0 ? "text-orange-400" : "text-foreground0"}`}>
             {status.currentStreak}
           </span>
-          <span className="text-xs text-slate-400">day streak</span>
+          <span className="text-xs text-[var(--text-muted)]">day streak</span>
         </div>
         {status.isActiveToday && (
           <span title="Active today!">
-            <CheckCircle className="h-4 w-4 text-emerald-400" />
+            <CheckCircle className="h-4 w-4 text-accent" />
           </span>
         )}
         {status.willBreakTomorrow && (
@@ -125,7 +125,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
 
   // Full display for dashboard
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
           <h3 className="font-semibold text-white">Activity Streak</h3>
         </div>
         {status.freezesRemaining > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-400" title="Streak protection available">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]" title="Streak protection available">
             <Shield className="h-4 w-4 text-cyan-400" />
             {status.freezesRemaining} freeze
           </div>
@@ -145,23 +145,23 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
         <div className={`relative p-6 rounded-full ${
           status.currentStreak > 0
             ? "bg-gradient-to-br from-orange-500/20 to-red-500/20 border-2 border-orange-500/30"
-            : "bg-slate-800 border-2 border-slate-700"
+            : "bg-surface border-2 border-[var(--card-border)]"
         }`}>
           <Flame className={`h-10 w-10 ${status.currentStreak > 0 ? "text-orange-400" : "text-slate-600"}`} />
           {status.isActiveToday && (
-            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-emerald-500 flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent flex items-center justify-center">
               <CheckCircle className="h-3 w-3 text-white" />
             </div>
           )}
         </div>
         <div>
           <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-bold ${status.currentStreak > 0 ? "text-orange-400" : "text-slate-500"}`}>
+            <span className={`text-4xl font-bold ${status.currentStreak > 0 ? "text-orange-400" : "text-foreground0"}`}>
               {status.currentStreak}
             </span>
-            <span className="text-slate-400">day streak</span>
+            <span className="text-[var(--text-muted)]">day streak</span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-foreground0 mt-1">
             Best: {status.longestStreak} days | Total: {status.totalActiveDays} days active
           </p>
         </div>
@@ -173,7 +173,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
           <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-400">Streak at risk!</p>
-            <p className="text-xs text-slate-400">Visit again tomorrow to keep your streak alive</p>
+            <p className="text-xs text-[var(--text-muted)]">Visit again tomorrow to keep your streak alive</p>
           </div>
           {!status.isActiveToday && (
             <button
@@ -189,9 +189,9 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
 
       {/* Today's Status */}
       {status.isActiveToday ? (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-4">
-          <CheckCircle className="h-5 w-5 text-emerald-400" />
-          <p className="text-sm text-emerald-400">You're active today! Come back tomorrow to continue your streak.</p>
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-accent/10 border border-accent/20 mb-4">
+          <CheckCircle className="h-5 w-5 text-accent" />
+          <p className="text-sm text-accent">You're active today! Come back tomorrow to continue your streak.</p>
         </div>
       ) : !status.willBreakTomorrow && (
         <button
@@ -207,10 +207,10 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
       {status.nextMilestone && (
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-slate-400">Next milestone: {status.nextMilestone} days</span>
-            <span className="text-slate-500">{status.progressToNextMilestone}%</span>
+            <span className="text-[var(--text-muted)]">Next milestone: {status.nextMilestone} days</span>
+            <span className="text-foreground0">{status.progressToNextMilestone}%</span>
           </div>
-          <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+          <div className="h-2 w-full rounded-full bg-surface overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-orange-500 to-red-500 transition-all"
               style={{ width: `${status.progressToNextMilestone}%` }}
@@ -223,7 +223,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Trophy className="h-4 w-4 text-amber-400" />
-          <span className="text-sm font-medium text-slate-300">Milestones</span>
+          <span className="text-sm font-medium text-[var(--text-secondary)]">Milestones</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {milestones.map(({ milestone, achieved }) => (
@@ -232,7 +232,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
               className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                 achieved
                   ? "bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-400 border border-orange-500/30"
-                  : "bg-slate-800 text-slate-500 border border-slate-700"
+                  : "bg-surface text-foreground0 border border-[var(--card-border)]"
               }`}
             >
               {milestone} days

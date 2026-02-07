@@ -74,26 +74,26 @@ function PostDetailContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020306] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
   if (notFound || !post) {
     return (
-      <div className="min-h-screen bg-[#020306]">
+      <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-2xl px-4 py-6">
           <button
             onClick={() => router.back()}
-            className="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#14B8A6] transition-colors"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[#14B8A6] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </button>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-            <p className="text-lg font-semibold text-slate-300">Post not found</p>
-            <p className="mt-2 text-sm text-slate-500">
+          <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
+            <p className="text-lg font-semibold text-[var(--text-secondary)]">Post not found</p>
+            <p className="mt-2 text-sm text-foreground0">
               This post may have been deleted or you don't have permission to view it.
             </p>
           </div>
@@ -109,22 +109,22 @@ function PostDetailContent() {
   const isAuthor = user?.uid === post.authorId;
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
         {/* Back nav */}
         <button
           onClick={() => router.back()}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#14B8A6] transition-colors"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[#14B8A6] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </button>
 
         {/* Post Content */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           {/* Author Header */}
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 flex-shrink-0 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-400 overflow-hidden">
+            <div className="h-12 w-12 flex-shrink-0 rounded-full bg-surface flex items-center justify-center text-sm font-bold text-[var(--text-muted)] overflow-hidden">
               {post.authorAvatarUrl ? (
                 <img
                   src={post.authorAvatarUrl}
@@ -139,12 +139,12 @@ function PostDetailContent() {
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-white">{post.authorName}</span>
                 {post.authorType === "organization" && (
-                  <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
+                  <span className="text-xs bg-accent/20 text-accent px-1.5 py-0.5 rounded-full">
                     Org
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-foreground0">
                 {post.authorTagline && `${post.authorTagline} · `}{timestamp}
               </p>
             </div>
@@ -154,23 +154,23 @@ function PostDetailContent() {
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="p-1.5 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+                  className="p-1.5 rounded-full hover:bg-surface transition-colors text-[var(--text-muted)] hover:text-foreground"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
                 {showDropdown && (
-                  <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-[var(--card-border)] bg-surface shadow-xl z-50 overflow-hidden">
                     {!confirmDelete ? (
                       <button
                         onClick={() => setConfirmDelete(true)}
-                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-surface transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete Post
                       </button>
                     ) : (
                       <div className="px-4 py-3 space-y-2">
-                        <p className="text-xs text-slate-400">Delete this post?</p>
+                        <p className="text-xs text-[var(--text-muted)]">Delete this post?</p>
                         <div className="flex gap-2">
                           <button
                             onClick={handleDelete}
@@ -184,7 +184,7 @@ function PostDetailContent() {
                               setConfirmDelete(false);
                               setShowDropdown(false);
                             }}
-                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition-colors"
+                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-surface text-[var(--text-muted)] hover:bg-slate-700 transition-colors"
                           >
                             Cancel
                           </button>
@@ -199,7 +199,7 @@ function PostDetailContent() {
 
           {/* Post Body */}
           <div className="mb-4">
-            <p className="text-slate-200 whitespace-pre-wrap">{post.content}</p>
+            <p className="text-foreground whitespace-pre-wrap">{post.content}</p>
           </div>
 
           {/* Media */}
@@ -218,8 +218,8 @@ function PostDetailContent() {
 
           {/* Shared Entity */}
           {post.referenceData && post.type !== "status" && (
-            <div className="mb-4 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-              <p className="text-xs font-medium text-emerald-400 mb-1">
+            <div className="mb-4 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+              <p className="text-xs font-medium text-accent mb-1">
                 {post.type === "share_job" && "Shared a Job"}
                 {post.type === "share_scholarship" && "Shared a Scholarship"}
                 {post.type === "share_event" && "Shared an Event"}
@@ -229,7 +229,7 @@ function PostDetailContent() {
                 {post.referenceData.title}
               </h4>
               {post.referenceData.employerName && (
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[var(--text-muted)]">
                   {post.referenceData.employerName}
                 </p>
               )}
@@ -255,7 +255,7 @@ function PostDetailContent() {
         </div>
 
         {/* Comment Thread */}
-        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="mt-6 rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <CommentThread postId={post.id} />
         </div>
       </div>

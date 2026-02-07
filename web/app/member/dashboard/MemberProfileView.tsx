@@ -54,9 +54,9 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
     return (
         <div className="pb-20">
             {/* Passport Header Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-slate-700 bg-[#0F172A] shadow-2xl">
+            <div className="relative overflow-hidden rounded-3xl border border-[var(--card-border)] bg-[#0F172A] shadow-2xl">
                 {/* Decorative Background Elements */}
-                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
+                <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
                 <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
 
                 <div className="relative z-10 flex flex-col items-center p-8 text-center pt-12">
@@ -68,13 +68,13 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
                     </div>
 
                     <div className="absolute top-6 left-6 opacity-50">
-                        <span className="text-[10px] font-bold tracking-widest text-teal-400">COMMUNITY PASSPORT</span>
+                        <span className="text-[10px] font-bold tracking-widest text-accent">COMMUNITY PASSPORT</span>
                     </div>
 
                     {/* Avatar with Glow */}
                     <div className="relative mb-6">
                         <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-teal-400 to-amber-500 opacity-70 blur-md" />
-                        <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-slate-800 bg-slate-900 ring-4 ring-slate-900/50">
+                        <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-[var(--card-border)] bg-surface ring-4 ring-slate-900/50">
                             <Image
                                 src={displayProfile.photoURL}
                                 alt={displayProfile.displayName}
@@ -88,26 +88,26 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
                     <p className="mt-1 text-sm font-medium text-amber-500">
                         {displayProfile.indigenousAffiliation}
                     </p>
-                    <p className="mt-2 max-w-xs text-sm text-slate-400">
+                    <p className="mt-2 max-w-xs text-sm text-[var(--text-muted)]">
                         {displayProfile.headline}
                     </p>
 
                     {/* Stats Row */}
-                    <div className="mt-8 grid w-full grid-cols-3 divide-x divide-slate-700/50 rounded-2xl border border-slate-700/50 bg-slate-800/30 backdrop-blur-md">
+                    <div className="mt-8 grid w-full grid-cols-3 divide-x divide-[var(--card-border)]/50 rounded-2xl border border-[var(--card-border)] bg-slate-800/30 backdrop-blur-md">
                         <div className="flex flex-col items-center py-4">
                             <TrophyIcon className="mb-1 h-5 w-5 text-amber-400" />
                             <span className="text-lg font-bold text-white">{displayProfile.wins}</span>
-                            <span className="text-[10px] uppercase tracking-wider text-slate-500">Wins</span>
+                            <span className="text-[10px] uppercase tracking-wider text-foreground0">Wins</span>
                         </div>
                         <div className="flex flex-col items-center py-4">
-                            <UsersIcon className="mb-1 h-5 w-5 text-teal-400" />
+                            <UsersIcon className="mb-1 h-5 w-5 text-accent" />
                             <span className="text-lg font-bold text-white">{displayProfile.connections}</span>
-                            <span className="text-[10px] uppercase tracking-wider text-slate-500">Connections</span>
+                            <span className="text-[10px] uppercase tracking-wider text-foreground0">Connections</span>
                         </div>
                         <div className="flex flex-col items-center py-4">
                             <StarIcon className="mb-1 h-5 w-5 text-purple-400" />
                             <span className="text-lg font-bold text-white">Lvl {displayProfile.level}</span>
-                            <span className="text-[10px] uppercase tracking-wider text-slate-500">Status</span>
+                            <span className="text-[10px] uppercase tracking-wider text-foreground0">Status</span>
                         </div>
                     </div>
                 </div>
@@ -115,14 +115,14 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
 
             {/* Timeline Section */}
             <div className="mt-8 px-2">
-                <h3 className="mb-4 text-lg font-bold text-slate-200">My Wins Timeline</h3>
+                <h3 className="mb-4 text-lg font-bold text-foreground">My Wins Timeline</h3>
 
-                <div className="space-y-6 border-l-2 border-slate-800 ml-3 pl-6 relative">
+                <div className="space-y-6 border-l-2 border-[var(--card-border)] ml-3 pl-6 relative">
                     {mockTimeline.map((item) => (
                         <div key={item.id} className="relative">
                             {/* Timeline Node */}
                             <div className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-900 shadow-xl ${item.type === 'win' ? 'bg-amber-500 text-white' :
-                                item.type === 'milestone' ? 'bg-teal-500 text-white' : 'bg-slate-700 text-slate-300'
+                                item.type === 'milestone' ? 'bg-accent text-white' : 'bg-slate-700 text-[var(--text-secondary)]'
                                 }`}>
                                 {item.type === 'win' && <TrophyIcon className="h-3 w-3" />}
                                 {item.type === 'milestone' && <CheckCircleIcon className="h-3 w-3" />}
@@ -130,7 +130,7 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
                             </div>
 
                             {/* Card */}
-                            <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 shadow-sm transition-all hover:border-slate-700">
+                            <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-slate-900/80 shadow-sm transition-all hover:border-[var(--card-border)]">
                                 <div className="p-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
@@ -140,17 +140,17 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
                                                 </span>
                                             )}
                                             {item.type === 'milestone' && (
-                                                <span className="rounded bg-teal-500/10 px-2 py-0.5 text-[10px] font-bold text-teal-400 uppercase tracking-wide">
+                                                <span className="rounded bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent uppercase tracking-wide">
                                                     Milestone
                                                 </span>
                                             )}
                                         </div>
-                                        <span className="text-xs text-slate-500">
+                                        <span className="text-xs text-foreground0">
                                             {formatDistanceToNow(item.date, { addSuffix: true })}
                                         </span>
                                     </div>
 
-                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                                         {item.content}
                                     </p>
 
@@ -160,12 +160,12 @@ export default function MemberProfileView({ profile }: MemberProfileViewProps) {
                                         </div>
                                     )}
 
-                                    <div className="mt-4 flex items-center gap-4 border-t border-slate-800/50 pt-3">
-                                        <button className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-                                            <span className="text-slate-500">❤️</span> {item.likes}
+                                    <div className="mt-4 flex items-center gap-4 border-t border-[var(--card-border)]/50 pt-3">
+                                        <button className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-white transition-colors">
+                                            <span className="text-foreground0">❤️</span> {item.likes}
                                         </button>
-                                        <button className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-                                            <span className="text-slate-500">💬</span> {item.comments}
+                                        <button className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-white transition-colors">
+                                            <span className="text-foreground0">💬</span> {item.comments}
                                         </button>
                                     </div>
                                 </div>

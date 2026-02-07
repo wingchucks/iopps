@@ -206,7 +206,7 @@ export default function TeamTab() {
       case "editor":
         return "bg-blue-500/20 text-blue-400 border-blue-500/30";
       case "viewer":
-        return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+        return "bg-slate-500/20 text-[var(--text-muted)] border-slate-500/30";
     }
   };
 
@@ -223,8 +223,8 @@ export default function TeamTab() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8">
-        <div className="flex items-center gap-3 text-slate-400">
+      <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8">
+        <div className="flex items-center gap-3 text-[var(--text-muted)]">
           <ArrowPathIcon className="h-5 w-5 animate-spin" />
           <span>Loading team data...</span>
         </div>
@@ -256,7 +256,7 @@ export default function TeamTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white">Team Members</h2>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             {teamData?.isOwner
               ? "Manage your organization's team access"
               : `You are a ${teamData?.role} of this organization`}
@@ -265,7 +265,7 @@ export default function TeamTab() {
         {teamData?.isOwner && (
           <button
             onClick={() => setShowInviteForm(true)}
-            className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
           >
             <PlusIcon className="h-5 w-5" />
             Invite Member
@@ -276,7 +276,7 @@ export default function TeamTab() {
       {/* Invite Form Modal */}
       {showInviteForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <div className="w-full max-w-md rounded-xl border border-[var(--card-border)] bg-surface p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
                 Invite Team Member
@@ -286,7 +286,7 @@ export default function TeamTab() {
                   setShowInviteForm(false);
                   setInviteError(null);
                 }}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-white"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -294,7 +294,7 @@ export default function TeamTab() {
 
             <form onSubmit={handleInvite} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Email Address
                 </label>
                 <input
@@ -303,24 +303,24 @@ export default function TeamTab() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
                   required
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Role
                 </label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as TeamRole)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 >
                   <option value="admin">Admin - Full access</option>
                   <option value="editor">Editor - Can edit content</option>
                   <option value="viewer">Viewer - Read only access</option>
                 </select>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground0">
                   {inviteRole === "admin" &&
                     "Admins can manage team, create content, and access all features"}
                   {inviteRole === "editor" &&
@@ -341,14 +341,14 @@ export default function TeamTab() {
                     setShowInviteForm(false);
                     setInviteError(null);
                   }}
-                  className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 hover:bg-slate-800 transition-colors"
+                  className="flex-1 rounded-lg border border-[var(--card-border)] px-4 py-2 text-[var(--text-secondary)] hover:bg-surface transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={inviting}
-                  className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+                  className="flex-1 rounded-lg bg-accent px-4 py-2 text-white hover:bg-accent disabled:opacity-50 transition-colors"
                 >
                   {inviting ? "Sending..." : "Send Invitation"}
                 </button>
@@ -359,32 +359,32 @@ export default function TeamTab() {
       )}
 
       {/* Team Members List */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-        <div className="border-b border-slate-800 bg-slate-900/80 px-6 py-4">
+      <div className="rounded-xl border border-[var(--card-border)] bg-surface overflow-hidden">
+        <div className="border-b border-[var(--card-border)] bg-slate-900/80 px-6 py-4">
           <div className="flex items-center gap-2">
-            <UserGroupIcon className="h-5 w-5 text-emerald-400" />
+            <UserGroupIcon className="h-5 w-5 text-accent" />
             <h3 className="font-semibold text-white">Active Members</h3>
-            <span className="ml-2 rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
+            <span className="ml-2 rounded-full bg-surface px-2 py-0.5 text-xs text-[var(--text-muted)]">
               {(teamData?.members.length || 0) + 1}
             </span>
           </div>
         </div>
 
-        <div className="divide-y divide-slate-800">
+        <div className="divide-y divide-[var(--card-border)]">
           {/* Owner (always first) */}
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20 text-accent">
                 <UserGroupIcon className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-medium text-white">
                   {teamData?.isOwner ? "You" : "Owner"}
                 </p>
-                <p className="text-sm text-slate-400">Organization Owner</p>
+                <p className="text-sm text-[var(--text-muted)]">Organization Owner</p>
               </div>
             </div>
-            <span className="rounded-full border bg-emerald-500/20 text-emerald-400 border-emerald-500/30 px-3 py-1 text-xs font-medium">
+            <span className="rounded-full border bg-accent/20 text-accent border-accent/30 px-3 py-1 text-xs font-medium">
               Owner
             </span>
           </div>
@@ -396,7 +396,7 @@ export default function TeamTab() {
               className="flex items-center justify-between px-6 py-4"
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-slate-300">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-[var(--text-secondary)]">
                   {member.displayName?.[0]?.toUpperCase() ||
                     member.email[0].toUpperCase()}
                 </div>
@@ -404,7 +404,7 @@ export default function TeamTab() {
                   <p className="font-medium text-white">
                     {member.displayName || member.email.split("@")[0]}
                   </p>
-                  <p className="text-sm text-slate-400">{member.email}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{member.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -418,7 +418,7 @@ export default function TeamTab() {
                       disabled={actionLoading === member.id}
                       className={`rounded-full border px-3 py-1 text-xs font-medium ${getRoleBadgeColor(
                         member.role
-                      )} bg-transparent focus:outline-none focus:ring-1 focus:ring-emerald-500`}
+                      )} bg-transparent focus:outline-none focus:ring-1 focus:ring-accent`}
                     >
                       <option value="admin">Admin</option>
                       <option value="editor">Editor</option>
@@ -427,7 +427,7 @@ export default function TeamTab() {
                     <button
                       onClick={() => handleRemoveMember(member.id)}
                       disabled={actionLoading === member.id}
-                      className="text-slate-500 hover:text-red-400 transition-colors"
+                      className="text-foreground0 hover:text-red-400 transition-colors"
                       title="Remove member"
                     >
                       <TrashIcon className="h-5 w-5" />
@@ -449,9 +449,9 @@ export default function TeamTab() {
           {/* Empty state */}
           {(!teamData?.members || teamData.members.length === 0) && (
             <div className="px-6 py-8 text-center">
-              <p className="text-slate-400">No team members yet</p>
+              <p className="text-[var(--text-muted)]">No team members yet</p>
               {teamData?.isOwner && (
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-foreground0 mt-1">
                   Invite colleagues to help manage your organization
                 </p>
               )}
@@ -462,8 +462,8 @@ export default function TeamTab() {
 
       {/* Pending Invitations */}
       {teamData?.isOwner && pendingInvitations.length > 0 && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-          <div className="border-b border-slate-800 bg-slate-900/80 px-6 py-4">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface overflow-hidden">
+          <div className="border-b border-[var(--card-border)] bg-slate-900/80 px-6 py-4">
             <div className="flex items-center gap-2">
               <EnvelopeIcon className="h-5 w-5 text-amber-400" />
               <h3 className="font-semibold text-white">Pending Invitations</h3>
@@ -473,7 +473,7 @@ export default function TeamTab() {
             </div>
           </div>
 
-          <div className="divide-y divide-slate-800">
+          <div className="divide-y divide-[var(--card-border)]">
             {pendingInvitations.map((invitation) => (
               <div
                 key={invitation.id}
@@ -487,7 +487,7 @@ export default function TeamTab() {
                     <p className="font-medium text-white">
                       {invitation.invitedEmail}
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-[var(--text-muted)]">
                       Invited {formatDate(invitation.createdAt)} &middot;{" "}
                       <span
                         className={`${getRoleBadgeColor(invitation.role)
@@ -503,14 +503,14 @@ export default function TeamTab() {
                   <button
                     onClick={() => handleResendInvitation(invitation.id)}
                     disabled={actionLoading === invitation.id}
-                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 transition-colors"
+                    className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-surface transition-colors"
                   >
                     Resend
                   </button>
                   <button
                     onClick={() => handleRevokeInvitation(invitation.id)}
                     disabled={actionLoading === invitation.id}
-                    className="text-slate-500 hover:text-red-400 transition-colors"
+                    className="text-foreground0 hover:text-red-400 transition-colors"
                     title="Revoke invitation"
                   >
                     <XMarkIcon className="h-5 w-5" />
@@ -523,12 +523,12 @@ export default function TeamTab() {
       )}
 
       {/* Role Permissions Info */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4">Role Permissions</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border border-purple-500/30 bg-purple-500/10 p-4">
             <h4 className="font-medium text-purple-400 mb-2">Admin</h4>
-            <ul className="text-sm text-slate-400 space-y-1">
+            <ul className="text-sm text-[var(--text-muted)] space-y-1">
               <li className="flex items-center gap-2">
                 <CheckIcon className="h-4 w-4 text-purple-400" />
                 Manage team members
@@ -545,7 +545,7 @@ export default function TeamTab() {
           </div>
           <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
             <h4 className="font-medium text-blue-400 mb-2">Editor</h4>
-            <ul className="text-sm text-slate-400 space-y-1">
+            <ul className="text-sm text-[var(--text-muted)] space-y-1">
               <li className="flex items-center gap-2">
                 <CheckIcon className="h-4 w-4 text-blue-400" />
                 Create & edit content
@@ -560,19 +560,19 @@ export default function TeamTab() {
               </li>
             </ul>
           </div>
-          <div className="rounded-lg border border-slate-600/30 bg-slate-600/10 p-4">
-            <h4 className="font-medium text-slate-300 mb-2">Viewer</h4>
-            <ul className="text-sm text-slate-400 space-y-1">
+          <div className="rounded-lg border border-[var(--card-border)]/30 bg-slate-600/10 p-4">
+            <h4 className="font-medium text-[var(--text-secondary)] mb-2">Viewer</h4>
+            <ul className="text-sm text-[var(--text-muted)] space-y-1">
               <li className="flex items-center gap-2">
-                <CheckIcon className="h-4 w-4 text-slate-400" />
+                <CheckIcon className="h-4 w-4 text-[var(--text-muted)]" />
                 View all content
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="h-4 w-4 text-slate-400" />
+                <CheckIcon className="h-4 w-4 text-[var(--text-muted)]" />
                 View applications
               </li>
               <li className="flex items-center gap-2">
-                <CheckIcon className="h-4 w-4 text-slate-400" />
+                <CheckIcon className="h-4 w-4 text-[var(--text-muted)]" />
                 View analytics
               </li>
             </ul>

@@ -121,14 +121,14 @@ export default function PassportPage() {
     // Show loading while auth is loading, role is being determined, or data is being fetched
     // Also show loading if employer is being redirected (role === "employer")
     if (loading || !role || dataLoading || role === "employer") {
-        return <div className="p-10 text-center text-slate-500">Loading Passport...</div>;
+        return <div className="p-10 text-center text-foreground0">Loading Passport...</div>;
     }
 
     return (
         <div className="container max-w-4xl py-6 pb-24">
             <div className="px-4 mb-6">
                 <h1 className="text-2xl font-bold text-white">My Passport</h1>
-                <p className="text-slate-400">Your career journey and tools.</p>
+                <p className="text-[var(--text-muted)]">Your career journey and tools.</p>
             </div>
 
             {/* <OverviewTab

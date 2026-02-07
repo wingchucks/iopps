@@ -20,7 +20,7 @@ export function SectionHeader({
         {title}
       </h1>
       {subtitle && (
-        <p className="mt-3 text-sm text-slate-400 sm:text-base">{subtitle}</p>
+        <p className="mt-3 text-sm text-[var(--text-muted)] sm:text-base">{subtitle}</p>
       )}
     </section>
   );

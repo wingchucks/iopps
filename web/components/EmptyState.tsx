@@ -133,27 +133,27 @@ export function EmptyState({
 
   return (
     <div
-      className={`mx-auto flex max-w-xl flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/50 px-6 py-12 text-center ${className}`}
+      className={`mx-auto flex max-w-xl flex-col items-center justify-center rounded-2xl border border-[var(--card-border)] bg-surface px-6 py-12 text-center ${className}`}
       data-testid={testId}
     >
-      <div className="mb-4 rounded-full bg-slate-800/50 p-4 text-slate-400">
+      <div className="mb-4 rounded-full bg-surface p-4 text-[var(--text-muted)]">
         {icons[icon]}
       </div>
-      <h3 className="text-lg font-semibold text-slate-200">{title}</h3>
-      <p className="mt-2 max-w-md text-sm text-slate-400">{description}</p>
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <p className="mt-2 max-w-md text-sm text-[var(--text-muted)]">{description}</p>
       {hasCta && (
         <>
           {href ? (
             <Link
               href={href}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white transition-all hover:bg-teal-600 hover:shadow-lg hover:shadow-teal-500/20"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-white transition-all hover:bg-accent hover:shadow-lg hover:shadow-teal-500/20"
             >
               {label}
             </Link>
           ) : (
             <button
               onClick={onCta}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-teal-500 px-6 py-3 font-semibold text-white transition-all hover:bg-teal-600 hover:shadow-lg hover:shadow-teal-500/20"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-white transition-all hover:bg-accent hover:shadow-lg hover:shadow-teal-500/20"
             >
               {label}
             </button>

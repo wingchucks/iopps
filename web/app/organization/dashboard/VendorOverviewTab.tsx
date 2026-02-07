@@ -86,7 +86,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
       <div className="rounded-2xl bg-card border border-card-border p-8 text-center">
         <CubeIcon className="mx-auto h-12 w-12 text-slate-600" />
         <h3 className="mt-4 text-lg font-semibold text-white">No Shop Profile Yet</h3>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Create your shop profile to start selling on the Indigenous Marketplace.
         </p>
         <button
@@ -111,7 +111,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
   const statusColors = {
     draft: 'bg-slate-500',
     pending: 'bg-amber-500',
-    active: 'bg-emerald-500',
+    active: 'bg-accent',
     suspended: 'bg-red-500',
   };
 
@@ -155,7 +155,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
                 {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
               </span>
               {vendor.category && (
-                <span className="text-sm text-slate-500">{vendor.category}</span>
+                <span className="text-sm text-foreground0">{vendor.category}</span>
               )}
             </div>
           </div>
@@ -171,10 +171,10 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-amber-300">Complete Your Shop Profile</h3>
-              <p className="mt-2 text-sm text-slate-300">
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                 Complete these items to submit your listing for review:
               </p>
-              <ul className="mt-2 text-sm text-slate-400 space-y-1">
+              <ul className="mt-2 text-sm text-[var(--text-muted)] space-y-1">
                 {publishValidation.errors.map((error, i) => (
                   <li key={i}>• {error}</li>
                 ))}
@@ -197,7 +197,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
             <ClockIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
             <div>
               <h3 className="font-semibold text-amber-500">Awaiting Approval</h3>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Your listing is being reviewed by our team. We&apos;ll notify you once it&apos;s approved.
               </p>
             </div>
@@ -221,7 +221,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
             {products.slice(0, 3).map((product) => (
               <div
                 key={product.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50"
+                className="flex items-center justify-between p-4 rounded-xl bg-surface border border-[var(--card-border)]"
               >
                 <div className="flex items-center gap-3">
                   {product.imageUrl ? (
@@ -234,12 +234,12 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center">
-                      <CubeIcon className="h-6 w-6 text-slate-500" />
+                      <CubeIcon className="h-6 w-6 text-foreground0" />
                     </div>
                   )}
                   <div>
                     <h4 className="font-medium text-white">{product.name}</h4>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-foreground0">
                       {product.category || 'Uncategorized'}
                     </p>
                   </div>
@@ -248,7 +248,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
                   {product.priceDisplay && (
                     <p className="text-accent font-semibold">{product.priceDisplay}</p>
                   )}
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-foreground0">
                     {product.inStock ? 'In Stock' : 'Out of Stock'}
                   </p>
                 </div>
@@ -258,7 +258,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
           {products.length === 0 && (
             <div className="text-center py-8">
               <CubeIcon className="mx-auto h-10 w-10 text-slate-600" />
-              <p className="mt-2 text-slate-400">No products yet</p>
+              <p className="mt-2 text-[var(--text-muted)]">No products yet</p>
               <button
                 onClick={() => onNavigate?.('products')}
                 className="mt-3 text-sm text-accent hover:text-accent-hover"
@@ -278,7 +278,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
         >
           <CubeIcon className="h-6 w-6 text-accent mb-2" />
           <h4 className="font-medium text-white">Manage Products</h4>
-          <p className="text-sm text-slate-400">Add or edit your products</p>
+          <p className="text-sm text-[var(--text-muted)]">Add or edit your products</p>
         </button>
       </div>
     </div>

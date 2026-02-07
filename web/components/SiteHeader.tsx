@@ -157,7 +157,7 @@ export default function SiteHeader() {
                       >
                         <MessageSquare className="h-5 w-5" />
                         {unreadMessageCount > 0 && (
-                          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#14B8A6] px-1 text-[10px] font-bold text-slate-900">
+                          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-slate-900">
                             {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
                           </span>
                         )}
@@ -180,22 +180,22 @@ export default function SiteHeader() {
                         </svg>
                       </button>
                       {menuOpen && (
-                        <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-slate-700/50 bg-slate-900/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
-                          <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                        <div className="absolute right-0 z-30 mt-2 w-60 rounded-xl border border-[var(--card-border)] bg-slate-900/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl">
+                          <p className="text-[0.65rem] uppercase tracking-[0.3em] text-foreground0">
                             Account
                           </p>
-                          <p className="mt-1 truncate text-sm font-semibold text-slate-100">
+                          <p className="mt-1 truncate text-sm font-semibold text-foreground">
                             {user.displayName ?? user.email}
                           </p>
-                          <p className="text-xs text-slate-400 capitalize">{role ?? "User"}</p>
+                          <p className="text-xs text-[var(--text-muted)] capitalize">{role ?? "User"}</p>
 
-                          <div className="my-3 border-t border-slate-700/50" />
+                          <div className="my-3 border-t border-[var(--card-border)]" />
 
                           <div className="space-y-1.5">
                             {role !== "employer" && role !== "admin" && role !== "moderator" && (
                               <Link
                                 href="/member/dashboard"
-                                className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-[#14B8A6]/20 hover:text-[#14B8A6]"
+                                className="block rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:bg-accent/20 hover:text-[#14B8A6]"
                                 onClick={closeMenu}
                               >
                                 <span className="font-semibold">My Dashboard</span>
@@ -204,7 +204,7 @@ export default function SiteHeader() {
                             {role === "employer" && (
                               <Link
                                 href="/organization/dashboard"
-                                className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-[#14B8A6]/20 hover:text-[#14B8A6]"
+                                className="block rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:bg-accent/20 hover:text-[#14B8A6]"
                                 onClick={closeMenu}
                               >
                                 <span className="font-semibold">Organization Dashboard</span>
@@ -213,7 +213,7 @@ export default function SiteHeader() {
                             {(role === "admin" || role === "moderator") && (
                               <Link
                                 href="/admin"
-                                className="block rounded-lg px-3 py-2 text-xs text-slate-300 transition hover:bg-[#14B8A6]/20 hover:text-[#14B8A6]"
+                                className="block rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:bg-accent/20 hover:text-[#14B8A6]"
                                 onClick={closeMenu}
                               >
                                 <span className="font-semibold">Admin Dashboard</span>
@@ -221,7 +221,7 @@ export default function SiteHeader() {
                             )}
                           </div>
 
-                          <div className="mt-3 border-t border-slate-700/50 pt-3">
+                          <div className="mt-3 border-t border-[var(--card-border)] pt-3">
                             <button
                               onClick={() => void handleLogout()}
                               className="w-full rounded-lg bg-gradient-to-r from-[#14B8A6] to-cyan-600 px-3 py-2 text-xs font-semibold text-white transition hover:from-[#16cdb8] hover:to-cyan-500"

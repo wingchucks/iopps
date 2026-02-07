@@ -351,7 +351,7 @@ export default function ConferenceHero({
 
             {conference.cost && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500">Registration:</span>
+                <span className="text-sm text-foreground0">Registration:</span>
                 <span className="rounded-lg border border-[#0D9488]/30 bg-[#0D9488]/10 px-3 py-1.5 text-sm font-semibold text-[#0D9488]">
                   {conference.cost}
                 </span>

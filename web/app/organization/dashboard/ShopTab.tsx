@@ -149,7 +149,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -157,7 +157,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
   const statusColors = {
     draft: 'bg-slate-500',
     pending: 'bg-amber-500',
-    active: 'bg-emerald-500',
+    active: 'bg-accent',
     suspended: 'bg-red-500',
   };
 
@@ -174,7 +174,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
           <h2 className="text-xl font-bold text-white">
             {isNewVendor ? 'List Your Business' : 'Indigenous Marketplace'}
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             {isNewVendor
               ? 'Create your business profile to start connecting with customers.'
               : 'Manage your Indigenous Marketplace business listing.'}
@@ -193,10 +193,10 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
               <h3 className="font-semibold text-amber-300">
                 Complete Your Business Profile
               </h3>
-              <p className="mt-2 text-sm text-slate-300">
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                 Complete these items to submit your listing for review:
               </p>
-              <ul className="mt-2 text-sm text-slate-400 space-y-1">
+              <ul className="mt-2 text-sm text-[var(--text-muted)] space-y-1">
                 {publishValidation.errors.map((error, i) => (
                   <li key={i}>• {error}</li>
                 ))}
@@ -214,7 +214,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
 
       {/* Sub-tabs */}
       {!isNewVendor && (
-        <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl w-fit">
+        <div className="flex gap-1 p-1 bg-surface rounded-xl w-fit">
           {[
             { id: 'overview', label: 'Overview', icon: ChartBarIcon },
             { id: 'products', label: 'Products', icon: PhotoIcon },
@@ -225,8 +225,8 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
               onClick={() => setActiveSubTab(tab.id as SubTab)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeSubTab === tab.id
-                  ? 'bg-teal-500 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                  ? 'bg-accent text-white'
+                  : 'text-[var(--text-muted)] hover:text-white hover:bg-slate-700'
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -240,7 +240,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
       {activeSubTab === 'overview' && vendor && (
         <div className="space-y-6">
           {/* Status Card */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
                 {vendor.logoUrl ? (
@@ -263,7 +263,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                       <StatusIcon className="h-3.5 w-3.5" />
                       {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
                     </span>
-                    <span className="text-sm text-slate-500">{typeof vendor.category === 'string' ? vendor.category : ''}</span>
+                    <span className="text-sm text-foreground0">{typeof vendor.category === 'string' ? vendor.category : ''}</span>
                   </div>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                 <button
                   onClick={handleSubmitForReview}
                   disabled={saving}
-                  className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors disabled:opacity-50"
                 >
                   Submit for Review
                 </button>
@@ -281,36 +281,36 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
 
           {/* Stats */}
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
-                  <EyeIcon className="h-5 w-5 text-teal-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                  <EyeIcon className="h-5 w-5 text-accent" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-white">{vendor.viewCount || 0}</p>
-                  <p className="text-sm text-slate-400">Profile Views</p>
+                  <p className="text-sm text-[var(--text-muted)]">Profile Views</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
                   <PhotoIcon className="h-5 w-5 text-purple-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-white">{products.length}</p>
-                  <p className="text-sm text-slate-400">Products Listed</p>
+                  <p className="text-sm text-[var(--text-muted)]">Products Listed</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+            <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
                   <ChartBarIcon className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-white">{typeof vendor.region === 'string' ? vendor.region : 'N/A'}</p>
-                  <p className="text-sm text-slate-400">Region</p>
+                  <p className="text-sm text-[var(--text-muted)]">Region</p>
                 </div>
               </div>
             </div>
@@ -323,7 +323,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                 <ClockIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-amber-500">Awaiting Approval</h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">
                     Your listing is being reviewed by our team. We&apos;ll notify you once it&apos;s approved and visible to customers.
                   </p>
                 </div>
@@ -335,17 +335,17 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
           {vendor.status === 'draft' && publishValidation && (
             <div className={`rounded-2xl border p-6 ${
               publishValidation.canPublish
-                ? 'bg-emerald-500/10 border-emerald-500/20'
+                ? 'bg-accent/10 border-accent/20'
                 : 'bg-amber-500/10 border-amber-500/20'
             }`}>
               <div className="flex items-start gap-3">
                 {publishValidation.canPublish ? (
-                  <CheckCircleIcon className="h-6 w-6 text-emerald-500 flex-shrink-0" />
+                  <CheckCircleIcon className="h-6 w-6 text-accent flex-shrink-0" />
                 ) : (
                   <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
                 )}
                 <div className="flex-1">
-                  <h3 className={`font-semibold ${publishValidation.canPublish ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  <h3 className={`font-semibold ${publishValidation.canPublish ? 'text-accent' : 'text-amber-500'}`}>
                     {publishValidation.canPublish
                       ? 'Ready to submit for review!'
                       : 'Complete these requirements to submit'}
@@ -381,8 +381,8 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
 
                     {/* Warnings (optional) */}
                     {publishValidation.warnings.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-700">
-                        <p className="text-xs text-slate-400 mb-2">Recommended (optional):</p>
+                      <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+                        <p className="text-xs text-[var(--text-muted)] mb-2">Recommended (optional):</p>
                         {!vendor.logoUrl && (
                           <ChecklistItem label="Add a logo" complete={false} isWarning />
                         )}
@@ -407,7 +407,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
 
                   <button
                     onClick={() => onNavigate?.('profile')}
-                    className="mt-4 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                    className="mt-4 text-sm text-accent hover:text-teal-300 transition-colors"
                   >
                     Edit profile in Settings →
                   </button>
@@ -420,9 +420,9 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Your Listing Preview</h3>
-              <span className="text-xs text-slate-500">This is how customers see your shop</span>
+              <span className="text-xs text-foreground0">This is how customers see your shop</span>
             </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 overflow-hidden">
+            <div className="rounded-2xl bg-surface border border-[var(--card-border)] overflow-hidden">
               <div className="h-32 bg-gradient-to-br from-teal-600/30 to-emerald-600/30 relative">
                 {vendor.logoUrl && (
                   <div className="absolute -bottom-8 left-6">
@@ -431,12 +431,12 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                       alt={vendor.businessName}
                       width={80}
                       height={80}
-                      className="rounded-xl border-4 border-slate-800 object-cover"
+                      className="rounded-xl border-4 border-[var(--card-border)] object-cover"
                     />
                   </div>
                 )}
                 {!vendor.logoUrl && (
-                  <div className="absolute -bottom-8 left-6 flex h-20 w-20 items-center justify-center rounded-xl border-4 border-slate-800 bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
+                  <div className="absolute -bottom-8 left-6 flex h-20 w-20 items-center justify-center rounded-xl border-4 border-[var(--card-border)] bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
                     {vendor.businessName.charAt(0)}
                   </div>
                 )}
@@ -447,10 +447,10 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                   <div>
                     <h4 className="text-xl font-bold text-white">{vendor.businessName}</h4>
                     {vendor.tagline && typeof vendor.tagline === 'string' && (
-                      <p className="text-slate-400 mt-1">{vendor.tagline}</p>
+                      <p className="text-[var(--text-muted)] mt-1">{vendor.tagline}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-400">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 px-3 py-1 text-teal-400">
+                    <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-[var(--text-muted)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-accent">
                         {typeof vendor.category === 'string' ? vendor.category : 'Uncategorized'}
                       </span>
                       {vendor.location && typeof vendor.location === 'string' && (
@@ -466,7 +466,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                   </div>
                   <button
                     onClick={() => onNavigate?.('profile')}
-                    className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-accent hover:text-teal-300 transition-colors"
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                     Edit in Settings
@@ -474,18 +474,18 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                 </div>
 
                 {vendor.description && typeof vendor.description === 'string' && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
-                    <p className="text-slate-300 text-sm line-clamp-3">{vendor.description}</p>
+                  <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+                    <p className="text-[var(--text-secondary)] text-sm line-clamp-3">{vendor.description}</p>
                   </div>
                 )}
 
                 {products.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
+                  <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-slate-400">Products ({products.length})</span>
+                      <span className="text-sm font-medium text-[var(--text-muted)]">Products ({products.length})</span>
                       <button
                         onClick={() => setActiveSubTab('products')}
-                        className="text-xs text-teal-400 hover:text-teal-300"
+                        className="text-xs text-accent hover:text-teal-300"
                       >
                         Manage
                       </button>
@@ -503,13 +503,13 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                             />
                           ) : (
                             <div className="w-20 h-20 rounded-lg bg-slate-700 flex items-center justify-center">
-                              <PhotoIcon className="h-6 w-6 text-slate-500" />
+                              <PhotoIcon className="h-6 w-6 text-foreground0" />
                             </div>
                           )}
                         </div>
                       ))}
                       {products.length > 4 && (
-                        <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-700/50 flex items-center justify-center text-slate-400 text-sm">
+                        <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-700/50 flex items-center justify-center text-[var(--text-muted)] text-sm">
                           +{products.length - 4}
                         </div>
                       )}
@@ -528,14 +528,14 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-white">Products & Services</h3>
-              <p className="text-sm text-slate-400">Add products or services to showcase on your profile.</p>
+              <p className="text-sm text-[var(--text-muted)]">Add products or services to showcase on your profile.</p>
             </div>
             <button
               onClick={() => {
                 setEditingProduct(null);
                 setShowProductModal(true);
               }}
-              className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
             >
               <PlusIcon className="h-4 w-4" />
               Add Product
@@ -543,10 +543,10 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
           </div>
 
           {products.length === 0 ? (
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+            <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-12 text-center">
               <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
               <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 Add products or services to help customers discover what you offer.
               </p>
             </div>
@@ -556,7 +556,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                 <div
                   key={product.id}
                   onClick={() => setPreviewProduct(product)}
-                  className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group cursor-pointer hover:border-teal-500/50 transition-colors"
+                  className="rounded-xl bg-surface border border-[var(--card-border)] overflow-hidden group cursor-pointer hover:border-accent/50 transition-colors"
                 >
                   {product.imageUrl ? (
                     <div className="relative h-40">
@@ -581,7 +581,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                             e.stopPropagation();
                             setPreviewProduct(product);
                           }}
-                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-teal-500/20 text-slate-300 hover:text-teal-400 transition-colors"
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-accent/20 text-[var(--text-secondary)] hover:text-accent transition-colors"
                           title="Preview product"
                         >
                           <EyeIcon className="h-4 w-4" />
@@ -592,7 +592,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                             setEditingProduct(product);
                             setShowProductModal(true);
                           }}
-                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-[var(--text-secondary)] hover:text-white transition-colors"
                           title="Edit product"
                         >
                           <PencilSquareIcon className="h-4 w-4" />
@@ -602,18 +602,18 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                             e.stopPropagation();
                             handleDeleteProduct(product.id);
                           }}
-                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-[var(--text-secondary)] hover:text-red-400 transition-colors"
                           title="Delete product"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">{product.description}</p>
+                    <p className="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">{product.description}</p>
                     {product.priceDisplay && (
-                      <p className="mt-2 text-teal-400 font-semibold">{product.priceDisplay}</p>
+                      <p className="mt-2 text-accent font-semibold">{product.priceDisplay}</p>
                     )}
-                    <p className="mt-2 text-xs text-slate-500">Click to preview</p>
+                    <p className="mt-2 text-xs text-foreground0">Click to preview</p>
                   </div>
                 </div>
               ))}
@@ -712,17 +712,17 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
   return (
     <div className="space-y-8">
       {/* Current Status */}
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+      <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Subscription Status</h3>
 
         {hasActiveSubscription && !isExpired ? (
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-              <CheckCircleIcon className="h-6 w-6 text-emerald-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+              <CheckCircleIcon className="h-6 w-6 text-accent" />
             </div>
             <div>
               <p className="text-white font-semibold">Active Subscription</p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 Your listing is live until {subscriptionEndDate?.toLocaleDateString('en-CA', {
                   year: 'numeric',
                   month: 'long',
@@ -740,7 +740,7 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
               <p className="text-white font-semibold">
                 {isExpired ? 'Subscription Expired' : 'No Active Subscription'}
               </p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 Subscribe to make your business visible in the Indigenous Marketplace.
               </p>
             </div>
@@ -751,15 +751,15 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
       {/* Pricing Plans */}
       <div>
         <h3 className="text-xl font-bold text-white mb-2">Choose Your Plan</h3>
-        <p className="text-slate-400 mb-6">
+        <p className="text-[var(--text-muted)] mb-6">
           Get your Indigenous-owned business in front of customers across North America.
         </p>
 
         <div className="max-w-md mx-auto">
           {/* Monthly Plan */}
-          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-teal-500/50 p-6">
+          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-accent/50 p-6">
             <div className="absolute -top-3 left-6">
-              <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white">
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
                 First Month Free
               </span>
             </div>
@@ -767,14 +767,14 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
             <h4 className="text-lg font-bold text-white mt-2">{VENDOR_PRODUCTS.MONTHLY.name}</h4>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="text-3xl font-bold text-white">${VENDOR_PRODUCTS.MONTHLY.price / 100}</span>
-              <span className="text-slate-400">/month</span>
+              <span className="text-[var(--text-muted)]">/month</span>
             </div>
-            <p className="mt-2 text-sm text-slate-400">{VENDOR_PRODUCTS.MONTHLY.description}</p>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">{VENDOR_PRODUCTS.MONTHLY.description}</p>
 
             <ul className="mt-4 space-y-2">
               {VENDOR_PRODUCTS.MONTHLY.features.map((feature: string, i: number) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
-                  <CheckCircleIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                <li key={i} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                  <CheckCircleIcon className="h-4 w-4 text-accent flex-shrink-0" />
                   {feature}
                 </li>
               ))}
@@ -791,7 +791,7 @@ function SubscriptionSection({ vendor, onRefresh }: { vendor: Vendor; onRefresh:
         </div>
       </div>
 
-      <div className="text-center text-sm text-slate-500">
+      <div className="text-center text-sm text-foreground0">
         <p>Secure payments powered by Stripe. Cancel anytime.</p>
       </div>
     </div>
@@ -859,14 +859,14 @@ function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl my-8">
+      <div className="w-full max-w-2xl rounded-2xl bg-surface border border-[var(--card-border)] p-6 shadow-xl my-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">
             {product ? 'Edit Product' : 'Add Product'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-white transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -875,7 +875,7 @@ function ProductModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Product Image
             </label>
             <div className="flex items-center gap-4">
@@ -897,7 +897,7 @@ function ProductModal({
                   </button>
                 </div>
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-slate-800 border border-slate-700">
+                <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-surface border border-[var(--card-border)]">
                   <PhotoIcon className="h-8 w-8 text-slate-600" />
                 </div>
               )}
@@ -915,7 +915,7 @@ function ProductModal({
                   disabled={uploadingImage}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     uploadingImage
-                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      ? 'bg-slate-700 text-foreground0 cursor-not-allowed'
                       : 'bg-slate-700 text-white hover:bg-slate-600'
                   }`}
                 >
@@ -927,7 +927,7 @@ function ProductModal({
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Product Name *
             </label>
             <input
@@ -935,14 +935,14 @@ function ProductModal({
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               placeholder="e.g., Handcrafted Beaded Earrings"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Description *
             </label>
             <textarea
@@ -950,7 +950,7 @@ function ProductModal({
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               placeholder="Describe your product..."
             />
           </div>
@@ -958,26 +958,26 @@ function ProductModal({
           {/* Category & Price */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Category
               </label>
               <input
                 type="text"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
                 placeholder="e.g., Jewelry, Art, Clothing"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Price Display
               </label>
               <input
                 type="text"
                 value={formData.priceDisplay}
                 onChange={(e) => setFormData({ ...formData, priceDisplay: e.target.value })}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
                 placeholder="e.g., $50, From $25, Contact for pricing"
               />
             </div>
@@ -990,37 +990,37 @@ function ProductModal({
                 type="checkbox"
                 checked={formData.inStock}
                 onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
               />
-              <span className="text-slate-300">In Stock</span>
+              <span className="text-[var(--text-secondary)]">In Stock</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.madeToOrder}
                 onChange={(e) => setFormData({ ...formData, madeToOrder: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
               />
-              <span className="text-slate-300">Made to Order</span>
+              <span className="text-[var(--text-secondary)]">Made to Order</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.featured}
                 onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
               />
-              <span className="text-slate-300">Featured</span>
+              <span className="text-[var(--text-secondary)]">Featured</span>
             </label>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-4 pt-4 border-t border-slate-800">
+          <div className="flex justify-end gap-4 pt-4 border-t border-[var(--card-border)]">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-6 py-3 rounded-lg text-slate-300 hover:text-white transition-colors"
+              className="px-6 py-3 rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
             >
               Cancel
             </button>
@@ -1052,16 +1052,16 @@ function ProductPreviewModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 shadow-xl my-8 overflow-hidden">
+      <div className="w-full max-w-2xl rounded-2xl bg-surface border border-[var(--card-border)] shadow-xl my-8 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--card-border)] bg-surface">
           <div className="flex items-center gap-2">
-            <EyeIcon className="h-5 w-5 text-teal-400" />
-            <span className="text-sm font-medium text-slate-300">Customer View Preview</span>
+            <EyeIcon className="h-5 w-5 text-accent" />
+            <span className="text-sm font-medium text-[var(--text-secondary)]">Customer View Preview</span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-700 text-[var(--text-muted)] hover:text-white transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -1075,11 +1075,11 @@ function ProductPreviewModal({
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                className="object-contain bg-slate-950"
+                className="object-contain bg-background"
               />
             </div>
           ) : (
-            <div className="w-full aspect-video max-h-60 bg-slate-800 flex items-center justify-center">
+            <div className="w-full aspect-video max-h-60 bg-surface flex items-center justify-center">
               <PhotoIcon className="h-20 w-20 text-slate-600" />
             </div>
           )}
@@ -1089,21 +1089,21 @@ function ProductPreviewModal({
               <div>
                 <h2 className="text-2xl font-bold text-white">{product.name}</h2>
                 {product.category && (
-                  <span className="inline-block mt-2 text-sm text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full">
+                  <span className="inline-block mt-2 text-sm text-accent bg-accent/10 px-3 py-1 rounded-full">
                     {product.category}
                   </span>
                 )}
               </div>
               {product.priceDisplay && (
-                <p className="text-2xl font-bold text-teal-400">{product.priceDisplay}</p>
+                <p className="text-2xl font-bold text-accent">{product.priceDisplay}</p>
               )}
             </div>
 
-            <p className="text-slate-300 leading-relaxed">{product.description}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{product.description}</p>
 
             <div className="flex flex-wrap gap-2">
               {product.inStock && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
                   <CheckCircleIcon className="h-3.5 w-3.5" />
                   In Stock
                 </span>
@@ -1122,7 +1122,7 @@ function ProductPreviewModal({
               )}
             </div>
 
-            <div className="pt-4 border-t border-slate-700">
+            <div className="pt-4 border-t border-[var(--card-border)]">
               <div className="flex items-center gap-3">
                 {vendor.logoUrl ? (
                   <Image
@@ -1139,7 +1139,7 @@ function ProductPreviewModal({
                 )}
                 <div>
                   <p className="font-medium text-white">{vendor.businessName}</p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-[var(--text-muted)]">
                     {typeof vendor.location === 'string' && vendor.location}
                     {typeof vendor.location === 'string' && typeof vendor.region === 'string' && ', '}
                     {typeof vendor.region === 'string' && vendor.region}
@@ -1151,20 +1151,20 @@ function ProductPreviewModal({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between gap-4 p-4 border-t border-slate-700 bg-slate-800/50">
-          <p className="text-xs text-slate-500 self-center">
+        <div className="flex justify-between gap-4 p-4 border-t border-[var(--card-border)] bg-surface">
+          <p className="text-xs text-foreground0 self-center">
             This is how customers will see your product
           </p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-slate-300 hover:text-white transition-colors"
+              className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
             >
               Close
             </button>
             <button
               onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-500 text-white font-medium hover:bg-teal-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent transition-colors"
             >
               <PencilSquareIcon className="h-4 w-4" />
               Edit Product
@@ -1181,7 +1181,7 @@ function ChecklistItem({ label, complete, isWarning = false }: { label: string; 
   return (
     <div className="flex items-center gap-2">
       {complete ? (
-        <CheckCircleIcon className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+        <CheckCircleIcon className="h-4 w-4 text-accent flex-shrink-0" />
       ) : isWarning ? (
         <div className="h-4 w-4 rounded-full border-2 border-amber-400 flex-shrink-0" />
       ) : (
@@ -1189,10 +1189,10 @@ function ChecklistItem({ label, complete, isWarning = false }: { label: string; 
       )}
       <span className={`text-sm ${
         complete
-          ? 'text-emerald-400'
+          ? 'text-accent'
           : isWarning
             ? 'text-amber-400'
-            : 'text-slate-400'
+            : 'text-[var(--text-muted)]'
       }`}>
         {label}
       </span>

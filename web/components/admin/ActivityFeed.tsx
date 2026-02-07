@@ -87,8 +87,8 @@ const activityConfig: Record<
   },
   job_posted: {
     icon: BriefcaseIcon,
-    iconClass: "text-teal-400",
-    bgClass: "bg-teal-500/10",
+    iconClass: "text-accent",
+    bgClass: "bg-accent/10",
   },
   member_signup: {
     icon: UserPlusIcon,
@@ -122,7 +122,7 @@ const activityConfig: Record<
   },
   custom: {
     icon: PlusCircleIcon,
-    iconClass: "text-slate-400",
+    iconClass: "text-[var(--text-muted)]",
     bgClass: "bg-slate-500/10",
   },
 };
@@ -158,10 +158,10 @@ function ActivityFeedSkeleton() {
     <div className="space-y-4">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex items-start gap-3 animate-pulse">
-          <div className="h-8 w-8 rounded-full bg-slate-800" />
+          <div className="h-8 w-8 rounded-full bg-surface" />
           <div className="flex-1">
-            <div className="h-4 w-48 rounded bg-slate-800" />
-            <div className="mt-1 h-3 w-16 rounded bg-slate-800" />
+            <div className="h-4 w-48 rounded bg-surface" />
+            <div className="mt-1 h-3 w-16 rounded bg-surface" />
           </div>
         </div>
       ))}
@@ -189,17 +189,17 @@ function ActivityItemRow({ activity }: ActivityItemRowProps) {
         <Icon className={`h-4 w-4 ${config.iconClass}`} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-200 group-hover:text-white truncate">
+        <p className="text-sm text-foreground group-hover:text-white truncate">
           {activity.title}
         </p>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-foreground0">
             {formatTimeAgo(activity.timestamp)}
           </span>
           {activity.actor && (
             <>
               <span className="text-slate-700">•</span>
-              <span className="text-xs text-slate-500 truncate">
+              <span className="text-xs text-foreground0 truncate">
                 {activity.actor}
               </span>
             </>
@@ -216,7 +216,7 @@ function ActivityItemRow({ activity }: ActivityItemRowProps) {
     return (
       <Link
         href={activity.href}
-        className="block rounded-lg p-2 -ml-2 transition-colors hover:bg-slate-800/50"
+        className="block rounded-lg p-2 -ml-2 transition-colors hover:bg-surface"
       >
         {content}
       </Link>
@@ -239,8 +239,8 @@ export function ActivityFeed({
 }: ActivityFeedProps) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
-        <h3 className="text-sm font-semibold text-slate-200 mb-4">
+      <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-4">
           Recent Activity
         </h3>
         <ActivityFeedSkeleton />
@@ -252,13 +252,13 @@ export function ActivityFeed({
   const hasMore = activities.length > maxItems;
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+    <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-200">Recent Activity</h3>
+        <h3 className="text-sm font-semibold text-foreground">Recent Activity</h3>
         {(showViewAll || hasMore) && viewAllHref && (
           <Link
             href={viewAllHref}
-            className="text-xs text-teal-400 hover:text-teal-300"
+            className="text-xs text-accent hover:text-teal-300"
           >
             View all
           </Link>
@@ -267,10 +267,10 @@ export function ActivityFeed({
 
       {displayedActivities.length === 0 ? (
         <div className="py-8 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-800">
-            <ArrowPathIcon className="h-6 w-6 text-slate-500" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface">
+            <ArrowPathIcon className="h-6 w-6 text-foreground0" />
           </div>
-          <p className="mt-3 text-sm text-slate-500">No recent activity</p>
+          <p className="mt-3 text-sm text-foreground0">No recent activity</p>
         </div>
       ) : (
         <div className="space-y-1">
@@ -304,7 +304,7 @@ export function CompactActivityList({
         {[...Array(maxItems)].map((_, i) => (
           <div key={i} className="flex items-center gap-2 animate-pulse">
             <div className="h-2 w-2 rounded-full bg-slate-700" />
-            <div className="h-3 flex-1 rounded bg-slate-800" />
+            <div className="h-3 flex-1 rounded bg-surface" />
           </div>
         ))}
       </div>
@@ -329,7 +329,7 @@ export function CompactActivityList({
                 "bg-"
               )}`}
             />
-            <span className="text-slate-400 truncate flex-1">
+            <span className="text-[var(--text-muted)] truncate flex-1">
               {activity.title}
             </span>
             <span className="text-slate-600 flex-shrink-0">

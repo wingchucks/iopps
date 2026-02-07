@@ -86,7 +86,7 @@ export function AddToCalendarButton({
     <div ref={dropdownRef} className={`relative inline-block ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors ${sizeClasses}`}
+        className={`inline-flex items-center rounded-lg bg-surface border border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white transition-colors ${sizeClasses}`}
       >
         <CalendarDaysIcon className={iconSize} />
         <span>Add to Calendar</span>
@@ -94,13 +94,13 @@ export function AddToCalendarButton({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-1 w-48 rounded-lg bg-slate-800 border border-slate-700 shadow-xl z-50 overflow-hidden">
+        <div className="absolute left-0 mt-1 w-48 rounded-lg bg-surface border border-[var(--card-border)] shadow-xl z-50 overflow-hidden">
           <a
             href={googleUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white transition-colors"
           >
             <GoogleCalendarIcon className="h-4 w-4" />
             Google Calendar
@@ -110,14 +110,14 @@ export function AddToCalendarButton({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white transition-colors"
           >
             <OutlookIcon className="h-4 w-4" />
             Outlook
           </a>
           <button
             onClick={handleICalDownload}
-            className="flex items-center gap-2 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors w-full text-left"
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white transition-colors w-full text-left"
           >
             <AppleCalendarIcon className="h-4 w-4" />
             Apple Calendar (.ics)

@@ -108,24 +108,24 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="relative flex h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-slate-900 shadow-2xl">
+      <div className="relative flex h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-surface shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--card-border)] px-6 py-4">
           <div className="flex items-center gap-3">
-            <Eye className="h-5 w-5 text-emerald-400" />
+            <Eye className="h-5 w-5 text-accent" />
             <h2 className="text-lg font-semibold text-white">Profile Preview</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            className="rounded-full p-2 text-[var(--text-muted)] transition-colors hover:bg-surface hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Viewer Type Selector */}
-        <div className="border-b border-slate-800 px-6 py-3">
-          <p className="mb-2 text-sm text-slate-400">Preview your profile as seen by:</p>
+        <div className="border-b border-[var(--card-border)] px-6 py-3">
+          <p className="mb-2 text-sm text-[var(--text-muted)]">Preview your profile as seen by:</p>
           <div className="flex gap-2">
             {VIEWER_TYPES.map((type) => {
               const Icon = type.icon;
@@ -136,8 +136,8 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
                   onClick={() => setViewerType(type.id)}
                   className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                      ? "bg-accent/20 text-accent border border-accent/30"
+                      : "bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -158,7 +158,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
           <div className="mx-auto max-w-2xl">
             {/* Profile Header */}
             <div className="mb-6 flex items-start gap-4">
-              <Avatar className="h-20 w-20 border-2 border-slate-700">
+              <Avatar className="h-20 w-20 border-2 border-[var(--card-border)]">
                 <AvatarImage src={profile.avatarUrl} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xl">
                   {getInitials(profile.displayName)}
@@ -169,18 +169,18 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
                   {profile.displayName || "Your Name"}
                 </h3>
                 {showLocation && profile.location && (
-                  <p className="text-sm text-slate-400">{profile.location}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{profile.location}</p>
                 )}
                 {showAffiliation && profile.indigenousAffiliation && (
-                  <p className="text-sm text-emerald-400">{profile.indigenousAffiliation}</p>
+                  <p className="text-sm text-accent">{profile.indigenousAffiliation}</p>
                 )}
                 {showAvailability && profile.availableForInterviews && (
                   <span className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${
                     profile.availableForInterviews === "yes"
-                      ? "bg-emerald-500/20 text-emerald-400"
+                      ? "bg-accent/20 text-accent"
                       : profile.availableForInterviews === "maybe"
                       ? "bg-amber-500/20 text-amber-400"
-                      : "bg-slate-500/20 text-slate-400"
+                      : "bg-slate-500/20 text-[var(--text-muted)]"
                   }`}>
                     {profile.availableForInterviews === "yes"
                       ? "Actively Looking"
@@ -194,26 +194,26 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
 
             {/* Bio */}
             {showBio && profile.bio ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/50 p-4">
-                <h4 className="mb-2 text-sm font-semibold text-slate-300">About</h4>
-                <p className="text-sm text-slate-400 whitespace-pre-wrap">{profile.bio}</p>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+                <h4 className="mb-2 text-sm font-semibold text-[var(--text-secondary)]">About</h4>
+                <p className="text-sm text-[var(--text-muted)] whitespace-pre-wrap">{profile.bio}</p>
               </div>
             ) : !showBio && profile.bio ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/30 p-4 opacity-50">
-                <h4 className="mb-2 text-sm font-semibold text-slate-500">About</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
+                <h4 className="mb-2 text-sm font-semibold text-foreground0">About</h4>
                 <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
             {/* Skills */}
             {showSkills && profile.skills.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/50 p-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-300">Skills</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+                <h4 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">Skills</h4>
                 <div className="flex flex-wrap gap-2">
                   {profile.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-400"
+                      className="rounded-full bg-accent/20 px-3 py-1 text-xs text-accent"
                     >
                       {skill}
                     </span>
@@ -221,22 +221,22 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
                 </div>
               </div>
             ) : !showSkills && profile.skills.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/30 p-4 opacity-50">
-                <h4 className="mb-2 text-sm font-semibold text-slate-500">Skills</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
+                <h4 className="mb-2 text-sm font-semibold text-foreground0">Skills</h4>
                 <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
             {/* Experience */}
             {showExperience && profile.experience.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/50 p-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-300">Work Experience</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+                <h4 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">Work Experience</h4>
                 <div className="space-y-4">
                   {profile.experience.map((exp) => (
-                    <div key={exp.id} className="border-l-2 border-slate-700 pl-4">
+                    <div key={exp.id} className="border-l-2 border-[var(--card-border)] pl-4">
                       <p className="font-medium text-white">{exp.position}</p>
-                      <p className="text-sm text-emerald-400">{exp.company}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm text-accent">{exp.company}</p>
+                      <p className="text-xs text-foreground0">
                         {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
                       </p>
                     </div>
@@ -244,22 +244,22 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
                 </div>
               </div>
             ) : !showExperience && profile.experience.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/30 p-4 opacity-50">
-                <h4 className="mb-2 text-sm font-semibold text-slate-500">Work Experience</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
+                <h4 className="mb-2 text-sm font-semibold text-foreground0">Work Experience</h4>
                 <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
             {/* Education */}
             {showEducation && profile.education.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/50 p-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-300">Education</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+                <h4 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">Education</h4>
                 <div className="space-y-4">
                   {profile.education.map((edu) => (
-                    <div key={edu.id} className="border-l-2 border-slate-700 pl-4">
+                    <div key={edu.id} className="border-l-2 border-[var(--card-border)] pl-4">
                       <p className="font-medium text-white">{edu.degree}</p>
-                      <p className="text-sm text-teal-400">{edu.institution}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm text-accent">{edu.institution}</p>
+                      <p className="text-xs text-foreground0">
                         {formatDate(edu.startDate)} - {edu.current ? "Present" : formatDate(edu.endDate)}
                       </p>
                     </div>
@@ -267,36 +267,36 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
                 </div>
               </div>
             ) : !showEducation && profile.education.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/30 p-4 opacity-50">
-                <h4 className="mb-2 text-sm font-semibold text-slate-500">Education</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
+                <h4 className="mb-2 text-sm font-semibold text-foreground0">Education</h4>
                 <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
             {/* Portfolio */}
             {showPortfolio && profile.portfolio.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/50 p-4">
-                <h4 className="mb-3 text-sm font-semibold text-slate-300">Portfolio</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+                <h4 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">Portfolio</h4>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {profile.portfolio.map((item) => (
-                    <div key={item.id} className="rounded-lg bg-slate-900/50 p-3">
+                    <div key={item.id} className="rounded-lg bg-surface p-3">
                       <p className="font-medium text-white">{item.title}</p>
-                      <p className="text-xs text-slate-400 line-clamp-2">{item.description}</p>
+                      <p className="text-xs text-[var(--text-muted)] line-clamp-2">{item.description}</p>
                     </div>
                   ))}
                 </div>
               </div>
             ) : !showPortfolio && profile.portfolio.length > 0 ? (
-              <div className="mb-6 rounded-xl border border-slate-800 bg-slate-800/30 p-4 opacity-50">
-                <h4 className="mb-2 text-sm font-semibold text-slate-500">Portfolio</h4>
+              <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
+                <h4 className="mb-2 text-sm font-semibold text-foreground0">Portfolio</h4>
                 <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
             {/* Empty State */}
             {!profile.bio && profile.skills.length === 0 && profile.experience.length === 0 && (
-              <div className="rounded-xl border border-dashed border-slate-700 bg-slate-800/30 p-8 text-center">
-                <p className="text-slate-500">Your profile looks a bit empty.</p>
+              <div className="rounded-xl border border-dashed border-[var(--card-border)] bg-slate-800/30 p-8 text-center">
+                <p className="text-foreground0">Your profile looks a bit empty.</p>
                 <p className="mt-1 text-sm text-slate-600">
                   Add more information to help others learn about you.
                 </p>
@@ -306,12 +306,12 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-800 px-6 py-4">
+        <div className="border-t border-[var(--card-border)] px-6 py-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-foreground0">
               This is how your profile appears to {VIEWER_TYPES.find(t => t.id === viewerType)?.description.toLowerCase()}
             </p>
-            <Button onClick={onClose} variant="outline" className="border-slate-700">
+            <Button onClick={onClose} variant="outline" className="border-[var(--card-border)]">
               Close Preview
             </Button>
           </div>

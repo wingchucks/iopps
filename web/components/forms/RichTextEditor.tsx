@@ -98,18 +98,18 @@ export function RichTextEditor({
   if (!editor) {
     return (
       <div
-        className="bg-slate-800 border border-slate-700 rounded-xl animate-pulse"
+        className="bg-surface border border-[var(--card-border)] rounded-xl animate-pulse"
         style={{ minHeight }}
       />
     );
   }
 
   return (
-    <div className="border border-slate-700 rounded-xl overflow-hidden bg-slate-800">
+    <div className="border border-[var(--card-border)] rounded-xl overflow-hidden bg-surface">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-slate-700 bg-slate-900/50">
+      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[var(--card-border)] bg-surface">
         {/* Text Formatting */}
-        <div className="flex items-center gap-1 border-r border-slate-700 pr-2 mr-1">
+        <div className="flex items-center gap-1 border-r border-[var(--card-border)] pr-2 mr-1">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive("bold")}
@@ -141,7 +141,7 @@ export function RichTextEditor({
         </div>
 
         {/* Headings */}
-        <div className="flex items-center gap-1 border-r border-slate-700 pr-2 mr-1">
+        <div className="flex items-center gap-1 border-r border-[var(--card-border)] pr-2 mr-1">
           <ToolbarButton
             onClick={() => editor.chain().focus().setParagraph().run()}
             isActive={editor.isActive("paragraph")}
@@ -179,7 +179,7 @@ export function RichTextEditor({
         </div>
 
         {/* Alignment */}
-        <div className="flex items-center gap-1 border-r border-slate-700 pr-2 mr-1">
+        <div className="flex items-center gap-1 border-r border-[var(--card-border)] pr-2 mr-1">
           <ToolbarButton
             onClick={() => editor.chain().focus().setTextAlign("left").run()}
             isActive={editor.isActive({ textAlign: "left" })}
@@ -204,7 +204,7 @@ export function RichTextEditor({
         </div>
 
         {/* Lists */}
-        <div className="flex items-center gap-1 border-r border-slate-700 pr-2 mr-1">
+        <div className="flex items-center gap-1 border-r border-[var(--card-border)] pr-2 mr-1">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             isActive={editor.isActive("bulletList")}
@@ -222,7 +222,7 @@ export function RichTextEditor({
         </div>
 
         {/* Link & Image */}
-        <div className="flex items-center gap-1 border-r border-slate-700 pr-2 mr-1">
+        <div className="flex items-center gap-1 border-r border-[var(--card-border)] pr-2 mr-1">
           <ToolbarButton
             onClick={() => setShowLinkInput(!showLinkInput)}
             isActive={editor.isActive("link")}
@@ -253,13 +253,13 @@ export function RichTextEditor({
 
       {/* Link Input */}
       {showLinkInput && (
-        <div className="flex items-center gap-2 p-2 border-b border-slate-700 bg-slate-900/30">
+        <div className="flex items-center gap-2 p-2 border-b border-[var(--card-border)] bg-slate-900/30">
           <input
             type="url"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
             placeholder="Enter URL..."
-            className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#14B8A6]"
+            className="flex-1 px-3 py-1.5 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-400 focus:outline-none focus:border-[#14B8A6]"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -269,7 +269,7 @@ export function RichTextEditor({
           />
           <button
             onClick={setLink}
-            className="px-3 py-1.5 bg-[#14B8A6] text-white text-sm rounded-lg hover:bg-[#0d9488] transition-colors"
+            className="px-3 py-1.5 bg-accent text-white text-sm rounded-lg hover:bg-[#0d9488] transition-colors"
           >
             Add Link
           </button>
@@ -278,7 +278,7 @@ export function RichTextEditor({
               setShowLinkInput(false);
               setLinkUrl("");
             }}
-            className="px-3 py-1.5 bg-slate-700 text-slate-300 text-sm rounded-lg hover:bg-slate-600 transition-colors"
+            className="px-3 py-1.5 bg-slate-700 text-[var(--text-secondary)] text-sm rounded-lg hover:bg-slate-600 transition-colors"
           >
             Cancel
           </button>
@@ -287,13 +287,13 @@ export function RichTextEditor({
 
       {/* Image Input */}
       {showImageInput && (
-        <div className="flex items-center gap-2 p-2 border-b border-slate-700 bg-slate-900/30">
+        <div className="flex items-center gap-2 p-2 border-b border-[var(--card-border)] bg-slate-900/30">
           <input
             type="url"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="Enter image URL..."
-            className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#14B8A6]"
+            className="flex-1 px-3 py-1.5 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-400 focus:outline-none focus:border-[#14B8A6]"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -303,7 +303,7 @@ export function RichTextEditor({
           />
           <button
             onClick={addImage}
-            className="px-3 py-1.5 bg-[#14B8A6] text-white text-sm rounded-lg hover:bg-[#0d9488] transition-colors"
+            className="px-3 py-1.5 bg-accent text-white text-sm rounded-lg hover:bg-[#0d9488] transition-colors"
           >
             Add Image
           </button>
@@ -312,7 +312,7 @@ export function RichTextEditor({
               setShowImageInput(false);
               setImageUrl("");
             }}
-            className="px-3 py-1.5 bg-slate-700 text-slate-300 text-sm rounded-lg hover:bg-slate-600 transition-colors"
+            className="px-3 py-1.5 bg-slate-700 text-[var(--text-secondary)] text-sm rounded-lg hover:bg-slate-600 transition-colors"
           >
             Cancel
           </button>
@@ -322,7 +322,7 @@ export function RichTextEditor({
       {/* Editor Content */}
       <EditorContent
         editor={editor}
-        className="text-slate-100"
+        className="text-foreground"
         style={{ minHeight }}
       />
     </div>
@@ -348,8 +348,8 @@ function ToolbarButton({
       title={title}
       className={`p-1.5 rounded text-sm font-medium transition-colors ${
         isActive
-          ? "bg-[#14B8A6] text-white"
-          : "text-slate-400 hover:text-slate-100 hover:bg-slate-700"
+          ? "bg-accent text-white"
+          : "text-[var(--text-muted)] hover:text-foreground hover:bg-slate-700"
       }`}
     >
       {children}

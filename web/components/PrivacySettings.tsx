@@ -126,7 +126,7 @@ export default function PrivacySettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function PrivacySettings() {
     return (
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 mx-auto text-amber-400 mb-3" />
-        <p className="text-slate-400">Unable to load privacy settings</p>
+        <p className="text-[var(--text-muted)]">Unable to load privacy settings</p>
       </div>
     );
   }
@@ -143,19 +143,19 @@ export default function PrivacySettings() {
   return (
     <div className="space-y-6">
       {/* OCAP/CARE Compliance Banner */}
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+      <div className="rounded-2xl border border-accent/20 bg-accent/5 p-5">
         <div className="flex items-start gap-4">
-          <Shield className="h-6 w-6 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <Shield className="h-6 w-6 text-accent flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <h3 className="font-semibold text-emerald-300">Indigenous Data Sovereignty</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               IOPPS respects OCAP (Ownership, Control, Access, Possession) and CARE
               (Collective benefit, Authority to control, Responsibility, Ethics) principles.
               You have full control over your data and how it is shared.
             </p>
             <Link
               href="/privacy"
-              className="mt-2 inline-flex items-center gap-1.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm text-accent hover:text-emerald-300 transition-colors"
             >
               Learn more about our data principles
               <ExternalLink className="h-3.5 w-3.5" />
@@ -165,23 +165,23 @@ export default function PrivacySettings() {
       </div>
 
       {/* Profile Visibility */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <Eye className="h-5 w-5 text-emerald-400" />
+          <Eye className="h-5 w-5 text-accent" />
           Profile Visibility
         </h3>
 
         {/* Profile Visibility Selector */}
-        <div className="flex items-center justify-between py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between py-4 border-b border-[var(--card-border)]">
           <div>
             <p className="font-medium text-white">Profile Visibility</p>
-            <p className="text-sm text-slate-400">Who can view your full profile</p>
+            <p className="text-sm text-[var(--text-muted)]">Who can view your full profile</p>
           </div>
           <select
             value={settings.profileVisibility}
             onChange={(e) => handleProfileVisibility(e.target.value as ProfileVisibility)}
             disabled={saving}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 focus:border-emerald-500/50 focus:outline-none disabled:opacity-50"
+            className="rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-[var(--text-secondary)] focus:border-accent/50 focus:outline-none disabled:opacity-50"
           >
             {PROFILE_VISIBILITY_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -193,7 +193,7 @@ export default function PrivacySettings() {
 
         {/* Show in Talent Search */}
         <ToggleRow
-          icon={<Search className="h-5 w-5 text-slate-400" />}
+          icon={<Search className="h-5 w-5 text-[var(--text-muted)]" />}
           label="Show in Talent Search"
           description="Allow employers to find you when searching for candidates"
           enabled={settings.showInTalentSearch}
@@ -204,7 +204,7 @@ export default function PrivacySettings() {
 
         {/* Show in Directory */}
         <ToggleRow
-          icon={<LayoutGrid className="h-5 w-5 text-slate-400" />}
+          icon={<LayoutGrid className="h-5 w-5 text-[var(--text-muted)]" />}
           label="Show in Member Directory"
           description="Appear in the community member directory"
           enabled={settings.showInDirectory}
@@ -214,12 +214,12 @@ export default function PrivacySettings() {
       </div>
 
       {/* Identity Information */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <Globe className="h-5 w-5 text-emerald-400" />
+          <Globe className="h-5 w-5 text-accent" />
           Identity Information
         </h3>
-        <p className="text-sm text-slate-400 mb-4">
+        <p className="text-sm text-[var(--text-muted)] mb-4">
           Control who can see your identity and professional information
         </p>
 
@@ -289,9 +289,9 @@ export default function PrivacySettings() {
       </div>
 
       {/* Contact & Messaging */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-emerald-400" />
+          <MessageCircle className="h-5 w-5 text-accent" />
           Contact & Messaging
         </h3>
 
@@ -314,7 +314,7 @@ export default function PrivacySettings() {
 
         {/* Allow Connection Requests */}
         <ToggleRow
-          icon={<Users className="h-5 w-5 text-slate-400" />}
+          icon={<Users className="h-5 w-5 text-[var(--text-muted)]" />}
           label="Allow Connection Requests"
           description="Let other members send you connection requests"
           enabled={settings.allowConnectionRequests}
@@ -327,13 +327,13 @@ export default function PrivacySettings() {
         <div className="flex items-center justify-between py-4">
           <div>
             <p className="font-medium text-white">Who Can Message Me</p>
-            <p className="text-sm text-slate-400">Control who can send you direct messages</p>
+            <p className="text-sm text-[var(--text-muted)]">Control who can send you direct messages</p>
           </div>
           <select
             value={settings.allowMessagesFrom}
             onChange={(e) => handleMessagesFrom(e.target.value as "everyone" | "connections" | "none")}
             disabled={saving}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 focus:border-emerald-500/50 focus:outline-none disabled:opacity-50"
+            className="rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-[var(--text-secondary)] focus:border-accent/50 focus:outline-none disabled:opacity-50"
           >
             {MESSAGES_FROM_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -345,14 +345,14 @@ export default function PrivacySettings() {
       </div>
 
       {/* Activity */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-emerald-400" />
+          <Activity className="h-5 w-5 text-accent" />
           Activity
         </h3>
 
         <ToggleRow
-          icon={<Activity className="h-5 w-5 text-slate-400" />}
+          icon={<Activity className="h-5 w-5 text-[var(--text-muted)]" />}
           label="Show Activity in Community Feed"
           description="Your activity may appear in the community feed"
           enabled={settings.showActivityInFeed}
@@ -361,7 +361,7 @@ export default function PrivacySettings() {
           border
         />
         <ToggleRow
-          icon={<Calendar className="h-5 w-5 text-slate-400" />}
+          icon={<Calendar className="h-5 w-5 text-[var(--text-muted)]" />}
           label="Show Event Attendance"
           description="Let others see which events you're attending"
           enabled={settings.showEventAttendance}
@@ -391,19 +391,19 @@ function ToggleRow({
   border?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between py-4 ${border ? "border-b border-slate-800" : ""}`}>
+    <div className={`flex items-center justify-between py-4 ${border ? "border-b border-[var(--card-border)]" : ""}`}>
       <div className="flex items-center gap-3 flex-1">
         {icon}
         <div>
           <p className="font-medium text-white">{label}</p>
-          <p className="text-sm text-slate-400">{description}</p>
+          <p className="text-sm text-[var(--text-muted)]">{description}</p>
         </div>
       </div>
       <button
         onClick={onToggle}
         disabled={saving}
         className={`relative h-7 w-12 rounded-full transition-colors flex-shrink-0 ${
-          enabled ? "bg-emerald-500" : "bg-slate-700"
+          enabled ? "bg-accent" : "bg-slate-700"
         }`}
       >
         <span
@@ -432,19 +432,19 @@ function FieldVisibilityRow({
   border?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between py-4 ${border ? "border-b border-slate-800" : ""}`}>
+    <div className={`flex items-center justify-between py-4 ${border ? "border-b border-[var(--card-border)]" : ""}`}>
       <div className="flex items-center gap-3 flex-1">
-        <Lock className="h-5 w-5 text-slate-400" />
+        <Lock className="h-5 w-5 text-[var(--text-muted)]" />
         <div>
           <p className="font-medium text-white">{label}</p>
-          <p className="text-sm text-slate-400">{description}</p>
+          <p className="text-sm text-[var(--text-muted)]">{description}</p>
         </div>
       </div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as FieldVisibility)}
         disabled={saving}
-        className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 focus:border-emerald-500/50 focus:outline-none disabled:opacity-50"
+        className="rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-[var(--text-secondary)] focus:border-accent/50 focus:outline-none disabled:opacity-50"
       >
         {FIELD_VISIBILITY_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>

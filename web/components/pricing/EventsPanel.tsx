@@ -12,49 +12,49 @@ export default function EventsPanel() {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-50">For Event Organizers</h2>
-        <p className="mt-2 text-slate-400">
+        <h2 className="text-2xl font-bold text-foreground">For Event Organizers</h2>
+        <p className="mt-2 text-[var(--text-muted)]">
           Post conferences, summits, pow wows, and gatherings for free. Pay only for featured visibility.
         </p>
       </div>
 
       {/* Free Posting Callout */}
-      <div className="max-w-3xl rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-6 mb-8">
+      <div className="max-w-3xl rounded-2xl border border-accent/30 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-6 mb-8">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20">
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-accent/20">
             <span className="text-2xl">🎉</span>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <h3 className="text-xl font-bold text-slate-100">Posting Is Always Free</h3>
-              <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              <h3 className="text-xl font-bold text-foreground">Posting Is Always Free</h3>
+              <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
                 Free
               </span>
             </div>
-            <p className="mt-2 text-slate-300">
+            <p className="mt-2 text-[var(--text-secondary)]">
               All conferences, summits, pow wows, and community events can be posted at no cost. Free listings receive standard visibility for 45 days. Feature your event to extend visibility.
             </p>
-            <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-slate-400">
+            <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-[var(--text-muted)]">
               <li className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Listed in Conferences section
               </li>
               <li className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Banner image & description
               </li>
               <li className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Registration link included
               </li>
               <li className="flex items-center gap-2">
-                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Agenda & speaker profiles
@@ -64,14 +64,14 @@ export default function EventsPanel() {
               {isCommunityMember ? (
                 <Link
                   href="/register?role=employer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-5 py-2.5 font-semibold text-white hover:bg-emerald-600 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent transition-colors"
                 >
                   Create Organization Account
                 </Link>
               ) : (
                 <Link
                   href="/organization/conferences/new"
-                  className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-5 py-2.5 font-semibold text-white hover:bg-emerald-600 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-semibold text-white hover:bg-accent transition-colors"
                 >
                   Post Your Event Free
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,8 +85,8 @@ export default function EventsPanel() {
       </div>
 
       {/* Featured Visibility Options */}
-      <h3 className="text-lg font-semibold text-slate-200 mb-4">Boost Your Visibility</h3>
-      <p className="text-sm text-slate-400 mb-6">
+      <h3 className="text-lg font-semibold text-foreground mb-4">Boost Your Visibility</h3>
+      <p className="text-sm text-[var(--text-muted)] mb-6">
         Want more exposure? Feature your conference for premium placement and increased reach. Featured = priority placement + extended visibility.
       </p>
 
@@ -130,8 +130,8 @@ export default function EventsPanel() {
       </div>
 
       {/* Contact CTA */}
-      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center">
-        <p className="text-slate-300">
+      <div className="mt-8 rounded-xl border border-[var(--card-border)] bg-surface p-6 text-center">
+        <p className="text-[var(--text-secondary)]">
           Have questions about posting events or need help with your listing?
         </p>
         <Link

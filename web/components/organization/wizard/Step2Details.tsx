@@ -74,8 +74,8 @@ export default function Step2Details({
         <div className="space-y-6">
             <div className="mb-6 flex items-start justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-100">Job Details</h2>
-                    <p className="text-sm text-slate-400">
+                    <h2 className="text-xl font-bold text-foreground">Job Details</h2>
+                    <p className="text-sm text-[var(--text-muted)]">
                         Tell candidates what they'll be doing and what you need.
                     </p>
                 </div>
@@ -103,7 +103,7 @@ export default function Step2Details({
             <div>
                 <label
                     htmlFor="description"
-                    className="block text-sm font-medium text-slate-200"
+                    className="block text-sm font-medium text-foreground"
                 >
                     Description <span className="text-red-400">*</span>
                 </label>
@@ -113,7 +113,7 @@ export default function Step2Details({
                     value={data.description}
                     onChange={(e) => updateData({ description: e.target.value })}
                     placeholder="Overview of the role and your company..."
-                    className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
                 />
             </div>
 
@@ -121,11 +121,11 @@ export default function Step2Details({
                 <div>
                     <label
                         htmlFor="responsibilities"
-                        className="block text-sm font-medium text-slate-200"
+                        className="block text-sm font-medium text-foreground"
                     >
                         Responsibilities <span className="text-red-400">*</span>
                     </label>
-                    <p className="text-xs text-slate-500 mb-2">One item per line</p>
+                    <p className="text-xs text-foreground0 mb-2">One item per line</p>
                     <textarea
                         id="responsibilities"
                         rows={8}
@@ -133,17 +133,17 @@ export default function Step2Details({
                         onChange={(e) =>
                             updateData({ responsibilities: e.target.value.split("\n") })
                         }
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                        className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
                     />
                 </div>
                 <div>
                     <label
                         htmlFor="qualifications"
-                        className="block text-sm font-medium text-slate-200"
+                        className="block text-sm font-medium text-foreground"
                     >
                         Qualifications <span className="text-red-400">*</span>
                     </label>
-                    <p className="text-xs text-slate-500 mb-2">One item per line</p>
+                    <p className="text-xs text-foreground0 mb-2">One item per line</p>
                     <textarea
                         id="qualifications"
                         rows={8}
@@ -151,7 +151,7 @@ export default function Step2Details({
                         onChange={(e) =>
                             updateData({ qualifications: e.target.value.split("\n") })
                         }
-                        className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                        className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
                     />
                 </div>
             </div>
@@ -159,14 +159,14 @@ export default function Step2Details({
             <div className="flex justify-between pt-6">
                 <button
                     onClick={onBack}
-                    className="text-sm font-semibold text-slate-400 hover:text-slate-200"
+                    className="text-sm font-semibold text-[var(--text-muted)] hover:text-foreground"
                 >
                     Back
                 </button>
                 <button
                     onClick={onNext}
                     disabled={!isValid}
-                    className="rounded-xl bg-[#14B8A6] px-8 py-3 font-semibold text-slate-900 transition-all hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl bg-accent px-8 py-3 font-semibold text-slate-900 transition-all hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     Next: Preferences
                 </button>

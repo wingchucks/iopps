@@ -148,7 +148,7 @@ export default function SettingsTab() {
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -156,7 +156,7 @@ export default function SettingsTab() {
   if (!settings) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <p className="text-slate-400">Unable to load settings</p>
+        <p className="text-[var(--text-muted)]">Unable to load settings</p>
       </div>
     );
   }
@@ -166,7 +166,7 @@ export default function SettingsTab() {
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-900/50 to-slate-800/50 p-8 shadow-xl">
         <h2 className="text-2xl font-bold text-white">Account Settings</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Manage your account preferences, notifications, and privacy settings
         </p>
         {hasChanges && (
@@ -180,26 +180,26 @@ export default function SettingsTab() {
       {/* Account Information */}
       <section className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="mb-6 flex items-center gap-3">
-          <Mail className="h-6 w-6 text-emerald-400" />
+          <Mail className="h-6 w-6 text-accent" />
           <h3 className="text-xl font-bold text-white">Account Information</h3>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-accent/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Email Address</p>
-              <p className="text-slate-400">{user?.email || "Not set"}</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Email Address</p>
+              <p className="text-[var(--text-muted)]">{user?.email || "Not set"}</p>
             </div>
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
+            <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-accent">
               Verified
             </span>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-accent/20 bg-surface p-4">
             <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-slate-500" />
+              <Calendar className="h-5 w-5 text-foreground0" />
               <div>
-                <p className="text-sm font-medium text-slate-300">Member Since</p>
-                <p className="text-slate-400">
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Member Since</p>
+                <p className="text-[var(--text-muted)]">
                   {user?.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", {
                         year: "numeric",
@@ -221,10 +221,10 @@ export default function SettingsTab() {
           <h3 className="text-xl font-bold text-white">Security</h3>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-blue-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Password</p>
-              <p className="text-xs text-slate-500">Update your account password</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Password</p>
+              <p className="text-xs text-foreground0">Update your account password</p>
             </div>
             <button
               onClick={handlePasswordReset}
@@ -236,7 +236,7 @@ export default function SettingsTab() {
           </div>
 
           {resetEmailSent && (
-            <p className="text-sm text-emerald-400">
+            <p className="text-sm text-accent">
               Password reset email sent to {user?.email}. Check your inbox.
             </p>
           )}
@@ -249,7 +249,7 @@ export default function SettingsTab() {
           <Bell className="h-6 w-6 text-amber-400" />
           <h3 className="text-xl font-bold text-white">Notification Preferences</h3>
         </div>
-        <p className="mb-4 text-sm text-slate-400">
+        <p className="mb-4 text-sm text-[var(--text-muted)]">
           Choose what email notifications you want to receive
         </p>
         <div className="space-y-3">
@@ -262,16 +262,16 @@ export default function SettingsTab() {
           ].map(({ key, label, description }) => (
             <div
               key={key}
-              className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-slate-900/50 p-4"
+              className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-surface p-4"
             >
               <div>
-                <p className="text-sm font-medium text-slate-300">{label}</p>
-                <p className="text-xs text-slate-500">{description}</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">{label}</p>
+                <p className="text-xs text-foreground0">{description}</p>
               </div>
               <button
                 onClick={() => handleNotificationToggle(key)}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
-                  settings.notifications[key] ? "bg-emerald-500" : "bg-slate-600"
+                  settings.notifications[key] ? "bg-accent" : "bg-slate-600"
                 }`}
                 role="switch"
                 aria-checked={settings.notifications[key]}
@@ -293,20 +293,20 @@ export default function SettingsTab() {
           <Eye className="h-6 w-6 text-purple-400" />
           <h3 className="text-xl font-bold text-white">Privacy Settings</h3>
         </div>
-        <p className="mb-4 text-sm text-slate-400">
+        <p className="mb-4 text-sm text-[var(--text-muted)]">
           Control who can see your profile and how you appear on the platform
         </p>
         <div className="space-y-4">
           {/* Profile Visibility */}
-          <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Profile Visibility</p>
-              <p className="text-xs text-slate-500">Who can view your full profile</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Profile Visibility</p>
+              <p className="text-xs text-foreground0">Who can view your full profile</p>
             </div>
             <select
               value={settings.profileVisibility}
               onChange={(e) => handlePrivacyChange("profileVisibility", e.target.value as ProfileVisibility)}
-              className="rounded-lg border border-purple-500/20 bg-slate-800 px-3 py-2 text-sm text-slate-300 focus:border-purple-500/50 focus:outline-none"
+              className="rounded-lg border border-purple-500/20 bg-surface px-3 py-2 text-sm text-[var(--text-secondary)] focus:border-purple-500/50 focus:outline-none"
             >
               <option value="public">Public (All IOPPS Members)</option>
               <option value="connections">Connections Only</option>
@@ -315,15 +315,15 @@ export default function SettingsTab() {
           </div>
 
           {/* Show in Talent Search */}
-          <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Show in Talent Search</p>
-              <p className="text-xs text-slate-500">Allow employers to find you when searching for candidates</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Show in Talent Search</p>
+              <p className="text-xs text-foreground0">Allow employers to find you when searching for candidates</p>
             </div>
             <button
               onClick={() => handlePrivacyChange("showInTalentSearch", !settings.showInTalentSearch)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                settings.showInTalentSearch ? "bg-emerald-500" : "bg-slate-600"
+                settings.showInTalentSearch ? "bg-accent" : "bg-slate-600"
               }`}
               role="switch"
               aria-checked={settings.showInTalentSearch}
@@ -337,15 +337,15 @@ export default function SettingsTab() {
           </div>
 
           {/* Show in Member Directory */}
-          <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-purple-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Show in Member Directory</p>
-              <p className="text-xs text-slate-500">Appear in the community member directory</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Show in Member Directory</p>
+              <p className="text-xs text-foreground0">Appear in the community member directory</p>
             </div>
             <button
               onClick={() => handlePrivacyChange("showInDirectory", !settings.showInDirectory)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                settings.showInDirectory ? "bg-emerald-500" : "bg-slate-600"
+                settings.showInDirectory ? "bg-accent" : "bg-slate-600"
               }`}
               role="switch"
               aria-checked={settings.showInDirectory}
@@ -366,20 +366,20 @@ export default function SettingsTab() {
           <Users className="h-6 w-6 text-cyan-400" />
           <h3 className="text-xl font-bold text-white">Connection Settings</h3>
         </div>
-        <p className="mb-4 text-sm text-slate-400">
+        <p className="mb-4 text-sm text-[var(--text-muted)]">
           Control how other members can interact with you
         </p>
         <div className="space-y-4">
           {/* Allow Connection Requests */}
-          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Allow Connection Requests</p>
-              <p className="text-xs text-slate-500">Let other members send you connection requests</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Allow Connection Requests</p>
+              <p className="text-xs text-foreground0">Let other members send you connection requests</p>
             </div>
             <button
               onClick={() => handlePrivacyChange("allowConnectionRequests", !settings.allowConnectionRequests)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                settings.allowConnectionRequests ? "bg-emerald-500" : "bg-slate-600"
+                settings.allowConnectionRequests ? "bg-accent" : "bg-slate-600"
               }`}
               role="switch"
               aria-checked={settings.allowConnectionRequests}
@@ -393,15 +393,15 @@ export default function SettingsTab() {
           </div>
 
           {/* Who Can Message */}
-          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Who Can Message Me</p>
-              <p className="text-xs text-slate-500">Control who can send you direct messages</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Who Can Message Me</p>
+              <p className="text-xs text-foreground0">Control who can send you direct messages</p>
             </div>
             <select
               value={settings.allowMessagesFrom}
               onChange={(e) => handleMessagesFromChange(e.target.value as "everyone" | "connections" | "none")}
-              className="rounded-lg border border-cyan-500/20 bg-slate-800 px-3 py-2 text-sm text-slate-300 focus:border-cyan-500/50 focus:outline-none"
+              className="rounded-lg border border-cyan-500/20 bg-surface px-3 py-2 text-sm text-[var(--text-secondary)] focus:border-cyan-500/50 focus:outline-none"
             >
               <option value="everyone">Everyone</option>
               <option value="connections">Connections Only</option>
@@ -410,15 +410,15 @@ export default function SettingsTab() {
           </div>
 
           {/* Show Activity in Feed */}
-          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Show Activity in Community Feed</p>
-              <p className="text-xs text-slate-500">Your activity may appear in the community feed</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Show Activity in Community Feed</p>
+              <p className="text-xs text-foreground0">Your activity may appear in the community feed</p>
             </div>
             <button
               onClick={() => handlePrivacyChange("showActivityInFeed", !settings.showActivityInFeed)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                settings.showActivityInFeed ? "bg-emerald-500" : "bg-slate-600"
+                settings.showActivityInFeed ? "bg-accent" : "bg-slate-600"
               }`}
               role="switch"
               aria-checked={settings.showActivityInFeed}
@@ -432,15 +432,15 @@ export default function SettingsTab() {
           </div>
 
           {/* Show Event Attendance */}
-          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-slate-900/50 p-4">
+          <div className="flex items-center justify-between rounded-xl border border-cyan-500/20 bg-surface p-4">
             <div>
-              <p className="text-sm font-medium text-slate-300">Show Event Attendance</p>
-              <p className="text-xs text-slate-500">Let others see which events you're attending</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Show Event Attendance</p>
+              <p className="text-xs text-foreground0">Let others see which events you're attending</p>
             </div>
             <button
               onClick={() => handlePrivacyChange("showEventAttendance", !settings.showEventAttendance)}
               className={`relative h-6 w-11 rounded-full transition-colors ${
-                settings.showEventAttendance ? "bg-emerald-500" : "bg-slate-600"
+                settings.showEventAttendance ? "bg-accent" : "bg-slate-600"
               }`}
               role="switch"
               aria-checked={settings.showEventAttendance}
@@ -473,7 +473,7 @@ export default function SettingsTab() {
           <Trash2 className="h-6 w-6 text-red-400" />
           <h3 className="text-xl font-bold text-red-400">Danger Zone</h3>
         </div>
-        <p className="mb-4 text-sm text-slate-400">
+        <p className="mb-4 text-sm text-[var(--text-muted)]">
           Once you delete your account, there is no going back. All your data, applications, and connections will be permanently removed.
         </p>
         <button

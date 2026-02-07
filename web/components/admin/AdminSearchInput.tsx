@@ -20,10 +20,10 @@ export function AdminSearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 pl-10 text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+        className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 pl-10 text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
       />
       <svg
-        className="absolute left-3 top-3.5 h-5 w-5 text-slate-500"
+        className="absolute left-3 top-3.5 h-5 w-5 text-foreground0"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

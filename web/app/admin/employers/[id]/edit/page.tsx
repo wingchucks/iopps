@@ -240,35 +240,35 @@ export default function EditEmployerPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#020306]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-teal-500"></div>
-          <p className="mt-3 text-slate-400">Loading employer...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[var(--card-border)] border-t-teal-500"></div>
+          <p className="mt-3 text-[var(--text-muted)]">Loading employer...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#020306] pb-12">
+    <div className="min-h-screen bg-background pb-12">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-3xl px-4 py-6">
           <Link
             href="/admin/employers"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-teal-400"
+            className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-accent"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Back to Employers
           </Link>
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-50">Edit Employer</h1>
-              <p className="mt-1 text-sm text-slate-400">{organizationName || "Loading..."}</p>
+              <h1 className="text-2xl font-bold text-foreground">Edit Employer</h1>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">{organizationName || "Loading..."}</p>
             </div>
             <Link
               href={`/admin/employers/${employerId}/products`}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:border-teal-500 hover:text-teal-400"
+              className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:border-accent hover:text-accent"
             >
               Manage Products
             </Link>
@@ -279,15 +279,15 @@ export default function EditEmployerPage() {
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="space-y-8">
           {/* Logo Section */}
-          <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Logo</h2>
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
+            <h2 className="text-lg font-semibold text-foreground">Logo</h2>
             <div className="mt-4 flex items-center gap-6">
               {logoUrl ? (
                 <div className="relative">
                   <img
                     src={logoUrl}
                     alt="Company logo"
-                    className="h-24 w-24 rounded-lg border border-slate-700 bg-white object-contain p-2"
+                    className="h-24 w-24 rounded-lg border border-[var(--card-border)] bg-white object-contain p-2"
                   />
                   <button
                     onClick={handleRemoveLogo}
@@ -298,8 +298,8 @@ export default function EditEmployerPage() {
                   </button>
                 </div>
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-800/50">
-                  <PhotoIcon className="h-8 w-8 text-slate-500" />
+                <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-[var(--card-border)] bg-surface">
+                  <PhotoIcon className="h-8 w-8 text-foreground0" />
                 </div>
               )}
               <div>
@@ -313,72 +313,72 @@ export default function EditEmployerPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingLogo}
-                  className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:border-teal-500 hover:text-teal-400 disabled:opacity-50"
+                  className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:border-accent hover:text-accent disabled:opacity-50"
                 >
                   {uploadingLogo ? "Uploading..." : logoUrl ? "Change Logo" : "Upload Logo"}
                 </button>
-                <p className="mt-2 text-xs text-slate-500">PNG, JPG up to 5MB</p>
+                <p className="mt-2 text-xs text-foreground0">PNG, JPG up to 5MB</p>
               </div>
             </div>
           </div>
 
           {/* Basic Info */}
-          <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Basic Information</h2>
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
+            <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                   Organization Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={organizationName}
                   onChange={(e) => setOrganizationName(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Description</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                   placeholder="About the organization..."
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Website</label>
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Website</label>
                   <input
                     type="url"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="https://example.com"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Location</label>
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Location</label>
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="City, Province"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Industry</label>
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Industry</label>
                   <select
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value as IndustryType)}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-accent focus:outline-none"
                   >
                     <option value="">Select industry</option>
                     {INDUSTRY_OPTIONS.map((opt) => (
@@ -389,11 +389,11 @@ export default function EditEmployerPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Company Size</label>
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Company Size</label>
                   <select
                     value={companySize}
                     onChange={(e) => setCompanySize(e.target.value as CompanySize)}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-accent focus:outline-none"
                   >
                     <option value="">Select size</option>
                     {COMPANY_SIZE_OPTIONS.map((opt) => (
@@ -406,7 +406,7 @@ export default function EditEmployerPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Founded Year</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Founded Year</label>
                 <input
                   type="number"
                   value={foundedYear}
@@ -414,90 +414,90 @@ export default function EditEmployerPage() {
                   placeholder="2020"
                   min={1800}
                   max={new Date().getFullYear()}
-                  className="w-full max-w-[200px] rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full max-w-[200px] rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Contact Info */}
-          <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Contact Information</h2>
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
+            <h2 className="text-lg font-semibold text-foreground">Contact Information</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Contact Email</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Contact Email</label>
                 <input
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   placeholder="contact@example.com"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Contact Phone</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Contact Phone</label>
                 <input
                   type="tel"
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   placeholder="(555) 123-4567"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Social Links */}
-          <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Social Links</h2>
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
+            <h2 className="text-lg font-semibold text-foreground">Social Links</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">LinkedIn</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">LinkedIn</label>
                 <input
                   type="url"
                   value={socialLinkedin}
                   onChange={(e) => setSocialLinkedin(e.target.value)}
                   placeholder="https://linkedin.com/company/..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Twitter / X</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Twitter / X</label>
                 <input
                   type="url"
                   value={socialTwitter}
                   onChange={(e) => setSocialTwitter(e.target.value)}
                   placeholder="https://twitter.com/..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Facebook</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Facebook</label>
                 <input
                   type="url"
                   value={socialFacebook}
                   onChange={(e) => setSocialFacebook(e.target.value)}
                   placeholder="https://facebook.com/..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Instagram</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Instagram</label>
                 <input
                   type="url"
                   value={socialInstagram}
                   onChange={(e) => setSocialInstagram(e.target.value)}
                   placeholder="https://instagram.com/..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Homepage Visibility */}
-          <div className="rounded-xl border border-slate-800 bg-[#08090C] p-6">
-            <h2 className="text-lg font-semibold text-slate-100">Homepage Visibility</h2>
-            <p className="mt-1 text-sm text-slate-400">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
+            <h2 className="text-lg font-semibold text-foreground">Homepage Visibility</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Control whether this organization appears on the homepage partner carousel.
             </p>
             <div className="mt-4">
@@ -509,19 +509,19 @@ export default function EditEmployerPage() {
                     onChange={(e) => setFeaturedOnCarousel(e.target.checked)}
                     className="peer sr-only"
                   />
-                  <div className="h-6 w-11 rounded-full bg-slate-700 peer-checked:bg-teal-500 transition-colors"></div>
+                  <div className="h-6 w-11 rounded-full bg-slate-700 peer-checked:bg-accent transition-colors"></div>
                   <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5"></div>
                 </div>
                 <div>
-                  <span className="font-medium text-slate-200">Featured on Partner Carousel</span>
-                  <p className="text-xs text-slate-500">
+                  <span className="font-medium text-foreground">Featured on Partner Carousel</span>
+                  <p className="text-xs text-foreground0">
                     Show this organization&apos;s logo in the homepage &quot;Trusted Partners&quot; section
                   </p>
                 </div>
               </label>
-              <div className="mt-3 rounded-lg bg-slate-800/50 border border-slate-700 px-4 py-3">
-                <p className="text-xs text-slate-400">
-                  <span className="font-semibold text-teal-400">Note:</span> Organizations with Tier 1 or Tier 2 subscriptions are automatically featured on the carousel.
+              <div className="mt-3 rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3">
+                <p className="text-xs text-[var(--text-muted)]">
+                  <span className="font-semibold text-accent">Note:</span> Organizations with Tier 1 or Tier 2 subscriptions are automatically featured on the carousel.
                 </p>
               </div>
             </div>
@@ -531,14 +531,14 @@ export default function EditEmployerPage() {
           <div className="flex justify-end gap-4">
             <Link
               href="/admin/employers"
-              className="rounded-lg border border-slate-700 px-6 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+              className="rounded-lg border border-[var(--card-border)] px-6 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
             >
               Cancel
             </Link>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-lg bg-teal-500 px-6 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+              className="rounded-lg bg-accent px-6 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

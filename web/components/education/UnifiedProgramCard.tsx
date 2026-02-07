@@ -53,11 +53,11 @@ export function UnifiedProgramCard({ program, onProviderClick }: UnifiedProgramC
   return (
     <Link
       href={detailUrl}
-      className="group rounded-2xl border border-slate-700 bg-slate-800/50 p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
+      className="group rounded-2xl border border-[var(--card-border)] bg-surface p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
     >
       {/* Header: Icon + Badges */}
       <div className="flex justify-between items-start mb-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 border border-[#14B8A6]/40">
           <span className="text-xl">{getCategoryIcon(program.category)}</span>
         </div>
 
@@ -75,7 +75,7 @@ export function UnifiedProgramCard({ program, onProviderClick }: UnifiedProgramC
 
           {/* Level badge (academic only) */}
           {program.level && (
-            <span className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-xs font-medium text-slate-300">
+            <span className="rounded-md bg-surface border border-[var(--card-border)] px-2 py-1 text-xs font-medium text-[var(--text-secondary)]">
               {LEVEL_LABELS[program.level] || program.level}
             </span>
           )}
@@ -110,7 +110,7 @@ export function UnifiedProgramCard({ program, onProviderClick }: UnifiedProgramC
       </h3>
 
       {/* Description */}
-      <p className="text-sm text-slate-400 mb-3 line-clamp-2">
+      <p className="text-sm text-[var(--text-muted)] mb-3 line-clamp-2">
         {program.shortDescription || program.description || "Explore this program and its opportunities."}
       </p>
 
@@ -120,24 +120,24 @@ export function UnifiedProgramCard({ program, onProviderClick }: UnifiedProgramC
           {program.skills.slice(0, 3).map((skill) => (
             <span
               key={skill}
-              className="rounded-md bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300"
+              className="rounded-md bg-slate-700/50 px-2 py-0.5 text-xs text-[var(--text-secondary)]"
             >
               {skill}
             </span>
           ))}
           {program.skills.length > 3 && (
-            <span className="text-xs text-slate-500">+{program.skills.length - 3} more</span>
+            <span className="text-xs text-foreground0">+{program.skills.length - 3} more</span>
           )}
         </div>
       )}
 
       {/* Meta info */}
-      <div className="flex flex-wrap gap-3 text-xs text-slate-400 mb-4">
+      <div className="flex flex-wrap gap-3 text-xs text-[var(--text-muted)] mb-4">
         {program.duration && <span>⏱ {program.duration}</span>}
         <FormatBadge format={program.format} size="sm" />
         {program.costDisplay && <span>💰 {program.costDisplay}</span>}
         {program.fundingAvailable && (
-          <span className="text-emerald-400">💵 Funding Available</span>
+          <span className="text-accent">💵 Funding Available</span>
         )}
         {program.certificationOffered && (
           <span>🏅 {program.certificationOffered}</span>
@@ -145,8 +145,8 @@ export function UnifiedProgramCard({ program, onProviderClick }: UnifiedProgramC
       </div>
 
       {/* Footer */}
-      <div className="pt-4 border-t border-slate-700/50 flex justify-between items-center">
-        <span className="text-xs text-slate-500 capitalize">
+      <div className="pt-4 border-t border-[var(--card-border)] flex justify-between items-center">
+        <span className="text-xs text-foreground0 capitalize">
           {program.category || (program.programType === "academic" ? "Academic Program" : "Training Program")}
         </span>
         <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">

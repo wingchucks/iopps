@@ -70,31 +70,31 @@ function EndorsementsContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
         <Link
           href="/member/settings"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#14B8A6] transition-colors"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[#14B8A6] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Settings
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-100">Endorsements</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold text-foreground">Endorsements</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Skill endorsements from your community
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-1 rounded-xl bg-slate-900/50 p-1">
+        <div className="mb-6 flex gap-1 rounded-xl bg-surface p-1">
           <button
             onClick={() => setTab("received")}
             className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
               tab === "received"
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-accent/20 text-accent"
+                : "text-[var(--text-muted)] hover:text-foreground"
             }`}
           >
             Received ({received.length})
@@ -103,8 +103,8 @@ function EndorsementsContent() {
             onClick={() => setTab("given")}
             className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
               tab === "given"
-                ? "bg-emerald-500/20 text-emerald-400"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-accent/20 text-accent"
+                : "text-[var(--text-muted)] hover:text-foreground"
             }`}
           >
             Given ({given.length})
@@ -112,16 +112,16 @@ function EndorsementsContent() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
+          <div className="text-center py-12 text-[var(--text-muted)] text-sm">
             Loading endorsements...
           </div>
         ) : tab === "received" ? (
           /* Received Tab — grouped by skill */
           sortedSkills.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
               <Award className="mx-auto h-10 w-10 text-slate-600 mb-3" />
-              <p className="text-slate-400 text-sm">No endorsements received yet.</p>
-              <p className="text-slate-500 text-xs mt-1">
+              <p className="text-[var(--text-muted)] text-sm">No endorsements received yet.</p>
+              <p className="text-foreground0 text-xs mt-1">
                 Endorsements from your connections will appear here.
               </p>
             </div>
@@ -130,14 +130,14 @@ function EndorsementsContent() {
               {sortedSkills.map(([skill, endorsements]) => (
                 <div
                   key={skill}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <Award className="h-5 w-5 text-emerald-400" />
-                      <h3 className="font-semibold text-slate-100">{skill}</h3>
+                      <Award className="h-5 w-5 text-accent" />
+                      <h3 className="font-semibold text-foreground">{skill}</h3>
                     </div>
-                    <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                    <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-1 rounded-full">
                       {endorsements.length} endorsement{endorsements.length !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -145,7 +145,7 @@ function EndorsementsContent() {
                     {endorsements.map((e) => (
                       <div
                         key={e.id}
-                        className="flex items-start gap-3 rounded-lg bg-slate-800/50 p-3"
+                        className="flex items-start gap-3 rounded-lg bg-surface p-3"
                       >
                         {e.endorserPhotoURL ? (
                           <img
@@ -155,12 +155,12 @@ function EndorsementsContent() {
                           />
                         ) : (
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-700">
-                            <User className="h-4 w-4 text-slate-400" />
+                            <User className="h-4 w-4 text-[var(--text-muted)]" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-200">
+                            <span className="text-sm font-medium text-foreground">
                               {e.endorserName}
                             </span>
                             {e.isElder && (
@@ -170,11 +170,11 @@ function EndorsementsContent() {
                               </span>
                             )}
                           </div>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-foreground0">
                             {RELATIONSHIP_LABELS[e.relationship] || e.relationship}
                           </span>
                           {e.message && (
-                            <p className="mt-1 text-xs text-slate-400 italic">
+                            <p className="mt-1 text-xs text-[var(--text-muted)] italic">
                               &ldquo;{e.message}&rdquo;
                             </p>
                           )}
@@ -189,12 +189,12 @@ function EndorsementsContent() {
         ) : (
           /* Given Tab */
           given.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
               <Award className="mx-auto h-10 w-10 text-slate-600 mb-3" />
-              <p className="text-slate-400 text-sm">
+              <p className="text-[var(--text-muted)] text-sm">
                 You haven&apos;t endorsed anyone yet.
               </p>
-              <p className="text-slate-500 text-xs mt-1">
+              <p className="text-foreground0 text-xs mt-1">
                 Visit a member&apos;s profile to endorse their skills.
               </p>
             </div>
@@ -203,7 +203,7 @@ function EndorsementsContent() {
               {given.map((e) => (
                 <div
                   key={e.id}
-                  className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4"
+                  className="flex items-center gap-3 rounded-2xl border border-[var(--card-border)] bg-surface p-4"
                 >
                   {e.endorserPhotoURL ? (
                     <img
@@ -213,21 +213,21 @@ function EndorsementsContent() {
                     />
                   ) : (
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-700">
-                      <User className="h-4 w-4 text-slate-400" />
+                      <User className="h-4 w-4 text-[var(--text-muted)]" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200">
+                    <p className="text-sm font-medium text-foreground">
                       {e.skill}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-foreground0">
                       {RELATIONSHIP_LABELS[e.relationship] || e.relationship}
                       {e.isElder && " (Elder endorsement)"}
                     </p>
                   </div>
                   <button
                     onClick={() => handleDelete(e.id)}
-                    className="rounded-lg p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    className="rounded-lg p-2 text-foreground0 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                     title="Remove endorsement"
                   >
                     <Trash2 className="h-4 w-4" />

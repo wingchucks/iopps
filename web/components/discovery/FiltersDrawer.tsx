@@ -40,7 +40,7 @@ export function FiltersDrawer({
 
   return (
     <div
-      className={`rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-6 ${
+      className={`rounded-2xl bg-surface backdrop-blur-sm border border-[var(--card-border)] p-6 ${
         isInline ? "" : "mb-8"
       }`}
     >
@@ -49,7 +49,7 @@ export function FiltersDrawer({
         {hasActiveFilters && onClearAll && (
           <button
             onClick={onClearAll}
-            className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             <XMarkIcon className="h-4 w-4" />
             Clear all
@@ -66,7 +66,7 @@ export function FiltersDrawer({
       >
         {filters.map((filter) => (
           <div key={filter.id}>
-            <label className="text-sm font-medium text-slate-400 mb-2 block">
+            <label className="text-sm font-medium text-[var(--text-muted)] mb-2 block">
               {filter.label}
             </label>
 
@@ -82,8 +82,8 @@ export function FiltersDrawer({
                       onClick={() => filter.onChange(option.value)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                         isSelected
-                          ? "bg-[#14B8A6] text-white"
-                          : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                          ? "bg-accent text-white"
+                          : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                       }`}
                     >
                       {option.label}
@@ -97,7 +97,7 @@ export function FiltersDrawer({
               <select
                 value={filter.value as string}
                 onChange={(e) => filter.onChange(e.target.value)}
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700 px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
               >
                 {filter.options.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -113,9 +113,9 @@ export function FiltersDrawer({
                   type="checkbox"
                   checked={filter.value as boolean}
                   onChange={(e) => filter.onChange(e.target.checked)}
-                  className="rounded border-slate-600 bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  className="rounded border-[var(--card-border)] bg-slate-700 text-[#14B8A6] focus:ring-[#14B8A6]"
                 />
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-[var(--text-secondary)]">
                   {filter.options?.[0]?.label || "Enable"}
                 </span>
               </label>
@@ -126,8 +126,8 @@ export function FiltersDrawer({
                 onClick={() => filter.onChange(!(filter.value as boolean))}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   filter.value
-                    ? "bg-[#14B8A6] text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    ? "bg-accent text-white"
+                    : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                 }`}
               >
                 {filter.options?.[0]?.label || "Toggle"}

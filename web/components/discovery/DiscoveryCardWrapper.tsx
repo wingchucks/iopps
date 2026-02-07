@@ -26,7 +26,7 @@ export function DiscoveryCardWrapper({
   const baseStyles = `group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-1`;
   const featuredStyles = featured
     ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 hover:border-amber-500/50"
-    : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50";
+    : "border-[var(--card-border)] bg-surface hover:border-[#14B8A6]/50";
 
   const cardContent = (
     <>
@@ -107,7 +107,7 @@ interface CardFooterProps {
 export function CardFooter({ children, className = "" }: CardFooterProps) {
   return (
     <div
-      className={`mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4 ${className}`}
+      className={`mt-4 flex items-center justify-between border-t border-[var(--card-border)] pt-4 ${className}`}
     >
       {children}
     </div>
@@ -160,7 +160,7 @@ export function CardDescription({
 }: CardDescriptionProps) {
   return (
     <p
-      className={`text-sm text-slate-300 ${
+      className={`text-sm text-[var(--text-secondary)] ${
         lines === 2 ? "line-clamp-2" : "line-clamp-3"
       } ${className}`}
     >

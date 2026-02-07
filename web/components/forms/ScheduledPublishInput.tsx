@@ -96,7 +96,7 @@ export function ScheduledPublishInput({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-slate-300">{label}</label>
+        <label className="block text-sm font-medium text-[var(--text-secondary)]">{label}</label>
         <button
           type="button"
           onClick={handleToggle}
@@ -104,7 +104,7 @@ export function ScheduledPublishInput({
           className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
             isScheduling
               ? "text-blue-400 hover:text-blue-300"
-              : "text-slate-400 hover:text-slate-300"
+              : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           <ClockIcon className="h-3.5 w-3.5" />
@@ -116,7 +116,7 @@ export function ScheduledPublishInput({
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <CalendarIcon className="h-4 w-4 text-slate-500" />
+              <CalendarIcon className="h-4 w-4 text-foreground0" />
             </div>
             <input
               type="datetime-local"
@@ -124,14 +124,14 @@ export function ScheduledPublishInput({
               onChange={handleDateChange}
               min={getMinDate()}
               disabled={disabled}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 pl-10 pr-3 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none disabled:opacity-50"
+              className="w-full rounded-lg bg-surface border border-[var(--card-border)] pl-10 pr-3 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none disabled:opacity-50"
             />
           </div>
           <button
             type="button"
             onClick={handleClear}
             disabled={disabled}
-            className="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors disabled:opacity-50"
+            className="p-2.5 rounded-lg bg-surface border border-[var(--card-border)] text-[var(--text-muted)] hover:text-white hover:bg-slate-700 transition-colors disabled:opacity-50"
             title="Clear schedule"
           >
             <XMarkIcon className="h-4 w-4" />
@@ -142,14 +142,14 @@ export function ScheduledPublishInput({
       {isScheduling && value && (
         <div className="flex items-center gap-2 text-xs">
           <span className="text-blue-400">{getRelativeTime(value)}</span>
-          <span className="text-slate-500">
+          <span className="text-foreground0">
             ({new Date(value as string).toLocaleString()})
           </span>
         </div>
       )}
 
       {!isScheduling && (
-        <p className="text-xs text-slate-500">{helpText}</p>
+        <p className="text-xs text-foreground0">{helpText}</p>
       )}
     </div>
   );

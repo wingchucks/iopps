@@ -50,7 +50,7 @@ function SpeakerCard({
               className="h-16 w-16 rounded-xl object-cover"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#0D9488]/20 to-slate-100 text-lg font-bold text-slate-500">
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-[#0D9488]/20 to-slate-100 text-lg font-bold text-foreground0">
               {speaker.name
                 .split(" ")
                 .map((n) => n[0])
@@ -65,13 +65,13 @@ function SpeakerCard({
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-800">{speaker.name}</h3>
           {speaker.title && (
-            <p className="text-sm text-slate-500">{speaker.title}</p>
+            <p className="text-sm text-foreground0">{speaker.title}</p>
           )}
           {speaker.organization && (
             <p className="text-sm text-[#0D9488]">{speaker.organization}</p>
           )}
           {speaker.nation && (
-            <p className="mt-1 text-xs text-slate-500">{speaker.nation}</p>
+            <p className="mt-1 text-xs text-foreground0">{speaker.nation}</p>
           )}
 
           {/* Topics */}
@@ -80,13 +80,13 @@ function SpeakerCard({
               {speaker.topics.slice(0, 3).map((topic, index) => (
                 <span
                   key={index}
-                  className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                  className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-foreground0"
                 >
                   {topic}
                 </span>
               ))}
               {speaker.topics.length > 3 && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-foreground0">
                   +{speaker.topics.length - 3}
                 </span>
               )}
@@ -96,7 +96,7 @@ function SpeakerCard({
 
         {/* Expand Icon */}
         <svg
-          className={`h-5 w-5 flex-shrink-0 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+          className={`h-5 w-5 flex-shrink-0 text-foreground0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -125,7 +125,7 @@ function SpeakerCard({
           {/* Sessions */}
           {sessions && sessions.length > 0 && (
             <div className="mb-4">
-              <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+              <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-foreground0">
                 Speaking At
               </h4>
               <div className="space-y-2">
@@ -134,9 +134,9 @@ function SpeakerCard({
                     key={index}
                     className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm"
                   >
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-foreground0">
                       <span className="block">{session.day}</span>
-                      <span className="font-medium text-slate-500">
+                      <span className="font-medium text-foreground0">
                         {session.time}
                       </span>
                     </div>
@@ -258,7 +258,7 @@ export default function ConferenceSpeakers({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-700">Speakers</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-foreground0">
             Meet the {speakers.length} speaker{speakers.length > 1 ? "s" : ""}{" "}
             presenting at this conference
           </p>

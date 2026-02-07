@@ -141,7 +141,7 @@ export default function OrganizationEducationEventsPage() {
   if (loading || loadingData) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -150,12 +150,12 @@ export default function OrganizationEducationEventsPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to manage events.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Login
         </Link>
@@ -166,12 +166,12 @@ export default function OrganizationEducationEventsPage() {
   if (!school) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
           <h2 className="mt-4 text-xl font-semibold text-white">
             No School Profile
           </h2>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-[var(--text-muted)]">
             You need to create a school profile before adding events.
           </p>
           <Link
@@ -190,7 +190,7 @@ export default function OrganizationEducationEventsPage() {
       <div className="mb-6">
         <Link
           href="/organization/education"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-4"
+          className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Education
@@ -200,7 +200,7 @@ export default function OrganizationEducationEventsPage() {
             <h1 className="text-2xl font-bold text-white">
               Events & Open Houses
             </h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Create and manage recruitment events for prospective students
             </p>
           </div>
@@ -229,11 +229,11 @@ export default function OrganizationEducationEventsPage() {
       </div>
 
       {events.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <CalendarDaysIcon className="h-8 w-8 text-slate-500" />
+            <CalendarDaysIcon className="h-8 w-8 text-foreground0" />
           </div>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             You haven&apos;t created any events yet.
           </p>
           <Link
@@ -249,17 +249,17 @@ export default function OrganizationEducationEventsPage() {
           {events.map((event) => (
             <div
               key={event.id}
-              className={`rounded-xl border bg-slate-900/50 p-6 ${
+              className={`rounded-xl border bg-surface p-6 ${
                 isUpcoming(event.startDatetime)
-                  ? "border-slate-800"
-                  : "border-slate-800/50 opacity-75"
+                  ? "border-[var(--card-border)]"
+                  : "border-[var(--card-border)]/50 opacity-75"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     {!isUpcoming(event.startDatetime) && (
-                      <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400">
+                      <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]">
                         Past Event
                       </span>
                     )}
@@ -268,12 +268,12 @@ export default function OrganizationEducationEventsPage() {
                     </h3>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
+                  <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                     <span className="inline-flex items-center gap-1">
                       <ClockIcon className="h-4 w-4" />
                       {formatDateTime(event.startDatetime)}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                       {getFormatIcon(event.format)}
                       {event.format.charAt(0).toUpperCase() +
                         event.format.slice(1)}
@@ -284,7 +284,7 @@ export default function OrganizationEducationEventsPage() {
                   </div>
 
                   {event.location && (
-                    <div className="mt-2 flex items-center gap-1 text-sm text-slate-400">
+                    <div className="mt-2 flex items-center gap-1 text-sm text-[var(--text-muted)]">
                       <MapPinIcon className="h-4 w-4" />
                       {event.location}
                     </div>
@@ -295,22 +295,22 @@ export default function OrganizationEducationEventsPage() {
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${
                       event.isPublished
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-slate-700 text-slate-400"
+                        ? "bg-accent/20 text-emerald-300"
+                        : "bg-slate-700 text-[var(--text-muted)]"
                     }`}
                   >
                     {event.isPublished ? "Published" : "Draft"}
                   </span>
                   <Link
                     href={`/organization/education/events/${event.id}/edit`}
-                    className="rounded-md p-2 text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                    className="rounded-md p-2 text-[var(--text-muted)] hover:bg-slate-700/50 hover:text-white"
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                   </Link>
                   <button
                     onClick={() => handleDelete(event.id)}
                     disabled={deleting === event.id}
-                    className="rounded-md p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    className="rounded-md p-2 text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -318,18 +318,18 @@ export default function OrganizationEducationEventsPage() {
               </div>
 
               {event.description && (
-                <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                   {event.description}
                 </p>
               )}
 
               {/* Stats */}
-              <div className="mt-4 flex items-center gap-6 border-t border-slate-800 pt-4">
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="mt-4 flex items-center gap-6 border-t border-[var(--card-border)] pt-4">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <EyeIcon className="h-4 w-4" />
                   <span>{event.viewCount || 0} views</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <UserGroupIcon className="h-4 w-4" />
                   <span>{event.attendeeCount || 0} RSVPs</span>
                 </div>

@@ -261,7 +261,7 @@ export default function MemberProfilePage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <div className="text-emerald-400">Loading profile...</div>
+        <div className="text-accent">Loading profile...</div>
       </div>
     );
   }
@@ -269,20 +269,20 @@ export default function MemberProfilePage() {
   if (!user || role !== "community") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <div className="text-slate-400">Please sign in as a community member to view your profile.</div>
+        <div className="text-[var(--text-muted)]">Please sign in as a community member to view your profile.</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-foreground">
       <div className="mx-auto max-w-5xl px-4 py-12">
         {/* Header with Profile Completeness */}
         <div className="mb-8 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
           <div className="flex items-start justify-between gap-8">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white">My Profile</h1>
-              <p className="mt-2 text-slate-400">Manage your professional information and settings</p>
+              <p className="mt-2 text-[var(--text-muted)]">Manage your professional information and settings</p>
             </div>
 
             {/* Profile Completeness Circle */}
@@ -306,21 +306,21 @@ export default function MemberProfilePage() {
                   fill="transparent"
                   strokeDasharray={`${2 * Math.PI * 40}`}
                   strokeDashoffset={`${2 * Math.PI * 40 * (1 - profileCompletion / 100)}`}
-                  className="text-emerald-400 transition-all duration-500"
+                  className="text-accent transition-all duration-500"
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-2xl font-bold text-white">{profileCompletion}%</span>
-                <span className="text-xs text-slate-400">Complete</span>
+                <span className="text-xs text-[var(--text-muted)]">Complete</span>
               </div>
             </div>
           </div>
 
           {/* Progress message */}
           {profileCompletion < 100 && (
-            <div className="mt-6 rounded-xl bg-slate-900/50 p-4">
-              <p className="text-sm text-slate-300">
+            <div className="mt-6 rounded-xl bg-surface p-4">
+              <p className="text-sm text-[var(--text-secondary)]">
                 {profileCompletion < 30 && "Get started by filling out your basic information."}
                 {profileCompletion >= 30 && profileCompletion < 60 && "Great start! Add more details to stand out to employers."}
                 {profileCompletion >= 60 && profileCompletion < 100 && "Almost there! Complete your profile to maximize opportunities."}
@@ -336,55 +336,55 @@ export default function MemberProfilePage() {
             <h2 className="mb-6 text-xl font-bold text-white">Basic Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Display Name *</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Display Name *</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                   placeholder="Your full name"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Location</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Location</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                   placeholder="City, Province/State"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Indigenous Affiliation</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Indigenous Affiliation</label>
                 <input
                   type="text"
                   value={indigenousAffiliation}
                   onChange={(e) => setIndigenousAffiliation(e.target.value)}
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                   placeholder="Your nation, community, or affiliation"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Messaging Handle</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Messaging Handle</label>
                 <input
                   type="text"
                   value={messagingHandle}
                   onChange={(e) => setMessagingHandle(e.target.value)}
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                   placeholder="@username or contact info"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Available for Interviews?</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Available for Interviews?</label>
                 <select
                   value={availability}
                   onChange={(e) => setAvailability(e.target.value)}
-                  className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 >
                   <option value="">Select availability</option>
                   <option value="yes">Yes, actively looking</option>
@@ -406,7 +406,7 @@ export default function MemberProfilePage() {
                 value={skillInput}
                 onChange={(e) => setSkillInput(e.target.value)}
                 onKeyDown={handleSkillKeyDown}
-                className="flex-1 rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="flex-1 rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 placeholder="Add a skill (press Enter)"
               />
               <button
@@ -427,14 +427,14 @@ export default function MemberProfilePage() {
                   {skill}
                   <button
                     onClick={() => handleRemoveSkill(skill)}
-                    className="text-emerald-400 transition-colors hover:text-emerald-300"
+                    className="text-accent transition-colors hover:text-emerald-300"
                   >
                     ×
                   </button>
                 </div>
               ))}
               {skills.length === 0 && (
-                <p className="text-slate-500">No skills added yet. Add your skills to showcase your expertise.</p>
+                <p className="text-foreground0">No skills added yet. Add your skills to showcase your expertise.</p>
               )}
             </div>
           </section>
@@ -458,17 +458,17 @@ export default function MemberProfilePage() {
               {experience.map((exp) => (
                 <div
                   key={exp.id}
-                  className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-accent/20 bg-surface p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-white">{exp.position}</h3>
-                      <p className="text-emerald-400">{exp.company}</p>
-                      {exp.location && <p className="text-sm text-slate-400">{exp.location}</p>}
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="text-accent">{exp.company}</p>
+                      {exp.location && <p className="text-sm text-[var(--text-muted)]">{exp.location}</p>}
+                      <p className="mt-1 text-sm text-foreground0">
                         {exp.startDate} - {exp.current ? "Present" : exp.endDate || "Present"}
                       </p>
-                      <p className="mt-3 text-slate-300">{exp.description}</p>
+                      <p className="mt-3 text-[var(--text-secondary)]">{exp.description}</p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -476,7 +476,7 @@ export default function MemberProfilePage() {
                           setEditingExperience(exp);
                           setShowExperienceModal(true);
                         }}
-                        className="text-emerald-400 hover:text-emerald-300"
+                        className="text-accent hover:text-emerald-300"
                       >
                         Edit
                       </button>
@@ -491,7 +491,7 @@ export default function MemberProfilePage() {
                 </div>
               ))}
               {experience.length === 0 && (
-                <p className="text-slate-500">No work experience added yet. Add your experience to stand out.</p>
+                <p className="text-foreground0">No work experience added yet. Add your experience to stand out.</p>
               )}
             </div>
           </section>
@@ -515,17 +515,17 @@ export default function MemberProfilePage() {
               {education.map((edu) => (
                 <div
                   key={edu.id}
-                  className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-accent/20 bg-surface p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-white">{edu.degree}</h3>
-                      <p className="text-emerald-400">{edu.institution}</p>
-                      {edu.fieldOfStudy && <p className="text-sm text-slate-400">{edu.fieldOfStudy}</p>}
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="text-accent">{edu.institution}</p>
+                      {edu.fieldOfStudy && <p className="text-sm text-[var(--text-muted)]">{edu.fieldOfStudy}</p>}
+                      <p className="mt-1 text-sm text-foreground0">
                         {edu.startDate} - {edu.current ? "Present" : edu.endDate || "Present"}
                       </p>
-                      {edu.description && <p className="mt-3 text-slate-300">{edu.description}</p>}
+                      {edu.description && <p className="mt-3 text-[var(--text-secondary)]">{edu.description}</p>}
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -533,7 +533,7 @@ export default function MemberProfilePage() {
                           setEditingEducation(edu);
                           setShowEducationModal(true);
                         }}
-                        className="text-emerald-400 hover:text-emerald-300"
+                        className="text-accent hover:text-emerald-300"
                       >
                         Edit
                       </button>
@@ -548,7 +548,7 @@ export default function MemberProfilePage() {
                 </div>
               ))}
               {education.length === 0 && (
-                <p className="text-slate-500">No education added yet. Add your educational background.</p>
+                <p className="text-foreground0">No education added yet. Add your educational background.</p>
               )}
             </div>
           </section>
@@ -572,18 +572,18 @@ export default function MemberProfilePage() {
               {portfolio.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-accent/20 bg-surface p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold text-white">{item.title}</h3>
-                      <p className="mt-2 text-sm text-slate-300">{item.description}</p>
+                      <p className="mt-2 text-sm text-[var(--text-secondary)]">{item.description}</p>
                       {item.url && (
                         <a
                           href={item.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-2 inline-block text-sm text-emerald-400 hover:text-emerald-300"
+                          className="mt-2 inline-block text-sm text-accent hover:text-emerald-300"
                         >
                           View Project →
                         </a>
@@ -593,7 +593,7 @@ export default function MemberProfilePage() {
                           {item.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-300"
+                              className="rounded-full bg-accent/20 px-2 py-1 text-xs text-emerald-300"
                             >
                               {tag}
                             </span>
@@ -607,7 +607,7 @@ export default function MemberProfilePage() {
                           setEditingPortfolio(item);
                           setShowPortfolioModal(true);
                         }}
-                        className="text-emerald-400 hover:text-emerald-300"
+                        className="text-accent hover:text-emerald-300"
                       >
                         Edit
                       </button>
@@ -623,7 +623,7 @@ export default function MemberProfilePage() {
               ))}
               {portfolio.length === 0 && (
                 <div className="col-span-full">
-                  <p className="text-slate-500">No portfolio items added yet. Showcase your best work!</p>
+                  <p className="text-foreground0">No portfolio items added yet. Showcase your best work!</p>
                 </div>
               )}
             </div>
@@ -634,17 +634,17 @@ export default function MemberProfilePage() {
             <h2 className="mb-6 text-xl font-bold text-white">Resume / CV</h2>
 
             {resumeUrl ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6">
+              <div className="rounded-xl border border-accent/20 bg-surface p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
-                      <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div>
                       <p className="font-medium text-white">Resume uploaded</p>
-                      <p className="text-sm text-slate-400">Your resume is ready to share with employers</p>
+                      <p className="text-sm text-[var(--text-muted)]">Your resume is ready to share with employers</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -652,13 +652,13 @@ export default function MemberProfilePage() {
                       href={resumeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-xl border border-emerald-500/30 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10"
+                      className="rounded-xl border border-accent/30 px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
                     >
                       View
                     </a>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-xl border border-emerald-500/30 px-4 py-2 text-sm font-medium text-emerald-400 transition-colors hover:bg-emerald-500/10"
+                      className="rounded-xl border border-accent/30 px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
                     >
                       Replace
                     </button>
@@ -674,17 +674,17 @@ export default function MemberProfilePage() {
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="cursor-pointer rounded-xl border-2 border-dashed border-emerald-500/30 bg-slate-900/30 p-12 text-center transition-all hover:border-emerald-500/50 hover:bg-slate-900/50"
+                className="cursor-pointer rounded-xl border-2 border-dashed border-accent/30 bg-slate-900/30 p-12 text-center transition-all hover:border-accent/50 hover:bg-surface"
               >
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20">
-                  <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
                 <p className="mb-2 font-medium text-white">Upload your resume</p>
-                <p className="text-sm text-slate-400">PDF or Word document (max 5MB)</p>
+                <p className="text-sm text-[var(--text-muted)]">PDF or Word document (max 5MB)</p>
                 {uploadingResume && (
-                  <p className="mt-4 text-emerald-400">Uploading...</p>
+                  <p className="mt-4 text-accent">Uploading...</p>
                 )}
               </div>
             )}
@@ -703,17 +703,17 @@ export default function MemberProfilePage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">Quick Apply Settings</h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                   Enable one-click applications for jobs that support it.
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-medium ${quickApplyEnabled ? "text-emerald-400" : "text-slate-400"}`}>
+                <span className={`text-sm font-medium ${quickApplyEnabled ? "text-accent" : "text-[var(--text-muted)]"}`}>
                   {quickApplyEnabled ? "Enabled" : "Disabled"}
                 </span>
                 <button
                   onClick={() => setQuickApplyEnabled(!quickApplyEnabled)}
-                  className={`relative h-7 w-12 rounded-full transition-colors ${quickApplyEnabled ? "bg-emerald-500" : "bg-slate-700"
+                  className={`relative h-7 w-12 rounded-full transition-colors ${quickApplyEnabled ? "bg-accent" : "bg-slate-700"
                     }`}
                 >
                   <span
@@ -727,17 +727,17 @@ export default function MemberProfilePage() {
             {quickApplyEnabled && (
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                     Default Cover Letter / Introduction
                   </label>
                   <textarea
                     value={defaultCoverLetter}
                     onChange={(e) => setDefaultCoverLetter(e.target.value)}
                     rows={6}
-                    className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                     placeholder="Write a brief introduction that can be used for quick applications..."
                   />
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="mt-2 text-xs text-[var(--text-muted)]">
                     This will be pre-filled when you use Quick Apply. You can always edit it before submitting.
                   </p>
                 </div>
@@ -746,9 +746,9 @@ export default function MemberProfilePage() {
           </section>
 
           {/* Data & Privacy */}
-          <section className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-900/50 to-slate-800/50 p-8 shadow-xl border border-slate-700/50">
+          <section className="rounded-3xl bg-gradient-to-br from-slate-800/50 via-slate-900/50 to-slate-800/50 p-8 shadow-xl border border-[var(--card-border)]">
             <h2 className="mb-2 text-xl font-bold text-white">Data & Privacy</h2>
-            <p className="mb-6 text-sm text-slate-400">
+            <p className="mb-6 text-sm text-[var(--text-muted)]">
               You have the right to access and export all your personal data stored on our platform.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -847,60 +847,60 @@ function ExperienceModal({
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Position *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Position *</label>
             <input
               type="text"
               value={formData.position}
               onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Software Developer"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Company *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Company *</label>
             <input
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Company Name"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Location</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Location</label>
             <input
               type="text"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="City, Province/State"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">Start Date *</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Start Date *</label>
               <input
                 type="month"
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">End Date</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">End Date</label>
               <input
                 type="month"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 disabled={formData.current}
-                className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50"
+                className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
               />
             </div>
           </div>
@@ -911,20 +911,20 @@ function ExperienceModal({
               id="current"
               checked={formData.current}
               onChange={(e) => setFormData({ ...formData, current: e.target.checked, endDate: "" })}
-              className="h-4 w-4 rounded border-emerald-500/20 bg-slate-900/50 text-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              className="h-4 w-4 rounded border-accent/20 bg-surface text-accent focus:ring-2 focus:ring-accent/20"
             />
-            <label htmlFor="current" className="text-sm text-slate-300">
+            <label htmlFor="current" className="text-sm text-[var(--text-secondary)]">
               I currently work here
             </label>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Description *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Description *</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Describe your responsibilities and achievements..."
               required
             />
@@ -934,7 +934,7 @@ function ExperienceModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-600 px-6 py-3 font-medium text-slate-300 transition-colors hover:bg-slate-800"
+              className="rounded-xl border border-[var(--card-border)] px-6 py-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-surface"
             >
               Cancel
             </button>
@@ -989,60 +989,60 @@ function EducationModal({
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Degree / Certificate *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Degree / Certificate *</label>
             <input
               type="text"
               value={formData.degree}
               onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Bachelor of Science"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Institution *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Institution *</label>
             <input
               type="text"
               value={formData.institution}
               onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="University Name"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Field of Study</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Field of Study</label>
             <input
               type="text"
               value={formData.fieldOfStudy}
               onChange={(e) => setFormData({ ...formData, fieldOfStudy: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Computer Science"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">Start Date *</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Start Date *</label>
               <input
                 type="month"
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">End Date</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">End Date</label>
               <input
                 type="month"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 disabled={formData.current}
-                className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50"
+                className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
               />
             </div>
           </div>
@@ -1053,20 +1053,20 @@ function EducationModal({
               id="currentEdu"
               checked={formData.current}
               onChange={(e) => setFormData({ ...formData, current: e.target.checked, endDate: "" })}
-              className="h-4 w-4 rounded border-emerald-500/20 bg-slate-900/50 text-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              className="h-4 w-4 rounded border-accent/20 bg-surface text-accent focus:ring-2 focus:ring-accent/20"
             />
-            <label htmlFor="currentEdu" className="text-sm text-slate-300">
+            <label htmlFor="currentEdu" className="text-sm text-[var(--text-secondary)]">
               I currently study here
             </label>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Description</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Notable achievements, awards, or relevant coursework..."
             />
           </div>
@@ -1075,7 +1075,7 @@ function EducationModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-600 px-6 py-3 font-medium text-slate-300 transition-colors hover:bg-slate-800"
+              className="rounded-xl border border-[var(--card-border)] px-6 py-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-surface"
             >
               Cancel
             </button>
@@ -1141,42 +1141,42 @@ function PortfolioModal({
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Project Title *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Project Title *</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="My Awesome Project"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Description *</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Description *</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="Describe your project and your role..."
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Project URL</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Project URL</label>
             <input
               type="url"
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               placeholder="https://github.com/username/project"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-300">Tags</label>
+            <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Tags</label>
             <div className="mb-2 flex gap-2">
               <input
                 type="text"
@@ -1188,13 +1188,13 @@ function PortfolioModal({
                     handleAddTag();
                   }
                 }}
-                className="flex-1 rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="flex-1 rounded-xl border border-accent/20 bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 placeholder="React, TypeScript, etc."
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="rounded-xl bg-emerald-500/20 px-4 py-2 text-sm text-emerald-400 transition-colors hover:bg-emerald-500/30"
+                className="rounded-xl bg-accent/20 px-4 py-2 text-sm text-accent transition-colors hover:bg-accent/30"
               >
                 Add
               </button>
@@ -1203,13 +1203,13 @@ function PortfolioModal({
               {formData.tags?.map((tag) => (
                 <div
                   key={tag}
-                  className="flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-sm text-emerald-300"
+                  className="flex items-center gap-2 rounded-full bg-accent/20 px-3 py-1 text-sm text-emerald-300"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="text-emerald-400 hover:text-emerald-300"
+                    className="text-accent hover:text-emerald-300"
                   >
                     ×
                   </button>
@@ -1222,7 +1222,7 @@ function PortfolioModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-600 px-6 py-3 font-medium text-slate-300 transition-colors hover:bg-slate-800"
+              className="rounded-xl border border-[var(--card-border)] px-6 py-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-surface"
             >
               Cancel
             </button>
@@ -1282,7 +1282,7 @@ function DataExportButton({ format }: { format: "json" | "csv" }) {
     <button
       onClick={handleExport}
       disabled={exporting}
-      className="flex items-center gap-2 rounded-xl border border-slate-600 px-5 py-3 font-medium text-slate-300 transition-all hover:border-emerald-500/50 hover:bg-slate-800 disabled:opacity-50"
+      className="flex items-center gap-2 rounded-xl border border-[var(--card-border)] px-5 py-3 font-medium text-[var(--text-secondary)] transition-all hover:border-accent/50 hover:bg-surface disabled:opacity-50"
     >
       {exporting ? (
         <>

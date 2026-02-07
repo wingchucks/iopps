@@ -120,8 +120,8 @@ export function TeamActivityFeed({ limit = 10, showHeader = true }: TeamActivity
     return (
       <div className="text-center py-8">
         <ClockIcon className="mx-auto h-10 w-10 text-slate-600" />
-        <p className="mt-2 text-sm text-slate-400">No recent activity</p>
-        <p className="text-xs text-slate-500">Team activities will appear here</p>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">No recent activity</p>
+        <p className="text-xs text-foreground0">Team activities will appear here</p>
       </div>
     );
   }
@@ -131,7 +131,7 @@ export function TeamActivityFeed({ limit = 10, showHeader = true }: TeamActivity
       {showHeader && (
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
-          <span className="text-xs text-slate-500">{activities.length} items</span>
+          <span className="text-xs text-foreground0">{activities.length} items</span>
         </div>
       )}
 
@@ -141,17 +141,17 @@ export function TeamActivityFeed({ limit = 10, showHeader = true }: TeamActivity
           return (
             <div
               key={activity.id}
-              className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors"
+              className="flex items-start gap-3 p-3 rounded-lg bg-surface hover:bg-surface transition-colors"
             >
               <div className={`p-2 rounded-lg ${style.bgColor}`}>
                 <span className={style.color}>{getActionIcon(activity.action)}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-200">
+                <p className="text-sm text-foreground">
                   <span className="font-medium">{activity.userName}</span>{" "}
-                  <span className="text-slate-400">{formatActivityMessage(activity)}</span>
+                  <span className="text-[var(--text-muted)]">{formatActivityMessage(activity)}</span>
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-foreground0 mt-0.5">
                   {formatRelativeTime(activity.createdAt)}
                 </p>
               </div>

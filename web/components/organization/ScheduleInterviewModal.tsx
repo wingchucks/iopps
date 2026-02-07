@@ -77,22 +77,22 @@ export default function ScheduleInterviewModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl border border-[var(--card-border)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-[var(--card-border)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-100">Schedule Interview</h2>
+            <h2 className="text-xl font-bold text-foreground">Schedule Interview</h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 transition-colors"
+              className="text-[var(--text-muted)] hover:text-foreground transition-colors"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Schedule an interview with <span className="text-slate-200">{applicantName}</span> for <span className="text-slate-200">{jobTitle}</span>
+          <p className="text-sm text-[var(--text-muted)] mt-1">
+            Schedule an interview with <span className="text-foreground">{applicantName}</span> for <span className="text-foreground">{jobTitle}</span>
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export default function ScheduleInterviewModal({
 
           {/* Date & Time */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
               Date & Time *
             </label>
             <input
@@ -115,19 +115,19 @@ export default function ScheduleInterviewModal({
               onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
               min={new Date().toISOString().slice(0, 16)}
               required
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
 
           {/* Duration */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
               Duration *
             </label>
             <select
               value={formData.duration}
               onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
               <option value="15">15 minutes</option>
               <option value="30">30 minutes</option>
@@ -140,7 +140,7 @@ export default function ScheduleInterviewModal({
 
           {/* Interview Type */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Interview Type *
             </label>
             <div className="flex gap-3">
@@ -155,8 +155,8 @@ export default function ScheduleInterviewModal({
                   onClick={() => setFormData({ ...formData, type: option.value as ScheduledInterviewType })}
                   className={`flex-1 py-3 px-4 rounded-lg border text-center transition-all ${
                     formData.type === option.value
-                      ? "border-[#14B8A6] bg-[#14B8A6]/10 text-[#14B8A6]"
-                      : "border-slate-700 text-slate-400 hover:border-slate-600"
+                      ? "border-[#14B8A6] bg-accent/10 text-[#14B8A6]"
+                      : "border-[var(--card-border)] text-[var(--text-muted)] hover:border-[var(--card-border)]"
                   }`}
                 >
                   <span className="text-xl block mb-1">{option.icon}</span>
@@ -169,7 +169,7 @@ export default function ScheduleInterviewModal({
           {/* Conditional fields based on type */}
           {formData.type === "virtual" && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Meeting URL
               </label>
               <input
@@ -177,9 +177,9 @@ export default function ScheduleInterviewModal({
                 value={formData.meetingUrl}
                 onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
                 placeholder="https://zoom.us/j/... or https://meet.google.com/..."
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 Add your Zoom, Google Meet, or Teams link
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function ScheduleInterviewModal({
 
           {formData.type === "phone" && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Phone Number
               </label>
               <input
@@ -195,9 +195,9 @@ export default function ScheduleInterviewModal({
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 placeholder="+1 (555) 123-4567"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 The number where you will call the candidate
               </p>
             </div>
@@ -205,7 +205,7 @@ export default function ScheduleInterviewModal({
 
           {formData.type === "in-person" && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Location / Address
               </label>
               <input
@@ -213,7 +213,7 @@ export default function ScheduleInterviewModal({
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="123 Main St, Suite 100, City, Province"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none"
               />
             </div>
           )}
@@ -221,7 +221,7 @@ export default function ScheduleInterviewModal({
           {/* Interviewer Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Interviewer Name
               </label>
               <input
@@ -229,11 +229,11 @@ export default function ScheduleInterviewModal({
                 value={formData.interviewerName}
                 onChange={(e) => setFormData({ ...formData, interviewerName: e.target.value })}
                 placeholder="John Smith"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Interviewer Email
               </label>
               <input
@@ -241,14 +241,14 @@ export default function ScheduleInterviewModal({
                 value={formData.interviewerEmail}
                 onChange={(e) => setFormData({ ...formData, interviewerEmail: e.target.value })}
                 placeholder="john@company.com"
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
               Notes for Candidate
             </label>
             <textarea
@@ -256,7 +256,7 @@ export default function ScheduleInterviewModal({
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
               placeholder="Any instructions or preparation tips for the candidate..."
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none resize-none"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none resize-none"
             />
           </div>
 
@@ -265,14 +265,14 @@ export default function ScheduleInterviewModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+              className="flex-1 py-2.5 px-4 rounded-lg border border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-surface transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || !formData.scheduledAt}
-              className="flex-1 py-2.5 px-4 rounded-lg bg-[#14B8A6] text-white font-medium hover:bg-[#0d9488] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-2.5 px-4 rounded-lg bg-accent text-white font-medium hover:bg-[#0d9488] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Scheduling..." : "Schedule Interview"}
             </button>

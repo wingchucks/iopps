@@ -137,10 +137,10 @@ export default function DashboardSidebar({
           </div>
         )}
         <div className="min-w-0">
-          <h2 className="font-bold text-slate-50 truncate">
+          <h2 className="font-bold text-foreground truncate">
             {profile?.organizationName || 'Organization'}
           </h2>
-          <p className="text-xs text-slate-500 truncate">
+          <p className="text-xs text-foreground0 truncate">
             {profile?.location || 'Location not set'}
           </p>
         </div>
@@ -148,13 +148,13 @@ export default function DashboardSidebar({
 
       {/* Binary Mode Toggle */}
       <div className="bg-card border border-card-border p-5 rounded-3xl backdrop-blur-xl flex-shrink-0">
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 px-1">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground0 mb-4 px-1">
           Dashboard Mode
         </h3>
 
         <button
           onClick={toggleMode}
-          className="relative w-full h-12 bg-slate-900/50 rounded-full border border-slate-800 cursor-pointer p-1 flex items-center justify-between select-none shadow-inner"
+          className="relative w-full h-12 bg-surface rounded-full border border-[var(--card-border)] cursor-pointer p-1 flex items-center justify-between select-none shadow-inner"
           aria-label={`Switch to ${mode === 'employer' ? 'vendor' : 'employer'} mode`}
         >
           {/* Sliding Knob */}
@@ -174,7 +174,7 @@ export default function DashboardSidebar({
             className={`
               relative z-20 w-1/2 text-center text-xs font-bold transition-colors duration-300
               flex items-center justify-center gap-2
-              ${mode === 'employer' ? 'text-white' : 'text-slate-500'}
+              ${mode === 'employer' ? 'text-white' : 'text-foreground0'}
             `}
           >
             <BriefcaseIcon className="w-3.5 h-3.5" />
@@ -184,7 +184,7 @@ export default function DashboardSidebar({
             className={`
               relative z-20 w-1/2 text-center text-xs font-bold transition-colors duration-300
               flex items-center justify-center gap-2
-              ${mode === 'vendor' ? 'text-slate-950' : 'text-slate-500'}
+              ${mode === 'vendor' ? 'text-slate-950' : 'text-foreground0'}
             `}
           >
             Vendor
@@ -230,7 +230,7 @@ export default function DashboardSidebar({
 
               {/* Education Provider Group */}
               <div>
-                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-4 text-teal-400">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 px-4 text-accent">
                   Education Provider
                 </h3>
                 {employerEducationNav.map((item) => (
@@ -287,7 +287,7 @@ export default function DashboardSidebar({
 
           {/* Shared Account Navigation */}
           <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-3 px-4">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground0 mb-3 px-4">
               Account
             </h3>
             {sharedNav.map((item) => (

@@ -7,7 +7,7 @@ export default function Loading() {
       {/* Grid Skeleton */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="rounded-2xl bg-slate-800/50 border border-slate-700 h-80" />
+          <div key={i} className="rounded-2xl bg-surface border border-[var(--card-border)] h-80" />
         ))}
       </div>
     </div>

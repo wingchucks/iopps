@@ -151,11 +151,11 @@ export default function SidebarSearch({
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-all border border-slate-800 hover:border-slate-700"
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground0 hover:text-[var(--text-secondary)] hover:bg-surface transition-all border border-[var(--card-border)] hover:border-[var(--card-border)]"
       >
         <MagnifyingGlassIcon className="w-4 h-4" />
         <span className="text-sm">Search...</span>
-        <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500 font-mono">/</kbd>
+        <kbd className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-surface text-foreground0 font-mono">/</kbd>
       </button>
     );
   }
@@ -164,7 +164,7 @@ export default function SidebarSearch({
     <div className="relative">
       {/* Search Input */}
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground0" />
         <input
           ref={inputRef}
           type="text"
@@ -172,21 +172,21 @@ export default function SidebarSearch({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Search pages..."
-          className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900 border border-accent/50 text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-accent"
+          className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface border border-accent/50 text-foreground placeholder-slate-500 text-sm focus:outline-none focus:border-accent"
         />
         <button
           onClick={() => {
             setIsOpen(false);
             setQuery('');
           }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-surface text-foreground0 hover:text-[var(--text-secondary)]"
         >
           <XMarkIcon className="w-4 h-4" />
         </button>
       </div>
 
       {/* Results Dropdown */}
-      <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+      <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-[var(--card-border)] rounded-xl shadow-xl overflow-hidden z-50">
         {filteredPages.length > 0 ? (
           <ul className="py-1">
             {filteredPages.map((page, index) => {
@@ -204,13 +204,13 @@ export default function SidebarSearch({
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                       index === selectedIndex
                         ? 'bg-accent/10 text-accent'
-                        : 'text-slate-300 hover:bg-slate-800'
+                        : 'text-[var(--text-secondary)] hover:bg-surface'
                     }`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
                     <span className="text-sm">{page.name}</span>
                     {page.module && (
-                      <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">
+                      <span className="ml-auto text-[10px] uppercase tracking-wider text-foreground0">
                         {page.module}
                       </span>
                     )}
@@ -220,16 +220,16 @@ export default function SidebarSearch({
             })}
           </ul>
         ) : (
-          <div className="px-4 py-6 text-center text-slate-500 text-sm">
+          <div className="px-4 py-6 text-center text-foreground0 text-sm">
             No pages found
           </div>
         )}
 
         {/* Keyboard hints */}
-        <div className="px-4 py-2 border-t border-slate-800 flex items-center gap-4 text-[10px] text-slate-500">
-          <span><kbd className="px-1 py-0.5 rounded bg-slate-800">↑↓</kbd> navigate</span>
-          <span><kbd className="px-1 py-0.5 rounded bg-slate-800">↵</kbd> select</span>
-          <span><kbd className="px-1 py-0.5 rounded bg-slate-800">esc</kbd> close</span>
+        <div className="px-4 py-2 border-t border-[var(--card-border)] flex items-center gap-4 text-[10px] text-foreground0">
+          <span><kbd className="px-1 py-0.5 rounded bg-surface">↑↓</kbd> navigate</span>
+          <span><kbd className="px-1 py-0.5 rounded bg-surface">↵</kbd> select</span>
+          <span><kbd className="px-1 py-0.5 rounded bg-surface">esc</kbd> close</span>
         </div>
       </div>
     </div>

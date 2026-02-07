@@ -14,10 +14,10 @@ export function VendorCard({ vendor, featured = false }: VendorCardProps) {
   return (
     <Link
       href={`/business/${vendor.slug}`}
-      className={`group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-teal-500/10 ${
+      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-teal-500/10 ${
         featured
-          ? 'border-teal-500/50 ring-1 ring-teal-500/20'
-          : 'border-slate-700/50 hover:border-teal-500/30'
+          ? 'border-accent/50 ring-1 ring-teal-500/20'
+          : 'border-[var(--card-border)] hover:border-accent/30'
       }`}
     >
       {/* Cover Image */}
@@ -48,7 +48,7 @@ export function VendorCard({ vendor, featured = false }: VendorCardProps) {
 
         {/* Logo */}
         <div className="absolute -bottom-6 left-4">
-          <div className="h-16 w-16 overflow-hidden rounded-xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+          <div className="h-16 w-16 overflow-hidden rounded-xl border-4 border-slate-900 bg-surface shadow-xl">
             {vendor.logoUrl ? (
               <Image
                 src={vendor.logoUrl}
@@ -70,28 +70,28 @@ export function VendorCard({ vendor, featured = false }: VendorCardProps) {
       <div className="p-4 pt-8">
         {/* Business Name */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-1">
+          <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors line-clamp-1">
             {vendor.businessName}
           </h3>
           {vendor.verified && (
-            <CheckBadgeIcon className="h-5 w-5 flex-shrink-0 text-teal-400" />
+            <CheckBadgeIcon className="h-5 w-5 flex-shrink-0 text-accent" />
           )}
         </div>
 
         {/* Tagline */}
         {vendor.tagline && (
-          <p className="mt-1 text-sm text-slate-400 line-clamp-1">{vendor.tagline}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-1">{vendor.tagline}</p>
         )}
 
         {/* Category Badge */}
         <div className="mt-3">
-          <span className="inline-flex items-center rounded-full bg-teal-500/10 px-2.5 py-0.5 text-xs font-medium text-teal-400">
+          <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
             {vendor.category}
           </span>
         </div>
 
         {/* Location & Links */}
-        <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+        <div className="mt-4 flex items-center gap-4 text-xs text-foreground0">
           {vendor.location && (
             <span className="flex items-center gap-1">
               <MapPinIcon className="h-3.5 w-3.5" />
@@ -108,7 +108,7 @@ export function VendorCard({ vendor, featured = false }: VendorCardProps) {
 
         {/* Nation */}
         {vendor.nation && (
-          <p className="mt-2 text-xs text-slate-500 italic">{vendor.nation}</p>
+          <p className="mt-2 text-xs text-foreground0 italic">{vendor.nation}</p>
         )}
       </div>
     </Link>

@@ -165,7 +165,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
     return (
         <div className="p-6 max-w-2xl space-y-8">
             {/* Visibility Status Card */}
-            <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-6">
+            <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Visibility Status</h3>
 
                 {visibilityTier === "featured" && (
@@ -173,7 +173,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                         <SparklesIcon className="h-6 w-6 text-amber-400 flex-shrink-0" />
                         <div>
                             <p className="font-medium text-amber-300">Featured</p>
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="text-sm text-[var(--text-muted)] mt-1">
                                 Your conference has premium visibility.
                                 {featuredExpiresAt && (
                                     <> Expires {featuredExpiresAt.toLocaleDateString()}.</>
@@ -184,14 +184,14 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                 )}
 
                 {visibilityTier === "standard" && publishedAt && (
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                        <ClockIcon className="h-6 w-6 text-emerald-400 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-accent/10 border border-accent/30">
+                        <ClockIcon className="h-6 w-6 text-accent flex-shrink-0" />
                         <div>
                             <p className="font-medium text-emerald-300">Standard Visibility</p>
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="text-sm text-[var(--text-muted)] mt-1">
                                 {daysRemainingFree > 0 ? (
                                     <>
-                                        <span className="text-emerald-400 font-medium">{daysRemainingFree} days</span> of free visibility remaining.
+                                        <span className="text-accent font-medium">{daysRemainingFree} days</span> of free visibility remaining.
                                         {freeVisibilityExpiresAt && (
                                             <> Expires {freeVisibilityExpiresAt.toLocaleDateString()}.</>
                                         )}
@@ -205,11 +205,11 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                 )}
 
                 {visibilityTier === "demoted" && (
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
-                        <ExclamationTriangleIcon className="h-6 w-6 text-slate-400 flex-shrink-0" />
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-slate-700/50 border border-[var(--card-border)]">
+                        <ExclamationTriangleIcon className="h-6 w-6 text-[var(--text-muted)] flex-shrink-0" />
                         <div>
-                            <p className="font-medium text-slate-300">Reduced Visibility</p>
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="font-medium text-[var(--text-secondary)]">Reduced Visibility</p>
+                            <p className="text-sm text-[var(--text-muted)] mt-1">
                                 Free visibility period has ended. Your conference is still accessible via direct link but won&apos;t appear in main listings. Feature it to restore visibility.
                             </p>
                         </div>
@@ -221,7 +221,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                         <ClockIcon className="h-6 w-6 text-blue-400 flex-shrink-0" />
                         <div>
                             <p className="font-medium text-blue-300">Not Published</p>
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="text-sm text-[var(--text-muted)] mt-1">
                                 When you publish, your conference will have {FREE_VISIBILITY_DAYS} days of free standard visibility.
                             </p>
                         </div>
@@ -242,17 +242,17 @@ export function SettingsTab({ conference }: SettingsTabProps) {
             {visibilityTier !== "featured" && (
                 <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-6">
                     <h3 className="text-lg font-semibold text-white mb-2">Boost Your Visibility</h3>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <p className="text-sm text-[var(--text-muted)] mb-4">
                         Get more registrations with featured placement and premium visibility.
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                         <button
                             onClick={() => handleFeatureCheckout("FEATURED_90")}
                             disabled={checkingFeatured}
-                            className="flex flex-col items-center justify-center rounded-lg border border-slate-600 bg-slate-800/50 p-4 text-center hover:border-amber-500/50 hover:bg-slate-800 transition-colors disabled:opacity-50"
+                            className="flex flex-col items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface p-4 text-center hover:border-amber-500/50 hover:bg-surface transition-colors disabled:opacity-50"
                         >
                             <span className="text-lg font-bold text-white">${CONFERENCE_PRODUCTS.FEATURED_90.price / 100}</span>
-                            <span className="text-sm text-slate-400">90 Days Featured</span>
+                            <span className="text-sm text-[var(--text-muted)]">90 Days Featured</span>
                         </button>
                         <button
                             onClick={() => handleFeatureCheckout("FEATURED_365")}
@@ -261,7 +261,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                         >
                             <span className="inline-block mb-1 text-xs font-bold text-amber-400 uppercase">Best Value</span>
                             <span className="text-lg font-bold text-white">${CONFERENCE_PRODUCTS.FEATURED_365.price / 100}</span>
-                            <span className="text-sm text-slate-400">1 Year Featured</span>
+                            <span className="text-sm text-[var(--text-muted)]">1 Year Featured</span>
                         </button>
                     </div>
                 </div>
@@ -326,7 +326,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                                 <button
                                     onClick={() => setShowConfirm(false)}
                                     disabled={deleting}
-                                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                                    className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
                                 >
                                     Cancel
                                 </button>
@@ -339,7 +339,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
             {/* Blocked Modal - Duplicate repost */}
             {showBlockedModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+                    <div className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
                                 <ExclamationTriangleIcon className="h-6 w-6 text-amber-400" />
@@ -347,7 +347,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                             <h2 className="text-xl font-bold text-white">Free Visibility Already Used</h2>
                         </div>
 
-                        <p className="text-slate-300 mb-6">
+                        <p className="text-[var(--text-secondary)] mb-6">
                             {blockedReason || "This conference has already received its free 45-day visibility period. To extend visibility, choose a featured option."}
                         </p>
 
@@ -372,7 +372,7 @@ export function SettingsTab({ conference }: SettingsTabProps) {
                             </button>
                             <button
                                 onClick={() => setShowBlockedModal(false)}
-                                className="w-full rounded-lg border border-slate-700 py-3 font-medium text-slate-400 hover:bg-slate-800 transition-colors"
+                                className="w-full rounded-lg border border-[var(--card-border)] py-3 font-medium text-[var(--text-muted)] hover:bg-surface transition-colors"
                             >
                                 Cancel
                             </button>

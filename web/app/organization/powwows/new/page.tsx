@@ -41,7 +41,7 @@ export default function NewPowwowPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -52,13 +52,13 @@ export default function NewPowwowPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Employers must be signed in to create pow wow events.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
@@ -75,7 +75,7 @@ export default function NewPowwowPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to an employer account to create pow wow events.
         </p>
       </div>
@@ -116,7 +116,7 @@ export default function NewPowwowPage() {
       <div className="mb-6">
         <Link
           href="/organization/powwows"
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
         >
           ← Back to Pow Wows
         </Link>
@@ -125,7 +125,7 @@ export default function NewPowwowPage() {
       <h1 className="text-2xl font-semibold tracking-tight">
         Create a Pow Wow Event
       </h1>
-      <p className="mt-2 text-sm text-slate-300">
+      <p className="mt-2 text-sm text-[var(--text-secondary)]">
         Share pow wow gatherings and cultural events with the IOPPS community.
       </p>
 
@@ -145,12 +145,12 @@ export default function NewPowwowPage() {
             <button
               type="button"
               onClick={() => setShowUploader(false)}
-              className="text-sm text-slate-400 hover:text-white"
+              className="text-sm text-[var(--text-muted)] hover:text-white"
             >
               Skip this step
             </button>
           </div>
-          <p className="mb-4 text-sm text-slate-400">
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
             Upload a pow wow poster or flyer and our AI will automatically extract the event details.
           </p>
           <PosterUploader
@@ -158,16 +158,16 @@ export default function NewPowwowPage() {
             onDataExtracted={handlePosterDataExtracted as any}
           />
           <div className="my-6 flex items-center gap-4">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-sm text-slate-500">or fill manually below</span>
-            <div className="h-px flex-1 bg-slate-800" />
+            <div className="h-px flex-1 bg-surface" />
+            <span className="text-sm text-foreground0">or fill manually below</span>
+            <div className="h-px flex-1 bg-surface" />
           </div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Pow Wow Name *
           </label>
           <input
@@ -176,12 +176,12 @@ export default function NewPowwowPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Annual Traditional Pow Wow"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Host Organization / Nation
           </label>
           <input
@@ -189,12 +189,12 @@ export default function NewPowwowPage() {
             value={host}
             onChange={(e) => setHost(e.target.value)}
             placeholder="e.g., First Nations Community Center"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Description *
           </label>
           <textarea
@@ -203,12 +203,12 @@ export default function NewPowwowPage() {
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
             placeholder="Describe the pow wow, activities, categories, and what attendees can expect..."
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Location *
           </label>
           <input
@@ -217,37 +217,37 @@ export default function NewPowwowPage() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g., Community Grounds, Edmonton, AB"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Start Date
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               End Date
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Date Range (if dates are tentative)
           </label>
           <input
@@ -255,19 +255,19 @@ export default function NewPowwowPage() {
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
             placeholder="e.g., June 15-17, 2024 or Summer 2024"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Season
             </label>
             <select
               value={season}
               onChange={(e) => setSeason(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
               <option value="">Select season</option>
               <option value="spring">Spring</option>
@@ -277,13 +277,13 @@ export default function NewPowwowPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Registration Status
             </label>
             <select
               value={registrationStatus}
               onChange={(e) => setRegistrationStatus(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
               <option value="open">Open</option>
               <option value="closed">Closed</option>
@@ -299,9 +299,9 @@ export default function NewPowwowPage() {
             id="livestream"
             checked={livestream}
             onChange={(e) => setLivestream(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#14B8A6] focus:ring-[#14B8A6]"
+            className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
           />
-          <label htmlFor="livestream" className="text-sm text-slate-200">
+          <label htmlFor="livestream" className="text-sm text-foreground">
             This event will be livestreamed
           </label>
         </div>
@@ -310,7 +310,7 @@ export default function NewPowwowPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+            className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60"
           >
             {saving ? "Creating..." : "Create Pow Wow"}
           </button>

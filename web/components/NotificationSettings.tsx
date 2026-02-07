@@ -249,7 +249,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -258,7 +258,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
     return (
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 mx-auto text-amber-400 mb-3" />
-        <p className="text-slate-400">Unable to load notification settings</p>
+        <p className="text-[var(--text-muted)]">Unable to load notification settings</p>
       </div>
     );
   }
@@ -266,23 +266,23 @@ export default function NotificationSettings({ compact = false }: NotificationSe
   return (
     <div className="space-y-6">
       {/* Global Settings */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-          <Bell className="h-5 w-5 text-emerald-400" />
+          <Bell className="h-5 w-5 text-accent" />
           Notification Settings
         </h3>
 
         {/* Master Toggle */}
-        <div className="flex items-center justify-between py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between py-4 border-b border-[var(--card-border)]">
           <div>
             <p className="font-medium text-white">All Notifications</p>
-            <p className="text-sm text-slate-400">Master switch for all notifications</p>
+            <p className="text-sm text-[var(--text-muted)]">Master switch for all notifications</p>
           </div>
           <button
             onClick={handleGlobalToggle}
             disabled={saving}
             className={`relative h-7 w-12 rounded-full transition-colors ${
-              preferences.globalEnabled ? "bg-emerald-500" : "bg-slate-700"
+              preferences.globalEnabled ? "bg-accent" : "bg-slate-700"
             }`}
           >
             <span
@@ -295,12 +295,12 @@ export default function NotificationSettings({ compact = false }: NotificationSe
 
         {/* Push Notifications */}
         {pushSupported && (
-          <div className="flex items-center justify-between py-4 border-b border-slate-800">
+          <div className="flex items-center justify-between py-4 border-b border-[var(--card-border)]">
             <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-slate-400" />
+              <Smartphone className="h-5 w-5 text-[var(--text-muted)]" />
               <div>
                 <p className="font-medium text-white">Push Notifications</p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[var(--text-muted)]">
                   {pushPermission === "denied"
                     ? "Blocked in browser settings"
                     : "Receive notifications even when you're away"}
@@ -311,7 +311,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
               onClick={handlePushToggle}
               disabled={saving || pushPermission === "denied"}
               className={`relative h-7 w-12 rounded-full transition-colors ${
-                preferences.pushEnabled ? "bg-emerald-500" : "bg-slate-700"
+                preferences.pushEnabled ? "bg-accent" : "bg-slate-700"
               } ${pushPermission === "denied" ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span
@@ -326,10 +326,10 @@ export default function NotificationSettings({ compact = false }: NotificationSe
         {/* Quiet Hours */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
-            <Moon className="h-5 w-5 text-slate-400" />
+            <Moon className="h-5 w-5 text-[var(--text-muted)]" />
             <div>
               <p className="font-medium text-white">Quiet Hours</p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 {preferences.quietHoursEnabled
                   ? `${preferences.quietHoursStart} - ${preferences.quietHoursEnd}`
                   : "Pause notifications at night"}
@@ -340,7 +340,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
             onClick={handleQuietHoursToggle}
             disabled={saving}
             className={`relative h-7 w-12 rounded-full transition-colors ${
-              preferences.quietHoursEnabled ? "bg-emerald-500" : "bg-slate-700"
+              preferences.quietHoursEnabled ? "bg-accent" : "bg-slate-700"
             }`}
           >
             <span
@@ -361,45 +361,45 @@ export default function NotificationSettings({ compact = false }: NotificationSe
             return (
               <div
                 key={group.id}
-                className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden"
+                className="rounded-2xl border border-[var(--card-border)] bg-surface overflow-hidden"
               >
                 {/* Group Header */}
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
+                  className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors"
                 >
                   <div>
                     <h4 className="font-medium text-white text-left">{group.label}</h4>
-                    <p className="text-sm text-slate-400 text-left">{group.description}</p>
+                    <p className="text-sm text-[var(--text-muted)] text-left">{group.description}</p>
                   </div>
                   {isExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-slate-400" />
+                    <ChevronUp className="h-5 w-5 text-[var(--text-muted)]" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-slate-400" />
+                    <ChevronDown className="h-5 w-5 text-[var(--text-muted)]" />
                   )}
                 </button>
 
                 {/* Category Items */}
                 {isExpanded && (
-                  <div className="border-t border-slate-800">
+                  <div className="border-t border-[var(--card-border)]">
                     {group.categories.map((category) => {
                       const pref = preferences.categories[category.key];
 
                       return (
                         <div
                           key={category.key}
-                          className="px-4 py-3 border-b border-slate-800/50 last:border-b-0"
+                          className="px-4 py-3 border-b border-[var(--card-border)]/50 last:border-b-0"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <p className="text-sm font-medium text-white">{category.label}</p>
-                              <p className="text-xs text-slate-500">{category.description}</p>
+                              <p className="text-xs text-foreground0">{category.description}</p>
                             </div>
                             <button
                               onClick={() => handleCategoryToggle(category.key, pref)}
                               disabled={saving}
                               className={`relative h-6 w-10 rounded-full transition-colors ${
-                                pref.enabled ? "bg-emerald-500" : "bg-slate-700"
+                                pref.enabled ? "bg-accent" : "bg-slate-700"
                               }`}
                             >
                               <span
@@ -413,14 +413,14 @@ export default function NotificationSettings({ compact = false }: NotificationSe
                           {/* Channel toggles */}
                           {pref.enabled && (
                             <div className="flex items-center gap-4 mt-3">
-                              <span className="text-xs text-slate-500">Deliver via:</span>
+                              <span className="text-xs text-foreground0">Deliver via:</span>
                               <button
                                 onClick={() => handleChannelToggle(category.key, pref, "in_app")}
                                 disabled={saving}
                                 className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors ${
                                   pref.channels.includes("in_app")
-                                    ? "bg-emerald-500/20 text-emerald-400"
-                                    : "bg-slate-800 text-slate-500"
+                                    ? "bg-accent/20 text-accent"
+                                    : "bg-surface text-foreground0"
                                 }`}
                               >
                                 <Monitor className="h-3 w-3" />
@@ -431,8 +431,8 @@ export default function NotificationSettings({ compact = false }: NotificationSe
                                 disabled={saving}
                                 className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors ${
                                   pref.channels.includes("email")
-                                    ? "bg-emerald-500/20 text-emerald-400"
-                                    : "bg-slate-800 text-slate-500"
+                                    ? "bg-accent/20 text-accent"
+                                    : "bg-surface text-foreground0"
                                 }`}
                               >
                                 <Mail className="h-3 w-3" />
@@ -444,8 +444,8 @@ export default function NotificationSettings({ compact = false }: NotificationSe
                                   disabled={saving}
                                   className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-colors ${
                                     pref.channels.includes("push")
-                                      ? "bg-emerald-500/20 text-emerald-400"
-                                      : "bg-slate-800 text-slate-500"
+                                      ? "bg-accent/20 text-accent"
+                                      : "bg-surface text-foreground0"
                                   }`}
                                 >
                                   <Smartphone className="h-3 w-3" />

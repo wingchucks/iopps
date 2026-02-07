@@ -179,21 +179,21 @@ export default function EditProductModal({
       aria-modal="true"
       aria-labelledby="edit-product-title"
     >
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-[var(--card-border)] bg-surface shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--card-border)] bg-surface px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600">
               <CubeIcon className="h-5 w-5 text-white" />
             </div>
-            <h2 id="edit-product-title" className="text-xl font-semibold text-slate-100">
+            <h2 id="edit-product-title" className="text-xl font-semibold text-foreground">
               Edit Product
             </h2>
           </div>
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200 disabled:opacity-50"
+            className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground disabled:opacity-50"
             aria-label="Close"
           >
             <XMarkIcon className="h-5 w-5" />
@@ -202,7 +202,7 @@ export default function EditProductModal({
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -213,16 +213,16 @@ export default function EditProductModal({
             )}
 
             {/* Product Image */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
-                <PhotoIcon className="h-4 w-4 text-teal-400" />
+                <PhotoIcon className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-white">Product Image</h3>
               </div>
 
               <div>
                 {imageUrl ? (
                   <div className="relative">
-                    <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden bg-slate-800">
+                    <div className="relative aspect-video w-full max-w-sm rounded-lg overflow-hidden bg-surface">
                       <Image
                         src={imageUrl}
                         alt="Product preview"
@@ -233,28 +233,28 @@ export default function EditProductModal({
                     <button
                       type="button"
                       onClick={() => setImageUrl("")}
-                      className="absolute top-2 right-2 p-1 bg-slate-900/80 rounded-full hover:bg-slate-800 transition-colors"
+                      className="absolute top-2 right-2 p-1 bg-slate-900/80 rounded-full hover:bg-surface transition-colors"
                     >
-                      <XMarkIcon className="h-5 w-5 text-slate-300" />
+                      <XMarkIcon className="h-5 w-5 text-[var(--text-secondary)]" />
                     </button>
                   </div>
                 ) : (
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-video w-full max-w-sm rounded-lg border-2 border-dashed border-slate-700 bg-slate-800/50 flex flex-col items-center justify-center cursor-pointer hover:border-slate-600 hover:bg-slate-800 transition-colors"
+                    className="aspect-video w-full max-w-sm rounded-lg border-2 border-dashed border-[var(--card-border)] bg-surface flex flex-col items-center justify-center cursor-pointer hover:border-[var(--card-border)] hover:bg-surface transition-colors"
                   >
                     {uploading ? (
                       <div className="text-center">
-                        <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                        <p className="text-sm text-slate-400">
+                        <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                        <p className="text-sm text-[var(--text-muted)]">
                           Uploading... {uploadProgress}%
                         </p>
                       </div>
                     ) : (
                       <>
-                        <ArrowUpTrayIcon className="h-8 w-8 text-slate-500 mb-2" />
-                        <p className="text-sm text-slate-400">Click to upload image</p>
-                        <p className="text-xs text-slate-500 mt-1">JPEG, PNG, or WebP (max 5MB)</p>
+                        <ArrowUpTrayIcon className="h-8 w-8 text-foreground0 mb-2" />
+                        <p className="text-sm text-[var(--text-muted)]">Click to upload image</p>
+                        <p className="text-xs text-foreground0 mt-1">JPEG, PNG, or WebP (max 5MB)</p>
                       </>
                     )}
                   </div>
@@ -270,15 +270,15 @@ export default function EditProductModal({
             </section>
 
             {/* Product Information */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
-                <CubeIcon className="h-4 w-4 text-teal-400" />
+                <CubeIcon className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-white">Product Information</h3>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Product Name *
                   </label>
                   <input
@@ -287,12 +287,12 @@ export default function EditProductModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., Handcrafted Beaded Earrings"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Description *
                   </label>
                   <textarea
@@ -301,18 +301,18 @@ export default function EditProductModal({
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
                     placeholder="Describe your product..."
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Category
                   </label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as VendorCategory)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
                   >
                     <option value="">Select a category</option>
                     {VENDOR_CATEGORIES.map((cat) => (
@@ -326,14 +326,14 @@ export default function EditProductModal({
             </section>
 
             {/* Pricing */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
-                <CurrencyDollarIcon className="h-4 w-4 text-teal-400" />
+                <CurrencyDollarIcon className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-white">Pricing</h3>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Price Display
                 </label>
                 <input
@@ -341,15 +341,15 @@ export default function EditProductModal({
                   value={priceDisplay}
                   onChange={(e) => setPriceDisplay(e.target.value)}
                   placeholder="e.g., $45.00, From $50, Contact for pricing"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </section>
 
             {/* Availability & Status */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircleIcon className="h-4 w-4 text-teal-400" />
+                <CheckCircleIcon className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-white">Availability & Status</h3>
               </div>
 
@@ -359,11 +359,11 @@ export default function EditProductModal({
                     type="checkbox"
                     checked={active}
                     onChange={(e) => setActive(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                   />
                   <div>
-                    <span className="text-sm text-slate-300 font-medium">Active</span>
-                    <p className="text-xs text-slate-500">Product is visible in the marketplace</p>
+                    <span className="text-sm text-[var(--text-secondary)] font-medium">Active</span>
+                    <p className="text-xs text-foreground0">Product is visible in the marketplace</p>
                   </div>
                 </label>
 
@@ -372,11 +372,11 @@ export default function EditProductModal({
                     type="checkbox"
                     checked={inStock}
                     onChange={(e) => setInStock(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                   />
                   <div>
-                    <span className="text-sm text-slate-300 font-medium">In Stock</span>
-                    <p className="text-xs text-slate-500">Currently available for purchase</p>
+                    <span className="text-sm text-[var(--text-secondary)] font-medium">In Stock</span>
+                    <p className="text-xs text-foreground0">Currently available for purchase</p>
                   </div>
                 </label>
 
@@ -385,11 +385,11 @@ export default function EditProductModal({
                     type="checkbox"
                     checked={madeToOrder}
                     onChange={(e) => setMadeToOrder(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                   />
                   <div>
-                    <span className="text-sm text-slate-300 font-medium">Made to Order</span>
-                    <p className="text-xs text-slate-500">Custom-made when ordered</p>
+                    <span className="text-sm text-[var(--text-secondary)] font-medium">Made to Order</span>
+                    <p className="text-xs text-foreground0">Custom-made when ordered</p>
                   </div>
                 </label>
 
@@ -398,30 +398,30 @@ export default function EditProductModal({
                     type="checkbox"
                     checked={featured}
                     onChange={(e) => setFeatured(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                   />
                   <div>
-                    <span className="text-sm text-slate-300 font-medium">Featured Product</span>
-                    <p className="text-xs text-slate-500">Highlight in your shop</p>
+                    <span className="text-sm text-[var(--text-secondary)] font-medium">Featured Product</span>
+                    <p className="text-xs text-foreground0">Highlight in your shop</p>
                   </div>
                 </label>
               </div>
             </section>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[var(--card-border)]">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-surface disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving || uploading}
-                className="rounded-lg bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-500 transition-colors disabled:opacity-50"
+                className="rounded-lg bg-accent px-6 py-2 text-sm font-semibold text-white hover:bg-accent transition-colors disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>

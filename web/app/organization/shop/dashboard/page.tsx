@@ -215,7 +215,7 @@ export default function VendorDashboard() {
   if (authLoading || loading || role === 'employer') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -234,7 +234,7 @@ export default function VendorDashboard() {
   const statusColors = {
     draft: 'bg-slate-500',
     pending: 'bg-amber-500',
-    active: 'bg-emerald-500',
+    active: 'bg-accent',
     suspended: 'bg-red-500',
   };
 
@@ -252,7 +252,7 @@ export default function VendorDashboard() {
             {isNewVendor ? 'List Your Business' : 'Shop Dashboard'}
           </h1>
         </div>
-        <p className="text-slate-400">
+        <p className="text-[var(--text-muted)]">
           {isNewVendor
             ? 'Create your business profile to start connecting with customers across North America.'
             : 'Manage your Shop Indigenous business listing.'}
@@ -261,7 +261,7 @@ export default function VendorDashboard() {
 
       {/* Tabs */}
       {!isNewVendor && (
-        <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl mb-8 w-fit">
+        <div className="flex gap-1 p-1 bg-surface rounded-xl mb-8 w-fit">
           {[
             { id: 'overview', label: 'Overview', icon: ChartBarIcon },
             { id: 'profile', label: 'Edit Profile', icon: PencilSquareIcon },
@@ -272,8 +272,8 @@ export default function VendorDashboard() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as Tab)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                ? 'bg-teal-500 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                ? 'bg-accent text-white'
+                : 'text-[var(--text-muted)] hover:text-white hover:bg-slate-700'
                 }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -287,7 +287,7 @@ export default function VendorDashboard() {
       {activeTab === 'overview' && vendor && (
         <div className="space-y-6">
           {/* Status Card */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
                 {vendor.logoUrl ? (
@@ -310,7 +310,7 @@ export default function VendorDashboard() {
                       <StatusIcon className="h-3.5 w-3.5" />
                       {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
                     </span>
-                    <span className="text-sm text-slate-500">{typeof vendor.category === 'string' ? vendor.category : ''}</span>
+                    <span className="text-sm text-foreground0">{typeof vendor.category === 'string' ? vendor.category : ''}</span>
                   </div>
                 </div>
               </div>
@@ -318,7 +318,7 @@ export default function VendorDashboard() {
                 <button
                   onClick={handlePublish}
                   disabled={saving}
-                  className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors disabled:opacity-50"
                 >
                   Publish
                 </button>
@@ -336,7 +336,7 @@ export default function VendorDashboard() {
                 <ExclamationTriangleIcon className="h-6 w-6 text-amber-500 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-amber-500">Your listing is in draft mode</h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">
                     Complete your profile and click &quot;Publish&quot; to make your business visible to customers.
                   </p>
                 </div>
@@ -348,9 +348,9 @@ export default function VendorDashboard() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Your Listing Preview</h3>
-              <span className="text-xs text-slate-500">This is how customers see your shop</span>
+              <span className="text-xs text-foreground0">This is how customers see your shop</span>
             </div>
-            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 overflow-hidden">
+            <div className="rounded-2xl bg-surface border border-[var(--card-border)] overflow-hidden">
               {/* Cover/Header area with dynamic theme color */}
               <div
                 className="h-32 relative"
@@ -365,12 +365,12 @@ export default function VendorDashboard() {
                       alt={vendor.businessName}
                       width={80}
                       height={80}
-                      className="rounded-xl border-4 border-slate-800 object-cover"
+                      className="rounded-xl border-4 border-[var(--card-border)] object-cover"
                     />
                   </div>
                 )}
                 {!vendor.logoUrl && (
-                  <div className="absolute -bottom-8 left-6 flex h-20 w-20 items-center justify-center rounded-xl border-4 border-slate-800 bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
+                  <div className="absolute -bottom-8 left-6 flex h-20 w-20 items-center justify-center rounded-xl border-4 border-[var(--card-border)] bg-gradient-to-br from-teal-500 to-teal-600 text-3xl font-bold text-white">
                     {vendor.businessName.charAt(0)}
                   </div>
                 )}
@@ -382,9 +382,9 @@ export default function VendorDashboard() {
                   <div>
                     <h4 className="text-xl font-bold text-white">{vendor.businessName}</h4>
                     {vendor.tagline && typeof vendor.tagline === 'string' && (
-                      <p className="text-slate-400 mt-1">{vendor.tagline}</p>
+                      <p className="text-[var(--text-muted)] mt-1">{vendor.tagline}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-slate-400">
+                    <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-[var(--text-muted)]">
                       <span
                         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-white"
                         style={{ backgroundColor: `${formData.themeColor}33`, color: formData.themeColor }} // 33 is ~20% opacity
@@ -414,19 +414,19 @@ export default function VendorDashboard() {
 
                 {/* Description preview */}
                 {vendor.description && typeof vendor.description === 'string' && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
-                    <p className="text-slate-300 text-sm line-clamp-3">{vendor.description}</p>
+                  <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+                    <p className="text-[var(--text-secondary)] text-sm line-clamp-3">{vendor.description}</p>
                   </div>
                 )}
 
                 {/* Products preview */}
                 {products.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
+                  <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-slate-400">Products ({products.length})</span>
+                      <span className="text-sm font-medium text-[var(--text-muted)]">Products ({products.length})</span>
                       <button
                         onClick={() => setActiveTab('products')}
-                        className="text-xs text-teal-400 hover:text-teal-300"
+                        className="text-xs text-accent hover:text-teal-300"
                       >
                         Manage →
                       </button>
@@ -444,13 +444,13 @@ export default function VendorDashboard() {
                             />
                           ) : (
                             <div className="w-20 h-20 rounded-lg bg-slate-700 flex items-center justify-center">
-                              <PhotoIcon className="h-6 w-6 text-slate-500" />
+                              <PhotoIcon className="h-6 w-6 text-foreground0" />
                             </div>
                           )}
                         </div>
                       ))}
                       {products.length > 4 && (
-                        <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-700/50 flex items-center justify-center text-slate-400 text-sm">
+                        <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-700/50 flex items-center justify-center text-[var(--text-muted)] text-sm">
                           +{products.length - 4}
                         </div>
                       )}
@@ -460,16 +460,16 @@ export default function VendorDashboard() {
 
                 {/* Gallery preview */}
                 {vendor.galleryImages && vendor.galleryImages.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
-                    <p className="text-sm font-medium text-slate-400 mb-2">Gallery ({vendor.galleryImages.length})</p>
+                  <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+                    <p className="text-sm font-medium text-[var(--text-muted)] mb-2">Gallery ({vendor.galleryImages.length})</p>
                     <div className="flex gap-2">
                       {vendor.galleryImages.slice(0, 4).map((img, i) => (
-                        <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-700">
+                        <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-[var(--card-border)]">
                           <Image src={img} alt="" fill className="object-cover" />
                         </div>
                       ))}
                       {vendor.galleryImages.length > 4 && (
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400">
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-surface border border-[var(--card-border)] text-xs text-[var(--text-muted)]">
                           +{vendor.galleryImages.length - 4}
                         </div>
                       )}
@@ -478,18 +478,18 @@ export default function VendorDashboard() {
                 )}
 
                 {/* Contact preview */}
-                <div className="mt-4 pt-4 border-t border-slate-700 flex flex-wrap gap-3">
+                <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex flex-wrap gap-3">
                   {vendor.email && typeof vendor.email === 'string' && (
-                    <span className="text-xs text-slate-500">✉️ {vendor.email}</span>
+                    <span className="text-xs text-foreground0">✉️ {vendor.email}</span>
                   )}
                   {vendor.phone && typeof vendor.phone === 'string' && (
-                    <span className="text-xs text-slate-500">📞 {vendor.phone}</span>
+                    <span className="text-xs text-foreground0">📞 {vendor.phone}</span>
                   )}
                   {vendor.website && typeof vendor.website === 'string' && (
-                    <span className="text-xs text-slate-500">🌐 Website</span>
+                    <span className="text-xs text-foreground0">🌐 Website</span>
                   )}
                   {(vendor.instagram || vendor.facebook || vendor.tiktok) && (
-                    <span className="text-xs text-slate-500">📱 Social</span>
+                    <span className="text-xs text-foreground0">📱 Social</span>
                   )}
                 </div>
               </div>
@@ -502,12 +502,12 @@ export default function VendorDashboard() {
       {(activeTab === 'profile' || isNewVendor) && (
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Business Info */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <h3 className="text-lg font-semibold text-white mb-6">Business Information</h3>
             <div className="grid gap-6 sm:grid-cols-2">
               {/* Logo Upload */}
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Business Logo
                 </label>
                 <div className="flex items-center gap-6">
@@ -531,8 +531,8 @@ export default function VendorDashboard() {
                         </button>
                       </div>
                     ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-700 border border-slate-600">
-                        <PhotoIcon className="h-8 w-8 text-slate-500" />
+                      <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-700 border border-[var(--card-border)]">
+                        <PhotoIcon className="h-8 w-8 text-foreground0" />
                       </div>
                     )}
                   </div>
@@ -564,12 +564,12 @@ export default function VendorDashboard() {
                         disabled={uploadingLogo || !vendor}
                       />
                       <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${uploadingLogo || !vendor
-                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                        ? 'bg-slate-700 text-foreground0 cursor-not-allowed'
                         : 'bg-slate-700 text-white hover:bg-slate-600'
                         }`}>
                         {uploadingLogo ? (
                           <>
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
                             Uploading {Math.round(uploadProgress)}%
                           </>
                         ) : (
@@ -580,7 +580,7 @@ export default function VendorDashboard() {
                         )}
                       </span>
                     </label>
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-foreground0">
                       {!vendor ? 'Save your profile first to upload a logo' : 'JPEG, PNG or WebP, max 10MB'}
                     </p>
                   </div>
@@ -589,10 +589,10 @@ export default function VendorDashboard() {
 
               {/* Cover Image Upload */}
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Cover Image
                 </label>
-                <p className="text-xs text-slate-500 mb-3">
+                <p className="text-xs text-foreground0 mb-3">
                   This image appears as the banner on your business card. Recommended size: 1200x400px
                 </p>
                 <div className="space-y-3">
@@ -615,10 +615,10 @@ export default function VendorDashboard() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600 border-dashed">
+                    <div className="flex h-40 items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-[var(--card-border)] border-dashed">
                       <div className="text-center">
-                        <PhotoIcon className="mx-auto h-10 w-10 text-slate-500" />
-                        <p className="mt-2 text-sm text-slate-500">No cover image</p>
+                        <PhotoIcon className="mx-auto h-10 w-10 text-foreground0" />
+                        <p className="mt-2 text-sm text-foreground0">No cover image</p>
                       </div>
                     </div>
                   )}
@@ -649,12 +649,12 @@ export default function VendorDashboard() {
                       disabled={uploadingCover || !vendor}
                     />
                     <span className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${uploadingCover || !vendor
-                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      ? 'bg-slate-700 text-foreground0 cursor-not-allowed'
                       : 'bg-slate-700 text-white hover:bg-slate-600'
                       }`}>
                       {uploadingCover ? (
                         <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
                           Uploading {Math.round(coverUploadProgress)}%
                         </>
                       ) : (
@@ -666,23 +666,23 @@ export default function VendorDashboard() {
                     </span>
                   </label>
                   {!vendor && (
-                    <p className="text-xs text-slate-500">Save your profile first to upload a cover image</p>
+                    <p className="text-xs text-foreground0">Save your profile first to upload a cover image</p>
                   )}
                 </div>
               </div>
 
               {/* Gallery Images Upload */}
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Gallery Images
                 </label>
-                <p className="text-xs text-slate-500 mb-3">
+                <p className="text-xs text-foreground0 mb-3">
                   Showcase your work, shop, or products. Max 6 images.
                 </p>
 
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 mb-4">
                   {formData.galleryImages.map((url, index) => (
-                    <div key={index} className="relative group aspect-square rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
+                    <div key={index} className="relative group aspect-square rounded-xl overflow-hidden bg-surface border border-[var(--card-border)]">
                       <Image
                         src={url}
                         alt={`Gallery image ${index + 1}`}
@@ -705,9 +705,9 @@ export default function VendorDashboard() {
 
                   {/* Upload Button Block */}
                   {formData.galleryImages.length < 6 && (
-                    <label className={`relative flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/50 transition-colors ${uploadingGallery || !vendor
+                    <label className={`relative flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-[var(--card-border)] bg-surface transition-colors ${uploadingGallery || !vendor
                       ? 'cursor-not-allowed opacity-50'
-                      : 'cursor-pointer hover:border-teal-500/50 hover:bg-slate-800'
+                      : 'cursor-pointer hover:border-accent/50 hover:bg-surface'
                       }`}>
                       <input
                         type="file"
@@ -745,13 +745,13 @@ export default function VendorDashboard() {
                       />
                       {uploadingGallery ? (
                         <>
-                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent mb-2" />
-                          <span className="text-xs text-slate-500">Uploading...</span>
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent mb-2" />
+                          <span className="text-xs text-foreground0">Uploading...</span>
                         </>
                       ) : (
                         <>
-                          <PlusIcon className="h-8 w-8 text-slate-500 mb-2" />
-                          <span className="text-sm font-medium text-slate-400">Add Images</span>
+                          <PlusIcon className="h-8 w-8 text-foreground0 mb-2" />
+                          <span className="text-sm font-medium text-[var(--text-muted)]">Add Images</span>
                         </>
                       )}
                     </label>
@@ -760,7 +760,7 @@ export default function VendorDashboard() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Business Name *
                 </label>
                 <input
@@ -768,27 +768,27 @@ export default function VendorDashboard() {
                   required
                   value={formData.businessName}
                   onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="Your business name"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">Tagline</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Tagline</label>
                 <input
                   type="text"
                   value={formData.tagline}
                   onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="A short tagline for your business"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Category *</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Category *</label>
                 <select
                   required
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value as VendorCategory })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white focus:border-accent focus:outline-none"
                 >
                   {VENDOR_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -799,7 +799,7 @@ export default function VendorDashboard() {
 
               {/* Theme Color */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Brand Color
                 </label>
                 <div className="flex items-center gap-3">
@@ -807,26 +807,26 @@ export default function VendorDashboard() {
                     type="color"
                     value={formData.themeColor}
                     onChange={(e) => setFormData({ ...formData, themeColor: e.target.value })}
-                    className="h-10 w-20 cursor-pointer rounded-lg border border-slate-600 bg-slate-700 p-1"
+                    className="h-10 w-20 cursor-pointer rounded-lg border border-[var(--card-border)] bg-slate-700 p-1"
                   />
-                  <span className="text-sm text-slate-400">{formData.themeColor}</span>
+                  <span className="text-sm text-[var(--text-muted)]">{formData.themeColor}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Nation / Affiliation
                 </label>
                 <input
                   type="text"
                   value={formData.nation}
                   onChange={(e) => setFormData({ ...formData, nation: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="e.g., Cree, Métis, Inuit"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   About Your Business *
                 </label>
                 <textarea
@@ -834,19 +834,19 @@ export default function VendorDashboard() {
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="Tell customers about your business, what you offer, and what makes you unique..."
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Your Story (Optional)
                 </label>
                 <textarea
                   rows={3}
                   value={formData.communityStory}
                   onChange={(e) => setFormData({ ...formData, communityStory: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="Share your story, your connection to your community, and what inspires your work..."
                 />
               </div>
@@ -854,26 +854,26 @@ export default function VendorDashboard() {
           </div>
 
           {/* Location */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <h3 className="text-lg font-semibold text-white mb-6">Location & Shipping</h3>
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">City / Town</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">City / Town</label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="e.g., Toronto"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Province / State *</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Province / State *</label>
                 <select
                   required
                   value={formData.region}
                   onChange={(e) => setFormData({ ...formData, region: e.target.value as NorthAmericanRegion })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white focus:border-accent focus:outline-none"
                 >
                   {NORTH_AMERICAN_REGIONS.map((region) => (
                     <option key={region} value={region}>{region}</option>
@@ -886,84 +886,84 @@ export default function VendorDashboard() {
                     type="checkbox"
                     checked={formData.offersShipping}
                     onChange={(e) => setFormData({ ...formData, offersShipping: e.target.checked })}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
                   />
-                  <span className="text-slate-300">Offers Shipping</span>
+                  <span className="text-[var(--text-secondary)]">Offers Shipping</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.onlineOnly}
                     onChange={(e) => setFormData({ ...formData, onlineOnly: e.target.checked })}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
                   />
-                  <span className="text-slate-300">Online only (no physical location)</span>
+                  <span className="text-[var(--text-secondary)]">Online only (no physical location)</span>
                 </label>
               </div>
             </div>
           </div>
 
           {/* Contact & Social */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <h3 className="text-lg font-semibold text-white mb-6">Contact & Social Media</h3>
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="contact@yourbusiness.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Phone</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Phone</label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="(555) 123-4567"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Website</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Website</label>
                 <input
                   type="url"
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="https://yourbusiness.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Instagram</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Instagram</label>
                 <input
                   type="text"
                   value={formData.instagram}
                   onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="@yourbusiness"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Facebook</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Facebook</label>
                 <input
                   type="text"
                   value={formData.facebook}
                   onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="facebook.com/yourbusiness"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">TikTok</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">TikTok</label>
                 <input
                   type="text"
                   value={formData.tiktok}
                   onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-slate-600 px-4 py-3 text-white placeholder-slate-400 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
                   placeholder="@yourbusiness"
                 />
               </div>
@@ -976,7 +976,7 @@ export default function VendorDashboard() {
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
-                className="px-6 py-3 rounded-lg text-slate-300 hover:text-white transition-colors"
+                className="px-6 py-3 rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
               >
                 Cancel
               </button>
@@ -1000,14 +1000,14 @@ export default function VendorDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-white">Products & Services</h3>
-                <p className="text-sm text-slate-400">Add products or services to showcase on your profile.</p>
+                <p className="text-sm text-[var(--text-muted)]">Add products or services to showcase on your profile.</p>
               </div>
               <button
                 onClick={() => {
                   setEditingProduct(null);
                   setShowProductModal(true);
                 }}
-                className="flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
               >
                 <PlusIcon className="h-4 w-4" />
                 Add Product
@@ -1015,10 +1015,10 @@ export default function VendorDashboard() {
             </div>
 
             {products.length === 0 ? (
-              <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+              <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-12 text-center">
                 <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
                 <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                   Add products or services to help customers discover what you offer.
                 </p>
               </div>
@@ -1028,7 +1028,7 @@ export default function VendorDashboard() {
                   <div
                     key={product.id}
                     onClick={() => setPreviewProduct(product)}
-                    className="rounded-xl bg-slate-800/50 border border-slate-700 overflow-hidden group cursor-pointer hover:border-teal-500/50 transition-colors"
+                    className="rounded-xl bg-surface border border-[var(--card-border)] overflow-hidden group cursor-pointer hover:border-accent/50 transition-colors"
                   >
                     {product.imageUrl ? (
                       <div className="relative h-40">
@@ -1053,7 +1053,7 @@ export default function VendorDashboard() {
                               e.stopPropagation();
                               setPreviewProduct(product);
                             }}
-                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-teal-500/20 text-slate-300 hover:text-teal-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-accent/20 text-[var(--text-secondary)] hover:text-accent transition-colors"
                             title="Preview product"
                           >
                             <EyeIcon className="h-4 w-4" />
@@ -1064,7 +1064,7 @@ export default function VendorDashboard() {
                               setEditingProduct(product);
                               setShowProductModal(true);
                             }}
-                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-[var(--text-secondary)] hover:text-white transition-colors"
                             title="Edit product"
                           >
                             <PencilSquareIcon className="h-4 w-4" />
@@ -1074,18 +1074,18 @@ export default function VendorDashboard() {
                               e.stopPropagation();
                               handleDeleteProduct(product.id);
                             }}
-                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-700 hover:bg-red-500/20 text-[var(--text-secondary)] hover:text-red-400 transition-colors"
                             title="Delete product"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1 line-clamp-2">{product.description}</p>
+                      <p className="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">{product.description}</p>
                       {product.priceDisplay && (
-                        <p className="mt-2 text-teal-400 font-semibold">{product.priceDisplay}</p>
+                        <p className="mt-2 text-accent font-semibold">{product.priceDisplay}</p>
                       )}
-                      <p className="mt-2 text-xs text-slate-500">Click to preview</p>
+                      <p className="mt-2 text-xs text-foreground0">Click to preview</p>
                     </div>
                   </div>
                 ))}
@@ -1192,17 +1192,17 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
   return (
     <div className="space-y-8">
       {/* Current Status */}
-      <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+      <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Subscription Status</h3>
 
         {hasActiveSubscription && !isExpired ? (
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-              <CheckCircleIcon className="h-6 w-6 text-emerald-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+              <CheckCircleIcon className="h-6 w-6 text-accent" />
             </div>
             <div>
               <p className="text-white font-semibold">Active Subscription</p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 Your listing is live until {subscriptionEndDate?.toLocaleDateString('en-CA', {
                   year: 'numeric',
                   month: 'long',
@@ -1220,7 +1220,7 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
               <p className="text-white font-semibold">
                 {isExpired ? 'Subscription Expired' : 'No Active Subscription'}
               </p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 Subscribe to make your business visible in Shop Indigenous.
               </p>
             </div>
@@ -1231,15 +1231,15 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
       {/* Pricing Plans */}
       <div>
         <h3 className="text-xl font-bold text-white mb-2">Choose Your Plan</h3>
-        <p className="text-slate-400 mb-6">
+        <p className="text-[var(--text-muted)] mb-6">
           Get your Indigenous-owned business in front of customers across North America.
         </p>
 
         <div className="max-w-md mx-auto">
           {/* Monthly Plan */}
-          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-teal-500/50 p-6">
+          <div className="relative rounded-2xl bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border-2 border-accent/50 p-6">
             <div className="absolute -top-3 left-6">
-              <span className="rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white">
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-white">
                 First Month Free
               </span>
             </div>
@@ -1247,14 +1247,14 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
             <h4 className="text-lg font-bold text-white mt-2">{VENDOR_PRODUCTS.MONTHLY.name}</h4>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="text-3xl font-bold text-white">${VENDOR_PRODUCTS.MONTHLY.price / 100}</span>
-              <span className="text-slate-400">/month</span>
+              <span className="text-[var(--text-muted)]">/month</span>
             </div>
-            <p className="mt-2 text-sm text-slate-400">{VENDOR_PRODUCTS.MONTHLY.description}</p>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">{VENDOR_PRODUCTS.MONTHLY.description}</p>
 
             <ul className="mt-4 space-y-2">
               {VENDOR_PRODUCTS.MONTHLY.features.map((feature: string, i: number) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
-                  <CheckCircleIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                <li key={i} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                  <CheckCircleIcon className="h-4 w-4 text-accent flex-shrink-0" />
                   {feature}
                 </li>
               ))}
@@ -1272,7 +1272,7 @@ function SubscriptionTab({ vendor, onRefresh }: { vendor: Vendor; onRefresh: () 
       </div>
 
       {/* Payment Security */}
-      <div className="text-center text-sm text-slate-500">
+      <div className="text-center text-sm text-foreground0">
         <p>Secure payments powered by Stripe. Cancel anytime.</p>
       </div>
     </div>
@@ -1340,14 +1340,14 @@ function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl my-8">
+      <div className="w-full max-w-2xl rounded-2xl bg-surface border border-[var(--card-border)] p-6 shadow-xl my-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-white">
             {product ? 'Edit Product' : 'Add Product'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-white transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -1356,7 +1356,7 @@ function ProductModal({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Product Image
             </label>
             <div className="flex items-center gap-4">
@@ -1378,7 +1378,7 @@ function ProductModal({
                   </button>
                 </div>
               ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-slate-800 border border-slate-700">
+                <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-surface border border-[var(--card-border)]">
                   <PhotoIcon className="h-8 w-8 text-slate-600" />
                 </div>
               )}
@@ -1395,7 +1395,7 @@ function ProductModal({
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
                   className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${uploadingImage
-                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    ? 'bg-slate-700 text-foreground0 cursor-not-allowed'
                     : 'bg-slate-700 text-white hover:bg-slate-600'
                     }`}
                 >
@@ -1407,7 +1407,7 @@ function ProductModal({
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Product Name *
             </label>
             <input
@@ -1415,14 +1415,14 @@ function ProductModal({
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               placeholder="e.g., Handcrafted Beaded Earrings"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Description *
             </label>
             <textarea
@@ -1430,7 +1430,7 @@ function ProductModal({
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               placeholder="Describe your product..."
             />
           </div>
@@ -1438,26 +1438,26 @@ function ProductModal({
           {/* Category & Price */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Category
               </label>
               <input
                 type="text"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
                 placeholder="e.g., Jewelry, Art, Clothing"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Price Display
               </label>
               <input
                 type="text"
                 value={formData.priceDisplay}
                 onChange={(e) => setFormData({ ...formData, priceDisplay: e.target.value })}
-                className="w-full rounded-lg bg-slate-800 border border-slate-700 px-4 py-3 text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
                 placeholder="e.g., $50, From $25, Contact for pricing"
               />
             </div>
@@ -1470,37 +1470,37 @@ function ProductModal({
                 type="checkbox"
                 checked={formData.inStock}
                 onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
               />
-              <span className="text-slate-300">In Stock</span>
+              <span className="text-[var(--text-secondary)]">In Stock</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.madeToOrder}
                 onChange={(e) => setFormData({ ...formData, madeToOrder: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
               />
-              <span className="text-slate-300">Made to Order</span>
+              <span className="text-[var(--text-secondary)]">Made to Order</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.featured}
                 onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500"
               />
-              <span className="text-slate-300">Featured</span>
+              <span className="text-[var(--text-secondary)]">Featured</span>
             </label>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-4 pt-4 border-t border-slate-800">
+          <div className="flex justify-end gap-4 pt-4 border-t border-[var(--card-border)]">
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-6 py-3 rounded-lg text-slate-300 hover:text-white transition-colors"
+              className="px-6 py-3 rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
             >
               Cancel
             </button>
@@ -1532,16 +1532,16 @@ function ProductPreviewModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 shadow-xl my-8 overflow-hidden">
+      <div className="w-full max-w-2xl rounded-2xl bg-surface border border-[var(--card-border)] shadow-xl my-8 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--card-border)] bg-surface">
           <div className="flex items-center gap-2">
-            <EyeIcon className="h-5 w-5 text-teal-400" />
-            <span className="text-sm font-medium text-slate-300">Customer View Preview</span>
+            <EyeIcon className="h-5 w-5 text-accent" />
+            <span className="text-sm font-medium text-[var(--text-secondary)]">Customer View Preview</span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-700 text-[var(--text-muted)] hover:text-white transition-colors"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -1556,11 +1556,11 @@ function ProductPreviewModal({
                 src={product.imageUrl}
                 alt={product.name}
                 fill
-                className="object-contain bg-slate-950"
+                className="object-contain bg-background"
               />
             </div>
           ) : (
-            <div className="w-full aspect-video max-h-60 bg-slate-800 flex items-center justify-center">
+            <div className="w-full aspect-video max-h-60 bg-surface flex items-center justify-center">
               <PhotoIcon className="h-20 w-20 text-slate-600" />
             </div>
           )}
@@ -1572,23 +1572,23 @@ function ProductPreviewModal({
               <div>
                 <h2 className="text-2xl font-bold text-white">{product.name}</h2>
                 {product.category && (
-                  <span className="inline-block mt-2 text-sm text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full">
+                  <span className="inline-block mt-2 text-sm text-accent bg-accent/10 px-3 py-1 rounded-full">
                     {product.category}
                   </span>
                 )}
               </div>
               {product.priceDisplay && (
-                <p className="text-2xl font-bold text-teal-400">{product.priceDisplay}</p>
+                <p className="text-2xl font-bold text-accent">{product.priceDisplay}</p>
               )}
             </div>
 
             {/* Description */}
-            <p className="text-slate-300 leading-relaxed">{product.description}</p>
+            <p className="text-[var(--text-secondary)] leading-relaxed">{product.description}</p>
 
             {/* Status Badges */}
             <div className="flex flex-wrap gap-2">
               {product.inStock && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-accent bg-accent/10 px-2.5 py-1 rounded-full">
                   <CheckCircleIcon className="h-3.5 w-3.5" />
                   In Stock
                 </span>
@@ -1608,7 +1608,7 @@ function ProductPreviewModal({
             </div>
 
             {/* Seller Info */}
-            <div className="pt-4 border-t border-slate-700">
+            <div className="pt-4 border-t border-[var(--card-border)]">
               <div className="flex items-center gap-3">
                 {vendor.logoUrl ? (
                   <Image
@@ -1625,7 +1625,7 @@ function ProductPreviewModal({
                 )}
                 <div>
                   <p className="font-medium text-white">{vendor.businessName}</p>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-[var(--text-muted)]">
                     {typeof vendor.location === 'string' && vendor.location}
                     {typeof vendor.location === 'string' && typeof vendor.region === 'string' && ', '}
                     {typeof vendor.region === 'string' && vendor.region}
@@ -1637,20 +1637,20 @@ function ProductPreviewModal({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between gap-4 p-4 border-t border-slate-700 bg-slate-800/50">
-          <p className="text-xs text-slate-500 self-center">
+        <div className="flex justify-between gap-4 p-4 border-t border-[var(--card-border)] bg-surface">
+          <p className="text-xs text-foreground0 self-center">
             This is how customers will see your product
           </p>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-slate-300 hover:text-white transition-colors"
+              className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-white transition-colors"
             >
               Close
             </button>
             <button
               onClick={onEdit}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-500 text-white font-medium hover:bg-teal-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent transition-colors"
             >
               <PencilSquareIcon className="h-4 w-4" />
               Edit Product

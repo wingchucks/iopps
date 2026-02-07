@@ -79,7 +79,7 @@ export default function MapListView({
         <h3 className="text-lg font-semibold text-slate-600 mb-2">
           No opportunities found
         </h3>
-        <p className="text-sm text-slate-500 max-w-md">
+        <p className="text-sm text-foreground0 max-w-md">
           Try adjusting your filters or search criteria to find more opportunities.
         </p>
       </div>
@@ -90,15 +90,15 @@ export default function MapListView({
     <div className="flex flex-col h-full">
       {/* Sort Controls */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-foreground0">
           {opportunities.length} {opportunities.length === 1 ? "result" : "results"}
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Sort by:</span>
+          <span className="text-xs text-foreground0">Sort by:</span>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="text-sm bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent"
           >
             <option value="distance">Distance</option>
             <option value="title">Name</option>
@@ -161,16 +161,16 @@ function OpportunityCard({
       <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-2">
         {title}
       </h3>
-      <p className="text-sm text-slate-500 mb-2">{organization}</p>
+      <p className="text-sm text-foreground0 mb-2">{organization}</p>
 
       {/* Meta info */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground0">
         <span className="flex items-center gap-1">
           <MapPinIcon className="w-3.5 h-3.5" />
           {location}
         </span>
         {distance !== undefined && (
-          <span className="text-emerald-400 font-medium">
+          <span className="text-accent font-medium">
             {formatDistance(distance)} away
           </span>
         )}
@@ -181,7 +181,7 @@ function OpportunityCard({
           </span>
         )}
         {meta.employmentType && (
-          <span className="text-slate-500">{meta.employmentType}</span>
+          <span className="text-foreground0">{meta.employmentType}</span>
         )}
       </div>
 

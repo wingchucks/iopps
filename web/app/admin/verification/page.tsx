@@ -83,9 +83,9 @@ function StatsRow({ counts }: { counts: Counts }) {
   const total = counts.pending + counts.approved + counts.rejected;
   const stats = [
     { label: "Pending", value: counts.pending, color: "text-amber-400", bg: "bg-amber-500/10", icon: ClockIcon },
-    { label: "Approved", value: counts.approved, color: "text-emerald-400", bg: "bg-emerald-500/10", icon: CheckCircleIcon },
+    { label: "Approved", value: counts.approved, color: "text-accent", bg: "bg-accent/10", icon: CheckCircleIcon },
     { label: "Rejected", value: counts.rejected, color: "text-red-400", bg: "bg-red-500/10", icon: XCircleIcon },
-    { label: "Total", value: total, color: "text-slate-300", bg: "bg-slate-500/10", icon: ShieldCheckIcon },
+    { label: "Total", value: total, color: "text-[var(--text-secondary)]", bg: "bg-slate-500/10", icon: ShieldCheckIcon },
   ];
 
   return (
@@ -93,7 +93,7 @@ function StatsRow({ counts }: { counts: Counts }) {
       {stats.map((s) => (
         <div
           key={s.label}
-          className="rounded-xl border border-slate-800 bg-[#08090C] p-4"
+          className="rounded-xl border border-[var(--card-border)] bg-surface p-4"
         >
           <div className="flex items-center gap-3">
             <div className={`rounded-lg ${s.bg} p-2`}>
@@ -101,7 +101,7 @@ function StatsRow({ counts }: { counts: Counts }) {
             </div>
             <div>
               <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-slate-500">{s.label}</div>
+              <div className="text-xs text-foreground0">{s.label}</div>
             </div>
           </div>
         </div>
@@ -134,9 +134,9 @@ function ReviewModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-800 bg-[#0B0D10] shadow-xl">
+      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-[#0B0D10] shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--card-border)] px-6 py-4">
           <div className="flex items-center gap-3">
             {request.logoUrl ? (
               <img
@@ -145,22 +145,22 @@ function ReviewModal({
                 className="h-10 w-10 rounded-lg object-cover"
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800">
-                <BuildingOfficeIcon className="h-5 w-5 text-slate-500" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface">
+                <BuildingOfficeIcon className="h-5 w-5 text-foreground0" />
               </div>
             )}
             <div>
-              <h2 className="text-lg font-semibold text-slate-100">
+              <h2 className="text-lg font-semibold text-foreground">
                 {request.organizationName}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 Verification Request
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -169,31 +169,31 @@ function ReviewModal({
         {/* Body */}
         <div className="space-y-5 px-6 py-5">
           {/* Organization Info */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-slate-300">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+            <h3 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">
               Organization Details
             </h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               {request.industry && (
                 <div>
-                  <span className="text-slate-500">Industry:</span>{" "}
-                  <span className="text-slate-300">{request.industry}</span>
+                  <span className="text-foreground0">Industry:</span>{" "}
+                  <span className="text-[var(--text-secondary)]">{request.industry}</span>
                 </div>
               )}
               {request.location && (
                 <div>
-                  <span className="text-slate-500">Location:</span>{" "}
-                  <span className="text-slate-300">{request.location}</span>
+                  <span className="text-foreground0">Location:</span>{" "}
+                  <span className="text-[var(--text-secondary)]">{request.location}</span>
                 </div>
               )}
               {request.website && (
                 <div>
-                  <span className="text-slate-500">Website:</span>{" "}
+                  <span className="text-foreground0">Website:</span>{" "}
                   <a
                     href={request.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-teal-400 hover:underline"
+                    className="text-accent hover:underline"
                   >
                     {request.website}
                   </a>
@@ -201,28 +201,28 @@ function ReviewModal({
               )}
               {request.contactEmail && (
                 <div>
-                  <span className="text-slate-500">Contact:</span>{" "}
-                  <span className="text-slate-300">{request.contactEmail}</span>
+                  <span className="text-foreground0">Contact:</span>{" "}
+                  <span className="text-[var(--text-secondary)]">{request.contactEmail}</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Verification Claims */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-slate-300">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+            <h3 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">
               Verification Claims
             </h3>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <div
                   className={`h-2 w-2 rounded-full ${
-                    v.isIndigenousOwned ? "bg-emerald-500" : "bg-slate-600"
+                    v.isIndigenousOwned ? "bg-accent" : "bg-slate-600"
                   }`}
                 />
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-[var(--text-secondary)]">
                   Indigenous Owned (51%+):{" "}
-                  <span className={v.isIndigenousOwned ? "text-emerald-400 font-medium" : "text-slate-500"}>
+                  <span className={v.isIndigenousOwned ? "text-accent font-medium" : "text-foreground0"}>
                     {v.isIndigenousOwned ? "Yes" : "No"}
                   </span>
                 </span>
@@ -230,30 +230,30 @@ function ReviewModal({
               <div className="flex items-center gap-2">
                 <div
                   className={`h-2 w-2 rounded-full ${
-                    v.isIndigenousLed ? "bg-emerald-500" : "bg-slate-600"
+                    v.isIndigenousLed ? "bg-accent" : "bg-slate-600"
                   }`}
                 />
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-[var(--text-secondary)]">
                   Indigenous Led:{" "}
-                  <span className={v.isIndigenousLed ? "text-emerald-400 font-medium" : "text-slate-500"}>
+                  <span className={v.isIndigenousLed ? "text-accent font-medium" : "text-foreground0"}>
                     {v.isIndigenousLed ? "Yes" : "No"}
                   </span>
                 </span>
               </div>
               {v.nationAffiliation && (
                 <div className="mt-2 text-sm">
-                  <span className="text-slate-500">Nation Affiliation:</span>{" "}
-                  <span className="text-slate-200 font-medium">{v.nationAffiliation}</span>
+                  <span className="text-foreground0">Nation Affiliation:</span>{" "}
+                  <span className="text-foreground font-medium">{v.nationAffiliation}</span>
                 </div>
               )}
               {v.certifications && v.certifications.length > 0 && (
                 <div className="mt-2">
-                  <span className="text-sm text-slate-500">Certifications:</span>
+                  <span className="text-sm text-foreground0">Certifications:</span>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {v.certifications.map((cert: string) => (
                       <span
                         key={cert}
-                        className="rounded-full bg-teal-500/10 px-2.5 py-0.5 text-xs font-medium text-teal-400"
+                        className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent"
                       >
                         {cert}
                       </span>
@@ -266,11 +266,11 @@ function ReviewModal({
 
           {/* Request Notes */}
           {v.requestNotes && (
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-300">
+            <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+              <h3 className="mb-2 text-sm font-semibold text-[var(--text-secondary)]">
                 Employer&apos;s Notes
               </h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                 {v.requestNotes}
               </p>
             </div>
@@ -284,22 +284,22 @@ function ReviewModal({
               </h3>
               <div className="space-y-1 text-sm">
                 <div>
-                  <span className="text-slate-500">Status:</span>{" "}
-                  <span className="capitalize text-slate-300">{v.status}</span>
+                  <span className="text-foreground0">Status:</span>{" "}
+                  <span className="capitalize text-[var(--text-secondary)]">{v.status}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Reviewed:</span>{" "}
-                  <span className="text-slate-300">{formatDate(v.reviewedAt)}</span>
+                  <span className="text-foreground0">Reviewed:</span>{" "}
+                  <span className="text-[var(--text-secondary)]">{formatDate(v.reviewedAt)}</span>
                 </div>
                 {v.reviewNotes && (
                   <div>
-                    <span className="text-slate-500">Notes:</span>{" "}
-                    <span className="text-slate-300">{v.reviewNotes}</span>
+                    <span className="text-foreground0">Notes:</span>{" "}
+                    <span className="text-[var(--text-secondary)]">{v.reviewNotes}</span>
                   </div>
                 )}
                 {v.rejectionReason && (
                   <div>
-                    <span className="text-slate-500">Rejection Reason:</span>{" "}
+                    <span className="text-foreground0">Rejection Reason:</span>{" "}
                     <span className="text-red-400">{v.rejectionReason}</span>
                   </div>
                 )}
@@ -308,17 +308,17 @@ function ReviewModal({
           )}
 
           {/* Review Form */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-slate-300">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+            <h3 className="mb-3 text-sm font-semibold text-[var(--text-secondary)]">
               Admin Review
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-slate-400 mb-1">
+                <label className="block text-sm text-[var(--text-muted)] mb-1">
                   Review Notes (optional)
                 </label>
                 <textarea
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
                   rows={2}
                   placeholder="Internal notes about this verification..."
                   value={reviewNotes}
@@ -332,7 +332,7 @@ function ReviewModal({
                     Rejection Reason *
                   </label>
                   <textarea
-                    className="w-full rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                    className="w-full rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2 text-sm text-foreground placeholder-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                     rows={2}
                     placeholder="Explain why the verification was not approved..."
                     value={rejectionReason}
@@ -345,10 +345,10 @@ function ReviewModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-[var(--card-border)] px-6 py-4">
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+            className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
           >
             Cancel
           </button>
@@ -365,7 +365,7 @@ function ReviewModal({
                 <button
                   onClick={() => onAction("approve", reviewNotes, "")}
                   disabled={loading}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent disabled:opacity-50"
                 >
                   {loading ? "Processing..." : "Approve"}
                 </button>
@@ -374,7 +374,7 @@ function ReviewModal({
               <>
                 <button
                   onClick={() => setConfirmReject(false)}
-                  className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                  className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
                 >
                   Back
                 </button>
@@ -482,10 +482,10 @@ export default function AdminVerificationPage() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-100">
+        <h1 className="text-2xl font-bold text-foreground">
           Indigenous Verification
         </h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Review and manage Indigenous business verification requests
         </p>
       </div>
@@ -507,8 +507,8 @@ export default function AdminVerificationPage() {
               onClick={() => setFilter(f)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 filter === f
-                  ? "bg-teal-600/20 text-teal-400"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-300"
+                  ? "bg-accent/20 text-accent"
+                  : "text-[var(--text-muted)] hover:bg-surface hover:text-[var(--text-secondary)]"
               }`}
             >
               {label}
@@ -530,20 +530,20 @@ export default function AdminVerificationPage() {
           icon={<ShieldCheckIcon className="h-12 w-12" />}
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#08090C]">
+        <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-surface">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800 text-left">
-                  <th className="px-4 py-3 font-medium text-slate-400">Organization</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 md:table-cell">Nation</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 sm:table-cell">Claims</th>
-                  <th className="hidden px-4 py-3 font-medium text-slate-400 lg:table-cell">Requested</th>
-                  <th className="px-4 py-3 font-medium text-slate-400">Status</th>
-                  <th className="px-4 py-3 font-medium text-slate-400 text-right">Actions</th>
+                <tr className="border-b border-[var(--card-border)] text-left">
+                  <th className="px-4 py-3 font-medium text-[var(--text-muted)]">Organization</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] md:table-cell">Nation</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] sm:table-cell">Claims</th>
+                  <th className="hidden px-4 py-3 font-medium text-[var(--text-muted)] lg:table-cell">Requested</th>
+                  <th className="px-4 py-3 font-medium text-[var(--text-muted)]">Status</th>
+                  <th className="px-4 py-3 font-medium text-[var(--text-muted)] text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
+              <tbody className="divide-y divide-[var(--card-border)]/50">
                 {filteredRequests.map((req) => (
                   <tr
                     key={req.employerId}
@@ -559,40 +559,40 @@ export default function AdminVerificationPage() {
                             className="h-8 w-8 rounded-lg object-cover"
                           />
                         ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
-                            <BuildingOfficeIcon className="h-4 w-4 text-slate-500" />
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface">
+                            <BuildingOfficeIcon className="h-4 w-4 text-foreground0" />
                           </div>
                         )}
                         <div>
-                          <div className="font-medium text-slate-200">
+                          <div className="font-medium text-foreground">
                             {req.organizationName}
                           </div>
                           {req.industry && (
-                            <div className="text-xs text-slate-500">{req.industry}</div>
+                            <div className="text-xs text-foreground0">{req.industry}</div>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="hidden px-4 py-3 md:table-cell">
-                      <span className="text-slate-300">
+                      <span className="text-[var(--text-secondary)]">
                         {req.verification.nationAffiliation || "—"}
                       </span>
                     </td>
                     <td className="hidden px-4 py-3 sm:table-cell">
                       <div className="flex gap-1.5">
                         {req.verification.isIndigenousOwned && (
-                          <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                          <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent">
                             OWNED
                           </span>
                         )}
                         {req.verification.isIndigenousLed && (
-                          <span className="rounded bg-teal-500/15 px-1.5 py-0.5 text-[10px] font-bold text-teal-400">
+                          <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent">
                             LED
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="hidden px-4 py-3 text-slate-400 lg:table-cell whitespace-nowrap">
+                    <td className="hidden px-4 py-3 text-[var(--text-muted)] lg:table-cell whitespace-nowrap">
                       {formatDate(req.verification.requestedAt)}
                     </td>
                     <td className="px-4 py-3">
@@ -619,7 +619,7 @@ export default function AdminVerificationPage() {
                           e.stopPropagation();
                           setSelectedRequest(req);
                         }}
-                        className="rounded-md px-2.5 py-1 text-xs font-medium text-teal-400 hover:bg-teal-500/10 transition"
+                        className="rounded-md px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/10 transition"
                       >
                         Review
                       </button>

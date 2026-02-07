@@ -32,7 +32,7 @@ export default function AboutClient() {
           <p className="mt-4 text-2xl font-medium text-slate-700">
             Empowering Indigenous Success
           </p>
-          <p className="mt-6 max-w-2xl mx-auto text-base leading-relaxed text-slate-500">
+          <p className="mt-6 max-w-2xl mx-auto text-base leading-relaxed text-foreground0">
             A community-first platform connecting Indigenous talent, employers, and partners.
             Discover jobs, conferences, scholarships, pow wows, Indigenous-owned businesses,
             and live streams—all in one place.
@@ -137,7 +137,7 @@ export default function AboutClient() {
                 </svg>
               </div>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Jobs & Careers</h3>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-foreground0">
                 Discover employment opportunities from organizations committed to Indigenous hiring.
               </p>
             </Link>
@@ -149,7 +149,7 @@ export default function AboutClient() {
                 </svg>
               </div>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Scholarships & Grants</h3>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-foreground0">
                 Access funding opportunities for education, training, and community development.
               </p>
             </Link>
@@ -161,7 +161,7 @@ export default function AboutClient() {
                 </svg>
               </div>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Shop Indigenous</h3>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-foreground0">
                 Support Indigenous-owned businesses, artisans, and entrepreneurs.
               </p>
             </Link>
@@ -173,7 +173,7 @@ export default function AboutClient() {
                 </svg>
               </div>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Conferences & Events</h3>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-foreground0">
                 Connect at career fairs, leadership summits, and professional development events.
               </p>
             </Link>
@@ -185,7 +185,7 @@ export default function AboutClient() {
                 </svg>
               </div>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Pow Wows & Events</h3>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-foreground0">
                 Find traditional gatherings, competitions, and cultural celebrations.
               </p>
             </Link>
@@ -197,7 +197,7 @@ export default function AboutClient() {
                 </svg>
               </div>
               <h3 className="mt-3 text-lg font-semibold text-slate-900">Live Streams</h3>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-foreground0">
                 Watch live broadcasts of pow wows, sports, and community events.
               </p>
             </Link>
@@ -208,7 +208,7 @@ export default function AboutClient() {
         <section className="grid gap-4 lg:grid-cols-2">
           <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-xl font-bold text-slate-900">For Employers & Partners</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-500">
+            <p className="mt-3 text-sm leading-relaxed text-foreground0">
               Create an employer profile, post jobs and programs, highlight Indigenous-owned
               businesses, and connect with Indigenous talent. Demonstrate your commitment to
               reconciliation through meaningful action.
@@ -225,7 +225,7 @@ export default function AboutClient() {
           </article>
           <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h3 className="text-xl font-bold text-slate-900">For Community Members</h3>
-            <p className="mt-3 text-sm leading-relaxed text-slate-500">
+            <p className="mt-3 text-sm leading-relaxed text-foreground0">
               Discover opportunities tailored to Indigenous talent, save your favourites,
               track applications, support Indigenous businesses, and connect with your community.
               All features are free.

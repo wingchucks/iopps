@@ -213,36 +213,36 @@ function AdminConferencesContent() {
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]">
         Free/Grant
       </span>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Admin Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Conferences Moderation
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {filteredConferences.length} conference
                 {filteredConferences.length !== 1 ? "s" : ""}
               </p>
             </div>
             <Link
               href="/organization/conferences/new"
-              className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
             >
               + Create New
             </Link>
@@ -254,21 +254,21 @@ function AdminConferencesContent() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Total</p>
-            <p className="mt-1 text-2xl font-bold text-slate-100">{conferences.length}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Total</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{conferences.length}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Active</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Active</p>
             <p className="mt-1 text-2xl font-bold text-green-400">{activeCount}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Featured</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Featured</p>
             <p className="mt-1 text-2xl font-bold text-amber-400">{featuredCount}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Paid</p>
-            <p className="mt-1 text-2xl font-bold text-teal-400">{paidCount}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Paid</p>
+            <p className="mt-1 text-2xl font-bold text-accent">{paidCount}</p>
           </div>
         </div>
 
@@ -277,8 +277,8 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                ? "bg-accent text-slate-900"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
             All ({conferences.length})
@@ -287,7 +287,7 @@ function AdminConferencesContent() {
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
                 ? "bg-green-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-green-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
             Active ({activeCount})
@@ -296,7 +296,7 @@ function AdminConferencesContent() {
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
                 ? "bg-slate-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-slate-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
             Inactive ({inactiveCount})
@@ -305,7 +305,7 @@ function AdminConferencesContent() {
             onClick={() => setFilter("featured")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "featured"
                 ? "bg-amber-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-amber-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
               }`}
           >
             Featured ({featuredCount})
@@ -313,8 +313,8 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("paid")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "paid"
-                ? "bg-teal-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-teal-500"
+                ? "bg-accent text-slate-900"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent"
               }`}
           >
             Paid ({paidCount})
@@ -336,7 +336,7 @@ function AdminConferencesContent() {
               return (
                 <div
                   key={conference.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
+                  className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]"
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     {/* Conference Info */}
@@ -346,14 +346,14 @@ function AdminConferencesContent() {
                           <img
                             src={conference.employerLogoUrl}
                             alt={conference.employerName}
-                            className="h-16 w-16 rounded-lg border border-slate-700 object-cover"
+                            className="h-16 w-16 rounded-lg border border-[var(--card-border)] object-cover"
                           />
                         )}
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <div className="flex items-center gap-2">
-                                <h3 className="text-xl font-semibold text-slate-50">
+                                <h3 className="text-xl font-semibold text-foreground">
                                   {conference.title}
                                 </h3>
                                 {conference.featured && (
@@ -363,7 +363,7 @@ function AdminConferencesContent() {
                                   </span>
                                 )}
                               </div>
-                              <p className="mt-1 text-sm text-slate-400">
+                              <p className="mt-1 text-sm text-[var(--text-muted)]">
                                 {conference.employerName}
                               </p>
                             </div>
@@ -373,7 +373,7 @@ function AdminConferencesContent() {
                             </div>
                           </div>
 
-                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
+                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                             <span className="flex items-center gap-1">
                               <svg
                                 className="h-4 w-4"
@@ -399,7 +399,7 @@ function AdminConferencesContent() {
                           </div>
 
                           {conference.description && (
-                            <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                            <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                               {conference.description}
                             </p>
                           )}
@@ -410,7 +410,7 @@ function AdminConferencesContent() {
                             </p>
                           )}
 
-                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground0">
                             {conference.startDate && (
                               <span>
                                 Start:{" "}
@@ -446,7 +446,7 @@ function AdminConferencesContent() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/conferences/${conference.id}`}
-                        className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
+                        className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View
                       </Link>

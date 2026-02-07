@@ -9,8 +9,8 @@ export default function TalentPage() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-[#020306] flex items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
             </div>
         );
     }
@@ -18,7 +18,7 @@ export default function TalentPage() {
     if (role !== "employer") {
         return (
             <PageShell>
-                <div className="mx-auto max-w-4xl px-4 py-12 text-center text-slate-300">
+                <div className="mx-auto max-w-4xl px-4 py-12 text-center text-[var(--text-secondary)]">
                     <p>Access restricted to Employers.</p>
                 </div>
             </PageShell>
@@ -26,14 +26,14 @@ export default function TalentPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#020306]">
+        <div className="min-h-screen bg-background">
             {/* Header */}
-            <div className="border-b border-slate-800 bg-[#08090C] py-8">
+            <div className="border-b border-[var(--card-border)] bg-surface py-8">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-bold text-slate-50">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Find Indigenous Talent
                     </h1>
-                    <p className="mt-2 text-slate-400">
+                    <p className="mt-2 text-[var(--text-muted)]">
                         Connect with qualified Indigenous professionals
                     </p>
                 </div>
@@ -53,31 +53,31 @@ export default function TalentPage() {
                     </h2>
 
                     {/* Description */}
-                    <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
+                    <p className="mx-auto mt-4 max-w-2xl text-lg text-[var(--text-muted)]">
                         The best way to discover Indigenous talent is to post a job opportunity.
                         When candidates apply, you can review their resumes and connect directly.
                     </p>
 
                     {/* Benefits */}
                     <div className="mx-auto mt-10 grid max-w-2xl gap-6 sm:grid-cols-3">
-                        <div className="rounded-xl bg-slate-800/50 p-6">
+                        <div className="rounded-xl bg-surface p-6">
                             <div className="mb-3 text-2xl">📣</div>
                             <h3 className="font-semibold text-white">Reach Job Seekers</h3>
-                            <p className="mt-2 text-sm text-slate-400">
+                            <p className="mt-2 text-sm text-[var(--text-muted)]">
                                 Your opportunity is seen by active Indigenous professionals
                             </p>
                         </div>
-                        <div className="rounded-xl bg-slate-800/50 p-6">
+                        <div className="rounded-xl bg-surface p-6">
                             <div className="mb-3 text-2xl">📋</div>
                             <h3 className="font-semibold text-white">Review Applications</h3>
-                            <p className="mt-2 text-sm text-slate-400">
+                            <p className="mt-2 text-sm text-[var(--text-muted)]">
                                 Candidates apply with resumes and cover letters
                             </p>
                         </div>
-                        <div className="rounded-xl bg-slate-800/50 p-6">
+                        <div className="rounded-xl bg-surface p-6">
                             <div className="mb-3 text-2xl">💬</div>
                             <h3 className="font-semibold text-white">Connect Directly</h3>
-                            <p className="mt-2 text-sm text-slate-400">
+                            <p className="mt-2 text-sm text-[var(--text-muted)]">
                                 Message promising candidates through the platform
                             </p>
                         </div>
@@ -96,16 +96,16 @@ export default function TalentPage() {
                         </Link>
                         <Link
                             href="/organization/applications"
-                            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-6 py-4 font-semibold text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+                            className="inline-flex items-center gap-2 rounded-xl border border-[var(--card-border)] px-6 py-4 font-semibold text-[var(--text-secondary)] transition-all hover:border-[var(--card-border)] hover:text-white"
                         >
                             View Applications
                         </Link>
                     </div>
 
                     {/* Already have jobs? */}
-                    <p className="mt-8 text-sm text-slate-500">
+                    <p className="mt-8 text-sm text-foreground0">
                         Already have active job postings?{" "}
-                        <Link href="/organization/jobs" className="text-teal-400 hover:text-teal-300 underline">
+                        <Link href="/organization/jobs" className="text-accent hover:text-teal-300 underline">
                             Manage your jobs
                         </Link>
                     </p>

@@ -64,7 +64,7 @@ export default function OrganizationEducationPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -73,12 +73,12 @@ export default function OrganizationEducationPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to manage education programs.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Login
         </Link>
@@ -89,7 +89,7 @@ export default function OrganizationEducationPage() {
   if (loadingData) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading education dashboard...</p>
+        <p className="text-[var(--text-muted)]">Loading education dashboard...</p>
       </div>
     );
   }
@@ -98,14 +98,14 @@ export default function OrganizationEducationPage() {
   if (!school) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-center">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-violet-500/20 flex items-center justify-center mb-4">
             <AcademicCapIcon className="h-8 w-8 text-violet-400" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
             Set Up Your School Profile
           </h1>
-          <p className="text-slate-400 max-w-md mx-auto mb-6">
+          <p className="text-[var(--text-muted)] max-w-md mx-auto mb-6">
             Create a school profile to list academic programs, scholarships, and
             recruit Indigenous students across Canada.
           </p>
@@ -116,7 +116,7 @@ export default function OrganizationEducationPage() {
             <PlusIcon className="h-5 w-5" />
             Create School Profile
           </Link>
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-foreground0">
             Already have an institution?{" "}
             <Link href="/contact" className="text-violet-400 hover:underline">
               Contact us
@@ -137,7 +137,7 @@ export default function OrganizationEducationPage() {
             <img
               src={school.logoUrl}
               alt={school.name}
-              className="h-16 w-16 rounded-xl object-cover border border-slate-700"
+              className="h-16 w-16 rounded-xl object-cover border border-[var(--card-border)]"
             />
           ) : (
             <div className="h-16 w-16 rounded-xl bg-violet-500/20 flex items-center justify-center">
@@ -151,7 +151,7 @@ export default function OrganizationEducationPage() {
                 <CheckBadgeIcon className="h-6 w-6 text-violet-400" />
               )}
             </div>
-            <p className="text-slate-400">
+            <p className="text-[var(--text-muted)]">
               {school.type.charAt(0).toUpperCase() + school.type.slice(1)}
               {school.location && ` • ${school.location}`}
             </p>
@@ -159,7 +159,7 @@ export default function OrganizationEducationPage() {
         </div>
         <Link
           href="/organization/education/settings"
-          className="flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-surface transition-colors"
         >
           <Cog6ToothIcon className="h-4 w-4" />
           Settings
@@ -193,15 +193,15 @@ export default function OrganizationEducationPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
             <BookOpenIcon className="h-4 w-4" />
             <span className="text-xs font-medium">Programs</span>
           </div>
           <p className="text-2xl font-bold text-white">{programCount}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
             <EnvelopeIcon className="h-4 w-4" />
             <span className="text-xs font-medium">New Inquiries</span>
           </div>
@@ -212,15 +212,15 @@ export default function OrganizationEducationPage() {
             )}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
             <ChartBarIcon className="h-4 w-4" />
             <span className="text-xs font-medium">Profile Views</span>
           </div>
           <p className="text-2xl font-bold text-white">{school.viewCount || 0}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
             <CalendarDaysIcon className="h-4 w-4" />
             <span className="text-xs font-medium">Events</span>
           </div>
@@ -232,7 +232,7 @@ export default function OrganizationEducationPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/organization/education/programs"
-          className="group rounded-xl border border-slate-800 bg-slate-900/50 p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
@@ -243,7 +243,7 @@ export default function OrganizationEducationPage() {
           <h3 className="mt-4 text-lg font-semibold text-white">
             Manage Programs
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Add and manage your academic programs, courses, and certifications.
           </p>
           <div className="mt-4 flex items-center gap-2">
@@ -255,34 +255,34 @@ export default function OrganizationEducationPage() {
 
         <Link
           href="/organization/education/inquiries"
-          className="group rounded-xl border border-slate-800 bg-slate-900/50 p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
-            <div className="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <EnvelopeIcon className="h-6 w-6 text-emerald-400" />
+            <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
+              <EnvelopeIcon className="h-6 w-6 text-accent" />
             </div>
-            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
+            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-accent transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">
             Student Inquiries
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             View and respond to inquiries from prospective students.
           </p>
           <div className="mt-4 flex items-center gap-2">
             {unreadInquiries > 0 ? (
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-sm font-medium text-emerald-400">
+              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-sm font-medium text-accent">
                 {unreadInquiries} new
               </span>
             ) : (
-              <span className="text-sm text-slate-500">No new inquiries</span>
+              <span className="text-sm text-foreground0">No new inquiries</span>
             )}
           </div>
         </Link>
 
         <Link
           href="/organization/education/events"
-          className="group rounded-xl border border-slate-800 bg-slate-900/50 p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
@@ -293,7 +293,7 @@ export default function OrganizationEducationPage() {
           <h3 className="mt-4 text-lg font-semibold text-white">
             Events & Open Houses
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Create recruitment events, info sessions, and campus tours.
           </p>
           <div className="mt-4">
@@ -305,7 +305,7 @@ export default function OrganizationEducationPage() {
 
         <Link
           href="/organization/scholarships"
-          className="group rounded-xl border border-slate-800 bg-slate-900/50 p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
@@ -314,7 +314,7 @@ export default function OrganizationEducationPage() {
             <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-amber-400 transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">Scholarships</h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Post scholarships and bursaries for Indigenous students.
           </p>
           <div className="mt-4">
@@ -326,7 +326,7 @@ export default function OrganizationEducationPage() {
 
         <Link
           href={`/education/schools/${school.slug || school.id}`}
-          className="group rounded-xl border border-slate-800 bg-slate-900/50 p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
@@ -337,7 +337,7 @@ export default function OrganizationEducationPage() {
           <h3 className="mt-4 text-lg font-semibold text-white">
             View Public Profile
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             See how your school appears to prospective students.
           </p>
           <div className="mt-4">

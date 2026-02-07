@@ -104,9 +104,9 @@ export default function ReportContentButton({
   };
 
   const buttonStyles = {
-    icon: "p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors",
-    text: "text-sm text-slate-500 hover:text-red-400 transition-colors",
-    full: "flex items-center gap-2 px-3 py-1.5 text-sm text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors",
+    icon: "p-2 text-foreground0 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors",
+    text: "text-sm text-foreground0 hover:text-red-400 transition-colors",
+    full: "flex items-center gap-2 px-3 py-1.5 text-sm text-foreground0 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors",
   };
 
   return (
@@ -126,7 +126,7 @@ export default function ReportContentButton({
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl"
+            className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -136,13 +136,13 @@ export default function ReportContentButton({
                   <FlagIcon className="h-5 w-5 text-red-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-100">Report Content</h2>
-                  <p className="text-sm text-slate-400">Help us maintain community standards</p>
+                  <h2 className="text-lg font-bold text-foreground">Report Content</h2>
+                  <p className="text-sm text-[var(--text-muted)]">Help us maintain community standards</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -153,17 +153,17 @@ export default function ReportContentButton({
               <div
                 className={`mt-4 rounded-lg p-4 ${
                   result.success
-                    ? "bg-emerald-500/10 border border-emerald-500/20"
+                    ? "bg-accent/10 border border-accent/20"
                     : "bg-red-500/10 border border-red-500/20"
                 }`}
               >
                 <div className="flex items-center gap-2">
                   {result.success ? (
-                    <CheckCircleIcon className="h-5 w-5 text-emerald-400" />
+                    <CheckCircleIcon className="h-5 w-5 text-accent" />
                   ) : (
                     <XMarkIcon className="h-5 w-5 text-red-400" />
                   )}
-                  <p className={result.success ? "text-emerald-400" : "text-red-400"}>
+                  <p className={result.success ? "text-accent" : "text-red-400"}>
                     {result.message}
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export default function ReportContentButton({
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 {/* Reason Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Why are you reporting this? *
                   </label>
                   <div className="space-y-2">
@@ -184,8 +184,8 @@ export default function ReportContentButton({
                         key={option.value}
                         className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
                           selectedReason === option.value
-                            ? "border-teal-500 bg-teal-500/10"
-                            : "border-slate-700 hover:border-slate-600"
+                            ? "border-accent bg-accent/10"
+                            : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                         }`}
                       >
                         <input
@@ -194,11 +194,11 @@ export default function ReportContentButton({
                           value={option.value}
                           checked={selectedReason === option.value}
                           onChange={() => setSelectedReason(option.value)}
-                          className="mt-1 h-4 w-4 text-teal-500 border-slate-600 focus:ring-teal-500 bg-slate-800"
+                          className="mt-1 h-4 w-4 text-accent border-[var(--card-border)] focus:ring-teal-500 bg-surface"
                         />
                         <div>
-                          <p className="font-medium text-slate-200">{option.label}</p>
-                          <p className="text-sm text-slate-500">{option.description}</p>
+                          <p className="font-medium text-foreground">{option.label}</p>
+                          <p className="text-sm text-foreground0">{option.description}</p>
                         </div>
                       </label>
                     ))}
@@ -207,7 +207,7 @@ export default function ReportContentButton({
 
                 {/* Additional Details */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Additional details (optional)
                   </label>
                   <textarea
@@ -215,13 +215,13 @@ export default function ReportContentButton({
                     onChange={(e) => setDetails(e.target.value)}
                     rows={3}
                     placeholder="Please provide any additional context..."
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none resize-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none resize-none"
                   />
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Your email (optional)
                   </label>
                   <input
@@ -229,9 +229,9 @@ export default function ReportContentButton({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                   />
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-foreground0">
                     Only if you&apos;d like us to follow up with you
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default function ReportContentButton({
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                    className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
                   >
                     Cancel
                   </button>

@@ -55,7 +55,7 @@ export default function SavedJobsPage() {
     return (
       <FeedLayout>
         <div className="py-10">
-          <p className="text-sm text-slate-500">Loading your account...</p>
+          <p className="text-sm text-foreground0">Loading your account...</p>
         </div>
       </FeedLayout>
     );
@@ -66,7 +66,7 @@ export default function SavedJobsPage() {
       <FeedLayout>
         <div className="py-10 space-y-4">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Please sign in</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground0">
             Log in or register as a community member to see your saved jobs.
           </p>
           <div className="flex gap-3">
@@ -95,7 +95,7 @@ export default function SavedJobsPage() {
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             Community member area
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground0">
             Switch to your community account to view saved jobs.
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function SavedJobsPage() {
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               Keep track of opportunities
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-foreground0">
               Saved jobs stay here even after you leave the site. Use the filters
               to find active roles or revisit older listings.
             </p>
@@ -154,9 +154,9 @@ export default function SavedJobsPage() {
         )}
 
         {listLoading ? (
-          <p className="text-sm text-slate-500">Loading saved jobs...</p>
+          <p className="text-sm text-foreground0">Loading saved jobs...</p>
         ) : filteredJobs.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground0">
             No saved jobs match your filters. Save jobs from the Jobs page and
             they will appear here.
           </p>
@@ -175,7 +175,7 @@ export default function SavedJobsPage() {
                     >
                       {entry.job?.title}
                     </Link>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-foreground0">
                       {entry.job?.employerName}
                     </p>
                   </div>
@@ -183,14 +183,14 @@ export default function SavedJobsPage() {
                     {entry.job?.employmentType}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-foreground0">
                   {entry.job?.description?.slice(0, 180)}
                   {entry.job?.description &&
                   entry.job.description.length > 180
                     ? "..."
                     : ""}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+                <div className="mt-3 flex flex-wrap gap-3 text-xs text-foreground0">
                   <span>{entry.job?.location}</span>
                   {entry.job?.remoteFlag && <span>Remote friendly</span>}
                   {entry.job?.indigenousPreference && (

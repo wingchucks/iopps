@@ -100,8 +100,8 @@ export default function MapClient({
 
   if (!isMounted) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-500">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      <div className="flex h-full w-full items-center justify-center bg-slate-50 text-foreground0">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -130,8 +130,8 @@ export default function MapClient({
         {loading && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-              <span className="text-sm text-slate-500">Loading opportunities...</span>
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+              <span className="text-sm text-foreground0">Loading opportunities...</span>
             </div>
           </div>
         )}

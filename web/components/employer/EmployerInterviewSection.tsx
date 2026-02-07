@@ -96,17 +96,17 @@ export default function EmployerInterviewSection({
   const showPlaylist = activeInterviews.length > 1;
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-gradient-to-br from-slate-900/50 to-slate-950/50 p-6 backdrop-blur-sm">
+    <section className="rounded-lg border border-[var(--card-border)] bg-gradient-to-br from-slate-900/50 to-slate-950/50 p-6 backdrop-blur-sm">
       {/* Section Header */}
-      <div className="mb-6 border-b border-slate-800 pb-4">
-        <h2 className="text-2xl font-bold text-slate-100">
+      <div className="mb-6 border-b border-[var(--card-border)] pb-4">
+        <h2 className="text-2xl font-bold text-foreground">
           Meet the Employer
         </h2>
         {currentInterview.title && (
-          <p className="mt-1 text-sm text-slate-400">{currentInterview.title}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{currentInterview.title}</p>
         )}
         {showPlaylist && (
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-foreground0">
             Video {currentIndex + 1} of {activeInterviews.length}
           </p>
         )}
@@ -136,7 +136,7 @@ export default function EmployerInterviewSection({
 
         {/* Video Metadata */}
         {(currentInterview.duration || currentInterview.interviewDate) && (
-          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground0">
             {currentInterview.duration && (
               <span className="flex items-center gap-1">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -175,7 +175,7 @@ export default function EmployerInterviewSection({
       {/* Description */}
       {currentInterview.description && (
         <div className="mb-6">
-          <p className="text-sm text-slate-300 leading-relaxed">
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
             {currentInterview.description}
           </p>
         </div>
@@ -194,7 +194,7 @@ export default function EmployerInterviewSection({
             {currentInterview.highlights.map((highlight, index) => (
               <li
                 key={index}
-                className="flex items-start gap-3 text-sm text-slate-300"
+                className="flex items-start gap-3 text-sm text-[var(--text-secondary)]"
               >
                 <svg
                   className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#14B8A6]"
@@ -217,7 +217,7 @@ export default function EmployerInterviewSection({
       {/* Playlist Navigation */}
       {showPlaylist && (
         <div className="mb-6">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
             More Videos
           </h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -227,13 +227,13 @@ export default function EmployerInterviewSection({
                 onClick={() => setCurrentIndex(index)}
                 className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
                   index === currentIndex
-                    ? "border-[#14B8A6] bg-[#14B8A6]/10"
-                    : "border-slate-800 bg-slate-950/40 hover:border-slate-700 hover:bg-slate-900/60"
+                    ? "border-[#14B8A6] bg-accent/10"
+                    : "border-[var(--card-border)] bg-background/40 hover:border-[var(--card-border)] hover:bg-slate-900/60"
                 }`}
               >
                 <div className="flex-shrink-0">
                   <div className={`flex h-8 w-8 items-center justify-center rounded ${
-                    index === currentIndex ? "bg-[#14B8A6] text-slate-900" : "bg-slate-800 text-slate-400"
+                    index === currentIndex ? "bg-accent text-slate-900" : "bg-surface text-[var(--text-muted)]"
                   }`}>
                     <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
@@ -242,12 +242,12 @@ export default function EmployerInterviewSection({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium truncate ${
-                    index === currentIndex ? "text-[#14B8A6]" : "text-slate-200"
+                    index === currentIndex ? "text-[#14B8A6]" : "text-foreground"
                   }`}>
                     {interview.title || `Interview ${index + 1}`}
                   </p>
                   {interview.duration && (
-                    <p className="text-xs text-slate-500 mt-0.5">{interview.duration}</p>
+                    <p className="text-xs text-foreground0 mt-0.5">{interview.duration}</p>
                   )}
                 </div>
               </button>
@@ -257,8 +257,8 @@ export default function EmployerInterviewSection({
       )}
 
       {/* TRC #92 Call to Action */}
-      <div className="rounded-md border border-[#14B8A6]/20 bg-[#14B8A6]/5 p-4">
-        <p className="text-xs leading-relaxed text-slate-400">
+      <div className="rounded-md border border-[#14B8A6]/20 bg-accent/5 p-4">
+        <p className="text-xs leading-relaxed text-[var(--text-muted)]">
           <span className="font-semibold text-[#14B8A6]">
             Truth and Reconciliation Call to Action #92:
           </span>{" "}

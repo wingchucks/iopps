@@ -94,7 +94,7 @@ export default function EditScholarshipPage() {
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -103,12 +103,12 @@ export default function EditScholarshipPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You must be signed in to edit scholarships.
         </p>
         <Link
           href="/login"
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -124,7 +124,7 @@ export default function EditScholarshipPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to an employer account to edit scholarships.
         </p>
       </div>
@@ -137,7 +137,7 @@ export default function EditScholarshipPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Scholarship not found
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           The scholarship you&apos;re looking for doesn&apos;t exist or has been removed.
         </p>
         <Link
@@ -155,7 +155,7 @@ export default function EditScholarshipPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Access denied</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You don&apos;t have permission to edit this scholarship.
         </p>
         <Link
@@ -238,14 +238,14 @@ export default function EditScholarshipPage() {
       <div className="mb-6">
         <Link
           href="/organization/scholarships"
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
         >
           ← Back to Scholarships
         </Link>
       </div>
 
       <h1 className="text-2xl font-semibold tracking-tight">Edit Scholarship</h1>
-      <p className="mt-2 text-sm text-slate-300">
+      <p className="mt-2 text-sm text-[var(--text-secondary)]">
         Update the details of your scholarship listing.
       </p>
 
@@ -257,7 +257,7 @@ export default function EditScholarshipPage() {
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Scholarship Title *
           </label>
           <input
@@ -266,12 +266,12 @@ export default function EditScholarshipPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Indigenous Student Leadership Award"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Provider / Organization
           </label>
           <input
@@ -279,12 +279,12 @@ export default function EditScholarshipPage() {
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
             placeholder="e.g., Indigenous Education Foundation"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Description *
           </label>
           <textarea
@@ -293,13 +293,13 @@ export default function EditScholarshipPage() {
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
             placeholder="Describe the scholarship, eligibility requirements, and how to apply..."
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Award Amount
             </label>
             <input
@@ -307,18 +307,18 @@ export default function EditScholarshipPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="e.g., $5,000 or $1,000-$5,000"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Application Deadline
             </label>
             <input
               type="date"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
         </div>
@@ -330,19 +330,19 @@ export default function EditScholarshipPage() {
               type="checkbox"
               checked={isRecurring}
               onChange={(e) => setIsRecurring(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+              className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-background"
             />
-            <span className="text-sm font-medium text-slate-200">
+            <span className="text-sm font-medium text-foreground">
               This deadline repeats annually
             </span>
           </label>
-          <p className="text-xs text-slate-500 ml-7">
+          <p className="text-xs text-foreground0 ml-7">
             Check this if the scholarship has multiple deadlines throughout the year or repeats every year.
           </p>
 
           {isRecurring && (
             <div className="ml-7">
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Recurring Schedule
               </label>
               <input
@@ -350,9 +350,9 @@ export default function EditScholarshipPage() {
                 value={recurringSchedule}
                 onChange={(e) => setRecurringSchedule(e.target.value)}
                 placeholder="e.g., August 1, November 1, February 1"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 List all deadline dates. This will be shown instead of a single deadline.
               </p>
             </div>
@@ -361,14 +361,14 @@ export default function EditScholarshipPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Education Level *
             </label>
             <select
               required
               value={level}
               onChange={(e) => setLevel(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
               <option value="">Select level</option>
               <option value="high_school">High School</option>
@@ -380,14 +380,14 @@ export default function EditScholarshipPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Scholarship Type *
             </label>
             <select
               required
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
               <option value="">Select type</option>
               <option value="merit">Merit-Based</option>
@@ -402,7 +402,7 @@ export default function EditScholarshipPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-foreground">
             Eligible Region
           </label>
           <input
@@ -410,46 +410,46 @@ export default function EditScholarshipPage() {
             value={region}
             onChange={(e) => setRegion(e.target.value)}
             placeholder="e.g., Canada-wide, Ontario, Alberta"
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
 
         {/* Status Toggle */}
-        <div className="pt-4 border-t border-slate-800">
+        <div className="pt-4 border-t border-[var(--card-border)]">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={active}
               onChange={(e) => setActive(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+              className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-background"
             />
-            <span className="text-sm font-medium text-slate-200">
+            <span className="text-sm font-medium text-foreground">
               Active (visible to students)
             </span>
           </label>
-          <p className="text-xs text-slate-500 ml-7">
+          <p className="text-xs text-foreground0 ml-7">
             Uncheck to hide this scholarship from public listings.
           </p>
         </div>
 
         {/* Application Method Section */}
-        <div className="mt-8 pt-6 border-t border-slate-800">
+        <div className="mt-8 pt-6 border-t border-[var(--card-border)]">
           <h3 className="text-lg font-semibold text-white mb-4">
             How do applicants apply? *
           </h3>
-          <p className="text-sm text-slate-400 mb-4">
+          <p className="text-sm text-[var(--text-muted)] mb-4">
             Let applicants know how to submit their application for this scholarship.
           </p>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Application Method *
             </label>
             <select
               required
               value={applicationMethod}
               onChange={(e) => setApplicationMethod(e.target.value as ScholarshipApplicationMethod)}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
             >
               <option value="">Select application method</option>
               <option value="external_link">External Application Link</option>
@@ -461,7 +461,7 @@ export default function EditScholarshipPage() {
 
           {applicationMethod === "external_link" && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Application URL *
               </label>
               <input
@@ -470,9 +470,9 @@ export default function EditScholarshipPage() {
                 value={applicationUrl}
                 onChange={(e) => setApplicationUrl(e.target.value)}
                 placeholder="https://example.com/apply"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 Enter the full URL where applicants can submit their application (must be https://)
               </p>
             </div>
@@ -480,7 +480,7 @@ export default function EditScholarshipPage() {
 
           {applicationMethod === "email" && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Application Email *
               </label>
               <input
@@ -489,9 +489,9 @@ export default function EditScholarshipPage() {
                 value={applicationEmail}
                 onChange={(e) => setApplicationEmail(e.target.value)}
                 placeholder="scholarships@organization.com"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 Applicants will be directed to send their application to this email
               </p>
             </div>
@@ -499,7 +499,7 @@ export default function EditScholarshipPage() {
 
           {applicationMethod === "institution_portal" && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Application Instructions
               </label>
               <textarea
@@ -507,7 +507,7 @@ export default function EditScholarshipPage() {
                 onChange={(e) => setApplicationInstructions(e.target.value)}
                 rows={3}
                 placeholder="e.g., Log in to your student portal and navigate to Financial Aid > Scholarships"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none"
               />
             </div>
           )}
@@ -517,13 +517,13 @@ export default function EditScholarshipPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+            className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
           <Link
             href="/organization/scholarships"
-            className="rounded-md border border-slate-700 bg-slate-800 px-6 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-700 transition-colors"
+            className="rounded-md border border-[var(--card-border)] bg-surface px-6 py-2 text-sm font-semibold text-foreground hover:bg-slate-700 transition-colors"
           >
             Cancel
           </Link>

@@ -41,7 +41,7 @@ export function AnalyticsCard({
   const trendColors = {
     up: "text-green-400",
     down: "text-red-400",
-    neutral: "text-slate-500",
+    neutral: "text-foreground0",
   };
 
   const trendIcons = {
@@ -52,18 +52,18 @@ export function AnalyticsCard({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/80 bg-card p-6 shadow-lg shadow-black/30">
+      <div className="rounded-2xl border border-[var(--card-border)]/80 bg-card p-6 shadow-lg shadow-black/30">
         <div className="animate-pulse space-y-3">
-          <div className="h-4 w-24 rounded bg-slate-800"></div>
-          <div className="h-8 w-32 rounded bg-slate-800"></div>
-          <div className="h-3 w-20 rounded bg-slate-800"></div>
+          <div className="h-4 w-24 rounded bg-surface"></div>
+          <div className="h-8 w-32 rounded bg-surface"></div>
+          <div className="h-3 w-20 rounded bg-surface"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-card p-6 shadow-lg shadow-black/30 transition-all duration-300 hover:border-accent/50">
+    <div className="group relative overflow-hidden rounded-2xl border border-[var(--card-border)]/80 bg-card p-6 shadow-lg shadow-black/30 transition-all duration-300 hover:border-accent/50">
       {/* Background gradient on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent/0 to-accent/0 opacity-0 transition-opacity duration-300 group-hover:from-accent/5 group-hover:to-transparent group-hover:opacity-100" />
 
@@ -71,7 +71,7 @@ export function AnalyticsCard({
         {/* Header with icon */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-slate-400">{title}</p>
+            <p className="text-sm font-medium text-[var(--text-muted)]">{title}</p>
           </div>
           {icon && (
             <div
@@ -100,10 +100,10 @@ export function AnalyticsCard({
                 {change > 0 ? "+" : ""}
                 {change}%
               </span>
-              <span className="ml-1 text-xs font-normal text-slate-500">vs last period</span>
+              <span className="ml-1 text-xs font-normal text-foreground0">vs last period</span>
             </div>
           ) : subtitle ? (
-            <p className="text-xs text-slate-500">{subtitle}</p>
+            <p className="text-xs text-foreground0">{subtitle}</p>
           ) : (
             <div />
           )}
@@ -119,11 +119,11 @@ export function AnalyticsCard({
 
 export function AnalyticsCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-800/80 bg-card p-6 shadow-lg shadow-black/30">
+    <div className="rounded-2xl border border-[var(--card-border)]/80 bg-card p-6 shadow-lg shadow-black/30">
       <div className="animate-pulse space-y-3">
-        <div className="h-4 w-24 rounded bg-slate-800"></div>
-        <div className="h-8 w-32 rounded bg-slate-800"></div>
-        <div className="h-3 w-20 rounded bg-slate-800"></div>
+        <div className="h-4 w-24 rounded bg-surface"></div>
+        <div className="h-8 w-32 rounded bg-surface"></div>
+        <div className="h-3 w-20 rounded bg-surface"></div>
       </div>
     </div>
   );

@@ -142,7 +142,7 @@ export default function VendorInquiryDetailPage() {
   if (!conversation) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-400">Conversation not found</p>
+        <p className="text-[var(--text-muted)]">Conversation not found</p>
         <Link
           href="/organization/sell/inquiries"
           className="text-accent hover:underline mt-4 inline-block"
@@ -156,22 +156,22 @@ export default function VendorInquiryDetailPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Header */}
-      <div className="flex items-center gap-4 pb-4 border-b border-slate-800">
+      <div className="flex items-center gap-4 pb-4 border-b border-[var(--card-border)]">
         <Link
           href="/organization/sell/inquiries"
-          className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
+          className="p-2 rounded-lg hover:bg-surface transition-colors"
         >
-          <ArrowLeftIcon className="w-5 h-5 text-slate-400" />
+          <ArrowLeftIcon className="w-5 h-5 text-[var(--text-muted)]" />
         </Link>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
-            <UserIcon className="w-5 h-5 text-slate-500" />
+          <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
+            <UserIcon className="w-5 h-5 text-foreground0" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-slate-50">
+            <h1 className="text-lg font-semibold text-foreground">
               {conversation.memberName || 'Customer'}
             </h1>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-foreground0">
               {conversation.memberEmail && (
                 <span className="flex items-center gap-1">
                   <EnvelopeIcon className="w-3 h-3" />
@@ -201,9 +201,9 @@ export default function VendorInquiryDetailPage() {
           <div key={date}>
             {/* Date Divider */}
             <div className="flex items-center gap-4 my-4">
-              <div className="flex-1 h-px bg-slate-800" />
-              <span className="text-xs text-slate-500 font-medium">{date}</span>
-              <div className="flex-1 h-px bg-slate-800" />
+              <div className="flex-1 h-px bg-surface" />
+              <span className="text-xs text-foreground0 font-medium">{date}</span>
+              <div className="flex-1 h-px bg-surface" />
             </div>
 
             {/* Messages for this date */}
@@ -219,13 +219,13 @@ export default function VendorInquiryDetailPage() {
                       className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                         isFromEmployer
                           ? 'bg-accent text-slate-950 rounded-br-md'
-                          : 'bg-slate-800 text-slate-200 rounded-bl-md'
+                          : 'bg-surface text-foreground rounded-bl-md'
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       <p
                         className={`text-xs mt-1 ${
-                          isFromEmployer ? 'text-slate-700' : 'text-slate-500'
+                          isFromEmployer ? 'text-slate-700' : 'text-foreground0'
                         }`}
                       >
                         {formatMessageTime(message.createdAt)}
@@ -239,7 +239,7 @@ export default function VendorInquiryDetailPage() {
         ))}
 
         {messages.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-foreground0">
             <p>No messages yet. Start the conversation by sending a message below.</p>
           </div>
         )}
@@ -248,7 +248,7 @@ export default function VendorInquiryDetailPage() {
       </div>
 
       {/* Message Input */}
-      <div className="border-t border-slate-800 pt-4">
+      <div className="border-t border-[var(--card-border)] pt-4">
         <div className="flex items-end gap-3">
           <textarea
             value={newMessage}
@@ -256,7 +256,7 @@ export default function VendorInquiryDetailPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             rows={2}
-            className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 resize-none focus:outline-none focus:border-accent/50"
+            className="flex-1 px-4 py-3 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 resize-none focus:outline-none focus:border-accent/50"
           />
           <button
             onClick={handleSendMessage}
@@ -270,7 +270,7 @@ export default function VendorInquiryDetailPage() {
             )}
           </button>
         </div>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-xs text-foreground0 mt-2">
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>

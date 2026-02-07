@@ -61,21 +61,21 @@ export default function JobVideoSection({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-[#08090C] p-6 sm:p-8">
+    <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 sm:p-8">
       {/* Section Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           {video.isIOPPSInterview && (
-            <span className="rounded-full bg-teal-500/10 px-2.5 py-0.5 text-xs font-medium text-teal-400">
+            <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
               IOPPS Interview
             </span>
           )}
         </div>
-        <h2 className="text-xl font-bold text-slate-200">
+        <h2 className="text-xl font-bold text-foreground">
           {video.title || `Learn More About This Role`}
         </h2>
         {video.description && (
-          <p className="mt-2 text-sm text-slate-400">{video.description}</p>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">{video.description}</p>
         )}
       </div>
 

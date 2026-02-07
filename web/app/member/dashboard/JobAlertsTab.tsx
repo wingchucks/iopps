@@ -115,7 +115,7 @@ export default function JobAlertsTab() {
     };
 
     if (loading) {
-        return <div className="text-slate-400">Loading alerts...</div>;
+        return <div className="text-[var(--text-muted)]">Loading alerts...</div>;
     }
 
     return (
@@ -124,7 +124,7 @@ export default function JobAlertsTab() {
                 <h2 className="text-xl font-bold text-white">Job Alerts</h2>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
                 >
                     + Create New Alert
                 </button>
@@ -141,12 +141,12 @@ export default function JobAlertsTab() {
                         if (e.key === "Escape") resetForm();
                     }}
                 >
-                    <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+                    <div className="w-full max-w-lg rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-white">Create Job Alert</h3>
                             <button
                                 onClick={resetForm}
-                                className="text-slate-400 hover:text-white"
+                                className="text-[var(--text-muted)] hover:text-white"
                             >
                                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -156,7 +156,7 @@ export default function JobAlertsTab() {
 
                         <form onSubmit={handleCreateAlert} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-foreground0 mb-1">
                                     Alert Name (Optional)
                                 </label>
                                 <input
@@ -164,13 +164,13 @@ export default function JobAlertsTab() {
                                     value={alertName}
                                     onChange={(e) => setAlertName(e.target.value)}
                                     placeholder="e.g., Software Developer Jobs"
-                                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
                                 />
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-foreground0 mb-1">
                                         Keywords
                                     </label>
                                     <input
@@ -178,11 +178,11 @@ export default function JobAlertsTab() {
                                         value={keyword}
                                         onChange={(e) => setKeyword(e.target.value)}
                                         placeholder="e.g., developer, analyst"
-                                        className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                                        className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-foreground0 mb-1">
                                         Location
                                     </label>
                                     <input
@@ -190,19 +190,19 @@ export default function JobAlertsTab() {
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
                                         placeholder="e.g., Vancouver, BC"
-                                        className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                                        className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-foreground0 mb-1">
                                     Employment Type
                                 </label>
                                 <select
                                     value={employmentType}
                                     onChange={(e) => setEmploymentType(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+                                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
                                 >
                                     <option value="">All Types</option>
                                     <option value="Full-time">Full-time</option>
@@ -214,34 +214,34 @@ export default function JobAlertsTab() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm text-slate-300">
+                                <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                                     <input
                                         type="checkbox"
                                         checked={remoteOnly}
                                         onChange={(e) => setRemoteOnly(e.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
                                     />
                                     Remote/Hybrid jobs only
                                 </label>
-                                <label className="flex items-center gap-2 text-sm text-slate-300">
+                                <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                                     <input
                                         type="checkbox"
                                         checked={indigenousOnly}
                                         onChange={(e) => setIndigenousOnly(e.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                                        className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
                                     />
                                     Indigenous preference jobs only
                                 </label>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-foreground0 mb-1">
                                     Alert Frequency
                                 </label>
                                 <select
                                     value={frequency}
                                     onChange={(e) => setFrequency(e.target.value as JobAlertFrequency)}
-                                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+                                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
                                 >
                                     <option value="instant">Instant (as jobs are posted)</option>
                                     <option value="daily">Daily digest</option>
@@ -253,14 +253,14 @@ export default function JobAlertsTab() {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="flex-1 rounded-lg bg-[#14B8A6] px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
+                                    className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
                                 >
                                     {processing ? "Creating..." : "Create Alert"}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800"
+                                    className="rounded-lg border border-[var(--card-border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface"
                                 >
                                     Cancel
                                 </button>
@@ -271,14 +271,14 @@ export default function JobAlertsTab() {
             )}
 
             {alerts.length === 0 ? (
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-800">
-                        <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface">
+                        <svg className="h-6 w-6 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                     </div>
                     <h3 className="text-lg font-medium text-white">No job alerts yet</h3>
-                    <p className="mt-2 text-slate-400">
+                    <p className="mt-2 text-[var(--text-muted)]">
                         Create alerts to get notified when new jobs match your interests.
                     </p>
                 </div>
@@ -287,7 +287,7 @@ export default function JobAlertsTab() {
                     {alerts.map((alert) => (
                         <div
                             key={alert.id}
-                            className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/50 p-4 transition-all hover:border-slate-700"
+                            className="flex items-center justify-between rounded-xl border border-[var(--card-border)] bg-surface p-4 transition-all hover:border-[var(--card-border)]"
                         >
                             <div>
                                 <div className="flex items-center gap-3">
@@ -296,27 +296,27 @@ export default function JobAlertsTab() {
                                     </h3>
                                     <span
                                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${alert.active
-                                                ? "bg-emerald-500/10 text-emerald-400"
-                                                : "bg-slate-700/50 text-slate-400"
+                                                ? "bg-accent/10 text-accent"
+                                                : "bg-slate-700/50 text-[var(--text-muted)]"
                                             }`}
                                     >
                                         {alert.active ? "Active" : "Paused"}
                                     </span>
                                 </div>
-                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--text-muted)]">
                                     {alert.keyword && (
-                                        <span>Keywords: <span className="text-slate-300">{alert.keyword}</span></span>
+                                        <span>Keywords: <span className="text-[var(--text-secondary)]">{alert.keyword}</span></span>
                                     )}
                                     {alert.location && (
-                                        <span>Location: <span className="text-slate-300">{alert.location}</span></span>
+                                        <span>Location: <span className="text-[var(--text-secondary)]">{alert.location}</span></span>
                                     )}
-                                    <span>Frequency: <span className="text-slate-300 capitalize">{alert.frequency}</span></span>
+                                    <span>Frequency: <span className="text-[var(--text-secondary)] capitalize">{alert.frequency}</span></span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => handleToggle(alert.id, !alert.active)}
-                                    className={`text-sm font-medium ${alert.active ? "text-amber-400 hover:text-amber-300" : "text-emerald-400 hover:text-emerald-300"
+                                    className={`text-sm font-medium ${alert.active ? "text-amber-400 hover:text-amber-300" : "text-accent hover:text-emerald-300"
                                         }`}
                                 >
                                     {alert.active ? "Pause" : "Resume"}

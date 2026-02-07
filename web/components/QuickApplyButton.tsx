@@ -160,7 +160,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                         }
                     }}
                 >
-                    <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl my-8">
+                    <div className="w-full max-w-2xl rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl my-8">
                         {success ? (
                             <div className="text-center py-8">
                                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20">
@@ -178,8 +178,8 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         />
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-50">Application Submitted!</h3>
-                                <p className="mt-2 text-slate-400">
+                                <h3 className="text-xl font-bold text-foreground">Application Submitted!</h3>
+                                <p className="mt-2 text-[var(--text-muted)]">
                                     Your application has been sent to {job.employerName || "the employer"}.
                                 </p>
                             </div>
@@ -187,14 +187,14 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                             <>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-slate-50">Quick Apply</h2>
-                                        <p className="mt-2 text-sm text-slate-400">
-                                            Apply to <span className="font-semibold text-slate-200">{job.title}</span> at {job.employerName}
+                                        <h2 className="text-2xl font-bold text-foreground">Quick Apply</h2>
+                                        <p className="mt-2 text-sm text-[var(--text-muted)]">
+                                            Apply to <span className="font-semibold text-foreground">{job.title}</span> at {job.employerName}
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => setShowModal(false)}
-                                        className="text-slate-500 hover:text-white"
+                                        className="text-foreground0 hover:text-white"
                                     >
                                         <span className="sr-only">Close</span>
                                         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -205,23 +205,23 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
 
                                 <div className="mt-6 space-y-6">
                                     {/* Resume Section */}
-                                    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+                                    <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-4">
                                         <div className="flex items-center justify-between mb-3">
-                                            <h3 className="font-semibold text-slate-100 flex items-center gap-2">
-                                                <DocumentIcon className="h-5 w-5 text-slate-400" />
+                                            <h3 className="font-semibold text-foreground flex items-center gap-2">
+                                                <DocumentIcon className="h-5 w-5 text-[var(--text-muted)]" />
                                                 Resume <span className="text-red-400">*</span>
                                             </h3>
                                         </div>
 
                                         {/* Toggle between saved resume and upload */}
                                         {hasResume && (
-                                            <div className="flex bg-slate-800 rounded-lg p-1 mb-3">
+                                            <div className="flex bg-surface rounded-lg p-1 mb-3">
                                                 <button
                                                     type="button"
                                                     onClick={() => setResumeSource("saved")}
                                                     className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${resumeSource === "saved"
                                                             ? "bg-slate-700 text-white shadow-sm"
-                                                            : "text-slate-400 hover:text-slate-200"
+                                                            : "text-[var(--text-muted)] hover:text-foreground"
                                                         }`}
                                                 >
                                                     Use Saved Resume
@@ -231,7 +231,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     onClick={() => setResumeSource("upload")}
                                                     className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all ${resumeSource === "upload"
                                                             ? "bg-slate-700 text-white shadow-sm"
-                                                            : "text-slate-400 hover:text-slate-200"
+                                                            : "text-[var(--text-muted)] hover:text-foreground"
                                                         }`}
                                                 >
                                                     Upload New Resume
@@ -245,7 +245,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
                                                         <DocumentIcon className="h-5 w-5 text-accent" />
-                                                        <span className="text-sm text-slate-200">Using your saved resume</span>
+                                                        <span className="text-sm text-foreground">Using your saved resume</span>
                                                     </div>
                                                     <a
                                                         href={memberProfile.resumeUrl}
@@ -276,14 +276,14 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     <div className="flex items-center justify-between p-3 bg-accent/10 border border-accent/30 rounded-lg">
                                                         <div className="flex items-center gap-2 overflow-hidden">
                                                             <DocumentIcon className="h-5 w-5 text-accent flex-shrink-0" />
-                                                            <span className="text-sm text-slate-200 truncate">
+                                                            <span className="text-sm text-foreground truncate">
                                                                 {uploadedResume.name}
                                                             </span>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => setUploadedResume(null)}
-                                                            className="text-slate-400 hover:text-red-400 transition-colors"
+                                                            className="text-[var(--text-muted)] hover:text-red-400 transition-colors"
                                                         >
                                                             <TrashIcon className="h-4 w-4" />
                                                         </button>
@@ -298,7 +298,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                             setUploadedResume({ name, url, path, type: "document" });
                                                         }}
                                                         onError={(err) => toast.error(err)}
-                                                        className="border-slate-700"
+                                                        className="border-[var(--card-border)]"
                                                     />
                                                 )}
                                             </div>
@@ -308,15 +308,15 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                     {/* Cover Letter Section */}
                                     <div>
                                         <div className="flex items-center justify-between mb-3">
-                                            <label className="block text-sm font-medium text-slate-200">
+                                            <label className="block text-sm font-medium text-foreground">
                                                 Cover Letter (Optional)
                                             </label>
-                                            <div className="flex bg-slate-800 rounded-lg p-1">
+                                            <div className="flex bg-surface rounded-lg p-1">
                                                 <button
                                                     onClick={() => setCoverLetterType("text")}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${coverLetterType === "text"
                                                             ? "bg-slate-700 text-white shadow-sm"
-                                                            : "text-slate-400 hover:text-slate-200"
+                                                            : "text-[var(--text-muted)] hover:text-foreground"
                                                         }`}
                                                 >
                                                     <PencilSquareIcon className="h-3.5 w-3.5" />
@@ -326,7 +326,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     onClick={() => setCoverLetterType("file")}
                                                     className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${coverLetterType === "file"
                                                             ? "bg-slate-700 text-white shadow-sm"
-                                                            : "text-slate-400 hover:text-slate-200"
+                                                            : "text-[var(--text-muted)] hover:text-foreground"
                                                         }`}
                                                 >
                                                     <ArrowUpTrayIcon className="h-3.5 w-3.5" />
@@ -342,10 +342,10 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     onChange={(e) => setCoverLetterText(e.target.value)}
                                                     rows={6}
                                                     placeholder="Introduce yourself and explain why you're a great fit for this role..."
-                                                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                                                    className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                                                 />
                                                 <div className="flex justify-between mt-1">
-                                                    <p className="text-xs text-slate-500">
+                                                    <p className="text-xs text-foreground0">
                                                         {coverLetterText.length} characters
                                                     </p>
                                                     <a href="/member/tools/cover-letter-builder" target="_blank" className="text-xs text-accent hover:underline flex items-center gap-1">
@@ -359,11 +359,11 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                     <div className="flex items-center justify-between p-3 bg-accent/10 border border-accent/30 rounded-lg">
                                                         <div className="flex items-center gap-2 overflow-hidden">
                                                             <DocumentIcon className="h-5 w-5 text-accent flex-shrink-0" />
-                                                            <span className="text-sm text-slate-200 truncate">{coverLetterFile.name}</span>
+                                                            <span className="text-sm text-foreground truncate">{coverLetterFile.name}</span>
                                                         </div>
                                                         <button
                                                             onClick={() => setCoverLetterFile(null)}
-                                                            className="text-slate-400 hover:text-red-400 transition-colors"
+                                                            className="text-[var(--text-muted)] hover:text-red-400 transition-colors"
                                                         >
                                                             <TrashIcon className="h-4 w-4" />
                                                         </button>
@@ -378,10 +378,10 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                                             setCoverLetterFile({ name, url, path, type: 'document' });
                                                         }}
                                                         onError={(err) => toast.error(err)}
-                                                        className="border-slate-700"
+                                                        className="border-[var(--card-border)]"
                                                     />
                                                 )}
-                                                <p className="text-xs text-slate-500">
+                                                <p className="text-xs text-foreground0">
                                                     Don't have one? <a href="/member/tools/cover-letter-builder" target="_blank" className="text-accent hover:underline">Create one with our builder</a>.
                                                 </p>
                                             </div>
@@ -389,23 +389,23 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                     </div>
 
                                     {/* Additional Documents Section */}
-                                    <div className="border-t border-slate-800 pt-6">
-                                        <h3 className="font-medium text-slate-200 mb-3 flex items-center justify-between">
+                                    <div className="border-t border-[var(--card-border)] pt-6">
+                                        <h3 className="font-medium text-foreground mb-3 flex items-center justify-between">
                                             <span>Additional Documents</span>
-                                            <span className="text-xs font-normal text-slate-500">Portfolio, Certifications, etc.</span>
+                                            <span className="text-xs font-normal text-foreground0">Portfolio, Certifications, etc.</span>
                                         </h3>
 
                                         {additionalDocs.length > 0 && (
                                             <div className="space-y-2 mb-3">
                                                 {additionalDocs.map((doc, idx) => (
-                                                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-800 rounded-lg border border-slate-700">
+                                                    <div key={idx} className="flex items-center justify-between p-2 bg-surface rounded-lg border border-[var(--card-border)]">
                                                         <div className="flex items-center gap-2 overflow-hidden">
-                                                            <DocumentIcon className="h-4 w-4 text-slate-400" />
-                                                            <a href={doc.url} target="_blank" className="text-sm text-slate-300 hover:text-accent truncate">{doc.name}</a>
+                                                            <DocumentIcon className="h-4 w-4 text-[var(--text-muted)]" />
+                                                            <a href={doc.url} target="_blank" className="text-sm text-[var(--text-secondary)] hover:text-accent truncate">{doc.name}</a>
                                                         </div>
                                                         <button
                                                             onClick={() => setAdditionalDocs(prev => prev.filter((_, i) => i !== idx))}
-                                                            className="p-1 text-slate-500 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
+                                                            className="p-1 text-foreground0 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
                                                         >
                                                             <TrashIcon className="h-4 w-4" />
                                                         </button>
@@ -415,10 +415,10 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         )}
 
                                         {showAddDoc ? (
-                                            <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-700">
+                                            <div className="bg-slate-800/30 p-4 rounded-xl border border-[var(--card-border)]">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-xs font-semibold text-slate-400 uppercase">New Document</span>
-                                                    <button onClick={() => setShowAddDoc(false)} className="text-xs text-slate-500 hover:text-white">Cancel</button>
+                                                    <span className="text-xs font-semibold text-[var(--text-muted)] uppercase">New Document</span>
+                                                    <button onClick={() => setShowAddDoc(false)} className="text-xs text-foreground0 hover:text-white">Cancel</button>
                                                 </div>
                                                 <FileUploader
                                                     label="Select File"
@@ -445,7 +445,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex gap-3 pt-4 border-t border-slate-800">
+                                    <div className="flex gap-3 pt-4 border-t border-[var(--card-border)]">
                                         <button
                                             onClick={handleQuickApply}
                                             disabled={applying || !((resumeSource === "saved" && hasResume) || (resumeSource === "upload" && uploadedResume))}
@@ -456,7 +456,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         <button
                                             onClick={() => setShowModal(false)}
                                             disabled={applying}
-                                            className="px-6 py-3 font-semibold text-slate-400 hover:text-white transition-colors"
+                                            className="px-6 py-3 font-semibold text-[var(--text-muted)] hover:text-white transition-colors"
                                         >
                                             Cancel
                                         </button>

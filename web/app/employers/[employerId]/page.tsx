@@ -249,7 +249,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
           <h1 className="text-2xl font-bold text-slate-900">
             {status === "pending" ? "Profile Under Review" : "Profile Unavailable"}
           </h1>
-          <p className="mt-4 text-slate-500">
+          <p className="mt-4 text-foreground0">
             {status === "pending"
               ? "This employer's profile is currently being reviewed and will be available once approved."
               : "This employer's profile is not currently available."}
@@ -257,7 +257,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
           <div className="mt-8 flex justify-center gap-4">
             <Link
               href="/careers"
-              className="rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#14B8A6]/90"
+              className="rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
             >
               Browse Jobs
             </Link>
@@ -361,13 +361,13 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
 
               {/* Industry Badge */}
               {employer.industry && (
-                <span className="mt-2 inline-flex items-center rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
+                <span className="mt-2 inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
                   {INDUSTRY_LABELS[employer.industry] || employer.industry}
                 </span>
               )}
 
               {employer.location && (
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-foreground0">
                   📍 {employer.location}
                 </p>
               )}
@@ -416,19 +416,19 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {employer.companySize && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-500">👥</span>
+                  <span className="text-foreground0">👥</span>
                   <span className="text-slate-600">{SIZE_LABELS[employer.companySize] || employer.companySize}</span>
                 </div>
               )}
               {employer.foundedYear && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">📅</span>
+                  <span className="text-[var(--text-muted)]">📅</span>
                   <span className="text-slate-600">Founded {employer.foundedYear}</span>
                 </div>
               )}
               {employer.contactEmail && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">✉️</span>
+                  <span className="text-[var(--text-muted)]">✉️</span>
                   <a
                     href={`mailto:${employer.contactEmail}`}
                     className="text-[#14B8A6] hover:text-[#14B8A6]/80 truncate"
@@ -439,7 +439,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
               )}
               {employer.contactPhone && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">📞</span>
+                  <span className="text-[var(--text-muted)]">📞</span>
                   <a
                     href={`tel:${employer.contactPhone}`}
                     className="text-[#14B8A6] hover:text-[#14B8A6]/80"
@@ -478,7 +478,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
 
         {jobs.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <p className="text-slate-500">
+            <p className="text-foreground0">
               No open positions at this time. Check back soon!
             </p>
           </div>
@@ -495,7 +495,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
                     <h3 className="text-xl font-semibold text-slate-900">
                       {job.title}
                     </h3>
-                    <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-500">
+                    <div className="mt-2 flex flex-wrap gap-3 text-sm text-foreground0">
                       <span>📍 {job.location}</span>
                       <span>💼 {job.employmentType}</span>
                       {job.remoteFlag && <span>🏠 Remote</span>}
@@ -512,7 +512,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
                     )}
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="inline-flex items-center rounded-md bg-[#14B8A6]/10 px-3 py-1 text-sm font-medium text-[#14B8A6]">
+                    <span className="inline-flex items-center rounded-md bg-accent/10 px-3 py-1 text-sm font-medium text-[#14B8A6]">
                       View Details →
                     </span>
                   </div>

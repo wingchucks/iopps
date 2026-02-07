@@ -55,7 +55,7 @@ export default function SidebarItem({
         transition-all cursor-pointer mb-1 text-left
         ${active
           ? colors.active
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
+          : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface border border-transparent'
         }
       `}
     >

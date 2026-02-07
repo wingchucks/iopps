@@ -302,9 +302,9 @@ export default function AdminEmailsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading email dashboard...</p>
+          <p className="text-[var(--text-muted)]">Loading email dashboard...</p>
         </div>
       </div>
     );
@@ -318,21 +318,21 @@ export default function AdminEmailsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <Link href="/admin" className="text-sm text-slate-400 hover:text-[#14B8A6]">
+        <Link href="/admin" className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]">
           ← Admin Dashboard
         </Link>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">Email Campaigns</h1>
-        <p className="mt-1 text-sm text-slate-400">Manage email notifications and view campaign statistics</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">Email Campaigns</h1>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">Manage email notifications and view campaign statistics</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-px">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-px">
         <button
           onClick={() => setActiveTab("dashboard")}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
             activeTab === "dashboard"
-              ? "bg-slate-800 text-[#14B8A6] border-b-2 border-[#14B8A6]"
-              : "text-slate-400 hover:text-slate-200"
+              ? "bg-surface text-[#14B8A6] border-b-2 border-[#14B8A6]"
+              : "text-[var(--text-muted)] hover:text-foreground"
           }`}
         >
           <ChartBarIcon className="inline-block w-4 h-4 mr-2" />
@@ -342,8 +342,8 @@ export default function AdminEmailsPage() {
           onClick={() => setActiveTab("compose")}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
             activeTab === "compose"
-              ? "bg-slate-800 text-[#14B8A6] border-b-2 border-[#14B8A6]"
-              : "text-slate-400 hover:text-slate-200"
+              ? "bg-surface text-[#14B8A6] border-b-2 border-[#14B8A6]"
+              : "text-[var(--text-muted)] hover:text-foreground"
           }`}
         >
           <PencilSquareIcon className="inline-block w-4 h-4 mr-2" />
@@ -354,8 +354,8 @@ export default function AdminEmailsPage() {
       {/* Compose Campaign Tab */}
       {activeTab === "compose" && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">New Email Campaign</h2>
+          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">New Email Campaign</h2>
 
             {campaignResult && (
               <div
@@ -381,7 +381,7 @@ export default function AdminEmailsPage() {
             <div className="space-y-4">
               {/* Subject */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Subject Line
                 </label>
                 <input
@@ -389,26 +389,26 @@ export default function AdminEmailsPage() {
                   value={campaignSubject}
                   onChange={(e) => setCampaignSubject(e.target.value)}
                   placeholder="Enter email subject..."
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                  className="w-full px-4 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
                 />
               </div>
 
               {/* Recipient Filter */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Recipients
                 </label>
                 <select
                   value={recipientFilter}
                   onChange={(e) => setRecipientFilter(e.target.value as RecipientFilter)}
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-[#14B8A6]"
+                  className="w-full px-4 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground focus:outline-none focus:border-[#14B8A6]"
                 >
                   <option value="all">All Subscribers</option>
                   <option value="job_seekers">Job Seekers (Job Alerts Enabled)</option>
                   <option value="employers">Approved Employers</option>
                   <option value="digest_subscribers">Weekly Digest Subscribers</option>
                 </select>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground0">
                   {recipientFilter === "all" && stats && `${stats.totalSubscribers - stats.unsubscribedCount} recipients`}
                   {recipientFilter === "job_seekers" && stats && `${stats.jobAlertsEnabled} recipients`}
                   {recipientFilter === "employers" && "All approved employer accounts"}
@@ -418,16 +418,16 @@ export default function AdminEmailsPage() {
 
               {/* Content */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Email Content
-                  <span className="ml-2 text-xs text-slate-500">(Markdown supported: # heading, ## subheading, - bullet)</span>
+                  <span className="ml-2 text-xs text-foreground0">(Markdown supported: # heading, ## subheading, - bullet)</span>
                 </label>
                 <textarea
                   value={campaignContent}
                   onChange={(e) => setCampaignContent(e.target.value)}
                   placeholder="Enter your email content here..."
                   rows={10}
-                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6] font-mono text-sm"
+                  className="w-full px-4 py-3 bg-surface border border-[var(--card-border)] rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6] font-mono text-sm"
                 />
               </div>
 
@@ -443,26 +443,26 @@ export default function AdminEmailsPage() {
                   </button>
 
                   {showPreview && (
-                    <div className="mt-4 p-4 bg-slate-800 rounded-lg border border-slate-700">
-                      <p className="text-xs text-slate-500 mb-2">Preview:</p>
+                    <div className="mt-4 p-4 bg-surface rounded-lg border border-[var(--card-border)]">
+                      <p className="text-xs text-foreground0 mb-2">Preview:</p>
                       <div className="prose prose-invert prose-sm max-w-none">
                         {campaignContent.split("\n\n").map((paragraph, i) => {
                           if (paragraph.startsWith("# ")) {
-                            return <h1 key={i} className="text-xl font-bold text-slate-100 mt-4 mb-2">{paragraph.slice(2)}</h1>;
+                            return <h1 key={i} className="text-xl font-bold text-foreground mt-4 mb-2">{paragraph.slice(2)}</h1>;
                           }
                           if (paragraph.startsWith("## ")) {
-                            return <h2 key={i} className="text-lg font-semibold text-slate-200 mt-3 mb-2">{paragraph.slice(3)}</h2>;
+                            return <h2 key={i} className="text-lg font-semibold text-foreground mt-3 mb-2">{paragraph.slice(3)}</h2>;
                           }
                           if (paragraph.startsWith("- ")) {
                             return (
-                              <ul key={i} className="list-disc list-inside text-slate-300 my-2">
+                              <ul key={i} className="list-disc list-inside text-[var(--text-secondary)] my-2">
                                 {paragraph.split("\n").map((line, j) => (
                                   <li key={j}>{line.slice(2)}</li>
                                 ))}
                               </ul>
                             );
                           }
-                          return <p key={i} className="text-slate-300 my-2">{paragraph}</p>;
+                          return <p key={i} className="text-[var(--text-secondary)] my-2">{paragraph}</p>;
                         })}
                       </div>
                     </div>
@@ -471,8 +471,8 @@ export default function AdminEmailsPage() {
               )}
 
               {/* Test Email */}
-              <div className="pt-4 border-t border-slate-700">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+              <div className="pt-4 border-t border-[var(--card-border)]">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Send Test Email
                 </label>
                 <div className="flex gap-2">
@@ -481,12 +481,12 @@ export default function AdminEmailsPage() {
                     value={testEmail}
                     onChange={(e) => setTestEmail(e.target.value)}
                     placeholder="test@example.com"
-                    className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                    className="flex-1 px-4 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
                   />
                   <button
                     onClick={() => sendCampaign(true)}
                     disabled={sendingCampaign || !campaignSubject || !campaignContent || !testEmail}
-                    className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-slate-700 text-foreground rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {sendingCampaign ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-white" />
@@ -507,10 +507,10 @@ export default function AdminEmailsPage() {
                     }
                   }}
                   disabled={sendingCampaign || !campaignSubject || !campaignContent}
-                  className="px-6 py-3 bg-[#14B8A6] text-slate-900 font-semibold rounded-lg hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-3 bg-accent text-slate-900 font-semibold rounded-lg hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {sendingCampaign ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-white" />
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-white" />
                   ) : (
                     <PaperAirplaneIcon className="h-5 w-5" />
                   )}
@@ -522,31 +522,31 @@ export default function AdminEmailsPage() {
 
           {/* Campaign History */}
           {campaigns.length > 0 && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-              <h2 className="text-xl font-semibold text-slate-50 mb-4">Campaign History</h2>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Campaign History</h2>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Subject</th>
-                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Recipients</th>
-                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Sent</th>
-                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Failed</th>
-                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Status</th>
-                      <th className="pb-3 text-left text-sm font-medium text-slate-400">Date</th>
+                    <tr className="border-b border-[var(--card-border)]">
+                      <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Subject</th>
+                      <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Recipients</th>
+                      <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Sent</th>
+                      <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Failed</th>
+                      <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Status</th>
+                      <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
+                  <tbody className="divide-y divide-[var(--card-border)]">
                     {campaigns.map((campaign) => (
                       <tr key={campaign.id}>
-                        <td className="py-3 text-sm text-slate-300 max-w-xs truncate">{campaign.subject}</td>
-                        <td className="py-3 text-sm text-slate-300 capitalize">{campaign.recipientFilter.replace(/_/g, " ")}</td>
+                        <td className="py-3 text-sm text-[var(--text-secondary)] max-w-xs truncate">{campaign.subject}</td>
+                        <td className="py-3 text-sm text-[var(--text-secondary)] capitalize">{campaign.recipientFilter.replace(/_/g, " ")}</td>
                         <td className="py-3 text-sm text-green-400">{campaign.sentCount}</td>
                         <td className="py-3 text-sm text-red-400">{campaign.failedCount}</td>
                         <td className="py-3">
                           <StatusBadge status={campaign.status} />
                         </td>
-                        <td className="py-3 text-sm text-slate-400">
+                        <td className="py-3 text-sm text-[var(--text-muted)]">
                           {campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : "N/A"}
                         </td>
                       </tr>
@@ -597,8 +597,8 @@ export default function AdminEmailsPage() {
 
       {/* Subscription Breakdown */}
       {stats && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-          <h2 className="text-xl font-semibold text-slate-50 mb-4">Subscription Breakdown</h2>
+        <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Subscription Breakdown</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <SubscriptionStat label="Job Alerts" count={stats.jobAlertsEnabled} total={stats.totalSubscribers} />
             <SubscriptionStat
@@ -614,9 +614,9 @@ export default function AdminEmailsPage() {
       )}
 
       {/* Manual Campaign Triggers */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-        <h2 className="text-xl font-semibold text-slate-50 mb-2">Manual Campaign Triggers</h2>
-        <p className="text-sm text-slate-400 mb-4">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+        <h2 className="text-xl font-semibold text-foreground mb-2">Manual Campaign Triggers</h2>
+        <p className="text-sm text-[var(--text-muted)] mb-4">
           Manually trigger email campaigns. Use with caution - emails will be sent to all eligible subscribers.
         </p>
 
@@ -666,32 +666,32 @@ export default function AdminEmailsPage() {
       </div>
 
       {/* Recent Email Logs */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-        <h2 className="text-xl font-semibold text-slate-50 mb-4">Recent Email Activity</h2>
+      <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Recent Email Activity</h2>
         {recentLogs.length === 0 ? (
-          <p className="text-slate-400">No email logs found. Logs will appear here after emails are sent.</p>
+          <p className="text-[var(--text-muted)]">No email logs found. Logs will appear here after emails are sent.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="pb-3 text-left text-sm font-medium text-slate-400">Recipient</th>
-                  <th className="pb-3 text-left text-sm font-medium text-slate-400">Campaign</th>
-                  <th className="pb-3 text-left text-sm font-medium text-slate-400">Subject</th>
-                  <th className="pb-3 text-left text-sm font-medium text-slate-400">Status</th>
-                  <th className="pb-3 text-left text-sm font-medium text-slate-400">Sent At</th>
+                <tr className="border-b border-[var(--card-border)]">
+                  <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Recipient</th>
+                  <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Campaign</th>
+                  <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Subject</th>
+                  <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Status</th>
+                  <th className="pb-3 text-left text-sm font-medium text-[var(--text-muted)]">Sent At</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-[var(--card-border)]">
                 {recentLogs.map((log) => (
                   <tr key={log.id}>
-                    <td className="py-3 text-sm text-slate-300">{log.userEmail || "Unknown"}</td>
-                    <td className="py-3 text-sm text-slate-300 capitalize">{log.campaignType?.replace(/-/g, " ") || "N/A"}</td>
-                    <td className="py-3 text-sm text-slate-300 max-w-xs truncate">{log.subject || "N/A"}</td>
+                    <td className="py-3 text-sm text-[var(--text-secondary)]">{log.userEmail || "Unknown"}</td>
+                    <td className="py-3 text-sm text-[var(--text-secondary)] capitalize">{log.campaignType?.replace(/-/g, " ") || "N/A"}</td>
+                    <td className="py-3 text-sm text-[var(--text-secondary)] max-w-xs truncate">{log.subject || "N/A"}</td>
                     <td className="py-3">
                       <StatusBadge status={log.status} />
                     </td>
-                    <td className="py-3 text-sm text-slate-400">
+                    <td className="py-3 text-sm text-[var(--text-muted)]">
                       {log.sentAt?.toDate?.()?.toLocaleString() || "N/A"}
                     </td>
                   </tr>
@@ -731,15 +731,15 @@ function StatCard({ label, value, subtitle, icon: Icon, color }: StatCardProps) 
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
       <div className="flex items-center gap-3">
         <Icon className={`h-8 w-8 ${iconColors[color]}`} />
         <div>
-          <p className="text-sm font-medium text-slate-400">{label}</p>
+          <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
           <p className={`text-3xl font-bold bg-gradient-to-r ${colors[color]} bg-clip-text text-transparent`}>
             {value.toLocaleString()}
           </p>
-          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-foreground0">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -756,16 +756,16 @@ function SubscriptionStat({ label, count, total }: SubscriptionStatProps) {
   const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
 
   return (
-    <div className="text-center p-4 rounded-lg bg-slate-800/50">
-      <p className="text-2xl font-bold text-slate-50">{count}</p>
-      <p className="text-sm text-slate-400">{label}</p>
+    <div className="text-center p-4 rounded-lg bg-surface">
+      <p className="text-2xl font-bold text-foreground">{count}</p>
+      <p className="text-sm text-[var(--text-muted)]">{label}</p>
       <div className="mt-2 h-1.5 rounded-full bg-slate-700 overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-[#14B8A6] to-[#0D9488]"
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <p className="text-xs text-slate-500 mt-1">{percentage}% of subscribers</p>
+      <p className="text-xs text-foreground0 mt-1">{percentage}% of subscribers</p>
     </div>
   );
 }
@@ -782,15 +782,15 @@ function CampaignButton({ label, description, onClick, loading }: CampaignButton
     <button
       onClick={onClick}
       disabled={loading}
-      className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-[#14B8A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex flex-col items-center justify-center p-6 rounded-xl border border-[var(--card-border)] bg-surface hover:bg-surface hover:border-[#14B8A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {loading ? (
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-400 border-t-[#14B8A6]" />
       ) : (
         <PlayIcon className="h-8 w-8 text-[#14B8A6]" />
       )}
-      <p className="mt-2 font-semibold text-slate-200">{label}</p>
-      <p className="text-xs text-slate-400">{description}</p>
+      <p className="mt-2 font-semibold text-foreground">{label}</p>
+      <p className="text-xs text-[var(--text-muted)]">{description}</p>
     </button>
   );
 }

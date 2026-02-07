@@ -166,7 +166,7 @@ export default function NotificationBell() {
         );
       default:
         return (
-          <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         );
@@ -180,7 +180,7 @@ export default function NotificationBell() {
       {/* Bell Button */}
       <button
         onClick={handleToggle}
-        className="relative rounded-lg border border-slate-700/50 bg-slate-800/40 p-2 text-slate-300 transition hover:border-accent/50 hover:text-accent"
+        className="relative rounded-lg border border-[var(--card-border)] bg-surface p-2 text-[var(--text-secondary)] transition hover:border-accent/50 hover:text-accent"
         aria-label="Notifications"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,10 +201,10 @@ export default function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-80 sm:w-96 rounded-xl border border-slate-800/80 bg-card shadow-2xl shadow-black/40">
+        <div className="absolute right-0 z-50 mt-2 w-80 sm:w-96 rounded-xl border border-[var(--card-border)]/80 bg-card shadow-2xl shadow-black/40">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-            <h3 className="font-semibold text-slate-100">Notifications</h3>
+          <div className="flex items-center justify-between border-b border-[var(--card-border)] px-4 py-3">
+            <h3 className="font-semibold text-foreground">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
@@ -219,7 +219,7 @@ export default function NotificationBell() {
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
               <div className="p-6 text-center">
-                <div className="text-sm text-slate-400">Loading...</div>
+                <div className="text-sm text-[var(--text-muted)]">Loading...</div>
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-6 text-center">
@@ -236,7 +236,7 @@ export default function NotificationBell() {
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                   />
                 </svg>
-                <p className="mt-2 text-sm text-slate-400">No notifications yet</p>
+                <p className="mt-2 text-sm text-[var(--text-muted)]">No notifications yet</p>
               </div>
             ) : (
               notifications.map((notification) => (
@@ -245,7 +245,7 @@ export default function NotificationBell() {
                     <Link
                       href={notification.link}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`flex gap-3 px-4 py-3 transition hover:bg-slate-800/50 ${
+                      className={`flex gap-3 px-4 py-3 transition hover:bg-surface ${
                         !notification.read ? "bg-slate-800/30" : ""
                       }`}
                     >
@@ -253,10 +253,10 @@ export default function NotificationBell() {
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.read ? "font-medium text-slate-100" : "text-slate-300"}`}>
+                        <p className={`text-sm ${!notification.read ? "font-medium text-foreground" : "text-[var(--text-secondary)]"}`}>
                           {notification.title}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">
+                        <p className="mt-0.5 text-xs text-foreground0 line-clamp-2">
                           {notification.message}
                         </p>
                         <p className="mt-1 text-xs text-slate-600">
@@ -272,7 +272,7 @@ export default function NotificationBell() {
                   ) : (
                     <div
                       onClick={() => handleNotificationClick(notification)}
-                      className={`flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-slate-800/50 ${
+                      className={`flex gap-3 px-4 py-3 cursor-pointer transition hover:bg-surface ${
                         !notification.read ? "bg-slate-800/30" : ""
                       }`}
                     >
@@ -280,10 +280,10 @@ export default function NotificationBell() {
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.read ? "font-medium text-slate-100" : "text-slate-300"}`}>
+                        <p className={`text-sm ${!notification.read ? "font-medium text-foreground" : "text-[var(--text-secondary)]"}`}>
                           {notification.title}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">
+                        <p className="mt-0.5 text-xs text-foreground0 line-clamp-2">
                           {notification.message}
                         </p>
                         <p className="mt-1 text-xs text-slate-600">
@@ -304,11 +304,11 @@ export default function NotificationBell() {
 
           {/* Footer - View All Link */}
           {notifications.length > 0 && (
-            <div className="border-t border-slate-800 p-2">
+            <div className="border-t border-[var(--card-border)] p-2">
               <Link
                 href="/member/alerts"
                 onClick={() => setIsOpen(false)}
-                className="block rounded-lg px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-slate-800/50"
+                className="block rounded-lg px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-surface"
               >
                 View all notifications
               </Link>

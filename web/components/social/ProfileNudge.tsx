@@ -97,30 +97,30 @@ export default function ProfileNudge() {
   const incomplete = PROFILE_FIELDS.filter((f) => !f.check(profile));
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 mb-4">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-5 mb-4">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold text-white">Complete your profile</h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-foreground0 mt-0.5">
             Stand out to employers and the community
           </p>
         </div>
         <button
           onClick={handleDismiss}
-          className="text-slate-600 hover:text-slate-400 transition-colors"
+          className="text-slate-600 hover:text-[var(--text-muted)] transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-2 rounded-full bg-slate-800 mb-4">
+      <div className="w-full h-2 rounded-full bg-surface mb-4">
         <div
-          className="h-full rounded-full transition-all duration-500 bg-emerald-500"
+          className="h-full rounded-full transition-all duration-500 bg-accent"
           style={{ width: `${completeness}%` }}
         />
       </div>
-      <p className="text-xs text-slate-500 mb-3">{completeness}% complete</p>
+      <p className="text-xs text-foreground0 mb-3">{completeness}% complete</p>
 
       {/* Quick wins */}
       <div className="space-y-2">
@@ -128,9 +128,9 @@ export default function ProfileNudge() {
           <Link
             key={field.key}
             href="/member/settings"
-            className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors"
+            className="flex items-center gap-3 rounded-xl bg-surface px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-surface hover:text-accent transition-colors"
           >
-            <span className="text-emerald-500">{field.icon}</span>
+            <span className="text-accent">{field.icon}</span>
             {field.label}
           </Link>
         ))}

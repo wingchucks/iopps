@@ -44,10 +44,10 @@ function NavItem({ href, label, icon: Icon, badge, active, onClick }: NavItemPro
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
         active
           ? 'bg-accent/10 text-accent border border-accent/20'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+          : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
       }`}
     >
       <Icon className="w-5 h-5 flex-shrink-0" />
@@ -126,10 +126,10 @@ export default function NavigationSidebar({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h2 className="font-bold text-slate-50 truncate text-sm">
+            <h2 className="font-bold text-foreground truncate text-sm">
               {profile.organizationName || 'Organization'}
             </h2>
-            <p className="text-xs text-slate-500 truncate">
+            <p className="text-xs text-foreground0 truncate">
               {profile.location || 'Location not set'}
             </p>
           </div>
@@ -197,8 +197,8 @@ export default function NavigationSidebar({
 
         {/* Modules Section */}
         {enabledModules.length > 0 && (
-          <div className="pt-2 border-t border-slate-800">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 mb-4 text-slate-500">
+          <div className="pt-2 border-t border-[var(--card-border)]">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 mb-4 text-foreground0">
               Modules
             </h3>
 
@@ -320,7 +320,7 @@ export default function NavigationSidebar({
             <Link
               href="/organization/settings?tab=modules"
               onClick={onNavigate}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 transition-all border border-dashed border-slate-800"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground0 hover:text-[var(--text-secondary)] hover:bg-slate-800/30 transition-all border border-dashed border-[var(--card-border)]"
             >
               <PlusCircleIcon className="w-5 h-5" />
               <span className="text-sm">Add Module</span>
@@ -330,7 +330,7 @@ export default function NavigationSidebar({
       </nav>
 
       {/* Help Section - Fixed at bottom */}
-      <div className="flex-shrink-0 pt-4 border-t border-slate-800">
+      <div className="flex-shrink-0 pt-4 border-t border-[var(--card-border)]">
         <HelpButton />
       </div>
     </div>

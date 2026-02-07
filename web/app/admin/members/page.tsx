@@ -195,22 +195,22 @@ function AdminMembersContent() {
   const activeMembers = members.filter((m) => !m.disabled).length;
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Admin Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Members - Job Seekers
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {filteredMembers.length} member{filteredMembers.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -222,28 +222,28 @@ function AdminMembersContent() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Total Members</p>
-            <p className="mt-1 text-2xl font-bold text-slate-100">{totalMembers}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Total Members</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{totalMembers}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Active</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Active</p>
             <p className="mt-1 text-2xl font-bold text-green-400">{activeMembers}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">With Resume</p>
-            <p className="mt-1 text-2xl font-bold text-teal-400">{withResume}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">With Resume</p>
+            <p className="mt-1 text-2xl font-bold text-accent">{withResume}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">With Skills</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">With Skills</p>
             <p className="mt-1 text-2xl font-bold text-purple-400">{withSkills}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">With Experience</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">With Experience</p>
             <p className="mt-1 text-2xl font-bold text-blue-400">{withExperience}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Applications</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Applications</p>
             <p className="mt-1 text-2xl font-bold text-amber-400">{totalApplications}</p>
           </div>
         </div>
@@ -254,8 +254,8 @@ function AdminMembersContent() {
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "all"
-                ? "bg-[#14B8A6] text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                ? "bg-accent text-slate-900"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
             }`}
           >
             All ({totalMembers})
@@ -264,8 +264,8 @@ function AdminMembersContent() {
             onClick={() => setFilter("with_resume")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "with_resume"
-                ? "bg-teal-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-teal-500"
+                ? "bg-accent text-slate-900"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent"
             }`}
           >
             With Resume ({withResume})
@@ -275,7 +275,7 @@ function AdminMembersContent() {
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "with_skills"
                 ? "bg-purple-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-purple-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-purple-500"
             }`}
           >
             With Skills ({withSkills})
@@ -285,7 +285,7 @@ function AdminMembersContent() {
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "recent"
                 ? "bg-amber-500 text-slate-900"
-                : "border border-slate-700 text-slate-300 hover:border-amber-500"
+                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
             }`}
           >
             Recent (30 days)
@@ -315,29 +315,29 @@ function AdminMembersContent() {
               return (
                 <div
                   key={member.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
+                  className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     {/* Member Info */}
                     <div className="flex-1">
                       <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800">
-                          <UserIcon className="h-6 w-6 text-slate-400" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface">
+                          <UserIcon className="h-6 w-6 text-[var(--text-muted)]" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <h3 className="text-lg font-semibold text-slate-50">
+                              <h3 className="text-lg font-semibold text-foreground">
                                 {member.displayName || member.email || "Unknown Member"}
                               </h3>
                               {member.displayName && member.email && (
-                                <p className="text-sm text-slate-400">{member.email}</p>
+                                <p className="text-sm text-[var(--text-muted)]">{member.email}</p>
                               )}
                             </div>
                             <div className="flex gap-2">
                               <StatusBadge status={member.disabled ? "disabled" : "active"} />
                               {member.resumeUrl && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/10 px-2 py-0.5 text-xs font-medium text-teal-400">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
                                   <DocumentTextIcon className="h-3 w-3" />
                                   Resume
                                 </span>
@@ -346,7 +346,7 @@ function AdminMembersContent() {
                           </div>
 
                           {/* Profile Stats */}
-                          <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-400">
+                          <div className="mt-3 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                             {member.location && (
                               <span className="flex items-center gap-1">
                                 <MapPinIcon className="h-4 w-4" />
@@ -390,7 +390,7 @@ function AdminMembersContent() {
                                 </span>
                               ))}
                               {member.skills.length > 5 && (
-                                <span className="text-xs text-slate-500">
+                                <span className="text-xs text-foreground0">
                                   +{member.skills.length - 5} more
                                 </span>
                               )}
@@ -405,7 +405,7 @@ function AdminMembersContent() {
                           )}
 
                           {/* Dates */}
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex gap-4 text-xs text-foreground0">
                             {member.userCreatedAt && (
                               <span className="flex items-center gap-1">
                                 <CalendarIcon className="h-3.5 w-3.5" />
@@ -425,7 +425,7 @@ function AdminMembersContent() {
                           href={member.resumeUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-md border border-teal-600 px-4 py-2 text-center text-sm font-semibold text-teal-400 transition hover:bg-teal-600/10"
+                          className="rounded-md border border-teal-600 px-4 py-2 text-center text-sm font-semibold text-accent transition hover:bg-accent/10"
                         >
                           View Resume
                         </a>
@@ -436,7 +436,7 @@ function AdminMembersContent() {
                         className={`rounded-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
                           member.disabled
                             ? "bg-green-600 text-white hover:bg-green-500"
-                            : "border border-slate-600 text-slate-400 hover:bg-slate-800"
+                            : "border border-[var(--card-border)] text-[var(--text-muted)] hover:bg-surface"
                         }`}
                       >
                         {isProcessing ? "Processing..." : member.disabled ? "Enable" : "Disable"}

@@ -10,11 +10,11 @@ interface SimplePageHeaderProps {
 
 export function SimplePageHeader({ title, subtitle, actions }: SimplePageHeaderProps) {
   return (
-    <div className="bg-slate-900 border-b border-slate-800">
+    <div className="bg-surface border-b border-[var(--card-border)]">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{title}</h1>
         {subtitle && (
-          <p className="text-slate-400 text-sm sm:text-base max-w-2xl">{subtitle}</p>
+          <p className="text-[var(--text-muted)] text-sm sm:text-base max-w-2xl">{subtitle}</p>
         )}
         {actions && <div className="mt-4 flex flex-wrap gap-3">{actions}</div>}
       </div>

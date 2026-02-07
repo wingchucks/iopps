@@ -123,7 +123,7 @@ function ProductsPageContent() {
   return (
     <FeedLayout activeNav="business" fullWidth>
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-500">
+      <nav className="mb-8 text-sm text-foreground0">
         <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
@@ -143,7 +143,7 @@ function ProductsPageContent() {
         <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-slate-900 sm:text-5xl">
           Shop Indigenous Products
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground0">
           Discover authentic handmade goods from Indigenous artisans and businesses across North America.
         </p>
       </div>
@@ -153,7 +153,7 @@ function ProductsPageContent() {
         <div className="grid gap-4 md:grid-cols-2">
           {/* Search */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Search Products
             </label>
             <input
@@ -161,13 +161,13 @@ function ProductsPageContent() {
               placeholder="Search by name, description, or vendor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-[var(--text-muted)] focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
 
           {/* Category Filter */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Category
             </label>
             <select
@@ -187,7 +187,7 @@ function ProductsPageContent() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500">
+        <p className="text-foreground0">
           {loading ? "Loading..." : `${filteredProducts.length} products found`}
         </p>
       </div>
@@ -244,7 +244,7 @@ function ProductsPageContent() {
                     {product.name}
                   </h3>
                   {vendor && (
-                    <p className="text-xs text-slate-500 mb-3">
+                    <p className="text-xs text-foreground0 mb-3">
                       by {vendor.businessName}
                     </p>
                   )}
@@ -253,7 +253,7 @@ function ProductsPageContent() {
                       {formatPrice(product)}
                     </span>
                     {product.madeToOrder && (
-                      <span className="text-xs text-slate-500">Made to order</span>
+                      <span className="text-xs text-foreground0">Made to order</span>
                     )}
                   </div>
                 </div>
@@ -265,14 +265,14 @@ function ProductsPageContent() {
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
           <span className="text-5xl mb-4 block">🔍</span>
           <h3 className="text-xl font-bold text-slate-900 mb-2">No Products Found</h3>
-          <p className="text-slate-500 mb-6">
+          <p className="text-foreground0 mb-6">
             {searchQuery || category
               ? "Try adjusting your search or filters."
               : "Products will appear here once vendors add them."}
           </p>
           <Link
             href="/business/directory"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
           >
             Browse Businesses Instead
           </Link>
@@ -285,12 +285,12 @@ function ProductsPageContent() {
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Sell Your Products on IOPPS
           </h2>
-          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+          <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
             Join our marketplace and reach customers across North America who want to support Indigenous businesses.
           </p>
           <Link
             href="/organization/shop"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
           >
             Start Selling
           </Link>

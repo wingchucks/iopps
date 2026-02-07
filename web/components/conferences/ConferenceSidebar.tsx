@@ -99,7 +99,7 @@ export default function ConferenceSidebar({
     <div className="space-y-4">
       {/* Quick Facts Card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
           Quick Facts
         </h3>
 
@@ -122,12 +122,12 @@ export default function ConferenceSidebar({
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-500">Date & Time</p>
+              <p className="text-xs text-foreground0">Date & Time</p>
               {startDate && (
                 <p className="font-medium text-slate-700">{startDate.full}</p>
               )}
               {endDate && startDate?.full !== endDate.full && (
-                <p className="text-sm text-slate-500">to {endDate.full}</p>
+                <p className="text-sm text-foreground0">to {endDate.full}</p>
               )}
               {countdown && (
                 <p className="mt-1 text-xs font-medium text-[#0D9488]">
@@ -161,12 +161,12 @@ export default function ConferenceSidebar({
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-xs text-slate-500">Location</p>
+              <p className="text-xs text-foreground0">Location</p>
               <p className="font-medium text-slate-700">
                 {conference.venue?.name || conference.location}
               </p>
               {conference.venue?.city && conference.venue?.province && (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-foreground0">
                   {conference.venue.city}, {conference.venue.province}
                 </p>
               )}
@@ -208,12 +208,12 @@ export default function ConferenceSidebar({
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-xs text-slate-500">Format</p>
+                <p className="text-xs text-foreground0">Format</p>
                 <p className="font-medium text-slate-700 capitalize">
                   {conference.eventType}
                 </p>
                 {conference.virtualPlatform && (
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     via {conference.virtualPlatform}
                   </p>
                 )}
@@ -240,7 +240,7 @@ export default function ConferenceSidebar({
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-xs text-slate-500">Expected Attendees</p>
+                <p className="text-xs text-foreground0">Expected Attendees</p>
                 <p className="font-medium text-slate-700">
                   {conference.expectedAttendees}
                 </p>
@@ -253,7 +253,7 @@ export default function ConferenceSidebar({
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50">
                 <svg
-                  className="h-5 w-5 text-slate-400"
+                  className="h-5 w-5 text-[var(--text-muted)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -267,7 +267,7 @@ export default function ConferenceSidebar({
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-xs text-slate-500">Timezone</p>
+                <p className="text-xs text-foreground0">Timezone</p>
                 <p className="font-medium text-slate-700">
                   {conference.timezone}
                 </p>
@@ -284,7 +284,7 @@ export default function ConferenceSidebar({
       {/* Registration Pricing Card */}
       {(conference.cost || conference.registrationOptions) && (
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
             Registration
           </h3>
 
@@ -312,7 +312,7 @@ export default function ConferenceSidebar({
             {(conference.registrationOptions?.regularPrice || conference.cost) && (
               <div className="rounded-lg border border-slate-300 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500">Regular</span>
+                  <span className="text-sm text-foreground0">Regular</span>
                   <span className="font-bold text-slate-700">
                     {conference.registrationOptions?.regularPrice || conference.cost}
                   </span>
@@ -336,7 +336,7 @@ export default function ConferenceSidebar({
             {conference.registrationOptions?.studentRate && (
               <div className="rounded-lg border border-slate-300 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500">Student</span>
+                  <span className="text-sm text-foreground0">Student</span>
                   <span className="font-bold text-slate-700">
                     {conference.registrationOptions.studentRate}
                   </span>
@@ -348,7 +348,7 @@ export default function ConferenceSidebar({
             {conference.registrationOptions?.groupRate && (
               <div className="rounded-lg border border-slate-300 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-foreground0">
                     Group ({conference.registrationOptions.groupMinimum || 5}+)
                   </span>
                   <span className="font-bold text-slate-700">
@@ -362,7 +362,7 @@ export default function ConferenceSidebar({
             {conference.registrationOptions?.virtualPrice && (
               <div className="rounded-lg border border-slate-300 bg-slate-50 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500">Virtual</span>
+                  <span className="text-sm text-foreground0">Virtual</span>
                   <span className="font-bold text-slate-700">
                     {conference.registrationOptions.virtualPrice}
                   </span>
@@ -401,7 +401,7 @@ export default function ConferenceSidebar({
       {/* Contact Card */}
       {(conference.contactEmail || conference.contactPhone) && (
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
             Contact
           </h3>
 

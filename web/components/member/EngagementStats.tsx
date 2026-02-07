@@ -59,11 +59,11 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
   const getTrendIcon = (trend: "up" | "down" | "stable") => {
     switch (trend) {
       case "up":
-        return <TrendingUp className="h-4 w-4 text-emerald-400" />;
+        return <TrendingUp className="h-4 w-4 text-accent" />;
       case "down":
         return <TrendingDown className="h-4 w-4 text-red-400" />;
       default:
-        return <Minus className="h-4 w-4 text-slate-400" />;
+        return <Minus className="h-4 w-4 text-[var(--text-muted)]" />;
     }
   };
 
@@ -72,9 +72,9 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 animate-pulse">
-              <div className="h-4 w-24 bg-slate-800 rounded mb-3" />
-              <div className="h-8 w-16 bg-slate-800 rounded" />
+            <div key={i} className="rounded-2xl border border-[var(--card-border)] bg-surface p-5 animate-pulse">
+              <div className="h-4 w-24 bg-surface rounded mb-3" />
+              <div className="h-8 w-16 bg-surface rounded" />
             </div>
           ))}
         </div>
@@ -102,8 +102,8 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
       subValue: stats.connections.pending > 0 ? `${stats.connections.pending} pending` : `${stats.connections.thisMonth} this month`,
       icon: Users,
       color: "from-emerald-500/20 to-teal-500/20",
-      borderColor: "border-emerald-500/20",
-      iconColor: "text-emerald-400",
+      borderColor: "border-accent/20",
+      iconColor: "text-accent",
       link: "/members",
     },
     {
@@ -143,17 +143,17 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
               className={`rounded-2xl border ${card.borderColor} bg-gradient-to-br ${card.color} p-5 transition-all hover:shadow-lg group cursor-pointer`}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className={`p-2 rounded-lg bg-slate-900/50 ${card.iconColor}`}>
+                <div className={`p-2 rounded-lg bg-surface ${card.iconColor}`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 {card.trend && getTrendIcon(card.trend)}
               </div>
               <div className="mt-3">
-                <p className="text-sm font-medium text-slate-400">{card.label}</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">{card.label}</p>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-2xl font-bold text-white">{card.value}</span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">{card.subValue}</p>
+                <p className="text-xs text-foreground0 mt-1">{card.subValue}</p>
               </div>
               <ChevronRight className="absolute top-4 right-4 h-4 w-4 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -176,19 +176,19 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
       </div>
 
       {/* Milestones Section */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-amber-400" />
             <h3 className="font-semibold text-white">Community Milestones</h3>
           </div>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-[var(--text-muted)]">
             {milestoneProgress.achieved}/{milestoneProgress.total} achieved
           </span>
         </div>
 
         {/* Progress Bar */}
-        <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden mb-4">
+        <div className="h-2 w-full rounded-full bg-surface overflow-hidden mb-4">
           <div
             className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
             style={{ width: `${milestoneProgress.percentage}%` }}
@@ -198,7 +198,7 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
         {/* Recently Achieved */}
         {recentlyAchieved.length > 0 && (
           <div className="mb-4">
-            <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Recently Achieved</p>
+            <p className="text-xs text-foreground0 uppercase tracking-wide mb-2">Recently Achieved</p>
             <div className="flex flex-wrap gap-2">
               {recentlyAchieved.map((milestone) => (
                 <span
@@ -215,13 +215,13 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
 
         {/* Next Milestone */}
         {nextMilestone && (
-          <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-            <div className="p-3 rounded-full bg-slate-900">
-              <Target className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-surface border border-[var(--card-border)]">
+            <div className="p-3 rounded-full bg-surface">
+              <Target className="h-5 w-5 text-[var(--text-muted)]" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-white">Next: {nextMilestone.label}</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-foreground0">
                 {nextMilestone.type === "profile_views" && `Get ${nextMilestone.threshold - stats.profileViews.total} more profile views`}
                 {nextMilestone.type === "connections" && `Make ${nextMilestone.threshold - stats.connections.total} more connections`}
                 {nextMilestone.type === "posts" && `Create ${nextMilestone.threshold - stats.posts.total} more posts`}
@@ -241,35 +241,35 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
       </div>
 
       {/* Quick Tips */}
-      <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 p-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-emerald-500/5 to-teal-500/5 p-6">
         <h3 className="font-semibold text-white mb-3">Boost Your Engagement</h3>
-        <ul className="space-y-2 text-sm text-slate-400">
+        <ul className="space-y-2 text-sm text-[var(--text-muted)]">
           {stats.profileViews.total < 10 && (
             <li className="flex items-start gap-2">
-              <span className="text-emerald-400">-</span>
+              <span className="text-accent">-</span>
               Complete your profile to attract more views
             </li>
           )}
           {stats.connections.total < 5 && (
             <li className="flex items-start gap-2">
-              <span className="text-emerald-400">-</span>
-              <Link href="/members" className="hover:text-emerald-400 transition-colors">
+              <span className="text-accent">-</span>
+              <Link href="/members" className="hover:text-accent transition-colors">
                 Browse the community directory and connect with others
               </Link>
             </li>
           )}
           {stats.posts.total < 1 && (
             <li className="flex items-start gap-2">
-              <span className="text-emerald-400">-</span>
-              <Link href="/network" className="hover:text-emerald-400 transition-colors">
+              <span className="text-accent">-</span>
+              <Link href="/network" className="hover:text-accent transition-colors">
                 Share your first post to introduce yourself
               </Link>
             </li>
           )}
           {stats.applications.total < 3 && (
             <li className="flex items-start gap-2">
-              <span className="text-emerald-400">-</span>
-              <Link href="/careers" className="hover:text-emerald-400 transition-colors">
+              <span className="text-accent">-</span>
+              <Link href="/careers" className="hover:text-accent transition-colors">
                 Explore job opportunities and apply
               </Link>
             </li>
@@ -279,7 +279,7 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
             stats.posts.total >= 1 &&
             stats.applications.total >= 3 && (
               <li className="flex items-start gap-2">
-                <span className="text-emerald-400">-</span>
+                <span className="text-accent">-</span>
                 You&apos;re doing great! Keep engaging with the community.
               </li>
             )}

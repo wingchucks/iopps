@@ -35,7 +35,7 @@ export function DashboardEntryCTA({
   if (loading) {
     if (showLoading) {
       return (
-        <div className={`animate-pulse rounded-2xl bg-slate-800/50 ${variant === 'card' ? 'h-48' : 'h-10'} ${className}`} />
+        <div className={`animate-pulse rounded-2xl bg-surface ${variant === 'card' ? 'h-48' : 'h-10'} ${className}`} />
       );
     }
     return null;
@@ -68,13 +68,13 @@ export function DashboardEntryCTA({
     return (
       <Link
         href={dashboardHref}
-        className={`group rounded-2xl border border-slate-800/80 bg-slate-900/50 p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10 ${className}`}
+        className={`group rounded-2xl border border-[var(--card-border)]/80 bg-surface p-8 text-left transition-all duration-300 hover:border-[#14B8A6]/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#14B8A6]/10 ${className}`}
       >
         <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#14B8A6]/20 to-cyan-500/20">
           <span className="text-2xl">📊</span>
         </div>
         <h2 className="text-xl font-bold text-white mb-2">{dashboardLabel}</h2>
-        <p className="text-sm text-slate-400 leading-relaxed mb-4">
+        <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-4">
           {dashboardDescription}
         </p>
         <span className="text-sm font-semibold text-[#14B8A6] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -100,7 +100,7 @@ export function DashboardEntryCTA({
   return (
     <Link
       href={dashboardHref}
-      className={`inline-flex items-center justify-center rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all hover:-translate-y-0.5 hover:bg-[#16cdb8] hover:shadow-xl ${className}`}
+      className={`inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition-all hover:-translate-y-0.5 hover:bg-[#16cdb8] hover:shadow-xl ${className}`}
     >
       {dashboardLabel}
     </Link>

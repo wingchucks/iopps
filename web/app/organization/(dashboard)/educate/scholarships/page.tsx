@@ -62,8 +62,8 @@ export default function EducateScholarshipsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Scholarships</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Scholarships</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Manage scholarships for Indigenous students
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function EducateScholarshipsPage() {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'all'
               ? 'bg-accent/10 text-accent border border-accent/20'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           All ({scholarships.length})
@@ -93,7 +93,7 @@ export default function EducateScholarshipsPage() {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'active'
               ? 'bg-green-900/30 text-green-400 border border-green-800/30'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           Active ({activeCount})
@@ -102,8 +102,8 @@ export default function EducateScholarshipsPage() {
           onClick={() => setFilter('inactive')}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'inactive'
-              ? 'bg-slate-700/50 text-slate-300 border border-slate-600'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              ? 'bg-slate-700/50 text-[var(--text-secondary)] border border-[var(--card-border)]'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           Inactive ({inactiveCount})
@@ -114,10 +114,10 @@ export default function EducateScholarshipsPage() {
       {filteredScholarships.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
           <SparklesIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'all' ? 'No scholarships yet' : `No ${filter} scholarships`}
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">
+          <p className="text-foreground0 max-w-md mx-auto mb-6">
             {filter === 'all'
               ? 'Add scholarships to help Indigenous students fund their education.'
               : `You don't have any ${filter} scholarships at the moment.`}
@@ -137,14 +137,14 @@ export default function EducateScholarshipsPage() {
           {filteredScholarships.map(scholarship => (
             <div
               key={scholarship.id}
-              className="bg-card border border-card-border rounded-xl p-4 hover:border-slate-700 transition-colors"
+              className="bg-card border border-card-border rounded-xl p-4 hover:border-[var(--card-border)] transition-colors"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Link
                       href={`/organization/scholarships/${scholarship.id}`}
-                      className="font-semibold text-slate-200 hover:text-accent transition-colors truncate"
+                      className="font-semibold text-foreground hover:text-accent transition-colors truncate"
                     >
                       {scholarship.title}
                     </Link>
@@ -157,10 +157,10 @@ export default function EducateScholarshipsPage() {
                         : scholarship.amount}
                     </p>
                   )}
-                  <p className="text-sm text-slate-500 line-clamp-1 mt-1">
+                  <p className="text-sm text-foreground0 line-clamp-1 mt-1">
                     {scholarship.description}
                   </p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-foreground0">
                     {scholarship.isRecurring && scholarship.recurringSchedule ? (
                       <span className="flex items-center gap-1 text-blue-400">
                         <ArrowPathIcon className="w-3.5 h-3.5" />
@@ -189,7 +189,7 @@ export default function EducateScholarshipsPage() {
                       Active
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-slate-800 text-slate-400">
+                    <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-surface text-[var(--text-muted)]">
                       <XCircleIcon className="w-3.5 h-3.5" />
                       Inactive
                     </span>
@@ -197,7 +197,7 @@ export default function EducateScholarshipsPage() {
 
                   <Link
                     href={`/organization/scholarships/${scholarship.id}/edit`}
-                    className="p-2 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="p-2 text-foreground0 hover:text-[var(--text-secondary)] transition-colors"
                   >
                     <PencilIcon className="w-4 h-4" />
                   </Link>

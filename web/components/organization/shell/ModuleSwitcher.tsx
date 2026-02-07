@@ -47,14 +47,14 @@ export default function ModuleSwitcher({
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 text-sm"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface border border-[var(--card-border)] text-sm"
         >
           {CurrentIcon && <CurrentIcon className={`w-4 h-4 ${currentInfo?.color}`} />}
-          <ChevronDownIcon className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 py-1">
+          <div className="absolute right-0 top-full mt-2 w-48 bg-surface border border-[var(--card-border)] rounded-xl shadow-xl z-50 py-1">
             {enabledModules.map(module => {
               const info = MODULE_CONFIG[module];
               const Icon = info.icon;
@@ -69,7 +69,7 @@ export default function ModuleSwitcher({
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${isActive
                     ? 'bg-accent/10 text-accent'
-                    : 'text-slate-300 hover:bg-slate-800'
+                    : 'text-[var(--text-secondary)] hover:bg-surface'
                     }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-accent' : info.color}`} />
@@ -80,11 +80,11 @@ export default function ModuleSwitcher({
 
             {enabledModules.length < 5 && (
               <>
-                <div className="h-px bg-slate-800 my-1" />
+                <div className="h-px bg-surface my-1" />
                 <Link
                   href="/organization/settings?tab=modules"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-foreground0 hover:text-[var(--text-secondary)] hover:bg-surface transition-colors"
                 >
                   <PlusIcon className="w-4 h-4" />
                   <span className="text-sm">Add Module</span>
@@ -100,7 +100,7 @@ export default function ModuleSwitcher({
   // Full mode for desktop - show pills
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-slate-500 mr-1">Module:</span>
+      <span className="text-xs text-foreground0 mr-1">Module:</span>
 
       {enabledModules.map(module => {
         const info = MODULE_CONFIG[module];
@@ -113,7 +113,7 @@ export default function ModuleSwitcher({
             onClick={() => onModuleSelect(module)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isActive
               ? 'bg-accent/20 text-accent border border-accent/30'
-              : 'bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-slate-300'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]'
               }`}
           >
             <Icon className={`w-4 h-4 ${isActive ? '' : info.color}`} />
@@ -125,7 +125,7 @@ export default function ModuleSwitcher({
       {enabledModules.length < 5 && (
         <Link
           href="/organization/settings?tab=modules"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-slate-500 hover:text-slate-300 border border-dashed border-slate-700 hover:border-slate-600 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-foreground0 hover:text-[var(--text-secondary)] border border-dashed border-[var(--card-border)] hover:border-[var(--card-border)] transition-all"
         >
           <PlusIcon className="w-4 h-4" />
           Add

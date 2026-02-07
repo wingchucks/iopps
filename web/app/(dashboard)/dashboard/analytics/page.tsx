@@ -115,33 +115,33 @@ export default function AnalyticsDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#0F172A]">
+      <div className="border-b border-[var(--card-border)] bg-[#0F172A]">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 transition hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] transition hover:text-[#14B8A6]"
               >
                 ← Back to Admin
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Analytics Dashboard
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Platform metrics and insights
               </p>
             </div>
 
             {/* Date Range Selector */}
             <div className="flex items-center gap-2">
-              <ChartBarIcon className="h-5 w-5 text-slate-500" />
+              <ChartBarIcon className="h-5 w-5 text-foreground0" />
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value as DateRange)}
-                className="rounded-lg border border-slate-700 bg-[#0F172A] px-4 py-2 text-sm text-slate-300 transition hover:border-[#14B8A6] focus:border-[#14B8A6] focus:outline-none"
+                className="rounded-lg border border-[var(--card-border)] bg-[#0F172A] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:border-[#14B8A6] focus:border-[#14B8A6] focus:outline-none"
               >
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
@@ -159,7 +159,7 @@ export default function AnalyticsDashboardPage() {
         <div className="space-y-8">
           {/* Summary Cards */}
           <div>
-            <h2 className="mb-4 text-xl font-semibold text-slate-100">
+            <h2 className="mb-4 text-xl font-semibold text-foreground">
               Overview
             </h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -201,13 +201,13 @@ export default function AnalyticsDashboardPage() {
           {/* Two Column Layout */}
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Jobs by Category Chart */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
-              <h3 className="mb-6 text-lg font-semibold text-slate-100">
+            <div className="rounded-2xl border border-[var(--card-border)]/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+              <h3 className="mb-6 text-lg font-semibold text-foreground">
                 Jobs by Category
               </h3>
               {loading ? (
                 <div className="flex h-64 items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-[#14B8A6]"></div>
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--card-border)] border-t-[#14B8A6]"></div>
                 </div>
               ) : (
                 <PieChart
@@ -224,13 +224,13 @@ export default function AnalyticsDashboardPage() {
             </div>
 
             {/* Applications Over Time */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
-              <h3 className="mb-6 text-lg font-semibold text-slate-100">
+            <div className="rounded-2xl border border-[var(--card-border)]/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+              <h3 className="mb-6 text-lg font-semibold text-foreground">
                 Applications Over Time
               </h3>
               {loading ? (
                 <div className="flex h-64 items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-[#14B8A6]"></div>
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--card-border)] border-t-[#14B8A6]"></div>
                 </div>
               ) : (
                 <LineChart
@@ -246,8 +246,8 @@ export default function AnalyticsDashboardPage() {
           {/* Two Column Layout */}
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Top Employers Table */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
-              <h3 className="mb-6 text-lg font-semibold text-slate-100">
+            <div className="rounded-2xl border border-[var(--card-border)]/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+              <h3 className="mb-6 text-lg font-semibold text-foreground">
                 Top Employers
               </h3>
               {loading ? (
@@ -255,12 +255,12 @@ export default function AnalyticsDashboardPage() {
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className="h-16 animate-pulse rounded-lg bg-slate-800/50"
+                      className="h-16 animate-pulse rounded-lg bg-surface"
                     />
                   ))}
                 </div>
               ) : topEmployers.length === 0 ? (
-                <p className="py-8 text-center text-sm text-slate-500">
+                <p className="py-8 text-center text-sm text-foreground0">
                   No employer data available
                 </p>
               ) : (
@@ -268,16 +268,16 @@ export default function AnalyticsDashboardPage() {
                   {topEmployers.map((employer, index) => (
                     <div
                       key={employer.id}
-                      className="group flex items-center gap-4 rounded-lg border border-slate-800/50 bg-slate-900/30 p-4 transition hover:border-[#14B8A6]/50"
+                      className="group flex items-center gap-4 rounded-lg border border-[var(--card-border)]/50 bg-slate-900/30 p-4 transition hover:border-[#14B8A6]/50"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#14B8A6] to-[#0D9488] text-sm font-bold text-slate-900 shadow-lg">
                         {index + 1}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-slate-200">
+                        <h4 className="font-semibold text-foreground">
                           {employer.name}
                         </h4>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-foreground0">
                           {employer.jobCount} jobs • {employer.applicationCount}{" "}
                           applications
                         </p>
@@ -286,7 +286,7 @@ export default function AnalyticsDashboardPage() {
                         <p className="text-sm font-semibold text-[#14B8A6]">
                           {employer.activeJobs}
                         </p>
-                        <p className="text-xs text-slate-500">active</p>
+                        <p className="text-xs text-foreground0">active</p>
                       </div>
                     </div>
                   ))}
@@ -295,8 +295,8 @@ export default function AnalyticsDashboardPage() {
             </div>
 
             {/* Recent Activity Feed */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
-              <h3 className="mb-6 text-lg font-semibold text-slate-100">
+            <div className="rounded-2xl border border-[var(--card-border)]/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+              <h3 className="mb-6 text-lg font-semibold text-foreground">
                 Recent Activity
               </h3>
               {loading ? (
@@ -304,12 +304,12 @@ export default function AnalyticsDashboardPage() {
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
-                      className="h-16 animate-pulse rounded-lg bg-slate-800/50"
+                      className="h-16 animate-pulse rounded-lg bg-surface"
                     />
                   ))}
                 </div>
               ) : recentActivity.length === 0 ? (
-                <p className="py-8 text-center text-sm text-slate-500">
+                <p className="py-8 text-center text-sm text-foreground0">
                   No recent activity
                 </p>
               ) : (
@@ -331,16 +331,16 @@ export default function AnalyticsDashboardPage() {
                     return (
                       <div
                         key={activity.id}
-                        className="group flex gap-4 rounded-lg border border-slate-800/50 bg-slate-900/30 p-4 transition hover:border-[#14B8A6]/50"
+                        className="group flex gap-4 rounded-lg border border-[var(--card-border)]/50 bg-slate-900/30 p-4 transition hover:border-[#14B8A6]/50"
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface">
                           <Icon className="h-5 w-5 text-[#14B8A6]" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-sm font-semibold text-slate-200">
+                          <h4 className="text-sm font-semibold text-foreground">
                             {activity.title}
                           </h4>
-                          <p className="mt-0.5 text-xs text-slate-500">
+                          <p className="mt-0.5 text-xs text-foreground0">
                             {activity.description}
                           </p>
                           <div className="mt-2 flex items-center gap-1 text-xs text-slate-600">
@@ -357,8 +357,8 @@ export default function AnalyticsDashboardPage() {
           </div>
 
           {/* Application Status Breakdown */}
-          <div className="rounded-2xl border border-slate-800/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
-            <h3 className="mb-6 text-lg font-semibold text-slate-100">
+          <div className="rounded-2xl border border-[var(--card-border)]/80 bg-[#0F172A] p-6 shadow-lg shadow-black/30">
+            <h3 className="mb-6 text-lg font-semibold text-foreground">
               Application Status Breakdown
             </h3>
             {loading ? (
@@ -366,7 +366,7 @@ export default function AnalyticsDashboardPage() {
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
-                    className="h-12 animate-pulse rounded-lg bg-slate-800/50"
+                    className="h-12 animate-pulse rounded-lg bg-surface"
                   />
                 ))}
               </div>
@@ -410,14 +410,14 @@ export default function AnalyticsDashboardPage() {
                   return (
                     <div key={status.label} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-300">
+                        <span className="text-sm font-medium text-[var(--text-secondary)]">
                           {status.label}
                         </span>
-                        <span className="text-sm font-semibold text-slate-200">
+                        <span className="text-sm font-semibold text-foreground">
                           {status.value} ({percentage}%)
                         </span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-slate-800/50">
+                      <div className="h-2 overflow-hidden rounded-full bg-surface">
                         <div
                           className={`h-full rounded-full bg-${status.color}-500 transition-all duration-500`}
                           style={{

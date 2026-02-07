@@ -30,12 +30,12 @@ function VideoCard({ video }: { video: YouTubeVideo }) {
       href={`https://www.youtube.com/watch?v=${video.id}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 transition-all hover:border-slate-700 hover:bg-slate-800/50 hover:-translate-y-1"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-surface transition-all hover:border-[var(--card-border)] hover:bg-surface hover:-translate-y-1"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-slate-800">
+      <div className="relative aspect-video overflow-hidden bg-surface">
         <img
           src={video.thumbnailUrl}
           alt={video.title}
@@ -60,7 +60,7 @@ function VideoCard({ video }: { video: YouTubeVideo }) {
           {video.title}
         </h4>
         {video.publishedAt && (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-foreground0">
             {formatDate(video.publishedAt)}
           </p>
         )}
@@ -71,12 +71,12 @@ function VideoCard({ video }: { video: YouTubeVideo }) {
 
 function VideoCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50">
-      <div className="aspect-video animate-pulse bg-slate-800" />
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-surface">
+      <div className="aspect-video animate-pulse bg-surface" />
       <div className="p-4 space-y-2">
         <div className="h-4 animate-pulse rounded bg-slate-700 w-full" />
         <div className="h-4 animate-pulse rounded bg-slate-700 w-3/4" />
-        <div className="h-3 animate-pulse rounded bg-slate-800 w-1/4 mt-3" />
+        <div className="h-3 animate-pulse rounded bg-surface w-1/4 mt-3" />
       </div>
     </div>
   );
@@ -105,7 +105,7 @@ function LiveBanner({
               Live Now
             </span>
             {liveInfo.viewerCount && (
-              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">
+              <span className="rounded-full bg-surface px-3 py-1 text-xs text-[var(--text-secondary)]">
                 {liveInfo.viewerCount.toLocaleString()} watching
               </span>
             )}
@@ -116,7 +116,7 @@ function LiveBanner({
           </h2>
 
           {liveInfo.description && (
-            <p className="max-w-xl text-slate-300 line-clamp-2">
+            <p className="max-w-xl text-[var(--text-secondary)] line-clamp-2">
               {liveInfo.description}
             </p>
           )}
@@ -153,7 +153,7 @@ function LivePlayer({
         </div>
         <button
           onClick={onClose}
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
         >
           Minimize
         </button>
@@ -175,14 +175,14 @@ function LivePlayer({
 
 function NotLiveStatus() {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 sm:p-8">
       <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-800">
-          <VideoCameraIcon className="h-7 w-7 text-slate-500" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface">
+          <VideoCameraIcon className="h-7 w-7 text-foreground0" />
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white">Not Currently Live</h3>
-          <p className="mt-1 text-slate-400">
+          <p className="mt-1 text-[var(--text-muted)]">
             Check out our past broadcasts below or subscribe to get notified when we go live.
           </p>
         </div>
@@ -257,7 +257,7 @@ export function YouTubeSection() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-white">IOPPS Live & Videos</h2>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             Watch our live broadcasts and past streams from the community.
           </p>
         </div>
@@ -265,7 +265,7 @@ export function YouTubeSection() {
           href={IOPPS_CHANNEL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-medium text-teal-400 hover:text-teal-300 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-teal-300 transition-colors"
         >
           View Channel
           <ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -291,15 +291,15 @@ export function YouTubeSection() {
 
       {/* Recent Videos Section */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-t border-slate-800/50 pt-8">
-          <h3 className="text-xl font-bold text-slate-200">
+        <div className="flex items-center justify-between border-t border-[var(--card-border)]/50 pt-8">
+          <h3 className="text-xl font-bold text-foreground">
             Past Broadcasts & Replays
           </h3>
           <a
             href={`${IOPPS_CHANNEL_URL}/videos`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+            className="text-sm font-medium text-[var(--text-muted)] hover:text-white transition-colors"
           >
             View all
           </a>
@@ -312,12 +312,12 @@ export function YouTubeSection() {
             ))}
           </div>
         ) : error || videos.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+          <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
             <VideoCameraIcon className="mx-auto h-12 w-12 text-slate-600" />
             <h4 className="mt-4 text-lg font-semibold text-white">
               No videos available
             </h4>
-            <p className="mt-2 text-slate-400">
+            <p className="mt-2 text-[var(--text-muted)]">
               Visit our YouTube channel to see all our content.
             </p>
             <a
@@ -342,13 +342,13 @@ export function YouTubeSection() {
       </div>
 
       {/* CTA Card */}
-      <div className="rounded-2xl border border-slate-800/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50 p-6 sm:p-8">
+      <div className="rounded-2xl border border-[var(--card-border)]/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50 p-6 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h4 className="text-lg font-semibold text-white">
               Never miss a broadcast
             </h4>
-            <p className="mt-1 text-slate-400">
+            <p className="mt-1 text-[var(--text-muted)]">
               Subscribe to our channel and turn on notifications to be the first to know when we go live.
             </p>
           </div>

@@ -24,8 +24,8 @@ const VISIBILITY_CONFIG: Record<FieldVisibility, {
     label: "Public",
     shortLabel: "Public",
     icon: Globe,
-    color: "text-emerald-400",
-    bgColor: "bg-emerald-500/10 border-emerald-500/20",
+    color: "text-accent",
+    bgColor: "bg-accent/10 border-accent/20",
     description: "Visible to all IOPPS members",
   },
   connections: {
@@ -48,7 +48,7 @@ const VISIBILITY_CONFIG: Record<FieldVisibility, {
     label: "Private",
     shortLabel: "Private",
     icon: Lock,
-    color: "text-slate-400",
+    color: "text-[var(--text-muted)]",
     bgColor: "bg-slate-500/10 border-slate-500/20",
     description: "Only you can see this",
   },
@@ -108,7 +108,7 @@ export function PrivacyIndicator({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border transition-colors hover:bg-slate-800 ${config.bgColor} ${config.color}`}
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border transition-colors hover:bg-surface ${config.bgColor} ${config.color}`}
         title={`${fieldName}: ${config.description}. Click to change.`}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
@@ -119,8 +119,8 @@ export function PrivacyIndicator({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl border border-slate-700 bg-slate-900 p-1 shadow-xl shadow-black/50">
-          <div className="px-2 py-1.5 text-xs font-medium text-slate-500 border-b border-slate-800 mb-1">
+        <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl border border-[var(--card-border)] bg-surface p-1 shadow-xl shadow-black/50">
+          <div className="px-2 py-1.5 text-xs font-medium text-foreground0 border-b border-[var(--card-border)] mb-1">
             Who can see your {fieldName.toLowerCase()}?
           </div>
           {(Object.keys(VISIBILITY_CONFIG) as FieldVisibility[]).map((key) => {
@@ -138,18 +138,18 @@ export function PrivacyIndicator({
                 }}
                 className={`w-full flex items-start gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
                   isSelected
-                    ? "bg-slate-800"
-                    : "hover:bg-slate-800/50"
+                    ? "bg-surface"
+                    : "hover:bg-surface"
                 }`}
                 role="option"
                 aria-selected={isSelected}
               >
                 <OptionIcon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${option.color}`} />
                 <div>
-                  <p className={`text-sm font-medium ${isSelected ? "text-white" : "text-slate-300"}`}>
+                  <p className={`text-sm font-medium ${isSelected ? "text-white" : "text-[var(--text-secondary)]"}`}>
                     {option.label}
                   </p>
-                  <p className="text-xs text-slate-500">{option.description}</p>
+                  <p className="text-xs text-foreground0">{option.description}</p>
                 </div>
                 {isSelected && (
                   <div className="ml-auto flex-shrink-0">

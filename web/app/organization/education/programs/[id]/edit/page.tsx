@@ -128,7 +128,7 @@ export default function EditProgramPage({
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export default function EditProgramPage({
         </h1>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Login
         </Link>
@@ -169,7 +169,7 @@ export default function EditProgramPage({
         </h1>
         <Link
           href="/organization/dashboard?tab=education"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Back to Dashboard
         </Link>
@@ -249,7 +249,7 @@ export default function EditProgramPage({
         <div className="mb-6">
           <Link
             href="/organization/dashboard?tab=education"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard
           </Link>
@@ -258,7 +258,7 @@ export default function EditProgramPage({
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Edit Program
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Update {program.name}.
         </p>
 
@@ -269,20 +269,20 @@ export default function EditProgramPage({
         )}
 
         {success && (
-          <p className="mt-4 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+          <p className="mt-4 rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-sm text-emerald-200">
             Program updated successfully! Redirecting...
           </p>
         )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           {/* Publishing Status */}
-          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
             <label className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-white">
                   Published Status
                 </span>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
                   {isPublished
                     ? "Program is visible to students"
                     : "Program is hidden from public view"}
@@ -292,7 +292,7 @@ export default function EditProgramPage({
                 type="button"
                 onClick={() => setIsPublished(!isPublished)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isPublished ? "bg-teal-500" : "bg-slate-600"
+                  isPublished ? "bg-accent" : "bg-slate-600"
                 }`}
               >
                 <span
@@ -306,12 +306,12 @@ export default function EditProgramPage({
 
           {/* Basic Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Program Information
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Program Name *
               </label>
               <input
@@ -319,12 +319,12 @@ export default function EditProgramPage({
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Short Description
               </label>
               <input
@@ -332,15 +332,15 @@ export default function EditProgramPage({
                 value={shortDescription}
                 onChange={(e) => setShortDescription(e.target.value)}
                 maxLength={150}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 {shortDescription.length}/150 characters
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Full Description *
               </label>
               <textarea
@@ -348,27 +348,27 @@ export default function EditProgramPage({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={6}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Classification */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Classification
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Category *
                 </label>
                 <select
                   required
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ProgramCategory)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   {PROGRAM_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -379,14 +379,14 @@ export default function EditProgramPage({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Credential Level *
                 </label>
                 <select
                   required
                   value={level}
                   onChange={(e) => setLevel(e.target.value as ProgramLevel)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   {PROGRAM_LEVELS.map((lvl) => (
                     <option key={lvl.value} value={lvl.value}>
@@ -400,20 +400,20 @@ export default function EditProgramPage({
 
           {/* Delivery */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Delivery & Duration
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Delivery Method *
                 </label>
                 <select
                   required
                   value={deliveryMethod}
                   onChange={(e) => setDeliveryMethod(e.target.value as ProgramDelivery)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   {DELIVERY_METHODS.map((dm) => (
                     <option key={dm.value} value={dm.value}>
@@ -424,7 +424,7 @@ export default function EditProgramPage({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Duration
                 </label>
                 <div className="mt-1 flex gap-2">
@@ -433,12 +433,12 @@ export default function EditProgramPage({
                     value={durationValue}
                     onChange={(e) => setDurationValue(e.target.value)}
                     min="1"
-                    className="w-20 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                   <select
                     value={durationUnit}
                     onChange={(e) => setDurationUnit(e.target.value as "weeks" | "months" | "years")}
-                    className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                    className="flex-1 rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                   >
                     <option value="weeks">Weeks</option>
                     <option value="months">Months</option>
@@ -454,9 +454,9 @@ export default function EditProgramPage({
                   type="checkbox"
                   checked={fullTime}
                   onChange={(e) => setFullTime(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                 />
-                <span className="text-sm text-slate-200">Full-time available</span>
+                <span className="text-sm text-foreground">Full-time available</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -464,9 +464,9 @@ export default function EditProgramPage({
                   type="checkbox"
                   checked={partTimeAvailable}
                   onChange={(e) => setPartTimeAvailable(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                 />
-                <span className="text-sm text-slate-200">Part-time available</span>
+                <span className="text-sm text-foreground">Part-time available</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -474,22 +474,22 @@ export default function EditProgramPage({
                   type="checkbox"
                   checked={communityDelivery}
                   onChange={(e) => setCommunityDelivery(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                 />
-                <span className="text-sm text-slate-200">Community delivery available</span>
+                <span className="text-sm text-foreground">Community delivery available</span>
               </label>
             </div>
           </div>
 
           {/* Tuition */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Tuition & Fees
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Domestic Tuition ($)
                 </label>
                 <input
@@ -497,12 +497,12 @@ export default function EditProgramPage({
                   value={domesticTuition}
                   onChange={(e) => setDomesticTuition(e.target.value)}
                   min="0"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   International Tuition ($)
                 </label>
                 <input
@@ -510,18 +510,18 @@ export default function EditProgramPage({
                   value={internationalTuition}
                   onChange={(e) => setInternationalTuition(e.target.value)}
                   min="0"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Per
                 </label>
                 <select
                   value={tuitionPer}
                   onChange={(e) => setTuitionPer(e.target.value as "year" | "program" | "semester")}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="program">Per Program</option>
                   <option value="year">Per Year</option>
@@ -533,52 +533,52 @@ export default function EditProgramPage({
 
           {/* Admission */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Admission Requirements
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Education Requirement
               </label>
               <input
                 type="text"
                 value={educationRequirement}
                 onChange={(e) => setEducationRequirement(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Prerequisites
               </label>
               <input
                 type="text"
                 value={prerequisites}
                 onChange={(e) => setPrerequisites(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 Separate prerequisites with commas
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Application URL
               </label>
               <input
                 type="url"
                 value={applicationUrl}
                 onChange={(e) => setApplicationUrl(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Submit */}
-          <div className="pt-4 border-t border-slate-800 flex gap-4">
+          <div className="pt-4 border-t border-[var(--card-border)] flex gap-4">
             <button
               type="submit"
               disabled={saving}
@@ -588,7 +588,7 @@ export default function EditProgramPage({
             </button>
             <Link
               href="/organization/dashboard?tab=education"
-              className="rounded-md border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+              className="rounded-md border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
             >
               Cancel
             </Link>

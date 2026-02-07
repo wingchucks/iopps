@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-slate-900">
           Forgot your password?
         </h1>
-        <p className="mt-3 text-sm text-slate-500 sm:text-base">
+        <p className="mt-3 text-sm text-foreground0 sm:text-base">
           No worries! Enter your email address and we&apos;ll send you a link to reset your password.
         </p>
       </div>
@@ -76,19 +76,19 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your.email@example.com"
-            className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none"
+            className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-accent focus:outline-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? "Sending..." : "Send reset link"}
         </button>
 
-        <div className="flex flex-col gap-2 text-center text-sm text-slate-500">
+        <div className="flex flex-col gap-2 text-center text-sm text-foreground0">
           <p>
             Remember your password?{" "}
             <Link href="/login" className="font-semibold text-[#14B8A6] hover:underline">
@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
         </div>
       </form>
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-foreground0">
         <p className="font-semibold text-slate-600 mb-2">Need help?</p>
         <p>
           If you&apos;re having trouble resetting your password, please{" "}

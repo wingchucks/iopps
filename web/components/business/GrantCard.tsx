@@ -51,10 +51,10 @@ export function GrantCard({ grant, featured = false }: GrantCardProps) {
   return (
     <Link
       href={`/business/grants/${grant.slug || grant.id}`}
-      className={`group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 ${
+      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 ${
         featured
-          ? 'border-emerald-500/50 ring-1 ring-emerald-500/20'
-          : 'border-slate-700/50 hover:border-emerald-500/30'
+          ? 'border-accent/50 ring-1 ring-emerald-500/20'
+          : 'border-[var(--card-border)] hover:border-accent/30'
       }`}
     >
       {/* Header with Provider Logo */}
@@ -78,7 +78,7 @@ export function GrantCard({ grant, featured = false }: GrantCardProps) {
               className="object-contain"
             />
           ) : (
-            <BuildingOfficeIcon className="h-10 w-10 text-emerald-400" />
+            <BuildingOfficeIcon className="h-10 w-10 text-accent" />
           )}
         </div>
 
@@ -107,25 +107,25 @@ export function GrantCard({ grant, featured = false }: GrantCardProps) {
       {/* Content */}
       <div className="p-4">
         {/* Title */}
-        <h3 className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors line-clamp-2">
+        <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors line-clamp-2">
           {grant.title}
         </h3>
 
         {/* Provider */}
-        <p className="mt-1 text-sm text-slate-400 line-clamp-1">
+        <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-1">
           {grant.provider}
         </p>
 
         {/* Short Description */}
         {grant.shortDescription && (
-          <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+          <p className="mt-2 text-sm text-foreground0 line-clamp-2">
             {grant.shortDescription}
           </p>
         )}
 
         {/* Grant Type Badge */}
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 capitalize">
+          <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent capitalize">
             {grant.grantType.replace('_', ' ')}
           </span>
           {grant.eligibility?.indigenousOwned && (
@@ -138,12 +138,12 @@ export function GrantCard({ grant, featured = false }: GrantCardProps) {
 
         {/* Amount & Deadline */}
         <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+          <span className="flex items-center gap-1.5 text-accent font-medium">
             <CurrencyDollarIcon className="h-4 w-4" />
             {formatAmount()}
           </span>
           {deadline && (
-            <span className="flex items-center gap-1 text-slate-500">
+            <span className="flex items-center gap-1 text-foreground0">
               <CalendarIcon className="h-4 w-4" />
               {deadline}
             </span>
@@ -152,7 +152,7 @@ export function GrantCard({ grant, featured = false }: GrantCardProps) {
 
         {/* Regions */}
         {grant.eligibility?.provinces && grant.eligibility.provinces.length > 0 && (
-          <div className="mt-3 flex items-center gap-1 text-xs text-slate-500">
+          <div className="mt-3 flex items-center gap-1 text-xs text-foreground0">
             <MapPinIcon className="h-3.5 w-3.5" />
             <span className="line-clamp-1">
               {grant.eligibility.provinces.slice(0, 3).join(', ')}

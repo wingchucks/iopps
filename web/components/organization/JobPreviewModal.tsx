@@ -40,18 +40,18 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4 pt-10">
-      <div className="w-full max-w-3xl rounded-2xl border border-slate-800 bg-[#08090C] shadow-xl mb-10">
+      <div className="w-full max-w-3xl rounded-2xl border border-[var(--card-border)] bg-surface shadow-xl mb-10">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--card-border)] px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-100">Job Preview</h2>
-            <p className="text-sm text-slate-400">
+            <h2 className="text-lg font-bold text-foreground">Job Preview</h2>
+            <p className="text-sm text-[var(--text-muted)]">
               This is how your job will appear to candidates
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-surface transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -60,7 +60,7 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
         {/* Preview Content */}
         <div className="p-6 space-y-6">
           {/* Job Header */}
-          <div className="border-b border-slate-800 pb-6">
+          <div className="border-b border-[var(--card-border)] pb-6">
             <div className="flex flex-wrap gap-2 mb-3">
               {jobData.indigenousPreference && (
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
@@ -79,10 +79,10 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
               )}
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">{jobData.title || "Job Title"}</h1>
-            <p className="text-lg text-teal-400 font-medium mb-3">
+            <p className="text-lg text-accent font-medium mb-3">
               {jobData.organizationName || "Organization Name"}
             </p>
-            <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+            <div className="flex flex-wrap gap-4 text-sm text-[var(--text-muted)]">
               <span className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -119,12 +119,12 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
           {(jobData.cpicRequired || jobData.driversLicense) && (
             <div className="flex flex-wrap gap-2">
               {jobData.cpicRequired && (
-                <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-surface text-[var(--text-secondary)] border border-[var(--card-border)]">
                   CPIC Required
                 </span>
               )}
               {jobData.driversLicense && (
-                <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-3 py-1.5 text-xs font-medium rounded-lg bg-surface text-[var(--text-secondary)] border border-[var(--card-border)]">
                   Driver&apos;s License Required
                 </span>
               )}
@@ -134,7 +134,7 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
           {/* Description */}
           <div>
             <h3 className="text-lg font-semibold text-white mb-3">About the Role</h3>
-            <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+            <p className="text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">
               {jobData.description || "No description provided."}
             </p>
           </div>
@@ -145,8 +145,8 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
               <h3 className="text-lg font-semibold text-white mb-3">Responsibilities</h3>
               <ul className="space-y-2">
                 {responsibilities.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-slate-300">
-                    <span className="text-teal-400 mt-1">•</span>
+                  <li key={i} className="flex items-start gap-2 text-[var(--text-secondary)]">
+                    <span className="text-accent mt-1">•</span>
                     {item}
                   </li>
                 ))}
@@ -160,8 +160,8 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
               <h3 className="text-lg font-semibold text-white mb-3">Qualifications</h3>
               <ul className="space-y-2">
                 {qualifications.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-slate-300">
-                    <span className="text-teal-400 mt-1">•</span>
+                  <li key={i} className="flex items-start gap-2 text-[var(--text-secondary)]">
+                    <span className="text-accent mt-1">•</span>
                     {item}
                   </li>
                 ))}
@@ -170,24 +170,24 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
           )}
 
           {/* Apply Button Preview */}
-          <div className="pt-4 border-t border-slate-800">
+          <div className="pt-4 border-t border-[var(--card-border)]">
             <button
               disabled
-              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-teal-500 text-white font-semibold opacity-75 cursor-not-allowed"
+              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-accent text-white font-semibold opacity-75 cursor-not-allowed"
             >
               Quick Apply
             </button>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-foreground0">
               Button is disabled in preview mode
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 border-t border-slate-800 px-6 py-4">
+        <div className="flex justify-end gap-3 border-t border-[var(--card-border)] px-6 py-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+            className="px-4 py-2 rounded-lg border border-[var(--card-border)] text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Close Preview
           </button>

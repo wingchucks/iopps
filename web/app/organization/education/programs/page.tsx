@@ -106,7 +106,7 @@ export default function OrganizationEducationProgramsPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -115,12 +115,12 @@ export default function OrganizationEducationProgramsPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to manage education programs.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Login
         </Link>
@@ -131,7 +131,7 @@ export default function OrganizationEducationProgramsPage() {
   if (loadingData) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading programs...</p>
+        <p className="text-[var(--text-muted)]">Loading programs...</p>
       </div>
     );
   }
@@ -139,12 +139,12 @@ export default function OrganizationEducationProgramsPage() {
   if (!school) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
           <h2 className="mt-4 text-xl font-semibold text-white">
             No School Profile
           </h2>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-[var(--text-muted)]">
             You need to create a school profile before adding programs.
           </p>
           <Link
@@ -162,7 +162,7 @@ export default function OrganizationEducationProgramsPage() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+          <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-1">
             <Link href="/organization/education" className="hover:text-white">
               Education
             </Link>
@@ -170,7 +170,7 @@ export default function OrganizationEducationProgramsPage() {
             <span className="text-white">Programs</span>
           </div>
           <h1 className="text-2xl font-bold text-white">Academic Programs</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Manage your school&apos;s academic programs and courses
           </p>
         </div>
@@ -198,11 +198,11 @@ export default function OrganizationEducationProgramsPage() {
       </div>
 
       {programs.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <BookOpenIcon className="h-8 w-8 text-slate-500" />
+            <BookOpenIcon className="h-8 w-8 text-foreground0" />
           </div>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             You haven&apos;t added any programs yet.
           </p>
           <Link
@@ -218,7 +218,7 @@ export default function OrganizationEducationProgramsPage() {
           {programs.map((program) => (
             <div
               key={program.id}
-              className="rounded-xl border border-slate-800 bg-slate-900/50 p-6"
+              className="rounded-xl border border-[var(--card-border)] bg-surface p-6"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -239,9 +239,9 @@ export default function OrganizationEducationProgramsPage() {
                       {program.name}
                     </h3>
                   </div>
-                  <p className="text-sm text-slate-400">{program.credential}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{program.credential}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                       {getDeliveryIcon(program.deliveryMethod)}
                       {program.deliveryMethod.charAt(0).toUpperCase() +
                         program.deliveryMethod.slice(1)}
@@ -253,7 +253,7 @@ export default function OrganizationEducationProgramsPage() {
                       {getLevelLabel(program.level)}
                     </span>
                     {program.duration && (
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
                         {program.duration.value} {program.duration.unit}
                       </span>
                     )}
@@ -263,22 +263,22 @@ export default function OrganizationEducationProgramsPage() {
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${
                       program.isPublished
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-slate-700 text-slate-400"
+                        ? "bg-accent/20 text-emerald-300"
+                        : "bg-slate-700 text-[var(--text-muted)]"
                     }`}
                   >
                     {program.isPublished ? "Published" : "Draft"}
                   </span>
                   <Link
                     href={`/organization/education/programs/${program.id}/edit`}
-                    className="rounded-md p-2 text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                    className="rounded-md p-2 text-[var(--text-muted)] hover:bg-slate-700/50 hover:text-white"
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                   </Link>
                   <button
                     onClick={() => handleDelete(program.id)}
                     disabled={deleting === program.id}
-                    className="rounded-md p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    className="rounded-md p-2 text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -286,18 +286,18 @@ export default function OrganizationEducationProgramsPage() {
               </div>
 
               {program.description && (
-                <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                   {program.description}
                 </p>
               )}
 
               {/* Stats */}
-              <div className="mt-4 flex items-center gap-6 border-t border-slate-800 pt-4">
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="mt-4 flex items-center gap-6 border-t border-[var(--card-border)] pt-4">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <EyeIcon className="h-4 w-4" />
                   <span>{program.viewCount || 0} views</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <EnvelopeIcon className="h-4 w-4" />
                   <span>{program.inquiryCount || 0} inquiries</span>
                 </div>

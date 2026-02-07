@@ -319,7 +319,7 @@ function RegisterPageInner() {
             <h2 className="text-xl font-semibold text-slate-900">
               Choose your account type
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-foreground0">
               Select how you&apos;ll be using IOPPS
             </p>
 
@@ -350,7 +350,7 @@ function RegisterPageInner() {
             <h2 className="text-xl font-semibold text-slate-900">
               What would you like to do on IOPPS?
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-foreground0">
               Help us customize your experience
             </p>
 
@@ -359,12 +359,12 @@ function RegisterPageInner() {
                 <button
                   key={option.id}
                   onClick={() => handleIntentSelection(option.id)}
-                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-teal-500/50 hover:bg-slate-100"
+                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-accent/50 hover:bg-slate-100"
                 >
-                  <option.icon className="h-6 w-6 flex-shrink-0 text-teal-500" />
+                  <option.icon className="h-6 w-6 flex-shrink-0 text-accent" />
                   <div>
                     <p className="font-medium text-slate-800">{option.title}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
+                    <p className="mt-0.5 text-xs text-foreground0">{option.description}</p>
                   </div>
                 </button>
               ))}
@@ -376,7 +376,7 @@ function RegisterPageInner() {
                 setShowRoleSelector(true);
                 setPendingGoogleRole(null);
               }}
-              className="mt-4 text-sm text-slate-500 hover:text-slate-700"
+              className="mt-4 text-sm text-foreground0 hover:text-slate-700"
             >
               ← Back to role selection
             </button>
@@ -479,18 +479,18 @@ function RegisterPageInner() {
                         onClick={() => setEmployerIntent(option.id)}
                         className={`flex items-start gap-3 rounded-xl border p-3 text-left transition ${
                           employerIntent === option.id
-                            ? "border-teal-500 bg-teal-50"
+                            ? "border-accent bg-teal-50"
                             : "border-slate-200 bg-slate-50 hover:border-slate-300"
                         }`}
                       >
                         <option.icon className={`h-5 w-5 flex-shrink-0 ${
-                          employerIntent === option.id ? "text-teal-500" : "text-slate-500"
+                          employerIntent === option.id ? "text-accent" : "text-foreground0"
                         }`} />
                         <div>
                           <p className={`text-sm font-medium ${
                             employerIntent === option.id ? "text-teal-600" : "text-slate-700"
                           }`}>{option.title}</p>
-                          <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
+                          <p className="mt-0.5 text-xs text-foreground0">{option.description}</p>
                         </div>
                       </button>
                     ))}
@@ -549,7 +549,7 @@ function RegisterPageInner() {
                 <button
                   type="submit"
                   disabled={loading || googleLoading || (role === "employer" && !employerIntent)}
-                  className="w-full rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -570,13 +570,13 @@ function RegisterPageInner() {
               {/* Prompt to select role if not selected */}
               {!role && (
                 <div className="text-center py-4 px-6 rounded-xl bg-slate-50 border border-slate-200">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Select an account type above to continue
                   </p>
                 </div>
               )}
 
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center text-xs text-foreground0">
                 By creating an account you agree to our{" "}
                 <Link href="/privacy" className="text-[#14B8A6] hover:underline">
                   Privacy Policy
@@ -587,7 +587,7 @@ function RegisterPageInner() {
                 </Link>
               </p>
 
-              <p className="text-center text-sm text-slate-500">
+              <p className="text-center text-sm text-foreground0">
                 Already have an account?{" "}
                 <Link href="/login" className="font-semibold text-[#14B8A6] hover:underline">
                   Log in

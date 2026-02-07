@@ -112,7 +112,7 @@ export default function NearMeControl({
       {/* Radius Selector Dropdown */}
       {showRadiusSelector && isActive && (
         <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 min-w-[120px]">
-          <div className="px-3 py-1 text-xs text-slate-500 uppercase tracking-wider">
+          <div className="px-3 py-1 text-xs text-foreground0 uppercase tracking-wider">
             Radius
           </div>
           {radiusOptions.map((opt) => (
@@ -140,7 +140,7 @@ export default function NearMeControl({
 
       {/* Permission Prompt */}
       {permissionState === "prompt" && !loading && !error && !isActive && (
-        <div className="absolute top-full left-0 mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-500 max-w-[250px] z-50">
+        <div className="absolute top-full left-0 mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-foreground0 max-w-[250px] z-50">
           Click to find opportunities near your location
         </div>
       )}

@@ -28,8 +28,8 @@ function PaymentSuccessContent() {
         return (
             <div className="mx-auto max-w-2xl px-4 py-16 text-center">
                 <div className="animate-pulse">
-                    <div className="mx-auto h-16 w-16 rounded-full bg-slate-800"></div>
-                    <div className="mt-4 h-8 w-64 mx-auto rounded bg-slate-800"></div>
+                    <div className="mx-auto h-16 w-16 rounded-full bg-surface"></div>
+                    <div className="mt-4 h-8 w-64 mx-auto rounded bg-surface"></div>
                 </div>
             </div>
         );
@@ -45,7 +45,7 @@ function PaymentSuccessContent() {
                     <p className="mt-4 text-red-300">{error}</p>
                     <Link
                         href="/organization/jobs"
-                        className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8]"
+                        className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8]"
                     >
                         Back to Jobs
                     </Link>
@@ -56,9 +56,9 @@ function PaymentSuccessContent() {
 
     return (
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-            <div className="rounded-2xl border border-[#14B8A6]/40 bg-[#14B8A6]/10 p-8">
+            <div className="rounded-2xl border border-[#14B8A6]/40 bg-accent/10 p-8">
                 {/* Success Icon */}
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#14B8A6]">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent">
                     <svg
                         className="h-8 w-8 text-slate-900"
                         fill="none"
@@ -74,15 +74,15 @@ function PaymentSuccessContent() {
                     </svg>
                 </div>
 
-                <h1 className="mt-6 text-3xl font-bold text-slate-50">
+                <h1 className="mt-6 text-3xl font-bold text-foreground">
                     {isSubscription ? "Job Posted Successfully!" : "Payment Successful!"} 🎉
                 </h1>
 
-                <p className="mt-4 text-lg text-slate-300">
+                <p className="mt-4 text-lg text-[var(--text-secondary)]">
                     Your job posting has been published successfully.
                 </p>
 
-                <div className="mt-8 space-y-3 text-sm text-slate-400">
+                <div className="mt-8 space-y-3 text-sm text-[var(--text-muted)]">
                     {isSubscription ? (
                         <>
                             <p>✅ Credit applied from your plan</p>
@@ -101,25 +101,25 @@ function PaymentSuccessContent() {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <Link
                         href="/organization/jobs"
-                        className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8]"
+                        className="rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8]"
                     >
                         View My Jobs
                     </Link>
                     <Link
                         href="/careers"
-                        className="rounded-lg border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                        className="rounded-lg border border-[var(--card-border)] px-6 py-3 font-semibold text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                     >
                         View Job Board
                     </Link>
                 </div>
 
                 {sessionId && (
-                    <p className="mt-8 text-xs text-slate-500">
+                    <p className="mt-8 text-xs text-foreground0">
                         Session ID: {sessionId}
                     </p>
                 )}
                 {jobId && !sessionId && (
-                    <p className="mt-8 text-xs text-slate-500">
+                    <p className="mt-8 text-xs text-foreground0">
                         Job ID: {jobId}
                     </p>
                 )}
@@ -134,8 +134,8 @@ export default function PaymentSuccessPage() {
             <Suspense fallback={
                 <div className="mx-auto max-w-2xl px-4 py-16 text-center">
                     <div className="animate-pulse">
-                        <div className="mx-auto h-16 w-16 rounded-full bg-slate-800"></div>
-                        <div className="mt-4 h-8 w-64 mx-auto rounded bg-slate-800"></div>
+                        <div className="mx-auto h-16 w-16 rounded-full bg-surface"></div>
+                        <div className="mt-4 h-8 w-64 mx-auto rounded bg-surface"></div>
                     </div>
                 </div>
             }>

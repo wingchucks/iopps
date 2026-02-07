@@ -100,7 +100,7 @@ export default function EditSchoolPage() {
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -111,12 +111,12 @@ export default function EditSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Organizations must be signed in to edit their school profile.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -132,7 +132,7 @@ export default function EditSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Organization access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to an organization account to edit school profiles.
         </p>
       </div>
@@ -145,12 +145,12 @@ export default function EditSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           No school profile found
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You haven&apos;t created a school profile yet.
         </p>
         <Link
           href="/organization/education/school/new"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
         >
           Create School Profile
         </Link>
@@ -218,7 +218,7 @@ export default function EditSchoolPage() {
         <div className="mb-6">
           <Link
             href="/organization/dashboard?tab=education"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard
           </Link>
@@ -227,7 +227,7 @@ export default function EditSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Edit School Profile
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Update your institution&apos;s information.
         </p>
 
@@ -238,20 +238,20 @@ export default function EditSchoolPage() {
         )}
 
         {success && (
-          <p className="mt-4 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+          <p className="mt-4 rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-sm text-emerald-200">
             School profile updated successfully! Redirecting...
           </p>
         )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           {/* Publishing Status */}
-          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
             <label className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-white">
                   Published Status
                 </span>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
                   {isPublished
                     ? "Your school is visible to students"
                     : "Your school is hidden from public view"}
@@ -261,7 +261,7 @@ export default function EditSchoolPage() {
                 type="button"
                 onClick={() => setIsPublished(!isPublished)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isPublished ? "bg-emerald-500" : "bg-slate-600"
+                  isPublished ? "bg-accent" : "bg-slate-600"
                 }`}
               >
                 <span
@@ -275,12 +275,12 @@ export default function EditSchoolPage() {
 
           {/* Basic Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Basic Information
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Institution Name *
               </label>
               <input
@@ -289,13 +289,13 @@ export default function EditSchoolPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., First Nations University of Canada"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Short Name / Acronym
                 </label>
                 <input
@@ -303,19 +303,19 @@ export default function EditSchoolPage() {
                   value={shortName}
                   onChange={(e) => setShortName(e.target.value)}
                   placeholder="e.g., FNUniv"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Institution Type *
                 </label>
                 <select
                   required
                   value={type}
                   onChange={(e) => setType(e.target.value as SchoolType)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   {SCHOOL_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -328,7 +328,7 @@ export default function EditSchoolPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Year Established
                 </label>
                 <input
@@ -338,12 +338,12 @@ export default function EditSchoolPage() {
                   placeholder="e.g., 1976"
                   min="1800"
                   max={new Date().getFullYear()}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Website
                 </label>
                 <input
@@ -351,13 +351,13 @@ export default function EditSchoolPage() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://your-school.ca"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Description
               </label>
               <textarea
@@ -365,19 +365,19 @@ export default function EditSchoolPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Tell prospective students about your institution..."
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Location */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Head Office Location
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Street Address *
               </label>
               <input
@@ -385,13 +385,13 @@ export default function EditSchoolPage() {
                 required
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   City *
                 </label>
                 <input
@@ -399,19 +399,19 @@ export default function EditSchoolPage() {
                   required
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Province *
                 </label>
                 <select
                   required
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="">Select province</option>
                   {PROVINCES.map((p) => (
@@ -423,59 +423,59 @@ export default function EditSchoolPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Postal Code
                 </label>
                 <input
                   type="text"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Reserve / First Nation Territory Name
               </label>
               <input
                 type="text"
                 value={reserveName}
                 onChange={(e) => setReserveName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Contact */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Contact Information
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   General Phone
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   General Email
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -483,17 +483,17 @@ export default function EditSchoolPage() {
 
           {/* Indigenous Verification */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Indigenous Verification
             </h2>
 
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+            <div className="rounded-lg border border-accent/30 bg-accent/10 p-4">
               <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   checked={indigenousControlled}
                   onChange={(e) => setIndigenousControlled(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                  className="mt-1 h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
                 />
                 <div>
                   <span className="text-sm font-medium text-emerald-200">
@@ -508,7 +508,7 @@ export default function EditSchoolPage() {
           </div>
 
           {/* Submit */}
-          <div className="pt-4 border-t border-slate-800 flex gap-4">
+          <div className="pt-4 border-t border-[var(--card-border)] flex gap-4">
             <button
               type="submit"
               disabled={saving}
@@ -518,7 +518,7 @@ export default function EditSchoolPage() {
             </button>
             <Link
               href="/organization/dashboard?tab=education"
-              className="rounded-md border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+              className="rounded-md border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
             >
               Cancel
             </Link>

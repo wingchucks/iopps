@@ -31,7 +31,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
           </h1>
           <Link
             href="/business/funding"
-            className="mt-6 inline-block rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+            className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
           >
             Back to Funding
           </Link>
@@ -77,7 +77,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
         );
       case "closed":
         return (
-          <span className="rounded-md bg-slate-50 border border-slate-200 px-3 py-1 text-sm font-semibold text-slate-500">
+          <span className="rounded-md bg-slate-50 border border-slate-200 px-3 py-1 text-sm font-semibold text-foreground0">
             Applications Closed
           </span>
         );
@@ -90,7 +90,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
     <FeedLayout activeNav="business" fullWidth>
       <div className="mx-auto max-w-4xl py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-slate-500">
+        <nav className="mb-6 text-sm text-foreground0">
           <Link href="/" className="hover:text-slate-900 transition-colors">
             Home
           </Link>
@@ -158,7 +158,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
                 href={grant.applicationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
               >
                 Apply Now
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -250,13 +250,13 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
               )}
               {grant.eligibility.requirements && grant.eligibility.requirements.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  <h3 className="text-sm font-semibold text-foreground0 uppercase tracking-wider mb-2">
                     Additional Requirements
                   </h3>
                   <ul className="space-y-2">
                     {grant.eligibility.requirements.map((req, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <span className="text-slate-500">•</span>
+                        <span className="text-foreground0">•</span>
                         <span className="text-slate-600">{req}</span>
                       </li>
                     ))}
@@ -280,13 +280,13 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
         {/* Contact Information */}
         {(grant.contactEmail || grant.contactPhone || grant.providerWebsite) && (
           <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
               Contact Information
             </h3>
             <div className="mt-4 space-y-2">
               {grant.contactEmail && (
                 <p className="text-slate-600">
-                  <span className="text-slate-500">Email:</span>{" "}
+                  <span className="text-foreground0">Email:</span>{" "}
                   <a href={`mailto:${grant.contactEmail}`} className="text-[#14B8A6] hover:underline">
                     {grant.contactEmail}
                   </a>
@@ -294,12 +294,12 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
               )}
               {grant.contactPhone && (
                 <p className="text-slate-600">
-                  <span className="text-slate-500">Phone:</span> {grant.contactPhone}
+                  <span className="text-foreground0">Phone:</span> {grant.contactPhone}
                 </p>
               )}
               {grant.providerWebsite && (
                 <p className="text-slate-600">
-                  <span className="text-slate-500">Website:</span>{" "}
+                  <span className="text-foreground0">Website:</span>{" "}
                   <a
                     href={grant.providerWebsite}
                     target="_blank"

@@ -74,8 +74,8 @@ export function ApplicationMethodSelector({
             key={m.value}
             className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
               method === m.value
-                ? "border-[#14B8A6] bg-[#14B8A6]/10"
-                : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                ? "border-[#14B8A6] bg-accent/10"
+                : "border-[var(--card-border)] bg-surface hover:border-[var(--card-border)]"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <input
@@ -85,14 +85,14 @@ export function ApplicationMethodSelector({
               checked={method === m.value}
               onChange={(e) => onMethodChange(e.target.value as ApplicationMethod)}
               disabled={disabled}
-              className="mt-1 w-4 h-4 border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+              className="mt-1 w-4 h-4 border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-background"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-[#14B8A6]">{m.icon}</span>
-                <span className="text-sm font-medium text-slate-100">{m.label}</span>
+                <span className="text-sm font-medium text-foreground">{m.label}</span>
               </div>
-              <div className="text-xs text-slate-400 mt-1">{m.description}</div>
+              <div className="text-xs text-[var(--text-muted)] mt-1">{m.description}</div>
             </div>
           </label>
         ))}
@@ -101,7 +101,7 @@ export function ApplicationMethodSelector({
       {/* Email Input */}
       {method === "email" && (
         <div>
-          <label className="block text-sm text-slate-300 mb-2">
+          <label className="block text-sm text-[var(--text-secondary)] mb-2">
             Application Email <span className="text-red-400">*</span>
           </label>
           <input
@@ -110,9 +110,9 @@ export function ApplicationMethodSelector({
             onChange={(e) => onEmailChange(e.target.value)}
             placeholder="hr@company.com"
             disabled={disabled}
-            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+            className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-foreground0 mt-1">
             Candidates will be instructed to send their application to this email address.
           </p>
         </div>
@@ -121,7 +121,7 @@ export function ApplicationMethodSelector({
       {/* URL Input */}
       {method === "url" && (
         <div>
-          <label className="block text-sm text-slate-300 mb-2">
+          <label className="block text-sm text-[var(--text-secondary)] mb-2">
             Application URL <span className="text-red-400">*</span>
           </label>
           <input
@@ -130,9 +130,9 @@ export function ApplicationMethodSelector({
             onChange={(e) => onUrlChange(e.target.value)}
             placeholder="https://careers.company.com/apply/job-123"
             disabled={disabled}
-            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+            className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-foreground0 mt-1">
             Candidates will be redirected to this URL to complete their application.
           </p>
         </div>
@@ -140,7 +140,7 @@ export function ApplicationMethodSelector({
 
       {/* Quick Apply Info */}
       {method === "quickApply" && (
-        <div className="flex items-start gap-3 p-4 bg-[#14B8A6]/10 border border-[#14B8A6]/30 rounded-xl">
+        <div className="flex items-start gap-3 p-4 bg-accent/10 border border-[#14B8A6]/30 rounded-xl">
           <svg
             className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0"
             fill="currentColor"
@@ -153,8 +153,8 @@ export function ApplicationMethodSelector({
             />
           </svg>
           <div>
-            <p className="text-sm text-slate-200 font-medium">IOPPS Quick Apply Enabled</p>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-foreground font-medium">IOPPS Quick Apply Enabled</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">
               Candidates can apply directly through IOPPS using their saved profile and resume.
               You&apos;ll receive applications in your IOPPS employer dashboard.
             </p>

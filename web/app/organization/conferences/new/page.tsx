@@ -61,8 +61,8 @@ export default function NewConferencePage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
         <div className="flex items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-          <p className="text-sm text-slate-300">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <p className="text-sm text-[var(--text-secondary)]">
             {creating ? "Creating your conference..." : "Loading..."}
           </p>
         </div>
@@ -76,13 +76,13 @@ export default function NewConferencePage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Employers must be signed in to create conferences.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
@@ -97,19 +97,19 @@ export default function NewConferencePage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer Account Required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           To post conferences and events on IOPPS, you need an employer account.
         </p>
         <div className="flex gap-3">
           <Link
             href="/register?role=employer"
-            className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
           >
             Register as Employer
           </Link>
           <Link
             href="/conferences"
-            className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+            className="inline-block rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Browse Conferences
           </Link>
@@ -132,7 +132,7 @@ export default function NewConferencePage() {
             setError(null);
             setCreating(false);
           }}
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
         >
           Try Again
         </button>

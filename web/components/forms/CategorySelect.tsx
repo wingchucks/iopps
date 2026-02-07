@@ -20,7 +20,7 @@ export function CategorySelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-[#14B8A6] appearance-none cursor-pointer"
+      className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground focus:outline-none focus:border-[#14B8A6] appearance-none cursor-pointer"
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
         backgroundPosition: "right 0.75rem center",
@@ -29,11 +29,11 @@ export function CategorySelect({
         paddingRight: "2.5rem",
       }}
     >
-      <option value="" className="bg-slate-800 text-slate-400">
+      <option value="" className="bg-surface text-[var(--text-muted)]">
         {placeholder}
       </option>
       {JOB_CATEGORIES.map((category) => (
-        <option key={category} value={category} className="bg-slate-800 text-slate-100">
+        <option key={category} value={category} className="bg-surface text-foreground">
           {category}
         </option>
       ))}
@@ -68,7 +68,7 @@ export function EmploymentTypeSelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-[#14B8A6] appearance-none cursor-pointer"
+      className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground focus:outline-none focus:border-[#14B8A6] appearance-none cursor-pointer"
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
         backgroundPosition: "right 0.75rem center",
@@ -77,11 +77,11 @@ export function EmploymentTypeSelect({
         paddingRight: "2.5rem",
       }}
     >
-      <option value="" className="bg-slate-800 text-slate-400">
+      <option value="" className="bg-surface text-[var(--text-muted)]">
         Select job type...
       </option>
       {EMPLOYMENT_TYPES.map((type) => (
-        <option key={type} value={type} className="bg-slate-800 text-slate-100">
+        <option key={type} value={type} className="bg-surface text-foreground">
           {type}
         </option>
       ))}

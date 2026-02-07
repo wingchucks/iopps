@@ -25,7 +25,7 @@ export default function ViewToggle({ view, onChange, disabled = false }: ViewTog
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
           view === "map"
             ? "bg-white text-slate-900 shadow-sm"
-            : "text-slate-500 hover:text-slate-900"
+            : "text-foreground0 hover:text-slate-900"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <MapIcon className="w-4 h-4" />
@@ -37,7 +37,7 @@ export default function ViewToggle({ view, onChange, disabled = false }: ViewTog
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
           view === "list"
             ? "bg-white text-slate-900 shadow-sm"
-            : "text-slate-500 hover:text-slate-900"
+            : "text-foreground0 hover:text-slate-900"
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         <ListBulletIcon className="w-4 h-4" />

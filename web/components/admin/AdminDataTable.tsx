@@ -57,7 +57,7 @@ function TableSkeleton({ columns }: { columns: number }) {
         <tr key={rowIndex} className="animate-pulse">
           {[...Array(columns)].map((_, colIndex) => (
             <td key={colIndex} className="px-6 py-4">
-              <div className="h-4 rounded bg-slate-800" />
+              <div className="h-4 rounded bg-surface" />
             </td>
           ))}
         </tr>
@@ -82,9 +82,9 @@ function TableEmptyState({
   return (
     <tr>
       <td colSpan={colSpan} className="px-6 py-12 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-800">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface">
           <svg
-            className="h-6 w-6 text-slate-500"
+            className="h-6 w-6 text-foreground0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -97,9 +97,9 @@ function TableEmptyState({
             />
           </svg>
         </div>
-        <p className="mt-4 text-sm font-medium text-slate-300">{message}</p>
+        <p className="mt-4 text-sm font-medium text-[var(--text-secondary)]">{message}</p>
         {description && (
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
+          <p className="mt-1 text-sm text-foreground0">{description}</p>
         )}
       </td>
     </tr>
@@ -157,20 +157,20 @@ export function AdminDataTable<T extends { id: string }>({
       return <ChevronUpDownIcon className="ml-1 h-4 w-4 text-slate-600" />;
     }
     return sortDirection === "asc" ? (
-      <ChevronUpIcon className="ml-1 h-4 w-4 text-teal-400" />
+      <ChevronUpIcon className="ml-1 h-4 w-4 text-accent" />
     ) : (
-      <ChevronDownIcon className="ml-1 h-4 w-4 text-teal-400" />
+      <ChevronDownIcon className="ml-1 h-4 w-4 text-accent" />
     );
   };
 
   const totalColumns = columns.length + (selectable ? 1 : 0) + (renderActions ? 1 : 0);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60">
+    <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-slate-900/60">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-950/60">
+            <tr className="border-b border-[var(--card-border)] bg-background/60">
               {/* Selection checkbox column */}
               {selectable && (
                 <th scope="col" className="w-12 px-6 py-4">
@@ -182,7 +182,7 @@ export function AdminDataTable<T extends { id: string }>({
                     }}
                     onChange={handleSelectAllClick}
                     aria-label={allSelected ? "Deselect all rows" : "Select all rows"}
-                    className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                    className="h-4 w-4 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500 focus:ring-offset-background"
                   />
                 </th>
               )}
@@ -192,7 +192,7 @@ export function AdminDataTable<T extends { id: string }>({
                 <th
                   key={column.id}
                   scope="col"
-                  className={`px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-400 ${getAlignmentClass(
+                  className={`px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] ${getAlignmentClass(
                     column.align
                   )} ${column.headerClassName || ""}`}
                   style={{ width: column.width }}
@@ -200,7 +200,7 @@ export function AdminDataTable<T extends { id: string }>({
                   {column.sortable && onSort ? (
                     <button
                       onClick={() => onSort(column.id)}
-                      className="inline-flex items-center hover:text-slate-200 transition-colors"
+                      className="inline-flex items-center hover:text-foreground transition-colors"
                       aria-label={`Sort by ${column.header}${sortField === column.id ? (sortDirection === "asc" ? ", currently ascending" : ", currently descending") : ""}`}
                     >
                       {column.header}
@@ -214,13 +214,13 @@ export function AdminDataTable<T extends { id: string }>({
 
               {/* Actions column */}
               {renderActions && (
-                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   Actions
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-[var(--card-border)]">
             {loading ? (
               <TableSkeleton columns={totalColumns} />
             ) : data.length === 0 ? (
@@ -240,9 +240,9 @@ export function AdminDataTable<T extends { id: string }>({
                     key={row.id}
                     className={`transition-colors ${
                       isSelected
-                        ? "bg-teal-500/5"
+                        ? "bg-accent/5"
                         : isHovered
-                        ? "bg-slate-800/50"
+                        ? "bg-surface"
                         : "hover:bg-slate-800/30"
                     } ${onRowClick ? "cursor-pointer" : ""} ${customRowClass}`}
                     onMouseEnter={() => setHoveredRow(row.id)}
@@ -257,7 +257,7 @@ export function AdminDataTable<T extends { id: string }>({
                           checked={isSelected}
                           onChange={() => onSelectChange?.(row.id)}
                           aria-label={isSelected ? "Deselect this row" : "Select this row"}
-                          className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500 focus:ring-offset-slate-900"
+                          className="h-4 w-4 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-teal-500 focus:ring-offset-background"
                         />
                       </td>
                     )}
@@ -332,9 +332,9 @@ export function AdminBulkActions({
 
   return (
     <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 transform">
-      <div className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 shadow-lg">
-        <span className="text-sm text-slate-300">
-          <span className="font-semibold text-teal-400">{selectedCount}</span> selected
+      <div className="flex items-center gap-3 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 shadow-lg">
+        <span className="text-sm text-[var(--text-secondary)]">
+          <span className="font-semibold text-accent">{selectedCount}</span> selected
         </span>
         <div className="h-4 w-px bg-slate-700" />
         {actions.map((action) => (
@@ -344,7 +344,7 @@ export function AdminBulkActions({
             className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               action.variant === "danger"
                 ? "text-red-400 hover:bg-red-500/10"
-                : "text-slate-300 hover:bg-slate-800"
+                : "text-[var(--text-secondary)] hover:bg-surface"
             }`}
           >
             {action.icon}
@@ -354,7 +354,7 @@ export function AdminBulkActions({
         <div className="h-4 w-px bg-slate-700" />
         <button
           onClick={onClearSelection}
-          className="text-sm text-slate-500 hover:text-slate-300"
+          className="text-sm text-foreground0 hover:text-[var(--text-secondary)]"
         >
           Clear
         </button>

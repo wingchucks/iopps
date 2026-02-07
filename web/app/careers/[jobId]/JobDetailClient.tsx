@@ -104,7 +104,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
       <FeedLayout activeNav="careers" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
           <div className="inline-flex items-center justify-center rounded-full bg-slate-100 p-6 mb-6">
-            <svg className="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-12 w-12 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {isExpired ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               ) : (
@@ -115,7 +115,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
           <h1 className="text-2xl font-bold text-slate-900">
             {isExpired ? "Job No Longer Available" : "Job Not Found"}
           </h1>
-          <p className="mt-3 text-slate-500 max-w-md mx-auto">
+          <p className="mt-3 text-foreground0 max-w-md mx-auto">
             {isExpired
               ? "This job posting has expired or is no longer accepting applications."
               : "Sorry, we couldn't find the job you're looking for."}
@@ -264,7 +264,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
                     </svg>
                     Apply on {job.employerName || "Employer"}&apos;s Website
                   </a>
-                  <p className="mt-4 text-sm text-slate-500">You will be redirected to the employer&apos;s website to complete your application.</p>
+                  <p className="mt-4 text-sm text-foreground0">You will be redirected to the employer&apos;s website to complete your application.</p>
                 </div>
               </div>
             ) : isCommunityMember && user ? (
@@ -284,7 +284,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             ) : !user ? (
               <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm text-center" id="apply">
                 <h3 className="text-lg font-bold text-slate-800">Sign in to apply</h3>
-                <p className="mt-2 text-slate-500">Create a community member account to apply for this position.</p>
+                <p className="mt-2 text-foreground0">Create a community member account to apply for this position.</p>
                 <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
                   <Link href="/login" className="rounded-lg bg-[#0D9488] px-6 py-3.5 font-semibold text-white transition-colors hover:bg-[#0F766E] text-center">Sign In</Link>
                   <Link href="/register" className="rounded-lg border border-slate-300 px-6 py-3.5 font-semibold text-slate-700 transition-colors hover:border-[#0D9488] hover:text-[#0D9488] text-center">Create Account</Link>
@@ -293,16 +293,16 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             ) : role === 'employer' ? (
               <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                  <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-6 w-6 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold text-slate-800">Employer View</h3>
-                <p className="mt-2 text-slate-500">You are viewing this as an Organization. Switch to a &quot;Community Member&quot; account to apply.</p>
+                <p className="mt-2 text-foreground0">You are viewing this as an Organization. Switch to a &quot;Community Member&quot; account to apply.</p>
               </div>
             ) : (
               <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm text-center">
-                <p className="text-slate-500">Switch to a community member account to apply for jobs.</p>
+                <p className="text-foreground0">Switch to a community member account to apply for jobs.</p>
               </div>
             )}
           </div>

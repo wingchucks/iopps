@@ -10,11 +10,11 @@ export default function JobHeader({ job, employerId }: JobHeaderProps) {
     return (
         <div className="mb-8">
             {/* Breadcrumb */}
-            <nav className="mb-4 flex items-center text-sm text-slate-500">
+            <nav className="mb-4 flex items-center text-sm text-foreground0">
                 <Link href="/careers" className="hover:text-[#0D9488] transition-colors">
                     Jobs
                 </Link>
-                <svg className="mx-2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="mx-2 h-4 w-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
                 <span className="text-slate-700 truncate max-w-[200px] sm:max-w-md">{job.title}</span>

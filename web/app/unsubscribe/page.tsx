@@ -121,10 +121,10 @@ function UnsubscribeContent() {
           {status === "loading" && (
             <>
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-                <EnvelopeIcon className="h-8 w-8 text-slate-500" />
+                <EnvelopeIcon className="h-8 w-8 text-foreground0" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900">Processing...</h1>
-              <p className="mt-2 text-slate-500">Please wait while we process your request.</p>
+              <p className="mt-2 text-foreground0">Please wait while we process your request.</p>
             </>
           )}
 
@@ -135,17 +135,17 @@ function UnsubscribeContent() {
                 <EnvelopeIcon className="h-8 w-8 text-amber-500" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900">Unsubscribe</h1>
-              <p className="mt-4 text-slate-500">
+              <p className="mt-4 text-foreground0">
                 You're about to unsubscribe <span className="text-slate-800">{verifiedEmail}</span> from{" "}
                 <span className="text-slate-800">{getTypeLabel(type)}</span>.
               </p>
               <button
                 onClick={handleUnsubscribe}
-                className="mt-6 w-full rounded-lg bg-[#14B8A6] px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
+                className="mt-6 w-full rounded-lg bg-accent px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
               >
                 Confirm Unsubscribe
               </button>
-              <p className="mt-4 text-sm text-slate-500">
+              <p className="mt-4 text-sm text-foreground0">
                 Changed your mind?{" "}
                 <Link href="/member/email-preferences" className="text-[#14B8A6] hover:underline">
                   Manage your preferences
@@ -161,8 +161,8 @@ function UnsubscribeContent() {
                 <CheckCircleIcon className="h-8 w-8 text-green-500" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900">Unsubscribed</h1>
-              <p className="mt-4 text-slate-500">{message}</p>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-4 text-foreground0">{message}</p>
+              <p className="mt-2 text-sm text-foreground0">
                 You'll still receive important account notifications.
               </p>
               <div className="mt-6 space-y-3">
@@ -174,7 +174,7 @@ function UnsubscribeContent() {
                 </Link>
                 <Link
                   href="/"
-                  className="block w-full rounded-lg bg-[#14B8A6] px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
+                  className="block w-full rounded-lg bg-accent px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
                 >
                   Return to IOPPS
                 </Link>
@@ -189,11 +189,11 @@ function UnsubscribeContent() {
                 <ExclamationCircleIcon className="h-8 w-8 text-red-500" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900">Something went wrong</h1>
-              <p className="mt-4 text-slate-500">{message}</p>
+              <p className="mt-4 text-foreground0">{message}</p>
               <div className="mt-6 space-y-3">
                 <Link
                   href="/member/email-preferences"
-                  className="block w-full rounded-lg bg-[#14B8A6] px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
+                  className="block w-full rounded-lg bg-accent px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
                 >
                   Manage Preferences (Login Required)
                 </Link>
@@ -209,7 +209,7 @@ function UnsubscribeContent() {
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-foreground0">
           Need help?{" "}
           <a href="mailto:support@iopps.ca" className="text-[#14B8A6] hover:underline">
             Contact support
@@ -225,7 +225,7 @@ export default function UnsubscribePage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <p className="text-slate-500">Loading...</p>
+          <p className="text-foreground0">Loading...</p>
         </div>
       }
     >

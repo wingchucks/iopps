@@ -46,8 +46,8 @@ const STATUS_LABELS: Record<FlagStatus, string> = {
 const STATUS_COLORS: Record<FlagStatus, string> = {
   pending: "bg-amber-500/20 text-amber-400 border-amber-500/30",
   reviewed: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  resolved: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  dismissed: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+  resolved: "bg-accent/20 text-accent border-accent/30",
+  dismissed: "bg-slate-500/20 text-[var(--text-muted)] border-slate-500/30",
 };
 
 interface FlagCounts {
@@ -180,8 +180,8 @@ export default function ModerationQueuePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Moderation Queue</h1>
-        <p className="mt-1 text-slate-400">Review and manage flagged content reports</p>
+        <h1 className="text-2xl font-bold text-foreground">Moderation Queue</h1>
+        <p className="mt-1 text-[var(--text-muted)]">Review and manage flagged content reports</p>
       </div>
 
       {/* Stats Cards */}
@@ -191,7 +191,7 @@ export default function ModerationQueuePage() {
             <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" />
             <div>
               <p className="text-2xl font-bold text-amber-400">{counts.pending}</p>
-              <p className="text-sm text-slate-400">Pending</p>
+              <p className="text-sm text-[var(--text-muted)]">Pending</p>
             </div>
           </div>
         </div>
@@ -200,54 +200,54 @@ export default function ModerationQueuePage() {
             <EyeIcon className="h-8 w-8 text-blue-500" />
             <div>
               <p className="text-2xl font-bold text-blue-400">{counts.reviewed}</p>
-              <p className="text-sm text-slate-400">Under Review</p>
+              <p className="text-sm text-[var(--text-muted)]">Under Review</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+        <div className="rounded-xl border border-accent/30 bg-accent/10 p-4">
           <div className="flex items-center gap-3">
-            <CheckCircleIcon className="h-8 w-8 text-emerald-500" />
+            <CheckCircleIcon className="h-8 w-8 text-accent" />
             <div>
-              <p className="text-2xl font-bold text-emerald-400">{counts.resolved}</p>
-              <p className="text-sm text-slate-400">Resolved</p>
+              <p className="text-2xl font-bold text-accent">{counts.resolved}</p>
+              <p className="text-sm text-[var(--text-muted)]">Resolved</p>
             </div>
           </div>
         </div>
         <div className="rounded-xl border border-slate-500/30 bg-slate-500/10 p-4">
           <div className="flex items-center gap-3">
-            <XCircleIcon className="h-8 w-8 text-slate-500" />
+            <XCircleIcon className="h-8 w-8 text-foreground0" />
             <div>
-              <p className="text-2xl font-bold text-slate-400">{counts.dismissed}</p>
-              <p className="text-sm text-slate-400">Dismissed</p>
+              <p className="text-2xl font-bold text-[var(--text-muted)]">{counts.dismissed}</p>
+              <p className="text-sm text-[var(--text-muted)]">Dismissed</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-4">
+      <div className="rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by content, details, or reporter..."
-                className="w-full rounded-lg border border-slate-700 bg-slate-800/60 pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 pl-10 pr-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Status Filter */}
           <div className="flex items-center gap-2">
-            <FunnelIcon className="h-5 w-5 text-slate-500" />
+            <FunnelIcon className="h-5 w-5 text-foreground0" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as FlagStatus | "all")}
-              className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+              className="rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -261,7 +261,7 @@ export default function ModerationQueuePage() {
           <select
             value={contentTypeFilter}
             onChange={(e) => setContentTypeFilter(e.target.value as FlaggedContentType | "all")}
-            className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+            className="rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
           >
             <option value="all">All Content Types</option>
             {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
@@ -283,13 +283,13 @@ export default function ModerationQueuePage() {
       {/* Loading State */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
         </div>
       ) : filteredFlags.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-800/20 p-12 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-800/20 p-12 text-center">
           <FlagIcon className="mx-auto h-12 w-12 text-slate-600" />
-          <h3 className="mt-4 text-lg font-semibold text-slate-300">No flagged content</h3>
-          <p className="mt-2 text-slate-500">
+          <h3 className="mt-4 text-lg font-semibold text-[var(--text-secondary)]">No flagged content</h3>
+          <p className="mt-2 text-foreground0">
             {statusFilter === "pending"
               ? "Great work! There are no pending reports to review."
               : "No reports match your current filters."}
@@ -298,7 +298,7 @@ export default function ModerationQueuePage() {
       ) : (
         <div className="space-y-4">
           {/* Results count */}
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             Showing {filteredFlags.length} of {counts.total} report{counts.total !== 1 ? "s" : ""}
           </p>
 
@@ -306,7 +306,7 @@ export default function ModerationQueuePage() {
           {filteredFlags.map((flag) => (
             <div
               key={flag.id}
-              className="rounded-xl border border-slate-800 bg-slate-800/30 p-5 hover:border-slate-700 transition-colors"
+              className="rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-5 hover:border-[var(--card-border)] transition-colors"
             >
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 {/* Flag Info */}
@@ -315,7 +315,7 @@ export default function ModerationQueuePage() {
                     <span className={`rounded-full border px-3 py-1 text-xs font-medium ${STATUS_COLORS[flag.status]}`}>
                       {STATUS_LABELS[flag.status]}
                     </span>
-                    <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-slate-300">
+                    <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                       {CONTENT_TYPE_LABELS[flag.contentType]}
                     </span>
                     <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300">
@@ -324,22 +324,22 @@ export default function ModerationQueuePage() {
                   </div>
 
                   <div>
-                    <h3 className="font-semibold text-slate-100">
+                    <h3 className="font-semibold text-foreground">
                       {flag.contentTitle || `${CONTENT_TYPE_LABELS[flag.contentType]} #${flag.contentId.slice(0, 8)}`}
                     </h3>
                     {flag.contentPreview && (
-                      <p className="mt-1 text-sm text-slate-400 line-clamp-2">{flag.contentPreview}</p>
+                      <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-2">{flag.contentPreview}</p>
                     )}
                   </div>
 
                   {flag.reasonDetails && (
-                    <div className="rounded-lg bg-slate-900/50 p-3">
-                      <p className="text-xs text-slate-500 mb-1">Reporter&apos;s Notes:</p>
-                      <p className="text-sm text-slate-300">{flag.reasonDetails}</p>
+                    <div className="rounded-lg bg-surface p-3">
+                      <p className="text-xs text-foreground0 mb-1">Reporter&apos;s Notes:</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{flag.reasonDetails}</p>
                     </div>
                   )}
 
-                  <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+                  <div className="flex flex-wrap gap-4 text-xs text-foreground0">
                     <span className="flex items-center gap-1">
                       <ClockIcon className="h-4 w-4" />
                       {flag.createdAt ? new Date(flag.createdAt as unknown as string).toLocaleDateString() : "Unknown"}
@@ -355,7 +355,7 @@ export default function ModerationQueuePage() {
                   {flag.moderatorNotes && (
                     <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
                       <p className="text-xs text-blue-400 mb-1">Moderator Notes:</p>
-                      <p className="text-sm text-slate-300">{flag.moderatorNotes}</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{flag.moderatorNotes}</p>
                     </div>
                   )}
                 </div>
@@ -367,7 +367,7 @@ export default function ModerationQueuePage() {
                       href={getContentLink(flag)!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+                      className="flex items-center justify-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-slate-700 transition-colors"
                     >
                       <EyeIcon className="h-4 w-4" />
                       View Content
@@ -378,7 +378,7 @@ export default function ModerationQueuePage() {
                     <>
                       <button
                         onClick={() => setSelectedFlag(flag)}
-                        className="flex items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 transition-colors"
+                        className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 transition-colors"
                       >
                         <CheckCircleIcon className="h-4 w-4" />
                         Review
@@ -386,7 +386,7 @@ export default function ModerationQueuePage() {
                       <button
                         onClick={() => handleUpdateFlag(flag.id, "dismissed")}
                         disabled={actionLoading}
-                        className="flex items-center justify-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface transition-colors disabled:opacity-50"
                       >
                         <XCircleIcon className="h-4 w-4" />
                         Dismiss
@@ -397,7 +397,7 @@ export default function ModerationQueuePage() {
                   {flag.status === "reviewed" && (
                     <button
                       onClick={() => setSelectedFlag(flag)}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-400 transition-colors"
+                      className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-400 transition-colors"
                     >
                       <CheckCircleIcon className="h-4 w-4" />
                       Resolve
@@ -414,23 +414,23 @@ export default function ModerationQueuePage() {
       {selectedFlag && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setSelectedFlag(null)}>
           <div
-            className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl"
+            className="w-full max-w-lg rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-slate-100">Review Flagged Content</h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <h2 className="text-xl font-bold text-foreground">Review Flagged Content</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               {selectedFlag.contentTitle || `${CONTENT_TYPE_LABELS[selectedFlag.contentType]}`}
             </p>
 
             <div className="mt-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Action to Take
                 </label>
                 <select
                   value={selectedAction}
                   onChange={(e) => setSelectedAction(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="none">No action needed</option>
                   <option value="warned">Issue warning to owner</option>
@@ -440,7 +440,7 @@ export default function ModerationQueuePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Moderator Notes (Optional)
                 </label>
                 <textarea
@@ -448,7 +448,7 @@ export default function ModerationQueuePage() {
                   onChange={(e) => setModeratorNotes(e.target.value)}
                   rows={3}
                   placeholder="Add notes about your decision..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none resize-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -456,7 +456,7 @@ export default function ModerationQueuePage() {
             <div className="mt-6 flex gap-3 justify-end">
               <button
                 onClick={() => setSelectedFlag(null)}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
               >
                 Cancel
               </button>
@@ -470,7 +470,7 @@ export default function ModerationQueuePage() {
               <button
                 onClick={() => handleUpdateFlag(selectedFlag.id, "resolved", selectedAction, moderatorNotes)}
                 disabled={actionLoading}
-                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-400 transition-colors disabled:opacity-50"
               >
                 {actionLoading ? "Saving..." : "Resolve"}
               </button>

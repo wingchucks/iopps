@@ -14,10 +14,10 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
   return (
     <Link
       href={`/business/services/${service.id}`}
-      className={`group relative block overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 ${
+      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 ${
         featured
           ? 'border-indigo-500/50 ring-1 ring-indigo-500/20'
-          : 'border-slate-700/50 hover:border-indigo-500/30'
+          : 'border-[var(--card-border)] hover:border-indigo-500/30'
       }`}
     >
       {/* Cover Image */}
@@ -48,7 +48,7 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
 
         {/* Logo */}
         <div className="absolute -bottom-6 left-4">
-          <div className="h-14 w-14 overflow-hidden rounded-xl border-4 border-slate-900 bg-slate-800 shadow-xl">
+          <div className="h-14 w-14 overflow-hidden rounded-xl border-4 border-slate-900 bg-surface shadow-xl">
             {service.logoUrl ? (
               <Image
                 src={service.logoUrl}
@@ -79,7 +79,7 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
         </div>
 
         {/* Business Name */}
-        <p className="mt-0.5 text-sm text-slate-400 line-clamp-1">
+        <p className="mt-0.5 text-sm text-[var(--text-muted)] line-clamp-1">
           {service.businessName}
         </p>
 
@@ -89,14 +89,14 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
             {service.category}
           </span>
           {service.freeConsultation && (
-            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+            <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
               Free Consultation
             </span>
           )}
         </div>
 
         {/* Location & Remote */}
-        <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+        <div className="mt-4 flex items-center gap-4 text-xs text-foreground0">
           {service.location && (
             <span className="flex items-center gap-1">
               <MapPinIcon className="h-3.5 w-3.5" />
@@ -114,12 +114,12 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
         {/* Price Range & Experience */}
         <div className="mt-3 flex items-center justify-between">
           {service.priceRange && (
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-[var(--text-muted)]">
               {service.priceRange}
             </span>
           )}
           {service.yearsExperience && (
-            <span className="flex items-center gap-1 text-xs text-slate-500">
+            <span className="flex items-center gap-1 text-xs text-foreground0">
               <BriefcaseIcon className="h-3.5 w-3.5" />
               {service.yearsExperience}+ years
             </span>
@@ -128,11 +128,11 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
 
         {/* Nation */}
         {service.nation && (
-          <p className="mt-2 text-xs text-slate-500 italic">{service.nation}</p>
+          <p className="mt-2 text-xs text-foreground0 italic">{service.nation}</p>
         )}
 
         {/* CTA */}
-        <div className="mt-4 pt-4 border-t border-slate-700/50">
+        <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
           <span className="block w-full rounded-lg bg-indigo-600 py-2 text-center text-sm font-semibold text-white group-hover:bg-indigo-500 transition-colors">
             View Service
           </span>

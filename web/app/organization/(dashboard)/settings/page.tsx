@@ -183,20 +183,20 @@ export default function SettingsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Settings</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        <p className="text-[var(--text-muted)] mt-1">
           Manage your organization settings and preferences
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-2">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-2">
         <button
           onClick={() => setActiveTab('general')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'general'
               ? 'bg-accent/10 text-accent'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
           }`}
         >
           <Cog6ToothIcon className="w-4 h-4" />
@@ -207,12 +207,12 @@ export default function SettingsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'modules'
               ? 'bg-accent/10 text-accent'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
           }`}
         >
           <PlusCircleIcon className="w-4 h-4" />
           Modules
-          <span className="px-1.5 py-0.5 text-xs rounded bg-slate-800">
+          <span className="px-1.5 py-0.5 text-xs rounded bg-surface">
             {enabledModules.length}/5
           </span>
         </button>
@@ -221,7 +221,7 @@ export default function SettingsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'notifications'
               ? 'bg-accent/10 text-accent'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
           }`}
         >
           <BellIcon className="w-4 h-4" />
@@ -233,20 +233,20 @@ export default function SettingsPage() {
       {activeTab === 'general' && (
         <div className="space-y-6">
           <div className="bg-card border border-card-border rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-slate-50 mb-4">Account Settings</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Account Settings</h2>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-slate-800">
+              <div className="flex items-center justify-between py-3 border-b border-[var(--card-border)]">
                 <div>
-                  <p className="text-slate-200">Organization ID</p>
-                  <p className="text-sm text-slate-500">{profile?.id || 'N/A'}</p>
+                  <p className="text-foreground">Organization ID</p>
+                  <p className="text-sm text-foreground0">{profile?.id || 'N/A'}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between py-3 border-b border-slate-800">
+              <div className="flex items-center justify-between py-3 border-b border-[var(--card-border)]">
                 <div>
-                  <p className="text-slate-200">Account Status</p>
-                  <p className="text-sm text-slate-500">{profile?.status || 'Pending'}</p>
+                  <p className="text-foreground">Account Status</p>
+                  <p className="text-sm text-foreground0">{profile?.status || 'Pending'}</p>
                 </div>
                 <span className={`px-2 py-1 text-xs font-medium rounded ${
                   profile?.status === 'approved'
@@ -259,8 +259,8 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between py-3">
                 <div>
-                  <p className="text-slate-200">Member Since</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-foreground">Member Since</p>
+                  <p className="text-sm text-foreground0">
                     {profile?.createdAt
                       ? new Date(
                           profile.createdAt instanceof Date
@@ -281,8 +281,8 @@ export default function SettingsPage() {
                 <TagIcon className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-50">Public Badge</h2>
-                <p className="text-sm text-slate-400">
+                <h2 className="text-lg font-semibold text-foreground">Public Badge</h2>
+                <p className="text-sm text-[var(--text-muted)]">
                   How your organization is identified in the directory
                 </p>
               </div>
@@ -290,14 +290,14 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-200 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Badge Type
                 </label>
                 <select
                   value={badgePreference}
                   onChange={(e) => handleBadgeChange(e.target.value as OrgType | 'AUTO')}
                   disabled={savingBadge}
-                  className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50"
+                  className="w-full rounded-xl bg-surface border border-[var(--card-border)] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent disabled:opacity-50"
                 >
                   {BADGE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -305,13 +305,13 @@ export default function SettingsPage() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-foreground0">
                   This badge appears on your public profile. It doesn&apos;t affect your features or capabilities.
                 </p>
               </div>
 
               {savingBadge && (
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Saving...
                 </div>
@@ -331,8 +331,8 @@ export default function SettingsPage() {
       {activeTab === 'modules' && (
         <div className="space-y-6">
           <div className="bg-card border border-card-border rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-slate-50 mb-2">Available Modules</h2>
-            <p className="text-sm text-slate-400 mb-6">
+            <h2 className="text-lg font-semibold text-foreground mb-2">Available Modules</h2>
+            <p className="text-sm text-[var(--text-muted)] mb-6">
               Enable modules to unlock different features for your organization
             </p>
 
@@ -363,17 +363,17 @@ export default function SettingsPage() {
                   <div
                     key={module}
                     className={`border rounded-xl p-4 transition-all ${
-                      isEnabled ? colorClasses[info.color] : 'border-slate-800 bg-slate-900/30'
+                      isEnabled ? colorClasses[info.color] : 'border-[var(--card-border)] bg-slate-900/30'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
-                        <div className={`p-2 rounded-xl bg-slate-900/50 ${iconColors[info.color]}`}>
+                        <div className={`p-2 rounded-xl bg-surface ${iconColors[info.color]}`}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-200">{info.name}</h3>
-                          <p className="text-sm text-slate-500 mt-1">{info.description}</p>
+                          <h3 className="font-semibold text-foreground">{info.name}</h3>
+                          <p className="text-sm text-foreground0 mt-1">{info.description}</p>
                         </div>
                       </div>
 
@@ -383,7 +383,7 @@ export default function SettingsPage() {
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                           isEnabled
                             ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            : 'bg-surface text-[var(--text-muted)] hover:bg-slate-700'
                         }`}
                       >
                         {isToggling ? (
@@ -412,54 +412,54 @@ export default function SettingsPage() {
       {activeTab === 'notifications' && (
         <div className="space-y-6">
           <div className="bg-card border border-card-border rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-slate-50 mb-4">Notification Preferences</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Notification Preferences</h2>
 
             <div className="space-y-4">
-              <label className="flex items-center justify-between py-3 border-b border-slate-800">
+              <label className="flex items-center justify-between py-3 border-b border-[var(--card-border)]">
                 <div>
-                  <p className="text-slate-200">New Applications</p>
-                  <p className="text-sm text-slate-500">Get notified when someone applies</p>
+                  <p className="text-foreground">New Applications</p>
+                  <p className="text-sm text-foreground0">Get notified when someone applies</p>
                 </div>
                 <input
                   type="checkbox"
                   defaultChecked={profile?.notificationPreferences?.newApplications !== false}
-                  className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-accent focus:ring-accent/50"
+                  className="w-5 h-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent/50"
                 />
               </label>
 
-              <label className="flex items-center justify-between py-3 border-b border-slate-800">
+              <label className="flex items-center justify-between py-3 border-b border-[var(--card-border)]">
                 <div>
-                  <p className="text-slate-200">New Messages</p>
-                  <p className="text-sm text-slate-500">Get notified for new inbox messages</p>
+                  <p className="text-foreground">New Messages</p>
+                  <p className="text-sm text-foreground0">Get notified for new inbox messages</p>
                 </div>
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-accent focus:ring-accent/50"
+                  className="w-5 h-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent/50"
                 />
               </label>
 
-              <label className="flex items-center justify-between py-3 border-b border-slate-800">
+              <label className="flex items-center justify-between py-3 border-b border-[var(--card-border)]">
                 <div>
-                  <p className="text-slate-200">Weekly Digest</p>
-                  <p className="text-sm text-slate-500">Receive a weekly summary of activity</p>
+                  <p className="text-foreground">Weekly Digest</p>
+                  <p className="text-sm text-foreground0">Receive a weekly summary of activity</p>
                 </div>
                 <input
                   type="checkbox"
                   defaultChecked={profile?.notificationPreferences?.weeklyDigest !== false}
-                  className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-accent focus:ring-accent/50"
+                  className="w-5 h-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent/50"
                 />
               </label>
 
               <label className="flex items-center justify-between py-3">
                 <div>
-                  <p className="text-slate-200">Marketing Emails</p>
-                  <p className="text-sm text-slate-500">Product updates and tips</p>
+                  <p className="text-foreground">Marketing Emails</p>
+                  <p className="text-sm text-foreground0">Product updates and tips</p>
                 </div>
                 <input
                   type="checkbox"
                   defaultChecked={profile?.notificationPreferences?.marketingEmails !== false}
-                  className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-accent focus:ring-accent/50"
+                  className="w-5 h-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent/50"
                 />
               </label>
             </div>

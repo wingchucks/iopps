@@ -112,7 +112,7 @@ export default function EducationEventsPage() {
   return (
     <FeedLayout activeNav="education">
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-500">
+      <nav className="mb-8 text-sm text-foreground0">
         <Link href="/" className="hover:text-slate-900 transition-colors">
           Home
         </Link>
@@ -132,7 +132,7 @@ export default function EducationEventsPage() {
         <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-slate-900 sm:text-5xl">
           Education Events
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground0">
           Open houses, info sessions, campus tours, and more from Indigenous-serving institutions.
         </p>
       </div>
@@ -142,7 +142,7 @@ export default function EducationEventsPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {/* Event Type */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Event Type
             </label>
             <select
@@ -160,7 +160,7 @@ export default function EducationEventsPage() {
 
           {/* Event Format */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Format
             </label>
             <select
@@ -180,7 +180,7 @@ export default function EducationEventsPage() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500">
+        <p className="text-foreground0">
           {loading ? "Loading..." : `${events.length} upcoming events`}
         </p>
         {(eventType || eventFormat) && (
@@ -212,7 +212,7 @@ export default function EducationEventsPage() {
               className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-[#14B8A6]/50"
             >
               {/* Date Box */}
-              <div className="flex flex-col items-center justify-center rounded-xl bg-[#14B8A6]/20 border border-[#14B8A6]/40 p-4 shrink-0 w-20">
+              <div className="flex flex-col items-center justify-center rounded-xl bg-accent/20 border border-[#14B8A6]/40 p-4 shrink-0 w-20">
                 <span className="text-xs font-semibold text-[#14B8A6] uppercase">
                   {getDatePart(event.startDatetime, "month")}
                 </span>
@@ -224,7 +224,7 @@ export default function EducationEventsPage() {
               {/* Event Info */}
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="rounded-md bg-[#14B8A6]/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
+                  <span className="rounded-md bg-accent/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">
                     {event.type?.replace("_", " ")}
                   </span>
                   <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 capitalize">
@@ -236,7 +236,7 @@ export default function EducationEventsPage() {
                   {event.name}
                 </h3>
 
-                <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                <div className="flex flex-wrap gap-4 mt-2 text-sm text-foreground0">
                   <span className="text-[#14B8A6] font-medium">{event.schoolName}</span>
                   <span>🕐 {formatEventTime(event.startDatetime)}</span>
                   {event.location && <span>📍 {event.location}</span>}
@@ -244,7 +244,7 @@ export default function EducationEventsPage() {
               </div>
 
               {/* RSVP Button */}
-              <button className="hidden sm:block rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
+              <button className="hidden sm:block rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
                 View Event →
               </button>
             </Link>
@@ -254,14 +254,14 @@ export default function EducationEventsPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
           <span className="text-5xl mb-4 block">📅</span>
           <h3 className="text-xl font-bold text-slate-900 mb-2">No Upcoming Events</h3>
-          <p className="text-slate-500 mb-6">
+          <p className="text-foreground0 mb-6">
             {eventType || eventFormat
               ? "Try adjusting your filters."
               : "Check back soon for education events from schools."}
           </p>
           <Link
             href="/education/schools"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
           >
             Browse Schools
           </Link>
@@ -273,12 +273,12 @@ export default function EducationEventsPage() {
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Hosting an Education Event?
         </h2>
-        <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+        <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
           List your open house, info session, or campus tour on IOPPS to reach Indigenous students.
         </p>
         <Link
           href="/organization/dashboard?tab=education"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
         >
           Post an Event
         </Link>

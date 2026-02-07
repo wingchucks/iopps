@@ -61,14 +61,14 @@ export default function CompanyIntroVideo({
   }
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-gradient-to-br from-emerald-900/20 to-slate-950/50 p-6 backdrop-blur-sm">
+    <section className="rounded-lg border border-[var(--card-border)] bg-gradient-to-br from-emerald-900/20 to-slate-950/50 p-6 backdrop-blur-sm">
       {/* Section Header */}
-      <div className="mb-6 border-b border-slate-800 pb-4">
-        <h2 className="text-2xl font-bold text-slate-100">
+      <div className="mb-6 border-b border-[var(--card-border)] pb-4">
+        <h2 className="text-2xl font-bold text-foreground">
           {video.title || `About ${organizationName}`}
         </h2>
         {video.description && (
-          <p className="mt-1 text-sm text-slate-400">{video.description}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{video.description}</p>
         )}
       </div>
 

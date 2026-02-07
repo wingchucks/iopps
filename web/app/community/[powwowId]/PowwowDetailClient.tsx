@@ -19,7 +19,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
         <div className="mx-auto max-w-4xl py-12 text-center">
           <div className="inline-flex items-center justify-center rounded-full bg-slate-100 p-6 mb-6">
             <svg
-              className="h-12 w-12 text-slate-400"
+              className="h-12 w-12 text-[var(--text-muted)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -44,7 +44,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
           <h1 className="text-2xl font-bold text-slate-900">
             {isEnded ? "Event Has Ended" : "Event Not Found"}
           </h1>
-          <p className="mt-3 text-slate-500 max-w-md mx-auto">
+          <p className="mt-3 text-foreground0 max-w-md mx-auto">
             {isEnded
               ? "This pow wow or cultural event has concluded. Check out other upcoming events below."
               : "Sorry, we couldn't find the event you're looking for. It may have been removed."}
@@ -96,7 +96,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
       <div className="mx-auto max-w-4xl py-8">
         <Link
           href="/community"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-[#0D9488]"
+          className="inline-flex items-center gap-2 text-sm text-foreground0 transition-colors hover:text-[#0D9488]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -226,7 +226,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
                 />
               </div>
             </div>
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-4 text-center text-sm text-foreground0">
               Click the download button to save the full poster image
             </p>
           </div>

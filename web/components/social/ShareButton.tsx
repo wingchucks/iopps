@@ -84,7 +84,7 @@ export function ShareButton({ entityId, type, data, className }: ShareButtonProp
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button onClick={handleShare} disabled={sharing} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Button onClick={handleShare} disabled={sharing} className="bg-accent hover:bg-emerald-700 text-white">
                         {sharing ? "Sharing..." : "Post"}
                     </Button>
                 </DialogFooter>

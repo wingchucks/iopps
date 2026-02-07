@@ -15,7 +15,7 @@ export default function LandingPage() {
             <span className="text-xl font-black tracking-tight text-teal-600">
               IOPPS
             </span>
-            <span className="hidden text-xs font-medium text-slate-400 sm:inline">
+            <span className="hidden text-xs font-medium text-[var(--text-muted)] sm:inline">
               Indigenous Opportunities
             </span>
           </Link>
@@ -58,7 +58,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/signup"
-              className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-700"
             >
               Sign Up
             </Link>
@@ -145,7 +145,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/signup"
-                className="rounded-lg bg-teal-600 px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-teal-700"
+                className="rounded-lg bg-accent px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-teal-700"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign Up
@@ -200,7 +200,7 @@ export default function LandingPage() {
             <span className="text-teal-300">opportunity</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-center text-base leading-relaxed text-slate-300 sm:mt-6 sm:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl text-center text-base leading-relaxed text-[var(--text-secondary)] sm:mt-6 sm:text-lg">
             IOPPS connects Indigenous professionals, communities, and
             organizations through jobs, education, events, and a
             community-powered marketplace — all in one place.
@@ -210,13 +210,13 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4">
             <Link
               href="/signup"
-              className="w-full rounded-lg bg-teal-500 px-8 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-400 sm:w-auto sm:text-base"
+              className="w-full rounded-lg bg-accent px-8 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:bg-teal-400 sm:w-auto sm:text-base"
             >
               Find Opportunities
             </Link>
             <Link
               href="/signup"
-              className="w-full rounded-lg border border-slate-500 bg-transparent px-8 py-3.5 text-center text-sm font-bold text-slate-200 transition hover:border-slate-400 hover:text-white sm:w-auto sm:text-base"
+              className="w-full rounded-lg border border-slate-500 bg-transparent px-8 py-3.5 text-center text-sm font-bold text-foreground transition hover:border-slate-400 hover:text-white sm:w-auto sm:text-base"
             >
               Post Opportunities
             </Link>
@@ -233,7 +233,7 @@ export default function LandingPage() {
                 <p className="text-2xl font-extrabold text-white sm:text-3xl lg:text-4xl">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-xs font-medium text-slate-400 sm:text-sm">
+                <p className="mt-1 text-xs font-medium text-[var(--text-muted)] sm:text-sm">
                   {stat.label}
                 </p>
               </div>
@@ -346,7 +346,7 @@ export default function LandingPage() {
       <section className="bg-white py-16 sm:py-24">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <svg
-            className="mx-auto h-10 w-10 text-teal-500/30"
+            className="mx-auto h-10 w-10 text-accent/30"
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -363,7 +363,7 @@ export default function LandingPage() {
             <p className="text-base font-semibold text-slate-900">
               David Couture
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-foreground0">
               Northern Lights Consulting
             </p>
           </div>
@@ -398,11 +398,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="bg-slate-900">
+      <footer className="bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           {/* Treaty acknowledgment */}
-          <div className="border-b border-slate-800 pb-8">
-            <p className="text-sm leading-relaxed text-slate-400">
+          <div className="border-b border-[var(--card-border)] pb-8">
+            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
               IOPPS operates on Treaty 6 Territory, the traditional homeland of
               the Cree, Metis, and many other Indigenous peoples. We honour the
               Treaties and relationships with the land and all peoples who call
@@ -412,8 +412,8 @@ export default function LandingPage() {
 
           <div className="mt-8 flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
             <div>
-              <span className="text-lg font-black text-teal-400">IOPPS</span>
-              <p className="mt-1 text-xs text-slate-500">
+              <span className="text-lg font-black text-accent">IOPPS</span>
+              <p className="mt-1 text-xs text-foreground0">
                 Indigenous Opportunities &amp; Partnerships Platform
               </p>
             </div>
@@ -421,51 +421,51 @@ export default function LandingPage() {
             <nav className="flex flex-wrap gap-x-6 gap-y-2">
               <Link
                 href="/about"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 About
               </Link>
               <Link
                 href="/careers"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 Jobs
               </Link>
               <Link
                 href="/education"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 Education
               </Link>
               <Link
                 href="/community"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 Events
               </Link>
               <Link
                 href="/privacy"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 Privacy
               </Link>
               <Link
                 href="/terms"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 Terms
               </Link>
               <Link
                 href="/contact"
-                className="text-sm text-slate-400 transition hover:text-white"
+                className="text-sm text-[var(--text-muted)] transition hover:text-white"
               >
                 Contact
               </Link>
             </nav>
           </div>
 
-          <div className="mt-8 border-t border-slate-800 pt-6">
-            <p className="text-xs text-slate-500">
+          <div className="mt-8 border-t border-[var(--card-border)] pt-6">
+            <p className="text-xs text-foreground0">
               &copy; {new Date().getFullYear()} IOPPS.ca &mdash; All rights
               reserved.
             </p>

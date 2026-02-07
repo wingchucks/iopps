@@ -42,7 +42,7 @@ export default function PricingTabs({ children }: PricingTabsProps) {
   return (
     <div>
       {/* Tab Navigation */}
-      <div className="border-b border-slate-800">
+      <div className="border-b border-[var(--card-border)]">
         {/* Desktop tabs */}
         <nav className="hidden sm:flex gap-1 overflow-x-auto" role="tablist" aria-label="Pricing categories">
           {tabs.map((tab) => (
@@ -55,7 +55,7 @@ export default function PricingTabs({ children }: PricingTabsProps) {
               className={`flex items-center gap-2 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
                 activeTab === tab.id
                   ? "border-[#14B8A6] text-[#14B8A6]"
-                  : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                  : "border-transparent text-[var(--text-muted)] hover:text-foreground hover:border-[var(--card-border)]"
               }`}
             >
               <span className="text-base">{tab.icon}</span>
@@ -73,7 +73,7 @@ export default function PricingTabs({ children }: PricingTabsProps) {
             id="pricing-tab-select"
             value={activeTab}
             onChange={(e) => handleTabChange(e.target.value as TabId)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
+            className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground focus:border-[#14B8A6] focus:outline-none focus:ring-1 focus:ring-[#14B8A6]"
           >
             {tabs.map((tab) => (
               <option key={tab.id} value={tab.id}>

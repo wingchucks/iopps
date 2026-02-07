@@ -226,7 +226,7 @@ export default function SearchFilters({
       {/* Main Search Bar */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             value={query}
@@ -234,28 +234,28 @@ export default function SearchFilters({
             onKeyPress={handleKeyPress}
             onFocus={() => setShowHistoryPanel(true)}
             placeholder="Search jobs, scholarships, events..."
-            className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3 pl-12 pr-4 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="w-full rounded-xl border border-[var(--card-border)] bg-surface py-3 pl-12 pr-4 text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 rounded-xl border px-4 py-3 transition-colors ${
             hasActiveFilters
-              ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
-              : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600"
+              ? "border-accent bg-accent/20 text-accent"
+              : "border-[var(--card-border)] bg-surface text-[var(--text-muted)] hover:border-[var(--card-border)]"
           }`}
         >
           <SlidersHorizontal className="h-5 w-5" />
           <span className="hidden sm:inline">Filters</span>
           {hasActiveFilters && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-xs text-white">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs text-white">
               {Object.values(filters).filter(v => v !== undefined).length}
             </span>
           )}
         </button>
         <button
           onClick={handleSearch}
-          className="rounded-xl bg-emerald-500 px-6 py-3 font-medium text-white hover:bg-emerald-600 transition-colors"
+          className="rounded-xl bg-accent px-6 py-3 font-medium text-white hover:bg-accent transition-colors"
         >
           Search
         </button>
@@ -263,11 +263,11 @@ export default function SearchFilters({
 
       {/* History & Suggestions Dropdown */}
       {showHistoryPanel && (showHistory || suggestions.length > 0) && (
-        <div className="rounded-xl border border-slate-700 bg-slate-800 p-4 space-y-4">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4 space-y-4">
           {/* Recent Searches */}
           {showHistory && history.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-2">
                 <Clock className="h-4 w-4" />
                 Recent Searches
               </div>
@@ -276,7 +276,7 @@ export default function SearchFilters({
                   <button
                     key={item.id}
                     onClick={() => runHistorySearch(item)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-700 text-sm text-slate-300 hover:bg-slate-600 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-slate-700 text-sm text-[var(--text-secondary)] hover:bg-slate-600 transition-colors"
                   >
                     {item.query}
                   </button>
@@ -288,7 +288,7 @@ export default function SearchFilters({
           {/* Suggested Searches */}
           {suggestions.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-2">
                 <TrendingUp className="h-4 w-4" />
                 Popular Searches
               </div>
@@ -300,7 +300,7 @@ export default function SearchFilters({
                       setQuery(suggestion);
                       onSearch(suggestion, filters);
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-700/50 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-slate-700/50 text-sm text-[var(--text-muted)] hover:bg-slate-700 hover:text-white transition-colors"
                   >
                     {suggestion}
                   </button>
@@ -311,7 +311,7 @@ export default function SearchFilters({
 
           <button
             onClick={() => setShowHistoryPanel(false)}
-            className="text-xs text-slate-500 hover:text-slate-400"
+            className="text-xs text-foreground0 hover:text-[var(--text-muted)]"
           >
             Close
           </button>
@@ -320,13 +320,13 @@ export default function SearchFilters({
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="rounded-xl border border-slate-700 bg-slate-800 p-6 space-y-6">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-white">Filter Results</h3>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-sm text-slate-400 hover:text-white"
+                className="text-sm text-[var(--text-muted)] hover:text-white"
               >
                 Clear all
               </button>
@@ -335,7 +335,7 @@ export default function SearchFilters({
 
           {/* Categories */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
               Categories
             </label>
             <div className="flex flex-wrap gap-2">
@@ -345,8 +345,8 @@ export default function SearchFilters({
                   onClick={() => toggleCategory(value)}
                   className={`px-4 py-2 rounded-lg text-sm transition-colors ${
                     filters.categories?.includes(value)
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-500"
+                      ? "bg-accent/20 text-accent border border-accent/30"
+                      : "bg-slate-700 text-[var(--text-secondary)] border border-[var(--card-border)] hover:border-slate-500"
                   }`}
                 >
                   {label}
@@ -358,14 +358,14 @@ export default function SearchFilters({
           {/* Location */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
                 <MapPin className="inline h-4 w-4 mr-1" />
                 Location
               </label>
               <select
                 value={filters.location || ""}
                 onChange={(e) => updateFilter("location", e.target.value || undefined)}
-                className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2.5 text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700 px-4 py-2.5 text-white focus:border-accent focus:outline-none"
               >
                 <option value="">Any location</option>
                 {PROVINCES.map((province) => (
@@ -376,21 +376,21 @@ export default function SearchFilters({
               </select>
             </div>
             <div className="flex items-end gap-4">
-              <label className="flex items-center gap-2 text-sm text-slate-300">
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <input
                   type="checkbox"
                   checked={filters.remoteOnly || false}
                   onChange={(e) => updateFilter("remoteOnly", e.target.checked || undefined)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-accent"
                 />
                 Remote only
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-300">
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <input
                   type="checkbox"
                   checked={filters.indigenousOnly || false}
                   onChange={(e) => updateFilter("indigenousOnly", e.target.checked || undefined)}
-                  className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-emerald-500 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-slate-700 text-accent focus:ring-accent"
                 />
                 Indigenous-focused
               </label>
@@ -399,7 +399,7 @@ export default function SearchFilters({
 
           {/* Employment Type (for jobs) */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
               <Building2 className="inline h-4 w-4 mr-1" />
               Employment Type
             </label>
@@ -410,8 +410,8 @@ export default function SearchFilters({
                   onClick={() => toggleEmploymentType(value)}
                   className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                     filters.employmentTypes?.includes(value)
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-500"
+                      ? "bg-accent/20 text-accent border border-accent/30"
+                      : "bg-slate-700 text-[var(--text-secondary)] border border-[var(--card-border)] hover:border-slate-500"
                   }`}
                 >
                   {label}
@@ -422,7 +422,7 @@ export default function SearchFilters({
 
           {/* Salary Range */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
               <DollarSign className="inline h-4 w-4 mr-1" />
               Salary Range (Annual)
             </label>
@@ -437,9 +437,9 @@ export default function SearchFilters({
                     min: e.target.value ? parseInt(e.target.value) : undefined,
                   })
                 }
-                className="w-32 rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-32 rounded-lg border border-[var(--card-border)] bg-slate-700 px-3 py-2 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               />
-              <span className="text-slate-500">to</span>
+              <span className="text-foreground0">to</span>
               <input
                 type="number"
                 placeholder="Max"
@@ -450,17 +450,17 @@ export default function SearchFilters({
                     max: e.target.value ? parseInt(e.target.value) : undefined,
                   })
                 }
-                className="w-32 rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-32 rounded-lg border border-[var(--card-border)] bg-slate-700 px-3 py-2 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Apply Filters */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+          <div className="flex items-center justify-between pt-4 border-t border-[var(--card-border)]">
             {user && showSavedSearches && (
               <button
                 onClick={() => setShowSaved(!showSaved)}
-                className="flex items-center gap-2 text-sm text-slate-400 hover:text-white"
+                className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white"
               >
                 <Bookmark className="h-4 w-4" />
                 Save this search
@@ -468,7 +468,7 @@ export default function SearchFilters({
             )}
             <button
               onClick={handleSearch}
-              className="ml-auto px-6 py-2 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors"
+              className="ml-auto px-6 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent transition-colors"
             >
               Apply Filters
             </button>
@@ -476,8 +476,8 @@ export default function SearchFilters({
 
           {/* Save Search Form */}
           {showSaved && user && (
-            <div className="p-4 rounded-lg bg-slate-700/50 border border-slate-600">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+            <div className="p-4 rounded-lg bg-slate-700/50 border border-[var(--card-border)]">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Search Name
               </label>
               <div className="flex gap-2">
@@ -486,12 +486,12 @@ export default function SearchFilters({
                   value={saveSearchName}
                   onChange={(e) => setSaveSearchName(e.target.value)}
                   placeholder="e.g., Remote tech jobs"
-                  className="flex-1 rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                  className="flex-1 rounded-lg border border-[var(--card-border)] bg-slate-700 px-3 py-2 text-white placeholder-slate-500 focus:border-accent focus:outline-none"
                 />
                 <button
                   onClick={handleSaveSearch}
                   disabled={!saveSearchName.trim() || savingSearch}
-                  className="px-4 py-2 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {savingSearch ? "Saving..." : "Save"}
                 </button>
@@ -503,10 +503,10 @@ export default function SearchFilters({
 
       {/* Saved Searches Panel */}
       {user && showSavedSearches && savedSearches.length > 0 && (
-        <div className="rounded-xl border border-slate-700 bg-slate-800 p-4">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <BookmarkCheck className="h-4 w-4 text-emerald-400" />
+            <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+              <BookmarkCheck className="h-4 w-4 text-accent" />
               Saved Searches
             </div>
           </div>
@@ -519,7 +519,7 @@ export default function SearchFilters({
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-white truncate">{search.name}</p>
                   {search.filters.query && (
-                    <p className="text-sm text-slate-400 truncate">
+                    <p className="text-sm text-[var(--text-muted)] truncate">
                       "{search.filters.query}"
                     </p>
                   )}
@@ -529,8 +529,8 @@ export default function SearchFilters({
                     onClick={() => handleToggleAlert(search.id, search.alertEnabled)}
                     className={`p-1.5 rounded-lg transition-colors ${
                       search.alertEnabled
-                        ? "text-emerald-400 hover:bg-emerald-500/20"
-                        : "text-slate-500 hover:bg-slate-600"
+                        ? "text-accent hover:bg-accent/20"
+                        : "text-foreground0 hover:bg-slate-600"
                     }`}
                     title={search.alertEnabled ? "Disable alerts" : "Enable alerts"}
                   >
@@ -542,14 +542,14 @@ export default function SearchFilters({
                   </button>
                   <button
                     onClick={() => runSavedSearch(search)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-colors"
+                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-slate-600 transition-colors"
                     title="Run search"
                   >
                     <Play className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteSavedSearch(search.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/20 transition-colors"
+                    className="p-1.5 rounded-lg text-foreground0 hover:text-red-400 hover:bg-red-500/20 transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="h-4 w-4" />

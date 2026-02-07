@@ -320,10 +320,10 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
     if (s === "reviewed" || s === "reviewing")
       return "bg-blue-500/20 text-blue-300 border-blue-500/40";
     if (s === "rejected")
-      return "bg-slate-500/20 text-slate-400 border-slate-500/40";
+      return "bg-slate-500/20 text-[var(--text-muted)] border-slate-500/40";
     if (s === "withdrawn")
       return "bg-orange-500/20 text-orange-300 border-orange-500/40";
-    return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+    return "bg-accent/20 text-emerald-300 border-accent/40";
   };
 
   // Export applications to CSV
@@ -424,7 +424,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
           <BriefcaseIcon className="h-8 w-8 text-blue-400" />
           <div>
             <h2 className="text-2xl font-bold text-white">Careers</h2>
-            <p className="mt-1 text-slate-400">
+            <p className="mt-1 text-[var(--text-muted)]">
               Manage job postings, training programs, and applications
             </p>
           </div>
@@ -432,12 +432,12 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-px overflow-x-auto">
         <button
           onClick={() => setCareerType("jobs")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${careerType === "jobs"
               ? "border-b-2 border-blue-500 bg-blue-500/10 text-blue-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+              : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BriefcaseIcon className="h-4 w-4" />
@@ -447,7 +447,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
           onClick={() => setCareerType("training")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${careerType === "training"
               ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+              : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <AcademicCapIcon className="h-4 w-4" />
@@ -456,14 +456,14 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
         <button
           onClick={() => setCareerType("applications")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${careerType === "applications"
-              ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-              : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+              ? "border-b-2 border-accent bg-accent/10 text-accent"
+              : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <UserGroupIcon className="h-4 w-4" />
           Applications ({applications.length})
           {pendingApplicationsCount > 0 && (
-            <span className="ml-1 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">
+            <span className="ml-1 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-white">
               {pendingApplicationsCount}
             </span>
           )}
@@ -474,7 +474,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       {(careerType === "jobs" || careerType === "training") && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
               Search
             </label>
             <input
@@ -483,17 +483,17 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder={`Search ${careerType}... (Press / to focus)`}
-              className="w-full rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-xl border border-blue-500/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
               Filter by status
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className="rounded-xl border border-blue-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="rounded-xl border border-blue-500/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             >
               <option value="all">All</option>
               <option value="active">Active only</option>
@@ -518,7 +518,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       {careerType === "applications" && (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex-1">
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
               Search candidates
             </label>
             <input
@@ -526,17 +526,17 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search by name or email..."
-              className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </div>
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
               Filter by job
             </label>
             <select
               value={appJobFilter}
               onChange={(e) => setAppJobFilter(e.target.value)}
-              className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               <option value="all">All jobs</option>
               {jobs.map((job) => (
@@ -547,13 +547,13 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
               Filter by status
             </label>
             <select
               value={appStatusFilter}
               onChange={(e) => setAppStatusFilter(e.target.value)}
-              className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              className="rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               <option value="all">All statuses</option>
               <option value="submitted">Submitted</option>
@@ -565,7 +565,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
               &nbsp;
             </label>
             <button
@@ -584,11 +584,11 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       {careerType === "jobs" && (
         <div className="rounded-3xl bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10 p-8 shadow-xl shadow-blue-900/20">
           {loading ? (
-            <p className="text-center text-slate-400">Loading jobs...</p>
+            <p className="text-center text-[var(--text-muted)]">Loading jobs...</p>
           ) : filteredJobs.length === 0 ? (
-            <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+            <div className="rounded-xl bg-surface p-8 text-center">
               <BriefcaseIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <p className="mt-4 text-slate-300">
+              <p className="mt-4 text-[var(--text-secondary)]">
                 {jobs.length === 0
                   ? "No jobs posted yet. Create your first job posting to get started."
                   : "No jobs match your filters."}
@@ -607,7 +607,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
               {filteredJobs.map((job) => (
                 <article
                   key={job.id}
-                  className="rounded-xl border border-blue-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-blue-500/20 bg-surface p-6"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
@@ -629,7 +629,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                               ⏰ Scheduled
                             </span>
                           ) : job.active === false ? (
-                            <span className="rounded-full border border-slate-600 bg-slate-700/30 px-3 py-1 text-xs font-medium text-slate-400">
+                            <span className="rounded-full border border-[var(--card-border)] bg-slate-700/30 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
                               Paused
                             </span>
                           ) : (
@@ -641,13 +641,13 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                       </div>
 
                       {job.description && (
-                        <p className="mt-3 text-sm text-slate-300">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)]">
                           {job.description.slice(0, 150)}
                           {job.description.length > 150 ? "..." : ""}
                         </p>
                       )}
 
-                      <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-400">
+                      <div className="mt-4 flex flex-wrap gap-4 text-xs text-[var(--text-muted)]">
                         <span>Location: {job.location || "Remote"}</span>
                         <span>Views: {job.viewsCount || 0}</span>
                         <span>Applications: {job.applicationsCount || 0}</span>
@@ -688,7 +688,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                     </button>
                     <button
                       onClick={() => handleToggleJobStatus(job.id, job.active !== false)}
-                      className="rounded-lg bg-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-300 transition-all hover:bg-slate-700"
+                      className="rounded-lg bg-slate-700/50 px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition-all hover:bg-slate-700"
                     >
                       {job.active !== false ? "Pause" : "Activate"}
                     </button>
@@ -710,11 +710,11 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
       {careerType === "training" && (
         <div className="rounded-3xl bg-gradient-to-br from-purple-500/10 via-indigo-500/10 to-violet-500/10 p-8 shadow-xl shadow-purple-900/20">
           {loading ? (
-            <p className="text-center text-slate-400">Loading training programs...</p>
+            <p className="text-center text-[var(--text-muted)]">Loading training programs...</p>
           ) : filteredTrainingPrograms.length === 0 ? (
-            <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+            <div className="rounded-xl bg-surface p-8 text-center">
               <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <p className="mt-4 text-slate-300">
+              <p className="mt-4 text-[var(--text-secondary)]">
                 {trainingPrograms.length === 0
                   ? "No training programs posted yet. Share your training opportunities with Indigenous learners."
                   : "No training programs match your filters."}
@@ -733,7 +733,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
               {filteredTrainingPrograms.map((program) => (
                 <article
                   key={program.id}
-                  className="rounded-xl border border-purple-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-purple-500/20 bg-surface p-6"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
@@ -755,7 +755,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           {program.active === false ? (
-                            <span className="rounded-full border border-slate-600 bg-slate-700/30 px-3 py-1 text-xs font-medium text-slate-400">
+                            <span className="rounded-full border border-[var(--card-border)] bg-slate-700/30 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
                               Inactive
                             </span>
                           ) : program.status === "pending" ? (
@@ -775,13 +775,13 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                       </div>
 
                       {program.shortDescription && (
-                        <p className="mt-3 text-sm text-slate-300">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)]">
                           {program.shortDescription.slice(0, 150)}
                           {program.shortDescription.length > 150 ? "..." : ""}
                         </p>
                       )}
 
-                      <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
+                      <div className="mt-4 flex flex-wrap gap-3 text-xs text-[var(--text-muted)]">
                         <span className="rounded-full bg-slate-700/50 px-2 py-1">
                           {program.format === "online" ? "Online" : program.format === "in-person" ? "In-Person" : "Hybrid"}
                         </span>
@@ -797,7 +797,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                         )}
                       </div>
 
-                      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+                      <div className="mt-3 flex items-center gap-4 text-xs text-foreground0">
                         <span>Views: {program.viewCount || 0}</span>
                         <span>Clicks: {program.clickCount || 0}</span>
                       </div>
@@ -836,39 +836,39 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
         <>
           {/* Application Stats */}
           <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            <div className="rounded-2xl bg-slate-800/50 p-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">Total</p>
+            <div className="rounded-2xl bg-surface p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-foreground0">Total</p>
               <p className="mt-1 text-2xl font-bold text-white">{applicationCounts.total}</p>
             </div>
-            <div className="rounded-2xl bg-emerald-500/10 p-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">New</p>
-              <p className="mt-1 text-2xl font-bold text-emerald-400">{applicationCounts.submitted}</p>
+            <div className="rounded-2xl bg-accent/10 p-4 text-center">
+              <p className="text-xs uppercase tracking-wider text-foreground0">New</p>
+              <p className="mt-1 text-2xl font-bold text-accent">{applicationCounts.submitted}</p>
             </div>
             <div className="rounded-2xl bg-blue-500/10 p-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">In Review</p>
+              <p className="text-xs uppercase tracking-wider text-foreground0">In Review</p>
               <p className="mt-1 text-2xl font-bold text-blue-400">{applicationCounts.inReview}</p>
             </div>
             <div className="rounded-2xl bg-yellow-500/10 p-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">Shortlisted</p>
+              <p className="text-xs uppercase tracking-wider text-foreground0">Shortlisted</p>
               <p className="mt-1 text-2xl font-bold text-yellow-400">{applicationCounts.shortlisted}</p>
             </div>
             <div className="rounded-2xl bg-green-500/10 p-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">Hired</p>
+              <p className="text-xs uppercase tracking-wider text-foreground0">Hired</p>
               <p className="mt-1 text-2xl font-bold text-green-400">{applicationCounts.hired}</p>
             </div>
             <div className="rounded-2xl bg-slate-700/50 p-4 text-center">
-              <p className="text-xs uppercase tracking-wider text-slate-500">Rejected</p>
-              <p className="mt-1 text-2xl font-bold text-slate-400">{applicationCounts.rejected}</p>
+              <p className="text-xs uppercase tracking-wider text-foreground0">Rejected</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--text-muted)]">{applicationCounts.rejected}</p>
             </div>
           </div>
 
           <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
             {loading ? (
-              <p className="text-center text-slate-400">Loading applications...</p>
+              <p className="text-center text-[var(--text-muted)]">Loading applications...</p>
             ) : filteredApplications.length === 0 ? (
-              <div className="rounded-xl bg-slate-900/50 p-8 text-center">
+              <div className="rounded-xl bg-surface p-8 text-center">
                 <UserGroupIcon className="mx-auto h-12 w-12 text-slate-600" />
-                <p className="mt-4 text-slate-300">
+                <p className="mt-4 text-[var(--text-secondary)]">
                   {applications.length === 0
                     ? "No applications received yet. Applications will appear here as candidates apply to your jobs."
                     : "No applications match your filters."}
@@ -881,7 +881,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                   return (
                     <article
                       key={app.id}
-                      className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                      className="rounded-xl border border-accent/20 bg-surface p-6"
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1">
@@ -890,10 +890,10 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                               <h3 className="text-lg font-semibold text-white">
                                 {app.memberDisplayName || "Anonymous"}
                               </h3>
-                              <p className="mt-1 text-sm text-slate-400">
+                              <p className="mt-1 text-sm text-[var(--text-muted)]">
                                 {app.memberEmail}
                               </p>
-                              <p className="mt-2 text-sm text-emerald-400">
+                              <p className="mt-2 text-sm text-accent">
                                 Applied to: {job?.title || "Unknown job"}
                               </p>
                             </div>
@@ -901,10 +901,10 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
 
                           {app.coverLetter && (
                             <div className="mt-4">
-                              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                                 Cover Letter
                               </p>
-                              <p className="mt-2 text-sm text-slate-300">
+                              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                                 {app.coverLetter.slice(0, 200)}
                                 {app.coverLetter.length > 200 ? "..." : ""}
                               </p>
@@ -917,7 +917,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                                 href={app.resumeUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30"
+                                className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-accent/30"
                               >
                                 View resume
                               </Link>
@@ -950,28 +950,28 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                                   {app.employerNotes.map((note) => (
                                     <div
                                       key={note.id}
-                                      className="rounded-lg bg-slate-800/50 p-3 group"
+                                      className="rounded-lg bg-surface p-3 group"
                                     >
                                       <div className="flex justify-between items-start gap-2">
-                                        <p className="text-sm text-slate-300 whitespace-pre-wrap flex-1">
+                                        <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap flex-1">
                                           {note.content}
                                         </p>
                                         <button
                                           onClick={() => handleDeleteNote(app.id, note.id)}
-                                          className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all p-1"
+                                          className="opacity-0 group-hover:opacity-100 text-foreground0 hover:text-red-400 transition-all p-1"
                                           title="Delete note"
                                         >
                                           <TrashIcon className="h-4 w-4" />
                                         </button>
                                       </div>
-                                      <p className="text-xs text-slate-500 mt-2">
+                                      <p className="text-xs text-foreground0 mt-2">
                                         {note.createdByName || "You"} • {formatNoteDate(note.createdAt)}
                                       </p>
                                     </div>
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-sm text-slate-500 mb-4">
+                                <p className="text-sm text-foreground0 mb-4">
                                   No notes yet. Add a note to track this candidate.
                                 </p>
                               )}
@@ -988,7 +988,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                                   }
                                   placeholder="Add a note about this candidate..."
                                   rows={2}
-                                  className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                                  className="flex-1 rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
                                 />
                                 <button
                                   onClick={() => handleAddNote(app.id)}
@@ -1022,7 +1022,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
                                 e.target.value as ApplicationStatus
                               )
                             }
-                            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100 transition-all hover:border-emerald-500/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            className="rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-xs text-foreground transition-all hover:border-accent/50 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                           >
                             <option value="submitted">Submitted</option>
                             <option value="reviewed">In review</option>

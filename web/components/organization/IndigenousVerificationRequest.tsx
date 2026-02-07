@@ -116,15 +116,15 @@ export default function IndigenousVerificationRequest({
               <CheckBadgeIcon className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <h4 className="font-semibold text-slate-200">
+              <h4 className="font-semibold text-foreground">
                 Verification Request Pending
               </h4>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Your Indigenous business verification request is being reviewed by
                 our team. This typically takes 2-5 business days.
               </p>
               {verification?.requestedAt && (
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-foreground0 mt-2">
                   Submitted:{" "}
                   {(() => {
                     const ts = verification.requestedAt;
@@ -143,7 +143,7 @@ export default function IndigenousVerificationRequest({
           <button
             onClick={handleCancel}
             disabled={loading}
-            className="text-slate-400 hover:text-red-400 transition-colors p-1"
+            className="text-[var(--text-muted)] hover:text-red-400 transition-colors p-1"
             title="Cancel request"
           >
             <XMarkIcon className="w-5 h-5" />
@@ -165,15 +165,15 @@ export default function IndigenousVerificationRequest({
             <CheckBadgeIcon className="w-5 h-5 text-red-400" />
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-slate-200">
+            <h4 className="font-semibold text-foreground">
               Verification Not Approved
             </h4>
             {verification?.rejectionReason && (
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Reason: {verification.rejectionReason}
               </p>
             )}
-            <p className="text-sm text-slate-400 mt-2">
+            <p className="text-sm text-[var(--text-muted)] mt-2">
               You may submit a new request with additional documentation.
             </p>
             <button
@@ -197,10 +197,10 @@ export default function IndigenousVerificationRequest({
             <CheckBadgeIcon className="w-5 h-5 text-amber-400" />
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-slate-200">
+            <h4 className="font-semibold text-foreground">
               Get Verified as an Indigenous Business
             </h4>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-[var(--text-muted)] mt-1">
               Earn a verified badge to showcase your Indigenous ownership or
               leadership. Verified businesses stand out to job seekers and build
               trust within the community.
@@ -222,13 +222,13 @@ export default function IndigenousVerificationRequest({
   return (
     <div className="rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-semibold text-slate-200 flex items-center gap-2">
+        <h4 className="font-semibold text-foreground flex items-center gap-2">
           <CheckBadgeIcon className="w-5 h-5 text-amber-400" />
           Indigenous Business Verification
         </h4>
         <button
           onClick={() => setShowForm(false)}
-          className="text-slate-400 hover:text-slate-200 transition-colors"
+          className="text-[var(--text-muted)] hover:text-foreground transition-colors"
         >
           <XMarkIcon className="w-5 h-5" />
         </button>
@@ -237,7 +237,7 @@ export default function IndigenousVerificationRequest({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Ownership/Leadership */}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-slate-300">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             Please indicate (select all that apply):
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
@@ -245,9 +245,9 @@ export default function IndigenousVerificationRequest({
               type="checkbox"
               checked={isIndigenousOwned}
               onChange={(e) => setIsIndigenousOwned(e.target.checked)}
-              className="h-4 w-4 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500"
+              className="h-4 w-4 rounded border-amber-500/50 bg-surface text-amber-500 focus:ring-amber-500"
             />
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-[var(--text-secondary)]">
               Majority Indigenous Owned (51%+)
             </span>
           </label>
@@ -256,9 +256,9 @@ export default function IndigenousVerificationRequest({
               type="checkbox"
               checked={isIndigenousLed}
               onChange={(e) => setIsIndigenousLed(e.target.checked)}
-              className="h-4 w-4 rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500"
+              className="h-4 w-4 rounded border-amber-500/50 bg-surface text-amber-500 focus:ring-amber-500"
             />
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-[var(--text-secondary)]">
               Indigenous Leadership / Management
             </span>
           </label>
@@ -266,7 +266,7 @@ export default function IndigenousVerificationRequest({
 
         {/* Nation Affiliation */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
             Nation / Community Affiliation (Optional)
           </label>
           <input
@@ -274,13 +274,13 @@ export default function IndigenousVerificationRequest({
             value={nationAffiliation}
             onChange={(e) => setNationAffiliation(e.target.value)}
             placeholder="e.g., Cree Nation, Métis Nation of Ontario"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+            className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-amber-500 focus:outline-none"
           />
         </div>
 
         {/* Certifications */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
             Certifications (Optional)
           </label>
           <input
@@ -288,16 +288,16 @@ export default function IndigenousVerificationRequest({
             value={certifications}
             onChange={(e) => setCertifications(e.target.value)}
             placeholder="e.g., CCAB Certified, CAMSC, PAR (separate with commas)"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+            className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-amber-500 focus:outline-none"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-foreground0 mt-1">
             Separate multiple certifications with commas
           </p>
         </div>
 
         {/* Additional Notes */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
             Additional Information (Optional)
           </label>
           <textarea
@@ -305,7 +305,7 @@ export default function IndigenousVerificationRequest({
             onChange={(e) => setRequestNotes(e.target.value)}
             placeholder="Any additional details to support your verification request..."
             rows={3}
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 placeholder-slate-500 focus:border-amber-500 focus:outline-none resize-none"
+            className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground placeholder-slate-500 focus:border-amber-500 focus:outline-none resize-none"
           />
         </div>
 
@@ -324,7 +324,7 @@ export default function IndigenousVerificationRequest({
           <button
             type="button"
             onClick={() => setShowForm(false)}
-            className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            className="rounded-lg border border-[var(--card-border)] px-4 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Cancel
           </button>

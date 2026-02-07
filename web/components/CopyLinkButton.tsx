@@ -38,11 +38,11 @@ export function CopyLinkButton({ url, className = "" }: CopyLinkButtonProps) {
         <button
             onClick={handleCopy}
             aria-label={copied ? "Link copied to clipboard" : "Copy link to clipboard"}
-            className={`flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:bg-slate-800 hover:text-white ${className}`}
+            className={`flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--card-border)] hover:bg-surface hover:text-white ${className}`}
         >
             {copied ? (
                 <>
-                    <CheckIcon className="h-4 w-4 text-emerald-400" />
+                    <CheckIcon className="h-4 w-4 text-accent" />
                     Copied!
                 </>
             ) : (

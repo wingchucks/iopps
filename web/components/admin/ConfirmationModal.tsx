@@ -70,9 +70,9 @@ const variantConfig: Record<
   },
   info: {
     icon: InformationCircleIcon,
-    iconBgClass: "bg-teal-500/10",
-    iconClass: "text-teal-400",
-    confirmButtonClass: "bg-teal-600 hover:bg-teal-500 text-white",
+    iconBgClass: "bg-accent/10",
+    iconClass: "text-accent",
+    confirmButtonClass: "bg-accent hover:bg-accent text-white",
   },
 };
 
@@ -145,7 +145,7 @@ export function ConfirmationModal({
     >
       <div
         ref={modalRef}
-        className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-xl border border-[var(--card-border)] bg-surface p-6 shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start gap-4">
@@ -157,11 +157,11 @@ export function ConfirmationModal({
           <div className="flex-1">
             <h3
               id="modal-title"
-              className="text-lg font-semibold text-slate-100"
+              className="text-lg font-semibold text-foreground"
             >
               {title}
             </h3>
-            <div className="mt-2 text-sm text-slate-400">{message}</div>
+            <div className="mt-2 text-sm text-[var(--text-muted)]">{message}</div>
             {warningText && (
               <p className="mt-2 text-sm font-medium text-red-400">
                 {warningText}
@@ -171,7 +171,7 @@ export function ConfirmationModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-shrink-0 rounded-lg p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300 disabled:opacity-50"
+            className="flex-shrink-0 rounded-lg p-1 text-foreground0 hover:bg-surface hover:text-[var(--text-secondary)] disabled:opacity-50"
             aria-label="Close"
           >
             <XMarkIcon className="h-5 w-5" />
@@ -183,7 +183,7 @@ export function ConfirmationModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 disabled:opacity-50"
+            className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-surface disabled:opacity-50"
           >
             {cancelText}
           </button>

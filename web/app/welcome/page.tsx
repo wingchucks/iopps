@@ -117,7 +117,7 @@ export default function WelcomePage() {
               }`}
             >
               <svg
-                className="h-10 w-10 text-emerald-500"
+                className="h-10 w-10 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -142,7 +142,7 @@ export default function WelcomePage() {
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
             Welcome, {displayName}!
           </h1>
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-foreground0">
             Your account is ready. Here&apos;s what to do next.
           </p>
 
@@ -158,7 +158,7 @@ export default function WelcomePage() {
               >
                 <step.icon className="mb-3 h-6 w-6 text-teal-600" />
                 <h2 className="font-semibold text-slate-900">{step.title}</h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-foreground0">
                   {step.description}
                 </p>
               </Link>

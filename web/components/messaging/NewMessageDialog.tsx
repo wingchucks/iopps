@@ -160,7 +160,7 @@ export default function NewMessageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-slate-700 bg-slate-900 text-white sm:max-w-md">
+      <DialogContent className="border-[var(--card-border)] bg-surface text-white sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-white">
             {selectedMember ? (
@@ -169,7 +169,7 @@ export default function NewMessageDialog({
                   setSelectedMember(null);
                   setError(null);
                 }}
-                className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to search
@@ -178,7 +178,7 @@ export default function NewMessageDialog({
               "New Message"
             )}
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-[var(--text-muted)]">
             {selectedMember
               ? `Send a message to ${selectedMember.displayName}`
               : "Search for a member to start a conversation"}
@@ -189,21 +189,21 @@ export default function NewMessageDialog({
           // Search view
           <div className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
 
             <div className="max-h-64 overflow-y-auto">
               {searching ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-[var(--text-muted)]" />
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="space-y-1">
@@ -224,7 +224,7 @@ export default function NewMessageDialog({
                           {member.displayName}
                         </p>
                         {member.indigenousAffiliation && (
-                          <p className="truncate text-xs text-slate-400">
+                          <p className="truncate text-xs text-[var(--text-muted)]">
                             {member.indigenousAffiliation}
                           </p>
                         )}
@@ -234,11 +234,11 @@ export default function NewMessageDialog({
                 </div>
               ) : searchQuery.trim() ? (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-slate-400">No members found</p>
+                  <p className="text-sm text-[var(--text-muted)]">No members found</p>
                 </div>
               ) : (
                 <div className="py-8 text-center">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground0">
                     Type a name to search
                   </p>
                 </div>
@@ -248,7 +248,7 @@ export default function NewMessageDialog({
         ) : (
           // Compose view
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg bg-slate-800/50 p-3">
+            <div className="flex items-center gap-3 rounded-lg bg-surface p-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={selectedMember.photoURL} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-sm">
@@ -260,7 +260,7 @@ export default function NewMessageDialog({
                   {selectedMember.displayName}
                 </p>
                 {selectedMember.indigenousAffiliation && (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[var(--text-muted)]">
                     {selectedMember.indigenousAffiliation}
                   </p>
                 )}
@@ -280,7 +280,7 @@ export default function NewMessageDialog({
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Write your message..."
               rows={4}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full resize-none rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
 
             <button

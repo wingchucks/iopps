@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-slate-900">
             Privacy Policy
           </h1>
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-foreground0">
             Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function PrivacyPolicyPage() {
               <li>Access controls and user permissions</li>
               <li>Secure cloud storage through Firebase/Google Cloud</li>
             </ul>
-            <p className="text-sm text-slate-500 mt-4 italic">
+            <p className="text-sm text-foreground0 mt-4 italic">
               No method of transmission over the Internet is 100% secure. We cannot guarantee absolute security.
             </p>
           </section>

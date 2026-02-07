@@ -119,7 +119,7 @@ export default function EmailVerificationBanner({
             {sent && (
               <button
                 onClick={() => setSent(false)}
-                className="inline-flex items-center gap-2 rounded-lg bg-slate-700/50 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700"
+                className="inline-flex items-center gap-2 rounded-lg bg-slate-700/50 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-slate-700"
               >
                 Send Again
               </button>

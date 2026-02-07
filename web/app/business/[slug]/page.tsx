@@ -111,7 +111,7 @@ function StatusBanner({ status }: { status: string }) {
         <Icon className={`h-6 w-6 flex-shrink-0 ${config.textColor}`} />
         <div>
           <h3 className={`font-semibold ${config.textColor}`}>{config.title}</h3>
-          <p className="mt-1 text-sm text-slate-500">{config.message}</p>
+          <p className="mt-1 text-sm text-foreground0">{config.message}</p>
         </div>
       </div>
     </div>
@@ -170,7 +170,7 @@ async function VendorPage({ params, searchParams }: Props) {
         {/* Back Link */}
         <Link
           href="/business"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-teal-600 mb-6"
+          className="inline-flex items-center gap-2 text-sm text-foreground0 transition-colors hover:text-teal-600 mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Indigenous Marketplace
@@ -228,7 +228,7 @@ async function VendorPage({ params, searchParams }: Props) {
                 </span>
               )}
               {vendor.verified && (
-                <span className="flex items-center gap-1.5 rounded-full bg-teal-500/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
+                <span className="flex items-center gap-1.5 rounded-full bg-accent/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
                   <CheckBadgeIcon className="h-4 w-4" />
                   Verified
                 </span>
@@ -266,7 +266,7 @@ async function VendorPage({ params, searchParams }: Props) {
                 <div>
                   <h1 className="text-3xl font-bold text-slate-900">{vendor.businessName}</h1>
                   {vendor.tagline && (
-                    <p className="mt-1 text-lg text-slate-500">{vendor.tagline}</p>
+                    <p className="mt-1 text-lg text-foreground0">{vendor.tagline}</p>
                   )}
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <span
@@ -276,7 +276,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       {vendor.category}
                     </span>
                     {vendor.nation && (
-                      <span className="text-sm text-slate-500">{vendor.nation}</span>
+                      <span className="text-sm text-foreground0">{vendor.nation}</span>
                     )}
                   </div>
                 </div>
@@ -288,7 +288,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-pink-50 hover:text-pink-600"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-foreground0 transition-colors hover:bg-pink-50 hover:text-pink-600"
                     >
                       <InstagramIcon className="h-5 w-5" />
                     </a>
@@ -298,7 +298,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-foreground0 transition-colors hover:bg-blue-50 hover:text-blue-600"
                     >
                       <FacebookIcon className="h-5 w-5" />
                     </a>
@@ -308,7 +308,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={`https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-foreground0 transition-colors hover:bg-slate-100 hover:text-slate-900"
                     >
                       <TikTokIcon className="h-5 w-5" />
                     </a>
@@ -318,7 +318,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-teal-50 hover:text-teal-600"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-foreground0 transition-colors hover:bg-teal-50 hover:text-teal-600"
                     >
                       <GlobeAltIcon className="h-5 w-5" />
                     </a>
@@ -386,10 +386,10 @@ async function VendorPage({ params, searchParams }: Props) {
               <div className="space-y-3">
                 {vendor.location && (
                   <div className="flex items-start gap-3 text-slate-600">
-                    <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+                    <MapPinIcon className="h-5 w-5 text-foreground0 flex-shrink-0 mt-0.5" />
                     <div>
                       <p>{vendor.location}</p>
-                      <p className="text-sm text-slate-500">{vendor.region}</p>
+                      <p className="text-sm text-foreground0">{vendor.region}</p>
                     </div>
                   </div>
                 )}
@@ -398,7 +398,7 @@ async function VendorPage({ params, searchParams }: Props) {
                     href={`mailto:${vendor.email}`}
                     className="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors"
                   >
-                    <EnvelopeIcon className="h-5 w-5 text-slate-500" />
+                    <EnvelopeIcon className="h-5 w-5 text-foreground0" />
                     {vendor.email}
                   </a>
                 )}
@@ -407,7 +407,7 @@ async function VendorPage({ params, searchParams }: Props) {
                     href={`tel:${vendor.phone}`}
                     className="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors"
                   >
-                    <PhoneIcon className="h-5 w-5 text-slate-500" />
+                    <PhoneIcon className="h-5 w-5 text-foreground0" />
                     {vendor.phone}
                   </a>
                 )}
@@ -439,12 +439,12 @@ async function VendorPage({ params, searchParams }: Props) {
                   </div>
                 )}
                 {vendor.onlineOnly ? (
-                  <div className="flex items-center gap-3 text-slate-500">
+                  <div className="flex items-center gap-3 text-foreground0">
                     <GlobeAltIcon className="h-5 w-5" />
                     <span>Online only</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 text-slate-500">
+                  <div className="flex items-center gap-3 text-foreground0">
                     <MapPinIcon className="h-5 w-5" />
                     <span>Physical location available</span>
                   </div>
@@ -488,13 +488,13 @@ function ProductCard({ product, themeColor }: { product: VendorProduct; themeCol
         <h4 className="font-semibold text-slate-900 group-hover:text-teal-600 transition-colors" style={{ color: undefined }} /* We want hover effect */>
           {product.name}
         </h4>
-        <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.description}</p>
+        <p className="mt-1 text-sm text-foreground0 line-clamp-2">{product.description}</p>
         {(product.priceDisplay || product.price) && (
           <p className="mt-2 font-semibold" style={{ color }}>
             {product.priceDisplay || `$${(product.price! / 100).toFixed(2)}`}
           </p>
         )}
-        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+        <div className="mt-2 flex items-center gap-2 text-xs text-foreground0">
           {product.madeToOrder && <span className="rounded bg-slate-100 px-2 py-0.5">Made to order</span>}
           {!product.inStock && <span className="rounded bg-amber-50 text-amber-600 px-2 py-0.5">Out of stock</span>}
         </div>

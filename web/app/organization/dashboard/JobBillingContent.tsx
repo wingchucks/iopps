@@ -67,7 +67,7 @@ export default function BillingTab() {
         const expiresAt = job.expiresAt;
 
         if (!expiresAt) {
-            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-400">Unknown</span>;
+            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">Unknown</span>;
         }
 
         let expiryDate: Date;
@@ -78,7 +78,7 @@ export default function BillingTab() {
         } else if ('toDate' in expiresAt) {
             expiryDate = expiresAt.toDate();
         } else {
-            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-400">Unknown</span>;
+            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">Unknown</span>;
         }
 
         if (expiryDate < now) {
@@ -122,10 +122,10 @@ export default function BillingTab() {
 
     if (loading) {
         return (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-8">
                 <div className="flex items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-emerald-500"></div>
-                    <span className="ml-3 text-slate-400">Loading payment history...</span>
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-accent"></div>
+                    <span className="ml-3 text-[var(--text-muted)]">Loading payment history...</span>
                 </div>
             </div>
         );
@@ -135,19 +135,19 @@ export default function BillingTab() {
         <div className="space-y-6">
             {/* Free Posting Status Banner */}
             {employerProfile?.freePostingEnabled && (
-                <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 p-6">
+                <div className="rounded-2xl border border-accent/30 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 p-6">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
-                            <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
+                            <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold text-emerald-400">Free Posting Access Active</h3>
-                            <p className="mt-1 text-sm text-slate-300">
+                            <h3 className="text-lg font-bold text-accent">Free Posting Access Active</h3>
+                            <p className="mt-1 text-sm text-[var(--text-secondary)]">
                                 Your account has been granted free job posting access by IOPPS admin.
                                 {employerProfile.freePostingReason && (
-                                    <span className="ml-1 text-slate-400">
+                                    <span className="ml-1 text-[var(--text-muted)]">
                                         Reason: {employerProfile.freePostingReason}
                                     </span>
                                 )}
@@ -155,7 +155,7 @@ export default function BillingTab() {
                         </div>
                         <Link
                             href="/organization/jobs/new"
-                            className="flex-shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                            className="flex-shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent"
                         >
                             Post Free Job
                         </Link>
@@ -165,24 +165,24 @@ export default function BillingTab() {
 
             {/* Summary Cards */}
             <div className="grid gap-6 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 p-6">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-slate-400">Total Spent</p>
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Total Spent</p>
                             <p className="mt-2 text-3xl font-bold text-white">${calculateTotalSpent().toFixed(2)}</p>
                         </div>
-                        <div className="rounded-full bg-emerald-500/20 p-3">
-                            <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="rounded-full bg-accent/20 p-3">
+                            <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-6">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-slate-400">Active Jobs</p>
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Active Jobs</p>
                             <p className="mt-2 text-3xl font-bold text-white">{getActiveJobsCount()}</p>
                         </div>
                         <div className="rounded-full bg-blue-500/20 p-3">
@@ -193,10 +193,10 @@ export default function BillingTab() {
                     </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-6">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-slate-400">Total Postings</p>
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Total Postings</p>
                             <p className="mt-2 text-3xl font-bold text-white">{paidJobs.length}</p>
                         </div>
                         <div className="rounded-full bg-purple-500/20 p-3">
@@ -209,34 +209,34 @@ export default function BillingTab() {
             </div>
 
             {/* Payment History Table */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-white">Payment History</h2>
-                        <p className="mt-1 text-sm text-slate-400">View all your job posting payments and receipts</p>
+                        <p className="mt-1 text-sm text-[var(--text-muted)]">View all your job posting payments and receipts</p>
                     </div>
                     <Link
                         href="/organization/jobs/new"
-                        className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent"
                     >
                         + Post New Job
                     </Link>
                 </div>
 
                 {paidJobs.length === 0 ? (
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-12 text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-800/40">
-                            <svg className="h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="rounded-xl border border-[var(--card-border)] bg-background/40 p-12 text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface">
+                            <svg className="h-8 w-8 text-foreground0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-200">No payment history yet</h3>
-                        <p className="mt-2 text-sm text-slate-400">
+                        <h3 className="text-lg font-semibold text-foreground">No payment history yet</h3>
+                        <p className="mt-2 text-sm text-[var(--text-muted)]">
                             Post your first job to see your payment history here
                         </p>
                         <Link
                             href="/organization/jobs/new"
-                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -248,7 +248,7 @@ export default function BillingTab() {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-800 text-left text-sm font-semibold text-slate-400">
+                                <tr className="border-b border-[var(--card-border)] text-left text-sm font-semibold text-[var(--text-muted)]">
                                     <th className="pb-3">Job Title</th>
                                     <th className="pb-3">Package</th>
                                     <th className="pb-3">Amount</th>
@@ -258,24 +258,24 @@ export default function BillingTab() {
                                     <th className="pb-3">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800">
+                            <tbody className="divide-y divide-[var(--card-border)]">
                                 {paidJobs.map((job) => (
                                     <tr key={job.id} className="text-sm hover:bg-slate-800/30">
                                         <td className="py-4">
-                                            <Link href={`/careers/${job.id}`} className="font-medium text-white hover:text-emerald-400">
+                                            <Link href={`/careers/${job.id}`} className="font-medium text-white hover:text-accent">
                                                 {job.title}
                                             </Link>
-                                            <p className="text-xs text-slate-500">{job.location}</p>
+                                            <p className="text-xs text-foreground0">{job.location}</p>
                                         </td>
                                         <td className="py-4">
                                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
                                                 job.productType === "FEATURED"
                                                     ? "bg-amber-500/10 text-amber-400"
                                                     : job.productType === "FREE_POSTING"
-                                                        ? "bg-emerald-500/10 text-emerald-400"
+                                                        ? "bg-accent/10 text-accent"
                                                         : job.productType === "SUBSCRIPTION"
                                                             ? "bg-blue-500/10 text-blue-400"
-                                                            : "bg-slate-500/10 text-slate-400"
+                                                            : "bg-slate-500/10 text-[var(--text-muted)]"
                                                 }`}>
                                                 {job.productType === "FEATURED" ? (
                                                     <>
@@ -298,13 +298,13 @@ export default function BillingTab() {
                                                 )}
                                             </span>
                                         </td>
-                                        <td className="py-4 font-semibold text-emerald-400">
+                                        <td className="py-4 font-semibold text-accent">
                                             ${((job.amountPaid || 0) / 100).toFixed(2)}
                                         </td>
-                                        <td className="py-4 text-slate-300">
+                                        <td className="py-4 text-[var(--text-secondary)]">
                                             {formatDate(job.createdAt)}
                                         </td>
-                                        <td className="py-4 text-slate-300">
+                                        <td className="py-4 text-[var(--text-secondary)]">
                                             {formatDate(job.expiresAt)}
                                         </td>
                                         <td className="py-4">
@@ -314,7 +314,7 @@ export default function BillingTab() {
                                             <div className="flex items-center gap-2">
                                                 <Link
                                                     href={`/organization/jobs/${job.id}/edit`}
-                                                    className="text-slate-400 transition hover:text-emerald-400"
+                                                    className="text-[var(--text-muted)] transition hover:text-accent"
                                                     title="Edit job"
                                                 >
                                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -323,7 +323,7 @@ export default function BillingTab() {
                                                 </Link>
                                                 <Link
                                                     href={`/careers/${job.id}`}
-                                                    className="text-slate-400 transition hover:text-blue-400"
+                                                    className="text-[var(--text-muted)] transition hover:text-blue-400"
                                                     title="View job"
                                                 >
                                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,30 +342,30 @@ export default function BillingTab() {
             </div>
 
             {/* Payment Tips */}
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
+            <div className="rounded-2xl border border-accent/20 bg-accent/5 p-6">
                 <div className="flex items-start gap-4">
-                    <div className="rounded-full bg-emerald-500/20 p-2">
-                        <svg className="h-6 w-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="rounded-full bg-accent/20 p-2">
+                        <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div className="flex-1">
-                        <h3 className="font-semibold text-emerald-400">Payment & Billing Tips</h3>
-                        <ul className="mt-2 space-y-2 text-sm text-slate-300">
+                        <h3 className="font-semibold text-accent">Payment & Billing Tips</h3>
+                        <ul className="mt-2 space-y-2 text-sm text-[var(--text-secondary)]">
                             <li className="flex items-start gap-2">
-                                <span className="text-emerald-500">ΓÇó</span>
+                                <span className="text-accent">ΓÇó</span>
                                 <span>Job postings automatically expire after their purchased duration (30 or 45 days)</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-emerald-500">ΓÇó</span>
+                                <span className="text-accent">ΓÇó</span>
                                 <span>You&apos;ll receive email notifications 7 days before expiration</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-emerald-500">ΓÇó</span>
+                                <span className="text-accent">ΓÇó</span>
                                 <span>Featured jobs ($300) get premium placement and branding</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-emerald-500">ΓÇó</span>
+                                <span className="text-accent">ΓÇó</span>
                                 <span>All payments are processed securely through Stripe</span>
                             </li>
                         </ul>

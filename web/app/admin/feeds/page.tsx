@@ -427,7 +427,7 @@ export default function AdminFeedsPage() {
     if (authLoading || loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <p className="text-slate-400">Loading feeds...</p>
+                <p className="text-[var(--text-muted)]">Loading feeds...</p>
             </div>
         );
     }
@@ -441,34 +441,34 @@ export default function AdminFeedsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-100">Job Auto Import</h1>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <h1 className="text-2xl font-bold text-foreground">Job Auto Import</h1>
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">
                         Import jobs automatically from XML/JSON feed or employer ATS.
                     </p>
                 </div>
                 <button
                     onClick={openAddModal}
-                    className="rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
                 >
                     Add new auto import
                 </button>
             </div>
 
             {/* Feeds Table */}
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+            <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 overflow-hidden">
                 {feeds.length === 0 ? (
                     <div className="p-12 text-center">
                         <svg className="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
                         </svg>
-                        <p className="mt-4 text-slate-400">
+                        <p className="mt-4 text-[var(--text-muted)]">
                             No auto imports configured yet. Add one to start importing jobs automatically.
                         </p>
                     </div>
                 ) : (
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-slate-800 text-left text-sm text-slate-400">
+                            <tr className="border-b border-[var(--card-border)] text-left text-sm text-[var(--text-muted)]">
                                 <th className="px-6 py-4 font-medium">Name</th>
                                 <th className="px-6 py-4 font-medium">Employer</th>
                                 <th className="px-6 py-4 font-medium">Last Import</th>
@@ -478,19 +478,19 @@ export default function AdminFeedsPage() {
                                 <th className="px-6 py-4 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800">
+                        <tbody className="divide-y divide-[var(--card-border)]">
                             {feeds.map((feed) => (
                                 <tr key={feed.id} className="text-sm hover:bg-slate-800/30 transition-colors">
                                     <td className="px-6 py-4">
-                                        <div className="font-medium text-slate-100">{feed.feedName}</div>
-                                        <div className="text-xs text-slate-500 truncate max-w-[200px]" title={feed.feedUrl}>
+                                        <div className="font-medium text-foreground">{feed.feedName}</div>
+                                        <div className="text-xs text-foreground0 truncate max-w-[200px]" title={feed.feedUrl}>
                                             {feed.feedUrl}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-300">
+                                    <td className="px-6 py-4 text-[var(--text-secondary)]">
                                         {feed.employerName || feed.employerId}
                                     </td>
-                                    <td className="px-6 py-4 text-slate-300">
+                                    <td className="px-6 py-4 text-[var(--text-secondary)]">
                                         {feed.lastSyncedAt ? (
                                             new Date(feed.lastSyncedAt.seconds * 1000).toLocaleString("en-US", {
                                                 month: "short",
@@ -500,10 +500,10 @@ export default function AdminFeedsPage() {
                                                 minute: "2-digit",
                                             })
                                         ) : (
-                                            <span className="text-slate-500">Never</span>
+                                            <span className="text-foreground0">Never</span>
                                         )}
                                     </td>
-                                    <td className="px-6 py-4 text-slate-300">
+                                    <td className="px-6 py-4 text-[var(--text-secondary)]">
                                         {feed.totalJobsImported ?? 0}
                                     </td>
                                     <td className="px-6 py-4">
@@ -529,7 +529,7 @@ export default function AdminFeedsPage() {
                                                 </span>
                                             )}
                                             {feed.jobExpiration?.type === "days" && (
-                                                <span className="inline-flex items-center rounded bg-slate-500/20 px-1.5 py-0.5 text-xs text-slate-400">
+                                                <span className="inline-flex items-center rounded bg-slate-500/20 px-1.5 py-0.5 text-xs text-[var(--text-muted)]">
                                                     {feed.jobExpiration.daysAfterImport}d
                                                 </span>
                                             )}
@@ -537,11 +537,11 @@ export default function AdminFeedsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         {feed.active ? (
-                                            <span className="inline-flex items-center rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                                            <span className="inline-flex items-center rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-medium text-accent">
                                                 Active
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center rounded-full bg-slate-700 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                                            <span className="inline-flex items-center rounded-full bg-slate-700 px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">
                                                 Inactive
                                             </span>
                                         )}
@@ -556,28 +556,28 @@ export default function AdminFeedsPage() {
                                             <button
                                                 onClick={() => syncFeed(feed.id)}
                                                 disabled={syncing === feed.id || !feed.active}
-                                                className="rounded-md bg-[#14B8A6] px-3 py-1.5 text-xs font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
+                                                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
                                                 title="Import jobs now"
                                             >
                                                 {syncing === feed.id ? "Importing..." : "Import"}
                                             </button>
                                             <button
                                                 onClick={() => openEditModal(feed)}
-                                                className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 transition hover:border-slate-600 hover:bg-slate-800"
+                                                className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] transition hover:border-[var(--card-border)] hover:bg-surface"
                                                 title="Edit"
                                             >
                                                 Edit
                                             </button>
                                             <button
                                                 onClick={() => toggleFeedStatus(feed.id, feed.active)}
-                                                className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 transition hover:border-slate-600 hover:bg-slate-800"
+                                                className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-xs text-[var(--text-secondary)] transition hover:border-[var(--card-border)] hover:bg-surface"
                                                 title={feed.active ? "Deactivate" : "Activate"}
                                             >
                                                 {feed.active ? "Pause" : "Resume"}
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteFeed(feed.id, feed.feedName)}
-                                                className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-500/10 hover:text-red-400"
+                                                className="rounded-md p-1.5 text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-400"
                                                 title="Delete"
                                             >
                                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -596,9 +596,9 @@ export default function AdminFeedsPage() {
             {/* Add Feed Modal */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                        <h2 className="text-xl font-bold text-slate-50">Add New Auto Import</h2>
-                        <p className="mt-1 text-sm text-slate-400">Connect an XML/JSON job feed to automatically import jobs.</p>
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-surface p-6">
+                        <h2 className="text-xl font-bold text-foreground">Add New Auto Import</h2>
+                        <p className="mt-1 text-sm text-[var(--text-muted)]">Connect an XML/JSON job feed to automatically import jobs.</p>
                         <form onSubmit={handleAddFeed} className="mt-6">
                             <FeedForm
                                 feedUrl={feedUrl}
@@ -634,17 +634,17 @@ export default function AdminFeedsPage() {
                                 onDetectFields={() => detectFieldsFromUrl(feedUrl)}
                                 detectingFields={detectingFields}
                             />
-                            <div className="flex gap-3 pt-6 border-t border-slate-800 mt-6">
+                            <div className="flex gap-3 pt-6 border-t border-[var(--card-border)] mt-6">
                                 <button
                                     type="button"
                                     onClick={() => setShowAddModal(false)}
-                                    className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600"
+                                    className="flex-1 rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-semibold text-foreground transition hover:border-[var(--card-border)]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                                    className="flex-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
                                 >
                                     Add Import
                                 </button>
@@ -657,9 +657,9 @@ export default function AdminFeedsPage() {
             {/* Edit Feed Modal */}
             {showEditModal && editingFeed && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                        <h2 className="text-xl font-bold text-slate-50">Edit Auto Import</h2>
-                        <p className="mt-1 text-sm text-slate-400">Update the feed configuration for &ldquo;{editingFeed.feedName}&rdquo;</p>
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-surface p-6">
+                        <h2 className="text-xl font-bold text-foreground">Edit Auto Import</h2>
+                        <p className="mt-1 text-sm text-[var(--text-muted)]">Update the feed configuration for &ldquo;{editingFeed.feedName}&rdquo;</p>
                         <form onSubmit={handleUpdateFeed} className="mt-6">
                             <FeedForm
                                 feedUrl={feedUrl}
@@ -695,7 +695,7 @@ export default function AdminFeedsPage() {
                                 onDetectFields={() => detectFieldsFromUrl(feedUrl)}
                                 detectingFields={detectingFields}
                             />
-                            <div className="flex gap-3 pt-6 border-t border-slate-800 mt-6">
+                            <div className="flex gap-3 pt-6 border-t border-[var(--card-border)] mt-6">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -703,13 +703,13 @@ export default function AdminFeedsPage() {
                                         setEditingFeed(null);
                                         resetForm();
                                     }}
-                                    className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600"
+                                    className="flex-1 rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-semibold text-foreground transition hover:border-[var(--card-border)]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                                    className="flex-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
                                 >
                                     Save Changes
                                 </button>

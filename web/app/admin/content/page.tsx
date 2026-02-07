@@ -61,9 +61,9 @@ export default function AdminContentPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-[#020306] px-4 py-10">
+            <div className="min-h-screen bg-background px-4 py-10">
                 <div className="mx-auto max-w-7xl">
-                    <p className="text-slate-400">Loading content...</p>
+                    <p className="text-[var(--text-muted)]">Loading content...</p>
                 </div>
             </div>
         );
@@ -81,22 +81,22 @@ export default function AdminContentPage() {
     const newCount = submissions.filter((s) => (s.status || "new") === "new").length;
 
     return (
-        <div className="min-h-screen bg-[#020306]">
+        <div className="min-h-screen bg-background">
             {/* Header */}
-            <div className="border-b border-slate-800 bg-[#08090C]">
+            <div className="border-b border-[var(--card-border)] bg-surface">
                 <div className="mx-auto max-w-7xl px-4 py-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <Link
                                 href="/admin"
-                                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
                             >
                                 ← Admin Dashboard
                             </Link>
-                            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+                            <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                                 Content Moderation
                             </h1>
-                            <p className="mt-1 text-sm text-slate-400">
+                            <p className="mt-1 text-sm text-[var(--text-muted)]">
                                 Manage contact submissions and platform content
                             </p>
                         </div>
@@ -107,8 +107,8 @@ export default function AdminContentPage() {
             {/* Main Content */}
             <div className="mx-auto max-w-7xl px-4 py-8">
                 <div className="mb-8">
-                    <h2 className="text-xl font-semibold text-slate-50">Contact Messages</h2>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <h2 className="text-xl font-semibold text-foreground">Contact Messages</h2>
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">
                         Review and manage messages from the contact form.
                     </p>
                 </div>
@@ -118,8 +118,8 @@ export default function AdminContentPage() {
                     <button
                         onClick={() => setFilter("all")}
                         className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                                ? "bg-[#14B8A6] text-slate-900"
-                                : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+                                ? "bg-accent text-slate-900"
+                                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
                             }`}
                     >
                         All ({submissions.length})
@@ -128,7 +128,7 @@ export default function AdminContentPage() {
                         onClick={() => setFilter("new")}
                         className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "new"
                                 ? "bg-blue-500 text-white"
-                                : "border border-slate-700 text-slate-300 hover:border-blue-500"
+                                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-blue-500"
                             }`}
                     >
                         New ({newCount})
@@ -137,7 +137,7 @@ export default function AdminContentPage() {
                         onClick={() => setFilter("read")}
                         className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "read"
                                 ? "bg-slate-700 text-white"
-                                : "border border-slate-700 text-slate-300 hover:border-slate-500"
+                                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
                             }`}
                     >
                         Read
@@ -146,7 +146,7 @@ export default function AdminContentPage() {
                         onClick={() => setFilter("responded")}
                         className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "responded"
                                 ? "bg-green-600 text-white"
-                                : "border border-slate-700 text-slate-300 hover:border-green-600"
+                                : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-600"
                             }`}
                     >
                         Responded
@@ -156,8 +156,8 @@ export default function AdminContentPage() {
                 {/* Messages List */}
                 <div className="space-y-4">
                     {filteredSubmissions.length === 0 ? (
-                        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-                            <p className="text-slate-400">No messages found.</p>
+                        <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
+                            <p className="text-[var(--text-muted)]">No messages found.</p>
                         </div>
                     ) : (
                         filteredSubmissions.map((sub) => (
@@ -165,20 +165,20 @@ export default function AdminContentPage() {
                                 key={sub.id}
                                 className={`rounded-xl border p-6 transition ${(sub.status || "new") === "new"
                                         ? "border-blue-500/30 bg-blue-500/5"
-                                        : "border-slate-800 bg-slate-900/60"
+                                        : "border-[var(--card-border)] bg-slate-900/60"
                                     }`}
                             >
                                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3">
-                                            <h3 className="font-semibold text-slate-50">{sub.subject || "No Subject"}</h3>
+                                            <h3 className="font-semibold text-foreground">{sub.subject || "No Subject"}</h3>
                                             {(sub.status || "new") === "new" && (
                                                 <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
                                                     New
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--text-muted)]">
                                             <span>{sub.name}</span>
                                             <span>&bull;</span>
                                             <a href={`mailto:${sub.email}`} className="hover:text-[#14B8A6]">
@@ -191,7 +191,7 @@ export default function AdminContentPage() {
                                                     : "Unknown date"}
                                             </span>
                                         </div>
-                                        <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-300">
+                                        <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
                                             {sub.message}
                                         </p>
                                     </div>
@@ -201,7 +201,7 @@ export default function AdminContentPage() {
                                             <button
                                                 onClick={() => updateStatus(sub.id, "read")}
                                                 disabled={processing === sub.id}
-                                                className="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                                                className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-surface disabled:opacity-50"
                                             >
                                                 Mark as Read
                                             </button>
@@ -210,14 +210,14 @@ export default function AdminContentPage() {
                                             <button
                                                 onClick={() => updateStatus(sub.id, "responded")}
                                                 disabled={processing === sub.id}
-                                                className="rounded-md bg-[#14B8A6] px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-[#12a695] disabled:opacity-50"
+                                                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-[#12a695] disabled:opacity-50"
                                             >
                                                 Mark Responded
                                             </button>
                                         )}
                                         <a
                                             href={`mailto:${sub.email}?subject=Re: ${sub.subject || "IOPPS Inquiry"}`}
-                                            className="rounded-md border border-slate-700 px-3 py-1.5 text-center text-xs font-medium text-slate-300 hover:bg-slate-800"
+                                            className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-center text-xs font-medium text-[var(--text-secondary)] hover:bg-surface"
                                         >
                                             Reply via Email
                                         </a>

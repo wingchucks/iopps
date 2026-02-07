@@ -62,9 +62,9 @@ export function SalaryRangeInput({
           checked={value.disclosed === false}
           onChange={handleDisclosedToggle}
           disabled={disabled}
-          className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+          className="w-4 h-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-background"
         />
-        <span className="text-sm text-slate-300">Don&apos;t disclose salary</span>
+        <span className="text-sm text-[var(--text-secondary)]">Don&apos;t disclose salary</span>
       </label>
 
       {value.disclosed !== false && (
@@ -72,12 +72,12 @@ export function SalaryRangeInput({
           {/* Currency and Period Selection */}
           <div className="flex gap-3">
             <div className="w-32">
-              <label className="block text-xs text-slate-400 mb-1">Currency</label>
+              <label className="block text-xs text-[var(--text-muted)] mb-1">Currency</label>
               <select
                 value={currency}
                 onChange={(e) => handleChange("currency", e.target.value)}
                 disabled={disabled}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-[#14B8A6]"
+                className="w-full px-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground text-sm focus:outline-none focus:border-[#14B8A6]"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -87,12 +87,12 @@ export function SalaryRangeInput({
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">Period</label>
+              <label className="block text-xs text-[var(--text-muted)] mb-1">Period</label>
               <select
                 value={value.period || "yearly"}
                 onChange={(e) => handleChange("period", e.target.value as SalaryPeriod)}
                 disabled={disabled}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-[#14B8A6]"
+                className="w-full px-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground text-sm focus:outline-none focus:border-[#14B8A6]"
               >
                 {SALARY_PERIODS.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -106,9 +106,9 @@ export function SalaryRangeInput({
           {/* Min/Max Inputs */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">Minimum</label>
+              <label className="block text-xs text-[var(--text-muted)] mb-1">Minimum</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                   {currencySymbol}
                 </span>
                 <input
@@ -119,15 +119,15 @@ export function SalaryRangeInput({
                   }
                   placeholder="0"
                   disabled={disabled}
-                  className="w-full pl-7 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                  className="w-full pl-7 pr-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground text-sm placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
                 />
               </div>
             </div>
-            <span className="text-slate-500 mt-5">—</span>
+            <span className="text-foreground0 mt-5">—</span>
             <div className="flex-1">
-              <label className="block text-xs text-slate-400 mb-1">Maximum</label>
+              <label className="block text-xs text-[var(--text-muted)] mb-1">Maximum</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                   {currencySymbol}
                 </span>
                 <input
@@ -138,7 +138,7 @@ export function SalaryRangeInput({
                   }
                   placeholder="0"
                   disabled={disabled}
-                  className="w-full pl-7 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                  className="w-full pl-7 pr-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-foreground text-sm placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
                 />
               </div>
             </div>
@@ -146,9 +146,9 @@ export function SalaryRangeInput({
 
           {/* Preview */}
           {(value.min || value.max) && (
-            <div className="text-sm text-slate-400">
+            <div className="text-sm text-[var(--text-muted)]">
               Preview:{" "}
-              <span className="text-slate-200">
+              <span className="text-foreground">
                 {formatSalaryDisplay(value, currencySymbol)}
               </span>
             </div>

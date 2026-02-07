@@ -27,13 +27,13 @@ export function FormProgressIndicator({
   const progress = Math.round((completedCount / sections.length) * 100);
 
   return (
-    <div className={`rounded-xl border border-slate-800 bg-slate-900/50 p-4 ${className}`}>
+    <div className={`rounded-xl border border-[var(--card-border)] bg-surface p-4 ${className}`}>
       {/* Progress Bar */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-slate-300">Form Progress</span>
-        <span className="text-sm font-semibold text-teal-400">{progress}%</span>
+        <span className="text-sm font-medium text-[var(--text-secondary)]">Form Progress</span>
+        <span className="text-sm font-semibold text-accent">{progress}%</span>
       </div>
-      <div className="h-2 bg-slate-800 rounded-full overflow-hidden mb-4">
+      <div className="h-2 bg-surface rounded-full overflow-hidden mb-4">
         <div
           className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}
@@ -48,17 +48,17 @@ export function FormProgressIndicator({
             <div
               key={section.id}
               className={`flex items-center gap-3 text-sm ${
-                isCurrent ? "text-white" : "text-slate-400"
+                isCurrent ? "text-white" : "text-[var(--text-muted)]"
               }`}
             >
               {/* Status Icon */}
               <div
                 className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium ${
                   section.isComplete
-                    ? "bg-teal-500/20 text-teal-400"
+                    ? "bg-accent/20 text-accent"
                     : isCurrent
-                    ? "bg-slate-700 text-white border border-slate-600"
-                    : "bg-slate-800 text-slate-500"
+                    ? "bg-slate-700 text-white border border-[var(--card-border)]"
+                    : "bg-surface text-foreground0"
                 }`}
               >
                 {section.isComplete ? (
@@ -70,7 +70,7 @@ export function FormProgressIndicator({
                 )}
               </div>
               {/* Section Label */}
-              <span className={section.isComplete ? "text-slate-400" : ""}>
+              <span className={section.isComplete ? "text-[var(--text-muted)]" : ""}>
                 {section.label}
               </span>
             </div>

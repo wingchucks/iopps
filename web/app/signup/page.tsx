@@ -24,7 +24,7 @@ export default function SignupPage() {
             <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
               Join IOPPS
             </h1>
-            <p className="mt-2 text-sm text-slate-500 sm:text-base">
+            <p className="mt-2 text-sm text-foreground0 sm:text-base">
               Choose how you&apos;d like to get started
             </p>
           </div>
@@ -58,7 +58,7 @@ export default function SignupPage() {
               <h2 className="mt-4 text-lg font-bold text-slate-900">
                 Community Member
               </h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-foreground0">
                 Search jobs, save opportunities, discover events, connect with
                 your community, and build your professional profile.
               </p>
@@ -86,7 +86,7 @@ export default function SignupPage() {
               href="/signup/organization"
               className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8"
             >
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground0">
                 Free &amp; paid tiers
               </span>
 
@@ -109,7 +109,7 @@ export default function SignupPage() {
               <h2 className="mt-4 text-lg font-bold text-slate-900">
                 Organization
               </h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-foreground0">
                 Post jobs, promote events and scholarships, list your business
                 in Shop Indigenous, and reach the Indigenous community.
               </p>
@@ -133,7 +133,7 @@ export default function SignupPage() {
             </Link>
           </div>
 
-          <p className="mt-8 text-center text-sm text-slate-500">
+          <p className="mt-8 text-center text-sm text-foreground0">
             Already have an account?{" "}
             <Link
               href="/login"

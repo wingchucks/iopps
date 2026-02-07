@@ -31,7 +31,7 @@ export default function OfflinePage() {
               </svg>
             </div>
             {/* Pulsing ring effect */}
-            <div className="absolute inset-0 w-24 h-24 bg-teal-500/10 rounded-full animate-ping"></div>
+            <div className="absolute inset-0 w-24 h-24 bg-accent/10 rounded-full animate-ping"></div>
           </div>
         </div>
 
@@ -40,7 +40,7 @@ export default function OfflinePage() {
           You&apos;re Offline
         </h1>
 
-        <p className="text-slate-500 mb-8 leading-relaxed">
+        <p className="text-foreground0 mb-8 leading-relaxed">
           It looks like you&apos;ve lost your internet connection. Don&apos;t worry, you can still access previously viewed pages.
         </p>
 
@@ -61,7 +61,7 @@ export default function OfflinePage() {
           <h2 className="text-sm font-semibold text-slate-600 mb-2">
             Offline Tips
           </h2>
-          <ul className="text-xs text-slate-500 space-y-1 text-left">
+          <ul className="text-xs text-foreground0 space-y-1 text-left">
             <li>• Check your internet connection</li>
             <li>• Try switching between WiFi and mobile data</li>
             <li>• Disable airplane mode if it's on</li>

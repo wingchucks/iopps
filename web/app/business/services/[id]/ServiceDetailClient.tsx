@@ -48,7 +48,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
         {/* Back Link */}
         <Link
           href="/business/services"
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-foreground0 hover:text-slate-900 transition-colors mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Services
@@ -324,21 +324,21 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
               <dl className="space-y-4">
                 {service.priceRange && (
                   <div>
-                    <dt className="text-sm text-slate-500">Pricing</dt>
+                    <dt className="text-sm text-foreground0">Pricing</dt>
                     <dd className="text-slate-800 font-medium">{service.priceRange}</dd>
                   </div>
                 )}
 
                 {service.yearsExperience && (
                   <div>
-                    <dt className="text-sm text-slate-500">Experience</dt>
+                    <dt className="text-sm text-foreground0">Experience</dt>
                     <dd className="text-slate-800">{service.yearsExperience}+ years</dd>
                   </div>
                 )}
 
                 {service.serviceAreas && service.serviceAreas.length > 0 && (
                   <div>
-                    <dt className="text-sm text-slate-500">Service Areas</dt>
+                    <dt className="text-sm text-foreground0">Service Areas</dt>
                     <dd className="text-slate-800">{service.serviceAreas.join(", ")}</dd>
                   </div>
                 )}

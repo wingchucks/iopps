@@ -127,7 +127,7 @@ export default function OverviewTab({
 
     const getColorClasses = (color: string) => {
         const colors: Record<string, { bg: string; text: string; hover: string }> = {
-            emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", hover: "hover:border-emerald-500/30" },
+            emerald: { bg: "bg-accent/10", text: "text-accent", hover: "hover:border-accent/30" },
             blue: { bg: "bg-blue-500/10", text: "text-blue-400", hover: "hover:border-blue-500/30" },
             purple: { bg: "bg-purple-500/10", text: "text-purple-400", hover: "hover:border-purple-500/30" },
             amber: { bg: "bg-amber-500/10", text: "text-amber-400", hover: "hover:border-amber-500/30" },
@@ -141,18 +141,18 @@ export default function OverviewTab({
         <div className="space-y-8">
             {/* Opportunity Feed Banner */}
             <Link href="/hub" className="block group">
-                <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-slate-900/50 p-6 backdrop-blur transition-all hover:border-teal-500/50 hover:shadow-lg hover:shadow-teal-500/10">
+                <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-slate-900/50 p-6 backdrop-blur transition-all hover:border-accent/50 hover:shadow-lg hover:shadow-teal-500/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-500/20 text-2xl">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/20 text-2xl">
                                 ✨
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-white">Explore the Opportunity Feed</h3>
-                                <p className="text-sm text-slate-400">Discover jobs, scholarships, events, and more — all in one place</p>
+                                <p className="text-sm text-[var(--text-muted)]">Discover jobs, scholarships, events, and more — all in one place</p>
                             </div>
                         </div>
-                        <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/20 text-teal-400 text-sm font-medium group-hover:bg-teal-500/30 transition-colors">
+                        <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-medium group-hover:bg-accent/30 transition-colors">
                             Open Feed
                             <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                         </div>
@@ -167,7 +167,7 @@ export default function OverviewTab({
             <EngagementStats onNavigate={onNavigate} />
 
             {/* Achievement Badges Section */}
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur">
+            <div className="rounded-3xl border border-[var(--card-border)] bg-surface p-6 backdrop-blur">
                 <BadgeDisplay showProgress />
             </div>
 
@@ -175,42 +175,42 @@ export default function OverviewTab({
                 {/* Main Column */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Application Tracker */}
-                    <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur">
+                    <div className="rounded-3xl border border-[var(--card-border)] bg-surface p-6 backdrop-blur">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-bold text-white">Recent Applications</h3>
-                            <button onClick={() => onNavigate("applications")} className="text-sm text-emerald-400 hover:text-emerald-300">
+                            <button onClick={() => onNavigate("applications")} className="text-sm text-accent hover:text-emerald-300">
                                 View All
                             </button>
                         </div>
 
                         <div className="space-y-3">
                             {applications.slice(0, 3).map((app) => (
-                                <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/80 p-4 transition hover:border-slate-700">
+                                <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[var(--card-border)] bg-slate-900/80 p-4 transition hover:border-[var(--card-border)]">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-lg bg-slate-800 text-xl">
+                                        <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-lg bg-surface text-xl">
                                             🏢
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <h4 className="font-semibold text-slate-200 truncate">{app.job?.title || "Job Application"}</h4>
-                                            <p className="text-xs text-slate-500 truncate">{app.job?.employerName || "Employer"}</p>
+                                            <h4 className="font-semibold text-foreground truncate">{app.job?.title || "Job Application"}</h4>
+                                            <p className="text-xs text-foreground0 truncate">{app.job?.employerName || "Employer"}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pl-14 sm:pl-0">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium border ${app.status === 'reviewed' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                            (app.status === 'hired' || app.status === 'shortlisted') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                            (app.status === 'hired' || app.status === 'shortlisted') ? 'bg-accent/10 text-accent border-accent/20' :
                                                 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                             }`}>
                                             {app.status ? (app.status.charAt(0).toUpperCase() + app.status.slice(1)) : "Submitted"}
                                         </span>
-                                        <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-800 text-slate-400">
+                                        <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-surface text-[var(--text-muted)]">
                                             →
                                         </button>
                                     </div>
                                 </div>
                             ))}
                             {applications.length === 0 && (
-                                <div className="text-center py-8 text-slate-500">
-                                    No active applications. <Link href="/careers" className="text-emerald-400 underline">Start applying!</Link>
+                                <div className="text-center py-8 text-foreground0">
+                                    No active applications. <Link href="/careers" className="text-accent underline">Start applying!</Link>
                                 </div>
                             )}
                         </div>
@@ -224,7 +224,7 @@ export default function OverviewTab({
                                 <Link
                                     key={action.href}
                                     href={action.href}
-                                    className={`group rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-all ${colors.hover} hover:bg-slate-900/70`}
+                                    className={`group rounded-2xl border border-[var(--card-border)] bg-surface p-5 transition-all ${colors.hover} hover:bg-slate-900/70`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-lg ${colors.bg} ${colors.text}`}>
@@ -232,7 +232,7 @@ export default function OverviewTab({
                                         </div>
                                         <div>
                                             <p className="font-medium text-white">{action.label}</p>
-                                            <p className="text-xs text-slate-500">{action.description}</p>
+                                            <p className="text-xs text-foreground0">{action.description}</p>
                                         </div>
                                     </div>
                                 </Link>
@@ -253,43 +253,43 @@ export default function OverviewTab({
                     />
 
                     {/* Community Links */}
-                    <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur">
+                    <div className="rounded-3xl border border-[var(--card-border)] bg-surface p-6 backdrop-blur">
                         <h3 className="text-lg font-bold text-white mb-4">Explore</h3>
                         <div className="space-y-3">
                             <Link
                                 href="/education/scholarships"
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                             >
                                 <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
                                     🎓
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-200 group-hover:text-white">Scholarships</p>
-                                    <p className="text-xs text-slate-500">Find funding opportunities</p>
+                                    <p className="text-sm font-medium text-foreground group-hover:text-white">Scholarships</p>
+                                    <p className="text-xs text-foreground0">Find funding opportunities</p>
                                 </div>
                             </Link>
                             <Link
                                 href="/careers/programs"
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                             >
                                 <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
                                     📚
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-200 group-hover:text-white">Training Programs</p>
-                                    <p className="text-xs text-slate-500">Develop new skills</p>
+                                    <p className="text-sm font-medium text-foreground group-hover:text-white">Training Programs</p>
+                                    <p className="text-xs text-foreground0">Develop new skills</p>
                                 </div>
                             </Link>
                             <Link
                                 href="/community"
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/50 transition-colors group"
+                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface transition-colors group"
                             >
                                 <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">
                                     🪶
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-slate-200 group-hover:text-white">Pow Wows</p>
-                                    <p className="text-xs text-slate-500">Cultural gatherings</p>
+                                    <p className="text-sm font-medium text-foreground group-hover:text-white">Pow Wows</p>
+                                    <p className="text-xs text-foreground0">Cultural gatherings</p>
                                 </div>
                             </Link>
                         </div>

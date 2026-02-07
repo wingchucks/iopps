@@ -29,7 +29,7 @@ export default function ConferenceVenue({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
       <h2 className="text-xl font-bold text-slate-700">Venue & Travel</h2>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-foreground0">
         Everything you need to know about getting there
       </p>
 
@@ -84,10 +84,10 @@ export default function ConferenceVenue({
           <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
             <h3 className="font-semibold text-slate-800">{venue.name}</h3>
             {fullAddress && (
-              <p className="mt-1 text-sm text-slate-500">{fullAddress}</p>
+              <p className="mt-1 text-sm text-foreground0">{fullAddress}</p>
             )}
             {!fullAddress && location && (
-              <p className="mt-1 text-sm text-slate-500">{location}</p>
+              <p className="mt-1 text-sm text-foreground0">{location}</p>
             )}
 
             <a
@@ -137,7 +137,7 @@ export default function ConferenceVenue({
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-700">Parking</h4>
-                  <p className="text-sm text-slate-500">{venue.parkingInfo}</p>
+                  <p className="text-sm text-foreground0">{venue.parkingInfo}</p>
                 </div>
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function ConferenceVenue({
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-700">Public Transit</h4>
-                  <p className="text-sm text-slate-500">{venue.transitInfo}</p>
+                  <p className="text-sm text-foreground0">{venue.transitInfo}</p>
                 </div>
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function ConferenceVenue({
                 </div>
                 <div>
                   <h4 className="font-medium text-slate-700">Nearby Hotels</h4>
-                  <p className="text-sm text-slate-500">{venue.nearbyHotels}</p>
+                  <p className="text-sm text-foreground0">{venue.nearbyHotels}</p>
                 </div>
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function ConferenceVenue({
                 <div>
                   <h4 className="font-medium text-slate-700">Accessibility</h4>
                   {venue.accessibilityInfo && (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-foreground0">
                       {venue.accessibilityInfo}
                     </p>
                   )}

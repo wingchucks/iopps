@@ -41,7 +41,7 @@ export default function PricingPage() {
       <SectionHeader title="Pricing & Plans" subtitle="Choose the plan that fits your needs" icon="briefcase" />
         {/* Quick audience selector hint */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground0">
             Select your category below to see relevant pricing options
           </p>
         </div>
