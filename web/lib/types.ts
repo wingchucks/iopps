@@ -2987,3 +2987,31 @@ export interface DirectoryResults {
   pageSize: number;
   hasMore: boolean;
 }
+
+// ============================================
+// INDIGENOUS NEWS
+// ============================================
+
+export type NewsCategory = "business" | "culture" | "policy" | "sports";
+
+export type NewsStatus = "draft" | "published";
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  excerpt: string;
+  content?: string;
+  source: string;
+  sourceUrl: string;
+  category: NewsCategory;
+  imageUrl?: string;
+  tags: string[];
+  featured: boolean;
+  businessIdea: boolean;
+  businessIdeaDetails?: string;
+  publishedAt: Timestamp | null;
+  status: NewsStatus;
+  createdBy: string;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}

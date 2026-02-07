@@ -24,6 +24,7 @@ import {
   AcademicCapIcon,
   ClipboardDocumentListIcon,
   FlagIcon,
+  NewspaperIcon,
 } from "@heroicons/react/24/outline";
 import { AdminNavGroup, AdminTopBar, type NavItem } from "@/components/admin";
 import { useAdminCounts } from "@/lib/hooks/admin";
@@ -90,6 +91,7 @@ function useNavigationGroups(): NavGroup[] {
         { name: "Scholarships", href: "/admin/scholarships", icon: AcademicCapIcon },
         { name: "Conferences", href: "/admin/conferences", icon: BuildingOfficeIcon },
         { name: "Pow Wows", href: "/admin/powwows", icon: SparklesIcon },
+        { name: "News", href: "/admin/news", icon: NewspaperIcon },
       ],
       defaultOpen: true,
     },

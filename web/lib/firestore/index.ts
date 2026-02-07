@@ -665,6 +665,21 @@ export type {
 } from "./talentSearch";
 
 // ============================================
+// INDIGENOUS NEWS
+// ============================================
+export {
+  createNewsArticle,
+  updateNewsArticle,
+  deleteNewsArticle,
+  getNewsArticle,
+  listNewsArticles,
+  getFeaturedNews,
+  getDailyBusinessIdea,
+  getNewsTags,
+} from "./news";
+export type { ListNewsOptions } from "./news";
+
+// ============================================
 // ORGANIZATION DIRECTORY VISIBILITY
 // ============================================
 // NOTE: visibility.ts uses firebase-admin and is SERVER-ONLY.

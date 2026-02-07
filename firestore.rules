@@ -1225,6 +1225,22 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // INDIGENOUS NEWS
+    // ===========================================================================
+    match /news/{articleId} {
+      // Public read for published articles
+      allow read: if resource.data.status == "published";
+
+      // Admins/moderators can read all (including drafts)
+      allow read: if isAdminOrModerator();
+
+      // Only admins/moderators can create, update, delete
+      allow create: if isAdminOrModerator();
+      allow update: if isAdminOrModerator();
+      allow delete: if isAdminOrModerator();
+    }
+
+    // ===========================================================================
     // PEER CONVERSATIONS (Member-to-Member Messaging)
     // ===========================================================================
     match /peerConversations/{conversationId} {
