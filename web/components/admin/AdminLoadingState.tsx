@@ -6,9 +6,9 @@ interface AdminLoadingStateProps {
 
 export function AdminLoadingState({ message = "Loading..." }: AdminLoadingStateProps) {
   return (
-    <div className="min-h-screen bg-[#020306] px-4 py-10">
+    <div className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto max-w-7xl">
-        <p className="text-slate-400">{message}</p>
+        <p className="text-[var(--text-muted)]">{message}</p>
       </div>
     </div>
   );

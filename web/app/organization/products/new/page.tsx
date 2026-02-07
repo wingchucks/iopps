@@ -41,7 +41,7 @@ export default function NewProductPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function NewProductPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You need to be signed in to list products.
         </p>
         <Link
@@ -68,7 +68,7 @@ export default function NewProductPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Become a Vendor</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           To list products on the Indigenous Marketplace, you need to register as a vendor or organization.
         </p>
         <div className="flex gap-3">
@@ -80,7 +80,7 @@ export default function NewProductPage() {
           </Link>
           <Link
             href="/business"
-            className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+            className="inline-block rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Back to Marketplace
           </Link>
@@ -184,7 +184,7 @@ export default function NewProductPage() {
       <div className="mb-6">
         <Link
           href="/organization/sell/offerings"
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
         >
           ← Back to Products & Services
         </Link>
@@ -196,7 +196,7 @@ export default function NewProductPage() {
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">Add New Product</h1>
       </div>
-      <p className="text-sm text-slate-300 mb-6">
+      <p className="text-sm text-[var(--text-secondary)] mb-6">
         List your product in the Indigenous Marketplace for customers to discover.
       </p>
 
@@ -208,16 +208,16 @@ export default function NewProductPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Product Image */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <PhotoIcon className="h-5 w-5 text-teal-400" />
+            <PhotoIcon className="h-5 w-5 text-accent" />
             <h2 className="text-lg font-semibold text-white">Product Image</h2>
           </div>
 
           <div className="space-y-4">
             {imageUrl ? (
               <div className="relative">
-                <div className="relative aspect-video w-full max-w-md rounded-lg overflow-hidden bg-slate-800">
+                <div className="relative aspect-video w-full max-w-md rounded-lg overflow-hidden bg-surface">
                   <Image
                     src={imageUrl}
                     alt="Product preview"
@@ -228,30 +228,30 @@ export default function NewProductPage() {
                 <button
                   type="button"
                   onClick={() => setImageUrl("")}
-                  className="absolute top-2 right-2 p-1 bg-slate-900/80 rounded-full hover:bg-slate-800 transition-colors"
+                  className="absolute top-2 right-2 p-1 bg-slate-900/80 rounded-full hover:bg-surface transition-colors"
                 >
-                  <XMarkIcon className="h-5 w-5 text-slate-300" />
+                  <XMarkIcon className="h-5 w-5 text-[var(--text-secondary)]" />
                 </button>
               </div>
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="aspect-video w-full max-w-md rounded-lg border-2 border-dashed border-slate-700 bg-slate-800/50 flex flex-col items-center justify-center cursor-pointer hover:border-slate-600 hover:bg-slate-800 transition-colors"
+                className="aspect-video w-full max-w-md rounded-lg border-2 border-dashed border-[var(--card-border)] bg-surface flex flex-col items-center justify-center cursor-pointer hover:border-[var(--card-border)] hover:bg-surface transition-colors"
               >
                 {uploading ? (
                   <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-slate-400">
+                    <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-sm text-[var(--text-muted)]">
                       Uploading... {uploadProgress}%
                     </p>
                   </div>
                 ) : (
                   <>
-                    <ArrowUpTrayIcon className="h-10 w-10 text-slate-500 mb-2" />
-                    <p className="text-sm text-slate-400">
+                    <ArrowUpTrayIcon className="h-10 w-10 text-foreground0 mb-2" />
+                    <p className="text-sm text-[var(--text-muted)]">
                       Click to upload product image
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-foreground0 mt-1">
                       JPEG, PNG, or WebP (max 5MB)
                     </p>
                   </>
@@ -269,15 +269,15 @@ export default function NewProductPage() {
         </section>
 
         {/* Product Information */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <CubeIcon className="h-5 w-5 text-teal-400" />
+            <CubeIcon className="h-5 w-5 text-accent" />
             <h2 className="text-lg font-semibold text-white">Product Information</h2>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Product Name *
               </label>
               <input
@@ -286,12 +286,12 @@ export default function NewProductPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Handcrafted Beaded Earrings"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Description *
               </label>
               <textarea
@@ -300,18 +300,18 @@ export default function NewProductPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
                 placeholder="Describe your product, materials used, dimensions, care instructions..."
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as VendorCategory)}
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
               >
                 <option value="">Select a category</option>
                 {VENDOR_CATEGORIES.map((cat) => (
@@ -325,15 +325,15 @@ export default function NewProductPage() {
         </section>
 
         {/* Pricing */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <CurrencyDollarIcon className="h-5 w-5 text-teal-400" />
+            <CurrencyDollarIcon className="h-5 w-5 text-accent" />
             <h2 className="text-lg font-semibold text-white">Pricing</h2>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Price Display
               </label>
               <input
@@ -341,9 +341,9 @@ export default function NewProductPage() {
                 value={priceDisplay}
                 onChange={(e) => setPriceDisplay(e.target.value)}
                 placeholder="e.g., $45.00, From $50, Contact for pricing"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-teal-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-accent focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 How the price appears to customers (flexible format)
               </p>
             </div>
@@ -351,9 +351,9 @@ export default function NewProductPage() {
         </section>
 
         {/* Availability */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircleIcon className="h-5 w-5 text-teal-400" />
+            <CheckCircleIcon className="h-5 w-5 text-accent" />
             <h2 className="text-lg font-semibold text-white">Availability</h2>
           </div>
 
@@ -363,11 +363,11 @@ export default function NewProductPage() {
                 type="checkbox"
                 checked={inStock}
                 onChange={(e) => setInStock(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
               />
               <div>
-                <span className="text-sm text-slate-300 font-medium">In Stock</span>
-                <p className="text-xs text-slate-500">
+                <span className="text-sm text-[var(--text-secondary)] font-medium">In Stock</span>
+                <p className="text-xs text-foreground0">
                   This product is currently available for purchase
                 </p>
               </div>
@@ -378,11 +378,11 @@ export default function NewProductPage() {
                 type="checkbox"
                 checked={madeToOrder}
                 onChange={(e) => setMadeToOrder(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
               />
               <div>
-                <span className="text-sm text-slate-300 font-medium">Made to Order</span>
-                <p className="text-xs text-slate-500">
+                <span className="text-sm text-[var(--text-secondary)] font-medium">Made to Order</span>
+                <p className="text-xs text-foreground0">
                   This product is custom-made when ordered
                 </p>
               </div>
@@ -393,11 +393,11 @@ export default function NewProductPage() {
                 type="checkbox"
                 checked={featured}
                 onChange={(e) => setFeatured(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
               />
               <div>
-                <span className="text-sm text-slate-300 font-medium">Featured Product</span>
-                <p className="text-xs text-slate-500">
+                <span className="text-sm text-[var(--text-secondary)] font-medium">Featured Product</span>
+                <p className="text-xs text-foreground0">
                   Highlight this product in your shop
                 </p>
               </div>
@@ -409,7 +409,7 @@ export default function NewProductPage() {
         <div className="flex items-center justify-between pt-4">
           <Link
             href="/organization/sell/offerings"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             Cancel
           </Link>

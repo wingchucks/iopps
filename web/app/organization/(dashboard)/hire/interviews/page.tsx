@@ -104,7 +104,7 @@ export default function HireInterviewsPage() {
       case 'scheduled':
         return <span className="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">Scheduled</span>;
       case 'completed':
-        return <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Completed</span>;
+        return <span className="px-2 py-0.5 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">Completed</span>;
       case 'cancelled':
         return <span className="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/20">Cancelled</span>;
       case 'no-show':
@@ -121,9 +121,9 @@ export default function HireInterviewsPage() {
       case 'phone':
         return <PhoneIcon className="w-4 h-4 text-blue-400" />;
       case 'in-person':
-        return <MapPinIcon className="w-4 h-4 text-emerald-400" />;
+        return <MapPinIcon className="w-4 h-4 text-accent" />;
       default:
-        return <VideoCameraIcon className="w-4 h-4 text-slate-400" />;
+        return <VideoCameraIcon className="w-4 h-4 text-[var(--text-muted)]" />;
     }
   };
 
@@ -139,8 +139,8 @@ export default function HireInterviewsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Interviews</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Interviews</h1>
+        <p className="text-[var(--text-muted)] mt-1">
           Schedule and manage candidate interviews
         </p>
       </div>
@@ -152,7 +152,7 @@ export default function HireInterviewsPage() {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'upcoming'
               ? 'bg-accent/10 text-accent border border-accent/20'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           Upcoming
@@ -161,8 +161,8 @@ export default function HireInterviewsPage() {
           onClick={() => setFilter('past')}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'past'
-              ? 'bg-slate-700/50 text-slate-300 border border-slate-600'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              ? 'bg-slate-700/50 text-[var(--text-secondary)] border border-[var(--card-border)]'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           Past
@@ -171,8 +171,8 @@ export default function HireInterviewsPage() {
           onClick={() => setFilter('all')}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'all'
-              ? 'bg-slate-700/50 text-slate-300 border border-slate-600'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              ? 'bg-slate-700/50 text-[var(--text-secondary)] border border-[var(--card-border)]'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           All
@@ -183,30 +183,30 @@ export default function HireInterviewsPage() {
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-card border border-card-border rounded-xl p-4">
           <p className="text-2xl font-bold text-blue-400">{interviews.filter(i => i.status === 'scheduled' && isFuture(getInterviewDate(i))).length}</p>
-          <p className="text-xs text-slate-500">Upcoming</p>
+          <p className="text-xs text-foreground0">Upcoming</p>
         </div>
         <div className="bg-card border border-card-border rounded-xl p-4">
-          <p className="text-2xl font-bold text-emerald-400">{interviews.filter(i => i.status === 'completed').length}</p>
-          <p className="text-xs text-slate-500">Completed</p>
+          <p className="text-2xl font-bold text-accent">{interviews.filter(i => i.status === 'completed').length}</p>
+          <p className="text-xs text-foreground0">Completed</p>
         </div>
         <div className="bg-card border border-card-border rounded-xl p-4">
           <p className="text-2xl font-bold text-red-400">{interviews.filter(i => i.status === 'cancelled').length}</p>
-          <p className="text-xs text-slate-500">Cancelled</p>
+          <p className="text-xs text-foreground0">Cancelled</p>
         </div>
         <div className="bg-card border border-card-border rounded-xl p-4">
-          <p className="text-2xl font-bold text-slate-400">{interviews.length}</p>
-          <p className="text-xs text-slate-500">Total</p>
+          <p className="text-2xl font-bold text-[var(--text-muted)]">{interviews.length}</p>
+          <p className="text-xs text-foreground0">Total</p>
         </div>
       </div>
 
       {/* Interviews List */}
       {filteredInterviews.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <VideoCameraIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <VideoCameraIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'upcoming' ? 'No upcoming interviews' : filter === 'past' ? 'No past interviews' : 'No interviews scheduled'}
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto">
+          <p className="text-foreground0 max-w-md mx-auto">
             Schedule interviews from the Applications page by clicking on a candidate.
           </p>
           <Link
@@ -227,26 +227,26 @@ export default function HireInterviewsPage() {
                 key={interview.id}
                 className={`bg-card border rounded-xl p-4 transition-colors ${
                   interview.status === 'cancelled' ? 'border-red-500/20 opacity-60' :
-                  interview.status === 'completed' ? 'border-emerald-500/20' :
-                  'border-card-border hover:border-slate-700'
+                  interview.status === 'completed' ? 'border-accent/20' :
+                  'border-card-border hover:border-[var(--card-border)]'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
-                      <UserIcon className="w-5 h-5 text-slate-500" />
+                    <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
+                      <UserIcon className="w-5 h-5 text-foreground0" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-slate-200">
+                        <p className="font-semibold text-foreground">
                           {interview.candidateName}
                         </p>
                         {getStatusBadge(interview.status)}
                       </div>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-foreground0">
                         {interview.jobTitle}
                       </p>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-3 mt-2 text-xs text-foreground0">
                         <span className="flex items-center gap-1">
                           <CalendarDaysIcon className="w-3.5 h-3.5" />
                           {format(interviewDate, 'MMM d, yyyy')}
@@ -259,12 +259,12 @@ export default function HireInterviewsPage() {
                           {getTypeIcon(interview.type)}
                           {interview.type === 'virtual' ? 'Video' : interview.type === 'phone' ? 'Phone' : 'In-Person'}
                         </span>
-                        <span className="text-slate-600">
+                        <span className="text-[var(--text-secondary)]">
                           {interview.duration} min
                         </span>
                       </div>
                       {interview.interviewerName && (
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-foreground0 mt-1">
                           Interviewer: {interview.interviewerName}
                         </p>
                       )}
@@ -288,23 +288,23 @@ export default function HireInterviewsPage() {
                       <div className="relative">
                         <button
                           onClick={() => setActionMenuOpen(actionMenuOpen === interview.id ? null : interview.id)}
-                          className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
+                          className="p-2 rounded-lg hover:bg-surface transition-colors"
                         >
-                          <EllipsisVerticalIcon className="w-5 h-5 text-slate-400" />
+                          <EllipsisVerticalIcon className="w-5 h-5 text-[var(--text-muted)]" />
                         </button>
 
                         {actionMenuOpen === interview.id && (
-                          <div className="absolute right-0 top-full mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10">
+                          <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-[var(--card-border)] rounded-lg shadow-xl z-10">
                             <button
                               onClick={() => handleMarkCompleted(interview.id)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors rounded-t-lg"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-slate-700 transition-colors rounded-t-lg"
                             >
-                              <CheckIcon className="w-4 h-4 text-emerald-400" />
+                              <CheckIcon className="w-4 h-4 text-accent" />
                               Mark Completed
                             </button>
                             <button
                               onClick={() => handleNoShow(interview.id)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-slate-700 transition-colors"
                             >
                               <UserIcon className="w-4 h-4 text-amber-400" />
                               Mark No-Show
@@ -324,7 +324,7 @@ export default function HireInterviewsPage() {
                 </div>
 
                 {interview.notes && (
-                  <div className="mt-3 pl-14 text-sm text-slate-500 border-l-2 border-slate-700 ml-5 pl-4">
+                  <div className="mt-3 pl-14 text-sm text-foreground0 border-l-2 border-[var(--card-border)] ml-5 pl-4">
                     {interview.notes}
                   </div>
                 )}

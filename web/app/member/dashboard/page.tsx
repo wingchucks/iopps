@@ -148,8 +148,8 @@ function MemberDashboardContent() {
   // Show loading while fetching dashboard data (auth is handled by ProtectedRoute)
   if (loadingData && !profile) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -252,8 +252,8 @@ export default function MemberDashboard() {
       unauthorizedPath="/organization/dashboard"
     >
       <Suspense fallback={
-        <div className="flex h-screen items-center justify-center bg-slate-950">
-          <p className="text-slate-400">Loading dashboard...</p>
+        <div className="flex h-screen items-center justify-center bg-background">
+          <p className="text-[var(--text-muted)]">Loading dashboard...</p>
         </div>
       }>
         <MemberDashboardContent />

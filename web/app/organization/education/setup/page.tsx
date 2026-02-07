@@ -187,7 +187,7 @@ export default function SchoolSetupPage() {
   if (loading || checkingExisting) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -196,7 +196,7 @@ export default function SchoolSetupPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Sign in required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           Sign in or create an employer account to set up your school profile.
         </p>
         <div className="flex gap-3">
@@ -208,7 +208,7 @@ export default function SchoolSetupPage() {
           </Link>
           <Link
             href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-violet-400"
+            className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground hover:border-violet-400"
           >
             Register
           </Link>
@@ -221,7 +221,7 @@ export default function SchoolSetupPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to create a school profile.
         </p>
       </div>
@@ -232,14 +232,14 @@ export default function SchoolSetupPage() {
   if (existingSchool) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-8 text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
-            <CheckCircleIcon className="h-8 w-8 text-emerald-400" />
+        <div className="rounded-2xl border border-accent/30 bg-accent/10 p-8 text-center">
+          <div className="mx-auto h-16 w-16 rounded-full bg-accent/20 flex items-center justify-center mb-4">
+            <CheckCircleIcon className="h-8 w-8 text-accent" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
             School Profile Already Exists
           </h1>
-          <p className="text-slate-400 mb-6">
+          <p className="text-[var(--text-muted)] mb-6">
             You already have a school profile for <strong>{existingSchool.name}</strong>.
           </p>
           <div className="flex justify-center gap-4">
@@ -251,7 +251,7 @@ export default function SchoolSetupPage() {
             </Link>
             <Link
               href="/organization/education/settings"
-              className="rounded-lg border border-slate-700 px-6 py-3 text-slate-300 hover:bg-slate-800"
+              className="rounded-lg border border-[var(--card-border)] px-6 py-3 text-[var(--text-secondary)] hover:bg-surface"
             >
               Edit Settings
             </Link>
@@ -270,7 +270,7 @@ export default function SchoolSetupPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           Create School Profile
         </h1>
-        <p className="mt-3 text-sm text-slate-400 sm:text-base">
+        <p className="mt-3 text-sm text-[var(--text-muted)] sm:text-base">
           Set up your institution&apos;s profile to list academic programs, scholarships,
           and connect with Indigenous students across Canada.
         </p>
@@ -281,7 +281,7 @@ export default function SchoolSetupPage() {
         className="mt-8 space-y-8"
       >
         {/* Basic Information */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <BuildingLibraryIcon className="h-5 w-5 text-violet-400" />
             Institution Information
@@ -289,7 +289,7 @@ export default function SchoolSetupPage() {
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Institution Name *
               </label>
               <input
@@ -297,33 +297,33 @@ export default function SchoolSetupPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="e.g., First Nations University of Canada"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Short Name / Abbreviation
               </label>
               <input
                 type="text"
                 value={shortName}
                 onChange={(e) => setShortName(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="e.g., FNUniv"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Institution Type *
               </label>
               <select
                 required
                 value={type}
                 onChange={(e) => setType(e.target.value as SchoolType)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               >
                 {SCHOOL_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -334,43 +334,43 @@ export default function SchoolSetupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Website
               </label>
               <input
                 type="url"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="https://yourschool.ca"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="Tell prospective students about your institution, mission, and what makes you unique..."
               />
             </div>
 
-            <label className="flex items-center gap-3 p-4 rounded-lg border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-violet-500/50 transition-colors">
+            <label className="flex items-center gap-3 p-4 rounded-lg border border-[var(--card-border)] bg-surface cursor-pointer hover:border-violet-500/50 transition-colors">
               <input
                 type="checkbox"
                 checked={indigenousFocused}
                 onChange={(e) => setIndigenousFocused(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-violet-600 focus:ring-violet-500"
               />
               <div>
                 <span className="block text-sm font-medium text-white">
                   Indigenous-Focused Institution
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-[var(--text-muted)]">
                   Check if your institution is Indigenous-governed or primarily serves Indigenous students
                 </span>
               </div>
@@ -379,7 +379,7 @@ export default function SchoolSetupPage() {
         </div>
 
         {/* Location */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <MapPinIcon className="h-5 w-5 text-violet-400" />
             Location
@@ -388,7 +388,7 @@ export default function SchoolSetupPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-200 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   City *
                 </label>
                 <input
@@ -396,20 +396,20 @@ export default function SchoolSetupPage() {
                   required
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                   placeholder="Regina"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Province *
                 </label>
                 <select
                   required
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 >
                   <option value="">Select Province</option>
                   {PROVINCES.map((p) => (
@@ -422,27 +422,27 @@ export default function SchoolSetupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Street Address
               </label>
               <input
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="1 First Nations Way"
               />
             </div>
 
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Postal Code
               </label>
               <input
                 type="text"
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="S4S 7K2"
               />
             </div>
@@ -450,7 +450,7 @@ export default function SchoolSetupPage() {
         </div>
 
         {/* Branding */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <PhotoIcon className="h-5 w-5 text-violet-400" />
             Branding
@@ -459,7 +459,7 @@ export default function SchoolSetupPage() {
           <div className="space-y-6">
             {/* Logo Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Institution Logo
               </label>
               <div className="flex items-start gap-4">
@@ -467,16 +467,16 @@ export default function SchoolSetupPage() {
                   <img
                     src={logoUrl}
                     alt="Logo preview"
-                    className="h-24 w-24 rounded-xl object-cover border border-slate-700"
+                    className="h-24 w-24 rounded-xl object-cover border border-[var(--card-border)]"
                   />
                 ) : (
-                  <div className="h-24 w-24 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-                    <AcademicCapIcon className="h-10 w-10 text-slate-600" />
+                  <div className="h-24 w-24 rounded-xl bg-surface border border-[var(--card-border)] flex items-center justify-center">
+                    <AcademicCapIcon className="h-10 w-10 text-[var(--text-secondary)]" />
                   </div>
                 )}
                 <div className="flex-1">
                   <label className="flex cursor-pointer flex-col">
-                    <span className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-center text-sm text-slate-300 hover:border-violet-500 transition-colors">
+                    <span className="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-center text-sm text-[var(--text-secondary)] hover:border-violet-500 transition-colors">
                       {uploadingLogo ? "Uploading..." : "Choose logo file"}
                     </span>
                     <input
@@ -487,7 +487,7 @@ export default function SchoolSetupPage() {
                       className="hidden"
                     />
                   </label>
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-foreground0">
                     Recommended: 200x200px or larger, PNG or JPG
                   </p>
                 </div>
@@ -496,11 +496,11 @@ export default function SchoolSetupPage() {
 
             {/* Banner Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Banner Image
               </label>
               {bannerUrl ? (
-                <div className="relative h-40 rounded-xl overflow-hidden border border-slate-700 mb-3">
+                <div className="relative h-40 rounded-xl overflow-hidden border border-[var(--card-border)] mb-3">
                   <img
                     src={bannerUrl}
                     alt="Banner preview"
@@ -508,17 +508,17 @@ export default function SchoolSetupPage() {
                   />
                 </div>
               ) : (
-                <div className="h-40 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-3">
+                <div className="h-40 rounded-xl bg-surface border border-[var(--card-border)] flex items-center justify-center mb-3">
                   <div className="text-center">
-                    <PhotoIcon className="mx-auto h-10 w-10 text-slate-600" />
-                    <p className="mt-2 text-sm text-slate-500">
+                    <PhotoIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
+                    <p className="mt-2 text-sm text-foreground0">
                       No banner uploaded
                     </p>
                   </div>
                 </div>
               )}
               <label className="flex cursor-pointer">
-                <span className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:border-violet-500 transition-colors">
+                <span className="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-sm text-[var(--text-secondary)] hover:border-violet-500 transition-colors">
                   {uploadingBanner ? "Uploading..." : "Choose banner image"}
                 </span>
                 <input
@@ -529,7 +529,7 @@ export default function SchoolSetupPage() {
                   className="hidden"
                 />
               </label>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-foreground0">
                 Recommended: 1200x400px, PNG or JPG
               </p>
             </div>
@@ -547,7 +547,7 @@ export default function SchoolSetupPage() {
         <div className="flex items-center justify-between">
           <Link
             href="/organization/education"
-            className="text-sm text-slate-400 hover:text-white"
+            className="text-sm text-[var(--text-muted)] hover:text-white"
           >
             Cancel
           </Link>

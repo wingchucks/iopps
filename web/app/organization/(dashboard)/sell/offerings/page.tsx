@@ -77,15 +77,15 @@ export default function SellOfferingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Products & Services</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Products & Services</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Manage your products and services
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/organization/products/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-[var(--text-secondary)] rounded-lg font-medium hover:bg-slate-700 transition-colors"
           >
             <CubeIcon className="w-4 h-4" />
             Add Product
@@ -101,13 +101,13 @@ export default function SellOfferingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-2">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-2">
         <button
           onClick={() => setActiveTab('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'all'
               ? 'bg-accent/10 text-accent'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
           }`}
         >
           All ({offerings.length})
@@ -117,7 +117,7 @@ export default function SellOfferingsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'product'
               ? 'bg-accent/10 text-accent'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
           }`}
         >
           <CubeIcon className="w-4 h-4" />
@@ -128,7 +128,7 @@ export default function SellOfferingsPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             activeTab === 'service'
               ? 'bg-accent/10 text-accent'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              : 'text-[var(--text-muted)] hover:text-foreground hover:bg-surface'
           }`}
         >
           <WrenchScrewdriverIcon className="w-4 h-4" />
@@ -139,15 +139,15 @@ export default function SellOfferingsPage() {
       {/* Offerings Grid */}
       {filteredOfferings.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <CubeIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">No offerings yet</h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">
+          <CubeIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">No offerings yet</h3>
+          <p className="text-foreground0 max-w-md mx-auto mb-6">
             Add offerings to help customers discover what you offer. You can add products or services.
           </p>
           <div className="flex justify-center gap-3">
             <Link
               href="/organization/products/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-[var(--text-secondary)] rounded-lg font-medium hover:bg-slate-700 transition-colors"
             >
               <PlusIcon className="w-4 h-4" />
               Add Product
@@ -166,10 +166,10 @@ export default function SellOfferingsPage() {
           {filteredOfferings.map(offering => (
             <div
               key={offering.id}
-              className="bg-card border border-card-border rounded-xl overflow-hidden hover:border-slate-700 transition-colors"
+              className="bg-card border border-card-border rounded-xl overflow-hidden hover:border-[var(--card-border)] transition-colors"
             >
               {/* Image */}
-              <div className="aspect-video bg-slate-900 relative">
+              <div className="aspect-video bg-surface relative">
                 {offering.imageUrl ? (
                   <img
                     src={offering.imageUrl}
@@ -179,9 +179,9 @@ export default function SellOfferingsPage() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     {offering.type === 'product' ? (
-                      <CubeIcon className="w-12 h-12 text-slate-700" />
+                      <CubeIcon className="w-12 h-12 text-[var(--text-secondary)]" />
                     ) : (
-                      <WrenchScrewdriverIcon className="w-12 h-12 text-slate-700" />
+                      <WrenchScrewdriverIcon className="w-12 h-12 text-[var(--text-secondary)]" />
                     )}
                   </div>
                 )}
@@ -199,15 +199,15 @@ export default function SellOfferingsPage() {
               {/* Content */}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-slate-200 truncate">{offering.name}</h3>
+                  <h3 className="font-semibold text-foreground truncate">{offering.name}</h3>
                   {offering.active ? (
                     <CheckCircleIcon className="w-5 h-5 text-green-400 flex-shrink-0" />
                   ) : (
-                    <XCircleIcon className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                    <XCircleIcon className="w-5 h-5 text-foreground0 flex-shrink-0" />
                   )}
                 </div>
 
-                <p className="text-sm text-slate-500 line-clamp-2 mb-3">
+                <p className="text-sm text-foreground0 line-clamp-2 mb-3">
                   {offering.description}
                 </p>
 
@@ -217,7 +217,7 @@ export default function SellOfferingsPage() {
                   </p>
                 )}
 
-                <div className="flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center justify-between text-xs text-foreground0">
                   <span className="flex items-center gap-1">
                     <EyeIcon className="w-3.5 h-3.5" />
                     {offering.viewCount} views

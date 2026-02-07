@@ -183,13 +183,13 @@ export function formatActivityMessage(activity: TeamActivityLog): string {
  */
 export function getActivityStyle(action: TeamActivityAction): { color: string; bgColor: string } {
   const styles: Record<TeamActivityAction, { color: string; bgColor: string }> = {
-    created: { color: "text-emerald-400", bgColor: "bg-emerald-500/20" },
+    created: { color: "text-accent", bgColor: "bg-accent/20" },
     updated: { color: "text-blue-400", bgColor: "bg-blue-500/20" },
     deleted: { color: "text-red-400", bgColor: "bg-red-500/20" },
     published: { color: "text-green-400", bgColor: "bg-green-500/20" },
     unpublished: { color: "text-amber-400", bgColor: "bg-amber-500/20" },
     duplicated: { color: "text-purple-400", bgColor: "bg-purple-500/20" },
-    archived: { color: "text-slate-400", bgColor: "bg-slate-500/20" },
+    archived: { color: "text-[var(--text-muted)]", bgColor: "bg-slate-500/20" },
   };
   return styles[action];
 }

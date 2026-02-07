@@ -312,9 +312,9 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading analytics...</p>
+          <p className="text-[var(--text-muted)]">Loading analytics...</p>
         </div>
       </div>
     );
@@ -326,7 +326,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
           <p className="text-red-400">Failed to load analytics data.</p>
         </div>
@@ -335,28 +335,28 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Admin Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Platform Analytics
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Comprehensive platform metrics and insights
               </p>
             </div>
             <button
               onClick={exportToCSV}
-              className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
             >
               Export CSV
             </button>
@@ -368,7 +368,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-8">
         {/* Key Metrics Overview */}
         <div>
-          <h2 className="text-xl font-semibold text-slate-50 mb-4">Overview</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Overview</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard
               label="Total Users"
@@ -399,14 +399,14 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
         {/* User Growth */}
         <div>
-          <h2 className="text-xl font-semibold text-slate-50 mb-4">User Growth (Last 12 Months)</h2>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <h2 className="text-xl font-semibold text-foreground mb-4">User Growth (Last 12 Months)</h2>
+          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
             <div className="space-y-3">
               {analytics.usersByMonth.map((month) => (
                 <div key={month.month} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-slate-400">{month.month}</div>
+                  <div className="w-24 text-sm text-[var(--text-muted)]">{month.month}</div>
                   <div className="flex-1">
-                    <div className="h-8 rounded-lg bg-slate-800 overflow-hidden">
+                    <div className="h-8 rounded-lg bg-surface overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
                         style={{
@@ -415,7 +415,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
                       />
                     </div>
                   </div>
-                  <div className="w-16 text-right text-sm font-semibold text-slate-200">
+                  <div className="w-16 text-right text-sm font-semibold text-foreground">
                     {month.count}
                   </div>
                 </div>
@@ -426,14 +426,14 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
         {/* Job Posting Trends */}
         <div>
-          <h2 className="text-xl font-semibold text-slate-50 mb-4">Job Postings (Last 12 Months)</h2>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Job Postings (Last 12 Months)</h2>
+          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
             <div className="space-y-3">
               {analytics.jobsByMonth.map((month) => (
                 <div key={month.month} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-slate-400">{month.month}</div>
+                  <div className="w-24 text-sm text-[var(--text-muted)]">{month.month}</div>
                   <div className="flex-1">
-                    <div className="h-8 rounded-lg bg-slate-800 overflow-hidden">
+                    <div className="h-8 rounded-lg bg-surface overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all"
                         style={{
@@ -442,7 +442,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
                       />
                     </div>
                   </div>
-                  <div className="w-16 text-right text-sm font-semibold text-slate-200">
+                  <div className="w-16 text-right text-sm font-semibold text-foreground">
                     {month.count}
                   </div>
                 </div>
@@ -455,18 +455,18 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Employment Types */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">Jobs by Employment Type</h2>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Jobs by Employment Type</h2>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
               <div className="space-y-4">
                 {analytics.jobsByEmploymentType.map((item) => (
                   <div key={item.type}>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-slate-300">{item.type}</span>
-                      <span className="font-semibold text-slate-200">
+                      <span className="text-[var(--text-secondary)]">{item.type}</span>
+                      <span className="font-semibold text-foreground">
                         {item.count} ({Math.round((item.count / analytics.totalJobs) * 100)}%)
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-2 rounded-full bg-surface overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-[#14B8A6] to-[#0D9488]"
                         style={{
@@ -482,8 +482,8 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
           {/* Application Status Breakdown */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">Applications by Status</h2>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Applications by Status</h2>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
               <div className="space-y-4">
                 {analytics.applicationsByStatus.map((item) => {
                   const colors: Record<string, string> = {
@@ -499,12 +499,12 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
                   return (
                     <div key={item.status}>
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-300 capitalize">{item.status}</span>
-                        <span className="font-semibold text-slate-200">
+                        <span className="text-[var(--text-secondary)] capitalize">{item.status}</span>
+                        <span className="font-semibold text-foreground">
                           {item.count} ({Math.round((item.count / analytics.totalApplications) * 100)}%)
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div className="h-2 rounded-full bg-surface overflow-hidden">
                         <div
                           className={`h-full bg-gradient-to-r ${color}`}
                           style={{
@@ -522,7 +522,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
         {/* Content Metrics */}
         <div>
-          <h2 className="text-xl font-semibold text-slate-50 mb-4">Content Metrics</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Content Metrics</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <ContentMetricCard
               label="Conferences"
@@ -552,17 +552,17 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Top Employers */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">Top Employers</h2>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Top Employers</h2>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
               <div className="space-y-4">
                 {analytics.topEmployers.map((employer, index) => (
                   <div key={employer.name} className="flex items-center gap-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#14B8A6] text-sm font-bold text-slate-900">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-bold text-[var(--text-primary)]">
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-slate-200">{employer.name}</div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-sm font-medium text-foreground">{employer.name}</div>
+                      <div className="text-xs text-foreground0">
                         {employer.jobCount} jobs • {employer.applicationCount} applications
                       </div>
                     </div>
@@ -574,8 +574,8 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
 
           {/* Top Locations */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-50 mb-4">Top Job Locations</h2>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Top Job Locations</h2>
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
               <div className="space-y-4">
                 {analytics.topLocations.map((location, index) => (
                   <div key={location.location} className="flex items-center gap-4">
@@ -583,8 +583,8 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-slate-200">{location.location}</div>
-                      <div className="text-xs text-slate-500">{location.count} jobs</div>
+                      <div className="text-sm font-medium text-foreground">{location.location}</div>
+                      <div className="text-xs text-foreground0">{location.count} jobs</div>
                     </div>
                   </div>
                 ))}
@@ -613,12 +613,12 @@ function MetricCard({ label, value, subtitle, color }: MetricCardProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-      <p className="text-sm font-medium text-slate-400">{label}</p>
+    <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+      <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
       <p className={`mt-2 text-4xl font-bold bg-gradient-to-r ${colors[color]} bg-clip-text text-transparent`}>
         {value}
       </p>
-      {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-xs text-foreground0">{subtitle}</p>}
     </div>
   );
 }
@@ -634,13 +634,13 @@ function ContentMetricCard({ label, total, active, featured }: ContentMetricCard
   const activePercentage = total > 0 ? Math.round((active / total) * 100) : 0;
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-      <p className="text-sm font-medium text-slate-400">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-slate-50">{total}</p>
+    <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
+      <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-foreground">{total}</p>
       <div className="mt-3 space-y-1">
         <div className="flex justify-between text-xs">
           <span className="text-green-400">Active: {active}</span>
-          <span className="text-slate-500">{activePercentage}%</span>
+          <span className="text-foreground0">{activePercentage}%</span>
         </div>
         {featured !== undefined && (
           <div className="text-xs text-yellow-400">Featured: {featured}</div>

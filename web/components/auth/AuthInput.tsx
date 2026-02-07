@@ -25,7 +25,7 @@ export function AuthInput({
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <label className="block text-sm font-medium text-slate-200">
+        <label className="block text-sm font-medium text-foreground">
           {label}
         </label>
         {rightElement}
@@ -33,7 +33,7 @@ export function AuthInput({
       <div className="relative">
         <input
           type={inputType}
-          className={`w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors ${
+          className={`w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-foreground0 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors ${
             error ? "border-red-500 focus:border-red-500 focus:ring-red-500/50" : ""
           } ${isPassword ? "pr-10" : ""} ${className}`}
           {...props}
@@ -42,7 +42,7 @@ export function AuthInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
             tabIndex={-1}
           >
             {showPassword ? (
@@ -59,7 +59,7 @@ export function AuthInput({
         )}
       </div>
       {hint && !error && (
-        <p className="mt-1 text-xs text-slate-400">{hint}</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">{hint}</p>
       )}
       {error && (
         <p className="mt-1 text-xs text-red-400">{error}</p>

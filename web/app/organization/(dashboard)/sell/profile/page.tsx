@@ -49,18 +49,18 @@ export default function SellProfilePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Shop Profile</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Shop Profile</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Set up your shop profile to start selling
           </p>
         </div>
 
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <BuildingStorefrontIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <BuildingStorefrontIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             No shop profile yet
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">
+          <p className="text-foreground0 max-w-md mx-auto mb-6">
             Create your shop profile to showcase your Indigenous business in the marketplace.
           </p>
           <Link
@@ -94,8 +94,8 @@ export default function SellProfilePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Shop Profile</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Shop Profile</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Manage your marketplace presence
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function SellProfilePage() {
             <Link
               href={`/organizations/${vendor.slug}`}
               target="_blank"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-medium hover:bg-slate-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-[var(--text-secondary)] rounded-lg font-medium hover:bg-slate-700 transition-colors"
             >
               <EyeIcon className="w-4 h-4" />
               View Public Profile
@@ -141,7 +141,7 @@ export default function SellProfilePage() {
         {/* Profile Preview */}
         <div className="lg:col-span-2 bg-card border border-card-border rounded-2xl overflow-hidden">
           {/* Banner */}
-          <div className="aspect-[3/1] bg-slate-900 relative">
+          <div className="aspect-[3/1] bg-surface relative">
             {vendor.coverImageUrl ? (
               <img
                 src={vendor.coverImageUrl}
@@ -150,7 +150,7 @@ export default function SellProfilePage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <PhotoIcon className="w-12 h-12 text-slate-700" />
+                <PhotoIcon className="w-12 h-12 text-[var(--text-secondary)]" />
               </div>
             )}
           </div>
@@ -159,7 +159,7 @@ export default function SellProfilePage() {
           <div className="p-6">
             <div className="flex items-start gap-4 -mt-16">
               {/* Logo */}
-              <div className="w-24 h-24 rounded-xl bg-slate-800 border-4 border-card flex items-center justify-center overflow-hidden">
+              <div className="w-24 h-24 rounded-xl bg-surface border-4 border-card flex items-center justify-center overflow-hidden">
                 {vendor.logoUrl ? (
                   <img
                     src={vendor.logoUrl}
@@ -167,14 +167,14 @@ export default function SellProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <BuildingStorefrontIcon className="w-10 h-10 text-slate-600" />
+                  <BuildingStorefrontIcon className="w-10 h-10 text-[var(--text-secondary)]" />
                 )}
               </div>
             </div>
 
             <div className="mt-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-50">
+                <h2 className="text-xl font-bold text-foreground">
                   {vendor.businessName}
                 </h2>
                 {isActive && (
@@ -185,17 +185,17 @@ export default function SellProfilePage() {
               </div>
 
               {vendor.tagline && (
-                <p className="text-slate-400 mt-1">{vendor.tagline}</p>
+                <p className="text-[var(--text-muted)] mt-1">{vendor.tagline}</p>
               )}
 
               {(vendor.location || vendor.region) && (
-                <p className="text-sm text-slate-500 mt-2">
+                <p className="text-sm text-foreground0 mt-2">
                   {[vendor.location, vendor.region].filter(Boolean).join(', ')}
                 </p>
               )}
 
               {vendor.description && (
-                <p className="text-slate-400 mt-4 line-clamp-3">
+                <p className="text-[var(--text-muted)] mt-4 line-clamp-3">
                   {vendor.description}
                 </p>
               )}
@@ -217,15 +217,15 @@ export default function SellProfilePage() {
 
         {/* Profile Completion */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h3 className="font-semibold text-slate-50 mb-4">Profile Completion</h3>
+          <h3 className="font-semibold text-foreground mb-4">Profile Completion</h3>
 
           {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-slate-400">Progress</span>
+              <span className="text-[var(--text-muted)]">Progress</span>
               <span className="text-accent font-medium">{completionScore}%</span>
             </div>
-            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-2 bg-surface rounded-full overflow-hidden">
               <div
                 className="h-full bg-accent rounded-full transition-all"
                 style={{ width: `${completionScore}%` }}
@@ -243,9 +243,9 @@ export default function SellProfilePage() {
                 {item.done ? (
                   <CheckCircleIcon className="w-4 h-4 text-green-400" />
                 ) : (
-                  <div className="w-4 h-4 rounded-full border border-slate-600" />
+                  <div className="w-4 h-4 rounded-full border border-[var(--card-border)]" />
                 )}
-                <span className={item.done ? 'text-slate-400' : 'text-slate-500'}>
+                <span className={item.done ? 'text-[var(--text-muted)]' : 'text-foreground0'}>
                   {item.label}
                 </span>
               </div>

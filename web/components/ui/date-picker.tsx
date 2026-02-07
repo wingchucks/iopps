@@ -114,10 +114,10 @@ export function DatePicker({
           disabled={isDisabled}
           className={`
             w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors
-            ${!isCurrentMonth ? "text-slate-600" : "text-slate-300"}
-            ${isSelected ? "bg-[#14B8A6] text-slate-900 font-semibold" : ""}
+            ${!isCurrentMonth ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"}
+            ${isSelected ? "bg-accent text-[var(--text-primary)] font-semibold" : ""}
             ${!isSelected && isTodayDate ? "border border-[#14B8A6] text-[#14B8A6]" : ""}
-            ${!isSelected && !isTodayDate && isCurrentMonth && !isDisabled ? "hover:bg-slate-800" : ""}
+            ${!isSelected && !isTodayDate && isCurrentMonth && !isDisabled ? "hover:bg-surface" : ""}
             ${isDisabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}
           `}
         >
@@ -138,13 +138,13 @@ export function DatePicker({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full rounded-lg border bg-slate-900 px-4 py-2.5 text-left text-slate-100 focus:outline-none flex items-center justify-between ${error ? 'border-red-500 focus:border-red-500' : 'border-slate-800 focus:border-[#14B8A6]'}`}
+        className={`w-full rounded-lg border bg-surface px-4 py-2.5 text-left text-foreground focus:outline-none flex items-center justify-between ${error ? 'border-red-500 focus:border-red-500' : 'border-[var(--card-border)] focus:border-[#14B8A6]'}`}
       >
-        <span className={selectedDate ? "text-slate-100" : "text-slate-500"}>
+        <span className={selectedDate ? "text-foreground" : "text-foreground0"}>
           {selectedDate ? format(selectedDate, "MMMM d, yyyy") : placeholder}
         </span>
         <svg
-          className="w-5 h-5 text-slate-400"
+          className="w-5 h-5 text-[var(--text-muted)]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -170,13 +170,13 @@ export function DatePicker({
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="absolute left-0 top-full z-50 mt-2 w-[300px] rounded-xl border border-slate-700 bg-[#08090C] p-4 shadow-xl">
+          <div className="absolute left-0 top-full z-50 mt-2 w-[300px] rounded-xl border border-[var(--card-border)] bg-surface p-4 shadow-xl">
             {/* Header with month navigation */}
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
               >
                 <svg
                   className="w-5 h-5"
@@ -192,13 +192,13 @@ export function DatePicker({
                   />
                 </svg>
               </button>
-              <span className="text-sm font-semibold text-slate-100">
+              <span className="text-sm font-semibold text-foreground">
                 {format(currentMonth, "MMMM yyyy")}
               </span>
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
               >
                 <svg
                   className="w-5 h-5"
@@ -221,7 +221,7 @@ export function DatePicker({
               {weekDays.map((day) => (
                 <div
                   key={day}
-                  className="w-9 h-8 flex items-center justify-center text-xs font-medium text-slate-500"
+                  className="w-9 h-8 flex items-center justify-center text-xs font-medium text-foreground0"
                 >
                   {day}
                 </div>
@@ -232,14 +232,14 @@ export function DatePicker({
             <div className="grid grid-cols-7 gap-1">{renderDays()}</div>
 
             {/* Quick actions */}
-            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-[var(--card-border)] flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
                   onChange("");
                   setIsOpen(false);
                 }}
-                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-xs text-foreground0 hover:text-[var(--text-secondary)] transition-colors"
               >
                 Clear
               </button>

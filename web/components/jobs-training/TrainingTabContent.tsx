@@ -150,27 +150,27 @@ export function TrainingTabContent() {
   return (
     <div>
       {/* Search and Filter Bar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 mb-6">
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search programs, skills, providers..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 py-3 pl-12 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-surface py-3 pl-12 pr-4 text-sm text-white placeholder:text-foreground0 focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-6 py-3 text-sm text-slate-300 transition-colors hover:bg-slate-800"
+            className="flex items-center justify-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-6 py-3 text-sm text-[var(--text-secondary)] transition-colors hover:bg-surface"
           >
             <FunnelIcon className="h-5 w-5" />
             Filters
             {hasFilters && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#14B8A6] text-xs font-bold text-slate-900">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-[var(--text-primary)]">
                 !
               </span>
             )}
@@ -179,15 +179,15 @@ export function TrainingTabContent() {
 
         {/* Quick Stats */}
         <div className="mt-4 flex gap-6 text-sm">
-          <span className="text-slate-400">
+          <span className="text-[var(--text-muted)]">
             <span className="font-semibold text-white">{programs.length}</span> Programs
           </span>
-          <span className="text-slate-400">
+          <span className="text-[var(--text-muted)]">
             <span className="font-semibold text-white">
               {programs.filter((p) => p.format === "online").length}
             </span> Online
           </span>
-          <span className="text-slate-400">
+          <span className="text-[var(--text-muted)]">
             <span className="font-semibold text-white">
               {programs.filter((p) => p.fundingAvailable).length}
             </span> With Funding
@@ -197,13 +197,13 @@ export function TrainingTabContent() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="mb-6 rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+        <div className="mb-6 rounded-2xl bg-surface border border-[var(--card-border)] p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Filters</h3>
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-white transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Clear all
@@ -214,7 +214,7 @@ export function TrainingTabContent() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {/* Category */}
             <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
+              <label className="text-sm font-medium text-[var(--text-muted)] mb-2 block">
                 Category
               </label>
               <div className="flex flex-wrap gap-2">
@@ -224,8 +224,8 @@ export function TrainingTabContent() {
                     onClick={() => setCategory(cat)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       category === cat
-                        ? "bg-[#14B8A6] text-slate-900"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        ? "bg-accent text-[var(--text-primary)]"
+                        : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                     }`}
                   >
                     {cat}
@@ -236,7 +236,7 @@ export function TrainingTabContent() {
 
             {/* Format */}
             <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
+              <label className="text-sm font-medium text-[var(--text-muted)] mb-2 block">
                 Format
               </label>
               <div className="flex flex-wrap gap-2">
@@ -246,8 +246,8 @@ export function TrainingTabContent() {
                     onClick={() => setFormat(f.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       format === f.value
-                        ? "bg-[#14B8A6] text-slate-900"
-                        : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        ? "bg-accent text-[var(--text-primary)]"
+                        : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                     }`}
                   >
                     {f.label}
@@ -258,15 +258,15 @@ export function TrainingTabContent() {
 
             {/* Indigenous Focus */}
             <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
+              <label className="text-sm font-medium text-[var(--text-muted)] mb-2 block">
                 Focus
               </label>
               <button
                 onClick={() => setIndigenousOnly(!indigenousOnly)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   indigenousOnly
-                    ? "bg-[#14B8A6] text-slate-900"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    ? "bg-accent text-[var(--text-primary)]"
+                    : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                 }`}
               >
                 Indigenous-Focused
@@ -275,15 +275,15 @@ export function TrainingTabContent() {
 
             {/* Funding Available */}
             <div>
-              <label className="text-sm font-medium text-slate-400 mb-2 block">
+              <label className="text-sm font-medium text-[var(--text-muted)] mb-2 block">
                 Funding
               </label>
               <button
                 onClick={() => setFundingOnly(!fundingOnly)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   fundingOnly
-                    ? "bg-emerald-500 text-white"
-                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                    ? "bg-accent text-white"
+                    : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                 }`}
               >
                 Funding Available
@@ -305,7 +305,7 @@ export function TrainingTabContent() {
         <h2 className="text-xl font-bold text-white">
           {hasFilters ? "Search Results" : "All Training Programs"}
         </h2>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm text-[var(--text-muted)]">
           {loading ? "Loading..." : `${sorted.length} ${sorted.length === 1 ? "program" : "programs"}`}
         </span>
       </div>
@@ -314,31 +314,31 @@ export function TrainingTabContent() {
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-slate-800/50 h-80" />
+            <div key={i} className="animate-pulse rounded-2xl bg-surface h-80" />
           ))}
         </div>
       ) : programs.length === 0 && !hasFilters ? (
-        <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+        <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-12 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <AcademicCapIcon className="h-8 w-8 text-slate-500" />
+            <AcademicCapIcon className="h-8 w-8 text-foreground0" />
           </div>
           <h3 className="text-lg font-semibold text-white mb-2">
             No training programs available yet
           </h3>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             Check back soon! Organizations are adding training programs regularly.
           </p>
         </div>
       ) : sorted.length === 0 ? (
-        <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-12 text-center">
+        <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-12 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
+            <MagnifyingGlassIcon className="h-8 w-8 text-foreground0" />
           </div>
           <h3 className="text-lg font-semibold text-white mb-2">No programs found</h3>
-          <p className="text-slate-400 mb-4">Try adjusting your filters or search terms.</p>
+          <p className="text-[var(--text-muted)] mb-4">Try adjusting your filters or search terms.</p>
           <button
             onClick={clearFilters}
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
           >
             Clear filters
           </button>
@@ -358,7 +358,7 @@ export function TrainingTabContent() {
             <div className="mt-10 flex justify-center">
               <button
                 onClick={() => setDisplayLimit((prev) => prev + 12)}
-                className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                className="group inline-flex items-center gap-2 rounded-xl border border-[var(--card-border)] bg-surface px-8 py-3.5 text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
               >
                 Load more programs
                 <svg
@@ -381,16 +381,16 @@ export function TrainingTabContent() {
       )}
 
       {/* CTA Section */}
-      <section className="mt-12 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-slate-700 p-8 text-center">
+      <section className="mt-12 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-800/50 border border-[var(--card-border)] p-8 text-center">
         <h2 className="text-xl font-bold text-white sm:text-2xl">
           Offer Training Programs?
         </h2>
-        <p className="mt-2 text-slate-400 max-w-xl mx-auto text-sm">
+        <p className="mt-2 text-[var(--text-muted)] max-w-xl mx-auto text-sm">
           List your training program on IOPPS and reach Indigenous learners across North America.
         </p>
         <Link
           href="/organization/training/new"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-2.5 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors text-sm"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors text-sm"
         >
           Post a Training Program
         </Link>
@@ -441,7 +441,7 @@ function TrainingCard({
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
         featured || program.featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-slate-700 bg-slate-800/50 hover:border-[#14B8A6]/50"
+          : "border-[var(--card-border)] bg-surface hover:border-[#14B8A6]/50"
       }`}
     >
       {/* Header */}
@@ -456,12 +456,12 @@ function TrainingCard({
 
         {/* Format & Indigenous Badge */}
         <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-300">
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-800/60 px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
             {getFormatIcon(program.format)}
             {getFormatLabel(program.format)}
           </span>
           {program.indigenousFocused && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/20 px-2.5 py-1 text-xs font-semibold text-[#14B8A6]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-1 text-xs font-semibold text-[#14B8A6]">
               <CheckBadgeIcon className="h-3 w-3" />
               Indigenous-Focused
             </span>
@@ -470,7 +470,7 @@ function TrainingCard({
 
         {/* Category */}
         {program.category && (
-          <span className="mt-2 inline-block rounded-full bg-[#14B8A6]/20 px-2.5 py-1 text-xs font-medium text-[#14B8A6]">
+          <span className="mt-2 inline-block rounded-full bg-accent/20 px-2.5 py-1 text-xs font-medium text-[#14B8A6]">
             {program.category}
           </span>
         )}
@@ -489,7 +489,7 @@ function TrainingCard({
         </Link>
 
         {program.shortDescription && (
-          <p className="mt-2 text-sm text-slate-300 line-clamp-2 flex-1">
+          <p className="mt-2 text-sm text-[var(--text-secondary)] line-clamp-2 flex-1">
             {program.shortDescription}
           </p>
         )}
@@ -497,19 +497,19 @@ function TrainingCard({
         {/* Details */}
         <div className="mt-4 space-y-2">
           {program.duration && (
-            <div className="flex items-center gap-1.5 text-sm text-slate-400">
+            <div className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
               <ClockIcon className="h-4 w-4 flex-shrink-0" />
               <span>{program.duration}</span>
             </div>
           )}
           {program.location && program.format !== "online" && (
-            <div className="flex items-center gap-1.5 text-sm text-slate-400">
+            <div className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
               <MapPinIcon className="h-4 w-4 flex-shrink-0" />
               <span className="line-clamp-1">{program.location}</span>
             </div>
           )}
           {program.cost && (
-            <div className="flex items-center gap-1.5 text-sm text-emerald-400">
+            <div className="flex items-center gap-1.5 text-sm text-accent">
               <CurrencyDollarIcon className="h-4 w-4 flex-shrink-0" />
               <span>{program.cost}</span>
               {program.fundingAvailable && (
@@ -525,13 +525,13 @@ function TrainingCard({
             {program.skills.slice(0, 3).map((skill, i) => (
               <span
                 key={i}
-                className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300"
+                className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-[var(--text-secondary)]"
               >
                 {skill}
               </span>
             ))}
             {program.skills.length > 3 && (
-              <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-400">
+              <span className="rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-[var(--text-muted)]">
                 +{program.skills.length - 3} more
               </span>
             )}
@@ -539,9 +539,9 @@ function TrainingCard({
         )}
 
         {/* Footer */}
-        <div className="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
+        <div className="mt-4 flex items-center justify-between border-t border-[var(--card-border)] pt-4">
           {program.certificationOffered ? (
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
               <AcademicCapIcon className="h-4 w-4" />
               <span className="line-clamp-1">{program.certificationOffered}</span>
             </div>
@@ -553,7 +553,7 @@ function TrainingCard({
               e.preventDefault();
               onEnrollClick();
             }}
-            className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/20 px-3 py-1.5 text-sm font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/30 transition-colors"
+            className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1.5 text-sm font-semibold text-[#14B8A6] hover:bg-accent/30 transition-colors"
           >
             Learn More
             <ArrowTopRightOnSquareIcon className="h-4 w-4" />

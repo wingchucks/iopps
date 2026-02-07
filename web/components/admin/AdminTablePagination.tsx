@@ -90,13 +90,13 @@ export function AdminTablePagination({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       {/* Results summary */}
-      <div className="text-sm text-slate-400">
+      <div className="text-sm text-[var(--text-muted)]">
         Showing{" "}
-        <span className="font-medium text-slate-200">{startItem}</span>
+        <span className="font-medium text-foreground">{startItem}</span>
         {" - "}
-        <span className="font-medium text-slate-200">{endItem}</span>
+        <span className="font-medium text-foreground">{endItem}</span>
         {" of "}
-        <span className="font-medium text-slate-200">{totalItems.toLocaleString()}</span>
+        <span className="font-medium text-foreground">{totalItems.toLocaleString()}</span>
         {" results"}
       </div>
 
@@ -104,7 +104,7 @@ export function AdminTablePagination({
         {/* Page size selector */}
         {showPageSizeSelector && onPageSizeChange && (
           <div className="flex items-center gap-2">
-            <label htmlFor="pageSize" className="text-sm text-slate-400">
+            <label htmlFor="pageSize" className="text-sm text-[var(--text-muted)]">
               Per page:
             </label>
             <select
@@ -112,7 +112,7 @@ export function AdminTablePagination({
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               disabled={loading}
-              className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-sm text-slate-200 focus:border-teal-500 focus:outline-none disabled:opacity-50"
+              className="rounded-md border border-[var(--card-border)] bg-surface px-2 py-1 text-sm text-foreground focus:border-accent focus:outline-none disabled:opacity-50"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
@@ -129,7 +129,7 @@ export function AdminTablePagination({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1 || loading}
-            className="inline-flex items-center justify-center rounded-md border border-slate-700 p-2 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-md border border-[var(--card-border)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--card-border)] hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Previous page"
           >
             <ChevronLeftIcon className="h-4 w-4" />
@@ -141,7 +141,7 @@ export function AdminTablePagination({
               page === "ellipsis" ? (
                 <span
                   key={`ellipsis-${index}`}
-                  className="px-2 text-slate-500"
+                  className="px-2 text-foreground0"
                 >
                   ...
                 </span>
@@ -152,8 +152,8 @@ export function AdminTablePagination({
                   disabled={loading}
                   className={`min-w-[36px] rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                     currentPage === page
-                      ? "bg-teal-500 text-slate-900"
-                      : "border border-slate-700 text-slate-400 hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200"
+                      ? "bg-accent text-[var(--text-primary)]"
+                      : "border border-[var(--card-border)] text-[var(--text-muted)] hover:border-[var(--card-border)] hover:bg-surface hover:text-foreground"
                   }`}
                   aria-current={currentPage === page ? "page" : undefined}
                 >
@@ -165,11 +165,11 @@ export function AdminTablePagination({
 
           {/* Mobile page indicator */}
           <div className="flex items-center gap-2 px-2 sm:hidden">
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-[var(--text-muted)]">
               Page{" "}
-              <span className="font-medium text-slate-200">{currentPage}</span>
+              <span className="font-medium text-foreground">{currentPage}</span>
               {" of "}
-              <span className="font-medium text-slate-200">{totalPages}</span>
+              <span className="font-medium text-foreground">{totalPages}</span>
             </span>
           </div>
 
@@ -177,7 +177,7 @@ export function AdminTablePagination({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages || loading}
-            className="inline-flex items-center justify-center rounded-md border border-slate-700 p-2 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-md border border-[var(--card-border)] p-2 text-[var(--text-muted)] transition-colors hover:border-[var(--card-border)] hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Next page"
           >
             <ChevronRightIcon className="h-4 w-4" />
@@ -217,14 +217,14 @@ export function SimplePagination({
       <button
         onClick={onPrevious}
         disabled={!hasPrevious || loading}
-        className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:border-[var(--card-border)] hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
       >
         Previous
       </button>
       <button
         onClick={onNext}
         disabled={!hasMore || loading}
-        className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-teal-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:border-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "Loading..." : "Load More"}
       </button>

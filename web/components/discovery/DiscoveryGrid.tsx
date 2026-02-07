@@ -29,7 +29,7 @@ export function LoadingGrid({ count = 6, height = "h-80" }: LoadingGridProps) {
       {[...Array(count)].map((_, i) => (
         <div
           key={i}
-          className={`animate-pulse rounded-2xl bg-slate-800/50 ${height}`}
+          className={`animate-pulse rounded-2xl bg-surface ${height}`}
         />
       ))}
     </DiscoveryGrid>
@@ -50,7 +50,7 @@ export function LoadMoreButton({
     <div className="mt-10 flex justify-center">
       <button
         onClick={onClick}
-        className="group inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-8 py-3.5 text-sm font-semibold text-slate-200 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+        className="group inline-flex items-center gap-2 rounded-xl border border-[var(--card-border)] bg-surface px-8 py-3.5 text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
       >
         {label}
         <svg

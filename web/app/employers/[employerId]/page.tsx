@@ -209,7 +209,7 @@ function SocialIcon({ platform, url }: { platform: string; url: string }) {
       target="_blank"
       rel="noopener noreferrer"
       title={label}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600 transition-colors ${color}`}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface text-sm font-semibold text-[var(--text-secondary)] transition-colors ${color}`}
     >
       {icon}
     </a>
@@ -240,16 +240,16 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
   if (status === "pending" || status === "rejected") {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 shadow-sm">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-50">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-12 shadow-sm">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--amber-bg)]">
             <svg className="h-10 w-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             {status === "pending" ? "Profile Under Review" : "Profile Unavailable"}
           </h1>
-          <p className="mt-4 text-slate-500">
+          <p className="mt-4 text-foreground0">
             {status === "pending"
               ? "This employer's profile is currently being reviewed and will be available once approved."
               : "This employer's profile is not currently available."}
@@ -257,13 +257,13 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
           <div className="mt-8 flex justify-center gap-4">
             <Link
               href="/careers"
-              className="rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#14B8A6]/90"
+              className="rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
             >
               Browse Jobs
             </Link>
             <Link
               href="/"
-              className="rounded-lg border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-[var(--border)] px-6 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--background)]"
             >
               Go Home
             </Link>
@@ -340,12 +340,12 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
       )}
 
       {/* Employer Header */}
-      <div className={`rounded-lg border border-slate-200 bg-white p-6 mb-8 shadow-sm ${employer.bannerUrl ? 'rounded-t-none -mt-1' : ''}`}>
+      <div className={`rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-6 mb-8 shadow-sm ${employer.bannerUrl ? 'rounded-t-none -mt-1' : ''}`}>
         <div className="flex flex-col md:flex-row md:items-start gap-6">
           {/* Logo and Basic Info */}
           <div className="flex items-start gap-4 flex-1">
             {employer.logoUrl && (
-              <div className={`relative h-24 w-24 flex-shrink-0 rounded-lg overflow-hidden bg-white ${employer.bannerUrl ? '-mt-16 ring-4 ring-white' : ''}`}>
+              <div className={`relative h-24 w-24 flex-shrink-0 rounded-lg overflow-hidden bg-[var(--card-bg)] ${employer.bannerUrl ? '-mt-16 ring-4 ring-white' : ''}`}>
                 <Image
                   src={employer.logoUrl}
                   alt={`${employer.organizationName} logo`}
@@ -355,19 +355,19 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
               </div>
             )}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
                 {employer.organizationName}
               </h1>
 
               {/* Industry Badge */}
               {employer.industry && (
-                <span className="mt-2 inline-flex items-center rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
+                <span className="mt-2 inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
                   {INDUSTRY_LABELS[employer.industry] || employer.industry}
                 </span>
               )}
 
               {employer.location && (
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-foreground0">
                   📍 {employer.location}
                 </p>
               )}
@@ -406,29 +406,29 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
 
         {employer.description && (
           <div className="mt-6 prose max-w-none">
-            <p className="text-slate-600 whitespace-pre-wrap">{employer.description}</p>
+            <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{employer.description}</p>
           </div>
         )}
 
         {/* Company Info & Contact Section */}
         {(hasCompanyInfo || hasContactInfo) && (
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-6 pt-6 border-t border-[var(--border)]">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {employer.companySize && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-500">👥</span>
-                  <span className="text-slate-600">{SIZE_LABELS[employer.companySize] || employer.companySize}</span>
+                  <span className="text-foreground0">👥</span>
+                  <span className="text-[var(--text-secondary)]">{SIZE_LABELS[employer.companySize] || employer.companySize}</span>
                 </div>
               )}
               {employer.foundedYear && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">📅</span>
-                  <span className="text-slate-600">Founded {employer.foundedYear}</span>
+                  <span className="text-[var(--text-muted)]">📅</span>
+                  <span className="text-[var(--text-secondary)]">Founded {employer.foundedYear}</span>
                 </div>
               )}
               {employer.contactEmail && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">✉️</span>
+                  <span className="text-[var(--text-muted)]">✉️</span>
                   <a
                     href={`mailto:${employer.contactEmail}`}
                     className="text-[#14B8A6] hover:text-[#14B8A6]/80 truncate"
@@ -439,7 +439,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
               )}
               {employer.contactPhone && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-slate-400">📞</span>
+                  <span className="text-[var(--text-muted)]">📞</span>
                   <a
                     href={`tel:${employer.contactPhone}`}
                     className="text-[#14B8A6] hover:text-[#14B8A6]/80"
@@ -472,13 +472,13 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
 
       {/* Jobs Section */}
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900 mb-4">
+        <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] mb-4">
           Open Positions ({jobs.length})
         </h2>
 
         {jobs.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <p className="text-slate-500">
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-8 text-center shadow-sm">
+            <p className="text-foreground0">
               No open positions at this time. Check back soon!
             </p>
           </div>
@@ -488,14 +488,14 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
               <Link
                 key={job.id}
                 href={`/careers/${job.id}`}
-                className="block rounded-lg border border-slate-200 bg-white p-6 hover:border-[#14B8A6]/50 hover:bg-slate-50 transition-all shadow-sm"
+                className="block rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-6 hover:border-[#14B8A6]/50 hover:bg-[var(--background)] transition-all shadow-sm"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-slate-900">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)]">
                       {job.title}
                     </h3>
-                    <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-500">
+                    <div className="mt-2 flex flex-wrap gap-3 text-sm text-foreground0">
                       <span>📍 {job.location}</span>
                       <span>💼 {job.employmentType}</span>
                       {job.remoteFlag && <span>🏠 Remote</span>}
@@ -506,13 +506,13 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
                       )}
                     </div>
                     {job.description && (
-                      <p className="mt-3 text-sm text-slate-600 line-clamp-2">
+                      <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                         {job.description.replace(/<[^>]*>/g, '').substring(0, 200)}...
                       </p>
                     )}
                   </div>
                   <div className="flex-shrink-0">
-                    <span className="inline-flex items-center rounded-md bg-[#14B8A6]/10 px-3 py-1 text-sm font-medium text-[#14B8A6]">
+                    <span className="inline-flex items-center rounded-md bg-accent/10 px-3 py-1 text-sm font-medium text-[#14B8A6]">
                       View Details →
                     </span>
                   </div>

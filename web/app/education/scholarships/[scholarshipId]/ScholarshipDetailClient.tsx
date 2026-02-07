@@ -124,42 +124,42 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
     <FeedLayout activeNav="education" fullWidth>
       <div className="mx-auto max-w-4xl py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm text-slate-500">
-          <Link href="/" className="hover:text-slate-900 transition-colors">
+        <nav className="mb-6 text-sm text-foreground0">
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
             Home
           </Link>
           <span className="mx-2">→</span>
-          <Link href="/education" className="hover:text-slate-900 transition-colors">
+          <Link href="/education" className="hover:text-[var(--text-primary)] transition-colors">
             Education
           </Link>
           <span className="mx-2">→</span>
-          <Link href="/education/scholarships" className="hover:text-slate-900 transition-colors">
+          <Link href="/education/scholarships" className="hover:text-[var(--text-primary)] transition-colors">
             Scholarships
           </Link>
           <span className="mx-2">→</span>
-          <span className="text-slate-900">{scholarship.title}</span>
+          <span className="text-[var(--text-primary)]">{scholarship.title}</span>
         </nav>
 
         {/* Scholarship Header */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
+            <span className="inline-flex items-center rounded-full border border-[#14B8A6]/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#14B8A6]">
               {scholarship.type}
             </span>
-            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center rounded-lg border border-[var(--border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
               {scholarship.level}
             </span>
             {scholarship.region && (
-              <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              <span className="inline-flex items-center rounded-lg border border-[var(--border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                 {scholarship.region}
               </span>
             )}
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">{scholarship.title}</h1>
+          <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">{scholarship.title}</h1>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-base">
-            <div className="flex items-center gap-2 text-slate-600">
+            <div className="flex items-center gap-2 text-[var(--text-secondary)]">
               <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -170,7 +170,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
           {/* Amount and Deadline */}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {scholarship.amount && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-base font-semibold text-emerald-600">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-[var(--accent-bg)] px-4 py-2 text-base font-semibold text-accent">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -191,7 +191,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               <span className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-base font-medium ${
                 isExpired
                   ? "border-red-300 bg-red-50 text-red-600"
-                  : "border-amber-300 bg-amber-50 text-amber-600"
+                  : "border-amber-300 bg-[var(--amber-bg)] text-[var(--amber)]"
               }`}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -215,7 +215,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               {isExpired ? (
                 <button
                   disabled
-                  className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-6 py-3 text-base font-semibold text-slate-500 cursor-not-allowed"
+                  className="inline-flex items-center gap-2 rounded-lg bg-surface px-6 py-3 text-base font-semibold text-foreground0 cursor-not-allowed"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -225,7 +225,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               ) : (
                 <button
                   onClick={handleApplyClick}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-base font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -241,7 +241,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
             <div className="mt-6">
               <a
                 href={`mailto:${scholarship.applicationEmail}?subject=Scholarship Application: ${encodeURIComponent(scholarship.title)}`}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-3 text-base font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-base font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -252,7 +252,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
           )}
 
           {/* Share Buttons */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-6 pt-6 border-t border-[var(--border)]">
             <ShareButtons
               item={{
                 id: scholarship.id,
@@ -265,9 +265,9 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
         </div>
 
         {/* Description */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
-          <h2 className="text-xl font-bold text-slate-800">About This {scholarship.type}</h2>
-          <div className="mt-4 space-y-4 text-slate-600">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">About This {scholarship.type}</h2>
+          <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
             {scholarship.description.split("\n").map((paragraph, i) => (
               <p key={i} className="leading-relaxed">
                 {paragraph}
@@ -278,10 +278,10 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
 
         {/* Application Instructions for Institution Portal */}
         {scholarship.applicationMethod === "institution_portal" && scholarship.applicationInstructions && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
-            <h2 className="text-xl font-bold text-slate-800">How to Apply</h2>
-            <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">How to Apply</h2>
+            <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-4">
+              <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">
                 {scholarship.applicationInstructions}
               </p>
             </div>
@@ -291,8 +291,8 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
         {/* Application Section - Only show internal form if no external method is set */}
         {!scholarship.applicationMethod || scholarship.applicationMethod === "instructions_provided" ? (
           isCommunityMember && user ? (
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
-              <h2 className="text-xl font-bold text-slate-800">
+            <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">
                 Apply for this {scholarship.type}
               </h2>
 
@@ -301,7 +301,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                   <p className="text-lg font-semibold text-red-600">
                     Application period has ended
                   </p>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     The deadline for this scholarship has passed.
                   </p>
                 </div>
@@ -310,14 +310,14 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                   <p className="text-lg font-semibold text-green-600">
                     Application submitted successfully!
                   </p>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
                     Redirecting to your applications...
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="mt-6 space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-800">
+                    <label className="block text-sm font-medium text-[var(--text-primary)]">
                       Education Background <span className="text-red-600">*</span>
                     </label>
                     <textarea
@@ -326,15 +326,15 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                       onChange={(e) => setEducation(e.target.value)}
                       rows={4}
                       placeholder="Describe your current education status, institution, program, year of study, GPA, etc."
-                      className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#14B8A6] focus:outline-none"
+                      className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#14B8A6] focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-800">
+                    <label className="block text-sm font-medium text-[var(--text-primary)]">
                       Personal Statement / Essay <span className="text-red-600">*</span>
                     </label>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-foreground0">
                       Share your goals, achievements, community involvement, and why you should be selected for this {scholarship.type.toLowerCase()}.
                     </p>
                     <textarea
@@ -343,7 +343,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                       onChange={(e) => setEssay(e.target.value)}
                       rows={10}
                       placeholder="Write your personal statement here..."
-                      className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#14B8A6] focus:outline-none"
+                      className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#14B8A6] focus:outline-none"
                     />
                   </div>
 
@@ -356,7 +356,7 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {submitting ? "Submitting..." : "Submit Application"}
                   </button>
@@ -364,31 +364,31 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
               )}
             </div>
           ) : !user ? (
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 text-center">
-              <h3 className="text-lg font-bold text-slate-800">
+            <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8 text-center">
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">
                 Sign in to apply
               </h3>
-              <p className="mt-2 text-slate-500">
+              <p className="mt-2 text-foreground0">
                 Create a community member account to apply for this {scholarship.type.toLowerCase()}.
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <Link
                   href="/login"
-                  className="rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                  className="rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-lg border border-slate-200 px-6 py-3 font-semibold text-slate-800 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                  className="rounded-lg border border-[var(--border)] px-6 py-3 font-semibold text-[var(--text-primary)] transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
                 >
                   Create Account
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 text-center">
-              <p className="text-slate-500">
+            <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8 text-center">
+              <p className="text-foreground0">
                 Switch to a community member account to apply for scholarships.
               </p>
             </div>
@@ -397,11 +397,11 @@ export default function ScholarshipDetailClient({ scholarship }: ScholarshipDeta
 
         {/* Provider Information */}
         {scholarship.employerName && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
               Provided By
             </h3>
-            <p className="mt-2 text-lg font-semibold text-slate-800">
+            <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">
               {scholarship.employerName}
             </p>
           </div>

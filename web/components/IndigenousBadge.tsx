@@ -68,7 +68,7 @@ export function IndigenousBadgeExpanded({
           <h4 className="font-bold text-amber-400 flex items-center gap-2">
             Verified Indigenous Business
           </h4>
-          <div className="mt-2 space-y-1 text-sm text-slate-300">
+          <div className="mt-2 space-y-1 text-sm text-[var(--text-secondary)]">
             {verification.isIndigenousOwned && (
               <p className="flex items-center gap-2">
                 <span className="text-amber-400">●</span>

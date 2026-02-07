@@ -53,7 +53,7 @@ export default function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-hidden">
@@ -69,17 +69,17 @@ export default function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
                 leaveTo="translate-x-full"
               >
                 <Dialog.Panel className="w-screen max-w-md">
-                  <div className="flex h-full flex-col bg-slate-900 shadow-xl">
+                  <div className="flex h-full flex-col bg-surface shadow-xl">
                     {/* Header */}
-                    <div className="px-6 py-5 border-b border-slate-800">
+                    <div className="px-6 py-5 border-b border-[var(--card-border)]">
                       <div className="flex items-center justify-between">
-                        <Dialog.Title className="text-lg font-semibold text-slate-50 flex items-center gap-2">
+                        <Dialog.Title className="text-lg font-semibold text-foreground flex items-center gap-2">
                           <QuestionMarkCircleIcon className="w-6 h-6 text-accent" />
                           Help Center
                         </Dialog.Title>
                         <button
                           onClick={onClose}
-                          className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                          className="p-2 rounded-lg text-[var(--text-muted)] hover:text-foreground hover:bg-surface transition-colors"
                         >
                           <XMarkIcon className="w-5 h-5" />
                         </button>
@@ -89,32 +89,32 @@ export default function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto">
                       {/* Quick Actions */}
-                      <div className="p-6 border-b border-slate-800">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">
+                      <div className="p-6 border-b border-[var(--card-border)]">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-4">
                           Quick Actions
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                           <a
                             href="mailto:support@iopps.ca?subject=Help%20Request"
-                            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors text-center"
+                            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface hover:bg-surface transition-colors text-center"
                           >
                             <EnvelopeIcon className="w-6 h-6 text-accent" />
-                            <span className="text-sm text-slate-300">Email Support</span>
+                            <span className="text-sm text-[var(--text-secondary)]">Email Support</span>
                           </a>
                           <Link
                             href="/help"
                             onClick={onClose}
-                            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-800/50 hover:bg-slate-800 transition-colors text-center"
+                            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface hover:bg-surface transition-colors text-center"
                           >
                             <BookOpenIcon className="w-6 h-6 text-accent" />
-                            <span className="text-sm text-slate-300">Documentation</span>
+                            <span className="text-sm text-[var(--text-secondary)]">Documentation</span>
                           </Link>
                         </div>
                       </div>
 
                       {/* FAQs */}
                       <div className="p-6">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-4">
                           Frequently Asked Questions
                         </h3>
                         <div className="space-y-2">
@@ -123,17 +123,17 @@ export default function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
                               {({ open }) => (
                                 <div className="rounded-xl bg-slate-800/30 overflow-hidden">
                                   <Disclosure.Button className="flex w-full items-center justify-between px-4 py-3 text-left">
-                                    <span className="text-sm font-medium text-slate-200">
+                                    <span className="text-sm font-medium text-foreground">
                                       {faq.question}
                                     </span>
                                     <ChevronDownIcon
-                                      className={`w-4 h-4 text-slate-400 transition-transform ${
+                                      className={`w-4 h-4 text-[var(--text-muted)] transition-transform ${
                                         open ? 'rotate-180' : ''
                                       }`}
                                     />
                                   </Disclosure.Button>
                                   <Disclosure.Panel className="px-4 pb-3">
-                                    <p className="text-sm text-slate-400">{faq.answer}</p>
+                                    <p className="text-sm text-[var(--text-muted)]">{faq.answer}</p>
                                   </Disclosure.Panel>
                                 </div>
                               )}
@@ -144,8 +144,8 @@ export default function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/50">
-                      <p className="text-xs text-slate-500 text-center">
+                    <div className="px-6 py-4 border-t border-[var(--card-border)] bg-surface">
+                      <p className="text-xs text-foreground0 text-center">
                         Can&apos;t find what you need?{' '}
                         <a
                           href="mailto:support@iopps.ca"
@@ -174,7 +174,7 @@ export function HelpButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[var(--text-muted)] hover:text-foreground hover:bg-surface transition-all"
       >
         <QuestionMarkCircleIcon className="w-5 h-5" />
         <span className="text-sm font-medium">Need help?</span>

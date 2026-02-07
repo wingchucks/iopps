@@ -115,11 +115,11 @@ export default function ProfileCompletenessScore({
   // Don't show if profile is 100% complete
   if (score === 100) {
     return (
-      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6">
+      <div className="rounded-2xl border border-accent/30 bg-accent/10 p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
             <svg
-              className="h-6 w-6 text-emerald-400"
+              className="h-6 w-6 text-accent"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -144,7 +144,7 @@ export default function ProfileCompletenessScore({
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-emerald-400";
+    if (score >= 80) return "text-accent";
     if (score >= 60) return "text-amber-400";
     if (score >= 40) return "text-orange-400";
     return "text-red-400";
@@ -165,12 +165,12 @@ export default function ProfileCompletenessScore({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">Profile Strength</h3>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             Complete your profile to attract more candidates
           </p>
         </div>
@@ -178,7 +178,7 @@ export default function ProfileCompletenessScore({
           <span className={`text-3xl font-bold ${getScoreColor(score)}`}>
             {score}%
           </span>
-          <p className="text-xs text-slate-500">complete</p>
+          <p className="text-xs text-foreground0">complete</p>
         </div>
       </div>
 
@@ -195,7 +195,7 @@ export default function ProfileCompletenessScore({
       {/* Incomplete Items - Show up to 3 */}
       {incompleteItems.length > 0 && (
         <div className="mb-4">
-          <p className="mb-3 text-sm font-medium text-slate-400">
+          <p className="mb-3 text-sm font-medium text-[var(--text-muted)]">
             Quick wins to boost your profile:
           </p>
           <div className="space-y-2">
@@ -203,22 +203,22 @@ export default function ProfileCompletenessScore({
               <button
                 key={item.id}
                 onClick={() => handleAction(item.href)}
-                className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-900/50 p-3 text-left transition-colors hover:border-slate-600 hover:bg-slate-800/50"
+                className="flex w-full items-center justify-between rounded-lg border border-[var(--card-border)] bg-surface p-3 text-left transition-colors hover:border-[var(--card-border)] hover:bg-surface"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-xs text-slate-400">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-xs text-[var(--text-muted)]">
                     +{item.weight}
                   </div>
-                  <span className="text-sm text-slate-300">{item.label}</span>
+                  <span className="text-sm text-[var(--text-secondary)]">{item.label}</span>
                 </div>
-                <span className="text-xs font-medium text-emerald-400">
+                <span className="text-xs font-medium text-accent">
                   {item.action || "Add"} →
                 </span>
               </button>
             ))}
           </div>
           {incompleteItems.length > 3 && (
-            <p className="mt-2 text-center text-xs text-slate-500">
+            <p className="mt-2 text-center text-xs text-foreground0">
               +{incompleteItems.length - 3} more items to complete
             </p>
           )}
@@ -227,15 +227,15 @@ export default function ProfileCompletenessScore({
 
       {/* Completed Items Summary */}
       {completedItems.length > 0 && (
-        <div className="border-t border-slate-700 pt-4">
-          <p className="mb-2 text-xs text-slate-500">
+        <div className="border-t border-[var(--card-border)] pt-4">
+          <p className="mb-2 text-xs text-foreground0">
             Completed ({completedItems.length}/{items.length}):
           </p>
           <div className="flex flex-wrap gap-2">
             {completedItems.map((item) => (
               <span
                 key={item.id}
-                className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400"
+                className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent"
               >
                 <svg
                   className="h-3 w-3"

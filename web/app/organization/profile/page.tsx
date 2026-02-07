@@ -54,10 +54,10 @@ export default function OrganizationProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm">Loading profile...</p>
+          <p className="text-[var(--text-muted)] text-sm">Loading profile...</p>
         </div>
       </div>
     );
@@ -73,12 +73,12 @@ export default function OrganizationProfilePage() {
   const publicUrl = profile.slug ? `/organizations/${profile.slug}` : null;
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
+    <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-50 mb-2">Your Public Profile</h1>
-          <p className="text-slate-400">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Your Public Profile</h1>
+          <p className="text-[var(--text-muted)]">
             Manage how your organization appears to the public
           </p>
         </div>
@@ -100,10 +100,10 @@ export default function OrganizationProfilePage() {
               </div>
             )}
             <div>
-              <h2 className="text-xl font-bold text-slate-50">
+              <h2 className="text-xl font-bold text-foreground">
                 {profile.organizationName || 'Your Organization'}
               </h2>
-              <p className="text-slate-400 text-sm">
+              <p className="text-[var(--text-muted)] text-sm">
                 {profile.location || 'Location not set'}
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function OrganizationProfilePage() {
                 <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
                 <div>
                   <p className="text-green-400 font-medium">Published</p>
-                  <p className="text-slate-400 text-sm">Your profile is live and visible to the public</p>
+                  <p className="text-[var(--text-muted)] text-sm">Your profile is live and visible to the public</p>
                 </div>
               </div>
             ) : (
@@ -128,7 +128,7 @@ export default function OrganizationProfilePage() {
                 <ExclamationTriangleIcon className="w-5 h-5 text-amber-400" />
                 <div>
                   <p className="text-amber-400 font-medium">Not Published</p>
-                  <p className="text-slate-400 text-sm">Complete your profile to make it visible</p>
+                  <p className="text-[var(--text-muted)] text-sm">Complete your profile to make it visible</p>
                 </div>
               </div>
             )}
@@ -151,7 +151,7 @@ export default function OrganizationProfilePage() {
               href="/organization/onboarding"
               className={`flex items-center justify-center gap-2 px-4 py-3 font-semibold rounded-xl transition-colors flex-1 ${
                 isPublished
-                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                  ? 'bg-surface hover:bg-slate-700 text-foreground'
                   : 'bg-accent hover:bg-accent/90 text-slate-950'
               }`}
             >

@@ -9,14 +9,14 @@ export const metadata: Metadata = {
 
 export default function OfflinePage() {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         {/* Offline Icon */}
         <div className="mb-8 flex justify-center">
           <div className="relative">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center border-2 border-slate-200 shadow-sm">
+            <div className="w-24 h-24 bg-[var(--card-bg)] rounded-full flex items-center justify-center border-2 border-[var(--border)] shadow-sm">
               <svg
-                className="w-12 h-12 text-slate-600"
+                className="w-12 h-12 text-[var(--text-secondary)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -31,16 +31,16 @@ export default function OfflinePage() {
               </svg>
             </div>
             {/* Pulsing ring effect */}
-            <div className="absolute inset-0 w-24 h-24 bg-teal-500/10 rounded-full animate-ping"></div>
+            <div className="absolute inset-0 w-24 h-24 bg-accent/10 rounded-full animate-ping"></div>
           </div>
         </div>
 
         {/* Main Content */}
-        <h1 className="text-3xl font-bold text-slate-900 mb-4">
+        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-4">
           You&apos;re Offline
         </h1>
 
-        <p className="text-slate-500 mb-8 leading-relaxed">
+        <p className="text-foreground0 mb-8 leading-relaxed">
           It looks like you&apos;ve lost your internet connection. Don&apos;t worry, you can still access previously viewed pages.
         </p>
 
@@ -50,18 +50,18 @@ export default function OfflinePage() {
 
           <Link
             href="/"
-            className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            className="block w-full bg-surface hover:bg-surface text-[var(--text-primary)] font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
           >
             Go to Home
           </Link>
         </div>
 
         {/* Tips Section */}
-        <div className="mt-12 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-600 mb-2">
+        <div className="mt-12 p-4 bg-[var(--card-bg)] rounded-lg border border-[var(--border)] shadow-sm">
+          <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">
             Offline Tips
           </h2>
-          <ul className="text-xs text-slate-500 space-y-1 text-left">
+          <ul className="text-xs text-foreground0 space-y-1 text-left">
             <li>• Check your internet connection</li>
             <li>• Try switching between WiFi and mobile data</li>
             <li>• Disable airplane mode if it's on</li>
@@ -71,7 +71,7 @@ export default function OfflinePage() {
 
         {/* IOPPS Branding */}
         <div className="mt-8">
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[var(--text-secondary)]">
             IOPPS - Indigenous Opportunities & Partnerships Platform
           </p>
         </div>

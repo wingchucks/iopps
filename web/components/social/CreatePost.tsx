@@ -138,7 +138,7 @@ export function CreatePost({ onPostCreated }: CreatePostProps = {}) {
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!content.trim() || isSubmitting}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="bg-accent hover:bg-emerald-700 text-white"
                             >
                                 {isSubmitting ? "Posting..." : "Post"}
                             </Button>

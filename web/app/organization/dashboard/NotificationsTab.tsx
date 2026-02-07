@@ -207,16 +207,16 @@ export default function NotificationsTab() {
 
   const renderSection = (title: string, settings: NotificationSetting[]) => (
     <div className="mb-8">
-      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">{title}</h3>
+      <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-4">{title}</h3>
       <div className="space-y-4">
         {settings.map((setting) => (
           <div
             key={setting.key}
-            className="flex items-center justify-between p-4 rounded-xl bg-slate-800/50 border border-slate-700/50"
+            className="flex items-center justify-between p-4 rounded-xl bg-surface border border-[var(--card-border)]"
           >
             <div className="flex-1 pr-4">
-              <p className="text-slate-100 font-medium">{setting.label}</p>
-              <p className="text-sm text-slate-400 mt-0.5">{setting.description}</p>
+              <p className="text-foreground font-medium">{setting.label}</p>
+              <p className="text-sm text-[var(--text-muted)] mt-0.5">{setting.description}</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -226,7 +226,7 @@ export default function NotificationsTab() {
                 disabled={saving || loading}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#14B8A6]/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#14B8A6]"></div>
+              <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#14B8A6]/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--card-bg)] after:border-[var(--border)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
             </label>
           </div>
         ))}
@@ -245,8 +245,8 @@ export default function NotificationsTab() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">Email Notifications</h2>
-        <p className="text-slate-400">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Email Notifications</h2>
+        <p className="text-[var(--text-muted)]">
           Choose which emails you would like to receive. Changes are saved automatically.
         </p>
       </div>
@@ -258,7 +258,7 @@ export default function NotificationsTab() {
       )}
 
       {saveSuccess && (
-        <div className="mb-6 p-4 rounded-xl bg-[#14B8A6]/10 border border-[#14B8A6]/30 text-[#14B8A6] flex items-center gap-2">
+        <div className="mb-6 p-4 rounded-xl bg-accent/10 border border-[#14B8A6]/30 text-[#14B8A6] flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
@@ -275,8 +275,8 @@ export default function NotificationsTab() {
       {renderSection("Team", teamSettings)}
       {renderSection("Digests & Updates", digestSettings)}
 
-      <div className="mt-8 p-4 rounded-xl bg-slate-800/30 border border-slate-700/30">
-        <p className="text-sm text-slate-400">
+      <div className="mt-8 p-4 rounded-xl bg-slate-800/30 border border-[var(--card-border)]/30">
+        <p className="text-sm text-[var(--text-muted)]">
           You will always receive essential notifications like security alerts and account-related emails regardless of these settings.
         </p>
       </div>

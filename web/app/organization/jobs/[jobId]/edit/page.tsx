@@ -270,7 +270,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
   if (loading || loadingJob) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -281,19 +281,19 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         <h1 className="text-2xl font-semibold tracking-tight">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Sign in as an employer to edit job postings.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6]"
+            className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground hover:border-[#14B8A6] hover:text-[#14B8A6]"
           >
             Register
           </Link>
@@ -308,7 +308,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to an employer account to edit jobs.
         </p>
       </div>
@@ -323,7 +323,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         </h1>
         <Link
           href="/organization/dashboard"
-          className="inline-flex rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Back to Dashboard
         </Link>
@@ -338,12 +338,12 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         <h1 className="text-2xl font-semibold tracking-tight text-red-400">
           Access denied
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You don&rsquo;t have permission to edit this job posting.
         </p>
         <Link
           href="/organization/dashboard"
-          className="inline-flex rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Back to Dashboard
         </Link>
@@ -356,14 +356,14 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Edit job posting</h1>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
             Update your job listing. Changes will be visible immediately on the public jobs page.
           </p>
         </div>
         <Link
-          href={`/jobs-training/${jobId}`}
+          href={`/careers/${jobId}`}
           target="_blank"
-          className="rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:border-[#14B8A6] hover:text-[#14B8A6] transition-colors whitespace-nowrap"
+          className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-sm text-foreground hover:border-accent hover:text-accent transition-colors whitespace-nowrap"
         >
           View public listing
         </Link>
@@ -396,7 +396,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
               disabled={deleting}
-              className="rounded-md border border-slate-700 px-3 py-1 text-sm text-slate-200 hover:border-slate-600 disabled:opacity-60"
+              className="rounded-md border border-[var(--card-border)] px-3 py-1 text-sm text-foreground hover:border-[var(--card-border)] disabled:opacity-60"
             >
               Cancel
             </button>
@@ -407,13 +407,13 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         {/* Section 1: Basic Information */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Basic Information</h2>
-            <p className="text-sm text-slate-400">Essential details about the position</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+            <p className="text-sm text-[var(--text-muted)]">Essential details about the position</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Job Title <span className="text-red-400">*</span>
             </label>
             <input
@@ -422,13 +422,13 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Senior Software Developer"
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+              className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
             />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Category
               </label>
               <CategorySelect
@@ -438,7 +438,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Employment Type <span className="text-red-400">*</span>
               </label>
               <EmploymentTypeSelect
@@ -451,9 +451,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Section 2: Location */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Location</h2>
-            <p className="text-sm text-slate-400">Where will this job be performed?</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Location</h2>
+            <p className="text-sm text-[var(--text-muted)]">Where will this job be performed?</p>
           </div>
 
           <LocationTypeSelector
@@ -466,9 +466,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Section 3: Compensation */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Compensation</h2>
-            <p className="text-sm text-slate-400">Salary information for candidates</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Compensation</h2>
+            <p className="text-sm text-[var(--text-muted)]">Salary information for candidates</p>
           </div>
 
           <SalaryRangeInput
@@ -479,48 +479,48 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Section 4: Job Requirements */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Job Requirements</h2>
-            <p className="text-sm text-slate-400">Special requirements and preferences</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Job Requirements</h2>
+            <p className="text-sm text-[var(--text-muted)]">Special requirements and preferences</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600 transition-colors">
+            <label className="flex items-start gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)] transition-colors">
               <input
                 type="checkbox"
                 checked={indigenousPreference}
                 onChange={(e) => setIndigenousPreference(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="mt-0.5 w-4 h-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
               />
               <div>
-                <span className="block text-sm font-medium text-slate-100">Indigenous Preference</span>
-                <span className="text-xs text-slate-400">Targeted hiring for Indigenous candidates</span>
+                <span className="block text-sm font-medium text-foreground">Indigenous Preference</span>
+                <span className="text-xs text-[var(--text-muted)]">Targeted hiring for Indigenous candidates</span>
               </div>
             </label>
 
-            <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600 transition-colors">
+            <label className="flex items-start gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)] transition-colors">
               <input
                 type="checkbox"
                 checked={cpicRequired}
                 onChange={(e) => setCpicRequired(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500"
+                className="mt-0.5 w-4 h-4 rounded border-[var(--card-border)] bg-surface text-amber-500 focus:ring-amber-500"
               />
               <div>
-                <span className="block text-sm font-medium text-slate-100">CPIC Required</span>
-                <span className="text-xs text-slate-400">Background check required</span>
+                <span className="block text-sm font-medium text-foreground">CPIC Required</span>
+                <span className="text-xs text-[var(--text-muted)]">Background check required</span>
               </div>
             </label>
 
-            <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-slate-600 transition-colors">
+            <label className="flex items-start gap-3 p-4 rounded-xl border border-[var(--card-border)] bg-surface cursor-pointer hover:border-[var(--card-border)] transition-colors">
               <input
                 type="checkbox"
                 checked={willTrain}
                 onChange={(e) => setWillTrain(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                className="mt-0.5 w-4 h-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
               />
               <div>
-                <span className="block text-sm font-medium text-slate-100">Will Train</span>
-                <span className="text-xs text-slate-400">On-the-job training provided</span>
+                <span className="block text-sm font-medium text-foreground">Will Train</span>
+                <span className="text-xs text-[var(--text-muted)]">On-the-job training provided</span>
               </div>
             </label>
           </div>
@@ -528,13 +528,13 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Section 5: Job Description */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Job Description</h2>
-            <p className="text-sm text-slate-400">Detailed information about the role</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Job Description</h2>
+            <p className="text-sm text-[var(--text-muted)]">Detailed information about the role</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Description <span className="text-red-400">*</span>
             </label>
             <RichTextEditor
@@ -546,7 +546,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Responsibilities (one per line)
               </label>
               <textarea
@@ -554,11 +554,11 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 onChange={(e) => setResponsibilities(e.target.value)}
                 rows={6}
                 placeholder="Lead development projects&#10;Collaborate with cross-functional teams&#10;Review code and mentor juniors"
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Qualifications (one per line)
               </label>
               <textarea
@@ -566,7 +566,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                 onChange={(e) => setQualifications(e.target.value)}
                 rows={6}
                 placeholder="5+ years of experience&#10;Bachelor's degree or equivalent&#10;Strong communication skills"
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+                className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
               />
             </div>
           </div>
@@ -574,40 +574,40 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Section 6: Dates */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Posting Duration</h2>
-            <p className="text-sm text-slate-400">When should this job be visible?</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Posting Duration</h2>
+            <p className="text-sm text-[var(--text-muted)]">When should this job be visible?</p>
           </div>
 
           <div className="max-w-xs">
-            <label className="block text-sm font-medium text-slate-200 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Closing Date (optional)
             </label>
             <input
               type="date"
               value={closingDate}
               onChange={(e) => setClosingDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-[#14B8A6]"
+              className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground focus:outline-none focus:border-[#14B8A6]"
             />
-            <p className="mt-1 text-xs text-slate-500">Leave blank to keep the job open indefinitely</p>
+            <p className="mt-1 text-xs text-foreground0">Leave blank to keep the job open indefinitely</p>
           </div>
         </section>
 
         {/* Application Method - Quick Apply Only */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Application Method</h2>
-            <p className="text-sm text-slate-400">How candidates will apply</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Application Method</h2>
+            <p className="text-sm text-[var(--text-muted)]">How candidates will apply</p>
           </div>
 
-          <div className="rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-4">
+          <div className="rounded-xl border border-[#14B8A6]/30 bg-accent/5 p-4">
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <h3 className="text-sm font-semibold text-slate-100 mb-1">IOPPS Quick Apply Enabled</h3>
-                <p className="text-xs text-slate-300">
+                <h3 className="text-sm font-semibold text-foreground mb-1">IOPPS Quick Apply Enabled</h3>
+                <p className="text-xs text-[var(--text-secondary)]">
                   All applications will be received through IOPPS using the <strong>Quick Apply</strong> button.
                   Candidates can apply with their saved profile and resume. View and manage all applications in your{" "}
                   <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline font-semibold">
@@ -621,9 +621,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Job Video Section */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Job Video</h2>
-            <p className="text-sm text-slate-400">Optional video to showcase this role</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Job Video</h2>
+            <p className="text-sm text-[var(--text-muted)]">Optional video to showcase this role</p>
           </div>
 
           <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-4">
@@ -633,13 +633,13 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
               </svg>
               <h3 className="text-sm font-semibold text-purple-300">Add a video (optional)</h3>
             </div>
-            <p className="text-xs text-slate-300 mb-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-4">
               Add a video to showcase this specific role - can be an intro from the hiring manager, a day-in-the-life, or team introduction.
             </p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Video URL
                 </label>
                 <input
@@ -647,15 +647,15 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                   value={jobVideoUrl}
                   onChange={(e) => setJobVideoUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
-                <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+                <p className="mt-1 text-xs text-foreground0">Supports YouTube, Vimeo, or custom video URLs</p>
               </div>
 
               {jobVideoUrl && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Video Title
                     </label>
                     <input
@@ -663,11 +663,11 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                       value={jobVideoTitle}
                       onChange={(e) => setJobVideoTitle(e.target.value)}
                       placeholder="e.g., Meet the Team"
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Video Description
                     </label>
                     <textarea
@@ -675,7 +675,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
                       onChange={(e) => setJobVideoDescription(e.target.value)}
                       placeholder="Brief description of what candidates will see in the video"
                       rows={2}
-                      className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                     />
                   </div>
                 </>
@@ -686,22 +686,22 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
 
         {/* Section: Job Status */}
         <section className="space-y-6">
-          <div className="border-b border-slate-800 pb-2">
-            <h2 className="text-lg font-semibold text-slate-100">Job Status</h2>
-            <p className="text-sm text-slate-400">Control visibility of this posting</p>
+          <div className="border-b border-[var(--card-border)] pb-2">
+            <h2 className="text-lg font-semibold text-foreground">Job Status</h2>
+            <p className="text-sm text-[var(--text-muted)]">Control visibility of this posting</p>
           </div>
 
-          <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
             <label className="inline-flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={active}
                 onChange={(e) => setActive(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6]"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
               />
               <div>
-                <span className="text-sm font-medium text-slate-100">Active job posting</span>
-                <p className="text-xs text-slate-400">
+                <span className="text-sm font-medium text-foreground">Active job posting</span>
+                <p className="text-xs text-[var(--text-muted)]">
                   Uncheck to pause this posting. Paused jobs won&apos;t appear in public listings but applications remain accessible.
                 </p>
               </div>
@@ -710,18 +710,18 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         </section>
 
         {/* Submit Actions */}
-        <div className="flex items-center justify-between pt-6 border-t border-slate-800">
+        <div className="flex items-center justify-between pt-6 border-t border-[var(--card-border)]">
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={saving || deleting}
-              className="rounded-xl bg-[#14B8A6] px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60"
+              className="rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
             <Link
               href="/organization/dashboard"
-              className="rounded-xl border border-slate-700 px-6 py-2.5 text-sm text-slate-200 hover:border-slate-600 transition-colors"
+              className="rounded-xl border border-[var(--card-border)] px-6 py-2.5 text-sm text-foreground hover:border-[var(--card-border)] transition-colors"
             >
               Cancel
             </Link>

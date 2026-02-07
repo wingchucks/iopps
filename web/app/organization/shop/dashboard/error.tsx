@@ -32,7 +32,7 @@ export default function Error({
                             {error.message}
                         </p>
                         {error.stack && (
-                            <pre className="mt-4 text-xs text-slate-500 whitespace-pre-wrap">
+                            <pre className="mt-4 text-xs text-foreground0 whitespace-pre-wrap">
                                 {error.stack}
                             </pre>
                         )}
@@ -41,13 +41,13 @@ export default function Error({
                     <div className="flex gap-4 pt-4">
                         <button
                             onClick={() => reset()}
-                            className="rounded-full bg-[#14B8A6] px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+                            className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-accent/90"
                         >
                             Try again
                         </button>
                         <button
                             onClick={() => window.location.href = "/organization/dashboard"}
-                            className="rounded-full border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                            className="rounded-full border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                         >
                             Go back
                         </button>

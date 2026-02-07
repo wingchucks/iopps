@@ -71,9 +71,9 @@ export default function ConferenceHero({
           /* Branded fallback with gradient and icon */
           <div className="absolute inset-0 bg-gradient-to-br from-[#0D9488]/30 via-blue-900/50 to-slate-50 flex items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--card-bg)]/10 backdrop-blur-sm">
                 <svg
-                  className="h-10 w-10 text-slate-900/70"
+                  className="h-10 w-10 text-[var(--text-primary)]/70"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -86,7 +86,7 @@ export default function ConferenceHero({
                   />
                 </svg>
               </div>
-              <p className="text-lg font-medium text-slate-900/60">Conference</p>
+              <p className="text-lg font-medium text-[var(--text-primary)]/60">Conference</p>
             </div>
           </div>
         )}
@@ -98,7 +98,7 @@ export default function ConferenceHero({
         <div className="absolute left-4 right-4 top-4 flex flex-wrap items-start justify-between gap-2">
           <div className="flex flex-wrap gap-2">
             {conference.featured && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-900 shadow-lg">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] shadow-lg">
                 <svg
                   className="h-3.5 w-3.5"
                   fill="currentColor"
@@ -120,7 +120,7 @@ export default function ConferenceHero({
               </span>
             )}
             {conference.eventType && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-50/80 px-3 py-1.5 text-xs font-medium text-slate-900 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-50/80 px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] backdrop-blur-sm">
                 {conference.eventType === "hybrid" && (
                   <svg
                     className="h-3.5 w-3.5"
@@ -178,7 +178,7 @@ export default function ConferenceHero({
             className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium backdrop-blur-sm transition-all ${
               isSaved
                 ? "border-[#0D9488] bg-[#0D9488]/20 text-[#0D9488]"
-                : "border-white/20 bg-slate-50/80 text-slate-900 hover:border-[#0D9488] hover:text-[#0D9488]"
+                : "border-white/20 bg-slate-50/80 text-[var(--text-primary)] hover:border-[#0D9488] hover:text-[#0D9488]"
             } ${saveAnimating ? "scale-110" : ""}`}
           >
             <svg
@@ -201,7 +201,7 @@ export default function ConferenceHero({
 
       {/* Content Overlay */}
       <div className="relative -mt-24 px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
           {/* Organizer */}
           {(conference.employerName || conference.organizerName) && (
             <p className="text-sm font-medium uppercase tracking-wider text-[#0D9488]">
@@ -210,12 +210,12 @@ export default function ConferenceHero({
           )}
 
           {/* Title */}
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
+          <h1 className="mt-2 text-2xl font-bold text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
             {conference.title}
           </h1>
 
           {/* Meta Info */}
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[var(--text-secondary)]">
             <div className="flex items-center gap-2">
               <svg
                 className="h-5 w-5 text-[#0D9488]"
@@ -301,7 +301,7 @@ export default function ConferenceHero({
               {conference.topics.map((topic, index) => (
                 <span
                   key={index}
-                  className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs text-slate-600"
+                  className="rounded-full border border-[var(--border)] bg-surface px-3 py-1 text-xs text-[var(--text-secondary)]"
                 >
                   {topic}
                 </span>
@@ -339,7 +339,7 @@ export default function ConferenceHero({
           </div>
 
           {/* Share & Cost Row */}
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-6">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border)] pt-6">
             <ShareButtons
               item={{
                 id: conference.id,
@@ -351,7 +351,7 @@ export default function ConferenceHero({
 
             {conference.cost && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-500">Registration:</span>
+                <span className="text-sm text-foreground0">Registration:</span>
                 <span className="rounded-lg border border-[#0D9488]/30 bg-[#0D9488]/10 px-3 py-1.5 text-sm font-semibold text-[#0D9488]">
                   {conference.cost}
                 </span>

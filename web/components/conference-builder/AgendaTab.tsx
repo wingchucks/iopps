@@ -68,8 +68,8 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
     return (
         <div className="flex h-full min-h-[500px]">
             {/* Sidebar: Days */}
-            <div className="w-64 border-r border-slate-700 bg-slate-900/30 p-4">
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
+            <div className="w-64 border-r border-[var(--card-border)] bg-slate-900/30 p-4">
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground0">
                     Days
                 </h3>
                 <div className="space-y-2">
@@ -78,8 +78,8 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
                             key={idx}
                             onClick={() => setActiveDayIndex(idx)}
                             className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors ${activeDayIndex === idx
-                                    ? "bg-[#14B8A6]/10 text-[#14B8A6]"
-                                    : "text-slate-300 hover:bg-slate-800"
+                                    ? "bg-accent/10 text-[#14B8A6]"
+                                    : "text-[var(--text-secondary)] hover:bg-surface"
                                 }`}
                         >
                             <span>{day.title || `Day ${idx + 1}`}</span>
@@ -98,7 +98,7 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
                     ))}
                     <button
                         onClick={addDay}
-                        className="flex w-full items-center gap-2 rounded-lg border border-dashed border-slate-700 px-3 py-2 text-sm text-slate-400 hover:border-slate-500 hover:text-white"
+                        className="flex w-full items-center gap-2 rounded-lg border border-dashed border-[var(--card-border)] px-3 py-2 text-sm text-[var(--text-muted)] hover:border-slate-500 hover:text-white"
                     >
                         <PlusIcon className="h-4 w-4" />
                         Add Day
@@ -109,7 +109,7 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
             {/* Main Content: Sessions */}
             <div className="flex-1 p-6">
                 {agenda.length === 0 ? (
-                    <div className="flex h-full flex-col items-center justify-center text-slate-500">
+                    <div className="flex h-full flex-col items-center justify-center text-foreground0">
                         <p>No days added yet.</p>
                         <button
                             onClick={addDay}
@@ -123,40 +123,40 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
                         {/* Day Metadata */}
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="text-xs text-slate-500">Day Title</label>
+                                <label className="text-xs text-foreground0">Day Title</label>
                                 <input
                                     type="text"
                                     value={agenda[activeDayIndex].title}
                                     onChange={(e) => updateDay(activeDayIndex, { title: e.target.value })}
                                     placeholder="e.g. Opening Ceremony"
-                                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+                                    className="mt-1 w-full rounded border border-[var(--card-border)] bg-surface px-3 py-1.5 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500">Date</label>
+                                <label className="text-xs text-foreground0">Date</label>
                                 <input
                                     type="date"
                                     value={agenda[activeDayIndex].date}
                                     onChange={(e) => updateDay(activeDayIndex, { date: e.target.value })}
-                                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
+                                    className="mt-1 w-full rounded border border-[var(--card-border)] bg-surface px-3 py-1.5 text-sm text-white focus:border-[#14B8A6] focus:outline-none"
                                 />
                             </div>
                         </div>
 
-                        <div className="h-px bg-slate-800" />
+                        <div className="h-px bg-surface" />
 
                         {/* Sessions List */}
                         <div className="space-y-4">
                             {agenda[activeDayIndex].sessions.map((session, sIdx) => (
                                 <div
                                     key={session.id}
-                                    className="group relative rounded-lg border border-slate-700 bg-slate-800/50 p-4 transition-all hover:border-slate-600"
+                                    className="group relative rounded-lg border border-[var(--card-border)] bg-surface p-4 transition-all hover:border-[var(--card-border)]"
                                 >
                                     <button
                                         onClick={() => {
                                             if (confirm('Delete session?')) removeSession(activeDayIndex, sIdx);
                                         }}
-                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-red-400"
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 text-foreground0 hover:text-red-400"
                                     >
                                         <TrashIcon className="h-4 w-4" />
                                     </button>
@@ -164,18 +164,18 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
                                     <div className="grid gap-4 md:grid-cols-12">
                                         {/* Time */}
                                         <div className="md:col-span-2">
-                                            <label className="text-xs text-slate-500">Time</label>
+                                            <label className="text-xs text-foreground0">Time</label>
                                             <input
                                                 type="time"
                                                 value={session.time}
                                                 onChange={(e) => updateSession(activeDayIndex, sIdx, { time: e.target.value })}
-                                                className="w-full rounded bg-slate-900 px-2 py-1 text-sm text-white focus:outline-none"
+                                                className="w-full rounded bg-surface px-2 py-1 text-sm text-white focus:outline-none"
                                             />
                                             <input
                                                 type="time"
                                                 value={session.endTime || ""}
                                                 onChange={(e) => updateSession(activeDayIndex, sIdx, { endTime: e.target.value })}
-                                                className="mt-1 w-full rounded bg-slate-900 px-2 py-1 text-xs text-slate-400 focus:outline-none"
+                                                className="mt-1 w-full rounded bg-surface px-2 py-1 text-xs text-[var(--text-muted)] focus:outline-none"
                                                 placeholder="End"
                                             />
                                         </div>
@@ -194,14 +194,14 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
                                                 onChange={(e) => updateSession(activeDayIndex, sIdx, { description: e.target.value })}
                                                 placeholder="Description..."
                                                 rows={2}
-                                                className="w-full rounded bg-transparent text-sm text-slate-400 placeholder-slate-600 focus:outline-none"
+                                                className="w-full rounded bg-transparent text-sm text-[var(--text-muted)] placeholder-slate-600 focus:outline-none"
                                             />
 
                                             <div className="flex gap-4">
                                                 <select
                                                     value={session.type}
                                                     onChange={(e) => updateSession(activeDayIndex, sIdx, { type: e.target.value as any })}
-                                                    className="rounded bg-slate-900 px-2 py-1 text-xs text-slate-300 border border-slate-700"
+                                                    className="rounded bg-surface px-2 py-1 text-xs text-[var(--text-secondary)] border border-[var(--card-border)]"
                                                 >
                                                     <option value="keynote">Keynote</option>
                                                     <option value="workshop">Workshop</option>
@@ -213,7 +213,7 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
                                                 </select>
 
                                                 {/* TODO: Speaker Selector */}
-                                                <div className="flex-1 text-xs text-slate-500 flex items-center">
+                                                <div className="flex-1 text-xs text-foreground0 flex items-center">
                                                     Speakers: {session.speakerIds?.length || 0} selected
                                                 </div>
                                             </div>
@@ -224,7 +224,7 @@ export function AgendaTab({ conference, onChange }: AgendaTabProps) {
 
                             <button
                                 onClick={() => addSession(activeDayIndex)}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-700 bg-slate-800/20 py-4 text-sm text-slate-400 hover:bg-slate-800/50 hover:text-white"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-[var(--card-border)] bg-slate-800/20 py-4 text-sm text-[var(--text-muted)] hover:bg-surface hover:text-white"
                             >
                                 <PlusIcon className="h-5 w-5" />
                                 Add Session

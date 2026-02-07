@@ -543,11 +543,11 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
   const getStatusBadge = (status?: EmployerStatus) => {
     const actualStatus = status || "incomplete";
     const styles: Record<EmployerStatus, string> = {
-      incomplete: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+      incomplete: "bg-slate-500/10 text-[var(--text-muted)] border-slate-500/20",
       pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
       approved: "bg-green-500/10 text-green-400 border-green-500/20",
       rejected: "bg-red-500/10 text-red-400 border-red-500/20",
-      deleted: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+      deleted: "bg-slate-500/10 text-[var(--text-muted)] border-slate-500/20",
     };
 
     return (
@@ -570,7 +570,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       <div className="rounded-lg border border-red-800 bg-red-950/20 p-8 text-center">
         <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
         <h2 className="mt-4 text-xl font-bold text-red-400">Unauthorized Access</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           You do not have permission to access this page. Admin access required.
         </p>
       </div>
@@ -581,58 +581,58 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-100">Employer Management</h1>
-        <p className="mt-1 text-slate-400">
+        <h1 className="text-3xl font-bold text-foreground">Employer Management</h1>
+        <p className="mt-1 text-[var(--text-muted)]">
           Review and manage employer access to the IOPPS platform.
         </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-5">
+        <div className="rounded-lg border border-[var(--card-border)] bg-surface p-5">
           <div className="flex items-center">
-            <div className="flex-shrink-0 rounded-md bg-teal-500/10 p-3">
-              <BuildingOfficeIcon className="h-6 w-6 text-teal-400" />
+            <div className="flex-shrink-0 rounded-md bg-accent/10 p-3">
+              <BuildingOfficeIcon className="h-6 w-6 text-accent" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-slate-400">Total Employers</p>
-              <p className="text-2xl font-bold text-slate-100">{stats.total}</p>
+              <p className="text-sm font-medium text-[var(--text-muted)]">Total Employers</p>
+              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-5">
+        <div className="rounded-lg border border-[var(--card-border)] bg-surface p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0 rounded-md bg-yellow-500/10 p-3">
               <ClockIcon className="h-6 w-6 text-yellow-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-slate-400">Pending</p>
-              <p className="text-2xl font-bold text-slate-100">{stats.pending}</p>
+              <p className="text-sm font-medium text-[var(--text-muted)]">Pending</p>
+              <p className="text-2xl font-bold text-foreground">{stats.pending}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-5">
+        <div className="rounded-lg border border-[var(--card-border)] bg-surface p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0 rounded-md bg-green-500/10 p-3">
               <CheckCircleIcon className="h-6 w-6 text-green-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-slate-400">Approved</p>
-              <p className="text-2xl font-bold text-slate-100">{stats.approved}</p>
+              <p className="text-sm font-medium text-[var(--text-muted)]">Approved</p>
+              <p className="text-2xl font-bold text-foreground">{stats.approved}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-5">
+        <div className="rounded-lg border border-[var(--card-border)] bg-surface p-5">
           <div className="flex items-center">
             <div className="flex-shrink-0 rounded-md bg-red-500/10 p-3">
               <XCircleIcon className="h-6 w-6 text-red-400" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-slate-400">Rejected</p>
-              <p className="text-2xl font-bold text-slate-100">{stats.rejected}</p>
+              <p className="text-sm font-medium text-[var(--text-muted)]">Rejected</p>
+              <p className="text-2xl font-bold text-foreground">{stats.rejected}</p>
             </div>
           </div>
         </div>
@@ -640,17 +640,17 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
       {/* Admin Tools - Fix Jobs */}
       {role === "admin" && (
-        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-medium text-slate-200">Maintenance Tools</h3>
-              <p className="text-sm text-slate-400">Find and deactivate jobs from unapproved employers</p>
+              <h3 className="font-medium text-foreground">Maintenance Tools</h3>
+              <p className="text-sm text-[var(--text-muted)]">Find and deactivate jobs from unapproved employers</p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => handleFixJobs(true)}
                 disabled={isFixingJobs}
-                className="rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFixingJobs ? "Checking..." : "Check Jobs (Dry Run)"}
               </button>
@@ -658,7 +658,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 <button
                   onClick={() => handleFixJobs(false)}
                   disabled={isFixingJobs}
-                  className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Fix {fixJobsResult.deactivated} Jobs
                 </button>
@@ -668,23 +668,23 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
           {/* Fix Jobs Results */}
           {fixJobsResult && (
-            <div className="mt-4 rounded-md border border-slate-700 bg-slate-800/50 p-4">
+            <div className="mt-4 rounded-md border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-sm text-[var(--text-secondary)]">
                     {fixJobsResult.dryRun ? "Would deactivate" : "Deactivated"}{" "}
                     <span className="font-bold text-amber-400">{fixJobsResult.deactivated}</span> of{" "}
                     <span className="font-bold">{fixJobsResult.checked}</span> active jobs
                   </p>
                   {fixJobsResult.dryRun && fixJobsResult.deactivated > 0 && (
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-foreground0">
                       Click &quot;Fix Jobs&quot; to deactivate these jobs
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => setFixJobsResult(null)}
-                  className="text-slate-500 hover:text-slate-300"
+                  className="text-foreground0 hover:text-[var(--text-secondary)]"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
@@ -693,15 +693,15 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
               {fixJobsResult.jobs.length > 0 && (
                 <div className="mt-3 max-h-40 overflow-y-auto">
                   <table className="w-full text-xs">
-                    <thead className="text-slate-500">
+                    <thead className="text-foreground0">
                       <tr>
                         <th className="pb-2 text-left">Job Title</th>
                         <th className="pb-2 text-left">Reason</th>
                       </tr>
                     </thead>
-                    <tbody className="text-slate-400">
+                    <tbody className="text-[var(--text-muted)]">
                       {fixJobsResult.jobs.map((job) => (
-                        <tr key={job.id} className="border-t border-slate-700/50">
+                        <tr key={job.id} className="border-t border-[var(--card-border)]">
                           <td className="py-1.5">{job.title}</td>
                           <td className="py-1.5">
                             <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-400">
@@ -722,15 +722,15 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       {/* Filters and Search */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Status Filter Tabs */}
-        <div className="flex flex-wrap rounded-lg bg-slate-800 p-1">
+        <div className="flex flex-wrap rounded-lg bg-surface p-1">
           {(["all", "pending", "incomplete", "approved", "rejected"] as const).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
               className={`rounded-md px-3 py-2 text-sm font-medium capitalize transition-colors ${
                 filter === status
-                  ? "bg-teal-500 text-slate-900 shadow-lg"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-accent text-[var(--text-primary)] shadow-lg"
+                  : "text-[var(--text-muted)] hover:text-foreground"
               }`}
             >
               {status}
@@ -746,20 +746,20 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
         {/* Search and Sort */}
         <div className="flex gap-3">
           <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground0" />
             <input
               type="text"
               placeholder="Search employers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-64"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-surface py-2 pl-10 pr-4 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500 sm:w-64"
             />
           </div>
 
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -769,23 +769,23 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       </div>
 
       {/* Results Count */}
-      <div className="text-sm text-slate-400">
+      <div className="text-sm text-[var(--text-muted)]">
         Showing {paginatedEmployers.length} of {filteredEmployers.length} employers
       </div>
 
       {/* Employer List */}
       {loading ? (
-        <div className="flex items-center justify-center rounded-lg border border-slate-800 bg-[#08090C] p-12">
+        <div className="flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface p-12">
           <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-teal-500"></div>
-            <p className="mt-3 text-slate-400">Loading employers...</p>
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[var(--card-border)] border-t-teal-500"></div>
+            <p className="mt-3 text-[var(--text-muted)]">Loading employers...</p>
           </div>
         </div>
       ) : paginatedEmployers.length === 0 ? (
-        <div className="rounded-lg border border-slate-800 bg-[#08090C] p-12 text-center">
-          <BuildingOfficeIcon className="mx-auto h-12 w-12 text-slate-600" />
-          <h3 className="mt-4 text-lg font-medium text-slate-300">No employers found</h3>
-          <p className="mt-2 text-sm text-slate-500">
+        <div className="rounded-lg border border-[var(--card-border)] bg-surface p-12 text-center">
+          <BuildingOfficeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
+          <h3 className="mt-4 text-lg font-medium text-[var(--text-secondary)]">No employers found</h3>
+          <p className="mt-2 text-sm text-foreground0">
             {searchQuery
               ? "No employer profiles match your search. The user may not have completed their employer profile setup yet."
               : `No ${filter !== "all" ? filter : ""} employers at this time`}
@@ -800,7 +800,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
             return (
               <div
                 key={employer.id}
-                className="rounded-lg border border-slate-800 bg-[#08090C] transition-all hover:border-slate-700"
+                className="rounded-lg border border-[var(--card-border)] bg-surface transition-all hover:border-[var(--card-border)]"
               >
                 <div className="p-6">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -810,17 +810,17 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                         <img
                           src={employer.logoUrl}
                           alt={`${employer.organizationName} logo`}
-                          className="h-16 w-16 flex-shrink-0 rounded-lg border border-slate-700 bg-white object-contain p-2"
+                          className="h-16 w-16 flex-shrink-0 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                         />
                       ) : (
-                        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xs text-slate-500">
+                        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-xs text-foreground0">
                           No Logo
                         </div>
                       )}
 
                       <div className="flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-xl font-bold text-slate-100">
+                          <h3 className="text-xl font-bold text-foreground">
                             {employer.organizationName || "Unnamed Organization"}
                           </h3>
                           {getStatusBadge(employer.status)}
@@ -831,7 +831,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                             </span>
                           )}
                           {employer.freePostingEnabled && (
-                            <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400" title={getGrantTooltip(employer.freePostingGrant)}>
+                            <span className="inline-flex items-center rounded-full border border-accent/20 bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent" title={getGrantTooltip(employer.freePostingGrant)}>
                               <GiftIcon className="mr-1 h-3 w-3" />
                               {getGrantLabel(employer.freePostingGrant)}
                             </span>
@@ -844,7 +844,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--text-muted)]">
                           {employer.location && (
                             <span className="flex items-center gap-1">
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -859,7 +859,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                               href={employer.website.startsWith("http") ? employer.website : `https://${employer.website}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-teal-400 hover:text-teal-300"
+                              className="flex items-center gap-1 text-accent hover:text-teal-300"
                             >
                               {employer.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                               <ArrowTopRightOnSquareIcon className="h-3 w-3" />
@@ -874,7 +874,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                         </div>
 
                         {employer.description && (
-                          <p className={`text-sm text-slate-400 ${!isExpanded && "line-clamp-2"}`}>
+                          <p className={`text-sm text-[var(--text-muted)] ${!isExpanded && "line-clamp-2"}`}>
                             {employer.description}
                           </p>
                         )}
@@ -910,7 +910,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                       {/* View Profile Button */}
                       <button
                         onClick={() => setPreviewModalId(employer.id)}
-                        className="flex items-center justify-center gap-2 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-teal-500 hover:text-teal-400"
+                        className="flex items-center justify-center gap-2 rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-accent hover:text-accent"
                       >
                         View
                       </button>
@@ -1063,7 +1063,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                       {employer.description && employer.description.length > 100 && (
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : employer.id)}
-                          className="flex items-center justify-center gap-1 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-300"
+                          className="flex items-center justify-center gap-1 rounded-md border border-[var(--card-border)] px-3 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
                         >
                           {isExpanded ? (
                             <ChevronUpIcon className="h-4 w-4" />
@@ -1087,17 +1087,17 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-[var(--text-muted)]">
             Page {currentPage} of {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next
           </button>
@@ -1107,9 +1107,9 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       {/* Rejection Modal */}
       {rejectModalId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
-            <h3 className="text-xl font-bold text-slate-100">Reject Employer</h3>
-            <p className="mt-2 text-sm text-slate-400">
+          <div className="w-full max-w-md rounded-lg border border-[var(--card-border)] bg-surface p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-foreground">Reject Employer</h3>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
               Please provide a reason for rejecting this employer. This will be visible to them.
             </p>
             <textarea
@@ -1117,7 +1117,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Enter rejection reason..."
               rows={4}
-              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+              className="mt-4 w-full rounded-md border border-[var(--card-border)] bg-surface p-3 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
             />
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -1125,7 +1125,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   setRejectModalId(null);
                   setRejectionReason("");
                 }}
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
               >
                 Cancel
               </button>
@@ -1149,20 +1149,20 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
       {/* Free Posting Modal */}
       {freePostingModalId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-lg border border-[var(--card-border)] bg-surface p-6 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
-                <GiftIcon className="h-5 w-5 text-emerald-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                <GiftIcon className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-100">Grant Free Posting</h3>
-                <p className="text-sm text-emerald-400">{getGrantValue()}</p>
+                <h3 className="text-xl font-bold text-foreground">Grant Free Posting</h3>
+                <p className="text-sm text-accent">{getGrantValue()}</p>
               </div>
             </div>
 
             {/* Package Selection */}
             <div className="mt-5">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Select Package
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -1178,14 +1178,14 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     onClick={() => setGrantType(option.value as GrantType)}
                     className={`flex flex-col items-start rounded-lg border p-3 text-left transition-colors ${
                       grantType === option.value
-                        ? "border-emerald-500 bg-emerald-500/10"
-                        : "border-slate-700 bg-slate-800 hover:border-slate-600"
+                        ? "border-accent bg-accent/10"
+                        : "border-[var(--card-border)] bg-surface hover:border-[var(--card-border)]"
                     }`}
                   >
-                    <span className={`text-sm font-medium ${grantType === option.value ? "text-emerald-400" : "text-slate-200"}`}>
+                    <span className={`text-sm font-medium ${grantType === option.value ? "text-accent" : "text-foreground"}`}>
                       {option.label}
                     </span>
-                    <span className="text-xs text-slate-500">{option.price}</span>
+                    <span className="text-xs text-foreground0">{option.price}</span>
                   </button>
                 ))}
               </div>
@@ -1194,14 +1194,14 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
             {/* Quantity (for single/featured) */}
             {(grantType === "single" || grantType === "featured") && (
               <div className="mt-4">
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Quantity
                 </label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setGrantQuantity(Math.max(1, grantQuantity - 1))}
-                    className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-slate-300 hover:bg-slate-700"
+                    className="rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-[var(--text-secondary)] hover:bg-slate-700"
                   >
                     −
                   </button>
@@ -1210,16 +1210,16 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     min="1"
                     value={grantQuantity}
                     onChange={(e) => setGrantQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-20 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-center text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                    className="w-20 rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-center text-sm text-foreground focus:border-accent focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setGrantQuantity(grantQuantity + 1)}
-                    className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-slate-300 hover:bg-slate-700"
+                    className="rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-[var(--text-secondary)] hover:bg-slate-700"
                   >
                     +
                   </button>
-                  <span className="text-sm text-slate-400">
+                  <span className="text-sm text-[var(--text-muted)]">
                     {grantType === "single" ? "job posts" : "featured ads"}
                   </span>
                 </div>
@@ -1228,14 +1228,14 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
             {/* Duration */}
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Duration (days)
               </label>
               <div className="flex items-center gap-2">
                 <select
                   value={grantDuration}
                   onChange={(e) => setGrantDuration(parseInt(e.target.value))}
-                  className="flex-1 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="flex-1 rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value={30}>30 days</option>
                   <option value={90}>90 days</option>
@@ -1248,7 +1248,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
             {/* Reason */}
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Reason (optional)
               </label>
               <input
@@ -1256,14 +1256,14 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 value={freePostingReason}
                 onChange={(e) => setFreePostingReason(e.target.value)}
                 placeholder="e.g., Partner, Promotion, Sponsorship"
-                className="w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full rounded-md border border-[var(--card-border)] bg-surface p-3 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
 
             {/* Summary */}
-            <div className="mt-4 rounded-md border border-slate-700 bg-slate-800/50 p-3">
-              <p className="text-sm text-slate-400">
-                <span className="text-slate-200 font-medium">Granting: </span>
+            <div className="mt-4 rounded-md border border-[var(--card-border)] bg-surface p-3">
+              <p className="text-sm text-[var(--text-muted)]">
+                <span className="text-foreground font-medium">Granting: </span>
                 {grantType === "single" && `${grantQuantity} job post${grantQuantity > 1 ? "s" : ""}`}
                 {grantType === "featured" && `${grantQuantity} featured ad${grantQuantity > 1 ? "s" : ""}`}
                 {grantType === "tier1" && "Tier 1 (15 jobs + 15 featured)"}
@@ -1278,7 +1278,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   setFreePostingModalId(null);
                   setFreePostingReason("");
                 }}
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
               >
                 Cancel
               </button>
@@ -1290,7 +1290,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   }
                 }}
                 disabled={!!processingId}
-                className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {processingId ? "Granting..." : "Grant Package"}
               </button>
@@ -1308,23 +1308,23 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-[var(--card-border)] bg-surface shadow-xl">
               {/* Header */}
-              <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-slate-700 bg-slate-900 p-6">
+              <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-[var(--card-border)] bg-surface p-6">
                 <div className="flex gap-4">
                   {employer.logoUrl ? (
                     <img
                       src={employer.logoUrl}
                       alt={`${employer.organizationName} logo`}
-                      className="h-16 w-16 flex-shrink-0 rounded-lg border border-slate-700 bg-white object-contain p-2"
+                      className="h-16 w-16 flex-shrink-0 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                     />
                   ) : (
-                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xs text-slate-500">
+                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-xs text-foreground0">
                       No Logo
                     </div>
                   )}
                   <div>
-                    <h3 className="text-xl font-bold text-slate-100">
+                    <h3 className="text-xl font-bold text-foreground">
                       {employer.organizationName || "Unnamed Organization"}
                     </h3>
                     <div className="mt-1">{getStatusBadge(employer.status)}</div>
@@ -1332,7 +1332,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 </div>
                 <button
                   onClick={() => setPreviewModalId(null)}
-                  className="rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                  className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
@@ -1343,8 +1343,8 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 {/* Basic Info */}
                 <div className="space-y-3">
                   {employer.location && (
-                    <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                      <svg className="h-4 w-4 text-foreground0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
@@ -1353,22 +1353,22 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   )}
                   {employer.website && (
                     <div className="flex items-center gap-2 text-sm">
-                      <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4 text-foreground0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                       </svg>
                       <a
                         href={employer.website.startsWith("http") ? employer.website : `https://${employer.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-teal-400 hover:text-teal-300"
+                        className="text-accent hover:text-teal-300"
                       >
                         {employer.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                         <ArrowTopRightOnSquareIcon className="ml-1 inline h-3 w-3" />
                       </a>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <ClockIcon className="h-4 w-4 text-slate-500" />
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                    <ClockIcon className="h-4 w-4 text-foreground0" />
                     <span>Joined {formatDate(employer.createdAt)}</span>
                   </div>
                 </div>
@@ -1376,8 +1376,8 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 {/* Description */}
                 {employer.description && (
                   <div>
-                    <h4 className="text-sm font-semibold text-slate-200 mb-2">About</h4>
-                    <p className="text-sm text-slate-300 whitespace-pre-wrap">{employer.description}</p>
+                    <h4 className="text-sm font-semibold text-foreground mb-2">About</h4>
+                    <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{employer.description}</p>
                   </div>
                 )}
 
@@ -1388,7 +1388,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                       <PlayCircleIcon className="h-5 w-5 text-purple-400" />
                       <h4 className="text-sm font-semibold text-purple-300">Company Intro Video</h4>
                     </div>
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-[var(--text-secondary)]">
                       {employer.companyIntroVideo.title || "Video available"}
                     </p>
                     {employer.companyIntroVideo.videoUrl && (
@@ -1406,20 +1406,20 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
                 {/* Interviews */}
                 {employer.interviews && employer.interviews.length > 0 && (
-                  <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 p-4">
+                  <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <VideoCameraIcon className="h-5 w-5 text-teal-400" />
+                      <VideoCameraIcon className="h-5 w-5 text-accent" />
                       <h4 className="text-sm font-semibold text-teal-300">
                         Interviews & Videos ({employer.interviews.length})
                       </h4>
                     </div>
                     <ul className="space-y-1">
                       {employer.interviews.map((interview, idx) => (
-                        <li key={idx} className="text-sm text-slate-300 flex items-center gap-2">
-                          <span className="text-slate-500">•</span>
+                        <li key={idx} className="text-sm text-[var(--text-secondary)] flex items-center gap-2">
+                          <span className="text-foreground0">•</span>
                           {interview.title || `Video ${idx + 1}`}
                           {interview.isIOPPSInterview && (
-                            <span className="rounded bg-teal-500/20 px-1.5 py-0.5 text-xs text-teal-400">IOPPS</span>
+                            <span className="rounded bg-accent/20 px-1.5 py-0.5 text-xs text-accent">IOPPS</span>
                           )}
                         </li>
                       ))}
@@ -1437,7 +1437,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
               </div>
 
               {/* Footer with Actions */}
-              <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-700 bg-slate-900 p-6">
+              <div className="sticky bottom-0 flex justify-end gap-3 border-t border-[var(--card-border)] bg-surface p-6">
                 {status === "pending" && (
                   <>
                     <button
@@ -1466,13 +1466,13 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 )}
                 <Link
                   href={`/admin/employers/${employer.id}/edit`}
-                  className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#14B8A6]/90"
+                  className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-accent/90"
                 >
                   Edit
                 </Link>
                 <button
                   onClick={() => setPreviewModalId(null)}
-                  className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                  className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
                 >
                   Close
                 </button>
@@ -1491,13 +1491,13 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+            <div className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
               </div>
-              <h3 className="text-xl font-semibold text-slate-100">Delete Employer</h3>
-              <p className="mt-2 text-slate-400">
-                Are you sure you want to delete <span className="font-medium text-slate-200">{employer.organizationName}</span>?
+              <h3 className="text-xl font-semibold text-foreground">Delete Employer</h3>
+              <p className="mt-2 text-[var(--text-muted)]">
+                Are you sure you want to delete <span className="font-medium text-foreground">{employer.organizationName}</span>?
               </p>
               <div className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
                 <strong>Warning:</strong> This will permanently delete:
@@ -1511,8 +1511,8 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 <p className="mt-2 font-medium">This action cannot be undone.</p>
               </div>
               <div className="mt-4">
-                <label className="block text-sm text-slate-400 mb-2">
-                  Type <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-200">{employer.organizationName}</span> to confirm:
+                <label className="block text-sm text-[var(--text-muted)] mb-2">
+                  Type <span className="font-mono bg-surface px-1.5 py-0.5 rounded text-foreground">{employer.organizationName}</span> to confirm:
                 </label>
                 <input
                   type="text"
@@ -1520,7 +1520,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="Type employer name here"
                   disabled={isDeleting}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-white placeholder-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50"
                 />
               </div>
               <div className="mt-6 flex gap-3">
@@ -1530,7 +1530,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     setDeleteConfirmText('');
                   }}
                   disabled={isDeleting}
-                  className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-[var(--card-border)] px-4 py-2 text-[var(--text-secondary)] transition hover:bg-surface disabled:opacity-50"
                 >
                   Cancel
                 </button>

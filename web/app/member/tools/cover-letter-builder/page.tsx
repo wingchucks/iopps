@@ -85,20 +85,20 @@ export default function CoverLetterBuilder() {
                     <div className="w-full lg:w-1/3 space-y-6">
                         <div>
                             <h1 className="text-2xl font-bold text-white mb-2">Cover Letter Builder</h1>
-                            <p className="text-slate-400 text-sm">Create a professional cover letter in minutes.</p>
+                            <p className="text-[var(--text-muted)] text-sm">Create a professional cover letter in minutes.</p>
                         </div>
 
                         {/* Design Selector */}
-                        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                            <label className="block text-xs font-semibold uppercase text-slate-500 mb-3 tracking-wider">Select Design</label>
+                        <div className="bg-surface p-4 rounded-xl border border-[var(--card-border)]">
+                            <label className="block text-xs font-semibold uppercase text-foreground0 mb-3 tracking-wider">Select Design</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {(Object.keys(TEMPLATES) as Array<keyof typeof TEMPLATES>).map((t) => (
                                     <button
                                         key={t}
                                         onClick={() => setDesign(t)}
                                         className={`px-3 py-2 rounded-lg text-sm font-medium capitalize transition-all ${design === t
-                                            ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-[#14B8A6]/20"
-                                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                                            ? "bg-accent text-[var(--text-primary)] shadow-lg shadow-[#14B8A6]/20"
+                                            : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                                             }`}
                                     >
                                         {t}
@@ -108,8 +108,8 @@ export default function CoverLetterBuilder() {
                         </div>
 
                         {/* Input Form */}
-                        <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar">
-                            <h2 className="text-sm font-semibold text-white border-b border-slate-700 pb-2">Your Information</h2>
+                        <div className="bg-surface p-6 rounded-xl border border-[var(--card-border)] space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar">
+                            <h2 className="text-sm font-semibold text-white border-b border-[var(--card-border)] pb-2">Your Information</h2>
                             <div className="grid grid-cols-1 gap-3">
                                 <input type="text" name="fullName" placeholder="Full Name" value={formData.fullName} onChange={handleInputChange} className="input-field" />
                                 <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleInputChange} className="input-field" />
@@ -117,7 +117,7 @@ export default function CoverLetterBuilder() {
                                 <input type="text" name="address" placeholder="Address (City, Province)" value={formData.address} onChange={handleInputChange} className="input-field" />
                             </div>
 
-                            <h2 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 pt-2">Recipient Info</h2>
+                            <h2 className="text-sm font-semibold text-white border-b border-[var(--card-border)] pb-2 pt-2">Recipient Info</h2>
                             <div className="grid grid-cols-1 gap-3">
                                 <input type="text" name="recipientName" placeholder="Recipient Name (e.g. Hiring Manager)" value={formData.recipientName} onChange={handleInputChange} className="input-field" />
                                 <input type="text" name="recipientTitle" placeholder="Recipient Title" value={formData.recipientTitle} onChange={handleInputChange} className="input-field" />
@@ -125,7 +125,7 @@ export default function CoverLetterBuilder() {
                                 <input type="text" name="companyAddress" placeholder="Company Address" value={formData.companyAddress} onChange={handleInputChange} className="input-field" />
                             </div>
 
-                            <h2 className="text-sm font-semibold text-white border-b border-slate-700 pb-2 pt-2">Content</h2>
+                            <h2 className="text-sm font-semibold text-white border-b border-[var(--card-border)] pb-2 pt-2">Content</h2>
                             <div className="grid grid-cols-1 gap-3">
                                 <input type="text" name="opening" placeholder="Opening Salutation" value={formData.opening} onChange={handleInputChange} className="input-field" />
                                 <textarea name="body1" rows={4} placeholder="Introduction Paragraph" value={formData.body1} onChange={handleInputChange} className="input-field resize-none leading-relaxed" />
@@ -141,7 +141,7 @@ export default function CoverLetterBuilder() {
                         <button
                             onClick={generatePDF}
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] text-slate-900 font-bold py-3 px-6 rounded-xl hover:shadow-lg hover:shadow-[#14B8A6]/20 transition-all disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] text-[var(--text-primary)] font-bold py-3 px-6 rounded-xl hover:shadow-lg hover:shadow-[#14B8A6]/20 transition-all disabled:opacity-50"
                         >
                             {loading ? (
                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
@@ -171,7 +171,7 @@ export default function CoverLetterBuilder() {
                     </div>
 
                     {/* PREVIEW COLUMN */}
-                    <div className="w-full lg:w-2/3 bg-slate-900 rounded-xl border border-slate-800 p-8 flex items-center justify-center overflow-hidden">
+                    <div className="w-full lg:w-2/3 bg-surface rounded-xl border border-[var(--card-border)] p-8 flex items-center justify-center overflow-hidden">
                         <div className="scale-[0.85] transform-origin-top shadow-2xl">
                             {/* DOCUMENT A4 PAGE */}
                             <div

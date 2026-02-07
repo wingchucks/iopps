@@ -79,8 +79,8 @@ export function FollowButton({ targetOrgId, className, initialIsFollowing, onFol
             onClick={handleToggleFollow}
             variant={isFollowing ? "outline" : "primary"}
             className={`gap-2 transition-all ${isFollowing
-                ? "border-emerald-500/50 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20"
+                ? "border-accent/50 text-accent hover:bg-accent/10 hover:text-accent"
+                : "bg-accent hover:bg-accent text-white shadow-lg shadow-emerald-900/20"
                 } ${className}`}
         >
             {isFollowing ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}

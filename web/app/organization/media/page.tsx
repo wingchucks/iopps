@@ -69,13 +69,13 @@ export default function MediaFeaturesPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#020306]">
+        <div className="min-h-screen bg-background">
             {/* Navigation */}
-            <div className="border-b border-slate-800 bg-[#08090C]">
+            <div className="border-b border-[var(--card-border)] bg-surface">
                 <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                     <Link
                         href="/organization"
-                        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                        className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white transition-colors"
                     >
                         <ArrowLeftIcon className="h-4 w-4" />
                         Back to Dashboard
@@ -93,7 +93,7 @@ export default function MediaFeaturesPage() {
                     <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
                         IOPPS Media Features
                     </h1>
-                    <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+                    <p className="text-xl text-[var(--text-muted)] max-w-3xl mx-auto">
                         Get your company featured across our social platforms. Connect with Indigenous
                         job seekers through authentic video content that showcases your workplace and opportunities.
                     </p>
@@ -109,7 +109,7 @@ export default function MediaFeaturesPage() {
                     {contentTypes.map((content) => (
                         <div
                             key={content.title}
-                            className="rounded-2xl border border-slate-700/50 bg-slate-800/30 p-8"
+                            className="rounded-2xl border border-[var(--card-border)] bg-slate-800/30 p-8"
                         >
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-purple-500/10">
@@ -120,10 +120,10 @@ export default function MediaFeaturesPage() {
                                     <span className="text-sm text-purple-400">{content.duration}</span>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6">{content.description}</p>
+                            <p className="text-[var(--text-muted)] mb-6">{content.description}</p>
                             <ul className="space-y-3">
                                 {content.features.map((feature) => (
-                                    <li key={feature} className="flex items-center gap-3 text-slate-300">
+                                    <li key={feature} className="flex items-center gap-3 text-[var(--text-secondary)]">
                                         <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
                                         {feature}
                                     </li>
@@ -139,7 +139,7 @@ export default function MediaFeaturesPage() {
                 <h2 className="text-2xl font-bold text-white text-center mb-4">
                     Published Across All Platforms
                 </h2>
-                <p className="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
+                <p className="text-[var(--text-muted)] text-center mb-12 max-w-2xl mx-auto">
                     Your content reaches Indigenous job seekers wherever they spend their time online
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -160,10 +160,10 @@ export default function MediaFeaturesPage() {
                 <h2 className="text-2xl font-bold text-white text-center mb-12">
                     Why Feature Your Company?
                 </h2>
-                <div className="rounded-2xl border border-slate-700/50 bg-slate-800/30 p-8">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-slate-800/30 p-8">
                     <ul className="space-y-4">
                         {benefits.map((benefit, index) => (
-                            <li key={index} className="flex items-start gap-4 text-slate-300">
+                            <li key={index} className="flex items-start gap-4 text-[var(--text-secondary)]">
                                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-purple-400 text-sm font-semibold flex-shrink-0">
                                     {index + 1}
                                 </span>
@@ -180,7 +180,7 @@ export default function MediaFeaturesPage() {
                     <h3 className="text-xl font-bold text-amber-400 mb-4">
                         Real & Authentic
                     </h3>
-                    <p className="text-slate-400">
+                    <p className="text-[var(--text-muted)]">
                         Our workplace tours are intentionally raw with minimal editing. Viewers appreciate
                         the authenticity and can relate more easily to real workplace environments.
                         This isn&apos;t polished corporate video - it&apos;s genuine content that connects.
@@ -194,15 +194,15 @@ export default function MediaFeaturesPage() {
                     Service Area
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-6">
-                        <h3 className="font-semibold text-emerald-400 mb-2">Local Zone - No Travel Fee</h3>
-                        <p className="text-slate-400 text-sm">
+                    <div className="rounded-xl border border-accent/30 bg-accent/5 p-6">
+                        <h3 className="font-semibold text-accent mb-2">Local Zone - No Travel Fee</h3>
+                        <p className="text-[var(--text-muted)] text-sm">
                             North Battleford, Saskatoon, Lloydminster and surrounding areas
                         </p>
                     </div>
-                    <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6">
-                        <h3 className="font-semibold text-slate-300 mb-2">Extended Zone</h3>
-                        <p className="text-slate-400 text-sm">
+                    <div className="rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-6">
+                        <h3 className="font-semibold text-[var(--text-secondary)] mb-2">Extended Zone</h3>
+                        <p className="text-[var(--text-muted)] text-sm">
                             Travel fees may apply for locations outside the local zone.
                             Contact us for a quote.
                         </p>
@@ -216,7 +216,7 @@ export default function MediaFeaturesPage() {
                     <h2 className="text-3xl font-bold text-white mb-4">
                         Interested in Being Featured?
                     </h2>
-                    <p className="text-slate-400 mb-8 max-w-xl mx-auto">
+                    <p className="text-[var(--text-muted)] mb-8 max-w-xl mx-auto">
                         Contact us to discuss your media feature. We&apos;ll work with you to create
                         content that authentically represents your organization and opportunities.
                     </p>
@@ -227,7 +227,7 @@ export default function MediaFeaturesPage() {
                         <EnvelopeIcon className="h-5 w-5" />
                         Email IOPPS
                     </a>
-                    <p className="mt-4 text-sm text-slate-500">
+                    <p className="mt-4 text-sm text-foreground0">
                         hello@iopps.ca
                     </p>
                 </div>
@@ -235,7 +235,7 @@ export default function MediaFeaturesPage() {
 
             {/* Footer */}
             <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 text-center">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-[var(--text-secondary)]">
                     Questions about media features?{" "}
                     <a href="mailto:hello@iopps.ca" className="text-purple-400 hover:underline">
                         Reach out anytime

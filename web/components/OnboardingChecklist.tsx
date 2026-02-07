@@ -83,34 +83,34 @@ export default function OnboardingChecklist({
   }
 
   return (
-    <div className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-cyan-500/10 p-6 shadow-xl shadow-emerald-900/20">
+    <div className="rounded-3xl border border-accent/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-cyan-500/10 p-6 shadow-xl shadow-emerald-900/20">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">
             Getting Started
           </h3>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             Complete these steps to get the most out of IOPPS
           </p>
         </div>
         <div className="text-right">
-          <span className="text-2xl font-bold text-emerald-400">
+          <span className="text-2xl font-bold text-accent">
             {completedCount}/{totalCount}
           </span>
-          <p className="text-xs text-slate-400">completed</p>
+          <p className="text-xs text-[var(--text-muted)]">completed</p>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="mb-6">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-surface">
           <div
             className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <p className="mt-1 text-right text-xs text-slate-500">
+        <p className="mt-1 text-right text-xs text-foreground0">
           {progressPercent}% complete
         </p>
       </div>
@@ -122,16 +122,16 @@ export default function OnboardingChecklist({
             key={item.id}
             className={`flex items-center gap-4 rounded-xl border p-4 transition-all ${
               item.completed
-                ? "border-emerald-500/30 bg-emerald-500/5"
-                : "border-slate-700 bg-slate-900/50 hover:border-slate-600"
+                ? "border-accent/30 bg-accent/5"
+                : "border-[var(--card-border)] bg-surface hover:border-[var(--card-border)]"
             }`}
           >
             {/* Step Number / Check */}
             <div
               className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
                 item.completed
-                  ? "bg-emerald-500 text-slate-900"
-                  : "bg-slate-800 text-slate-400"
+                  ? "bg-accent text-[var(--text-primary)]"
+                  : "bg-surface text-[var(--text-muted)]"
               }`}
             >
               {item.completed ? (
@@ -162,7 +162,7 @@ export default function OnboardingChecklist({
               >
                 {item.label}
               </p>
-              <p className="text-sm text-slate-400 truncate">
+              <p className="text-sm text-[var(--text-muted)] truncate">
                 {item.description}
               </p>
             </div>
@@ -178,18 +178,18 @@ export default function OnboardingChecklist({
                     onTabChange(tab);
                   }
                 }}
-                className="flex-shrink-0 rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/30"
+                className="flex-shrink-0 rounded-lg bg-accent/20 px-3 py-1.5 text-sm font-medium text-emerald-300 transition-colors hover:bg-accent/30"
               >
                 {item.action}
               </Link>
             )}
             {!item.completed && !item.href && (
-              <span className="flex-shrink-0 rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-400">
+              <span className="flex-shrink-0 rounded-lg bg-surface px-3 py-1.5 text-sm text-[var(--text-muted)]">
                 {item.action}
               </span>
             )}
             {item.completed && (
-              <span className="flex-shrink-0 text-sm text-emerald-400">
+              <span className="flex-shrink-0 text-sm text-accent">
                 Done ✓
               </span>
             )}
@@ -198,11 +198,11 @@ export default function OnboardingChecklist({
       </div>
 
       {/* Help Text */}
-      <p className="mt-4 text-center text-xs text-slate-500">
+      <p className="mt-4 text-center text-xs text-foreground0">
         Need help?{" "}
         <a
           href="mailto:support@iopps.ca"
-          className="text-emerald-400 hover:underline"
+          className="text-accent hover:underline"
         >
           Contact our support team
         </a>

@@ -41,7 +41,7 @@ export default function PricingPage() {
       <SectionHeader title="Pricing & Plans" subtitle="Choose the plan that fits your needs" icon="briefcase" />
         {/* Quick audience selector hint */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground0">
             Select your category below to see relevant pricing options
           </p>
         </div>
@@ -64,14 +64,14 @@ export default function PricingPage() {
               <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--card-bg)] px-8 py-3 font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
                 >
                   Talk to IOPPS about pricing
                 </Link>
                 {!shouldHideEmployerButton && (
                   <Link
                     href="/register"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-[var(--card-bg)]/10 px-8 py-3 font-semibold text-white backdrop-blur transition hover:bg-[var(--card-bg)]/20"
                   >
                     Create organization account
                   </Link>

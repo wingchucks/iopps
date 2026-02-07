@@ -44,7 +44,7 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
     candidate_message: 'bg-blue-500/10 text-blue-400',
     customer_inquiry: 'bg-accent/10 text-accent',
     student_inquiry: 'bg-purple-500/10 text-purple-400',
-    system: 'bg-slate-500/10 text-slate-400',
+    system: 'bg-slate-500/10 text-[var(--text-muted)]',
   };
 
   const formattedTime = item.createdAt
@@ -58,16 +58,16 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
 
   return (
     <div
-      className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-slate-600 ${
+      className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-[var(--card-border)] ${
         item.isRead
-          ? 'bg-slate-900/30 border-slate-800'
-          : 'bg-slate-900/70 border-slate-700'
+          ? 'bg-slate-900/30 border-[var(--card-border)]'
+          : 'bg-slate-900/70 border-[var(--card-border)]'
       }`}
       onClick={onMarkRead}
     >
       <div className="flex items-start gap-4">
         {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center flex-shrink-0">
           {item.senderAvatarUrl ? (
             <img
               src={item.senderAvatarUrl}
@@ -75,7 +75,7 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
-            <span className="text-sm font-semibold text-slate-400">
+            <span className="text-sm font-semibold text-[var(--text-muted)]">
               {item.senderName.charAt(0).toUpperCase()}
             </span>
           )}
@@ -84,7 +84,7 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`font-medium ${item.isRead ? 'text-slate-400' : 'text-slate-200'}`}>
+            <span className={`font-medium ${item.isRead ? 'text-[var(--text-muted)]' : 'text-foreground'}`}>
               {item.senderName}
             </span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${typeColors[item.type]}`}>
@@ -96,15 +96,15 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
           </div>
 
           {item.subject && (
-            <p className={`text-sm mb-1 ${item.isRead ? 'text-slate-500' : 'text-slate-300'}`}>
+            <p className={`text-sm mb-1 ${item.isRead ? 'text-foreground0' : 'text-[var(--text-secondary)]'}`}>
               {item.subject}
             </p>
           )}
 
-          <p className="text-sm text-slate-500 line-clamp-2">{item.preview}</p>
+          <p className="text-sm text-foreground0 line-clamp-2">{item.preview}</p>
 
           {item.relatedEntity && (
-            <p className="text-xs text-slate-600 mt-2">
+            <p className="text-xs text-[var(--text-secondary)] mt-2">
               Re: {item.relatedEntity.title}
             </p>
           )}
@@ -112,9 +112,9 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
 
         {/* Time & Status */}
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <span className="text-xs text-slate-500">{formattedTime}</span>
+          <span className="text-xs text-foreground0">{formattedTime}</span>
           {item.isRead ? (
-            <EnvelopeOpenIcon className="w-4 h-4 text-slate-600" />
+            <EnvelopeOpenIcon className="w-4 h-4 text-[var(--text-secondary)]" />
           ) : (
             <EnvelopeIcon className="w-4 h-4 text-accent" />
           )}
@@ -191,8 +191,8 @@ export default function InboxPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Inbox</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Inbox</h1>
+        <p className="text-[var(--text-muted)] mt-1">
           Messages and inquiries from people who contact you
         </p>
       </div>
@@ -213,14 +213,14 @@ export default function InboxPage() {
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-accent/10 text-accent border border-accent/20'
-                    : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+                    : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 {option.label}
                 {count > 0 && (
                   <span className={`px-1.5 py-0.5 text-xs rounded-full ${
-                    isActive ? 'bg-accent/20' : 'bg-slate-800'
+                    isActive ? 'bg-accent/20' : 'bg-surface'
                   }`}>
                     {count}
                   </span>
@@ -232,13 +232,13 @@ export default function InboxPage() {
 
         {/* Search */}
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground0" />
           <input
             type="text"
             placeholder="Search messages..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-900/50 border border-slate-800 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent/50"
+            className="w-full pl-9 pr-4 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-accent/50"
           />
         </div>
       </div>
@@ -250,9 +250,9 @@ export default function InboxPage() {
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <InboxIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">No messages yet</h3>
-          <p className="text-slate-500 max-w-md mx-auto">
+          <InboxIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">No messages yet</h3>
+          <p className="text-foreground0 max-w-md mx-auto">
             When people contact you, apply for jobs, or inquire about your programs, their messages will appear here.
           </p>
         </div>

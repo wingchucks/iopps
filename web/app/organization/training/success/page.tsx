@@ -25,8 +25,8 @@ function PaymentSuccessContent() {
         return (
             <div className="mx-auto max-w-2xl px-4 py-16 text-center">
                 <div className="animate-pulse">
-                    <div className="mx-auto h-16 w-16 rounded-full bg-slate-800"></div>
-                    <div className="mt-4 h-8 w-64 mx-auto rounded bg-slate-800"></div>
+                    <div className="mx-auto h-16 w-16 rounded-full bg-surface"></div>
+                    <div className="mt-4 h-8 w-64 mx-auto rounded bg-surface"></div>
                 </div>
             </div>
         );
@@ -71,20 +71,20 @@ function PaymentSuccessContent() {
                     </svg>
                 </div>
 
-                <h1 className="mt-6 text-3xl font-bold text-slate-50">
+                <h1 className="mt-6 text-3xl font-bold text-foreground">
                     Featured Purchase Successful!
                 </h1>
 
-                <p className="mt-4 text-lg text-slate-300">
+                <p className="mt-4 text-lg text-[var(--text-secondary)]">
                     Your training program is now featured and will appear at the
                     top of search results with a special badge.
                 </p>
 
-                <div className="mt-8 rounded-xl bg-slate-800/50 p-6 text-left">
+                <div className="mt-8 rounded-xl bg-surface p-6 text-left">
                     <h2 className="text-lg font-semibold text-purple-400">
                         What happens next?
                     </h2>
-                    <ul className="mt-4 space-y-3 text-slate-300">
+                    <ul className="mt-4 space-y-3 text-[var(--text-secondary)]">
                         <li className="flex items-start gap-3">
                             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-xs font-bold text-purple-400">
                                 1
@@ -121,7 +121,7 @@ function PaymentSuccessContent() {
                     </Link>
                     <Link
                         href="/careers/programs"
-                        className="rounded-lg border border-slate-700 bg-slate-800 px-6 py-3 font-semibold text-slate-200 transition hover:bg-slate-700"
+                        className="rounded-lg border border-[var(--card-border)] bg-surface px-6 py-3 font-semibold text-foreground transition hover:bg-slate-700"
                     >
                         View Training Programs
                     </Link>
@@ -138,8 +138,8 @@ export default function TrainingPaymentSuccessPage() {
                 fallback={
                     <div className="mx-auto max-w-2xl px-4 py-16 text-center">
                         <div className="animate-pulse">
-                            <div className="mx-auto h-16 w-16 rounded-full bg-slate-800"></div>
-                            <div className="mt-4 h-8 w-64 mx-auto rounded bg-slate-800"></div>
+                            <div className="mx-auto h-16 w-16 rounded-full bg-surface"></div>
+                            <div className="mt-4 h-8 w-64 mx-auto rounded bg-surface"></div>
                         </div>
                     </div>
                 }

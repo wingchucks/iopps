@@ -307,7 +307,7 @@ function UnifiedProgramsContent() {
             <div className="mt-8">
               {loadingMore ? (
                 <div className="flex justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#14B8A6]" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[#14B8A6]" />
                 </div>
               ) : (
                 <LoadMoreButton
@@ -332,23 +332,23 @@ function UnifiedProgramsContent() {
       )}
 
       {/* CTA Section */}
-      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+      <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-[var(--border)] p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
           Are you an educator or training provider?
         </h2>
-        <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+        <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
           List your programs on IOPPS to reach Indigenous learners across Canada.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-4">
           <Link
             href="/organization/education/setup"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
           >
             List Academic Programs
           </Link>
           <Link
             href="/organization/training/new"
-            className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6] px-6 py-3 font-semibold text-[#14B8A6] hover:bg-[#14B8A6]/10 transition-colors"
+            className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6] px-6 py-3 font-semibold text-[#14B8A6] hover:bg-accent/10 transition-colors"
           >
             Add Training Program
           </Link>
@@ -363,16 +363,16 @@ export default function UnifiedProgramsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen text-slate-900">
-          <div className="bg-white">
+        <div className="min-h-screen text-[var(--text-primary)]">
+          <div className="bg-[var(--card-bg)]">
             <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-              <nav className="text-sm text-slate-500">
+              <nav className="text-sm text-foreground0">
                 <span>Home → Education → Programs</span>
               </nav>
             </div>
           </div>
           <div className="py-16 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#14B8A6]" />
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[#14B8A6]" />
           </div>
         </div>
       }

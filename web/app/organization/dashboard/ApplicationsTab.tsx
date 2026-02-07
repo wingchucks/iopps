@@ -79,10 +79,10 @@ export default function ApplicationsTab() {
     if (s === "reviewed" || s === "reviewing")
       return "bg-blue-500/20 text-blue-300 border-blue-500/40";
     if (s === "rejected")
-      return "bg-slate-500/20 text-slate-400 border-slate-500/40";
+      return "bg-slate-500/20 text-[var(--text-muted)] border-slate-500/40";
     if (s === "withdrawn")
       return "bg-orange-500/20 text-orange-300 border-orange-500/40";
-    return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+    return "bg-accent/20 text-emerald-300 border-accent/40";
   };
 
   const statusCounts = useMemo(() => {
@@ -101,22 +101,22 @@ export default function ApplicationsTab() {
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <h2 className="text-2xl font-bold text-white">Applications</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Review and manage applications from candidates
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="rounded-3xl bg-gradient-to-br from-slate-500/10 to-slate-600/10 p-6 shadow-xl shadow-slate-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Total</p>
+        <div className="rounded-3xl bg-gradient-to-br from-slate-500/10 to-slate-600/10 p-6 shadow-xl shadow-sm/20">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">Total</p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {statusCounts.total}
           </h3>
         </div>
 
         <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-6 shadow-xl shadow-emerald-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Submitted
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
@@ -125,7 +125,7 @@ export default function ApplicationsTab() {
         </div>
 
         <div className="rounded-3xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-6 shadow-xl shadow-blue-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             In Review
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
@@ -134,7 +134,7 @@ export default function ApplicationsTab() {
         </div>
 
         <div className="rounded-3xl bg-gradient-to-br from-yellow-500/10 to-amber-500/10 p-6 shadow-xl shadow-yellow-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Shortlisted
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
@@ -143,14 +143,14 @@ export default function ApplicationsTab() {
         </div>
 
         <div className="rounded-3xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-6 shadow-xl shadow-green-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Hired</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">Hired</p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {statusCounts.hired}
           </h3>
         </div>
 
-        <div className="rounded-3xl bg-gradient-to-br from-slate-600/10 to-slate-700/10 p-6 shadow-xl shadow-slate-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <div className="rounded-3xl bg-gradient-to-br from-slate-600/10 to-slate-700/10 p-6 shadow-xl shadow-sm/20">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Rejected
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
@@ -162,7 +162,7 @@ export default function ApplicationsTab() {
       {/* Filters */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
         <div className="flex-1">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
             Search candidates
           </label>
           <input
@@ -170,17 +170,17 @@ export default function ApplicationsTab() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
         </div>
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
             Filter by job
           </label>
           <select
             value={jobFilter}
             onChange={(e) => setJobFilter(e.target.value)}
-            className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
           >
             <option value="all">All jobs</option>
             {jobs.map((job) => (
@@ -191,13 +191,13 @@ export default function ApplicationsTab() {
           </select>
         </div>
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
             Filter by status
           </label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
           >
             <option value="all">All statuses</option>
             <option value="submitted">Submitted</option>
@@ -213,10 +213,10 @@ export default function ApplicationsTab() {
       {/* Applications List */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         {loading ? (
-          <p className="text-center text-slate-400">Loading applications...</p>
+          <p className="text-center text-[var(--text-muted)]">Loading applications...</p>
         ) : filteredApplications.length === 0 ? (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-            <p className="text-slate-300">
+          <div className="rounded-xl bg-surface p-8 text-center">
+            <p className="text-[var(--text-secondary)]">
               {applications.length === 0
                 ? "No applications received yet. Applications will appear here as candidates apply to your jobs."
                 : "No applications match your filters."}
@@ -229,7 +229,7 @@ export default function ApplicationsTab() {
               return (
                 <article
                   key={app.id}
-                  className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                  className="rounded-xl border border-accent/20 bg-surface p-6"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
@@ -238,10 +238,10 @@ export default function ApplicationsTab() {
                           <h3 className="text-lg font-semibold text-white">
                             {app.memberDisplayName || "Anonymous"}
                           </h3>
-                          <p className="mt-1 text-sm text-slate-400">
+                          <p className="mt-1 text-sm text-[var(--text-muted)]">
                             {app.memberEmail}
                           </p>
-                          <p className="mt-2 text-sm text-emerald-400">
+                          <p className="mt-2 text-sm text-accent">
                             Applied to: {job?.title || "Unknown job"}
                           </p>
                         </div>
@@ -249,10 +249,10 @@ export default function ApplicationsTab() {
 
                       {app.coverLetter && (
                         <div className="mt-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
                             Cover Letter
                           </p>
-                          <p className="mt-2 text-sm text-slate-300">
+                          <p className="mt-2 text-sm text-[var(--text-secondary)]">
                             {app.coverLetter.slice(0, 200)}
                             {app.coverLetter.length > 200 ? "..." : ""}
                           </p>
@@ -265,7 +265,7 @@ export default function ApplicationsTab() {
                             href={app.resumeUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-emerald-500/30"
+                            className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all hover:bg-accent/30"
                           >
                             📄 View resume
                           </Link>
@@ -295,7 +295,7 @@ export default function ApplicationsTab() {
                             e.target.value as ApplicationStatus
                           )
                         }
-                        className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100 transition-all hover:border-emerald-500/50 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                        className="rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-xs text-foreground transition-all hover:border-accent/50 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                       >
                         <option value="submitted">Submitted</option>
                         <option value="reviewed">In review</option>

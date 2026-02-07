@@ -139,7 +139,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
           icon={BriefcaseIcon}
           value={activeJobs.length}
           label="Active Jobs"
-          className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          className="bg-accent/10 border-accent/20 text-accent"
           onClick={() => handleNavigate("jobs")}
         />
         <StatCard
@@ -170,7 +170,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
 
       {/* Organization Status Card */}
       {profile && (
-        <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 backdrop-blur-xl shadow-xl">
+        <div className="rounded-3xl border border-[var(--card-border)] bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 backdrop-blur-xl shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 sm:gap-0">
             <div className="flex items-center gap-6">
               {profile.logoUrl ? (
@@ -179,7 +179,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                   alt={profile.organizationName || "Organization"}
                   width={80}
                   height={80}
-                  className="rounded-2xl object-cover border-2 border-slate-700/50 shadow-lg"
+                  className="rounded-2xl object-cover border-2 border-[var(--card-border)] shadow-lg"
                 />
               ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-3xl font-bold text-white shadow-lg">
@@ -191,17 +191,17 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                 <div className="flex items-center gap-3 mt-2">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${profile.status === "approved"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      ? "bg-accent/10 text-accent border-accent/20"
                       : profile.status === "pending"
                         ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                        : "bg-slate-500/10 text-[var(--text-muted)] border-slate-500/20"
                       }`}
                   >
                     <span className={`h-1.5 w-1.5 rounded-full ${profile.status === "approved" ? "bg-emerald-400" : profile.status === "pending" ? "bg-amber-400" : "bg-slate-400"}`} />
                     {profile.status === "approved" ? "Active" : profile.status === "pending" ? "Pending Approval" : "Draft"}
                   </span>
                   {profile.location && (
-                    <span className="flex items-center gap-1 text-sm text-slate-400">
+                    <span className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
                       <span>📍</span> {profile.location}
                     </span>
                   )}
@@ -210,7 +210,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
             </div>
             <button
               onClick={() => handleNavigate("profile")}
-              className="flex items-center gap-2 rounded-xl bg-slate-800/50 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all border border-slate-700/50 hover:border-slate-600"
+              className="flex items-center gap-2 rounded-xl bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface hover:text-white transition-all border border-[var(--card-border)] hover:border-[var(--card-border)]"
             >
               <Cog6ToothIcon className="h-4 w-4" />
               Edit Profile
@@ -230,20 +230,20 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
               <PlusIcon className="h-6 w-6" />
             </div>
             <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">Post a Job</h4>
-            <p className="mt-1 text-sm text-slate-400">Find your next hire</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Find your next hire</p>
           </div>
         </Link>
 
         <button
           onClick={() => handleNavigate("applications")}
-          className="group relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-6 text-left transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10"
+          className="group relative overflow-hidden rounded-3xl border border-accent/20 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-6 text-left transition-all hover:border-accent/40 hover:shadow-lg hover:shadow-emerald-500/10"
         >
           <div className="relative z-10">
-            <div className="mb-4 inline-flex rounded-xl bg-emerald-500/20 p-3 text-emerald-400">
+            <div className="mb-4 inline-flex rounded-xl bg-accent/20 p-3 text-accent">
               <DocumentTextIcon className="h-6 w-6" />
             </div>
-            <h4 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">Review Applications</h4>
-            <p className="mt-1 text-sm text-slate-400">{pendingApplications.length} candidates waiting</p>
+            <h4 className="text-lg font-bold text-white group-hover:text-accent transition-colors">Review Applications</h4>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{pendingApplications.length} candidates waiting</p>
           </div>
         </button>
 
@@ -267,43 +267,43 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </h4>
-              <p className="mt-1 text-sm text-slate-400">Host a gathering</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">Host a gathering</p>
             </div>
           </button>
           {/* Dropdown Menu */}
           {showCreateMenu && (
-            <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-xl p-2 shadow-2xl">
+            <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-2xl border border-[var(--card-border)] bg-slate-900/95 backdrop-blur-xl p-2 shadow-2xl">
               <Link
                 href="/organization/powwows/new"
                 onClick={() => setShowCreateMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-200 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-foreground transition-colors hover:bg-purple-500/20 hover:text-purple-300"
               >
                 <span className="text-xl">🎪</span>
                 <div>
                   <p className="font-medium">Pow Wow / Event</p>
-                  <p className="text-xs text-slate-400">Cultural gatherings</p>
+                  <p className="text-xs text-[var(--text-muted)]">Cultural gatherings</p>
                 </div>
               </Link>
               <Link
                 href="/organization/scholarships/new"
                 onClick={() => setShowCreateMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-200 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-foreground transition-colors hover:bg-purple-500/20 hover:text-purple-300"
               >
                 <AcademicCapIcon className="h-5 w-5" />
                 <div>
                   <p className="font-medium">Scholarship</p>
-                  <p className="text-xs text-slate-400">Scholarships & grants</p>
+                  <p className="text-xs text-[var(--text-muted)]">Scholarships & grants</p>
                 </div>
               </Link>
               <Link
                 href="/organization/conferences/new"
                 onClick={() => setShowCreateMenu(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-200 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-foreground transition-colors hover:bg-purple-500/20 hover:text-purple-300"
               >
                 <ChartBarIcon className="h-5 w-5" />
                 <div>
                   <p className="font-medium">Conference</p>
-                  <p className="text-xs text-slate-400">Announce conferences</p>
+                  <p className="text-xs text-[var(--text-muted)]">Announce conferences</p>
                 </div>
               </Link>
             </div>
@@ -319,7 +319,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
               <MagnifyingGlassIcon className="h-6 w-6" />
             </div>
             <h4 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors">Search Talent</h4>
-            <p className="mt-1 text-sm text-slate-400">Browse the community</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Browse the community</p>
           </div>
         </Link>
       </div>
@@ -338,16 +338,16 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
 
         {recentApplications.length === 0 ? (
           <div className="text-center py-8">
-            <UsersIcon className="mx-auto h-10 w-10 text-slate-600" />
-            <p className="mt-2 text-slate-400">No applications yet</p>
-            <p className="mt-1 text-sm text-slate-500">Applications will appear here as candidates apply to your jobs</p>
+            <UsersIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
+            <p className="mt-2 text-[var(--text-muted)]">No applications yet</p>
+            <p className="mt-1 text-sm text-foreground0">Applications will appear here as candidates apply to your jobs</p>
           </div>
         ) : (
           <div className="space-y-3">
             {recentApplications.map((app) => (
               <div
                 key={app.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 gap-4"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-surface border border-[var(--card-border)] gap-4"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-semibold">
@@ -355,7 +355,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                   </div>
                   <div>
                     <h4 className="font-medium text-white">{app.memberDisplayName || "Anonymous"}</h4>
-                    <p className="text-sm text-slate-500">{app.memberEmail}</p>
+                    <p className="text-sm text-foreground0">{app.memberEmail}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0">
@@ -364,7 +364,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
                       ? "bg-blue-500/20 text-blue-300"
                       : app.status === "hired" || app.status === "shortlisted"
                         ? "bg-green-500/20 text-green-300"
-                        : "bg-slate-500/20 text-slate-400"
+                        : "bg-slate-500/20 text-[var(--text-muted)]"
                       }`}
                   >
                     {app.status || "submitted"}

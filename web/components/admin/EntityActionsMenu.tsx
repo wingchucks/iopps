@@ -48,14 +48,14 @@ function isActionGroup(item: ActionItem | ActionGroup): item is ActionGroup {
 }
 
 const variantStyles = {
-  default: "text-slate-300 hover:bg-slate-700 hover:text-white",
+  default: "text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white",
   danger: "text-red-400 hover:bg-red-500/10 hover:text-red-300",
   success: "text-green-400 hover:bg-green-500/10 hover:text-green-300",
   warning: "text-amber-400 hover:bg-amber-500/10 hover:text-amber-300",
 };
 
 const buttonVariantStyles = {
-  default: "border-slate-700 text-slate-300 hover:border-teal-500 hover:text-teal-400",
+  default: "border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent hover:text-accent",
   danger: "border-red-800 text-red-400 hover:border-red-500 hover:bg-red-500/10",
   success: "border-green-800 text-green-400 hover:border-green-500 hover:bg-green-500/10",
   warning: "border-amber-800 text-amber-400 hover:border-amber-500 hover:bg-amber-500/10",
@@ -229,7 +229,7 @@ export function EntityActionsMenu({
               toggleMenu();
             }}
             disabled={processing}
-            className={`inline-flex items-center justify-center rounded-md border border-slate-700 text-slate-400 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${
+            className={`inline-flex items-center justify-center rounded-md border border-[var(--card-border)] text-[var(--text-muted)] transition-colors hover:border-[var(--card-border)] hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${
               size === "sm" ? "p-2.5" : "p-3"
             }`}
             aria-label="Actions menu"
@@ -242,7 +242,7 @@ export function EntityActionsMenu({
           {isOpen && mounted && createPortal(
             <div
               ref={menuRef}
-              className="fixed z-[9999] min-w-[160px] rounded-lg border border-slate-700 bg-slate-800 py-1 shadow-xl"
+              className="fixed z-[9999] min-w-[160px] rounded-lg border border-[var(--card-border)] bg-surface py-1 shadow-xl"
               style={{ top: menuPosition.top, left: menuPosition.left }}
               role="menu"
             >
@@ -254,7 +254,7 @@ export function EntityActionsMenu({
                   return (
                     <Fragment key={actionOrGroup.id}>
                       {index > 0 && (
-                        <div className="my-1 border-t border-slate-700" />
+                        <div className="my-1 border-t border-[var(--card-border)]" />
                       )}
                       {visibleGroupItems.map((item) => (
                         <ActionMenuItem

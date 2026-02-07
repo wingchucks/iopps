@@ -55,7 +55,7 @@ export default function SavedItemsTab() {
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <h2 className="text-2xl font-bold text-white">Saved Jobs</h2>
-        <p className="mt-2 text-slate-400">
+        <p className="mt-2 text-[var(--text-muted)]">
           Saved jobs stay here even after you leave the site. Use the filters to find active roles or revisit older listings.
         </p>
       </div>
@@ -63,24 +63,24 @@ export default function SavedItemsTab() {
       {/* Stats */}
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Total Saved
           </p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {savedJobs.length}
           </h3>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
             {savedJobs.filter(entry => entry.job?.active !== false).length} active positions
           </p>
         </div>
         <div className="rounded-3xl bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 p-8 shadow-xl shadow-blue-900/20">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Quick Actions
           </p>
           <div className="mt-3 flex flex-col gap-2">
             <Link
               href="/careers"
-              className="rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-2 text-sm font-semibold text-emerald-400 transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
+              className="rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-4 py-2 text-sm font-semibold text-accent transition-all hover:from-emerald-500/30 hover:to-teal-500/30"
             >
               Browse more jobs →
             </Link>
@@ -91,7 +91,7 @@ export default function SavedItemsTab() {
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex-1">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
             Search jobs
           </label>
           <input
@@ -99,17 +99,17 @@ export default function SavedItemsTab() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="Search job or employer"
-            className="w-full rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
         </div>
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-foreground0">
             Filter by status
           </label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="rounded-xl border border-emerald-500/20 bg-slate-900/50 px-4 py-3 text-slate-100 transition-all focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
           >
             <option value="all">All</option>
             <option value="active">Active only</option>
@@ -128,10 +128,10 @@ export default function SavedItemsTab() {
       {/* Saved Jobs List */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         {listLoading ? (
-          <p className="text-center text-slate-400">Loading saved jobs...</p>
+          <p className="text-center text-[var(--text-muted)]">Loading saved jobs...</p>
         ) : filteredJobs.length === 0 ? (
-          <div className="rounded-xl bg-slate-900/50 p-8 text-center">
-            <p className="text-slate-300">
+          <div className="rounded-xl bg-surface p-8 text-center">
+            <p className="text-[var(--text-secondary)]">
               {savedJobs.length === 0
                 ? "No saved jobs yet. Save jobs from the Jobs page and they will appear here."
                 : "No saved jobs match your filters."}
@@ -148,26 +148,26 @@ export default function SavedItemsTab() {
             {filteredJobs.map((entry) => (
               <article
                 key={entry.id}
-                className="rounded-xl border border-emerald-500/20 bg-slate-900/50 p-6"
+                className="rounded-xl border border-accent/20 bg-surface p-6"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
                     <Link
                       href={`/careers/${entry.jobId}`}
-                      className="text-lg font-semibold text-white transition-colors hover:text-emerald-400"
+                      className="text-lg font-semibold text-white transition-colors hover:text-accent"
                     >
                       {entry.job?.title}
                     </Link>
-                    <p className="mt-1 text-sm text-emerald-400">
+                    <p className="mt-1 text-sm text-accent">
                       {entry.job?.employerName}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
+                    <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-emerald-300">
                       {entry.job?.employmentType}
                     </span>
                     {entry.job?.active === false && (
-                      <span className="rounded-full border border-slate-600 bg-slate-700/30 px-3 py-1 text-xs font-medium text-slate-400">
+                      <span className="rounded-full border border-[var(--card-border)] bg-slate-700/30 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
                         Closed
                       </span>
                     )}
@@ -175,13 +175,13 @@ export default function SavedItemsTab() {
                 </div>
 
                 {entry.job?.description && (
-                  <p className="mt-3 text-sm text-slate-300">
+                  <p className="mt-3 text-sm text-[var(--text-secondary)]">
                     {entry.job.description.slice(0, 180)}
                     {entry.job.description.length > 180 ? "..." : ""}
                   </p>
                 )}
 
-                <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-400">
+                <div className="mt-4 flex flex-wrap gap-3 text-xs text-[var(--text-muted)]">
                   {entry.job?.location && (
                     <span className="flex items-center gap-1">
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -197,7 +197,7 @@ export default function SavedItemsTab() {
                     </span>
                   )}
                   {entry.job?.indigenousPreference && (
-                    <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-emerald-300">
+                    <span className="rounded-full bg-accent/20 px-3 py-1 text-emerald-300">
                       Indigenous preference
                     </span>
                   )}
@@ -206,7 +206,7 @@ export default function SavedItemsTab() {
                 <div className="mt-4 flex gap-3">
                   <Link
                     href={`/careers/${entry.jobId}`}
-                    className="text-sm font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
+                    className="text-sm font-semibold text-accent transition-colors hover:text-emerald-300"
                   >
                     View job details →
                   </Link>

@@ -27,12 +27,12 @@ export default function StatCard({ icon: Icon, value, label, className = "", onC
 
   const content = (
     <div className="flex items-center gap-4 mb-2">
-      <div className="p-2.5 rounded-xl bg-slate-900/50 text-slate-400 group-hover:text-accent transition-colors">
+      <div className="p-2.5 rounded-xl bg-surface text-[var(--text-muted)] group-hover:text-accent transition-colors">
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <h3 className="text-2xl font-bold text-slate-50">{value}</h3>
-        <p className="text-xs text-slate-500 uppercase tracking-wider">{label}</p>
+        <h3 className="text-2xl font-bold text-foreground">{value}</h3>
+        <p className="text-xs text-foreground0 uppercase tracking-wider">{label}</p>
       </div>
     </div>
   );

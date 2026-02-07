@@ -48,7 +48,7 @@ export default function OrganizationPowwowsPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -57,12 +57,12 @@ export default function OrganizationPowwowsPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to manage pow wows.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -77,26 +77,26 @@ export default function OrganizationPowwowsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Your Pow Wows & Events
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Manage your pow wow and sporting event listings
           </p>
         </div>
         <Link
           href="/organization/powwows/new"
-          className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           + Create Pow Wow
         </Link>
       </div>
 
       {loadingPowwows ? (
-        <div className="mt-8 text-slate-400">Loading pow wows...</div>
+        <div className="mt-8 text-[var(--text-muted)]">Loading pow wows...</div>
       ) : powwows.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-          <p className="text-slate-400">You have not created any pow wows yet.</p>
+        <div className="mt-8 rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
+          <p className="text-[var(--text-muted)]">You have not created any pow wows yet.</p>
           <Link
             href="/organization/powwows/new"
-            className="mt-4 inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+            className="mt-4 inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
           >
             Create your first pow wow
           </Link>
@@ -106,18 +106,18 @@ export default function OrganizationPowwowsPage() {
           {powwows.map((powwow) => (
             <div
               key={powwow.id}
-              className="rounded-xl border border-slate-800 bg-slate-900/50 p-6"
+              className="rounded-xl border border-[var(--card-border)] bg-surface p-6"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     {powwow.name}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">
                     {powwow.location}
                   </p>
                   {powwow.dateRange && (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-foreground0">
                       {powwow.dateRange}
                     </p>
                   )}
@@ -126,8 +126,8 @@ export default function OrganizationPowwowsPage() {
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-medium ${
                       powwow.active
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-slate-700 text-slate-400"
+                        ? "bg-accent/20 text-emerald-300"
+                        : "bg-slate-700 text-[var(--text-muted)]"
                     }`}
                   >
                     {powwow.active ? "Active" : "Inactive"}
@@ -142,7 +142,7 @@ export default function OrganizationPowwowsPage() {
                 </div>
               </div>
               {powwow.description && (
-                <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                   {powwow.description}
                 </p>
               )}

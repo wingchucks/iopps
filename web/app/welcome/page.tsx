@@ -47,7 +47,7 @@ const communitySteps: StepCard[] = [
   {
     title: "Discover Opportunities",
     description: "Browse jobs, scholarships, conferences, and more across Canada.",
-    href: "/hub",
+    href: "/discover",
     icon: MagnifyingGlassIcon,
     primary: true,
   },
@@ -83,7 +83,7 @@ export default function WelcomePage() {
 
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
       </div>
     );
@@ -93,13 +93,13 @@ export default function WelcomePage() {
   const displayName = user.displayName || "there";
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-[var(--background)]">
       {/* Minimal header */}
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-[var(--border)] bg-[var(--card-bg)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="text-xl font-black tracking-tight text-teal-600"
+            className="text-xl font-black tracking-tight text-accent"
           >
             IOPPS
           </Link>
@@ -112,12 +112,12 @@ export default function WelcomePage() {
           {/* Animated checkmark */}
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center">
             <div
-              className={`flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 transition-transform duration-500 ease-out ${
+              className={`flex h-20 w-20 items-center justify-center rounded-full bg-[var(--accent-lt)] transition-transform duration-500 ease-out ${
                 mounted ? "scale-100" : "scale-0"
               }`}
             >
               <svg
-                className="h-10 w-10 text-emerald-500"
+                className="h-10 w-10 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -139,10 +139,10 @@ export default function WelcomePage() {
           </div>
 
           {/* Greeting */}
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
             Welcome, {displayName}!
           </h1>
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-foreground0">
             Your account is ready. Here&apos;s what to do next.
           </p>
 
@@ -152,13 +152,13 @@ export default function WelcomePage() {
               <Link
                 key={step.href}
                 href={step.href}
-                className={`group rounded-xl border border-gray-200 bg-white p-5 text-left transition hover:shadow-md ${
+                className={`group rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-5 text-left transition hover:shadow-md ${
                   step.primary ? "border-l-4 border-l-teal-500" : ""
                 }`}
               >
-                <step.icon className="mb-3 h-6 w-6 text-teal-600" />
-                <h2 className="font-semibold text-slate-900">{step.title}</h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <step.icon className="mb-3 h-6 w-6 text-accent" />
+                <h2 className="font-semibold text-[var(--text-primary)]">{step.title}</h2>
+                <p className="mt-1 text-sm text-foreground0">
                   {step.description}
                 </p>
               </Link>

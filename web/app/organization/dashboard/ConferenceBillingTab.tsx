@@ -55,7 +55,7 @@ export default function ConferenceBillingTab() {
         const expiresAt = conference.expiresAt;
 
         if (!expiresAt) {
-            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-400">Unknown</span>;
+            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">Unknown</span>;
         }
 
         let expiryDate: Date;
@@ -66,7 +66,7 @@ export default function ConferenceBillingTab() {
         } else if ('toDate' in expiresAt) {
             expiryDate = expiresAt.toDate();
         } else {
-            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-400">Unknown</span>;
+            return <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">Unknown</span>;
         }
 
         if (expiryDate < now) {
@@ -110,10 +110,10 @@ export default function ConferenceBillingTab() {
 
     if (loading) {
         return (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-8">
                 <div className="flex items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-emerald-500"></div>
-                    <span className="ml-3 text-slate-400">Loading conference payment history...</span>
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-accent"></div>
+                    <span className="ml-3 text-[var(--text-muted)]">Loading conference payment history...</span>
                 </div>
             </div>
         );
@@ -123,10 +123,10 @@ export default function ConferenceBillingTab() {
         <div className="space-y-6">
             {/* Summary Cards */}
             <div className="grid gap-6 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-6">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-slate-400">Total Spent</p>
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Total Spent</p>
                             <p className="mt-2 text-3xl font-bold text-white">${calculateTotalSpent().toFixed(2)}</p>
                         </div>
                         <div className="rounded-full bg-purple-500/20 p-3">
@@ -137,10 +137,10 @@ export default function ConferenceBillingTab() {
                     </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-6">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-slate-400">Active Conferences</p>
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Active Conferences</p>
                             <p className="mt-2 text-3xl font-bold text-white">{getActiveConferencesCount()}</p>
                         </div>
                         <div className="rounded-full bg-blue-500/20 p-3">
@@ -151,10 +151,10 @@ export default function ConferenceBillingTab() {
                     </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-6">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-slate-400">Total Conferences</p>
+                            <p className="text-sm font-medium text-[var(--text-muted)]">Total Conferences</p>
                             <p className="mt-2 text-3xl font-bold text-white">{paidConferences.length}</p>
                         </div>
                         <div className="rounded-full bg-amber-500/20 p-3">
@@ -167,34 +167,34 @@ export default function ConferenceBillingTab() {
             </div>
 
             {/* Payment History Table */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6">
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-white">Conference Payment History</h2>
-                        <p className="mt-1 text-sm text-slate-400">View all your conference listing payments</p>
+                        <p className="mt-1 text-sm text-[var(--text-muted)]">View all your conference listing payments</p>
                     </div>
                     <Link
                         href="/organization/conferences/new"
-                        className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                        className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent"
                     >
                         + Add Conference
                     </Link>
                 </div>
 
                 {paidConferences.length === 0 ? (
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-12 text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-800/40">
-                            <svg className="h-8 w-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="rounded-xl border border-[var(--card-border)] bg-background/40 p-12 text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface">
+                            <svg className="h-8 w-8 text-foreground0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-200">No conference payment history yet</h3>
-                        <p className="mt-2 text-sm text-slate-400">
+                        <h3 className="text-lg font-semibold text-foreground">No conference payment history yet</h3>
+                        <p className="mt-2 text-sm text-[var(--text-muted)]">
                             List your first conference to see your payment history here
                         </p>
                         <Link
                             href="/organization/conferences/new"
-                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent"
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -206,7 +206,7 @@ export default function ConferenceBillingTab() {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-slate-800 text-left text-sm font-semibold text-slate-400">
+                                <tr className="border-b border-[var(--card-border)] text-left text-sm font-semibold text-[var(--text-muted)]">
                                     <th className="pb-3">Conference Title</th>
                                     <th className="pb-3">Package</th>
                                     <th className="pb-3">Amount</th>
@@ -216,21 +216,21 @@ export default function ConferenceBillingTab() {
                                     <th className="pb-3">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800">
+                            <tbody className="divide-y divide-[var(--card-border)]">
                                 {paidConferences.map((conf) => (
                                     <tr key={conf.id} className="text-sm hover:bg-slate-800/30">
                                         <td className="py-4">
-                                            <Link href={`/conferences/${conf.id}`} className="font-medium text-white hover:text-emerald-400">
+                                            <Link href={`/conferences/${conf.id}`} className="font-medium text-white hover:text-accent">
                                                 {conf.title}
                                             </Link>
-                                            <p className="text-xs text-slate-500">{conf.location}</p>
+                                            <p className="text-xs text-foreground0">{conf.location}</p>
                                         </td>
                                         <td className="py-4">
                                             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${conf.productType === "FEATURED"
                                                     ? "bg-amber-500/10 text-amber-400"
                                                     : conf.productType === "PREMIUM"
                                                         ? "bg-blue-500/10 text-blue-400"
-                                                        : "bg-slate-500/10 text-slate-400"
+                                                        : "bg-slate-500/10 text-[var(--text-muted)]"
                                                 }`}>
                                                 {conf.productType === "FEATURED" ? (
                                                     <>
@@ -246,13 +246,13 @@ export default function ConferenceBillingTab() {
                                                 )}
                                             </span>
                                         </td>
-                                        <td className="py-4 font-semibold text-emerald-400">
+                                        <td className="py-4 font-semibold text-accent">
                                             {conf.amountPaid ? `$${(conf.amountPaid / 100).toFixed(2)}` : "Free"}
                                         </td>
-                                        <td className="py-4 text-slate-300">
+                                        <td className="py-4 text-[var(--text-secondary)]">
                                             {formatDate(conf.createdAt)}
                                         </td>
-                                        <td className="py-4 text-slate-300">
+                                        <td className="py-4 text-[var(--text-secondary)]">
                                             {formatDate(conf.expiresAt)}
                                         </td>
                                         <td className="py-4">
@@ -262,7 +262,7 @@ export default function ConferenceBillingTab() {
                                             <div className="flex items-center gap-2">
                                                 <Link
                                                     href={`/organization/conferences/${conf.id}/edit`}
-                                                    className="text-slate-400 transition hover:text-emerald-400"
+                                                    className="text-[var(--text-muted)] transition hover:text-accent"
                                                     title="Edit conference"
                                                 >
                                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -271,7 +271,7 @@ export default function ConferenceBillingTab() {
                                                 </Link>
                                                 <Link
                                                     href={`/conferences/${conf.id}`}
-                                                    className="text-slate-400 transition hover:text-blue-400"
+                                                    className="text-[var(--text-muted)] transition hover:text-blue-400"
                                                     title="View conference"
                                                 >
                                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -299,7 +299,7 @@ export default function ConferenceBillingTab() {
                     </div>
                     <div className="flex-1">
                         <h3 className="font-semibold text-blue-400">Conference Listing Tips</h3>
-                        <ul className="mt-2 space-y-2 text-sm text-slate-300">
+                        <ul className="mt-2 space-y-2 text-sm text-[var(--text-secondary)]">
                             <li className="flex items-start gap-2">
                                 <span className="text-blue-500">•</span>
                                 <span>Free listings are visible for 60 days - perfect for community events</span>

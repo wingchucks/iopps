@@ -86,14 +86,14 @@ const queueConfig: Record<
 
 function QueueCardSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 animate-pulse">
+    <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-5 animate-pulse">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-slate-800" />
-        <div className="h-5 w-32 rounded bg-slate-800" />
+        <div className="h-10 w-10 rounded-lg bg-surface" />
+        <div className="h-5 w-32 rounded bg-surface" />
       </div>
       <div className="mt-4 space-y-2">
-        <div className="h-4 w-24 rounded bg-slate-800" />
-        <div className="h-4 w-20 rounded bg-slate-800" />
+        <div className="h-4 w-24 rounded bg-surface" />
+        <div className="h-4 w-20 rounded bg-surface" />
       </div>
     </div>
   );
@@ -133,27 +133,27 @@ export function QueueCard({
             className={`flex h-10 w-10 items-center justify-center rounded-lg ${
               hasItems && config.pulseOnItems
                 ? `${config.bgClass} animate-pulse`
-                : "bg-slate-800"
+                : "bg-surface"
             }`}
           >
             <Icon
-              className={`h-5 w-5 ${hasItems ? config.iconClass : "text-slate-500"}`}
+              className={`h-5 w-5 ${hasItems ? config.iconClass : "text-foreground0"}`}
               aria-hidden="true"
             />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
             {hasItems ? (
               <p className={`text-xs ${config.countClass}`}>
                 {totalCount} item{totalCount !== 1 ? "s" : ""} need attention
               </p>
             ) : (
-              <p className="text-xs text-slate-500">{emptyMessage}</p>
+              <p className="text-xs text-foreground0">{emptyMessage}</p>
             )}
           </div>
         </div>
         {href && (
-          <ArrowRightIcon className="h-4 w-4 text-slate-600" aria-hidden="true" />
+          <ArrowRightIcon className="h-4 w-4 text-[var(--text-secondary)]" aria-hidden="true" />
         )}
       </div>
 
@@ -167,7 +167,7 @@ export function QueueCard({
                 key={item.label}
                 className="flex items-center justify-between text-sm"
               >
-                <span className="text-slate-400">{item.label}</span>
+                <span className="text-[var(--text-muted)]">{item.label}</span>
                 <span className={`font-semibold ${config.countClass}`}>
                   {item.count}
                 </span>

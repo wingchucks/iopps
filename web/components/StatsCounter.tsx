@@ -125,7 +125,7 @@ export function StatsCounter() {
                         <div className="text-3xl font-bold text-white md:text-4xl">
                             <AnimatedNumber value={stat.value} suffix={stat.suffix} />
                         </div>
-                        <div className="mt-1 text-sm text-slate-400">{stat.label}</div>
+                        <div className="mt-1 text-sm text-[var(--text-muted)]">{stat.label}</div>
                     </div>
                 ))
             )}

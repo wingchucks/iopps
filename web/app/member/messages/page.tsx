@@ -180,9 +180,9 @@ function MemberMessagesContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading messages...</p>
+          <p className="text-[var(--text-muted)]">Loading messages...</p>
         </div>
       </div>
     );
@@ -193,22 +193,22 @@ function MemberMessagesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/member/dashboard"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 &larr; Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Messages
               </h1>
-              <p className="mt-1 text-sm text-slate-400">Your conversations</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">Your conversations</p>
             </div>
             <button
               onClick={() => setNewMessageOpen(true)}
@@ -223,13 +223,13 @@ function MemberMessagesContent() {
 
       {/* Filter Tabs */}
       <div className="mx-auto max-w-7xl px-4 pt-4">
-        <div className="flex gap-2 rounded-lg bg-slate-800/50 p-1 w-fit">
+        <div className="flex gap-2 rounded-lg bg-surface p-1 w-fit">
           <button
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
               filter === "all"
                 ? "bg-slate-700 text-white"
-                : "text-slate-400 hover:text-white"
+                : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
             All ({allConversations.length})
@@ -239,7 +239,7 @@ function MemberMessagesContent() {
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-1.5 ${
               filter === "employers"
                 ? "bg-slate-700 text-white"
-                : "text-slate-400 hover:text-white"
+                : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
             <Briefcase className="h-3.5 w-3.5" />
@@ -250,7 +250,7 @@ function MemberMessagesContent() {
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-1.5 ${
               filter === "peers"
                 ? "bg-slate-700 text-white"
-                : "text-slate-400 hover:text-white"
+                : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
             <Users className="h-3.5 w-3.5" />
@@ -262,12 +262,12 @@ function MemberMessagesContent() {
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-4">
         {allConversations.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-            <MessageSquare className="mx-auto h-16 w-16 text-slate-600" />
+          <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
+            <MessageSquare className="mx-auto h-16 w-16 text-[var(--text-secondary)]" />
             <h3 className="mt-4 text-lg font-semibold text-white">
               No messages yet
             </h3>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
               Connect with other members or apply to jobs to start conversations.
             </p>
             <button
@@ -279,21 +279,21 @@ function MemberMessagesContent() {
             </button>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+          <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-slate-900/60">
             <div className="grid h-[calc(100vh-300px)] min-h-[500px] md:grid-cols-[320px_1fr]">
               {/* Conversation List */}
-              <div className="border-r border-slate-800 overflow-y-auto">
-                <div className="border-b border-slate-800 p-4 space-y-3">
+              <div className="border-r border-[var(--card-border)] overflow-y-auto">
+                <div className="border-b border-[var(--card-border)] p-4 space-y-3">
                   <h2 className="font-semibold text-white">Conversations</h2>
                   {/* Search */}
                   <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground0" />
                     <input
                       type="text"
                       placeholder="Search conversations..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
+                      className="w-full pl-9 pr-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
                     />
                   </div>
                 </div>
@@ -324,13 +324,13 @@ function MemberMessagesContent() {
                     />
                   )
                 ) : (
-                  <div className="flex h-full items-center justify-center text-slate-400">
+                  <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
                     <div className="text-center">
-                      <MessageSquare className="mx-auto h-16 w-16 text-slate-600" />
+                      <MessageSquare className="mx-auto h-16 w-16 text-[var(--text-secondary)]" />
                       <p className="mt-4">
                         Select a conversation to view messages
                       </p>
-                      <p className="mt-2 text-sm text-slate-500">
+                      <p className="mt-2 text-sm text-foreground0">
                         Chat with employers about jobs or connect with other
                         members
                       </p>
@@ -341,11 +341,11 @@ function MemberMessagesContent() {
 
               {/* Mobile: Show thread if selected */}
               {selectedConversation && (
-                <div className="absolute inset-0 z-10 bg-[#020306] md:hidden">
+                <div className="absolute inset-0 z-10 bg-background md:hidden">
                   <div className="h-full">
                     <button
                       onClick={() => setSelectedConversation(null)}
-                      className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-400"
+                      className="flex items-center gap-2 border-b border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-[var(--text-muted)]"
                     >
                       <svg
                         className="h-5 w-5"
@@ -423,7 +423,7 @@ function PeerAwareConversationList({
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-16 rounded-lg bg-slate-800/50" />
+              <div className="h-16 rounded-lg bg-surface" />
             </div>
           ))}
         </div>
@@ -434,14 +434,14 @@ function PeerAwareConversationList({
   if (conversations.length === 0) {
     return (
       <div className="p-6 text-center">
-        <MessageSquare className="mx-auto h-12 w-12 text-slate-600" />
-        <p className="mt-3 text-sm text-slate-400">No conversations found</p>
+        <MessageSquare className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
+        <p className="mt-3 text-sm text-[var(--text-muted)]">No conversations found</p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-slate-800">
+    <div className="divide-y divide-[var(--card-border)]">
       {conversations.map((conversation) => {
         let displayName: string;
         let unreadCount: number;
@@ -480,38 +480,38 @@ function PeerAwareConversationList({
           <button
             key={conversation.id}
             onClick={() => onSelect(conversation)}
-            className={`w-full p-4 text-left transition hover:bg-slate-800/50 ${
+            className={`w-full p-4 text-left transition hover:bg-surface ${
               isSelected
-                ? "bg-slate-800/70 border-l-2 border-emerald-500"
+                ? "bg-slate-800/70 border-l-2 border-accent"
                 : ""
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500">{icon}</span>
+                  <span className="text-foreground0">{icon}</span>
                   <span
                     className={`font-medium truncate ${
-                      unreadCount > 0 ? "text-white" : "text-slate-300"
+                      unreadCount > 0 ? "text-white" : "text-[var(--text-secondary)]"
                     }`}
                   >
                     {displayName}
                   </span>
                   {unreadCount > 0 && (
-                    <span className="flex-shrink-0 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-semibold text-slate-900">
+                    <span className="flex-shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-[var(--text-primary)]">
                       {unreadCount}
                     </span>
                   )}
                 </div>
                 {subtitle && (
-                  <p className="mt-0.5 text-xs text-slate-500 truncate">
+                  <p className="mt-0.5 text-xs text-foreground0 truncate">
                     {subtitle}
                   </p>
                 )}
                 {conversation.lastMessage && (
                   <p
                     className={`mt-1 text-sm truncate ${
-                      unreadCount > 0 ? "text-slate-300" : "text-slate-500"
+                      unreadCount > 0 ? "text-[var(--text-secondary)]" : "text-foreground0"
                     }`}
                   >
                     {conversation.lastMessage}
@@ -519,7 +519,7 @@ function PeerAwareConversationList({
                 )}
               </div>
               {lastMessageTime && (
-                <span className="flex-shrink-0 text-xs text-slate-500">
+                <span className="flex-shrink-0 text-xs text-foreground0">
                   {lastMessageTime}
                 </span>
               )}
@@ -550,9 +550,9 @@ export default function MemberMessagesPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="min-h-screen bg-background px-4 py-10">
           <div className="mx-auto max-w-7xl">
-            <p className="text-slate-400">Loading messages...</p>
+            <p className="text-[var(--text-muted)]">Loading messages...</p>
           </div>
         </div>
       }

@@ -109,11 +109,11 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-950/80 backdrop-blur-sm p-4">
-            <div className="relative w-full max-w-2xl rounded-3xl bg-[#0F172A] shadow-2xl shadow-emerald-900/40 border border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-background/80 backdrop-blur-sm p-4">
+            <div className="relative w-full max-w-2xl rounded-3xl bg-[#0F172A] shadow-2xl shadow-emerald-900/40 border border-[var(--card-border)]">
 
                 {/* Header / Progress */}
-                <div className="relative h-2 w-full overflow-hidden rounded-t-3xl bg-slate-800">
+                <div className="relative h-2 w-full overflow-hidden rounded-t-3xl bg-surface">
                     <div
                         className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 ease-out"
                         style={{ width: `${progress}%` }}
@@ -129,7 +129,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                 {step === 3 && "Upload your Resume 📄"}
                                 {step === 4 && "You're all set! 🎉"}
                             </h2>
-                            <p className="text-slate-400 mt-1">
+                            <p className="text-[var(--text-muted)] mt-1">
                                 {step === 1 && "Let's get your profile set up so you can find the best opportunities."}
                                 {step === 2 && "Add your skills to help employers find you."}
                                 {step === 3 && "Upload your resume to apply for jobs with one click."}
@@ -137,7 +137,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                             </p>
                         </div>
                         {step < 4 && (
-                            <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+                            <button onClick={onClose} className="text-foreground0 hover:text-white transition-colors">
                                 Skip
                             </button>
                         )}
@@ -149,32 +149,32 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                         {step === 1 && (
                             <div className="space-y-4 animate-fadeIn">
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-slate-300">Full Name</label>
+                                    <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Full Name</label>
                                     <input
                                         type="text"
                                         value={displayName}
                                         onChange={(e) => setDisplayName(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                                         placeholder="e.g. John Doe"
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-slate-300">Location</label>
+                                    <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Location</label>
                                     <input
                                         type="text"
                                         value={location}
                                         onChange={(e) => setLocation(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                                         placeholder="City, Province"
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-slate-300">Indigenous Affiliation</label>
+                                    <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Indigenous Affiliation</label>
                                     <input
                                         type="text"
                                         value={indigenousAffiliation}
                                         onChange={(e) => setIndigenousAffiliation(e.target.value)}
-                                        className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                        className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                                         placeholder="Nation, Community, or Metis Settlement"
                                     />
                                 </div>
@@ -190,7 +190,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                         value={skillInput}
                                         onChange={(e) => setSkillInput(e.target.value)}
                                         onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
-                                        className="flex-1 rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                        className="flex-1 rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                                         placeholder="Type a skill (e.g. Project Management)"
                                     />
                                     <button
@@ -203,10 +203,10 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
 
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     {skills.length === 0 && (
-                                        <p className="text-slate-500 italic">No skills added yet.</p>
+                                        <p className="text-foreground0 italic">No skills added yet.</p>
                                     )}
                                     {skills.map((skill) => (
-                                        <span key={skill} className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-sm text-emerald-400 border border-emerald-500/20">
+                                        <span key={skill} className="flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-sm text-accent border border-accent/20">
                                             {skill}
                                             <button onClick={() => handleRemoveSkill(skill)} className="ml-1 hover:text-white">×</button>
                                         </span>
@@ -214,13 +214,13 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                 </div>
 
                                 <div className="mt-8">
-                                    <p className="text-sm text-slate-400 mb-2">Suggestions:</p>
+                                    <p className="text-sm text-[var(--text-muted)] mb-2">Suggestions:</p>
                                     <div className="flex flex-wrap gap-2">
                                         {["Communication", "Leadership", "Microsoft Office", "Customer Service", "Teamwork"].map(s => (
                                             <button
                                                 key={s}
                                                 onClick={() => !skills.includes(s) && setSkills([...skills, s])}
-                                                className="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+                                                className="text-xs px-3 py-1 rounded-full bg-surface text-[var(--text-secondary)] hover:bg-slate-700 border border-[var(--card-border)]"
                                             >
                                                 + {s}
                                             </button>
@@ -234,16 +234,16 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                         {step === 3 && (
                             <div className="flex flex-col items-center justify-center py-8 animate-fadeIn">
                                 {resumeUrl ? (
-                                    <div className="w-full p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between">
+                                    <div className="w-full p-6 bg-accent/10 border border-accent/20 rounded-xl flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-3 bg-emerald-500/20 rounded-lg text-emerald-400">
+                                            <div className="p-3 bg-accent/20 rounded-lg text-accent">
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                             </div>
                                             <span className="text-emerald-100 font-medium">Resume Uploaded Successfully!</span>
                                         </div>
                                         <button
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="text-sm text-emerald-400 hover:underline"
+                                            className="text-sm text-accent hover:underline"
                                         >
                                             Replace
                                         </button>
@@ -251,14 +251,14 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                 ) : (
                                     <div
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="w-full border-2 border-dashed border-slate-700 rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500/50 hover:bg-slate-900/50 transition-all group"
+                                        className="w-full border-2 border-dashed border-[var(--card-border)] rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-accent/50 hover:bg-surface transition-all group"
                                     >
-                                        <div className="p-4 bg-slate-800 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                                            <svg className="w-8 h-8 text-slate-400 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                        <div className="p-4 bg-surface rounded-full mb-4 group-hover:scale-110 transition-transform">
+                                            <svg className="w-8 h-8 text-[var(--text-muted)] group-hover:text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                                         </div>
-                                        <p className="text-lg font-medium text-slate-200">Click to upload Resume</p>
-                                        <p className="text-sm text-slate-500 mt-1">PDF, DOC, DOCX (Max 5MB)</p>
-                                        {uploadingResume && <p className="mt-4 text-emerald-400 animate-pulse">Uploading...</p>}
+                                        <p className="text-lg font-medium text-foreground">Click to upload Resume</p>
+                                        <p className="text-sm text-foreground0 mt-1">PDF, DOC, DOCX (Max 5MB)</p>
+                                        {uploadingResume && <p className="mt-4 text-accent animate-pulse">Uploading...</p>}
                                     </div>
                                 )}
                                 <input
@@ -278,14 +278,14 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                                     <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">Profile Completed!</h3>
-                                <p className="text-slate-400 max-w-md">
+                                <p className="text-[var(--text-muted)] max-w-md">
                                     You've successfully set up your profile. You can always edit it later or add more details like your education and portfolio.
                                 </p>
 
                                 <div className="grid grid-cols-2 gap-4 w-full mt-8">
                                     <button
                                         onClick={onComplete}
-                                        className="rounded-xl border border-slate-700 bg-slate-800/50 py-4 font-semibold text-white hover:bg-slate-800 transition-colors"
+                                        className="rounded-xl border border-[var(--card-border)] bg-surface py-4 font-semibold text-white hover:bg-surface transition-colors"
                                     >
                                         View Dashboard
                                     </button>
@@ -304,17 +304,17 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
 
                 {/* Footer Buttons */}
                 {step < 4 && (
-                    <div className="p-6 border-t border-slate-800 flex justify-between">
+                    <div className="p-6 border-t border-[var(--card-border)] flex justify-between">
                         <button
                             onClick={handleBack}
                             disabled={step === 1}
-                            className={`px-6 py-3 rounded-xl font-medium transition-colors ${step === 1 ? "text-slate-600 cursor-not-allowed" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
+                            className={`px-6 py-3 rounded-xl font-medium transition-colors ${step === 1 ? "text-[var(--text-secondary)] cursor-not-allowed" : "text-[var(--text-muted)] hover:text-white hover:bg-surface"}`}
                         >
                             Back
                         </button>
                         <button
                             onClick={handleNext}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-900/20 transition-all active:scale-95"
+                            className="bg-accent hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-900/20 transition-all active:scale-95"
                         >
                             {step === 3 ? "Finish" : "Next"}
                         </button>

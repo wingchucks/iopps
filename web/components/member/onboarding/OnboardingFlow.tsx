@@ -195,7 +195,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
       {/* Skip Button - fixed position so it stays visible while scrolling */}
       <button
         onClick={handleSkip}
-        className="fixed right-4 top-4 z-10 flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+        className="fixed right-4 top-4 z-10 flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-[var(--text-muted)] transition-colors hover:bg-surface hover:text-white"
       >
         Skip for now
         <X className="h-4 w-4" />
@@ -208,10 +208,10 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-400">Step {currentStep + 1} of {totalSteps}</span>
-            <span className="text-sm text-slate-400">{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
+            <span className="text-sm text-[var(--text-muted)]">Step {currentStep + 1} of {totalSteps}</span>
+            <span className="text-sm text-[var(--text-muted)]">{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
           </div>
-          <div className="h-2 rounded-full bg-slate-800">
+          <div className="h-2 rounded-full bg-surface">
             <div
               className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
               style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
@@ -220,7 +220,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
         </div>
 
         {/* Step Content */}
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-8 backdrop-blur-sm shadow-2xl">
+        <div className="rounded-3xl border border-[var(--card-border)] bg-slate-900/80 p-8 backdrop-blur-sm shadow-2xl">
           {/* Step 0: Welcome & Intent */}
           {currentStep === 0 && (
             <div className="space-y-6">
@@ -228,7 +228,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                 <h1 className="text-3xl font-bold text-white">
                   Welcome{userName ? `, ${userName.split(" ")[0]}` : ""}!
                 </h1>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                   What brings you to IOPPS? Select all that apply.
                 </p>
               </div>
@@ -245,27 +245,27 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                       onClick={() => handleIntentToggle(option.id)}
                       className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
                         isSelected
-                          ? "border-emerald-500 bg-emerald-500/10"
-                          : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                          ? "border-accent bg-accent/10"
+                          : "border-[var(--card-border)] bg-surface hover:border-[var(--card-border)]"
                       }`}
                     >
                       <div className={`rounded-lg p-2 ${
-                        isSelected ? "bg-emerald-500/20" : "bg-slate-700/50"
+                        isSelected ? "bg-accent/20" : "bg-slate-700/50"
                       }`}>
                         <Icon className={`h-5 w-5 ${
-                          isSelected ? "text-emerald-400" : "text-slate-400"
+                          isSelected ? "text-accent" : "text-[var(--text-muted)]"
                         }`} />
                       </div>
                       <div className="flex-1">
                         <p className={`font-medium ${
-                          isSelected ? "text-emerald-400" : "text-slate-200"
+                          isSelected ? "text-accent" : "text-foreground"
                         }`}>
                           {option.label}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500">{option.description}</p>
+                        <p className="mt-0.5 text-xs text-foreground0">{option.description}</p>
                       </div>
                       {isSelected && (
-                        <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                        <Check className="h-5 w-5 text-accent flex-shrink-0" />
                       )}
                     </button>
                   );
@@ -279,14 +279,14 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-white">Add a Profile Photo</h2>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                   Profiles with photos get 3x more views from employers
                 </p>
               </div>
 
               <div className="flex flex-col items-center">
                 <div className="relative mb-4">
-                  <Avatar className="h-32 w-32 border-4 border-slate-700">
+                  <Avatar className="h-32 w-32 border-4 border-[var(--card-border)]">
                     <AvatarImage src={avatarUrl} />
                     <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-3xl">
                       {getInitials(userName)}
@@ -307,13 +307,13 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                     className="hidden"
                     disabled={uploading}
                   />
-                  <div className="flex items-center gap-2 rounded-xl bg-slate-800 px-6 py-3 font-medium text-white transition-colors hover:bg-slate-700">
+                  <div className="flex items-center gap-2 rounded-xl bg-surface px-6 py-3 font-medium text-white transition-colors hover:bg-slate-700">
                     <Upload className="h-4 w-4" />
                     {avatarUrl ? "Change Photo" : "Upload Photo"}
                   </div>
                 </label>
 
-                <p className="mt-4 text-center text-xs text-slate-500">
+                <p className="mt-4 text-center text-xs text-foreground0">
                   JPG, PNG, GIF or WebP (max 5MB)
                 </p>
               </div>
@@ -325,14 +325,14 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-white">Tell Us About Yourself</h2>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                   This helps others in the community learn about you
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                     Short Bio
                   </label>
                   <textarea
@@ -340,34 +340,34 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                     onChange={(e) => setBio(e.target.value)}
                     rows={3}
                     maxLength={200}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                     placeholder="A brief introduction about yourself..."
                   />
-                  <p className="mt-1 text-xs text-slate-500">{bio.length}/200 characters</p>
+                  <p className="mt-1 text-xs text-foreground0">{bio.length}/200 characters</p>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                     Location
                   </label>
                   <input
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                     placeholder="City, Province/Territory"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                     Indigenous Affiliation
                   </label>
                   <input
                     type="text"
                     value={affiliation}
                     onChange={(e) => setAffiliation(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-slate-100 placeholder-slate-500 focus:border-emerald-500/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-foreground placeholder-slate-500 focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                     placeholder="Your nation, community, or affiliation"
                   />
                 </div>
@@ -380,18 +380,18 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-white">You're All Set!</h2>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                   Based on your interests, here's what to do next
                 </p>
               </div>
 
               <div className="space-y-3">
                 {selectedIntents.includes("find-job") && (
-                  <div className="flex items-center gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                    <Briefcase className="h-6 w-6 text-emerald-400" />
+                  <div className="flex items-center gap-4 rounded-xl border border-accent/20 bg-accent/10 p-4">
+                    <Briefcase className="h-6 w-6 text-accent" />
                     <div>
                       <p className="font-medium text-white">Browse Job Opportunities</p>
-                      <p className="text-sm text-slate-400">Check out the latest positions in your field</p>
+                      <p className="text-sm text-[var(--text-muted)]">Check out the latest positions in your field</p>
                     </div>
                   </div>
                 )}
@@ -401,7 +401,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                     <Calendar className="h-6 w-6 text-purple-400" />
                     <div>
                       <p className="font-medium text-white">Explore Upcoming Events</p>
-                      <p className="text-sm text-slate-400">Find conferences and pow wows near you</p>
+                      <p className="text-sm text-[var(--text-muted)]">Find conferences and pow wows near you</p>
                     </div>
                   </div>
                 )}
@@ -411,7 +411,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                     <GraduationCap className="h-6 w-6 text-amber-400" />
                     <div>
                       <p className="font-medium text-white">Discover Scholarships</p>
-                      <p className="text-sm text-slate-400">Find funding for your education</p>
+                      <p className="text-sm text-[var(--text-muted)]">Find funding for your education</p>
                     </div>
                   </div>
                 )}
@@ -421,27 +421,27 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                     <Users className="h-6 w-6 text-blue-400" />
                     <div>
                       <p className="font-medium text-white">Build Your Network</p>
-                      <p className="text-sm text-slate-400">Connect with Indigenous professionals</p>
+                      <p className="text-sm text-[var(--text-muted)]">Connect with Indigenous professionals</p>
                     </div>
                   </div>
                 )}
 
                 {(selectedIntents.includes("explore-careers") || selectedIntents.includes("browse-community")) && (
-                  <div className="flex items-center gap-4 rounded-xl border border-teal-500/20 bg-teal-500/10 p-4">
-                    <Compass className="h-6 w-6 text-teal-400" />
+                  <div className="flex items-center gap-4 rounded-xl border border-accent/20 bg-accent/10 p-4">
+                    <Compass className="h-6 w-6 text-accent" />
                     <div>
                       <p className="font-medium text-white">Explore the Platform</p>
-                      <p className="text-sm text-slate-400">Discover all that IOPPS has to offer</p>
+                      <p className="text-sm text-[var(--text-muted)]">Discover all that IOPPS has to offer</p>
                     </div>
                   </div>
                 )}
 
                 {/* Always show profile completion tip */}
-                <div className="flex items-center gap-4 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
-                  <Check className="h-6 w-6 text-slate-400" />
+                <div className="flex items-center gap-4 rounded-xl border border-[var(--card-border)] bg-surface p-4">
+                  <Check className="h-6 w-6 text-[var(--text-muted)]" />
                   <div>
                     <p className="font-medium text-white">Complete Your Profile</p>
-                    <p className="text-sm text-slate-400">Add skills and experience to stand out</p>
+                    <p className="text-sm text-[var(--text-muted)]">Add skills and experience to stand out</p>
                   </div>
                 </div>
               </div>
@@ -455,7 +455,7 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
             variant="ghost"
             onClick={prevStep}
             disabled={currentStep === 0}
-            className="text-slate-400 hover:text-white disabled:opacity-0"
+            className="text-[var(--text-muted)] hover:text-white disabled:opacity-0"
           >
             <ChevronLeft className="mr-1 h-4 w-4" />
             Back
@@ -467,9 +467,9 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
                 key={i}
                 className={`h-2 w-2 rounded-full transition-colors ${
                   i === currentStep
-                    ? "bg-emerald-500"
+                    ? "bg-accent"
                     : i < currentStep
-                    ? "bg-emerald-500/50"
+                    ? "bg-accent/50"
                     : "bg-slate-700"
                 }`}
               />

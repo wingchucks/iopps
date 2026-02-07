@@ -95,14 +95,14 @@ export default function OrganizationEducationInquiriesPage() {
         );
       case "responded":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-emerald-300">
             <CheckCircleIcon className="h-3 w-3" />
             Responded
           </span>
         );
       case "archived":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400">
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]">
             <ArchiveBoxIcon className="h-3 w-3" />
             Archived
           </span>
@@ -145,7 +145,7 @@ export default function OrganizationEducationInquiriesPage() {
   if (loading || loadingData) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -154,12 +154,12 @@ export default function OrganizationEducationInquiriesPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to view inquiries.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -170,12 +170,12 @@ export default function OrganizationEducationInquiriesPage() {
   if (!school) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-          <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
+          <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
           <h2 className="mt-4 text-xl font-semibold text-white">
             No School Profile
           </h2>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-[var(--text-muted)]">
             You need to create a school profile to receive inquiries.
           </p>
           <Link
@@ -194,13 +194,13 @@ export default function OrganizationEducationInquiriesPage() {
       <div className="mb-6">
         <Link
           href="/organization/education"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-4"
+          className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Education
         </Link>
         <h1 className="text-2xl font-bold text-white">Student Inquiries</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           View and respond to inquiries from prospective students
         </p>
       </div>
@@ -215,7 +215,7 @@ export default function OrganizationEducationInquiriesPage() {
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 filter === status
                   ? "bg-violet-500 text-white"
-                  : "bg-slate-800 text-slate-400 hover:text-white"
+                  : "bg-surface text-[var(--text-muted)] hover:text-white"
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -228,11 +228,11 @@ export default function OrganizationEducationInquiriesPage() {
       </div>
 
       {filteredInquiries.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <EnvelopeIcon className="h-8 w-8 text-slate-500" />
+            <EnvelopeIcon className="h-8 w-8 text-foreground0" />
           </div>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             {filter === "all"
               ? "No inquiries yet. They will appear here when students reach out."
               : `No ${filter} inquiries.`}
@@ -243,29 +243,29 @@ export default function OrganizationEducationInquiriesPage() {
           {filteredInquiries.map((inquiry) => (
             <div
               key={inquiry.id}
-              className={`rounded-xl border bg-slate-900/50 p-6 ${
+              className={`rounded-xl border bg-surface p-6 ${
                 inquiry.status === "new"
                   ? "border-violet-500/50"
-                  : "border-slate-800"
+                  : "border-[var(--card-border)]"
               }`}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center">
-                    <UserIcon className="h-5 w-5 text-slate-400" />
+                    <UserIcon className="h-5 w-5 text-[var(--text-muted)]" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">
                       {inquiry.memberName}
                     </h3>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-[var(--text-muted)]">
                       {inquiry.memberEmail}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {getStatusBadge(inquiry.status)}
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-foreground0">
                     <ClockIcon className="h-3 w-3" />
                     {formatDate(inquiry.createdAt)}
                   </div>
@@ -274,7 +274,7 @@ export default function OrganizationEducationInquiriesPage() {
 
               <div className="mb-4">
                 <h4 className="font-medium text-white mb-1">{inquiry.subject}</h4>
-                <p className="text-sm text-slate-300 whitespace-pre-wrap">
+                <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">
                   {inquiry.message}
                 </p>
               </div>
@@ -282,7 +282,7 @@ export default function OrganizationEducationInquiriesPage() {
               {inquiry.interestedInPrograms &&
                 inquiry.interestedInPrograms.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-xs text-slate-500 mb-1">
+                    <p className="text-xs text-foreground0 mb-1">
                       Interested in programs:
                     </p>
                     <div className="flex flex-wrap gap-1">
@@ -299,12 +299,12 @@ export default function OrganizationEducationInquiriesPage() {
                 )}
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-4 border-t border-slate-800">
+              <div className="flex items-center gap-2 pt-4 border-t border-[var(--card-border)]">
                 {inquiry.status === "new" && (
                   <button
                     onClick={() => handleStatusUpdate(inquiry.id, "read")}
                     disabled={updating === inquiry.id}
-                    className="rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-700 disabled:opacity-50"
+                    className="rounded-lg bg-surface px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-slate-700 disabled:opacity-50"
                   >
                     Mark as Read
                   </button>
@@ -320,7 +320,7 @@ export default function OrganizationEducationInquiriesPage() {
                     <button
                       onClick={() => handleStatusUpdate(inquiry.id, "responded")}
                       disabled={updating === inquiry.id}
-                      className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-50"
+                      className="rounded-lg bg-accent/20 px-3 py-1.5 text-sm text-accent hover:bg-accent/30 disabled:opacity-50"
                     >
                       Mark as Responded
                     </button>
@@ -330,7 +330,7 @@ export default function OrganizationEducationInquiriesPage() {
                   <button
                     onClick={() => handleStatusUpdate(inquiry.id, "archived")}
                     disabled={updating === inquiry.id}
-                    className="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-800 hover:text-slate-300 disabled:opacity-50"
+                    className="rounded-lg px-3 py-1.5 text-sm text-foreground0 hover:bg-surface hover:text-[var(--text-secondary)] disabled:opacity-50"
                   >
                     Archive
                   </button>

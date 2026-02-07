@@ -61,7 +61,7 @@ export default function EmployerJobApplicationsPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading dashboard...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading dashboard...</p>
       </div>
     );
   }
@@ -72,13 +72,13 @@ export default function EmployerJobApplicationsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Employers must be signed in to view job applications.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
@@ -93,7 +93,7 @@ export default function EmployerJobApplicationsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer access only
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to your employer account to view this page.
         </p>
       </div>
@@ -110,7 +110,7 @@ export default function EmployerJobApplicationsPage() {
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
             {job?.title ?? "Job"}
           </h1>
-          <p className="mt-1 text-sm text-slate-300">
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Review and track candidates who have recorded their applications to
             this posting.
           </p>
@@ -123,12 +123,12 @@ export default function EmployerJobApplicationsPage() {
         </Link>
       </div>
 
-      <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+      <section className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
         {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
         {appsLoading ? (
-          <p className="text-sm text-slate-300">Loading applications...</p>
+          <p className="text-sm text-[var(--text-secondary)]">Loading applications...</p>
         ) : applications.length === 0 ? (
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--text-secondary)]">
             No applications have been recorded for this job yet.
           </p>
         ) : (
@@ -136,24 +136,24 @@ export default function EmployerJobApplicationsPage() {
             {applications.map((app) => (
               <div
                 key={app.id}
-                className="rounded-md border border-slate-800 bg-slate-950/40 p-4"
+                className="rounded-md border border-[var(--card-border)] bg-background/40 p-4"
               >
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-slate-50">
+                    <p className="text-sm font-semibold text-foreground">
                       {app.memberDisplayName || "Applicant"}
                     </p>
-                    <p className="text-xs text-slate-300">
+                    <p className="text-xs text-[var(--text-secondary)]">
                       {app.memberEmail || "Email not provided"}
                     </p>
                     {app.note && (
-                      <p className="mt-2 text-xs text-slate-300">
+                      <p className="mt-2 text-xs text-[var(--text-secondary)]">
                         Note: {app.note}
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-                    <span className="rounded-full border border-slate-700 px-3 py-1 uppercase tracking-widest">
+                  <div className="flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+                    <span className="rounded-full border border-[var(--card-border)] px-3 py-1 uppercase tracking-widest">
                       {app.status}
                     </span>
                     <select
@@ -165,7 +165,7 @@ export default function EmployerJobApplicationsPage() {
                           e.target.value as ApplicationStatus
                         )
                       }
-                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                      className="rounded-md border border-[var(--card-border)] bg-surface px-2 py-1 text-xs text-foreground focus:border-[#14B8A6] focus:outline-none"
                     >
                       <option value="submitted">submitted</option>
                       <option value="reviewed">reviewed</option>

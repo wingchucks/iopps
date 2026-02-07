@@ -61,27 +61,27 @@ function StatCard({ label, value, icon: Icon, href, color = 'teal', loading, err
       );
     }
     if (error) {
-      return <p className="text-lg text-slate-500">--</p>;
+      return <p className="text-lg text-foreground0">--</p>;
     }
     if (value === 0) {
       return (
         <div>
-          <p className="text-3xl font-bold text-slate-400">0</p>
-          {emptyHint && <p className="text-xs text-slate-500 mt-1">{emptyHint}</p>}
+          <p className="text-3xl font-bold text-[var(--text-muted)]">0</p>
+          {emptyHint && <p className="text-xs text-foreground0 mt-1">{emptyHint}</p>}
         </div>
       );
     }
-    return <p className="text-3xl font-bold text-slate-50">{value}</p>;
+    return <p className="text-3xl font-bold text-foreground">{value}</p>;
   };
 
   const content = (
     <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-2xl p-5 backdrop-blur-sm transition-all hover:scale-[1.02]`}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-slate-400 text-sm mb-1">{label}</p>
+          <p className="text-[var(--text-muted)] text-sm mb-1">{label}</p>
           {renderValue()}
         </div>
-        <div className={`p-2 rounded-xl bg-slate-900/50 ${colorClasses[color].split(' ').pop()}`}>
+        <div className={`p-2 rounded-xl bg-surface ${colorClasses[color].split(' ').pop()}`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
@@ -110,23 +110,23 @@ function ActionCard({ title, description, href, icon: Icon, completed }: ActionC
       className={`flex items-center gap-4 p-4 rounded-xl border transition-all hover:border-accent/50 ${
         completed
           ? 'bg-teal-900/10 border-teal-800/30'
-          : 'bg-slate-900/50 border-slate-800 hover:bg-slate-900'
+          : 'bg-surface border-[var(--card-border)] hover:bg-surface'
       }`}
     >
-      <div className={`p-2 rounded-lg ${completed ? 'bg-teal-900/30' : 'bg-slate-800'}`}>
+      <div className={`p-2 rounded-lg ${completed ? 'bg-teal-900/30' : 'bg-surface'}`}>
         {completed ? (
           <CheckCircleIcon className="w-5 h-5 text-accent" />
         ) : (
-          <Icon className="w-5 h-5 text-slate-400" />
+          <Icon className="w-5 h-5 text-[var(--text-muted)]" />
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`font-medium ${completed ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
+        <p className={`font-medium ${completed ? 'text-[var(--text-muted)] line-through' : 'text-foreground'}`}>
           {title}
         </p>
-        <p className="text-sm text-slate-500 truncate">{description}</p>
+        <p className="text-sm text-foreground0 truncate">{description}</p>
       </div>
-      <ArrowRightIcon className="w-4 h-4 text-slate-500" />
+      <ArrowRightIcon className="w-4 h-4 text-foreground0" />
     </Link>
   );
 }
@@ -206,38 +206,38 @@ function ModuleCard({ module, enabled, onEnable }: ModuleCardProps) {
   if (enabled) return null;
 
   const priceColorClasses = {
-    emerald: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    emerald: 'bg-accent/20 text-accent border-accent/30',
     blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   };
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/30 hover:border-slate-600 hover:bg-slate-900/50 transition-all">
-      <div className="p-2 rounded-lg bg-slate-800">
-        <info.icon className="w-5 h-5 text-slate-400" />
+    <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-[var(--card-border)] bg-slate-900/30 hover:border-[var(--card-border)] hover:bg-surface transition-all">
+      <div className="p-2 rounded-lg bg-surface">
+        <info.icon className="w-5 h-5 text-[var(--text-muted)]" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <p className="font-semibold text-slate-200">{info.intentLabel}</p>
+          <p className="font-semibold text-foreground">{info.intentLabel}</p>
           <span className={`px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${priceColorClasses[info.priceColor]}`}>
             {info.price}
           </span>
         </div>
-        <p className="text-sm text-slate-500">{info.description}</p>
+        <p className="text-sm text-foreground0">{info.description}</p>
       </div>
       <div className="flex items-center gap-2">
         <Link
           href={info.pricingLink}
-          className="text-xs text-slate-400 hover:text-slate-300 transition-colors"
+          className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           Pricing
         </Link>
         <button
           onClick={onEnable}
-          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+          className="p-1.5 rounded-lg bg-surface hover:bg-slate-700 transition-colors"
           title="Enable module"
         >
-          <PlusIcon className="w-4 h-4 text-slate-400" />
+          <PlusIcon className="w-4 h-4 text-[var(--text-muted)]" />
         </button>
       </div>
     </div>
@@ -295,12 +295,12 @@ function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
     <div className="bg-gradient-to-br from-accent/10 to-teal-600/5 border border-accent/20 rounded-2xl p-5">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-slate-900/50 text-accent">
+          <div className="p-2 rounded-xl bg-surface text-accent">
             <CreditCardIcon className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-50">Your Plan</h3>
-            <p className="text-sm text-slate-400">
+            <h3 className="font-semibold text-foreground">Your Plan</h3>
+            <p className="text-sm text-[var(--text-muted)]">
               {hasActiveSubscription
                 ? `${subscriptionTier === 'TIER2' ? 'Unlimited' : 'Growth'} Plan Active`
                 : 'No active subscription'}
@@ -319,16 +319,16 @@ function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
         {/* Free Features */}
         {freeFeatures.length > 0 && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400 mb-2">Free</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent mb-2">Free</p>
             <ul className="space-y-1">
               {freeFeatures.map(feature => (
                 <li
                   key={feature.name}
-                  className="text-sm text-slate-300 flex items-center gap-2 cursor-help"
+                  className="text-sm text-[var(--text-secondary)] flex items-center gap-2 cursor-help"
                   title={feature.tooltip}
                 >
-                  <CheckCircleIcon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  <span className="border-b border-dotted border-slate-600">{feature.name}</span>
+                  <CheckCircleIcon className="w-4 h-4 text-accent flex-shrink-0" />
+                  <span className="border-b border-dotted border-[var(--card-border)]">{feature.name}</span>
                 </li>
               ))}
             </ul>
@@ -343,11 +343,11 @@ function YourPlanCard({ profile, enabledModules }: YourPlanCardProps) {
               {paidFeatures.map(feature => (
                 <li
                   key={feature.name}
-                  className="text-sm text-slate-300 cursor-help"
+                  className="text-sm text-[var(--text-secondary)] cursor-help"
                   title={feature.tooltip}
                 >
-                  <span className="border-b border-dotted border-slate-600">{feature.name}</span>
-                  <span className="text-slate-500 text-xs ml-1">({feature.price})</span>
+                  <span className="border-b border-dotted border-[var(--card-border)]">{feature.name}</span>
+                  <span className="text-foreground0 text-xs ml-1">({feature.price})</span>
                 </li>
               ))}
             </ul>
@@ -580,10 +580,10 @@ export default function OrganizationDashboardHome() {
     <div className="space-y-8">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">
+        <h1 className="text-2xl font-bold text-foreground">
           Welcome back{profile?.organizationName ? `, ${profile.organizationName}` : ''}
         </h1>
-        <p className="text-slate-400 mt-1">
+        <p className="text-[var(--text-muted)] mt-1">
           Here&apos;s what&apos;s happening with your organization
         </p>
       </div>
@@ -621,16 +621,16 @@ export default function OrganizationDashboardHome() {
         {/* Next Best Actions */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-50">Next Steps</h2>
+            <h2 className="text-lg font-semibold text-foreground">Next Steps</h2>
             {totalActions > 0 && (
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-[var(--text-muted)]">
                 {completedCount}/{totalActions} completed
               </span>
             )}
           </div>
           {/* Progress bar */}
           {totalActions > 0 && (
-            <div className="w-full h-1.5 bg-slate-800 rounded-full mb-4 overflow-hidden">
+            <div className="w-full h-1.5 bg-surface rounded-full mb-4 overflow-hidden">
               <div
                 className="h-full bg-accent rounded-full transition-all duration-500"
                 style={{ width: `${(completedCount / totalActions) * 100}%` }}
@@ -651,7 +651,7 @@ export default function OrganizationDashboardHome() {
 
         {/* Add Modules / Quick Access */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-50 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">
             {availableModules.length > 0 ? 'Expand Your Presence' : 'Quick Access'}
           </h2>
           <div className="space-y-3">
@@ -670,35 +670,35 @@ export default function OrganizationDashboardHome() {
             ) : (
               <>
                 <Link
-                  href="/hub"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-teal-500/10 to-slate-900/50 border border-teal-500/20 hover:border-teal-500/40 transition-colors"
+                  href="/discover"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-teal-500/10 to-slate-900/50 border border-accent/20 hover:border-accent/40 transition-colors"
                 >
-                  <SparklesIcon className="w-5 h-5 text-teal-400" />
+                  <SparklesIcon className="w-5 h-5 text-accent" />
                   <div>
-                    <span className="text-slate-200">Preview Opportunity Feed</span>
-                    <p className="text-xs text-slate-500">See how your postings appear</p>
+                    <span className="text-foreground">Preview Opportunity Feed</span>
+                    <p className="text-xs text-foreground0">See how your postings appear</p>
                   </div>
                 </Link>
                 <Link
                   href="/organization/inbox"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 hover:bg-slate-900 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface transition-colors"
                 >
                   <EnvelopeIcon className="w-5 h-5 text-accent" />
-                  <span className="text-slate-200">View Inbox</span>
+                  <span className="text-foreground">View Inbox</span>
                 </Link>
                 <Link
                   href="/organization/analytics"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 hover:bg-slate-900 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface transition-colors"
                 >
                   <EyeIcon className="w-5 h-5 text-accent" />
-                  <span className="text-slate-200">View Analytics</span>
+                  <span className="text-foreground">View Analytics</span>
                 </Link>
                 <Link
                   href="/organization/billing"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 hover:bg-slate-900 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface transition-colors"
                 >
                   <SparklesIcon className="w-5 h-5 text-accent" />
-                  <span className="text-slate-200">View Pricing</span>
+                  <span className="text-foreground">View Pricing</span>
                 </Link>
               </>
             )}

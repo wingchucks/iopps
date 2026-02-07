@@ -95,7 +95,7 @@ function VideoForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
           Video URL <span className="text-red-400">*</span>
         </label>
         <input
@@ -103,30 +103,30 @@ function VideoForm({
           value={formData.videoUrl}
           onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
           placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
-        <p className="mt-1 text-xs text-slate-500">Supports YouTube, Vimeo, or custom video URLs</p>
+        <p className="mt-1 text-xs text-foreground0">Supports YouTube, Vimeo, or custom video URLs</p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Title</label>
         <input
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           placeholder="Video title"
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+        <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
         <textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Brief description of the video"
           rows={3}
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-teal-500"
         />
       </div>
 
@@ -139,9 +139,9 @@ function VideoForm({
               onChange={(e) => setFormData({ ...formData, isIOPPSInterview: e.target.checked })}
               className="peer sr-only"
             />
-            <div className="peer h-6 w-11 rounded-full bg-slate-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-600 after:bg-slate-400 after:transition-all after:content-[''] peer-checked:bg-teal-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:after:bg-white peer-focus:outline-none"></div>
+            <div className="peer h-6 w-11 rounded-full bg-slate-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-[var(--card-border)] after:bg-slate-400 after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:after:bg-[var(--card-bg)] peer-focus:outline-none"></div>
           </label>
-          <span className="text-sm text-slate-300">
+          <span className="text-sm text-[var(--text-secondary)]">
             {formData.isIOPPSInterview ? "IOPPS Interview" : "Employer Promotional Video"}
           </span>
         </div>
@@ -157,14 +157,14 @@ function VideoForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+          className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving..." : submitLabel}
         </button>
@@ -374,7 +374,7 @@ export default function AdminVideosPage() {
       <div className="rounded-lg border border-red-800 bg-red-950/20 p-8 text-center">
         <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
         <h2 className="mt-4 text-xl font-bold text-red-400">Unauthorized Access</h2>
-        <p className="mt-2 text-slate-400">Admin access required.</p>
+        <p className="mt-2 text-[var(--text-muted)]">Admin access required.</p>
       </div>
     );
   }
@@ -383,8 +383,8 @@ export default function AdminVideosPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-100">Video Management</h1>
-        <p className="mt-1 text-slate-400">
+        <h1 className="text-3xl font-bold text-foreground">Video Management</h1>
+        <p className="mt-1 text-[var(--text-muted)]">
           Manage employer videos including company intros, IOPPS interviews, and job-specific videos.
         </p>
       </div>
@@ -392,18 +392,18 @@ export default function AdminVideosPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Employer List */}
         <div className="lg:col-span-1">
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <h2 className="text-lg font-semibold text-slate-100 mb-4">Select Employer</h2>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Select Employer</h2>
 
             {/* Search */}
             <div className="relative mb-4">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground0" />
               <input
                 type="text"
                 placeholder="Search employers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface py-2 pl-10 pr-4 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
               />
             </div>
 
@@ -411,10 +411,10 @@ export default function AdminVideosPage() {
             <div className="max-h-[calc(100vh-320px)] overflow-y-auto space-y-2">
               {loading ? (
                 <div className="py-8 text-center">
-                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-slate-700 border-t-teal-500"></div>
+                  <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-teal-500"></div>
                 </div>
               ) : filteredEmployers.length === 0 ? (
-                <p className="py-4 text-center text-sm text-slate-500">No employers found</p>
+                <p className="py-4 text-center text-sm text-foreground0">No employers found</p>
               ) : (
                 filteredEmployers.map((employer) => (
                   <button
@@ -422,31 +422,31 @@ export default function AdminVideosPage() {
                     onClick={() => handleSelectEmployer(employer)}
                     className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
                       selectedEmployer?.id === employer.id
-                        ? "border-teal-500 bg-teal-500/10"
-                        : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/50"
+                        ? "border-accent bg-accent/10"
+                        : "border-[var(--card-border)] hover:border-[var(--card-border)] hover:bg-surface"
                     }`}
                   >
                     {employer.logoUrl ? (
                       <img
                         src={employer.logoUrl}
                         alt={`${employer.organizationName} logo`}
-                        className="h-10 w-10 rounded-lg border border-slate-700 bg-white object-contain p-1"
+                        className="h-10 w-10 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-1"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800">
-                        <BuildingOfficeIcon className="h-5 w-5 text-slate-500" />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface">
+                        <BuildingOfficeIcon className="h-5 w-5 text-foreground0" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium text-slate-100">
+                      <p className="truncate font-medium text-foreground">
                         {employer.organizationName}
                       </p>
                       {employer.location && (
-                        <p className="truncate text-xs text-slate-500">{employer.location}</p>
+                        <p className="truncate text-xs text-foreground0">{employer.location}</p>
                       )}
                     </div>
                     {(employer.interviews?.length || employer.companyIntroVideo) && (
-                      <VideoCameraIcon className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                      <VideoCameraIcon className="h-4 w-4 text-accent flex-shrink-0" />
                     )}
                   </button>
                 ))
@@ -458,51 +458,51 @@ export default function AdminVideosPage() {
         {/* Video Management Panel */}
         <div className="lg:col-span-2">
           {!selectedEmployer ? (
-            <div className="rounded-lg border border-slate-800 bg-[#08090C] p-12 text-center">
-              <VideoCameraIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <h3 className="mt-4 text-lg font-medium text-slate-300">Select an Employer</h3>
-              <p className="mt-2 text-sm text-slate-500">
+            <div className="rounded-lg border border-[var(--card-border)] bg-surface p-12 text-center">
+              <VideoCameraIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
+              <h3 className="mt-4 text-lg font-medium text-[var(--text-secondary)]">Select an Employer</h3>
+              <p className="mt-2 text-sm text-foreground0">
                 Choose an employer from the list to manage their videos
               </p>
             </div>
           ) : loadingEmployerData ? (
-            <div className="rounded-lg border border-slate-800 bg-[#08090C] p-12 text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-teal-500"></div>
-              <p className="mt-4 text-slate-400">Loading employer data...</p>
+            <div className="rounded-lg border border-[var(--card-border)] bg-surface p-12 text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-teal-500"></div>
+              <p className="mt-4 text-[var(--text-muted)]">Loading employer data...</p>
             </div>
           ) : (
             <div className="space-y-6">
               {/* Employer Header */}
-              <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+              <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
                 <div className="flex items-center gap-4">
                   {selectedEmployer.logoUrl ? (
                     <img
                       src={selectedEmployer.logoUrl}
                       alt={`${selectedEmployer.organizationName} logo`}
-                      className="h-14 w-14 rounded-lg border border-slate-700 bg-white object-contain p-1"
+                      className="h-14 w-14 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-1"
                     />
                   ) : (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-700 bg-slate-800">
-                      <BuildingOfficeIcon className="h-7 w-7 text-slate-500" />
+                    <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface">
+                      <BuildingOfficeIcon className="h-7 w-7 text-foreground0" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-xl font-bold text-slate-100">
+                    <h2 className="text-xl font-bold text-foreground">
                       {selectedEmployer.organizationName}
                     </h2>
-                    <p className="text-sm text-slate-400">{selectedEmployer.location}</p>
+                    <p className="text-sm text-[var(--text-muted)]">{selectedEmployer.location}</p>
                   </div>
                 </div>
               </div>
 
               {/* Company Intro Video */}
-              <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+              <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-100">Company Intro Video</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Company Intro Video</h3>
                   {!selectedEmployer.companyIntroVideo && (
                     <button
                       onClick={() => setShowIntroModal(true)}
-                      className="flex items-center gap-1.5 rounded-lg bg-teal-500/10 px-3 py-1.5 text-sm font-medium text-teal-400 hover:bg-teal-500/20"
+                      className="flex items-center gap-1.5 rounded-lg bg-accent/10 px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent/20"
                     >
                       <PlusIcon className="h-4 w-4" />
                       Add Video
@@ -511,27 +511,27 @@ export default function AdminVideosPage() {
                 </div>
 
                 {selectedEmployer.companyIntroVideo ? (
-                  <div className="flex items-start gap-4 rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-teal-500/10">
-                      <PlayCircleIcon className="h-6 w-6 text-teal-400" />
+                  <div className="flex items-start gap-4 rounded-lg border border-[var(--card-border)] bg-surface p-4">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                      <PlayCircleIcon className="h-6 w-6 text-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-100">
+                      <p className="font-medium text-foreground">
                         {selectedEmployer.companyIntroVideo.title || "Company Intro"}
                       </p>
                       {selectedEmployer.companyIntroVideo.description && (
-                        <p className="mt-1 text-sm text-slate-400 line-clamp-2">
+                        <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-2">
                           {selectedEmployer.companyIntroVideo.description}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-slate-500 truncate">
+                      <p className="mt-1 text-xs text-foreground0 truncate">
                         {selectedEmployer.companyIntroVideo.videoUrl}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setShowIntroModal(true)}
-                        className="rounded-md p-2 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                        className="rounded-md p-2 text-[var(--text-muted)] hover:bg-slate-700 hover:text-foreground"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>
@@ -544,14 +544,14 @@ export default function AdminVideosPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">No company intro video added yet.</p>
+                  <p className="text-sm text-foreground0">No company intro video added yet.</p>
                 )}
               </div>
 
               {/* Interviews / Promotional Videos */}
-              <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
+              <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-100">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Interviews & Promotional Videos
                   </h3>
                   <button
@@ -559,7 +559,7 @@ export default function AdminVideosPage() {
                       setEditingInterview(null);
                       setShowInterviewModal(true);
                     }}
-                    className="flex items-center gap-1.5 rounded-lg bg-teal-500/10 px-3 py-1.5 text-sm font-medium text-teal-400 hover:bg-teal-500/20"
+                    className="flex items-center gap-1.5 rounded-lg bg-accent/10 px-3 py-1.5 text-sm font-medium text-accent hover:bg-accent/20"
                   >
                     <PlusIcon className="h-4 w-4" />
                     Add Video
@@ -571,20 +571,20 @@ export default function AdminVideosPage() {
                     {selectedEmployer.interviews.map((interview) => (
                       <div
                         key={interview.id}
-                        className="flex items-start gap-4 rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+                        className="flex items-start gap-4 rounded-lg border border-[var(--card-border)] bg-surface p-4"
                       >
                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-purple-500/10">
                           <PlayCircleIcon className="h-6 w-6 text-purple-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-slate-100">
+                            <p className="font-medium text-foreground">
                               {interview.title || "Untitled Video"}
                             </p>
                             <span
                               className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                                 interview.isIOPPSInterview
-                                  ? "bg-teal-500/10 text-teal-400"
+                                  ? "bg-accent/10 text-accent"
                                   : "bg-purple-500/10 text-purple-400"
                               }`}
                             >
@@ -592,11 +592,11 @@ export default function AdminVideosPage() {
                             </span>
                           </div>
                           {interview.description && (
-                            <p className="mt-1 text-sm text-slate-400 line-clamp-2">
+                            <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-2">
                               {interview.description}
                             </p>
                           )}
-                          <p className="mt-1 text-xs text-slate-500 truncate">
+                          <p className="mt-1 text-xs text-foreground0 truncate">
                             {interview.videoUrl}
                           </p>
                         </div>
@@ -606,7 +606,7 @@ export default function AdminVideosPage() {
                               setEditingInterview(interview);
                               setShowInterviewModal(true);
                             }}
-                            className="rounded-md p-2 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                            className="rounded-md p-2 text-[var(--text-muted)] hover:bg-slate-700 hover:text-foreground"
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
@@ -621,27 +621,27 @@ export default function AdminVideosPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">No interview or promotional videos added yet.</p>
+                  <p className="text-sm text-foreground0">No interview or promotional videos added yet.</p>
                 )}
               </div>
 
               {/* Job-Specific Videos */}
-              <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-                <h3 className="text-lg font-semibold text-slate-100 mb-4">Job-Specific Videos</h3>
+              <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Job-Specific Videos</h3>
 
                 {employerJobs.length > 0 ? (
                   <div className="space-y-3">
                     {employerJobs.map((job) => (
                       <div
                         key={job.id}
-                        className="flex items-start gap-4 rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+                        className="flex items-start gap-4 rounded-lg border border-[var(--card-border)] bg-surface p-4"
                       >
                         <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/10">
                           <BriefcaseIcon className="h-6 w-6 text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-100">{job.title}</p>
-                          <p className="text-sm text-slate-400">{job.location}</p>
+                          <p className="font-medium text-foreground">{job.title}</p>
+                          <p className="text-sm text-[var(--text-muted)]">{job.location}</p>
                           {job.jobVideo ? (
                             <div className="mt-2 flex items-center gap-2 text-sm">
                               <PlayCircleIcon className="h-4 w-4 text-green-400" />
@@ -649,13 +649,13 @@ export default function AdminVideosPage() {
                                 {job.jobVideo.title || "Video attached"}
                               </span>
                               {job.jobVideo.isIOPPSInterview && (
-                                <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-xs text-teal-400">
+                                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
                                   IOPPS
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <p className="mt-2 text-sm text-slate-500">No video attached</p>
+                            <p className="mt-2 text-sm text-foreground0">No video attached</p>
                           )}
                         </div>
                         <div className="flex gap-2">
@@ -664,7 +664,7 @@ export default function AdminVideosPage() {
                               setSelectedJob(job);
                               setShowJobVideoModal(true);
                             }}
-                            className="rounded-md p-2 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                            className="rounded-md p-2 text-[var(--text-muted)] hover:bg-slate-700 hover:text-foreground"
                             title={job.jobVideo ? "Edit video" : "Add video"}
                           >
                             {job.jobVideo ? (
@@ -686,7 +686,7 @@ export default function AdminVideosPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">This employer has no job postings yet.</p>
+                  <p className="text-sm text-foreground0">This employer has no job postings yet.</p>
                 )}
               </div>
             </div>
@@ -697,14 +697,14 @@ export default function AdminVideosPage() {
       {/* Company Intro Video Modal */}
       {showIntroModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-lg border border-[var(--card-border)] bg-surface p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-slate-100">
+              <h3 className="text-xl font-bold text-foreground">
                 {selectedEmployer?.companyIntroVideo ? "Edit" : "Add"} Company Intro Video
               </h3>
               <button
                 onClick={() => setShowIntroModal(false)}
-                className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                className="rounded-md p-1 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -730,9 +730,9 @@ export default function AdminVideosPage() {
       {/* Interview Modal */}
       {showInterviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-lg border border-[var(--card-border)] bg-surface p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-slate-100">
+              <h3 className="text-xl font-bold text-foreground">
                 {editingInterview ? "Edit" : "Add"} Video
               </h3>
               <button
@@ -740,7 +740,7 @@ export default function AdminVideosPage() {
                   setShowInterviewModal(false);
                   setEditingInterview(null);
                 }}
-                className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                className="rounded-md p-1 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -769,20 +769,20 @@ export default function AdminVideosPage() {
       {/* Job Video Modal */}
       {showJobVideoModal && selectedJob && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-lg border border-[var(--card-border)] bg-surface p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-100">
+                <h3 className="text-xl font-bold text-foreground">
                   {selectedJob.jobVideo ? "Edit" : "Add"} Job Video
                 </h3>
-                <p className="text-sm text-slate-400">{selectedJob.title}</p>
+                <p className="text-sm text-[var(--text-muted)]">{selectedJob.title}</p>
               </div>
               <button
                 onClick={() => {
                   setShowJobVideoModal(false);
                   setSelectedJob(null);
                 }}
-                className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                className="rounded-md p-1 text-[var(--text-muted)] hover:bg-surface hover:text-foreground"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>

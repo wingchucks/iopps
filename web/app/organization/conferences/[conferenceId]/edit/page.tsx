@@ -77,7 +77,7 @@ function EditConferenceContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0B0C10] text-slate-400">
+      <div className="flex min-h-screen items-center justify-center bg-[#0B0C10] text-[var(--text-muted)]">
         Loading builder...
       </div>
     );
@@ -88,7 +88,7 @@ function EditConferenceContent() {
   if (!user || !conference || (role !== 'employer' && !isSuperAdmin)) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center">
-        <p className="text-slate-400">Access denied or conference not found.</p>
+        <p className="text-[var(--text-muted)]">Access denied or conference not found.</p>
         <Link href="/organization/dashboard" className="text-[#14B8A6] hover:underline mt-4 block">Return to Dashboard</Link>
       </div>
     );
@@ -117,7 +117,7 @@ function EditConferenceContent() {
       {showNewBanner && (
         <div className="flex items-center justify-between bg-teal-900/30 border-b border-teal-800/50 px-6 py-3">
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-500/20 text-teal-400">
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
@@ -129,7 +129,7 @@ function EditConferenceContent() {
           </div>
           <button
             onClick={() => setShowNewBanner(false)}
-            className="text-teal-400 hover:text-teal-300 transition-colors"
+            className="text-accent hover:text-teal-300 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -139,11 +139,11 @@ function EditConferenceContent() {
       )}
 
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-slate-800 bg-[#08090C] px-6 py-4">
+      <header className="flex items-center justify-between border-b border-[var(--card-border)] bg-surface px-6 py-4">
         <div className="flex items-center gap-4">
           <Link
             href="/organization/dashboard"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ←
           </Link>
@@ -151,7 +151,7 @@ function EditConferenceContent() {
             <h1 className="text-lg font-bold text-white leading-tight">
               {displayTitle}
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-foreground0">
               {conference.startDate ? new Date(conference.startDate as string).toLocaleDateString() : 'Date TBD'}
             </p>
           </div>
@@ -161,17 +161,17 @@ function EditConferenceContent() {
           <Link
             href={`/conferences/${conferenceId}`}
             target="_blank"
-            className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Preview Page
           </Link>
-          <div className="h-6 w-px bg-slate-800 hidden sm:block" />
+          <div className="h-6 w-px bg-surface hidden sm:block" />
           <button
             onClick={saveChanges}
             disabled={!unsavedChanges || saving}
             className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-bold transition-all ${unsavedChanges
-                ? "bg-[#14B8A6] text-black hover:bg-[#14B8A6]/90 shadow-[0_0_15px_-3px_rgba(20,184,166,0.3)]"
-                : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                ? "bg-accent text-black hover:bg-accent/90 shadow-[0_0_15px_-3px_rgba(20,184,166,0.3)]"
+                : "bg-surface text-foreground0 cursor-not-allowed"
               }`}
           >
             {saving ? "Saving..." : unsavedChanges ? "Save Changes" : "Saved"}
@@ -185,7 +185,7 @@ function EditConferenceContent() {
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-[#0B0C10]">
         <div className="mx-auto max-w-5xl py-8">
-          <div className="rounded-2xl border border-slate-800 bg-[#08090C] shadow-xl">
+          <div className="rounded-2xl border border-[var(--card-border)] bg-surface shadow-xl">
             {activeTab === 'overview' && <OverviewTab conference={conference} onChange={handleUpdate} />}
             {activeTab === 'agenda' && <AgendaTab conference={conference} onChange={handleUpdate} />}
             {activeTab === 'speakers' && <SpeakersTab conference={conference} onChange={handleUpdate} />}
@@ -205,7 +205,7 @@ export default function EditConferencePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#0B0C10] text-slate-400">
+        <div className="flex min-h-screen items-center justify-center bg-[#0B0C10] text-[var(--text-muted)]">
           Loading builder...
         </div>
       }

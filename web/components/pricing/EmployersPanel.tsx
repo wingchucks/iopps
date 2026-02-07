@@ -63,8 +63,8 @@ export default function EmployersPanel() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-50">For Employers & Recruiters</h2>
-        <p className="mt-2 text-slate-400">
+        <h2 className="text-2xl font-bold text-foreground">For Employers & Recruiters</h2>
+        <p className="mt-2 text-[var(--text-muted)]">
           Connect with Indigenous talent through job postings or annual hiring plans.
         </p>
       </div>
@@ -81,7 +81,7 @@ export default function EmployersPanel() {
       )}
 
       {/* Pay-Per-Post Options */}
-      <h3 className="text-lg font-semibold text-slate-200 mb-4">Pay-Per-Post</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-4">Pay-Per-Post</h3>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
         {/* Single Job Post - Starter option */}
         <PricingCard
@@ -171,8 +171,8 @@ export default function EmployersPanel() {
       </div>
 
       {/* Talk to us CTA */}
-      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center">
-        <p className="text-slate-300">
+      <div className="mt-8 rounded-xl border border-[var(--card-border)] bg-surface p-6 text-center">
+        <p className="text-[var(--text-secondary)]">
           Need a custom package or have questions about hiring?
         </p>
         <Link

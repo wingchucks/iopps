@@ -124,7 +124,7 @@ export default function EditTrainingProgramPage() {
   if (authLoading || loadingProgram) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -135,13 +135,13 @@ export default function EditTrainingProgramPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Employers must be signed in to edit training programs.
         </p>
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
@@ -158,7 +158,7 @@ export default function EditTrainingProgramPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Employer access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to an employer account to edit training programs.
         </p>
       </div>
@@ -171,7 +171,7 @@ export default function EditTrainingProgramPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-red-400">
           Error
         </h1>
-        <p className="text-sm text-slate-300">{error}</p>
+        <p className="text-sm text-[var(--text-secondary)]">{error}</p>
         <Link
           href="/organization/training"
           className="inline-block rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600 transition-colors"
@@ -240,7 +240,7 @@ export default function EditTrainingProgramPage() {
       <div className="mb-6">
         <Link
           href="/organization/training"
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
         >
           &larr; Back to Training Programs
         </Link>
@@ -249,7 +249,7 @@ export default function EditTrainingProgramPage() {
       <h1 className="text-2xl font-semibold tracking-tight">
         Edit Training Program
       </h1>
-      <p className="mt-2 text-sm text-slate-300">
+      <p className="mt-2 text-sm text-[var(--text-secondary)]">
         Update the details of your training program.
       </p>
 
@@ -257,7 +257,7 @@ export default function EditTrainingProgramPage() {
       {program && (
         <div className={`mt-4 rounded-lg border p-4 ${
           program.status === "approved"
-            ? "border-emerald-500/30 bg-emerald-500/10"
+            ? "border-accent/30 bg-accent/10"
             : program.status === "pending"
             ? "border-amber-500/30 bg-amber-500/10"
             : "border-red-500/30 bg-red-500/10"
@@ -287,12 +287,12 @@ export default function EditTrainingProgramPage() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         {/* Basic Info */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+          <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
             Basic Information
           </h2>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Program Title *
             </label>
             <input
@@ -301,12 +301,12 @@ export default function EditTrainingProgramPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Full Stack Web Development Bootcamp"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Short Description
             </label>
             <input
@@ -315,15 +315,15 @@ export default function EditTrainingProgramPage() {
               onChange={(e) => setShortDescription(e.target.value)}
               placeholder="A brief one-liner for program cards (optional)"
               maxLength={150}
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-foreground0">
               {shortDescription.length}/150 characters
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Full Description *
             </label>
             <textarea
@@ -332,20 +332,20 @@ export default function EditTrainingProgramPage() {
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
               placeholder="Describe the program in detail: what participants will learn, prerequisites, outcomes, etc."
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Provider Info */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+          <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
             Provider Information
           </h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Provider / Institution Name *
               </label>
               <input
@@ -354,11 +354,11 @@ export default function EditTrainingProgramPage() {
                 value={providerName}
                 onChange={(e) => setProviderName(e.target.value)}
                 placeholder="e.g., Indigenous Tech Academy"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Provider Website
               </label>
               <input
@@ -366,13 +366,13 @@ export default function EditTrainingProgramPage() {
                 value={providerWebsite}
                 onChange={(e) => setProviderWebsite(e.target.value)}
                 placeholder="https://provider-website.com"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Enrollment / Registration URL *
             </label>
             <input
@@ -381,9 +381,9 @@ export default function EditTrainingProgramPage() {
               value={enrollmentUrl}
               onChange={(e) => setEnrollmentUrl(e.target.value)}
               placeholder="https://your-site.com/enroll"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-foreground0">
               Users will be redirected to this URL when they click &quot;Enroll&quot;
             </p>
           </div>
@@ -391,13 +391,13 @@ export default function EditTrainingProgramPage() {
 
         {/* Format & Schedule */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+          <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
             Format & Schedule
           </h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Delivery Format *
               </label>
               <div className="mt-2 space-y-2">
@@ -407,7 +407,7 @@ export default function EditTrainingProgramPage() {
                     className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
                       format === f.value
                         ? "border-purple-500 bg-purple-500/10"
-                        : "border-slate-700 hover:border-slate-600"
+                        : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                     }`}
                   >
                     <input
@@ -420,14 +420,14 @@ export default function EditTrainingProgramPage() {
                       }
                       className="sr-only"
                     />
-                    <span className="text-sm text-slate-200">{f.label}</span>
+                    <span className="text-sm text-foreground">{f.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Duration
               </label>
               <input
@@ -435,12 +435,12 @@ export default function EditTrainingProgramPage() {
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="e.g., 12 weeks, 40 hours, Self-paced"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
 
               {format !== "online" && (
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Location
                   </label>
                   <input
@@ -448,7 +448,7 @@ export default function EditTrainingProgramPage() {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g., Toronto, ON or Multiple Locations"
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -461,9 +461,9 @@ export default function EditTrainingProgramPage() {
                 type="checkbox"
                 checked={ongoing}
                 onChange={(e) => setOngoing(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <span className="text-sm text-slate-200">
+              <span className="text-sm text-foreground">
                 Ongoing enrollment (students can join anytime)
               </span>
             </label>
@@ -472,19 +472,19 @@ export default function EditTrainingProgramPage() {
 
         {/* Category & Skills */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+          <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
             Category & Skills
           </h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -495,7 +495,7 @@ export default function EditTrainingProgramPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Certification Offered
               </label>
               <input
@@ -503,13 +503,13 @@ export default function EditTrainingProgramPage() {
                 value={certificationOffered}
                 onChange={(e) => setCertificationOffered(e.target.value)}
                 placeholder="e.g., AWS Certified Developer"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Skills Taught
             </label>
             <input
@@ -517,9 +517,9 @@ export default function EditTrainingProgramPage() {
               value={skills}
               onChange={(e) => setSkills(e.target.value)}
               placeholder="JavaScript, React, Node.js (comma-separated)"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-foreground0">
               Separate skills with commas
             </p>
           </div>
@@ -530,9 +530,9 @@ export default function EditTrainingProgramPage() {
                 type="checkbox"
                 checked={indigenousFocused}
                 onChange={(e) => setIndigenousFocused(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <span className="text-sm text-slate-200">
+              <span className="text-sm text-foreground">
                 This program has an Indigenous focus or is specifically designed
                 for Indigenous learners
               </span>
@@ -542,12 +542,12 @@ export default function EditTrainingProgramPage() {
 
         {/* Pricing & Funding */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+          <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
             Pricing & Funding
           </h2>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-foreground">
               Cost
             </label>
             <input
@@ -555,7 +555,7 @@ export default function EditTrainingProgramPage() {
               value={cost}
               onChange={(e) => setCost(e.target.value)}
               placeholder="e.g., Free, $500, $1,000-$2,500, Contact for pricing"
-              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+              className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
             />
           </div>
 
@@ -565,9 +565,9 @@ export default function EditTrainingProgramPage() {
                 type="checkbox"
                 checked={fundingAvailable}
                 onChange={(e) => setFundingAvailable(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <span className="text-sm text-slate-200">
+              <span className="text-sm text-foreground">
                 Funding, scholarships, or financial aid is available
               </span>
             </label>
@@ -575,7 +575,7 @@ export default function EditTrainingProgramPage() {
 
           {fundingAvailable && (
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Funding Details
               </label>
               <textarea
@@ -583,7 +583,7 @@ export default function EditTrainingProgramPage() {
                 onChange={(e) => setScholarshipInfo(e.target.value)}
                 rows={3}
                 placeholder="Describe available funding options, eligibility requirements, etc."
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
           )}
@@ -591,7 +591,7 @@ export default function EditTrainingProgramPage() {
 
         {/* Visibility */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+          <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
             Visibility
           </h2>
 
@@ -601,20 +601,20 @@ export default function EditTrainingProgramPage() {
                 type="checkbox"
                 checked={active}
                 onChange={(e) => setActive(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <span className="text-sm text-slate-200">
+              <span className="text-sm text-foreground">
                 Active - Program is visible to public (when approved)
               </span>
             </label>
-            <p className="mt-1 ml-7 text-xs text-slate-500">
+            <p className="mt-1 ml-7 text-xs text-foreground0">
               Uncheck to temporarily hide this program from public listings
             </p>
           </div>
         </div>
 
         {/* Submit */}
-        <div className="pt-4 border-t border-slate-800 flex items-center gap-4">
+        <div className="pt-4 border-t border-[var(--card-border)] flex items-center gap-4">
           <button
             type="submit"
             disabled={saving}
@@ -624,7 +624,7 @@ export default function EditTrainingProgramPage() {
           </button>
           <Link
             href="/organization/training"
-            className="rounded-md px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+            className="rounded-md px-4 py-2 text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             Cancel
           </Link>

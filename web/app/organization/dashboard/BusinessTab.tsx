@@ -120,24 +120,24 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
     return (
       <div className="space-y-6">
         {/* Business Type Tabs */}
-        <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
+        <div className="flex gap-2 border-b border-[var(--card-border)] pb-px overflow-x-auto">
           <button
             onClick={() => setBusinessType("shop")}
-            className="flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
+            className="flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 border-accent bg-accent/10 text-accent"
           >
             <BuildingStorefrontIcon className="h-4 w-4" />
             Shop Profile
           </button>
           <button
             onClick={() => setBusinessType("services")}
-            className="flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            className="flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
           >
             <WrenchScrewdriverIcon className="h-4 w-4" />
             Services ({services.length})
           </button>
           <button
             onClick={() => setBusinessType("funding")}
-            className="flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            className="flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
           >
             <BanknotesIcon className="h-4 w-4" />
             Funding ({grants.length})
@@ -153,12 +153,12 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
   return (
     <div className="space-y-6">
       {/* Business Type Tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-px overflow-x-auto">
         <button
           onClick={() => setBusinessType("shop")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${(businessType as any) === "shop"
-            ? "border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-accent bg-accent/10 text-accent"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BuildingStorefrontIcon className="h-4 w-4" />
@@ -168,7 +168,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
           onClick={() => setBusinessType("services")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${businessType === "services"
             ? "border-b-2 border-indigo-500 bg-indigo-500/10 text-indigo-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <WrenchScrewdriverIcon className="h-4 w-4" />
@@ -177,8 +177,8 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
         <button
           onClick={() => setBusinessType("funding")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${businessType === "funding"
-            ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-accent bg-accent/10 text-accent"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BanknotesIcon className="h-4 w-4" />
@@ -196,7 +196,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
                 placeholder="Search services..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
               />
             </div>
             <Link
@@ -213,12 +213,12 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
             </div>
           ) : filteredServices.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-              <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
+              <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No services found" : "No services yet"}
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {keyword ? "Try adjusting your search" : "List your professional services to connect with clients."}
               </p>
               {!keyword && (
@@ -236,7 +236,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
               {filteredServices.map((service) => (
                 <div
                   key={service.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -249,38 +249,38 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
                           {service.category}
                         </span>
                         {service.location && (
-                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
+                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-[var(--text-secondary)]">
                             {service.location}
                           </span>
                         )}
                         {service.verified && (
-                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-300">
+                          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs text-emerald-300">
                             Verified
                           </span>
                         )}
                       </div>
                       {service.tagline && (
-                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {service.tagline}
                         </p>
                       )}
-                      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+                      <div className="mt-3 flex items-center gap-4 text-xs text-foreground0">
                         <span>Views: {service.viewCount || 0}</span>
                         <span>Contact clicks: {service.contactClicks || 0}</span>
                       </div>
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${service.status === "approved"
-                        ? "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-accent/20 text-accent"
                         : service.status === "pending"
                           ? "bg-amber-500/20 text-amber-400"
-                          : "bg-slate-700 text-slate-400"
+                          : "bg-slate-700 text-[var(--text-muted)]"
                         }`}
                     >
                       {service.status === "approved" ? "Active" : service.status === "pending" ? "Pending" : "Draft"}
                     </span>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/organization/services/${service.id}/edit`}
                       className="rounded-lg px-3 py-1.5 text-sm text-indigo-400 hover:bg-indigo-500/10 transition-colors"
@@ -321,7 +321,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
                 placeholder="Search funding opportunities..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               />
             </div>
             <Link
@@ -335,15 +335,15 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
             </div>
           ) : filteredGrants.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-              <BanknotesIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
+              <BanknotesIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No funding opportunities found" : "No funding opportunities yet"}
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {keyword ? "Try adjusting your search" : "Share grants and funding opportunities for Indigenous businesses."}
               </p>
               {!keyword && (
@@ -361,25 +361,25 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
               {filteredGrants.map((grant) => (
                 <div
                   key={grant.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-white truncate">
                         {grant.title}
                       </h3>
-                      <p className="mt-1 text-sm text-emerald-400">{grant.provider}</p>
+                      <p className="mt-1 text-sm text-accent">{grant.provider}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-medium text-emerald-300 capitalize">
+                        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-emerald-300 capitalize">
                           {grant.grantType.replace("_", " ")}
                         </span>
                         {grant.amount?.display && (
-                          <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-xs font-medium text-teal-300">
+                          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-teal-300">
                             {grant.amount.display}
                           </span>
                         )}
                         {grant.deadline && (
-                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
+                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-[var(--text-secondary)]">
                             Deadline:{" "}
                             {typeof grant.deadline === "string"
                               ? grant.deadline
@@ -388,29 +388,29 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
                         )}
                       </div>
                       {grant.shortDescription && (
-                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {grant.shortDescription}
                         </p>
                       )}
-                      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+                      <div className="mt-3 flex items-center gap-4 text-xs text-foreground0">
                         <span>Views: {grant.viewCount || 0}</span>
                       </div>
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${grant.status === "active"
-                        ? "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-accent/20 text-accent"
                         : grant.status === "upcoming"
                           ? "bg-amber-500/20 text-amber-400"
-                          : "bg-slate-700 text-slate-400"
+                          : "bg-slate-700 text-[var(--text-muted)]"
                         }`}
                     >
                       {grant.status === "active" ? "Active" : grant.status === "upcoming" ? "Upcoming" : "Closed"}
                     </span>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/organization/funding/${grant.id}/edit`}
-                      className="rounded-lg px-3 py-1.5 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                      className="rounded-lg px-3 py-1.5 text-sm text-accent hover:bg-accent/10 transition-colors"
                     >
                       <PencilSquareIcon className="inline h-4 w-4 mr-1" />
                       Edit

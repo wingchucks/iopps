@@ -54,7 +54,7 @@ export default function MemberSidebar({
             {/* Title */}
             <div className="bg-card border border-card-border p-5 rounded-3xl backdrop-blur-xl flex-shrink-0">
                 <h2 className="font-bold text-xl text-white">My Dashboard</h2>
-                <p className="text-xs text-slate-500 mt-1">Manage your career journey</p>
+                <p className="text-xs text-foreground0 mt-1">Manage your career journey</p>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
@@ -73,7 +73,7 @@ export default function MemberSidebar({
 
                     {/* Career Group */}
                     <div>
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3 px-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-3 px-4">
                             Career
                         </h3>
                         {careerNav.map((item) => (
@@ -91,7 +91,7 @@ export default function MemberSidebar({
 
                     {/* Learning Group */}
                     <div>
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-400 mb-3 px-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-3 px-4">
                             Learning
                         </h3>
                         {learningNav.map((item) => (
@@ -108,7 +108,7 @@ export default function MemberSidebar({
 
                     {/* Account Group */}
                     <div>
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-3 px-4">
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground0 mb-3 px-4">
                             Account
                         </h3>
                         {accountNav.map((item) => (

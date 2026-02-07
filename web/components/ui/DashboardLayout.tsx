@@ -39,7 +39,7 @@ export default function DashboardLayout({
               <h1 className="text-3xl font-bold text-white sm:text-4xl">{title}</h1>
             )}
             {subtitle && (
-              <p className="mt-2 text-slate-400">{subtitle}</p>
+              <p className="mt-2 text-[var(--text-muted)]">{subtitle}</p>
             )}
           </div>
         )}

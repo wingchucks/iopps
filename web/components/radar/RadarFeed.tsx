@@ -16,7 +16,7 @@ export function RadarFeed() {
         { label: "Hot", icon: "🔥", color: "text-orange-500 bg-orange-500/10 border-orange-500/20" },
         { label: "Community", icon: "🐮", color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
         { label: "Opportunities", icon: "💼", color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
-        { label: "Wins", icon: "🎉", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+        { label: "Wins", icon: "🎉", color: "text-accent bg-accent/10 border-accent/20" },
     ];
 
     useEffect(() => {
@@ -180,7 +180,7 @@ export function RadarFeed() {
     if (loading) {
         return (
             <div className="flex justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
         );
     }
@@ -197,15 +197,15 @@ export function RadarFeed() {
     return (
         <div className="space-y-4 pb-20">
             {/* Sticky Header with Tabs */}
-            <div className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md pt-2 pb-2 -mx-4 px-4 border-b border-slate-800/50">
+            <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md pt-2 pb-2 -mx-4 px-4 border-b border-[var(--card-border)]/50">
                 <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab
-                                ? "bg-[#14B8A6] text-slate-900 shadow-lg shadow-teal-500/20"
-                                : "bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700"
+                                ? "bg-accent text-[var(--text-primary)] shadow-lg shadow-teal-500/20"
+                                : "bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]"
                                 }`}
                         >
                             {tab}
@@ -222,7 +222,7 @@ export function RadarFeed() {
                                 onClick={() => setActiveFilter(filter.label)}
                                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${activeFilter === filter.label
                                     ? filter.color + " shadow-lg shadow-black/20"
-                                    : "bg-slate-900/50 text-slate-500 border border-slate-800/50"
+                                    : "bg-surface text-foreground0 border border-[var(--card-border)]/50"
                                     }`}
                             >
                                 <span>{filter.icon}</span>
@@ -240,13 +240,13 @@ export function RadarFeed() {
                     ))
                 ) : (
                     <div className="text-center py-12">
-                        <p className="text-slate-500">No {activeTab.toLowerCase()} items found yet.</p>
+                        <p className="text-foreground0">No {activeTab.toLowerCase()} items found yet.</p>
                     </div>
                 )}
             </div>
 
             <div className="text-center py-8">
-                <p className="text-slate-500 text-sm">That's all for now.</p>
+                <p className="text-foreground0 text-sm">That's all for now.</p>
             </div>
         </div>
     );

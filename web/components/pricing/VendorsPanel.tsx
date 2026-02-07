@@ -7,8 +7,8 @@ export default function VendorsPanel() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-50">For Indigenous-Owned Businesses</h2>
-        <p className="mt-2 text-slate-400">
+        <h2 className="text-2xl font-bold text-foreground">For Indigenous-Owned Businesses</h2>
+        <p className="mt-2 text-[var(--text-muted)]">
           Showcase your Indigenous-owned business in our marketplace and connect with customers across Turtle Island.
         </p>
       </div>
@@ -22,8 +22,8 @@ export default function VendorsPanel() {
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-slate-100">Business Listing is FREE for Indigenous-Owned Businesses</h3>
-            <p className="mt-1 text-sm text-slate-400">
+            <h3 className="font-semibold text-foreground">Business Listing is FREE for Indigenous-Owned Businesses</h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               We support Indigenous entrepreneurs. List your business at no cost – forever. Optional upgrades available for increased visibility.
             </p>
           </div>
@@ -71,26 +71,26 @@ export default function VendorsPanel() {
 
       {/* Benefits highlight */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3 max-w-3xl">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-5 text-center">
           <div className="text-2xl mb-2">🏪</div>
-          <h3 className="font-semibold text-slate-100">Full Business Profile</h3>
-          <p className="mt-1 text-sm text-slate-400">Logo, description, photos & contact info</p>
+          <h3 className="font-semibold text-foreground">Full Business Profile</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Logo, description, photos & contact info</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-5 text-center">
           <div className="text-2xl mb-2">🔍</div>
-          <h3 className="font-semibold text-slate-100">Search Visibility</h3>
-          <p className="mt-1 text-sm text-slate-400">Found by customers looking for Indigenous businesses</p>
+          <h3 className="font-semibold text-foreground">Search Visibility</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Found by customers looking for Indigenous businesses</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5 text-center">
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-5 text-center">
           <div className="text-2xl mb-2">📈</div>
-          <h3 className="font-semibold text-slate-100">Analytics</h3>
-          <p className="mt-1 text-sm text-slate-400">Track views and engagement</p>
+          <h3 className="font-semibold text-foreground">Analytics</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Track views and engagement</p>
         </div>
       </div>
 
       {/* Talk to us CTA */}
-      <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center max-w-3xl">
-        <p className="text-slate-300">
+      <div className="mt-8 rounded-xl border border-[var(--card-border)] bg-surface p-6 text-center max-w-3xl">
+        <p className="text-[var(--text-secondary)]">
           Have questions about listing your business or need help getting set up?
         </p>
         <Link

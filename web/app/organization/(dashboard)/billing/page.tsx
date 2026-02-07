@@ -63,12 +63,12 @@ function PlanCard({ module, name, icon: Icon, status, details, expiresAt, upgrad
     <div className={`border rounded-2xl p-5 ${colorClasses[color]}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl bg-slate-900/50 ${iconColors[color]}`}>
+          <div className={`p-2 rounded-xl bg-surface ${iconColors[color]}`}>
             <Icon className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-200">{name}</h3>
-            <p className="text-sm text-slate-500">{module}</p>
+            <h3 className="font-semibold text-foreground">{name}</h3>
+            <p className="text-sm text-foreground0">{module}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -84,19 +84,19 @@ function PlanCard({ module, name, icon: Icon, status, details, expiresAt, upgrad
             </>
           ) : (
             <>
-              <XCircleIcon className="w-4 h-4 text-slate-500" />
-              <span className="text-sm text-slate-500">Inactive</span>
+              <XCircleIcon className="w-4 h-4 text-foreground0" />
+              <span className="text-sm text-foreground0">Inactive</span>
             </>
           )}
         </div>
       </div>
 
       {details && (
-        <p className="text-sm text-slate-400 mb-3">{details}</p>
+        <p className="text-sm text-[var(--text-muted)] mb-3">{details}</p>
       )}
 
       {expiresAt && status === 'active' && (
-        <p className="text-xs text-slate-500 mb-3">
+        <p className="text-xs text-foreground0 mb-3">
           Expires: {format(expiresAt, 'MMMM d, yyyy')}
         </p>
       )}
@@ -246,8 +246,8 @@ export default function BillingPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Pricing</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Pricing</h1>
+        <p className="text-[var(--text-muted)] mt-1">
           View pricing options and manage your subscriptions
         </p>
       </div>
@@ -257,13 +257,13 @@ export default function BillingPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <CreditCardIcon className="w-6 h-6 text-accent" />
-            <h2 className="text-lg font-semibold text-slate-50">Subscription Overview</h2>
+            <h2 className="text-lg font-semibold text-foreground">Subscription Overview</h2>
           </div>
           {(profile?.subscription?.active || vendor?.subscriptionStatus === 'active') && (
             <button
               onClick={openBillingPortal}
               disabled={portalLoading}
-              className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-surface text-[var(--text-secondary)] rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {portalLoading ? (
                 <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
@@ -277,25 +277,25 @@ export default function BillingPage() {
 
         {profile?.subscription?.active ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-slate-900/50 rounded-xl p-4">
-              <p className="text-sm text-slate-500 mb-1">Current Tier</p>
+            <div className="bg-surface rounded-xl p-4">
+              <p className="text-sm text-foreground0 mb-1">Current Tier</p>
               <p className="text-xl font-bold text-accent">
                 {profile.subscription.tier === 'TIER2' ? 'Partner' : 'Starter'}
               </p>
             </div>
-            <div className="bg-slate-900/50 rounded-xl p-4">
-              <p className="text-sm text-slate-500 mb-1">Job Credits</p>
-              <p className="text-xl font-bold text-slate-200">{jobCreditsRemaining}</p>
+            <div className="bg-surface rounded-xl p-4">
+              <p className="text-sm text-foreground0 mb-1">Job Credits</p>
+              <p className="text-xl font-bold text-foreground">{jobCreditsRemaining}</p>
             </div>
-            <div className="bg-slate-900/50 rounded-xl p-4">
-              <p className="text-sm text-slate-500 mb-1">Featured Credits</p>
-              <p className="text-xl font-bold text-slate-200">{featuredCreditsRemaining}</p>
+            <div className="bg-surface rounded-xl p-4">
+              <p className="text-sm text-foreground0 mb-1">Featured Credits</p>
+              <p className="text-xl font-bold text-foreground">{featuredCreditsRemaining}</p>
             </div>
           </div>
         ) : (
           <div className="bg-slate-900/30 rounded-xl p-6 text-center">
-            <SparklesIcon className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400 mb-4">No active subscription</p>
+            <SparklesIcon className="w-10 h-10 text-[var(--text-secondary)] mx-auto mb-3" />
+            <p className="text-[var(--text-muted)] mb-4">No active subscription</p>
             <Link
               href="/pricing#employers"
               className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg font-medium hover:bg-accent/90 transition-colors"
@@ -309,7 +309,7 @@ export default function BillingPage() {
 
       {/* Module Plans */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-50 mb-4">Module Plans</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Module Plans</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Hire Plan */}
           {enabledModules.includes('hire') && (
@@ -373,7 +373,7 @@ export default function BillingPage() {
       <div className="bg-card border border-card-border rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-4">
           <DocumentTextIcon className="w-6 h-6 text-accent" />
-          <h2 className="text-lg font-semibold text-slate-50">Payment History</h2>
+          <h2 className="text-lg font-semibold text-foreground">Payment History</h2>
         </div>
 
         {paymentsLoading ? (
@@ -381,8 +381,8 @@ export default function BillingPage() {
             <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : payments.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <DocumentTextIcon className="w-10 h-10 mx-auto mb-3 text-slate-600" />
+          <div className="text-center py-8 text-foreground0">
+            <DocumentTextIcon className="w-10 h-10 mx-auto mb-3 text-[var(--text-secondary)]" />
             <p>No payments yet</p>
             <p className="text-sm mt-1">
               Your payment history will appear here
@@ -392,27 +392,27 @@ export default function BillingPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-800">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Description</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Amount</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-slate-400">Status</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-400"></th>
+                <tr className="border-b border-[var(--card-border)]">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-muted)]">Date</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-muted)]">Description</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-[var(--text-muted)]">Amount</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-[var(--text-muted)]">Status</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-[var(--text-muted)]"></th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((payment) => (
-                  <tr key={payment.id} className="border-b border-slate-800/50 hover:bg-slate-900/30">
-                    <td className="py-3 px-4 text-sm text-slate-300">
+                  <tr key={payment.id} className="border-b border-[var(--card-border)]/50 hover:bg-slate-900/30">
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
                       {payment.createdAt
                         ? format(new Date(payment.createdAt), 'MMM d, yyyy')
                         : '—'}
                     </td>
                     <td className="py-3 px-4">
-                      <p className="text-sm text-slate-200">{payment.description}</p>
-                      <p className="text-xs text-slate-500 capitalize">{payment.type.replace('_', ' ')}</p>
+                      <p className="text-sm text-foreground">{payment.description}</p>
+                      <p className="text-xs text-foreground0 capitalize">{payment.type.replace('_', ' ')}</p>
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-200">
+                    <td className="py-3 px-4 text-right text-sm font-medium text-foreground">
                       ${((payment.amount || 0) / 100).toFixed(2)} {payment.currency?.toUpperCase()}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -449,14 +449,14 @@ export default function BillingPage() {
       </div>
 
       {/* Help Section */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div className="bg-slate-900/30 border border-[var(--card-border)] rounded-xl p-4 flex items-center justify-between">
         <div>
-          <p className="text-slate-300 font-medium">Need help with billing?</p>
-          <p className="text-sm text-slate-500">Contact our support team</p>
+          <p className="text-[var(--text-secondary)] font-medium">Need help with billing?</p>
+          <p className="text-sm text-foreground0">Contact our support team</p>
         </div>
         <Link
           href="/contact"
-          className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors"
+          className="px-4 py-2 bg-surface text-[var(--text-secondary)] rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors"
         >
           Contact Support
         </Link>

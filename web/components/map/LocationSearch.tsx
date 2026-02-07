@@ -187,7 +187,7 @@ export default function LocationSearch({
       {/* Search Input */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground0" />
           <input
             ref={inputRef}
             type="text"
@@ -196,14 +196,14 @@ export default function LocationSearch({
             onFocus={() => setShowSuggestions(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full pl-9 pr-8 py-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
           />
           {query && (
             <button
               onClick={handleClear}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-surface rounded transition-colors"
             >
-              <XMarkIcon className="w-4 h-4 text-slate-500" />
+              <XMarkIcon className="w-4 h-4 text-foreground0" />
             </button>
           )}
         </div>
@@ -212,7 +212,7 @@ export default function LocationSearch({
         <select
           value={radius}
           onChange={(e) => handleRadiusChange(parseInt(e.target.value) as RadiusOption)}
-          className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="px-3 py-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-accent"
         >
           {radiusOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -224,11 +224,11 @@ export default function LocationSearch({
 
       {/* Suggestions Dropdown */}
       {showDropdown && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {/* Search Results */}
           {suggestions.length > 0 && (
             <div>
-              <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <div className="px-3 py-2 text-xs font-medium text-foreground0 uppercase tracking-wider">
                 Locations
               </div>
               {suggestions.map((city, index) => (
@@ -237,11 +237,11 @@ export default function LocationSearch({
                   onClick={() => handleSelect(city)}
                   className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
                     index === highlightedIndex
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-600 hover:bg-slate-100"
+                      ? "bg-surface text-[var(--text-primary)]"
+                      : "text-[var(--text-secondary)] hover:bg-surface"
                   }`}
                 >
-                  <MapPinIcon className="w-4 h-4 text-slate-500" />
+                  <MapPinIcon className="w-4 h-4 text-foreground0" />
                   {city}
                 </button>
               ))}
@@ -251,7 +251,7 @@ export default function LocationSearch({
           {/* Recent Searches (only show if no search results) */}
           {suggestions.length === 0 && recentSearches.length > 0 && (
             <div>
-              <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <div className="px-3 py-2 text-xs font-medium text-foreground0 uppercase tracking-wider">
                 Recent Searches
               </div>
               {recentSearches.map((city, index) => (
@@ -260,11 +260,11 @@ export default function LocationSearch({
                   onClick={() => handleSelect(city)}
                   className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors ${
                     index === highlightedIndex
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-600 hover:bg-slate-100"
+                      ? "bg-surface text-[var(--text-primary)]"
+                      : "text-[var(--text-secondary)] hover:bg-surface"
                   }`}
                 >
-                  <MapPinIcon className="w-4 h-4 text-slate-500" />
+                  <MapPinIcon className="w-4 h-4 text-foreground0" />
                   {city}
                 </button>
               ))}

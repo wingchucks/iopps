@@ -484,6 +484,6 @@ export function getTierBorderColor(tier: BadgeDefinition["tier"]): string {
     case "platinum":
       return "border-cyan-400/50";
     default:
-      return "border-slate-600/50";
+      return "border-[var(--card-border)]/50";
   }
 }

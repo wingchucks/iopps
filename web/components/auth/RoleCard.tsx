@@ -16,18 +16,18 @@ export function RoleCard({ title, description, icon, selected, onClick }: RoleCa
       className={`flex flex-col items-start rounded-xl border px-4 py-4 text-left transition-all duration-200 ${
         selected
           ? "border-accent bg-accent/10 shadow-lg shadow-accent/10"
-          : "border-slate-700 bg-slate-900 hover:border-slate-600 hover:bg-slate-800/50"
+          : "border-[var(--card-border)] bg-surface hover:border-[var(--card-border)] hover:bg-surface"
       }`}
     >
       <div className={`mb-3 rounded-lg p-2 ${
-        selected ? "bg-accent/20 text-accent" : "bg-slate-800 text-slate-400"
+        selected ? "bg-accent/20 text-accent" : "bg-surface text-[var(--text-muted)]"
       }`}>
         {icon}
       </div>
-      <span className={`text-sm font-semibold ${selected ? "text-accent" : "text-slate-200"}`}>
+      <span className={`text-sm font-semibold ${selected ? "text-accent" : "text-foreground"}`}>
         {title}
       </span>
-      <span className="mt-1 text-sm text-slate-400 leading-snug">
+      <span className="mt-1 text-sm text-[var(--text-muted)] leading-snug">
         {description}
       </span>
     </button>

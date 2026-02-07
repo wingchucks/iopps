@@ -34,15 +34,15 @@ function ProductsPageSkeleton() {
   return (
     <FeedLayout activeNav="business" fullWidth>
       <div className="animate-pulse">
-        <div className="h-4 bg-slate-100 rounded w-48 mb-8" />
+        <div className="h-4 bg-surface rounded w-48 mb-8" />
         <div className="text-center mb-12">
-          <div className="h-6 bg-slate-100 rounded w-40 mx-auto mb-4" />
-          <div className="h-10 bg-slate-100 rounded w-80 mx-auto mb-6" />
-          <div className="h-6 bg-slate-100 rounded w-96 mx-auto" />
+          <div className="h-6 bg-surface rounded w-40 mx-auto mb-4" />
+          <div className="h-10 bg-surface rounded w-80 mx-auto mb-6" />
+          <div className="h-6 bg-surface rounded w-96 mx-auto" />
         </div>
         <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="rounded-2xl bg-white h-72" />
+            <div key={i} className="rounded-2xl bg-[var(--card-bg)] h-72" />
           ))}
         </div>
       </div>
@@ -123,16 +123,16 @@ function ProductsPageContent() {
   return (
     <FeedLayout activeNav="business" fullWidth>
       {/* Breadcrumb */}
-      <nav className="mb-8 text-sm text-slate-500">
-        <Link href="/" className="hover:text-slate-900 transition-colors">
+      <nav className="mb-8 text-sm text-foreground0">
+        <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
           Home
         </Link>
         <span className="mx-2">→</span>
-        <Link href="/business" className="hover:text-slate-900 transition-colors">
+        <Link href="/business" className="hover:text-[var(--text-primary)] transition-colors">
           Indigenous Marketplace
         </Link>
         <span className="mx-2">→</span>
-        <span className="text-slate-900">Products</span>
+        <span className="text-[var(--text-primary)]">Products</span>
       </nav>
 
       {/* Hero Section */}
@@ -140,20 +140,20 @@ function ProductsPageContent() {
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
           Indigenous Marketplace
         </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-slate-900 sm:text-5xl">
+        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-[var(--text-primary)] sm:text-5xl">
           Shop Indigenous Products
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground0">
           Discover authentic handmade goods from Indigenous artisans and businesses across North America.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 mb-8">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 mb-8">
         <div className="grid gap-4 md:grid-cols-2">
           {/* Search */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Search Products
             </label>
             <input
@@ -161,19 +161,19 @@ function ProductsPageContent() {
               placeholder="Search by name, description, or vendor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[#14B8A6] focus:outline-none"
             />
           </div>
 
           {/* Category Filter */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-2 block">
               Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-sm text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
             >
               {CATEGORIES.map((cat) => (
                 <option key={cat.value} value={cat.value}>
@@ -187,7 +187,7 @@ function ProductsPageContent() {
 
       {/* Results Count */}
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500">
+        <p className="text-foreground0">
           {loading ? "Loading..." : `${filteredProducts.length} products found`}
         </p>
       </div>
@@ -196,7 +196,7 @@ function ProductsPageContent() {
       {loading ? (
         <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-white h-72" />
+            <div key={i} className="animate-pulse rounded-2xl bg-[var(--card-bg)] h-72" />
           ))}
         </div>
       ) : filteredProducts.length > 0 ? (
@@ -207,7 +207,7 @@ function ProductsPageContent() {
               <Link
                 key={product.id}
                 href={`/business/${vendor?.slug || product.vendorId}#product-${product.id}`}
-                className="group rounded-2xl border border-slate-200 bg-white overflow-hidden transition-all hover:border-teal-300 hover:-translate-y-1"
+                className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden transition-all hover:border-teal-300 hover:-translate-y-1"
               >
                 {/* Product Image */}
                 <div className="relative h-48 bg-gradient-to-br from-[#14B8A6]/10 to-sky-500/5">
@@ -224,12 +224,12 @@ function ProductsPageContent() {
                     </div>
                   )}
                   {product.featured && (
-                    <span className="absolute top-3 left-3 rounded-md bg-amber-500 px-2 py-1 text-xs font-bold text-slate-900">
+                    <span className="absolute top-3 left-3 rounded-md bg-amber-500 px-2 py-1 text-xs font-bold text-[var(--text-primary)]">
                       Featured
                     </span>
                   )}
                   {!product.inStock && !product.madeToOrder && (
-                    <span className="absolute top-3 right-3 rounded-md bg-red-500/80 px-2 py-1 text-xs font-bold text-slate-900">
+                    <span className="absolute top-3 right-3 rounded-md bg-red-500/80 px-2 py-1 text-xs font-bold text-[var(--text-primary)]">
                       Out of Stock
                     </span>
                   )}
@@ -240,11 +240,11 @@ function ProductsPageContent() {
                   <div className="text-xs font-semibold text-[#14B8A6] uppercase mb-1">
                     {product.category}
                   </div>
-                  <h3 className="font-semibold text-slate-900 mb-1 line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
+                  <h3 className="font-semibold text-[var(--text-primary)] mb-1 line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
                     {product.name}
                   </h3>
                   {vendor && (
-                    <p className="text-xs text-slate-500 mb-3">
+                    <p className="text-xs text-foreground0 mb-3">
                       by {vendor.businessName}
                     </p>
                   )}
@@ -253,7 +253,7 @@ function ProductsPageContent() {
                       {formatPrice(product)}
                     </span>
                     {product.madeToOrder && (
-                      <span className="text-xs text-slate-500">Made to order</span>
+                      <span className="text-xs text-foreground0">Made to order</span>
                     )}
                   </div>
                 </div>
@@ -262,17 +262,17 @@ function ProductsPageContent() {
           })}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-12 text-center">
           <span className="text-5xl mb-4 block">🔍</span>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">No Products Found</h3>
-          <p className="text-slate-500 mb-6">
+          <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Products Found</h3>
+          <p className="text-foreground0 mb-6">
             {searchQuery || category
               ? "Try adjusting your search or filters."
               : "Products will appear here once vendors add them."}
           </p>
           <Link
             href="/business/directory"
-            className="inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
           >
             Browse Businesses Instead
           </Link>
@@ -281,16 +281,16 @@ function ProductsPageContent() {
 
       {/* CTA Section - Only for employers/admins */}
       {canSell && (
-        <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <section className="mt-16 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-[var(--border)] p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
             Sell Your Products on IOPPS
           </h2>
-          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+          <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
             Join our marketplace and reach customers across North America who want to support Indigenous businesses.
           </p>
           <Link
             href="/organization/shop"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
           >
             Start Selling
           </Link>

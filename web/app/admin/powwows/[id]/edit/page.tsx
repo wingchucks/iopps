@@ -204,9 +204,9 @@ export default function AdminEditPowwowPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl">
-          <p className="text-slate-400">Loading...</p>
+          <p className="text-[var(--text-muted)]">Loading...</p>
         </div>
       </div>
     );
@@ -218,7 +218,7 @@ export default function AdminEditPowwowPage() {
 
   if (error && !powwow) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-3xl">
           <p className="text-red-400">{error}</p>
           <Link
@@ -233,20 +233,20 @@ export default function AdminEditPowwowPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-3xl px-4 py-6">
           <Link
             href="/admin/powwows"
-            className="text-sm text-slate-400 hover:text-[#14B8A6]"
+            className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
           >
             ← Back to Pow Wows
           </Link>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-50">
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
             Edit Pow Wow
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Update event details and manage poster image
           </p>
         </div>
@@ -267,16 +267,16 @@ export default function AdminEditPowwowPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Poster Image Section */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
             <h2 className="text-lg font-semibold text-white">Event Poster</h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Upload a poster image for this pow wow event
             </p>
 
             <div className="mt-4">
               {imageUrl ? (
                 <div className="space-y-4">
-                  <div className="relative aspect-[3/4] w-full max-w-xs overflow-hidden rounded-lg border border-slate-700">
+                  <div className="relative aspect-[3/4] w-full max-w-xs overflow-hidden rounded-lg border border-[var(--card-border)]">
                     <Image
                       src={imageUrl}
                       alt="Event poster"
@@ -288,7 +288,7 @@ export default function AdminEditPowwowPage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                      className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:border-[#14B8A6] hover:text-[#14B8A6]"
                     >
                       Replace Image
                     </button>
@@ -304,10 +304,10 @@ export default function AdminEditPowwowPage() {
               ) : (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-700 p-8 transition hover:border-[#14B8A6]"
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[var(--card-border)] p-8 transition hover:border-[#14B8A6]"
                 >
                   <svg
-                    className="h-12 w-12 text-slate-600"
+                    className="h-12 w-12 text-[var(--text-secondary)]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -319,10 +319,10 @@ export default function AdminEditPowwowPage() {
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-[var(--text-muted)]">
                     Click to upload poster image
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-foreground0">
                     PNG, JPG, WEBP up to 10MB
                   </p>
                 </div>
@@ -338,13 +338,13 @@ export default function AdminEditPowwowPage() {
 
               {uploading && (
                 <div className="mt-4">
-                  <div className="flex items-center justify-between text-sm text-slate-400">
+                  <div className="flex items-center justify-between text-sm text-[var(--text-muted)]">
                     <span>Uploading...</span>
                     <span>{Math.round(uploadProgress)}%</span>
                   </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface">
                     <div
-                      className="h-full bg-[#14B8A6] transition-all"
+                      className="h-full bg-accent transition-all"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -368,12 +368,12 @@ export default function AdminEditPowwowPage() {
           </div>
 
           {/* Event Details Section */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
+          <div className="rounded-xl border border-[var(--card-border)] bg-surface p-6">
             <h2 className="text-lg font-semibold text-white">Event Details</h2>
 
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Pow Wow Name *
                 </label>
                 <input
@@ -381,24 +381,24 @@ export default function AdminEditPowwowPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Host Organization / Nation
                 </label>
                 <input
                   type="text"
                   value={host}
                   onChange={(e) => setHost(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Description *
                 </label>
                 <textarea
@@ -406,12 +406,12 @@ export default function AdminEditPowwowPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={5}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Location *
                 </label>
                 <input
@@ -419,37 +419,37 @@ export default function AdminEditPowwowPage() {
                   required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Start Date
                   </label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     End Date
                   </label>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Date Range (if dates are tentative)
                 </label>
                 <input
@@ -457,19 +457,19 @@ export default function AdminEditPowwowPage() {
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
                   placeholder="e.g., June 15-17, 2024"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Season
                   </label>
                   <select
                     value={season}
                     onChange={(e) => setSeason(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                   >
                     <option value="">Select season</option>
                     <option value="spring">Spring</option>
@@ -479,13 +479,13 @@ export default function AdminEditPowwowPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Registration Status
                   </label>
                   <select
                     value={registrationStatus}
                     onChange={(e) => setRegistrationStatus(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                   >
                     <option value="open">Open</option>
                     <option value="closed">Closed</option>
@@ -501,9 +501,9 @@ export default function AdminEditPowwowPage() {
                   id="livestream"
                   checked={livestream}
                   onChange={(e) => setLivestream(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
                 />
-                <label htmlFor="livestream" className="text-sm text-slate-200">
+                <label htmlFor="livestream" className="text-sm text-foreground">
                   This event will be livestreamed
                 </label>
               </div>
@@ -514,9 +514,9 @@ export default function AdminEditPowwowPage() {
                   id="active"
                   checked={active}
                   onChange={(e) => setActive(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#14B8A6] focus:ring-[#14B8A6]"
+                  className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
                 />
-                <label htmlFor="active" className="text-sm text-slate-200">
+                <label htmlFor="active" className="text-sm text-foreground">
                   Event is active (visible to users)
                 </label>
               </div>
@@ -527,14 +527,14 @@ export default function AdminEditPowwowPage() {
           <div className="flex items-center justify-between">
             <Link
               href="/admin/powwows"
-              className="rounded-lg border border-slate-700 px-6 py-2 text-sm font-medium text-slate-300 hover:border-slate-600"
+              className="rounded-lg border border-[var(--card-border)] px-6 py-2 text-sm font-medium text-[var(--text-secondary)] hover:border-[var(--card-border)]"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={saving || uploading || analyzing}
-              className="rounded-lg bg-[#14B8A6] px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
+              className="rounded-lg bg-accent px-6 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

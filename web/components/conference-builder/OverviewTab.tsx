@@ -37,50 +37,50 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                 {/* Basic Info */}
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-200">
+                        <label className="block text-sm font-medium text-foreground">
                             Conference Title
                         </label>
                         <input
                             type="text"
                             value={conference.title}
                             onChange={(e) => onChange({ title: e.target.value })}
-                            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-200">
+                        <label className="block text-sm font-medium text-foreground">
                             Description
                         </label>
                         <textarea
                             rows={5}
                             value={conference.description}
                             onChange={(e) => onChange({ description: e.target.value })}
-                            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">
+                            <label className="block text-sm font-medium text-foreground">
                                 Start Date
                             </label>
                             <input
                                 type="date"
                                 value={typeof conference.startDate === 'string' ? conference.startDate : ''}
                                 onChange={(e) => onChange({ startDate: e.target.value })}
-                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">
+                            <label className="block text-sm font-medium text-foreground">
                                 End Date
                             </label>
                             <input
                                 type="date"
                                 value={typeof conference.endDate === 'string' ? conference.endDate : ''}
                                 onChange={(e) => onChange({ endDate: e.target.value })}
-                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                             />
                         </div>
                     </div>
@@ -89,10 +89,10 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                 {/* Media & Location */}
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-200 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                             Banner Image
                         </label>
-                        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-slate-700 bg-slate-900">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-[var(--card-border)] bg-surface">
                             {conference.bannerImageUrl ? (
                                 <Image
                                     src={conference.bannerImageUrl}
@@ -101,12 +101,12 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                                     className="object-cover"
                                 />
                             ) : (
-                                <div className="flex h-full items-center justify-center text-slate-500">
+                                <div className="flex h-full items-center justify-center text-foreground0">
                                     No image uploaded
                                 </div>
                             )}
                             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity hover:opacity-100">
-                                <label className="cursor-pointer rounded-lg bg-white/10 px-4 py-2 font-medium text-white hover:bg-white/20">
+                                <label className="cursor-pointer rounded-lg bg-[var(--card-bg)]/10 px-4 py-2 font-medium text-white hover:bg-[var(--card-bg)]/20">
                                     {uploading ? "Uploading..." : "Change Image"}
                                     <input
                                         type="file"
@@ -118,13 +118,13 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                                 </label>
                             </div>
                         </div>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-foreground0">
                             Recommended: 1200x630px JPG or PNG
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-200">
+                        <label className="block text-sm font-medium text-foreground">
                             Location Name
                         </label>
                         <input
@@ -132,13 +132,13 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                             value={conference.location}
                             onChange={(e) => onChange({ location: e.target.value })}
                             placeholder="e.g. Vancouver Convention Centre"
-                            className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">
+                            <label className="block text-sm font-medium text-foreground">
                                 Cost Info
                             </label>
                             <input
@@ -146,11 +146,11 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                                 value={conference.cost || ""}
                                 onChange={(e) => onChange({ cost: e.target.value })}
                                 placeholder="Free / $500"
-                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">
+                            <label className="block text-sm font-medium text-foreground">
                                 Registration Link
                             </label>
                             <input
@@ -158,7 +158,7 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                                 value={conference.registrationLink || ""}
                                 onChange={(e) => onChange({ registrationLink: e.target.value })}
                                 placeholder="https://"
-                                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-100 focus:border-[#14B8A6] focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground focus:border-[#14B8A6] focus:outline-none"
                             />
                         </div>
                     </div>

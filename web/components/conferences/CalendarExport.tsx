@@ -97,7 +97,7 @@ END:VCALENDAR`;
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3 font-medium text-slate-200 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+        className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 font-medium text-foreground transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
       >
         <svg
           className="h-5 w-5"
@@ -137,13 +137,13 @@ END:VCALENDAR`;
           />
 
           {/* Dropdown */}
-          <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-700 bg-[#08090C] p-2 shadow-xl">
+          <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-[var(--card-border)] bg-surface p-2 shadow-xl">
             <a
               href={generateGoogleCalendarUrl()}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-200 transition-colors hover:bg-slate-800"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-surface"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.5 22h-15A2.5 2.5 0 012 19.5v-15A2.5 2.5 0 014.5 2h15A2.5 2.5 0 0122 4.5v15a2.5 2.5 0 01-2.5 2.5zM9.5 7.5v9h1.5v-3.5h2a2.5 2.5 0 000-5h-3.5zm1.5 4V9h2a1 1 0 110 2h-2z" />
@@ -156,7 +156,7 @@ END:VCALENDAR`;
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-200 transition-colors hover:bg-slate-800"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-surface"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M21.5 2h-19A2.5 2.5 0 000 4.5v15A2.5 2.5 0 002.5 22h19a2.5 2.5 0 002.5-2.5v-15A2.5 2.5 0 0021.5 2zM12 12.5L2 7V4.5l10 5.5 10-5.5V7l-10 5.5z" />
@@ -166,7 +166,7 @@ END:VCALENDAR`;
 
             <button
               onClick={generateICSFile}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-slate-800"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-surface"
             >
               <svg
                 className="h-5 w-5"

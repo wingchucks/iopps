@@ -226,8 +226,8 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Analytics</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Track your job performance and recruitment metrics
           </p>
         </div>
@@ -272,14 +272,14 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Job Posting Trends */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-50 mb-4">Jobs Posted (Last 6 Months)</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Jobs Posted (Last 6 Months)</h2>
           {analytics.jobsByMonth.length > 0 ? (
             <div className="space-y-3">
               {analytics.jobsByMonth.map((month) => (
                 <div key={month.month} className="flex items-center gap-4">
-                  <div className="w-16 text-sm text-slate-400">{month.month}</div>
+                  <div className="w-16 text-sm text-[var(--text-muted)]">{month.month}</div>
                   <div className="flex-1">
-                    <div className="h-6 rounded-lg bg-slate-800 overflow-hidden">
+                    <div className="h-6 rounded-lg bg-surface overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
                         style={{
@@ -288,27 +288,27 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
                       />
                     </div>
                   </div>
-                  <div className="w-8 text-right text-sm font-semibold text-slate-200">
+                  <div className="w-8 text-right text-sm font-semibold text-foreground">
                     {month.count}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-400 py-8">No jobs posted yet</p>
+            <p className="text-center text-[var(--text-muted)] py-8">No jobs posted yet</p>
           )}
         </div>
 
         {/* Application Trends */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-50 mb-4">Applications (Last 6 Months)</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Applications (Last 6 Months)</h2>
           {analytics.applicationsByMonth.length > 0 ? (
             <div className="space-y-3">
               {analytics.applicationsByMonth.map((month) => (
                 <div key={month.month} className="flex items-center gap-4">
-                  <div className="w-16 text-sm text-slate-400">{month.month}</div>
+                  <div className="w-16 text-sm text-[var(--text-muted)]">{month.month}</div>
                   <div className="flex-1">
-                    <div className="h-6 rounded-lg bg-slate-800 overflow-hidden">
+                    <div className="h-6 rounded-lg bg-surface overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all"
                         style={{
@@ -317,14 +317,14 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
                       />
                     </div>
                   </div>
-                  <div className="w-8 text-right text-sm font-semibold text-slate-200">
+                  <div className="w-8 text-right text-sm font-semibold text-foreground">
                     {month.count}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-400 py-8">No applications received yet</p>
+            <p className="text-center text-[var(--text-muted)] py-8">No applications received yet</p>
           )}
         </div>
       </div>
@@ -333,7 +333,7 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Top Performing Jobs */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-50 mb-4">Top Performing Jobs</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Top Performing Jobs</h2>
           {analytics.topPerformingJobs.filter(j => j.applications > 0).length > 0 ? (
             <div className="space-y-4">
               {analytics.topPerformingJobs.filter(j => j.applications > 0).map((job, index) => (
@@ -344,11 +344,11 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/careers/${job.jobId}`}
-                      className="text-sm font-medium text-slate-200 hover:text-accent truncate block"
+                      className="text-sm font-medium text-foreground hover:text-accent truncate block"
                     >
                       {job.title}
                     </Link>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-foreground0">
                       {job.applications} application{job.applications !== 1 ? "s" : ""}
                     </div>
                   </div>
@@ -356,13 +356,13 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-400 py-8">No applications received yet</p>
+            <p className="text-center text-[var(--text-muted)] py-8">No applications received yet</p>
           )}
         </div>
 
         {/* Application Status Breakdown */}
         <div className="bg-card border border-card-border rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-50 mb-4">Applications by Status</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Applications by Status</h2>
           {analytics.applicationsByStatus.length > 0 ? (
             <div className="space-y-4">
               {analytics.applicationsByStatus.map((item) => {
@@ -379,12 +379,12 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
                 return (
                   <div key={item.status}>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-slate-300 capitalize">{item.status}</span>
-                      <span className="font-semibold text-slate-200">
+                      <span className="text-[var(--text-secondary)] capitalize">{item.status}</span>
+                      <span className="font-semibold text-foreground">
                         {item.count} ({Math.round((item.count / analytics.totalApplications) * 100)}%)
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div className="h-2 rounded-full bg-surface overflow-hidden">
                       <div
                         className={`h-full bg-gradient-to-r ${color}`}
                         style={{
@@ -397,7 +397,7 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
               })}
             </div>
           ) : (
-            <p className="text-center text-slate-400 py-8">No applications received yet</p>
+            <p className="text-center text-[var(--text-muted)] py-8">No applications received yet</p>
           )}
         </div>
       </div>
@@ -406,7 +406,7 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
       {analytics.totalJobs === 0 && (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
           <svg
-            className="mx-auto h-12 w-12 text-slate-600"
+            className="mx-auto h-12 w-12 text-[var(--text-secondary)]"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -418,10 +418,10 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
             />
           </svg>
-          <h3 className="mt-4 text-lg font-semibold text-slate-300">
+          <h3 className="mt-4 text-lg font-semibold text-[var(--text-secondary)]">
             No analytics data yet
           </h3>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-[var(--text-muted)]">
             Post your first job to start tracking performance and applications.
           </p>
           <Link
@@ -454,9 +454,9 @@ function MetricCard({ label, value, subtitle, color }: MetricCardProps) {
 
   return (
     <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-2xl p-5`}>
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-1 text-3xl font-bold text-slate-50">{value}</p>
-      {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+      <p className="text-sm text-[var(--text-muted)]">{label}</p>
+      <p className="mt-1 text-3xl font-bold text-foreground">{value}</p>
+      {subtitle && <p className="mt-1 text-xs text-foreground0">{subtitle}</p>}
     </div>
   );
 }

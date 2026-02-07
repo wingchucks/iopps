@@ -77,7 +77,7 @@ export default function ReactionBar({
   const totalReactions = counts.love + counts.honor + counts.fire;
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-800 pt-3">
+    <div className="flex items-center justify-between border-t border-[var(--card-border)] pt-3">
       <div className="flex items-center gap-1">
         {REACTIONS.map(({ type, emoji, label }) => (
           <button
@@ -86,8 +86,8 @@ export default function ReactionBar({
             disabled={saving || !user}
             className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-colors ${
               currentReaction === type
-                ? "bg-emerald-500/20 text-emerald-300"
-                : "text-slate-400 hover:bg-slate-800"
+                ? "bg-accent/20 text-emerald-300"
+                : "text-[var(--text-muted)] hover:bg-surface"
             }`}
             title={label}
           >
@@ -102,7 +102,7 @@ export default function ReactionBar({
       <div className="flex items-center gap-1">
         <button
           onClick={onCommentClick}
-          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--text-muted)] hover:bg-surface transition-colors"
         >
           <MessageCircle className="h-4 w-4" />
           {commentsCount > 0 && (
@@ -112,7 +112,7 @@ export default function ReactionBar({
 
         <button
           onClick={onShareClick}
-          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--text-muted)] hover:bg-surface transition-colors"
         >
           <Share2 className="h-4 w-4" />
           {sharesCount > 0 && (

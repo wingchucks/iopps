@@ -115,7 +115,7 @@ export default function OrganizationTrainingPage() {
   const getStatusBadge = (program: TrainingProgram) => {
     if (!program.active) {
       return (
-        <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-slate-400">
+        <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
           Inactive
         </span>
       );
@@ -123,7 +123,7 @@ export default function OrganizationTrainingPage() {
     switch (program.status) {
       case "approved":
         return (
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
+          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-emerald-300">
             Approved
           </span>
         );
@@ -147,7 +147,7 @@ export default function OrganizationTrainingPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -156,12 +156,12 @@ export default function OrganizationTrainingPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to manage training programs.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -176,7 +176,7 @@ export default function OrganizationTrainingPage() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Training Programs
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Manage your training program listings
           </p>
         </div>
@@ -203,13 +203,13 @@ export default function OrganizationTrainingPage() {
       </div>
 
       {loadingPrograms ? (
-        <div className="mt-8 text-slate-400">Loading training programs...</div>
+        <div className="mt-8 text-[var(--text-muted)]">Loading training programs...</div>
       ) : programs.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
+        <div className="mt-8 rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-slate-700 flex items-center justify-center mb-4">
-            <AcademicCapIcon className="h-8 w-8 text-slate-500" />
+            <AcademicCapIcon className="h-8 w-8 text-foreground0" />
           </div>
-          <p className="text-slate-400">
+          <p className="text-[var(--text-muted)]">
             You haven&apos;t created any training programs yet.
           </p>
           <Link
@@ -224,7 +224,7 @@ export default function OrganizationTrainingPage() {
           {programs.map((program) => (
             <div
               key={program.id}
-              className="rounded-xl border border-slate-800 bg-slate-900/50 p-6"
+              className="rounded-xl border border-[var(--card-border)] bg-surface p-6"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -239,11 +239,11 @@ export default function OrganizationTrainingPage() {
                       {program.title}
                     </h3>
                   </div>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-[var(--text-muted)]">
                     {program.providerName}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-slate-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                       {getFormatIcon(program.format)}
                       {program.format.charAt(0).toUpperCase() +
                         program.format.slice(1)}
@@ -259,7 +259,7 @@ export default function OrganizationTrainingPage() {
                       </span>
                     )}
                     {program.cost && (
-                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-emerald-300">
                         {program.cost}
                       </span>
                     )}
@@ -278,7 +278,7 @@ export default function OrganizationTrainingPage() {
                   )}
                   <Link
                     href={`/organization/training/${program.id}/edit`}
-                    className="rounded-md px-3 py-1 text-sm text-slate-300 hover:bg-slate-700/50"
+                    className="rounded-md px-3 py-1 text-sm text-[var(--text-secondary)] hover:bg-slate-700/50"
                   >
                     Edit
                   </Link>
@@ -293,18 +293,18 @@ export default function OrganizationTrainingPage() {
               </div>
 
               {program.shortDescription && (
-                <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                   {program.shortDescription}
                 </p>
               )}
 
               {/* Stats */}
-              <div className="mt-4 flex items-center gap-6 border-t border-slate-800 pt-4">
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="mt-4 flex items-center gap-6 border-t border-[var(--card-border)] pt-4">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <EyeIcon className="h-4 w-4" />
                   <span>{program.viewCount || 0} views</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                   <CursorArrowRaysIcon className="h-4 w-4" />
                   <span>{program.clickCount || 0} clicks</span>
                 </div>
@@ -325,19 +325,19 @@ export default function OrganizationTrainingPage() {
       {/* Feature Purchase Modal */}
       {featureModalProgram && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl">
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">
                   Promote Your Training Program
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
                   {featureModalProgram.title}
                 </p>
               </div>
               <button
                 onClick={() => setFeatureModalProgram(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-white"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -347,13 +347,13 @@ export default function OrganizationTrainingPage() {
 
             <div className="mt-6 space-y-4">
               {/* 60 Day Option */}
-              <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+              <div className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-white">
                       {TRAINING_PRODUCTS.FEATURED_60.name}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">
                       {TRAINING_PRODUCTS.FEATURED_60.description}
                     </p>
                   </div>
@@ -361,7 +361,7 @@ export default function OrganizationTrainingPage() {
                     <p className="text-2xl font-bold text-white">
                       ${(TRAINING_PRODUCTS.FEATURED_60.price / 100).toFixed(0)}
                     </p>
-                    <p className="text-xs text-slate-400">CAD</p>
+                    <p className="text-xs text-[var(--text-muted)]">CAD</p>
                   </div>
                 </div>
                 <button
@@ -383,7 +383,7 @@ export default function OrganizationTrainingPage() {
                     <h3 className="font-semibold text-white">
                       {TRAINING_PRODUCTS.FEATURED_90.name}
                     </h3>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <p className="mt-1 text-sm text-[var(--text-muted)]">
                       {TRAINING_PRODUCTS.FEATURED_90.description}
                     </p>
                   </div>
@@ -391,7 +391,7 @@ export default function OrganizationTrainingPage() {
                     <p className="text-2xl font-bold text-white">
                       ${(TRAINING_PRODUCTS.FEATURED_90.price / 100).toFixed(0)}
                     </p>
-                    <p className="text-xs text-slate-400">CAD</p>
+                    <p className="text-xs text-[var(--text-muted)]">CAD</p>
                   </div>
                 </div>
                 <button
@@ -404,9 +404,9 @@ export default function OrganizationTrainingPage() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-lg bg-slate-800/50 p-4">
-              <h4 className="font-medium text-emerald-400">What you get:</h4>
-              <ul className="mt-2 space-y-2 text-sm text-slate-300">
+            <div className="mt-6 rounded-lg bg-surface p-4">
+              <h4 className="font-medium text-accent">What you get:</h4>
+              <ul className="mt-2 space-y-2 text-sm text-[var(--text-secondary)]">
                 <li className="flex items-center gap-2">
                   <StarIcon className="h-4 w-4 text-amber-400" />
                   Featured badge on your program
@@ -426,7 +426,7 @@ export default function OrganizationTrainingPage() {
               </ul>
             </div>
 
-            <p className="mt-4 text-center text-xs text-slate-500">
+            <p className="mt-4 text-center text-xs text-foreground0">
               Secure payment powered by Stripe
             </p>
           </div>

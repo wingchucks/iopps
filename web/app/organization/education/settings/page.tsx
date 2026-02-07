@@ -233,7 +233,7 @@ export default function SchoolSettingsPage() {
   if (loading || loadingData) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-slate-400">Loading...</p>
+        <p className="text-[var(--text-muted)]">Loading...</p>
       </div>
     );
   }
@@ -242,12 +242,12 @@ export default function SchoolSettingsPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold">Employer access required</h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--text-secondary)]">
           You need an employer account to manage school settings.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -258,12 +258,12 @@ export default function SchoolSettingsPage() {
   if (!school) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-8 text-center">
-          <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
+        <div className="rounded-xl border border-[var(--card-border)] bg-surface p-8 text-center">
+          <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
           <h2 className="mt-4 text-xl font-semibold text-white">
             No School Profile
           </h2>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-[var(--text-muted)]">
             You need to create a school profile first.
           </p>
           <Link
@@ -282,7 +282,7 @@ export default function SchoolSettingsPage() {
       <div className="mb-6">
         <Link
           href="/organization/education"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-4"
+          className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Education
@@ -290,7 +290,7 @@ export default function SchoolSettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">School Settings</h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Manage your institution&apos;s profile and settings
             </p>
           </div>
@@ -298,8 +298,8 @@ export default function SchoolSettingsPage() {
             <span
               className={`rounded-full px-3 py-1 text-xs font-medium ${
                 school.isPublished
-                  ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-slate-700 text-slate-400"
+                  ? "bg-accent/20 text-emerald-300"
+                  : "bg-slate-700 text-[var(--text-muted)]"
               }`}
             >
               {school.isPublished ? "Published" : "Draft"}
@@ -316,8 +316,8 @@ export default function SchoolSettingsPage() {
 
       {/* Success Message */}
       {success && (
-        <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-          <p className="text-sm text-emerald-400">
+        <div className="mb-6 rounded-xl border border-accent/30 bg-accent/10 p-4">
+          <p className="text-sm text-accent">
             Settings saved successfully!
           </p>
         </div>
@@ -332,7 +332,7 @@ export default function SchoolSettingsPage() {
 
       <form onSubmit={(e) => handleSubmit(e)} className="space-y-8">
         {/* Basic Information */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <BuildingLibraryIcon className="h-5 w-5 text-violet-400" />
             Institution Information
@@ -340,7 +340,7 @@ export default function SchoolSettingsPage() {
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Institution Name *
               </label>
               <input
@@ -348,31 +348,31 @@ export default function SchoolSettingsPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Short Name / Abbreviation
               </label>
               <input
                 type="text"
                 value={shortName}
                 onChange={(e) => setShortName(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Institution Type *
               </label>
               <select
                 required
                 value={type}
                 onChange={(e) => setType(e.target.value as SchoolType)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               >
                 {SCHOOL_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -383,43 +383,43 @@ export default function SchoolSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Website
               </label>
               <input
                 type="url"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="https://yourschool.ca"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="Tell prospective students about your institution..."
               />
             </div>
 
-            <label className="flex items-center gap-3 p-4 rounded-lg border border-slate-700 bg-slate-800/50 cursor-pointer hover:border-violet-500/50 transition-colors">
+            <label className="flex items-center gap-3 p-4 rounded-lg border border-[var(--card-border)] bg-surface cursor-pointer hover:border-violet-500/50 transition-colors">
               <input
                 type="checkbox"
                 checked={indigenousFocused}
                 onChange={(e) => setIndigenousFocused(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-violet-600 focus:ring-violet-500"
               />
               <div>
                 <span className="block text-sm font-medium text-white">
                   Indigenous-Focused Institution
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-[var(--text-muted)]">
                   Check if your institution is Indigenous-governed or primarily
                   serves Indigenous students
                 </span>
@@ -429,7 +429,7 @@ export default function SchoolSettingsPage() {
         </div>
 
         {/* Location */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <MapPinIcon className="h-5 w-5 text-violet-400" />
             Location
@@ -438,7 +438,7 @@ export default function SchoolSettingsPage() {
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-200 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   City *
                 </label>
                 <input
@@ -446,19 +446,19 @@ export default function SchoolSettingsPage() {
                   required
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Province *
                 </label>
                 <select
                   required
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 >
                   <option value="">Select Province</option>
                   {PROVINCES.map((p) => (
@@ -471,33 +471,33 @@ export default function SchoolSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Street Address
               </label>
               <input
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
 
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Postal Code
               </label>
               <input
                 type="text"
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Contact Information */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <GlobeAltIcon className="h-5 w-5 text-violet-400" />
             Contact Information
@@ -505,27 +505,27 @@ export default function SchoolSettingsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Contact Email
               </label>
               <input
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="admissions@school.ca"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Contact Phone
               </label>
               <input
                 type="tel"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-white focus:border-violet-500 focus:outline-none"
                 placeholder="(306) 555-0100"
               />
             </div>
@@ -533,7 +533,7 @@ export default function SchoolSettingsPage() {
         </div>
 
         {/* Indigenous Services */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-6">
             Indigenous Student Services
           </h2>
@@ -544,9 +544,9 @@ export default function SchoolSettingsPage() {
                 type="checkbox"
                 checked={elderInResidence}
                 onChange={(e) => setElderInResidence(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-violet-600 focus:ring-violet-500"
               />
-              <span className="text-slate-300">Elder in Residence Program</span>
+              <span className="text-[var(--text-secondary)]">Elder in Residence Program</span>
             </label>
 
             <label className="flex items-center gap-3">
@@ -556,9 +556,9 @@ export default function SchoolSettingsPage() {
                 onChange={(e) =>
                   setIndigenousStudentServices(e.target.checked)
                 }
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-violet-600 focus:ring-violet-500"
               />
-              <span className="text-slate-300">
+              <span className="text-[var(--text-secondary)]">
                 Indigenous Student Services Office
               </span>
             </label>
@@ -568,9 +568,9 @@ export default function SchoolSettingsPage() {
                 type="checkbox"
                 checked={culturalPrograms}
                 onChange={(e) => setCulturalPrograms(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-violet-600 focus:ring-violet-500"
               />
-              <span className="text-slate-300">
+              <span className="text-[var(--text-secondary)]">
                 Cultural Programs & Activities
               </span>
             </label>
@@ -578,7 +578,7 @@ export default function SchoolSettingsPage() {
         </div>
 
         {/* Branding */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             <PhotoIcon className="h-5 w-5 text-violet-400" />
             Branding
@@ -587,7 +587,7 @@ export default function SchoolSettingsPage() {
           <div className="space-y-6">
             {/* Logo Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Institution Logo
               </label>
               <div className="flex items-start gap-4">
@@ -595,16 +595,16 @@ export default function SchoolSettingsPage() {
                   <img
                     src={logoUrl}
                     alt="Logo preview"
-                    className="h-24 w-24 rounded-xl object-cover border border-slate-700"
+                    className="h-24 w-24 rounded-xl object-cover border border-[var(--card-border)]"
                   />
                 ) : (
-                  <div className="h-24 w-24 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
-                    <AcademicCapIcon className="h-10 w-10 text-slate-600" />
+                  <div className="h-24 w-24 rounded-xl bg-surface border border-[var(--card-border)] flex items-center justify-center">
+                    <AcademicCapIcon className="h-10 w-10 text-[var(--text-secondary)]" />
                   </div>
                 )}
                 <div className="flex-1">
                   <label className="flex cursor-pointer flex-col">
-                    <span className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-center text-sm text-slate-300 hover:border-violet-500 transition-colors">
+                    <span className="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-center text-sm text-[var(--text-secondary)] hover:border-violet-500 transition-colors">
                       {uploadingLogo ? "Uploading..." : "Change logo"}
                     </span>
                     <input
@@ -615,7 +615,7 @@ export default function SchoolSettingsPage() {
                       className="hidden"
                     />
                   </label>
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-foreground0">
                     Recommended: 200x200px or larger
                   </p>
                 </div>
@@ -624,11 +624,11 @@ export default function SchoolSettingsPage() {
 
             {/* Banner Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Banner Image
               </label>
               {bannerUrl ? (
-                <div className="relative h-40 rounded-xl overflow-hidden border border-slate-700 mb-3">
+                <div className="relative h-40 rounded-xl overflow-hidden border border-[var(--card-border)] mb-3">
                   <img
                     src={bannerUrl}
                     alt="Banner preview"
@@ -636,17 +636,17 @@ export default function SchoolSettingsPage() {
                   />
                 </div>
               ) : (
-                <div className="h-40 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-3">
+                <div className="h-40 rounded-xl bg-surface border border-[var(--card-border)] flex items-center justify-center mb-3">
                   <div className="text-center">
-                    <PhotoIcon className="mx-auto h-10 w-10 text-slate-600" />
-                    <p className="mt-2 text-sm text-slate-500">
+                    <PhotoIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
+                    <p className="mt-2 text-sm text-foreground0">
                       No banner uploaded
                     </p>
                   </div>
                 </div>
               )}
               <label className="flex cursor-pointer">
-                <span className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:border-violet-500 transition-colors">
+                <span className="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-sm text-[var(--text-secondary)] hover:border-violet-500 transition-colors">
                   {uploadingBanner ? "Uploading..." : "Change banner"}
                 </span>
                 <input
@@ -657,7 +657,7 @@ export default function SchoolSettingsPage() {
                   className="hidden"
                 />
               </label>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-foreground0">
                 Recommended: 1200x400px
               </p>
             </div>
@@ -668,7 +668,7 @@ export default function SchoolSettingsPage() {
         <div className="flex items-center justify-end gap-4">
           <Link
             href="/organization/education"
-            className="rounded-lg border border-slate-700 px-6 py-2 text-slate-300 hover:bg-slate-800"
+            className="rounded-lg border border-[var(--card-border)] px-6 py-2 text-[var(--text-secondary)] hover:bg-surface"
           >
             Cancel
           </Link>
@@ -695,7 +695,7 @@ export default function SchoolSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-6 py-2 font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
+                className="rounded-lg border border-[var(--card-border)] bg-surface px-6 py-2 font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Draft"}
               </button>

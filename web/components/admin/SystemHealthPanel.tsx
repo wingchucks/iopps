@@ -67,7 +67,7 @@ const statusConfig: Record<
   },
   unknown: {
     icon: ExclamationCircleIcon,
-    iconClass: "text-slate-500",
+    iconClass: "text-foreground0",
     dotClass: "bg-slate-500",
     label: "Unknown",
   },
@@ -91,10 +91,10 @@ function SystemHealthSkeleton() {
       {[...Array(4)].map((_, i) => (
         <div key={i} className="flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-slate-800" />
-            <div className="h-4 w-24 rounded bg-slate-800" />
+            <div className="h-8 w-8 rounded-lg bg-surface" />
+            <div className="h-4 w-24 rounded bg-surface" />
           </div>
-          <div className="h-4 w-16 rounded bg-slate-800" />
+          <div className="h-4 w-16 rounded bg-surface" />
         </div>
       ))}
     </div>
@@ -116,13 +116,13 @@ function HealthItemRow({ item }: HealthItemRowProps) {
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
-          <Icon className="h-4 w-4 text-slate-400" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface">
+          <Icon className="h-4 w-4 text-[var(--text-muted)]" />
         </div>
         <div>
-          <span className="text-sm font-medium text-slate-200">{item.name}</span>
+          <span className="text-sm font-medium text-foreground">{item.name}</span>
           {item.message && (
-            <p className="text-xs text-slate-500">{item.message}</p>
+            <p className="text-xs text-foreground0">{item.message}</p>
           )}
         </div>
       </div>
@@ -158,11 +158,11 @@ export function SystemHealthPanel({
   const overallConfig = statusConfig[overallStatus];
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+    <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-slate-200">System Health</h3>
+          <h3 className="text-sm font-semibold text-foreground">System Health</h3>
           <div
             className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
               overallStatus === "healthy"
@@ -171,7 +171,7 @@ export function SystemHealthPanel({
                 ? "bg-amber-500/10 text-amber-400"
                 : overallStatus === "error"
                 ? "bg-red-500/10 text-red-400"
-                : "bg-slate-500/10 text-slate-400"
+                : "bg-slate-500/10 text-[var(--text-muted)]"
             }`}
           >
             <div className={`h-1.5 w-1.5 rounded-full ${overallConfig.dotClass}`} />
@@ -182,7 +182,7 @@ export function SystemHealthPanel({
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-md text-foreground0 hover:text-[var(--text-secondary)] hover:bg-surface transition-colors disabled:opacity-50"
             aria-label="Refresh status"
           >
             <ArrowPathIcon
@@ -197,10 +197,10 @@ export function SystemHealthPanel({
         <SystemHealthSkeleton />
       ) : items.length === 0 ? (
         <div className="py-6 text-center">
-          <p className="text-sm text-slate-500">No services to monitor</p>
+          <p className="text-sm text-foreground0">No services to monitor</p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-800">
+        <div className="divide-y divide-[var(--card-border)]">
           {items.map((item) => (
             <HealthItemRow key={item.id} item={item} />
           ))}
@@ -228,7 +228,7 @@ export function CompactHealthIndicator({
   return (
     <div className="flex items-center gap-1.5">
       <div className={`h-2 w-2 rounded-full ${config.dotClass}`} />
-      {label && <span className="text-xs text-slate-500">{label}</span>}
+      {label && <span className="text-xs text-foreground0">{label}</span>}
     </div>
   );
 }

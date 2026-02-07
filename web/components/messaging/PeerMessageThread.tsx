@@ -115,7 +115,7 @@ export default function PeerMessageThread({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-slate-400">Loading messages...</div>
+        <div className="text-[var(--text-muted)]">Loading messages...</div>
       </div>
     );
   }
@@ -123,7 +123,7 @@ export default function PeerMessageThread({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/50 p-4">
+      <div className="border-b border-[var(--card-border)] bg-surface p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
@@ -134,12 +134,12 @@ export default function PeerMessageThread({
             </Avatar>
             <div>
               <h3 className="font-semibold text-white">{otherParticipant.name || "Member"}</h3>
-              <p className="text-xs text-slate-400">Community Member</p>
+              <p className="text-xs text-[var(--text-muted)]">Community Member</p>
             </div>
           </div>
           <Link
             href={`/member/${otherParticipant.id}`}
-            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-accent transition-colors"
           >
             View Profile
             <ExternalLink className="h-3.5 w-3.5" />
@@ -159,10 +159,10 @@ export default function PeerMessageThread({
                 </AvatarFallback>
               </Avatar>
               <h4 className="font-semibold text-white mb-1">{otherParticipant.name}</h4>
-              <p className="text-sm text-slate-400 mb-4">
+              <p className="text-sm text-[var(--text-muted)] mb-4">
                 Start a conversation with {otherParticipant.name?.split(" ")[0] || "this member"}!
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-foreground0">
                 Say hello and start connecting with the community.
               </p>
             </div>
@@ -195,7 +195,7 @@ export default function PeerMessageThread({
                     className={`rounded-2xl px-4 py-2.5 ${
                       isOwn
                         ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                        : "bg-slate-800 text-slate-100"
+                        : "bg-surface text-foreground"
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words text-sm">
@@ -203,7 +203,7 @@ export default function PeerMessageThread({
                     </p>
                     <p
                       className={`mt-1 text-xs ${
-                        isOwn ? "text-emerald-100/70" : "text-slate-500"
+                        isOwn ? "text-emerald-100/70" : "text-foreground0"
                       }`}
                     >
                       {time}
@@ -218,7 +218,7 @@ export default function PeerMessageThread({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t border-slate-800 p-4">
+      <form onSubmit={handleSubmit} className="border-t border-[var(--card-border)] p-4">
         <div className="flex gap-3">
           <textarea
             ref={inputRef}
@@ -227,7 +227,7 @@ export default function PeerMessageThread({
             onKeyDown={handleKeyDown}
             placeholder={`Message ${otherParticipant.name?.split(" ")[0] || "member"}...`}
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="flex-1 resize-none rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <button
             type="submit"
@@ -259,7 +259,7 @@ export default function PeerMessageThread({
             )}
           </button>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-foreground0">
           Press Enter to send, Shift+Enter for new line
         </p>
       </form>

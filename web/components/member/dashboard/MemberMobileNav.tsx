@@ -77,8 +77,8 @@ export default function MemberMobileNav({
         setShowMoreMenu(false);
     };
 
-    const activeColor = 'text-emerald-400';
-    const activeBg = 'bg-emerald-500';
+    const activeColor = 'text-accent';
+    const activeBg = 'bg-accent';
 
     return (
         <>
@@ -92,10 +92,10 @@ export default function MemberMobileNav({
 
             {/* More Menu Panel */}
             {showMoreMenu && (
-                <div className="fixed bottom-16 left-0 right-0 bg-[#0A0B0F] border-t border-slate-800/60 rounded-t-3xl z-50 md:hidden animate-slide-up">
+                <div className="fixed bottom-16 left-0 right-0 bg-[#0A0B0F] border-t border-[var(--card-border)]/60 rounded-t-3xl z-50 md:hidden animate-slide-up">
                     <div className="p-4">
-                        <div className="mb-4 pb-2 border-b border-slate-800/60">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">
+                        <div className="mb-4 pb-2 border-b border-[var(--card-border)]/60">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground0 mb-2">
                                 More Options
                             </p>
                         </div>
@@ -105,8 +105,8 @@ export default function MemberMobileNav({
                                     key={item.id}
                                     onClick={() => handleTabClick(item.id)}
                                     className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${activeSection === item.id
-                                            ? 'bg-emerald-500/10 text-emerald-400'
-                                            : 'text-slate-400 hover:bg-slate-800/50'
+                                            ? 'bg-accent/10 text-accent'
+                                            : 'text-[var(--text-muted)] hover:bg-surface'
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5" />
@@ -119,13 +119,13 @@ export default function MemberMobileNav({
             )}
 
             {/* Bottom Tab Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#08090C]/95 backdrop-blur-xl border-t border-slate-800/60 z-50 md:hidden safe-area-bottom">
+            <div className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-xl border-t border-[var(--card-border)]/60 z-50 md:hidden safe-area-bottom">
                 <div className="flex items-center justify-around px-2 py-1">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => handleTabClick(tab.id)}
-                            className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${activeSection === tab.id ? activeColor : 'text-slate-500'
+                            className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${activeSection === tab.id ? activeColor : 'text-foreground0'
                                 }`}
                         >
                             <div className="relative">
@@ -145,7 +145,7 @@ export default function MemberMobileNav({
                     {/* More Button */}
                     <button
                         onClick={() => setShowMoreMenu(!showMoreMenu)}
-                        className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${showMoreMenu || isMoreActive || isOtherActive ? activeColor : 'text-slate-500'
+                        className={`relative flex flex-col items-center justify-center py-2 px-3 min-w-[60px] transition-colors ${showMoreMenu || isMoreActive || isOtherActive ? activeColor : 'text-foreground0'
                             }`}
                     >
                         {showMoreMenu ? (

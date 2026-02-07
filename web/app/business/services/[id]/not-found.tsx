@@ -4,11 +4,11 @@ import { BriefcaseIcon } from "@heroicons/react/24/outline";
 export default function ServiceNotFound() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-      <div className="mx-auto h-20 w-20 rounded-full bg-slate-800 flex items-center justify-center mb-6">
-        <BriefcaseIcon className="h-10 w-10 text-slate-500" />
+      <div className="mx-auto h-20 w-20 rounded-full bg-surface flex items-center justify-center mb-6">
+        <BriefcaseIcon className="h-10 w-10 text-foreground0" />
       </div>
       <h1 className="text-3xl font-bold text-white mb-4">Service Not Found</h1>
-      <p className="text-slate-400 mb-8">
+      <p className="text-[var(--text-muted)] mb-8">
         The service you&apos;re looking for doesn&apos;t exist or may have been removed.
       </p>
       <Link

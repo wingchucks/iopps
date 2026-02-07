@@ -183,8 +183,8 @@ function AdminJobsContent() {
   if (authLoading || loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 w-48 animate-pulse rounded bg-slate-800" />
-        <div className="h-64 animate-pulse rounded-xl bg-slate-800" />
+        <div className="h-8 w-48 animate-pulse rounded bg-surface" />
+        <div className="h-64 animate-pulse rounded-xl bg-surface" />
       </div>
     );
   }
@@ -219,14 +219,14 @@ function AdminJobsContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Jobs Management</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold text-foreground">Jobs Management</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             {totalJobs} total jobs • {activeCount} active • {inactiveCount} inactive
           </p>
         </div>
         <Link
           href="/organization/jobs/new"
-          className="flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
         >
           <BriefcaseIcon className="h-4 w-4" />
           Post New Job
@@ -239,8 +239,8 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-[#14B8A6] text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+              ? "bg-accent text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
             All ({totalJobs})
@@ -248,8 +248,8 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-green-500"
+              ? "bg-green-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
             Active ({activeCount})
@@ -257,8 +257,8 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-slate-500"
+              ? "bg-slate-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
             Inactive ({inactiveCount})
@@ -267,23 +267,23 @@ function AdminJobsContent() {
 
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             placeholder="Search jobs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-800 py-2 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+            className="w-full rounded-lg border border-[var(--card-border)] bg-surface py-2 pl-10 pr-4 text-sm text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
           />
         </div>
       </div>
 
       {/* Jobs Table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+      <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 overflow-hidden">
         {filteredJobs.length === 0 ? (
           <div className="p-12 text-center">
-            <BriefcaseIcon className="mx-auto h-12 w-12 text-slate-600" />
-            <p className="mt-4 text-slate-400">
+            <BriefcaseIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
+            <p className="mt-4 text-[var(--text-muted)]">
               {searchQuery ? "No jobs match your search." : "No jobs found."}
             </p>
           </div>
@@ -291,7 +291,7 @@ function AdminJobsContent() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-800 text-left text-sm text-slate-400">
+                <tr className="border-b border-[var(--card-border)] text-left text-sm text-[var(--text-muted)]">
                   <th className="px-6 py-4 font-medium">Job</th>
                   <th className="px-6 py-4 font-medium">Employer</th>
                   <th className="px-6 py-4 font-medium">Location</th>
@@ -300,23 +300,23 @@ function AdminJobsContent() {
                   <th className="px-6 py-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-[var(--card-border)]">
                 {filteredJobs.map((job) => {
                   const isProcessing = processing === job.id;
                   const isActive = job.active === true;
 
                   return (
-                    <tr key={job.id} className="text-sm hover:bg-slate-800/50 cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}>
+                    <tr key={job.id} className="text-sm hover:bg-surface cursor-pointer" onClick={() => router.push(`/admin/jobs/${job.id}/edit`)}>
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
                           <Link
                             href={`/admin/jobs/${job.id}/edit`}
-                            className="font-medium text-slate-100 truncate hover:text-[#14B8A6] transition-colors block"
+                            className="font-medium text-foreground truncate hover:text-[#14B8A6] transition-colors block"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {job.title}
                           </Link>
-                          <p className="text-xs text-slate-500 mt-1">
+                          <p className="text-xs text-foreground0 mt-1">
                             {job.employmentType || "Full-time"}
                             {job.remoteFlag && " • Remote"}
                           </p>
@@ -332,16 +332,16 @@ function AdminJobsContent() {
                             />
                           ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-700">
-                              <BuildingOfficeIcon className="h-4 w-4 text-slate-400" />
+                              <BuildingOfficeIcon className="h-4 w-4 text-[var(--text-muted)]" />
                             </div>
                           )}
-                          <span className="text-slate-300 truncate max-w-[150px]">
+                          <span className="text-[var(--text-secondary)] truncate max-w-[150px]">
                             {job.employerName}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 text-slate-400">
+                        <div className="flex items-center gap-1 text-[var(--text-muted)]">
                           <MapPinIcon className="h-3.5 w-3.5" />
                           <span className="truncate max-w-[150px]">
                             {job.location || "Not specified"}
@@ -352,7 +352,7 @@ function AdminJobsContent() {
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${isActive
                             ? "bg-green-500/10 text-green-400"
-                            : "bg-slate-500/10 text-slate-400"
+                            : "bg-slate-500/10 text-[var(--text-muted)]"
                             }`}
                         >
                           {isActive ? (
@@ -364,7 +364,7 @@ function AdminJobsContent() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-[var(--text-muted)]">
                           <p>{job.viewsCount || 0} views</p>
                           <p>{job.applicationsCount || 0} applies</p>
                         </div>
@@ -373,14 +373,14 @@ function AdminJobsContent() {
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/careers/${job.id}`}
-                            className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                            className="rounded-md p-2 text-[var(--text-muted)] transition hover:bg-slate-700 hover:text-white"
                             title="View public page"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/admin/jobs/${job.id}/edit`}
-                            className="rounded-md p-2 text-slate-400 transition hover:bg-slate-700 hover:text-white"
+                            className="rounded-md p-2 text-[var(--text-muted)] transition hover:bg-slate-700 hover:text-white"
                             title="Edit"
                           >
                             <PencilSquareIcon className="h-4 w-4" />
@@ -389,7 +389,7 @@ function AdminJobsContent() {
                             onClick={() => toggleJobStatus(job.id, isActive)}
                             disabled={isProcessing}
                             className={`rounded-md px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${isActive
-                              ? "border border-slate-600 text-slate-400 hover:bg-slate-700"
+                              ? "border border-[var(--card-border)] text-[var(--text-muted)] hover:bg-slate-700"
                               : "bg-green-600 text-white hover:bg-green-500"
                               }`}
                           >
@@ -402,7 +402,7 @@ function AdminJobsContent() {
                           <button
                             onClick={() => deleteJob(job.id, job.title)}
                             disabled={isProcessing}
-                            className="rounded-md p-2 text-slate-400 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                            className="rounded-md p-2 text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                             title="Delete"
                           >
                             <TrashIcon className="h-4 w-4" />
@@ -423,7 +423,7 @@ function AdminJobsContent() {
         <div className="flex justify-center">
           <button
             onClick={() => loadJobs(true)}
-            className="rounded-lg border border-slate-700 px-6 py-2 text-sm text-slate-300 transition hover:border-[#14B8A6] hover:text-white"
+            className="rounded-lg border border-[var(--card-border)] px-6 py-2 text-sm text-[var(--text-secondary)] transition hover:border-[#14B8A6] hover:text-white"
           >
             Load More
           </button>
@@ -438,8 +438,8 @@ export default function AdminJobsPage() {
     <Suspense
       fallback={
         <div className="space-y-4">
-          <div className="h-8 w-48 animate-pulse rounded bg-slate-800" />
-          <div className="h-64 animate-pulse rounded-xl bg-slate-800" />
+          <div className="h-8 w-48 animate-pulse rounded bg-surface" />
+          <div className="h-64 animate-pulse rounded-xl bg-surface" />
         </div>
       }
     >

@@ -33,10 +33,10 @@ export default function Error({
                     </svg>
                 </div>
 
-                <h1 className="mt-6 text-2xl font-bold text-slate-50">
+                <h1 className="mt-6 text-2xl font-bold text-foreground">
                     Something went wrong
                 </h1>
-                <p className="mt-4 max-w-md text-slate-400">
+                <p className="mt-4 max-w-md text-[var(--text-muted)]">
                     We encountered an unexpected error. Don't worry, our team has been
                     notified and we're looking into it.
                 </p>
@@ -44,13 +44,13 @@ export default function Error({
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <button
                         onClick={reset}
-                        className="rounded-full bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                        className="rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
                     >
                         Try Again
                     </button>
                     <Link
                         href="/"
-                        className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                        className="rounded-full border border-[var(--card-border)] px-6 py-3 font-semibold text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6]"
                     >
                         Go Home
                     </Link>
@@ -58,12 +58,12 @@ export default function Error({
 
                 {error.digest && (
                     <div className="mt-8">
-                        <p className="text-xs text-slate-600">Error ID: {error.digest}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">Error ID: {error.digest}</p>
                     </div>
                 )}
 
                 <div className="mt-4">
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-foreground0">
                         Need help? <Link href="/contact" className="text-[#14B8A6] hover:underline">Contact support</Link>
                     </p>
                 </div>

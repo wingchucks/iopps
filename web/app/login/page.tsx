@@ -17,7 +17,7 @@ import {
 
 // Helper to get redirect path based on user role
 async function getRedirectPath(userId: string): Promise<string> {
-  if (!db) return "/hub";
+  if (!db) return "/discover";
 
   try {
     const userDoc = await getDoc(doc(db, "users", userId));
@@ -34,8 +34,7 @@ async function getRedirectPath(userId: string): Promise<string> {
     console.error("Error fetching user role:", error);
   }
 
-  // Default to the Opportunity Graph feed for members
-  return "/hub";
+  return "/discover";
 }
 
 export default function LoginPage() {
@@ -81,7 +80,7 @@ export default function LoginPage() {
         const redirectPath = await getRedirectPath(auth.currentUser.uid);
         router.push(redirectPath);
       } else {
-        router.push("/hub");
+        router.push("/discover");
       }
     } catch (err) {
       console.error(err);
@@ -107,7 +106,7 @@ export default function LoginPage() {
 
       <AuthDivider />
 
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm">
         <AuthInput
           label="Email"
           type="email"
@@ -128,7 +127,7 @@ export default function LoginPage() {
           rightElement={
             <Link
               href="/forgot-password"
-              className="text-xs text-[#14B8A6] hover:underline"
+              className="text-xs text-accent hover:underline"
             >
               Forgot password?
             </Link>
@@ -138,7 +137,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading || googleLoading}
-          className="w-full rounded-full bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -153,9 +152,9 @@ export default function LoginPage() {
           )}
         </button>
 
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-foreground0">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-semibold text-[#14B8A6] hover:underline">
+          <Link href="/signup" className="font-semibold text-accent hover:underline">
             Create account
           </Link>
         </p>

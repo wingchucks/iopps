@@ -59,7 +59,7 @@ export default function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-800/50 bg-gradient-to-b from-slate-900/80 to-slate-950">
+    <footer className="border-t border-[var(--card-border)]/50 bg-gradient-to-b from-slate-900/80 to-slate-950">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Main Footer Content */}
         <div className="grid gap-8 md:grid-cols-3">
@@ -68,14 +68,14 @@ export default function SiteFooter() {
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold text-accent">IOPPS</span>
             </div>
-            <p className="mt-3 text-sm text-slate-400">
+            <p className="mt-3 text-sm text-[var(--text-muted)]">
               Empowering Indigenous success across Canada through jobs, conferences, scholarships, and community connections.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-300">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
               Quick Links
             </h3>
             <ul className="mt-4 space-y-2">
@@ -83,7 +83,7 @@ export default function SiteFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-slate-400 transition hover:text-accent"
+                    className="text-sm text-[var(--text-muted)] transition hover:text-accent"
                   >
                     {link.label}
                   </Link>
@@ -94,7 +94,7 @@ export default function SiteFooter() {
 
           {/* Social Media */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-300">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--text-secondary)]">
               Connect With Us
             </h3>
             <div className="mt-4 flex gap-4">
@@ -104,22 +104,22 @@ export default function SiteFooter() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700/50 bg-slate-800/40 text-slate-400 transition hover:border-accent/50 hover:bg-slate-800/60 hover:text-accent"
+                  className="group flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-[var(--text-muted)] transition hover:border-accent/50 hover:bg-slate-800/60 hover:text-accent"
                   aria-label={`Visit our ${social.name} page`}
                 >
                   {social.icon}
                 </a>
               ))}
             </div>
-            <p className="mt-4 text-xs text-slate-500">
+            <p className="mt-4 text-xs text-foreground0">
               Follow us for updates on opportunities, events, and community highlights.
             </p>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-8 border-t border-slate-800/50 pt-6">
-          <p className="text-center text-xs text-slate-500">
+        <div className="mt-8 border-t border-[var(--card-border)]/50 pt-6">
+          <p className="text-center text-xs text-foreground0">
             &copy; {year} IOPPS. All rights reserved. Empowering Indigenous Success across Canada.
           </p>
         </div>

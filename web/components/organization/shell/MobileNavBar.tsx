@@ -38,7 +38,7 @@ function NavItem({ href, label, icon: Icon, iconSolid: IconSolid, badge, active 
     <Link
       href={href}
       className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors ${
-        active ? 'text-accent' : 'text-slate-500'
+        active ? 'text-accent' : 'text-foreground0'
       }`}
     >
       <div className="relative">
@@ -68,7 +68,7 @@ function MoreButton({ active, onClick }: MoreButtonProps) {
     <button
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors ${
-        active ? 'text-accent' : 'text-slate-500'
+        active ? 'text-accent' : 'text-foreground0'
       }`}
     >
       <div className="relative">
@@ -95,13 +95,13 @@ interface MenuItemProps {
 
 function MenuItem({ href, label, description, icon: Icon, onClick, external, colorClass }: MenuItemProps) {
   const content = (
-    <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-900/50 hover:bg-slate-800 transition-colors">
-      <div className={`p-2 rounded-lg ${colorClass || 'bg-slate-800'}`}>
-        <Icon className={`w-5 h-5 ${colorClass ? 'text-white' : 'text-slate-400'}`} />
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-surface hover:bg-surface transition-colors">
+      <div className={`p-2 rounded-lg ${colorClass || 'bg-surface'}`}>
+        <Icon className={`w-5 h-5 ${colorClass ? 'text-white' : 'text-[var(--text-muted)]'}`} />
       </div>
       <div className="flex-1">
-        <p className="font-medium text-slate-200">{label}</p>
-        <p className="text-sm text-slate-500">{description}</p>
+        <p className="font-medium text-foreground">{label}</p>
+        <p className="text-sm text-foreground0">{description}</p>
       </div>
     </div>
   );
@@ -124,8 +124,8 @@ function MenuItem({ href, label, description, icon: Icon, onClick, external, col
 function MenuDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 px-2 pt-4 pb-2">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
-      <div className="flex-1 h-px bg-slate-800" />
+      <span className="text-[10px] font-bold uppercase tracking-wider text-foreground0">{label}</span>
+      <div className="flex-1 h-px bg-surface" />
     </div>
   );
 }
@@ -159,7 +159,7 @@ export default function MobileNavBar({
   // Module color classes for menu items
   const moduleColorClasses: Record<OrganizationModule, string> = {
     hire: 'bg-blue-500/20',
-    sell: 'bg-teal-500/20',
+    sell: 'bg-accent/20',
     educate: 'bg-purple-500/20',
     host: 'bg-amber-500/20',
     funding: 'bg-pink-500/20',
@@ -168,7 +168,7 @@ export default function MobileNavBar({
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 safe-area-pb">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-[var(--card-border)] safe-area-pb">
         <div className="flex items-center h-16 px-2">
           <NavItem
             href="/organization"
@@ -216,20 +216,20 @@ export default function MobileNavBar({
           />
 
           {/* Bottom Sheet */}
-          <div className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 rounded-t-3xl animate-in slide-in-from-bottom duration-300 safe-area-pb max-h-[80vh] overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-background border-t border-[var(--card-border)] rounded-t-3xl animate-in slide-in-from-bottom duration-300 safe-area-pb max-h-[80vh] overflow-y-auto">
             {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-slate-950">
+            <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-background">
               <div className="w-12 h-1 rounded-full bg-slate-700" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pb-4 sticky top-6 bg-slate-950">
-              <h3 className="text-lg font-semibold text-slate-100">More Options</h3>
+            <div className="flex items-center justify-between px-6 pb-4 sticky top-6 bg-background">
+              <h3 className="text-lg font-semibold text-foreground">More Options</h3>
               <button
                 onClick={() => setShowMoreMenu(false)}
-                className="p-2 rounded-full hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-full hover:bg-surface transition-colors"
               >
-                <XMarkIcon className="w-5 h-5 text-slate-400" />
+                <XMarkIcon className="w-5 h-5 text-[var(--text-muted)]" />
               </button>
             </div>
 

@@ -289,8 +289,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Admin Dashboard</h1>
-          <p className="text-sm text-slate-400">
+          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+          <p className="text-sm text-[var(--text-muted)]">
             {isLoading
               ? "Loading..."
               : dashboardState.lastUpdated
@@ -301,7 +301,7 @@ export default function AdminDashboard() {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing || dashboardState.refreshing}
-          className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:text-white disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:border-[var(--card-border)] hover:text-white disabled:opacity-50"
         >
           <ArrowPathIcon
             className={`h-4 w-4 ${
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
 
       {/* Urgent Queues */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground0">
           Needs Attention
         </h2>
         <QueueGrid>
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
 
       {/* KPIs */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground0">
           Platform Overview
         </h2>
         <KPIGrid columns={5}>
@@ -414,37 +414,37 @@ export default function AdminDashboard() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
           <div className="flex items-center gap-2">
-            <UsersIcon className="h-4 w-4 text-slate-500" />
-            <span className="text-xs text-slate-500">Users (Auth)</span>
+            <UsersIcon className="h-4 w-4 text-foreground0" />
+            <span className="text-xs text-foreground0">Users (Auth)</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-slate-200">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {isLoading ? "-" : counts.users.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
           <div className="flex items-center gap-2">
-            <BriefcaseIcon className="h-4 w-4 text-slate-500" />
-            <span className="text-xs text-slate-500">Total Jobs</span>
+            <BriefcaseIcon className="h-4 w-4 text-foreground0" />
+            <span className="text-xs text-foreground0">Total Jobs</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-slate-200">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {isLoading ? "-" : counts.jobs.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
           <div className="flex items-center gap-2">
-            <BuildingStorefrontIcon className="h-4 w-4 text-slate-500" />
-            <span className="text-xs text-slate-500">Total Vendors</span>
+            <BuildingStorefrontIcon className="h-4 w-4 text-foreground0" />
+            <span className="text-xs text-foreground0">Total Vendors</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-slate-200">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {isLoading ? "-" : counts.vendors.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
           <div className="flex items-center gap-2">
             <svg
-              className="h-4 w-4 text-slate-500"
+              className="h-4 w-4 text-foreground0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -456,16 +456,16 @@ export default function AdminDashboard() {
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
-            <span className="text-xs text-slate-500">Conferences</span>
+            <span className="text-xs text-foreground0">Conferences</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-slate-200">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {isLoading ? "-" : counts.conferences.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
           <div className="flex items-center gap-2">
             <svg
-              className="h-4 w-4 text-slate-500"
+              className="h-4 w-4 text-foreground0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -477,18 +477,18 @@ export default function AdminDashboard() {
                 d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
               />
             </svg>
-            <span className="text-xs text-slate-500">Pow Wows</span>
+            <span className="text-xs text-foreground0">Pow Wows</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-slate-200">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {isLoading ? "-" : counts.powwows.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-lg border border-[var(--card-border)] bg-slate-900/60 p-4">
           <div className="flex items-center gap-2">
-            <DocumentTextIcon className="h-4 w-4 text-slate-500" />
-            <span className="text-xs text-slate-500">Total Apps</span>
+            <DocumentTextIcon className="h-4 w-4 text-foreground0" />
+            <span className="text-xs text-foreground0">Total Apps</span>
           </div>
-          <p className="mt-1 text-xl font-bold text-slate-200">
+          <p className="mt-1 text-xl font-bold text-foreground">
             {isLoading ? "-" : counts.applications.total.toLocaleString()}
           </p>
         </div>

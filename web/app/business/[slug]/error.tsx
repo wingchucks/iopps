@@ -35,27 +35,27 @@ export default function Error({
             <h2 className="mb-2 text-2xl font-bold text-white">
                 Something went wrong
             </h2>
-            <p className="mb-8 max-w-md text-slate-400">
+            <p className="mb-8 max-w-md text-[var(--text-muted)]">
                 We encountered an error while loading this shop. This might be due to a temporary connection issue.
             </p>
             <div className="flex gap-4">
                 <button
                     onClick={reset}
-                    className="rounded-full bg-[#14B8A6] px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+                    className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-accent/90"
                 >
                     Try Again
                 </button>
                 <Link
                     href="/business"
-                    className="rounded-full border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-300 transition hover:bg-slate-800"
+                    className="rounded-full border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-surface"
                 >
                     Browse All Businesses
                 </Link>
             </div>
             {process.env.NODE_ENV === "development" && (
-                <div className="mt-8 w-full max-w-2xl overflow-hidden rounded-lg bg-slate-900 p-4 text-left">
+                <div className="mt-8 w-full max-w-2xl overflow-hidden rounded-lg bg-surface p-4 text-left">
                     <p className="mb-2 text-xs font-bold text-red-400">Error Details:</p>
-                    <pre className="whitespace-pre-wrap text-xs text-slate-400">
+                    <pre className="whitespace-pre-wrap text-xs text-[var(--text-muted)]">
                         {error.message}
                         {error.stack}
                     </pre>

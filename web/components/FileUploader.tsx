@@ -173,7 +173,7 @@ export default function FileUploader({
 
     return (
         <div className={`w-full ${className}`}>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 {label}
             </label>
 
@@ -182,7 +182,7 @@ export default function FileUploader({
                     <div className="flex items-center gap-3 overflow-hidden">
                         <CheckCircleIcon className="h-6 w-6 text-accent flex-shrink-0" />
                         <div className="truncate">
-                            <p className="text-sm font-medium text-slate-200 truncate">{uploadedFile.name}</p>
+                            <p className="text-sm font-medium text-foreground truncate">{uploadedFile.name}</p>
                             <a href={uploadedFile.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline">View File</a>
                         </div>
                     </div>
@@ -192,7 +192,7 @@ export default function FileUploader({
                             setUploadedFile(null);
                             if (inputRef.current) inputRef.current.value = '';
                         }}
-                        className="p-1 hover:bg-slate-700 rounded-full transition-colors text-slate-400 hover:text-white"
+                        className="p-1 hover:bg-slate-700 rounded-full transition-colors text-[var(--text-muted)] hover:text-white"
                     >
                         <XMarkIcon className="h-5 w-5" />
                     </button>
@@ -201,7 +201,7 @@ export default function FileUploader({
                 <div
                     className={`
             relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer
-            ${dragActive ? 'border-accent bg-accent/5' : 'border-slate-700 bg-slate-800/30 hover:border-slate-500 hover:bg-slate-800/50'}
+            ${dragActive ? 'border-accent bg-accent/5' : 'border-[var(--card-border)] bg-slate-800/30 hover:border-slate-500 hover:bg-surface'}
           `}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -219,7 +219,7 @@ export default function FileUploader({
 
                     {uploading ? (
                         <div className="w-full max-w-xs">
-                            <div className="flex justify-between text-xs text-slate-400 mb-1">
+                            <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1">
                                 <span>Uploading...</span>
                                 <span>{Math.round(progress)}%</span>
                             </div>
@@ -232,11 +232,11 @@ export default function FileUploader({
                         </div>
                     ) : (
                         <>
-                            <CloudArrowUpIcon className="h-10 w-10 text-slate-400 mb-3" />
-                            <p className="text-sm text-slate-300 font-medium">
+                            <CloudArrowUpIcon className="h-10 w-10 text-[var(--text-muted)] mb-3" />
+                            <p className="text-sm text-[var(--text-secondary)] font-medium">
                                 <span className="text-accent">Click to upload</span> or drag and drop
                             </p>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-foreground0 mt-1">
                                 {accept.replace(/,/g, ', ')} (Max {maxSizeMB}MB)
                             </p>
                         </>

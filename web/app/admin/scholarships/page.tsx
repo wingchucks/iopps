@@ -168,9 +168,9 @@ function AdminScholarshipsContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading scholarships...</p>
+          <p className="text-[var(--text-muted)]">Loading scholarships...</p>
         </div>
       </div>
     );
@@ -209,29 +209,29 @@ function AdminScholarshipsContent() {
   const deletedCount = scholarships.filter((s) => s.deletedAt != null).length;
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Admin Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Scholarships Moderation
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {filteredScholarships.length} scholarship
                 {filteredScholarships.length !== 1 ? "s" : ""}
               </p>
             </div>
             <Link
               href="/organization/scholarships/new"
-              className="flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#14B8A6]/90"
+              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-accent/90"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -249,8 +249,8 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-[#14B8A6] text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+              ? "bg-accent text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
             All ({scholarships.filter(s => !s.deletedAt).length})
@@ -258,8 +258,8 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-green-500"
+              ? "bg-green-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
             Active ({activeCount})
@@ -267,8 +267,8 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-slate-500"
+              ? "bg-slate-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
             Inactive ({inactiveCount})
@@ -276,8 +276,8 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("expired")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "expired"
-              ? "bg-amber-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-amber-500"
+              ? "bg-amber-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
               }`}
           >
             Expired ({expiredCount})
@@ -298,7 +298,7 @@ function AdminScholarshipsContent() {
               onClick={() => setFilter("deleted")}
               className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "deleted"
                 ? "bg-slate-600 text-white"
-                : "border border-slate-600 text-slate-400 hover:border-slate-500"
+                : "border border-[var(--card-border)] text-[var(--text-muted)] hover:border-slate-500"
                 }`}
             >
               Deleted ({deletedCount})
@@ -309,8 +309,8 @@ function AdminScholarshipsContent() {
         {/* Scholarships List */}
         <div className="space-y-4">
           {filteredScholarships.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-              <p className="text-slate-400">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
+              <p className="text-[var(--text-muted)]">
                 No scholarships found for this filter.
               </p>
             </div>
@@ -322,7 +322,7 @@ function AdminScholarshipsContent() {
               return (
                 <div
                   key={scholarship.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
+                  className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]"
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     {/* Scholarship Info */}
@@ -332,16 +332,16 @@ function AdminScholarshipsContent() {
                           <img
                             src={scholarship.employerLogoUrl}
                             alt={scholarship.employerName}
-                            className="h-16 w-16 rounded-lg border border-slate-700 object-cover"
+                            className="h-16 w-16 rounded-lg border border-[var(--card-border)] object-cover"
                           />
                         )}
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <h3 className="text-xl font-semibold text-slate-50">
+                              <h3 className="text-xl font-semibold text-foreground">
                                 {scholarship.title}
                               </h3>
-                              <p className="mt-1 text-sm text-slate-400">
+                              <p className="mt-1 text-sm text-[var(--text-muted)]">
                                 {scholarship.provider || scholarship.employerName}
                               </p>
                             </div>
@@ -349,7 +349,7 @@ function AdminScholarshipsContent() {
                               <span
                                 className={`rounded-full px-3 py-1 text-xs font-medium ${isActive
                                   ? "bg-green-500/10 text-green-400"
-                                  : "bg-slate-500/10 text-slate-400"
+                                  : "bg-slate-500/10 text-[var(--text-muted)]"
                                   }`}
                               >
                                 {isActive ? "Active" : "Inactive"}
@@ -370,14 +370,14 @@ function AdminScholarshipsContent() {
                                 </span>
                               )}
                               {scholarship.deletedAt && (
-                                <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-400">
+                                <span className="rounded-full bg-slate-500/10 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
                                   Deleted
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
+                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                             {scholarship.amount && (
                               <span className="font-medium text-green-400">
                                 {scholarship.amount}
@@ -390,19 +390,19 @@ function AdminScholarshipsContent() {
                               {scholarship.type}
                             </span>
                             {scholarship.region && (
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-foreground0">
                                 {scholarship.region}
                               </span>
                             )}
                           </div>
 
                           {scholarship.description && (
-                            <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                            <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                               {scholarship.description}
                             </p>
                           )}
 
-                          <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex gap-4 text-xs text-foreground0">
                             {scholarship.deadline && (
                               <span>
                                 Deadline:{" "}
@@ -432,7 +432,7 @@ function AdminScholarshipsContent() {
                     <div className="flex gap-2 lg:flex-col relative">
                       <Link
                         href={`/education/scholarships/${scholarship.id}`}
-                        className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
+                        className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View
                       </Link>
@@ -444,7 +444,7 @@ function AdminScholarshipsContent() {
                             <button
                               onClick={() => handleAction(scholarship.id, "force_unpublish")}
                               disabled={isProcessing}
-                              className="rounded-md border border-slate-600 px-4 py-2 text-sm text-slate-400 transition hover:bg-slate-800 disabled:opacity-50"
+                              className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-muted)] transition hover:bg-surface disabled:opacity-50"
                             >
                               {isProcessing ? "..." : "Unpublish"}
                             </button>
@@ -464,19 +464,19 @@ function AdminScholarshipsContent() {
                       <div className="relative">
                         <button
                           onClick={() => setActionMenuOpen(actionMenuOpen === scholarship.id ? null : scholarship.id)}
-                          className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-300 transition hover:border-slate-600"
+                          className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:border-[var(--card-border)]"
                         >
                           More ▼
                         </button>
 
                         {actionMenuOpen === scholarship.id && (
-                          <div className="absolute right-0 top-full mt-1 z-10 w-48 rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg">
+                          <div className="absolute right-0 top-full mt-1 z-10 w-48 rounded-lg border border-[var(--card-border)] bg-surface py-1 shadow-lg">
                             {!scholarship.deletedAt && (
                               <>
                                 {isExpired(scholarship) && !scholarship.adminOverride?.forcePublished && (
                                   <button
                                     onClick={() => handleAction(scholarship.id, "reopen")}
-                                    className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-800"
+                                    className="w-full px-4 py-2 text-left text-sm text-[var(--text-secondary)] hover:bg-surface"
                                   >
                                     🔓 Reopen Scholarship
                                   </button>
@@ -484,7 +484,7 @@ function AdminScholarshipsContent() {
                                 {!isExpired(scholarship) && (
                                   <button
                                     onClick={() => handleAction(scholarship.id, "mark_expired")}
-                                    className="w-full px-4 py-2 text-left text-sm text-amber-400 hover:bg-slate-800"
+                                    className="w-full px-4 py-2 text-left text-sm text-amber-400 hover:bg-surface"
                                   >
                                     ⏰ Mark as Expired
                                   </button>
@@ -492,19 +492,19 @@ function AdminScholarshipsContent() {
                                 {scholarship.adminOverride?.flaggedAsSpam ? (
                                   <button
                                     onClick={() => handleAction(scholarship.id, "unflag_spam")}
-                                    className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-slate-800"
+                                    className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-surface"
                                   >
                                     ✓ Remove Spam Flag
                                   </button>
                                 ) : (
                                   <button
                                     onClick={() => handleAction(scholarship.id, "flag_spam")}
-                                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-slate-800"
+                                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-surface"
                                   >
                                     🚩 Flag as Spam
                                   </button>
                                 )}
-                                <hr className="my-1 border-slate-700" />
+                                <hr className="my-1 border-[var(--card-border)]" />
                                 <button
                                   onClick={() => handleAction(scholarship.id, "delete")}
                                   className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10"
@@ -516,7 +516,7 @@ function AdminScholarshipsContent() {
                             {scholarship.deletedAt && (
                               <button
                                 onClick={() => handleAction(scholarship.id, "restore")}
-                                className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-slate-800"
+                                className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-surface"
                               >
                                 ↩️ Restore
                               </button>
@@ -536,13 +536,13 @@ function AdminScholarshipsContent() {
       {/* Reason Modal */}
       {reasonModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6">
             <h3 className="text-lg font-semibold text-white">
               {reasonModalOpen.action === "flag_spam" && "Flag as Spam"}
               {reasonModalOpen.action === "delete" && "Delete Scholarship"}
               {reasonModalOpen.action === "mark_expired" && "Mark as Expired"}
             </h3>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
               {reasonModalOpen.action === "flag_spam" &&
                 "This will hide the scholarship and flag it for review."}
               {reasonModalOpen.action === "delete" &&
@@ -552,7 +552,7 @@ function AdminScholarshipsContent() {
             </p>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-300">
+              <label className="block text-sm font-medium text-[var(--text-secondary)]">
                 Reason (optional)
               </label>
               <textarea
@@ -560,7 +560,7 @@ function AdminScholarshipsContent() {
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 placeholder="Enter reason for this action..."
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none"
               />
             </div>
 
@@ -570,7 +570,7 @@ function AdminScholarshipsContent() {
                   setReasonModalOpen(null);
                   setReason("");
                 }}
-                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 transition hover:bg-slate-800"
+                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-surface"
               >
                 Cancel
               </button>
@@ -610,9 +610,9 @@ function AdminScholarshipsContent() {
 export default function AdminScholarshipsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading scholarships...</p>
+          <p className="text-[var(--text-muted)]">Loading scholarships...</p>
         </div>
       </div>
     }>

@@ -26,14 +26,14 @@ interface DiscoveryBadgeProps {
 const variantStyles: Record<BadgeVariant, string> = {
   featured:
     "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg",
-  free: "bg-[#14B8A6]/20 text-[#14B8A6] border border-[#14B8A6]/30",
+  free: "bg-accent/20 text-[#14B8A6] border border-[#14B8A6]/30",
   "indigenous-focused":
-    "bg-teal-500/20 text-teal-300 border border-teal-500/30",
+    "bg-accent/20 text-teal-300 border border-accent/30",
   livestream: "bg-red-500 text-white animate-pulse",
-  format: "bg-slate-800/60 text-slate-300",
-  category: "bg-[#14B8A6]/20 text-[#14B8A6]",
+  format: "bg-slate-800/60 text-[var(--text-secondary)]",
+  category: "bg-accent/20 text-[#14B8A6]",
   "happening-now": "bg-red-500/90 text-white animate-pulse",
-  upcoming: "bg-[#14B8A6]/90 text-slate-900",
+  upcoming: "bg-accent/90 text-[var(--text-primary)]",
   trc92: "bg-orange-500/10 text-orange-400 border border-orange-500/30",
 };
 
@@ -74,10 +74,10 @@ export function DiscoveryBadge({
         </svg>
       )}
       {variant === "livestream" && !icon && (
-        <span className="h-2 w-2 rounded-full bg-white" />
+        <span className="h-2 w-2 rounded-full bg-[var(--card-bg)]" />
       )}
       {variant === "happening-now" && !icon && (
-        <span className="h-2 w-2 rounded-full bg-white" />
+        <span className="h-2 w-2 rounded-full bg-[var(--card-bg)]" />
       )}
       {variant === "trc92" && !icon && (
         <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -102,7 +102,7 @@ interface FormatBadgeProps {
 const formatColors: Record<FormatBadgeProps["format"], string> = {
   online: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
   virtual: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-  "in-person": "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
+  "in-person": "bg-accent/20 text-emerald-300 border border-accent/30",
   hybrid: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
   "self-paced": "bg-amber-500/20 text-amber-300 border border-amber-500/30",
 };
@@ -139,7 +139,7 @@ const eventTypeColors: Record<string, string> = {
 
 export function EventTypeBadge({ eventType, size = "md" }: EventTypeBadgeProps) {
   const colorClass =
-    eventTypeColors[eventType] || "bg-slate-500/20 text-slate-300";
+    eventTypeColors[eventType] || "bg-slate-500/20 text-[var(--text-secondary)]";
 
   return (
     <span

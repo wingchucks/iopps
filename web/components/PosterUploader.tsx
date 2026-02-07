@@ -288,8 +288,8 @@ export function PosterUploader({
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${isDragging
-          ? "border-emerald-500 bg-emerald-500/10"
-          : "border-slate-700 bg-slate-900/50 hover:border-emerald-500/50 hover:bg-slate-900/70"
+          ? "border-accent bg-accent/10"
+          : "border-[var(--card-border)] bg-surface hover:border-accent/50 hover:bg-slate-900/70"
           }`}
       >
         <input
@@ -300,9 +300,9 @@ export function PosterUploader({
           className="hidden"
         />
 
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
           <svg
-            className="h-8 w-8 text-emerald-400"
+            className="h-8 w-8 text-accent"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -319,13 +319,13 @@ export function PosterUploader({
         <h3 className="text-lg font-semibold text-white">
           Upload {eventTypeLabels[eventType]} Poster
         </h3>
-        <p className="mt-2 text-sm text-slate-400">
+        <p className="mt-2 text-sm text-[var(--text-muted)]">
           Drag and drop an image or click to browse
         </p>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-foreground0">
           Our AI will automatically extract event details from the poster
         </p>
-        <p className="mt-2 text-xs text-slate-600">
+        <p className="mt-2 text-xs text-[var(--text-secondary)]">
           Supported: JPEG, PNG, WebP, GIF (max 10MB)
         </p>
       </div>
@@ -339,7 +339,7 @@ export function PosterUploader({
 
       {/* Preview and Analysis Results */}
       {previewUrl && (
-        <div className="rounded-2xl border border-slate-700 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-start justify-between">
             <h4 className="text-lg font-semibold text-white">
               {isAnalyzing ? "Analyzing..." : "Extracted Information"}
@@ -349,7 +349,7 @@ export function PosterUploader({
                 e.stopPropagation();
                 handleClear();
               }}
-              className="rounded-lg px-3 py-1 text-sm text-slate-400 transition hover:bg-slate-800 hover:text-white"
+              className="rounded-lg px-3 py-1 text-sm text-[var(--text-muted)] transition hover:bg-surface hover:text-white"
             >
               Clear
             </button>
@@ -357,7 +357,7 @@ export function PosterUploader({
 
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
             {/* Image Preview */}
-            <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-slate-700">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-[var(--card-border)]">
               <Image
                 src={previewUrl}
                 alt="Uploaded poster"
@@ -371,11 +371,11 @@ export function PosterUploader({
               {isAnalyzing ? (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">
-                    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-                    <p className="mt-4 text-sm text-slate-400">
+                    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+                    <p className="mt-4 text-sm text-[var(--text-muted)]">
                       {retryStatus || "AI is reading the poster..."}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-foreground0">
                       {retryStatus ? "Please wait while we retry" : "This may take a few seconds"}
                     </p>
                   </div>
@@ -383,10 +383,10 @@ export function PosterUploader({
               ) : analysisResult ? (
                 <div>
                   <div className="mb-4 flex items-center gap-2">
-                    <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
+                    <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-emerald-300">
                       AI Extracted
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-foreground0">
                       Review and edit in the form below
                     </span>
                   </div>
@@ -395,7 +395,7 @@ export function PosterUploader({
                   </div>
                 </div>
               ) : (
-                <div className="flex h-full items-center justify-center text-center text-slate-500">
+                <div className="flex h-full items-center justify-center text-center text-foreground0">
                   <p>Analysis results will appear here</p>
                 </div>
               )}
@@ -421,11 +421,11 @@ function DataField({
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <p className="text-xs font-semibold uppercase tracking-wider text-foreground0">
         {label}
       </p>
       <p
-        className={`mt-1 text-sm text-slate-200 ${multiline ? "whitespace-pre-wrap" : ""
+        className={`mt-1 text-sm text-foreground ${multiline ? "whitespace-pre-wrap" : ""
           }`}
       >
         {value}

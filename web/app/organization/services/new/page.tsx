@@ -98,7 +98,7 @@ export default function NewServicePage() {
       <div className="mx-auto max-w-4xl px-4 py-10">
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-slate-300">Loading...</p>
+          <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
         </div>
       </div>
     );
@@ -108,7 +108,7 @@ export default function NewServicePage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Please sign in</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           You need to be signed in to list your services.
         </p>
         <Link
@@ -125,7 +125,7 @@ export default function NewServicePage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Become a Vendor</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           To list services on the Indigenous Marketplace, you need to register as a vendor or organization.
         </p>
         <div className="flex gap-3">
@@ -137,7 +137,7 @@ export default function NewServicePage() {
           </Link>
           <Link
             href="/business"
-            className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+            className="inline-block rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Back to Marketplace
           </Link>
@@ -207,7 +207,7 @@ export default function NewServicePage() {
       <div className="mb-6">
         <Link
           href="/organization/sell/offerings"
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
         >
           ← Back to Products & Services
         </Link>
@@ -219,16 +219,16 @@ export default function NewServicePage() {
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">Add New Service</h1>
       </div>
-      <p className="text-sm text-slate-300 mb-6">
+      <p className="text-sm text-[var(--text-secondary)] mb-6">
         List a service for clients to discover in the Indigenous Marketplace.
       </p>
 
       {/* Organization Card */}
       {orgProfile && (
-        <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+        <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-surface p-4">
           <div className="flex items-center gap-4">
             {orgProfile.logoUrl ? (
-              <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0">
+              <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-surface flex-shrink-0">
                 <Image
                   src={orgProfile.logoUrl}
                   alt={orgProfile.organizationName}
@@ -237,15 +237,15 @@ export default function NewServicePage() {
                 />
               </div>
             ) : (
-              <div className="w-14 h-14 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
-                <BuildingOffice2Icon className="w-7 h-7 text-slate-600" />
+              <div className="w-14 h-14 rounded-lg bg-surface flex items-center justify-center flex-shrink-0">
+                <BuildingOffice2Icon className="w-7 h-7 text-[var(--text-secondary)]" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-slate-100 truncate">
+              <h3 className="font-semibold text-foreground truncate">
                 {orgProfile.organizationName}
               </h3>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-[var(--text-muted)]">
                 {orgProfile.location && (
                   <span className="flex items-center gap-1">
                     <MapPinIcon className="w-3.5 h-3.5" />
@@ -274,7 +274,7 @@ export default function NewServicePage() {
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-foreground0">
               This service will be listed under your organization profile.
             </p>
             <Link
@@ -295,12 +295,12 @@ export default function NewServicePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Service Basics */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Service Basics</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Service Title *
               </label>
               <input
@@ -309,19 +309,19 @@ export default function NewServicePage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Professional Catering Services"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Category *
               </label>
               <select
                 required
                 value={category}
                 onChange={(e) => setCategory(e.target.value as ServiceCategory)}
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
               >
                 <option value="">Select a category</option>
                 {SERVICE_CATEGORIES.map((cat) => (
@@ -333,7 +333,7 @@ export default function NewServicePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Description *
               </label>
               <textarea
@@ -342,14 +342,14 @@ export default function NewServicePage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="What services do you offer? What makes you unique?"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
               />
             </div>
           </div>
         </section>
 
         {/* Delivery */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
             <MapPinIcon className="h-5 w-5 text-indigo-400" />
             <h2 className="text-lg font-semibold text-white">Service Delivery</h2>
@@ -361,11 +361,11 @@ export default function NewServicePage() {
                 type="checkbox"
                 checked={servesRemote}
                 onChange={(e) => setServesRemote(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-indigo-500 focus:ring-indigo-500"
               />
               <div className="flex items-center gap-2">
-                <GlobeAltIcon className="h-4 w-4 text-slate-400" />
-                <span className="text-sm text-slate-300">
+                <GlobeAltIcon className="h-4 w-4 text-[var(--text-muted)]" />
+                <span className="text-sm text-[var(--text-secondary)]">
                   Available for remote / virtual delivery
                 </span>
               </div>
@@ -373,7 +373,7 @@ export default function NewServicePage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   City/Town
                 </label>
                 <input
@@ -381,19 +381,19 @@ export default function NewServicePage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g., Toronto"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Region *
                 </label>
                 <select
                   required
                   value={region}
                   onChange={(e) => setRegion(e.target.value as NorthAmericanRegion)}
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                 >
                   <option value="">Select a region</option>
                   {NORTH_AMERICAN_REGIONS.map((r) => (
@@ -408,12 +408,12 @@ export default function NewServicePage() {
         </section>
 
         {/* Pricing (Optional) */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Pricing (Optional)</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Price Range
               </label>
               <input
@@ -421,7 +421,7 @@ export default function NewServicePage() {
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
                 placeholder="e.g., $50-$100/hr, Contact for quote"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
               />
             </div>
 
@@ -430,11 +430,11 @@ export default function NewServicePage() {
                 type="checkbox"
                 checked={freeConsultation}
                 onChange={(e) => setFreeConsultation(e.target.checked)}
-                className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-indigo-500 focus:ring-indigo-500"
               />
               <div className="flex items-center gap-2">
-                <CheckCircleIcon className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm text-slate-300">
+                <CheckCircleIcon className="h-4 w-4 text-accent" />
+                <span className="text-sm text-[var(--text-secondary)]">
                   Offer free initial consultation / estimate
                 </span>
               </div>
@@ -443,7 +443,7 @@ export default function NewServicePage() {
         </section>
 
         {/* Optional Details (Collapsed) */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface overflow-hidden">
           <button
             type="button"
             onClick={() => setShowOptionalDetails(!showOptionalDetails)}
@@ -451,21 +451,21 @@ export default function NewServicePage() {
           >
             <div>
               <h2 className="text-lg font-semibold text-white">Optional Details</h2>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-[var(--text-muted)] mt-1">
                 Industries, certifications, experience, booking link
               </p>
             </div>
             <ChevronDownIcon
-              className={`h-5 w-5 text-slate-400 transition-transform ${
+              className={`h-5 w-5 text-[var(--text-muted)] transition-transform ${
                 showOptionalDetails ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {showOptionalDetails && (
-            <div className="px-6 pb-6 space-y-4 border-t border-slate-800 pt-4">
+            <div className="px-6 pb-6 space-y-4 border-t border-[var(--card-border)] pt-4">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Industries Served
                 </label>
                 <input
@@ -473,12 +473,12 @@ export default function NewServicePage() {
                   value={industries}
                   onChange={(e) => setIndustries(e.target.value)}
                   placeholder="Comma-separated: Hospitality, Events, Corporate"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Certifications
                 </label>
                 <input
@@ -486,13 +486,13 @@ export default function NewServicePage() {
                   value={certifications}
                   onChange={(e) => setCertifications(e.target.value)}
                   placeholder="Comma-separated: Food Safe, First Aid"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Years of Experience
                   </label>
                   <input
@@ -501,12 +501,12 @@ export default function NewServicePage() {
                     onChange={(e) => setYearsExperience(e.target.value)}
                     min="0"
                     placeholder="e.g., 10"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Booking / Inquiry URL
                   </label>
                   <input
@@ -514,7 +514,7 @@ export default function NewServicePage() {
                     value={bookingUrl}
                     onChange={(e) => setBookingUrl(e.target.value)}
                     placeholder="https://calendly.com/..."
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -523,7 +523,7 @@ export default function NewServicePage() {
         </section>
 
         {/* Contact Override */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <section className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
             <EnvelopeIcon className="h-5 w-5 text-indigo-400" />
             <h2 className="text-lg font-semibold text-white">Contact Information</h2>
@@ -534,39 +534,39 @@ export default function NewServicePage() {
               type="checkbox"
               checked={useOrgContact}
               onChange={(e) => setUseOrgContact(e.target.checked)}
-              className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+              className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-indigo-500 focus:ring-indigo-500"
             />
-            <span className="text-sm text-slate-300">
+            <span className="text-sm text-[var(--text-secondary)]">
               Use organization contact info
             </span>
           </label>
 
           {useOrgContact ? (
-            <div className="rounded-lg bg-slate-800/50 border border-slate-700 p-4">
-              <p className="text-sm text-slate-400 mb-2">
+            <div className="rounded-lg bg-surface border border-[var(--card-border)] p-4">
+              <p className="text-sm text-[var(--text-muted)] mb-2">
                 Clients will see your organization contact details:
               </p>
-              <div className="flex flex-wrap gap-3 text-sm text-slate-300">
+              <div className="flex flex-wrap gap-3 text-sm text-[var(--text-secondary)]">
                 {orgProfile?.contactEmail && (
                   <span className="flex items-center gap-1.5">
-                    <EnvelopeIcon className="w-4 h-4 text-slate-500" />
+                    <EnvelopeIcon className="w-4 h-4 text-foreground0" />
                     {orgProfile.contactEmail}
                   </span>
                 )}
                 {orgProfile?.contactPhone && (
                   <span className="flex items-center gap-1.5">
-                    <PhoneIcon className="w-4 h-4 text-slate-500" />
+                    <PhoneIcon className="w-4 h-4 text-foreground0" />
                     {orgProfile.contactPhone}
                   </span>
                 )}
                 {orgProfile?.website && (
                   <span className="flex items-center gap-1.5">
-                    <LinkIcon className="w-4 h-4 text-slate-500" />
+                    <LinkIcon className="w-4 h-4 text-foreground0" />
                     {orgProfile.website.replace(/^https?:\/\//, "")}
                   </span>
                 )}
                 {!orgProfile?.contactEmail && !orgProfile?.contactPhone && !orgProfile?.website && (
-                  <span className="text-slate-500 italic">
+                  <span className="text-foreground0 italic">
                     No contact info in organization profile
                   </span>
                 )}
@@ -574,12 +574,12 @@ export default function NewServicePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--text-muted)]">
                 Enter custom contact info for this service:
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Email
                   </label>
                   <input
@@ -587,12 +587,12 @@ export default function NewServicePage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="service@example.com"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Phone
                   </label>
                   <input
@@ -600,13 +600,13 @@ export default function NewServicePage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="(555) 123-4567"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Website
                 </label>
                 <input
@@ -614,7 +614,7 @@ export default function NewServicePage() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://example.com"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -625,7 +625,7 @@ export default function NewServicePage() {
         <div className="flex items-center justify-between pt-4">
           <Link
             href="/organization/sell/offerings"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             Cancel
           </Link>

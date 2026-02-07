@@ -147,16 +147,16 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className="p-1.5 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+                        className="p-1.5 rounded-full hover:bg-surface transition-colors text-[var(--text-muted)] hover:text-foreground"
                     >
                         <MoreHorizontal className="h-4 w-4" />
                     </button>
                     {showDropdown && (
-                        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
+                        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-[var(--card-border)] bg-surface shadow-xl z-50 overflow-hidden">
                             {isAuthor && !confirmDelete && (
                                 <button
                                     onClick={() => setConfirmDelete(true)}
-                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-surface transition-colors"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                     Delete Post
@@ -164,7 +164,7 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                             )}
                             {isAuthor && confirmDelete && (
                                 <div className="px-4 py-3 space-y-2">
-                                    <p className="text-xs text-slate-400">Delete this post?</p>
+                                    <p className="text-xs text-[var(--text-muted)]">Delete this post?</p>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={handleDelete}
@@ -175,14 +175,14 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                                         </button>
                                         <button
                                             onClick={() => setConfirmDelete(false)}
-                                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition-colors"
+                                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-surface text-[var(--text-muted)] hover:bg-slate-700 transition-colors"
                                         >
                                             Cancel
                                         </button>
                                     </div>
                                 </div>
                             )}
-                            <div className="border-t border-slate-800">
+                            <div className="border-t border-[var(--card-border)]">
                                 <ReportContentButton
                                     contentType="post"
                                     contentId={post.id}
@@ -208,7 +208,7 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                 {/* Render Reference Content (Shared Job, etc) */}
                 {post.type === 'share_job' && post.referenceData && (
                     <div className="border rounded-md p-3 bg-muted/30">
-                        <p className="text-xs font-medium text-emerald-500 mb-1">Shared a Job</p>
+                        <p className="text-xs font-medium text-accent mb-1">Shared a Job</p>
                         <h4 className="font-semibold">{post.referenceData.title}</h4>
                         <p className="text-sm text-muted-foreground">{post.referenceData.employerName}</p>
                     </div>
@@ -233,8 +233,8 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                             disabled={savingBookmark || !user}
                             className={`p-2 rounded-full transition-colors ${
                                 saved
-                                    ? "text-emerald-400"
-                                    : "text-slate-500 hover:text-emerald-400"
+                                    ? "text-accent"
+                                    : "text-foreground0 hover:text-accent"
                             }`}
                             title={saved ? "Unsave post" : "Save post"}
                         >
@@ -266,7 +266,7 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                                         </Avatar>
                                         <div className="flex-1 bg-muted/30 rounded-md p-2 text-xs">
                                             <span className="font-semibold block">{comment.authorName}</span>
-                                            <span className="text-slate-300">{comment.content}</span>
+                                            <span className="text-[var(--text-secondary)]">{comment.content}</span>
                                         </div>
                                     </div>
                                 ))
@@ -284,7 +284,7 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                                     <input
                                         type="text"
                                         placeholder="Write a comment..."
-                                        className="w-full bg-muted/50 border border-transparent focus:border-emerald-500 rounded-full py-1 px-3 text-sm focus:outline-none transition-all"
+                                        className="w-full bg-muted/50 border border-transparent focus:border-accent rounded-full py-1 px-3 text-sm focus:outline-none transition-all"
                                         value={newComment}
                                         onChange={(e) => setNewComment(e.target.value)}
                                         onKeyDown={(e) => {
@@ -295,7 +295,7 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
                                     <button
                                         onClick={handlePostComment}
                                         disabled={!newComment.trim() || submittingComment}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-500 disabled:text-muted-foreground text-xs font-semibold uppercase"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-accent disabled:text-muted-foreground text-xs font-semibold uppercase"
                                     >
                                         Send
                                     </button>

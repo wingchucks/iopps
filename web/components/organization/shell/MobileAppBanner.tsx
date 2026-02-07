@@ -52,8 +52,8 @@ export default function MobileAppBanner({ userId }: MobileAppBannerProps) {
             <DevicePhoneMobileIcon className="w-6 h-6 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-slate-50 text-sm">Get the IOPPS App</p>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="font-semibold text-foreground text-sm">Get the IOPPS App</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
               Coming soon! Get push notifications and manage on the go.
             </p>
             <div className="flex items-center gap-2 mt-3">
@@ -65,7 +65,7 @@ export default function MobileAppBanner({ userId }: MobileAppBannerProps) {
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-foreground transition-colors"
               >
                 Maybe Later
               </button>
@@ -73,7 +73,7 @@ export default function MobileAppBanner({ userId }: MobileAppBannerProps) {
           </div>
           <button
             onClick={handleDismiss}
-            className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors"
+            className="p-1 rounded-lg text-foreground0 hover:text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             <XMarkIcon className="w-4 h-4" />
           </button>

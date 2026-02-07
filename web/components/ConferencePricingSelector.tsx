@@ -55,7 +55,7 @@ export default function ConferencePricingSelector({ conferenceId, userId, onSkip
         <div className="space-y-6">
             <div className="text-center">
                 <h2 className="text-2xl font-bold text-white">Boost Your Conference Visibility</h2>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                     Your conference is posted for free. Feature it for premium placement and more registrations.
                 </p>
             </div>
@@ -68,31 +68,31 @@ export default function ConferencePricingSelector({ conferenceId, userId, onSkip
 
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Featured 90 Days */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]">
                     <div className="mb-4">
                         <h3 className="text-lg font-semibold text-white">{CONFERENCE_PRODUCTS.FEATURED_90.name}</h3>
                         <div className="mt-2 flex items-baseline gap-1">
-                            <span className="text-4xl font-bold text-emerald-400">${CONFERENCE_PRODUCTS.FEATURED_90.price / 100}</span>
-                            <span className="text-slate-500">CAD</span>
+                            <span className="text-4xl font-bold text-accent">${CONFERENCE_PRODUCTS.FEATURED_90.price / 100}</span>
+                            <span className="text-foreground0">CAD</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-400">{CONFERENCE_PRODUCTS.FEATURED_90.description}</p>
+                        <p className="mt-2 text-sm text-[var(--text-muted)]">{CONFERENCE_PRODUCTS.FEATURED_90.description}</p>
                     </div>
 
                     <ul className="mb-6 space-y-3 text-sm">
-                        <li className="flex items-start gap-2 text-slate-300">
-                            <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
+                            <svg className="h-5 w-5 flex-shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>Featured badge for {CONFERENCE_PRODUCTS.FEATURED_90.duration} days</span>
                         </li>
-                        <li className="flex items-start gap-2 text-slate-300">
-                            <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
+                            <svg className="h-5 w-5 flex-shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>Priority placement in listings</span>
                         </li>
-                        <li className="flex items-start gap-2 text-slate-300">
-                            <svg className="h-5 w-5 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
+                            <svg className="h-5 w-5 flex-shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>Increased visibility to attendees</span>
@@ -102,7 +102,7 @@ export default function ConferencePricingSelector({ conferenceId, userId, onSkip
                     <button
                         onClick={() => handleSelectPlan("FEATURED_90")}
                         disabled={loading === "FEATURED_90"}
-                        className="w-full rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                        className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3 text-sm font-semibold text-white transition hover:bg-surface disabled:opacity-50"
                     >
                         {loading === "FEATURED_90" ? "Processing..." : "Feature for 90 Days"}
                     </button>
@@ -120,31 +120,31 @@ export default function ConferencePricingSelector({ conferenceId, userId, onSkip
                         <h3 className="text-lg font-semibold text-white">{CONFERENCE_PRODUCTS.FEATURED_365.name}</h3>
                         <div className="mt-2 flex items-baseline gap-1">
                             <span className="text-4xl font-bold text-amber-400">${CONFERENCE_PRODUCTS.FEATURED_365.price / 100}</span>
-                            <span className="text-slate-500">CAD</span>
+                            <span className="text-foreground0">CAD</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-400">{CONFERENCE_PRODUCTS.FEATURED_365.description}</p>
+                        <p className="mt-2 text-sm text-[var(--text-muted)]">{CONFERENCE_PRODUCTS.FEATURED_365.description}</p>
                     </div>
 
                     <ul className="mb-6 space-y-3 text-sm">
-                        <li className="flex items-start gap-2 text-slate-300">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>Featured badge for full year</span>
                         </li>
-                        <li className="flex items-start gap-2 text-slate-300">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>Homepage spotlight placement</span>
                         </li>
-                        <li className="flex items-start gap-2 text-slate-300">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             <span>Top positioning in all listings</span>
                         </li>
-                        <li className="flex items-start gap-2 text-slate-300">
+                        <li className="flex items-start gap-2 text-[var(--text-secondary)]">
                             <svg className="h-5 w-5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
@@ -167,16 +167,16 @@ export default function ConferencePricingSelector({ conferenceId, userId, onSkip
                 <div className="text-center">
                     <button
                         onClick={onSkip}
-                        className="text-sm text-slate-400 hover:text-slate-300 underline"
+                        className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] underline"
                     >
                         Continue with free listing
                     </button>
                 </div>
             )}
 
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
-                <p className="text-sm text-slate-300">
-                    <span className="font-semibold text-emerald-400">💡 Tip:</span> Featured conferences get 3x more views and registrations on average
+            <div className="rounded-xl border border-accent/20 bg-accent/5 p-4 text-center">
+                <p className="text-sm text-[var(--text-secondary)]">
+                    <span className="font-semibold text-accent">💡 Tip:</span> Featured conferences get 3x more views and registrations on average
                 </p>
             </div>
         </div>

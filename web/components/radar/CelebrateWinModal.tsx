@@ -36,7 +36,7 @@ export default function CelebrateWinModal({ isOpen, onClose }: CelebrateWinModal
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-[#0F172A] border-slate-800 text-slate-100">
+            <DialogContent className="sm:max-w-md bg-[#0F172A] border-[var(--card-border)] text-foreground">
                 <DialogHeader>
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-500/40">
                         <TrophyIcon className="h-8 w-8 text-amber-500" />
@@ -44,7 +44,7 @@ export default function CelebrateWinModal({ isOpen, onClose }: CelebrateWinModal
                     <DialogTitle className="text-center text-xl text-white">
                         Celebrate a Win!
                     </DialogTitle>
-                    <div className="text-center text-sm text-slate-400">
+                    <div className="text-center text-sm text-[var(--text-muted)]">
                         Share your success with the community. Big or small, every win counts!
                     </div>
                 </DialogHeader>
@@ -54,7 +54,7 @@ export default function CelebrateWinModal({ isOpen, onClose }: CelebrateWinModal
                         placeholder="I just completed my certification in..."
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
-                        className="min-h-[120px] resize-none border-slate-700 bg-slate-900/50 text-slate-100 placeholder:text-slate-500 focus:border-amber-500/50 focus:ring-amber-500/20"
+                        className="min-h-[120px] resize-none border-[var(--card-border)] bg-surface text-foreground placeholder:text-foreground0 focus:border-amber-500/50 focus:ring-amber-500/20"
                     />
                 </div>
 

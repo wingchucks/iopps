@@ -26,8 +26,8 @@ export function CategoryFilter({ selected, onChange }: CategoryFilterProps) {
         onClick={() => onChange(null)}
         className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
           selected === null
-            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25'
-            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+            ? 'bg-accent text-white shadow-lg shadow-teal-500/25'
+            : 'bg-surface text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white'
         }`}
       >
         All
@@ -38,8 +38,8 @@ export function CategoryFilter({ selected, onChange }: CategoryFilterProps) {
           onClick={() => onChange(category)}
           className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
             selected === category
-              ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/25'
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+              ? 'bg-accent text-white shadow-lg shadow-teal-500/25'
+              : 'bg-surface text-[var(--text-secondary)] hover:bg-slate-700 hover:text-white'
           }`}
         >
           <span className="mr-1.5">{categoryIcons[category]}</span>

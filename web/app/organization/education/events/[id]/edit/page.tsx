@@ -142,7 +142,7 @@ export default function EditEducationEventPage({
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -155,7 +155,7 @@ export default function EditEducationEventPage({
         </h1>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -183,7 +183,7 @@ export default function EditEducationEventPage({
         </h1>
         <Link
           href="/organization/dashboard?tab=education"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Back to Dashboard
         </Link>
@@ -243,7 +243,7 @@ export default function EditEducationEventPage({
         <div className="mb-6">
           <Link
             href="/organization/dashboard?tab=education"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard
           </Link>
@@ -252,7 +252,7 @@ export default function EditEducationEventPage({
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Edit Event
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Update {event.title}.
         </p>
 
@@ -263,20 +263,20 @@ export default function EditEducationEventPage({
         )}
 
         {success && (
-          <p className="mt-4 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+          <p className="mt-4 rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-sm text-emerald-200">
             Event updated successfully! Redirecting...
           </p>
         )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           {/* Publishing Status */}
-          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
             <label className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-white">
                   Published Status
                 </span>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
                   {isPublished
                     ? "Event is visible to students"
                     : "Event is hidden from public view"}
@@ -289,7 +289,7 @@ export default function EditEducationEventPage({
                   }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPublished ? "translate-x-6" : "translate-x-1"
+                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--card-bg)] transition-transform ${isPublished ? "translate-x-6" : "translate-x-1"
                     }`}
                 />
               </button>
@@ -298,12 +298,12 @@ export default function EditEducationEventPage({
 
           {/* Basic Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Event Details
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Event Title *
               </label>
               <input
@@ -311,12 +311,12 @@ export default function EditEducationEventPage({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Description *
               </label>
               <textarea
@@ -324,20 +324,20 @@ export default function EditEducationEventPage({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Event Type *
                 </label>
                 <select
                   required
                   value={eventType}
                   onChange={(e) => setEventType(e.target.value as EducationEventType)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 >
                   {EVENT_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -348,14 +348,14 @@ export default function EditEducationEventPage({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Format *
                 </label>
                 <select
                   required
                   value={format}
                   onChange={(e) => setFormat(e.target.value as EducationEventFormat)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 >
                   {EVENT_FORMATS.map((fmt) => (
                     <option key={fmt.value} value={fmt.value}>
@@ -369,13 +369,13 @@ export default function EditEducationEventPage({
 
           {/* Date & Time */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Date & Time
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Start Date *
                 </label>
                 <input
@@ -383,45 +383,45 @@ export default function EditEducationEventPage({
                   required
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Start Time
                 </label>
                 <input
                   type="time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   End Time
                 </label>
                 <input
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -429,13 +429,13 @@ export default function EditEducationEventPage({
 
           {/* Location */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Location
             </h2>
 
             {format !== "online" && (
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Physical Location {format === "in-person" && "*"}
                 </label>
                 <input
@@ -443,14 +443,14 @@ export default function EditEducationEventPage({
                   required={format === "in-person"}
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             )}
 
             {format !== "in-person" && (
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Virtual Meeting Link {format === "online" && "*"}
                 </label>
                 <input
@@ -458,7 +458,7 @@ export default function EditEducationEventPage({
                   required={format === "online"}
                   value={virtualLink}
                   onChange={(e) => setVirtualLink(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                 />
               </div>
             )}
@@ -466,7 +466,7 @@ export default function EditEducationEventPage({
 
           {/* Registration */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Registration
             </h2>
 
@@ -475,9 +475,9 @@ export default function EditEducationEventPage({
                 type="checkbox"
                 checked={registrationRequired}
                 onChange={(e) => setRegistrationRequired(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
+                className="h-4 w-4 rounded border-[var(--card-border)] bg-surface text-purple-500 focus:ring-purple-500"
               />
-              <span className="text-sm text-slate-200">
+              <span className="text-sm text-foreground">
                 Registration is required for this event
               </span>
             </label>
@@ -485,19 +485,19 @@ export default function EditEducationEventPage({
             {registrationRequired && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Registration URL
                   </label>
                   <input
                     type="url"
                     value={registrationUrl}
                     onChange={(e) => setRegistrationUrl(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Maximum Capacity
                   </label>
                   <input
@@ -505,7 +505,7 @@ export default function EditEducationEventPage({
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
                     min="1"
-                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-purple-500 focus:outline-none"
+                    className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-purple-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -513,7 +513,7 @@ export default function EditEducationEventPage({
           </div>
 
           {/* Submit */}
-          <div className="pt-4 border-t border-slate-800 flex gap-4">
+          <div className="pt-4 border-t border-[var(--card-border)] flex gap-4">
             <button
               type="submit"
               disabled={saving}
@@ -523,7 +523,7 @@ export default function EditEducationEventPage({
             </button>
             <Link
               href="/organization/dashboard?tab=education"
-              className="rounded-md border border-slate-700 px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+              className="rounded-md border border-[var(--card-border)] px-6 py-2.5 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
             >
               Cancel
             </Link>

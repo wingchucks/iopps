@@ -52,7 +52,7 @@ export default function KeyboardShortcutsModal() {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -66,14 +66,14 @@ export default function KeyboardShortcutsModal() {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-surface border border-[var(--card-border)] p-6 shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
-                  <Dialog.Title className="text-lg font-semibold text-slate-50">
+                  <Dialog.Title className="text-lg font-semibold text-foreground">
                     Keyboard Shortcuts
                   </Dialog.Title>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                    className="p-2 rounded-lg text-[var(--text-muted)] hover:text-foreground hover:bg-surface transition-colors"
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
@@ -82,7 +82,7 @@ export default function KeyboardShortcutsModal() {
                 <div className="space-y-6">
                   {SHORTCUTS.map(category => (
                     <div key={category.category}>
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground0 mb-3">
                         {category.category}
                       </h3>
                       <div className="space-y-2">
@@ -91,17 +91,17 @@ export default function KeyboardShortcutsModal() {
                             key={shortcut.key}
                             className="flex items-center justify-between py-1.5"
                           >
-                            <span className="text-sm text-slate-300">{shortcut.description}</span>
+                            <span className="text-sm text-[var(--text-secondary)]">{shortcut.description}</span>
                             <div className="flex items-center gap-1">
                               {shortcut.modifier && (
                                 <>
-                                  <kbd className="px-2 py-1 text-xs font-mono rounded bg-slate-800 text-slate-400 border border-slate-700">
+                                  <kbd className="px-2 py-1 text-xs font-mono rounded bg-surface text-[var(--text-muted)] border border-[var(--card-border)]">
                                     {shortcut.modifier}
                                   </kbd>
-                                  <span className="text-slate-600">+</span>
+                                  <span className="text-[var(--text-secondary)]">+</span>
                                 </>
                               )}
-                              <kbd className="px-2 py-1 text-xs font-mono rounded bg-slate-800 text-slate-400 border border-slate-700 min-w-[28px] text-center">
+                              <kbd className="px-2 py-1 text-xs font-mono rounded bg-surface text-[var(--text-muted)] border border-[var(--card-border)] min-w-[28px] text-center">
                                 {shortcut.key}
                               </kbd>
                             </div>
@@ -112,9 +112,9 @@ export default function KeyboardShortcutsModal() {
                   ))}
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-800">
-                  <p className="text-xs text-slate-500 text-center">
-                    Press <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-400">Esc</kbd> to close
+                <div className="mt-6 pt-4 border-t border-[var(--card-border)]">
+                  <p className="text-xs text-foreground0 text-center">
+                    Press <kbd className="px-1 py-0.5 rounded bg-surface text-[var(--text-muted)]">Esc</kbd> to close
                   </p>
                 </div>
               </Dialog.Panel>

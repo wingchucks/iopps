@@ -129,9 +129,9 @@ export default function AnalyticsTab() {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 animate-pulse">
-              <div className="h-4 w-24 bg-slate-800 rounded mb-3" />
-              <div className="h-8 w-16 bg-slate-800 rounded" />
+            <div key={i} className="rounded-2xl border border-[var(--card-border)] bg-surface p-5 animate-pulse">
+              <div className="h-4 w-24 bg-surface rounded mb-3" />
+              <div className="h-8 w-16 bg-surface rounded" />
             </div>
           ))}
         </div>
@@ -140,7 +140,7 @@ export default function AnalyticsTab() {
   }
 
   const getTrendIcon = (trend: "up" | "down" | "stable") => {
-    if (trend === "up") return <ArrowTrendingUpIcon className="h-4 w-4 text-emerald-400" />;
+    if (trend === "up") return <ArrowTrendingUpIcon className="h-4 w-4 text-accent" />;
     if (trend === "down") return <ArrowTrendingDownIcon className="h-4 w-4 text-red-400" />;
     return null;
   };
@@ -152,8 +152,8 @@ export default function AnalyticsTab() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Your Analytics</h1>
-        <p className="mt-1 text-slate-400">Track your profile performance and application progress</p>
+        <h1 className="text-2xl font-bold text-foreground">Your Analytics</h1>
+        <p className="mt-1 text-[var(--text-muted)]">Track your profile performance and application progress</p>
       </div>
 
       {/* Overview Stats */}
@@ -191,8 +191,8 @@ export default function AnalyticsTab() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Profile Views Chart */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Profile Views (Last 30 Days)</h3>
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Profile Views (Last 30 Days)</h3>
           {profileViewsData.length > 0 ? (
             <div className="space-y-4">
               {/* Simple bar chart */}
@@ -207,21 +207,21 @@ export default function AnalyticsTab() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-xs text-slate-500">
+              <div className="flex justify-between text-xs text-foreground0">
                 <span>{profileViewsData.slice(-14)[0]?.date.split("-").slice(1).join("/")}</span>
                 <span>Today</span>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-32 text-slate-500">
+            <div className="flex items-center justify-center h-32 text-foreground0">
               No profile views yet
             </div>
           )}
         </div>
 
         {/* Application Funnel */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-          <h3 className="text-lg font-semibold text-slate-100 mb-4">Application Funnel</h3>
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Application Funnel</h3>
           {applicationStats && applicationStats.total > 0 ? (
             <div className="space-y-3">
               <FunnelStep
@@ -252,11 +252,11 @@ export default function AnalyticsTab() {
                 label="Hired"
                 count={applicationStats.byStatus.hired}
                 percentage={Math.round((applicationStats.byStatus.hired / applicationStats.total) * 100)}
-                color="bg-emerald-500"
+                color="bg-accent"
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center h-32 text-slate-500">
+            <div className="flex items-center justify-center h-32 text-foreground0">
               Submit applications to see your funnel
             </div>
           )}
@@ -264,38 +264,38 @@ export default function AnalyticsTab() {
       </div>
 
       {/* Recent Profile Viewers */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-        <h3 className="text-lg font-semibold text-slate-100 mb-4">Recent Profile Viewers</h3>
+      <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Recent Profile Viewers</h3>
         {recentViewers.length > 0 ? (
           <div className="space-y-3">
             {recentViewers.slice(0, 5).map((viewer, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-slate-700/50"
+                className="flex items-center justify-between p-3 rounded-xl bg-surface border border-[var(--card-border)]"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
                     {viewer.type === "employer" ? (
-                      <BriefcaseIcon className="w-5 h-5 text-emerald-400" />
+                      <BriefcaseIcon className="w-5 h-5 text-accent" />
                     ) : (
                       <UserGroupIcon className="w-5 h-5 text-blue-400" />
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-200">
+                    <p className="font-medium text-foreground">
                       {viewer.name || (viewer.type === "employer" ? "An employer" : "A community member")}
                     </p>
-                    <p className="text-xs text-slate-500 capitalize">{viewer.type}</p>
+                    <p className="text-xs text-foreground0 capitalize">{viewer.type}</p>
                   </div>
                 </div>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-foreground0">
                   {formatTimeAgo(viewer.date)}
                 </span>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-foreground0">
             <EyeIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
             <p>No profile viewers yet</p>
             <p className="text-sm mt-1">Complete your profile to get noticed</p>
@@ -304,28 +304,28 @@ export default function AnalyticsTab() {
       </div>
 
       {/* Performance Tips */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6">
+      <div className="rounded-2xl border border-accent/30 bg-accent/10 p-6">
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/20">
-            <TrophyIcon className="w-6 h-6 text-emerald-400" />
+          <div className="p-3 rounded-xl bg-accent/20">
+            <TrophyIcon className="w-6 h-6 text-accent" />
           </div>
           <div>
             <h3 className="font-semibold text-emerald-300">Tips to Improve Your Visibility</h3>
-            <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 Complete all sections of your profile for better match scores
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 Upload a professional resume to enable Quick Apply
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 Add your skills to appear in employer talent searches
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircleIcon className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                <CheckCircleIcon className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                 Connect with others to expand your network
               </li>
             </ul>
@@ -354,14 +354,14 @@ function StatCard({
 }) {
   const colorClasses = {
     blue: "from-blue-500/20 to-cyan-500/20 border-blue-500/20",
-    emerald: "from-emerald-500/20 to-teal-500/20 border-emerald-500/20",
+    emerald: "from-emerald-500/20 to-teal-500/20 border-accent/20",
     purple: "from-purple-500/20 to-pink-500/20 border-purple-500/20",
     amber: "from-amber-500/20 to-orange-500/20 border-amber-500/20",
   };
 
   const iconColors = {
     blue: "text-blue-400",
-    emerald: "text-emerald-400",
+    emerald: "text-accent",
     purple: "text-purple-400",
     amber: "text-amber-400",
   };
@@ -372,14 +372,14 @@ function StatCard({
         <Icon className={`w-5 h-5 ${iconColors[color]}`} />
         {trend && (
           <span className="flex items-center gap-1">
-            {trend === "up" && <ArrowTrendingUpIcon className="w-4 h-4 text-emerald-400" />}
+            {trend === "up" && <ArrowTrendingUpIcon className="w-4 h-4 text-accent" />}
             {trend === "down" && <ArrowTrendingDownIcon className="w-4 h-4 text-red-400" />}
           </span>
         )}
       </div>
-      <p className="text-2xl font-bold text-slate-100">{value.toLocaleString()}</p>
-      <p className="text-sm text-slate-400 mt-1">{label}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{subValue}</p>
+      <p className="text-2xl font-bold text-foreground">{value.toLocaleString()}</p>
+      <p className="text-sm text-[var(--text-muted)] mt-1">{label}</p>
+      <p className="text-xs text-foreground0 mt-0.5">{subValue}</p>
     </div>
   );
 }
@@ -399,10 +399,10 @@ function FunnelStep({
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
-        <span className="text-slate-300">{label}</span>
-        <span className="text-slate-400">{count} ({percentage}%)</span>
+        <span className="text-[var(--text-secondary)]">{label}</span>
+        <span className="text-[var(--text-muted)]">{count} ({percentage}%)</span>
       </div>
-      <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+      <div className="h-2 bg-surface rounded-full overflow-hidden">
         <div
           className={`h-full ${color} rounded-full transition-all`}
           style={{ width: `${percentage}%` }}

@@ -16,7 +16,7 @@ const sessionTypeConfig: Record<string, { icon: ReactNode; color: string; label:
         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
       </svg>
     ),
-    color: "text-amber-400 bg-amber-50 border-amber-500/30",
+    color: "text-amber-400 bg-[var(--amber-bg)] border-amber-500/30",
     label: "Keynote",
   },
   workshop: {
@@ -52,7 +52,7 @@ const sessionTypeConfig: Record<string, { icon: ReactNode; color: string; label:
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    color: "text-slate-500 bg-slate-50 border-slate-500/30",
+    color: "text-foreground0 bg-[var(--background)] border-slate-500/30",
     label: "Break",
   },
   ceremony: {
@@ -70,7 +70,7 @@ const sessionTypeConfig: Record<string, { icon: ReactNode; color: string; label:
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    color: "text-slate-500 bg-slate-50 border-slate-500/30",
+    color: "text-foreground0 bg-[var(--background)] border-slate-500/30",
     label: "Session",
   },
 };
@@ -93,7 +93,7 @@ function SessionCard({
 
   return (
     <div
-      className={`rounded-xl border bg-slate-50 transition-all ${typeConfig.color.split(" ")[2]} hover:border-opacity-60`}
+      className={`rounded-xl border bg-[var(--background)] transition-all ${typeConfig.color.split(" ")[2]} hover:border-opacity-60`}
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -101,9 +101,9 @@ function SessionCard({
       >
         {/* Time */}
         <div className="flex-shrink-0 text-center">
-          <p className="text-sm font-bold text-slate-700">{session.time}</p>
+          <p className="text-sm font-bold text-[var(--text-secondary)]">{session.time}</p>
           {session.endTime && (
-            <p className="text-xs text-slate-500">{session.endTime}</p>
+            <p className="text-xs text-foreground0">{session.endTime}</p>
           )}
         </div>
 
@@ -117,18 +117,18 @@ function SessionCard({
               {typeConfig.label}
             </span>
             {session.track && (
-              <span className="rounded-full border border-slate-300 bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">
+              <span className="rounded-full border border-[var(--border)] bg-surface px-2.5 py-0.5 text-xs text-foreground0">
                 {session.track}
               </span>
             )}
             {session.location && (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-foreground0">
                 @ {session.location}
               </span>
             )}
           </div>
 
-          <h4 className="mt-2 font-semibold text-slate-800">{session.title}</h4>
+          <h4 className="mt-2 font-semibold text-[var(--text-primary)]">{session.title}</h4>
 
           {sessionSpeakers && sessionSpeakers.length > 0 && (
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -139,7 +139,7 @@ function SessionCard({
                     e.stopPropagation();
                     onSpeakerClick?.(speaker.id);
                   }}
-                  className="flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-600 transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
+                  className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-surface px-2 py-1 text-xs text-[var(--text-secondary)] transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
                 >
                   {speaker.photoUrl ? (
                     <img
@@ -148,7 +148,7 @@ function SessionCard({
                       className="h-5 w-5 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-medium">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-surface text-[10px] font-medium">
                       {speaker.name
                         .split(" ")
                         .map((n) => n[0])
@@ -166,7 +166,7 @@ function SessionCard({
         {/* Expand Icon */}
         {session.description && (
           <svg
-            className={`h-5 w-5 flex-shrink-0 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            className={`h-5 w-5 flex-shrink-0 text-foreground0 transition-transform ${isExpanded ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -183,8 +183,8 @@ function SessionCard({
 
       {/* Expanded Description */}
       {isExpanded && session.description && (
-        <div className="border-t border-slate-200 px-4 py-3">
-          <p className="text-sm leading-relaxed text-slate-600">
+        <div className="border-t border-[var(--border)] px-4 py-3">
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
             {session.description}
           </p>
         </div>
@@ -233,11 +233,11 @@ export default function ConferenceAgenda({
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-700">Schedule</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <h2 className="text-xl font-bold text-[var(--text-secondary)]">Schedule</h2>
+          <p className="mt-1 text-sm text-foreground0">
             {agenda.length} day{agenda.length > 1 ? "s" : ""} of sessions and activities
           </p>
         </div>
@@ -249,7 +249,7 @@ export default function ConferenceAgenda({
               onClick={() => setTrackFilter(null)}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${trackFilter === null
                   ? "bg-[#0D9488] text-white"
-                  : "border border-slate-300 text-slate-600 hover:border-[#0D9488]"
+                  : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[#0D9488]"
                 }`}
             >
               All Tracks
@@ -260,7 +260,7 @@ export default function ConferenceAgenda({
                 onClick={() => setTrackFilter(track)}
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${trackFilter === track
                     ? "bg-[#0D9488] text-white"
-                    : "border border-slate-300 text-slate-600 hover:border-[#0D9488]"
+                    : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[#0D9488]"
                   }`}
               >
                 {track}
@@ -279,7 +279,7 @@ export default function ConferenceAgenda({
               onClick={() => setActiveDay(index)}
               className={`flex-shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeDay === index
                   ? "bg-[#0D9488] text-white"
-                  : "border border-slate-300 text-slate-600 hover:border-[#0D9488]"
+                  : "border border-[var(--border)] text-[var(--text-secondary)] hover:border-[#0D9488]"
                 }`}
             >
               <span className="block text-xs opacity-70">Day {index + 1}</span>
@@ -292,7 +292,7 @@ export default function ConferenceAgenda({
       {/* Sessions */}
       <div className="mt-6 space-y-3">
         {filteredSessions.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">
+          <p className="py-8 text-center text-sm text-foreground0">
             No sessions match the selected filter.
           </p>
         ) : (
@@ -308,15 +308,15 @@ export default function ConferenceAgenda({
       </div>
 
       {/* Legend */}
-      <div className="mt-6 border-t border-slate-200 pt-4">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+      <div className="mt-6 border-t border-[var(--border)] pt-4">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-foreground0">
           Session Types
         </p>
         <div className="flex flex-wrap gap-3">
           {Object.entries(sessionTypeConfig).map(([key, config]) => (
             <div
               key={key}
-              className="flex items-center gap-1.5 text-xs text-slate-500"
+              className="flex items-center gap-1.5 text-xs text-foreground0"
             >
               <span className={config.color.split(" ")[0]}>{config.icon}</span>
               {config.label}

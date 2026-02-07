@@ -18,14 +18,14 @@ function ProgressBar({ used, total, label }: ProgressBarProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-300">{label}</span>
-        <span className="text-sm text-slate-400">
+        <span className="text-sm font-medium text-[var(--text-secondary)]">{label}</span>
+        <span className="text-sm text-[var(--text-muted)]">
           {used} / {total}
         </span>
       </div>
       <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#14B8A6] transition-all duration-300"
+          className="h-full bg-accent transition-all duration-300"
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
       </div>
@@ -44,8 +44,8 @@ function FeatureItem({ icon, title, description }: FeatureItemProps) {
     <div className="flex items-start gap-3">
       <span className="text-xl mt-1">{icon}</span>
       <div>
-        <h4 className="font-medium text-slate-100">{title}</h4>
-        <p className="text-sm text-slate-400">{description}</p>
+        <h4 className="font-medium text-foreground">{title}</h4>
+        <p className="text-sm text-[var(--text-muted)]">{description}</p>
       </div>
     </div>
   );
@@ -53,8 +53,8 @@ function FeatureItem({ icon, title, description }: FeatureItemProps) {
 
 function TierBadge({ tier }: { tier: string }) {
   const tierLabels: Record<string, { label: string; color: string }> = {
-    TIER1: { label: "Basic", color: "bg-slate-700/50 border-slate-600 text-slate-200" },
-    TIER2: { label: "Unlimited + Shop", color: "bg-[#14B8A6]/20 border-[#14B8A6]/40 text-[#14B8A6]" },
+    TIER1: { label: "Basic", color: "bg-slate-700/50 border-[var(--card-border)] text-foreground" },
+    TIER2: { label: "Unlimited + Shop", color: "bg-accent/20 border-[#14B8A6]/40 text-[#14B8A6]" },
   };
 
   const tierInfo = tierLabels[tier as keyof typeof tierLabels] || tierLabels.TIER1;
@@ -178,9 +178,9 @@ export default function SubscriptionPage() {
   // Loading state
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-16">
-          <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-8 text-center shadow-lg shadow-black/30">
+          <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-8 text-center shadow-lg shadow-black/30">
             <div className="animate-pulse flex flex-col items-center gap-4">
               <div className="h-8 w-48 bg-slate-700 rounded"></div>
               <div className="h-4 w-72 bg-slate-700 rounded"></div>
@@ -194,18 +194,18 @@ export default function SubscriptionPage() {
   // Not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="space-y-4">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Please sign in
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--text-muted)]">
               Sign in with your employer account to view your subscription details.
             </p>
             <Link
               href="/register?role=employer"
-              className="inline-flex items-center rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+              className="inline-flex items-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[#16cdb8]"
             >
               Create employer account
             </Link>
@@ -218,13 +218,13 @@ export default function SubscriptionPage() {
   // Not employer
   if (role !== "employer") {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="space-y-4">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Employer access only
             </h1>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--text-muted)]">
               Switch to your employer account to view subscription information.
             </p>
           </div>
@@ -236,7 +236,7 @@ export default function SubscriptionPage() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-6 text-red-200">
             <p className="font-medium">Error loading subscription</p>
@@ -251,43 +251,43 @@ export default function SubscriptionPage() {
   const hasActiveSubscription = subscription?.active;
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-surface">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:py-20">
         {/* Page Header */}
         <div className="mb-12 space-y-3">
           <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
             Subscription Management
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl text-slate-50">
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">
             Your Subscription
           </h1>
-          <p className="mt-3 text-sm text-slate-400 sm:text-base max-w-2xl">
+          <p className="mt-3 text-sm text-[var(--text-muted)] sm:text-base max-w-2xl">
             Manage your IOPPS employer subscription, view credit usage, and explore upgrade options.
           </p>
         </div>
 
         {/* No Subscription State */}
         {!hasActiveSubscription && (
-          <div className="mb-12 rounded-2xl border border-slate-800/80 bg-[#08090C] p-8 shadow-lg shadow-black/30">
+          <div className="mb-12 rounded-2xl border border-[var(--card-border)]/80 bg-surface p-8 shadow-lg shadow-black/30">
             <div className="text-center space-y-6">
               <div>
-                <h2 className="text-2xl font-semibold text-slate-50">
+                <h2 className="text-2xl font-semibold text-foreground">
                   No active subscription
                 </h2>
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[var(--text-muted)]">
                   Get started with an IOPPS employer subscription to post jobs, access job credits, and reach Indigenous talent across Canada.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center justify-center rounded-lg bg-[#14B8A6] px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+                  className="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[#16cdb8]"
                 >
                   View Pricing & Plans
                 </Link>
                 <Link
                   href="/organization/jobs/new"
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-800/60 px-6 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+                  className="inline-flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-6 py-3 text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface"
                 >
                   Post a Job
                 </Link>
@@ -299,10 +299,10 @@ export default function SubscriptionPage() {
         {hasActiveSubscription && subscription && (
           <div className="space-y-8">
             {/* Subscription Status Card */}
-            <div className="rounded-2xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-6 sm:p-8 shadow-lg shadow-black/30">
+            <div className="rounded-2xl border border-[#14B8A6]/30 bg-accent/5 p-6 sm:p-8 shadow-lg shadow-black/30">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">
                     Plan
                   </p>
                   <div className="flex items-center gap-3">
@@ -311,31 +311,31 @@ export default function SubscriptionPage() {
                 </div>
 
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">
                     Status
                   </p>
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-slate-200">
+                    <span className="text-sm font-medium text-foreground">
                       Active
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">
                     Purchased
                   </p>
-                  <p className="text-sm font-medium text-slate-200">
+                  <p className="text-sm font-medium text-foreground">
                     {formatDate(subscription.purchasedAt)}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">
                     Expires
                   </p>
-                  <p className="text-sm font-medium text-slate-200">
+                  <p className="text-sm font-medium text-foreground">
                     {formatDate(subscription.expiresAt)}
                   </p>
                 </div>
@@ -343,7 +343,7 @@ export default function SubscriptionPage() {
 
               {subscription.amountPaid && (
                 <div className="mt-6 pt-6 border-t border-[#14B8A6]/20">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">
                     Amount Paid
                   </p>
                   <p className="text-2xl font-bold text-[#14B8A6]">
@@ -356,13 +356,13 @@ export default function SubscriptionPage() {
             {/* Credits Dashboard */}
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Job Credits Card */}
-              <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+              <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-50">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Job Credits
                     </h3>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-[var(--text-muted)] mt-1">
                       Used to post job listings
                     </p>
                   </div>
@@ -376,8 +376,8 @@ export default function SubscriptionPage() {
                     label="Job postings"
                   />
 
-                  <div className="pt-4 border-t border-slate-700">
-                    <p className="text-xs text-slate-400 mb-2">
+                  <div className="pt-4 border-t border-[var(--card-border)]">
+                    <p className="text-xs text-[var(--text-muted)] mb-2">
                       {subscription.jobCreditsUsed || 0} of {subscription.jobCredits || 0} credits used
                     </p>
                     <p className="text-sm font-medium text-[#14B8A6]">
@@ -386,13 +386,13 @@ export default function SubscriptionPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-slate-700">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-3">
+                <div className="mt-6 pt-6 border-t border-[var(--card-border)]">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-3">
                     Quick actions
                   </p>
                   <Link
                     href="/organization/jobs/new"
-                    className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+                    className="block w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface"
                   >
                     Post a Job
                   </Link>
@@ -400,13 +400,13 @@ export default function SubscriptionPage() {
               </div>
 
               {/* Featured Job Credits Card */}
-              <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
+              <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-50">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Featured Job Credits
                     </h3>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <p className="text-sm text-[var(--text-muted)] mt-1">
                       Premium visibility for job postings
                     </p>
                   </div>
@@ -420,8 +420,8 @@ export default function SubscriptionPage() {
                     label="Featured listings"
                   />
 
-                  <div className="pt-4 border-t border-slate-700">
-                    <p className="text-xs text-slate-400 mb-2">
+                  <div className="pt-4 border-t border-[var(--card-border)]">
+                    <p className="text-xs text-[var(--text-muted)] mb-2">
                       {subscription.featuredJobCreditsUsed || 0} of {subscription.featuredJobCredits || 0} credits used
                     </p>
                     <p className="text-sm font-medium text-[#14B8A6]">
@@ -430,13 +430,13 @@ export default function SubscriptionPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-slate-700">
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-3">
+                <div className="mt-6 pt-6 border-t border-[var(--card-border)]">
+                  <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] mb-3">
                     Quick actions
                   </p>
                   <Link
                     href="/organization/jobs/new?featured=true"
-                    className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+                    className="block w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface"
                   >
                     Post Featured Job
                   </Link>
@@ -446,11 +446,11 @@ export default function SubscriptionPage() {
 
             {/* Unlimited Posts Badge */}
             {subscription.unlimitedPosts && (
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 sm:p-8 shadow-lg shadow-black/30">
+              <div className="rounded-2xl border border-accent/30 bg-accent/5 p-6 sm:p-8 shadow-lg shadow-black/30">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
                     <svg
-                      className="h-6 w-6 text-emerald-400"
+                      className="h-6 w-6 text-accent"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -476,8 +476,8 @@ export default function SubscriptionPage() {
             )}
 
             {/* Tier Benefits */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-              <h2 className="text-xl font-semibold text-slate-50 mb-6">
+            <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
+              <h2 className="text-xl font-semibold text-foreground mb-6">
                 Your Subscription Benefits
               </h2>
 
@@ -546,32 +546,32 @@ export default function SubscriptionPage() {
 
             {/* Action Cards */}
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-                <h3 className="font-semibold text-slate-50 mb-2">
+              <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
+                <h3 className="font-semibold text-foreground mb-2">
                   View Your Jobs
                 </h3>
-                <p className="text-sm text-slate-400 mb-4">
+                <p className="text-sm text-[var(--text-muted)] mb-4">
                   Manage all your active and past job postings
                 </p>
                 <Link
                   href="/organization/jobs"
-                  className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+                  className="block w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface"
                 >
                   View Jobs
                 </Link>
               </div>
 
-              <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-                <h3 className="font-semibold text-slate-50 mb-2">
+              <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
+                <h3 className="font-semibold text-foreground mb-2">
                   Manage Billing
                 </h3>
-                <p className="text-sm text-slate-400 mb-4">
+                <p className="text-sm text-[var(--text-muted)] mb-4">
                   Update payment method and billing information
                 </p>
                 <button
                   onClick={handleManageBilling}
                   disabled={billingLoading}
-                  className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800 disabled:opacity-50"
+                  className="block w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface disabled:opacity-50"
                 >
                   {billingLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -584,31 +584,31 @@ export default function SubscriptionPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-                <h3 className="font-semibold text-slate-50 mb-2">
+              <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
+                <h3 className="font-semibold text-foreground mb-2">
                   View Pricing
                 </h3>
-                <p className="text-sm text-slate-400 mb-4">
+                <p className="text-sm text-[var(--text-muted)] mb-4">
                   See all available plans and upgrade options
                 </p>
                 <Link
                   href="/pricing"
-                  className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+                  className="block w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface"
                 >
                   View Pricing
                 </Link>
               </div>
 
-              <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-                <h3 className="font-semibold text-slate-50 mb-2">
+              <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
+                <h3 className="font-semibold text-foreground mb-2">
                   View Your Profile
                 </h3>
-                <p className="text-sm text-slate-400 mb-4">
+                <p className="text-sm text-[var(--text-muted)] mb-4">
                   Edit organization information and branding
                 </p>
                 <Link
                   href="/organization/profile"
-                  className="block w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-slate-100 transition-all hover:border-[#14B8A6] hover:bg-slate-800"
+                  className="block w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2 text-center text-sm font-semibold text-foreground transition-all hover:border-[#14B8A6] hover:bg-surface"
                 >
                   View Profile
                 </Link>
@@ -616,8 +616,8 @@ export default function SubscriptionPage() {
             </div>
 
             {/* Payment History */}
-            <div className="rounded-2xl border border-slate-800/80 bg-[#08090C] p-6 sm:p-8 shadow-lg shadow-black/30">
-              <h2 className="text-xl font-semibold text-slate-50 mb-6">
+            <div className="rounded-2xl border border-[var(--card-border)]/80 bg-surface p-6 sm:p-8 shadow-lg shadow-black/30">
+              <h2 className="text-xl font-semibold text-foreground mb-6">
                 Payment History
               </h2>
 
@@ -626,7 +626,7 @@ export default function SubscriptionPage() {
                   <div className="w-8 h-8 border-3 border-[#14B8A6] border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : payments.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-6">
+                <p className="text-sm text-foreground0 text-center py-6">
                   No payment records found.
                 </p>
               ) : (
@@ -634,13 +634,13 @@ export default function SubscriptionPage() {
                   {payments.map((payment) => (
                     <div
                       key={payment.id}
-                      className="flex items-center justify-between rounded-xl border border-slate-700/50 bg-slate-800/30 px-4 py-3"
+                      className="flex items-center justify-between rounded-xl border border-[var(--card-border)] bg-slate-800/30 px-4 py-3"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-200 truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {payment.description || payment.type || "Payment"}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-foreground0">
                           {payment.createdAt
                             ? new Date(payment.createdAt).toLocaleDateString(
                                 "en-US",
@@ -654,7 +654,7 @@ export default function SubscriptionPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-sm font-semibold text-slate-200">
+                        <span className="text-sm font-semibold text-foreground">
                           ${(payment.amount / 100).toFixed(2)}{" "}
                           {payment.currency.toUpperCase()}
                         </span>

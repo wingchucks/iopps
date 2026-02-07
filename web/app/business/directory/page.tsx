@@ -158,7 +158,7 @@ export default function BusinessDirectoryPage() {
       <SectionHeader title="Business Directory" subtitle="Discover and connect with Indigenous-owned businesses" icon="briefcase" />
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 px-6 py-16 sm:px-12 sm:py-24 mb-12 border border-slate-200">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 px-6 py-16 sm:px-12 sm:py-24 mb-12 border border-[var(--border)]">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -172,14 +172,14 @@ export default function BusinessDirectoryPage() {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-[var(--text-primary)] sm:text-5xl lg:text-6xl">
             Indigenous Business Directory
           </h1>
-          <p className="mt-4 text-lg text-slate-600 sm:text-xl">
+          <p className="mt-4 text-lg text-[var(--text-secondary)] sm:text-xl">
             Discover and connect with Indigenous-owned businesses across North America.
             Find products, services, and professional expertise all in one place.
           </p>
@@ -187,23 +187,23 @@ export default function BusinessDirectoryPage() {
           {/* Search Bar */}
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground0" />
               <input
                 type="text"
                 placeholder="Search businesses..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white border border-slate-200 py-3 pl-12 pr-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500"
+                className="w-full rounded-full bg-[var(--card-bg)] border border-[var(--border)] py-3 pl-12 pr-4 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-accent"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white border border-slate-200 px-6 py-3 text-slate-900 transition-colors hover:bg-slate-50"
+              className="flex items-center justify-center gap-2 rounded-full bg-[var(--card-bg)] border border-[var(--border)] px-6 py-3 text-[var(--text-primary)] transition-colors hover:bg-[var(--background)]"
             >
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">
                   !
                 </span>
               )}
@@ -216,8 +216,8 @@ export default function BusinessDirectoryPage() {
               onClick={() => setBusinessType('all')}
               className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 businessType === 'all'
-                  ? 'bg-white text-slate-900'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[var(--card-bg)] text-[var(--text-primary)]'
+                  : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
               }`}
             >
               All Businesses
@@ -226,8 +226,8 @@ export default function BusinessDirectoryPage() {
               onClick={() => setBusinessType('products')}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 businessType === 'products'
-                  ? 'bg-teal-500 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-accent text-white'
+                  : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
               }`}
             >
               <BuildingStorefrontIcon className="h-4 w-4" />
@@ -238,7 +238,7 @@ export default function BusinessDirectoryPage() {
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 businessType === 'services'
                   ? 'bg-indigo-500 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
               }`}
             >
               <BriefcaseIcon className="h-4 w-4" />
@@ -250,13 +250,13 @@ export default function BusinessDirectoryPage() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="mb-8 rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+        <div className="mb-8 rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Filters</h3>
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+                className="flex items-center gap-1 text-sm text-foreground0 hover:text-[var(--text-primary)] transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Clear all
@@ -266,14 +266,14 @@ export default function BusinessDirectoryPage() {
 
           {/* Regions */}
           <div>
-            <h4 className="text-sm font-medium text-slate-500 mb-3">Region</h4>
+            <h4 className="text-sm font-medium text-foreground0 mb-3">Region</h4>
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
               <button
                 onClick={() => setRegion(null)}
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   region === null
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-accent text-white'
+                    : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                 }`}
               >
                 All Regions
@@ -284,8 +284,8 @@ export default function BusinessDirectoryPage() {
                   onClick={() => setRegion(r)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     region === r
-                      ? 'bg-teal-500 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-accent text-white'
+                      : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                   }`}
                 >
                   {r}
@@ -299,13 +299,13 @@ export default function BusinessDirectoryPage() {
       {/* Stats Bar */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-foreground0">
             {loading ? 'Loading...' : `${items.length} ${items.length === 1 ? 'business' : 'businesses'} found`}
           </span>
           {businessType !== 'all' && (
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
               businessType === 'products'
-                ? 'bg-teal-500/10 text-teal-400'
+                ? 'bg-accent/10 text-accent'
                 : 'bg-indigo-500/10 text-indigo-400'
             }`}>
               {businessType === 'products' ? (
@@ -319,14 +319,14 @@ export default function BusinessDirectoryPage() {
         <div className="flex gap-2">
           <Link
             href="/business"
-            className="text-sm text-slate-500 hover:text-teal-400 transition-colors"
+            className="text-sm text-foreground0 hover:text-accent transition-colors"
           >
             Shop Products →
           </Link>
-          <span className="text-slate-600">|</span>
+          <span className="text-[var(--text-secondary)]">|</span>
           <Link
             href="/business/services"
-            className="text-sm text-slate-500 hover:text-indigo-400 transition-colors"
+            className="text-sm text-foreground0 hover:text-indigo-400 transition-colors"
           >
             Browse Services →
           </Link>
@@ -337,16 +337,16 @@ export default function BusinessDirectoryPage() {
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[...Array(12)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-slate-100 h-72" />
+            <div key={i} className="animate-pulse rounded-2xl bg-surface h-72" />
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center shadow-sm">
-          <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-            <MagnifyingGlassIcon className="h-8 w-8 text-slate-500" />
+        <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-12 text-center shadow-sm">
+          <div className="mx-auto h-16 w-16 rounded-full bg-surface flex items-center justify-center mb-4">
+            <MagnifyingGlassIcon className="h-8 w-8 text-foreground0" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No businesses found</h3>
-          <p className="text-slate-500 mb-4">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No businesses found</h3>
+          <p className="text-foreground0 mb-4">
             {hasFilters
               ? "Try adjusting your filters or search terms."
               : "Be the first to list your Indigenous-owned business!"}
@@ -354,7 +354,7 @@ export default function BusinessDirectoryPage() {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
             >
               Clear filters
             </button>
@@ -366,12 +366,12 @@ export default function BusinessDirectoryPage() {
             <Link
               key={`${item.type}-${item.id}`}
               href={getItemUrl(item)}
-              className={`group relative block overflow-hidden rounded-2xl bg-white border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+              className={`group relative block overflow-hidden rounded-2xl bg-[var(--card-bg)] border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
                 item.featured
                   ? item.type === 'vendor'
-                    ? 'border-teal-500/50 ring-1 ring-teal-500/20 hover:shadow-teal-500/10'
+                    ? 'border-accent/50 ring-1 ring-teal-500/20 hover:shadow-teal-500/10'
                     : 'border-indigo-500/50 ring-1 ring-indigo-500/20 hover:shadow-indigo-500/10'
-                  : 'border-slate-200 hover:border-slate-300'
+                  : 'border-[var(--border)] hover:border-[var(--border)]'
               }`}
             >
               {/* Cover Image */}
@@ -395,7 +395,7 @@ export default function BusinessDirectoryPage() {
                 {/* Type Badge */}
                 <div className={`absolute top-3 left-3 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
                   item.type === 'vendor'
-                    ? 'bg-teal-500/80 text-white'
+                    ? 'bg-accent/80 text-white'
                     : 'bg-indigo-500/80 text-white'
                 }`}>
                   {item.type === 'vendor' ? (
@@ -416,7 +416,7 @@ export default function BusinessDirectoryPage() {
 
                 {/* Logo */}
                 <div className="absolute -bottom-5 left-4">
-                  <div className="h-12 w-12 overflow-hidden rounded-xl border-4 border-white bg-white shadow-xl">
+                  <div className="h-12 w-12 overflow-hidden rounded-xl border-4 border-white bg-[var(--card-bg)] shadow-xl">
                     {item.logoUrl ? (
                       <Image
                         src={item.logoUrl}
@@ -442,28 +442,28 @@ export default function BusinessDirectoryPage() {
               <div className="p-4 pt-7">
                 {/* Business Name */}
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className={`text-base font-semibold text-slate-900 transition-colors line-clamp-1 ${
-                    item.type === 'vendor' ? 'group-hover:text-teal-400' : 'group-hover:text-indigo-400'
+                  <h3 className={`text-base font-semibold text-[var(--text-primary)] transition-colors line-clamp-1 ${
+                    item.type === 'vendor' ? 'group-hover:text-accent' : 'group-hover:text-indigo-400'
                   }`}>
                     {item.name}
                   </h3>
                   {item.verified && (
                     <CheckBadgeIcon className={`h-4 w-4 flex-shrink-0 ${
-                      item.type === 'vendor' ? 'text-teal-400' : 'text-indigo-400'
+                      item.type === 'vendor' ? 'text-accent' : 'text-indigo-400'
                     }`} />
                   )}
                 </div>
 
                 {/* Tagline */}
                 {item.tagline && (
-                  <p className="mt-1 text-xs text-slate-500 line-clamp-1">{item.tagline}</p>
+                  <p className="mt-1 text-xs text-foreground0 line-clamp-1">{item.tagline}</p>
                 )}
 
                 {/* Category Badge */}
                 <div className="mt-2">
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                     item.type === 'vendor'
-                      ? 'bg-teal-500/10 text-teal-400'
+                      ? 'bg-accent/10 text-accent'
                       : 'bg-indigo-500/10 text-indigo-400'
                   }`}>
                     {item.category}
@@ -471,7 +471,7 @@ export default function BusinessDirectoryPage() {
                 </div>
 
                 {/* Location & Options */}
-                <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                <div className="mt-3 flex items-center gap-3 text-xs text-foreground0">
                   {item.location && (
                     <span className="flex items-center gap-1">
                       <MapPinIcon className="h-3 w-3" />
@@ -488,7 +488,7 @@ export default function BusinessDirectoryPage() {
 
                 {/* Nation */}
                 {item.nation && (
-                  <p className="mt-2 text-xs text-slate-500 italic truncate">{item.nation}</p>
+                  <p className="mt-2 text-xs text-foreground0 italic truncate">{item.nation}</p>
                 )}
               </div>
             </Link>
@@ -498,11 +498,11 @@ export default function BusinessDirectoryPage() {
 
       {/* CTA Section - Only show to employers/admins */}
       {canListBusiness && (
-        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-[var(--border)] p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
             Join Our Business Directory
           </h2>
-          <p className="mt-3 text-slate-500 max-w-2xl mx-auto">
+          <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
             Whether you sell products or offer professional services, list your Indigenous-owned business and connect with customers across North America.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">

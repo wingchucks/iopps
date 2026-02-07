@@ -167,21 +167,21 @@ export default function EditServiceModal({
       aria-modal="true"
       aria-labelledby="edit-service-title"
     >
-      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-[var(--card-border)] bg-surface shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--card-border)] bg-surface px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
               <BriefcaseIcon className="h-5 w-5 text-white" />
             </div>
-            <h2 id="edit-service-title" className="text-xl font-semibold text-slate-100">
+            <h2 id="edit-service-title" className="text-xl font-semibold text-foreground">
               Edit Service
             </h2>
           </div>
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200 disabled:opacity-50"
+            className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-foreground disabled:opacity-50"
             aria-label="Close"
           >
             <XMarkIcon className="h-5 w-5" />
@@ -201,7 +201,7 @@ export default function EditServiceModal({
             )}
 
             {/* Service Information */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
                 <BriefcaseIcon className="h-4 w-4 text-indigo-400" />
                 <h3 className="text-sm font-semibold text-white">Service Information</h3>
@@ -209,7 +209,7 @@ export default function EditServiceModal({
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Service Title *
                   </label>
                   <input
@@ -218,12 +218,12 @@ export default function EditServiceModal({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Indigenous Business Consulting"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Tagline
                   </label>
                   <input
@@ -231,12 +231,12 @@ export default function EditServiceModal({
                     value={tagline}
                     onChange={(e) => setTagline(e.target.value)}
                     placeholder="A brief catchy description"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Description *
                   </label>
                   <textarea
@@ -245,19 +245,19 @@ export default function EditServiceModal({
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
                     placeholder="Describe your services..."
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Category *
                   </label>
                   <select
                     required
                     value={category}
                     onChange={(e) => setCategory(e.target.value as ServiceCategory)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="">Select a category</option>
                     {SERVICE_CATEGORIES.map((cat) => (
@@ -271,7 +271,7 @@ export default function EditServiceModal({
             </section>
 
             {/* Location & Availability */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
                 <MapPinIcon className="h-4 w-4 text-indigo-400" />
                 <h3 className="text-sm font-semibold text-white">Location & Availability</h3>
@@ -280,7 +280,7 @@ export default function EditServiceModal({
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       City/Town
                     </label>
                     <input
@@ -288,19 +288,19 @@ export default function EditServiceModal({
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="e.g., Toronto"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Region *
                     </label>
                     <select
                       required
                       value={region}
                       onChange={(e) => setRegion(e.target.value as NorthAmericanRegion)}
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                     >
                       <option value="">Select a region</option>
                       {NORTH_AMERICAN_REGIONS.map((r) => (
@@ -313,7 +313,7 @@ export default function EditServiceModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Service Areas
                   </label>
                   <input
@@ -321,7 +321,7 @@ export default function EditServiceModal({
                     value={serviceAreas}
                     onChange={(e) => setServiceAreas(e.target.value)}
                     placeholder="Comma-separated: Toronto, Vancouver, Calgary"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
@@ -330,11 +330,11 @@ export default function EditServiceModal({
                     type="checkbox"
                     checked={servesRemote}
                     onChange={(e) => setServesRemote(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-indigo-500 focus:ring-indigo-500"
                   />
                   <div className="flex items-center gap-2">
-                    <GlobeAltIcon className="h-4 w-4 text-slate-400" />
-                    <span className="text-sm text-slate-300">
+                    <GlobeAltIcon className="h-4 w-4 text-[var(--text-muted)]" />
+                    <span className="text-sm text-[var(--text-secondary)]">
                       Available for remote/virtual services
                     </span>
                   </div>
@@ -343,7 +343,7 @@ export default function EditServiceModal({
             </section>
 
             {/* Contact Information */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
                 <EnvelopeIcon className="h-4 w-4 text-indigo-400" />
                 <h3 className="text-sm font-semibold text-white">Contact Information</h3>
@@ -352,7 +352,7 @@ export default function EditServiceModal({
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Email
                     </label>
                     <input
@@ -360,12 +360,12 @@ export default function EditServiceModal({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="contact@example.com"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Phone
                     </label>
                     <input
@@ -373,14 +373,14 @@ export default function EditServiceModal({
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="(555) 123-4567"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Website
                     </label>
                     <input
@@ -388,12 +388,12 @@ export default function EditServiceModal({
                       value={website}
                       onChange={(e) => setWebsite(e.target.value)}
                       placeholder="https://example.com"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-200">
+                    <label className="block text-sm font-medium text-foreground">
                       Booking URL
                     </label>
                     <input
@@ -401,7 +401,7 @@ export default function EditServiceModal({
                       value={bookingUrl}
                       onChange={(e) => setBookingUrl(e.target.value)}
                       placeholder="Link to your scheduling"
-                      className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                      className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -409,7 +409,7 @@ export default function EditServiceModal({
             </section>
 
             {/* Pricing & Status */}
-            <section className="rounded-xl border border-slate-800 bg-slate-800/50 p-4">
+            <section className="rounded-xl border border-[var(--card-border)] bg-surface p-4">
               <div className="flex items-center gap-2 mb-3">
                 <CheckCircleIcon className="h-4 w-4 text-indigo-400" />
                 <h3 className="text-sm font-semibold text-white">Pricing & Status</h3>
@@ -417,7 +417,7 @@ export default function EditServiceModal({
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Price Range
                   </label>
                   <input
@@ -425,24 +425,24 @@ export default function EditServiceModal({
                     value={priceRange}
                     onChange={(e) => setPriceRange(e.target.value)}
                     placeholder="e.g., $100-$200/hr"
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-200">
+                  <label className="block text-sm font-medium text-foreground">
                     Status
                   </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as ServiceStatus)}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="draft">Draft</option>
                     <option value="pending">Pending Review</option>
                     <option value="active">Active</option>
                   </select>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-foreground0">
                     Note: Active services are visible in the marketplace
                   </p>
                 </div>
@@ -452,11 +452,11 @@ export default function EditServiceModal({
                     type="checkbox"
                     checked={freeConsultation}
                     onChange={(e) => setFreeConsultation(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-indigo-500 focus:ring-indigo-500"
                   />
                   <div className="flex items-center gap-2">
-                    <CheckCircleIcon className="h-4 w-4 text-emerald-400" />
-                    <span className="text-sm text-slate-300">
+                    <CheckCircleIcon className="h-4 w-4 text-accent" />
+                    <span className="text-sm text-[var(--text-secondary)]">
                       Offer free initial consultation
                     </span>
                   </div>
@@ -465,12 +465,12 @@ export default function EditServiceModal({
             </section>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+            <div className="flex justify-end gap-3 pt-4 border-t border-[var(--card-border)]">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-surface disabled:opacity-50"
               >
                 Cancel
               </button>

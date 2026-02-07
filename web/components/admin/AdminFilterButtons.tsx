@@ -21,12 +21,12 @@ export function AdminFilterButtons({ options, value, onChange }: AdminFilterButt
         const isPurple = option.variant === "purple";
 
         const activeClass = isPurple
-          ? "bg-purple-500 text-slate-900"
-          : "bg-[#14B8A6] text-slate-900";
+          ? "bg-purple-500 text-[var(--text-primary)]"
+          : "bg-accent text-[var(--text-primary)]";
 
         const inactiveClass = isPurple
-          ? "border border-slate-700 text-slate-300 hover:border-purple-500"
-          : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]";
+          ? "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-purple-500"
+          : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]";
 
         return (
           <button

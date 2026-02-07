@@ -75,7 +75,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={`inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors ${className || ""}`}
+        className={`inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors ${className || ""}`}
       >
         <Award className="h-4 w-4" />
         Endorse
@@ -87,23 +87,23 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl"
+            className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <Award className="h-5 w-5 text-emerald-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                  <Award className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-100">Endorse Skills</h2>
-                  <p className="text-sm text-slate-400">Recognize their abilities</p>
+                  <h2 className="text-lg font-bold text-foreground">Endorse Skills</h2>
+                  <p className="text-sm text-[var(--text-muted)]">Recognize their abilities</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -112,7 +112,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Skill Selection */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Skill *
                 </label>
                 {targetSkills.length > 0 ? (
@@ -120,7 +120,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                     <select
                       value={skill}
                       onChange={(e) => setSkill(e.target.value)}
-                      className="w-full appearance-none rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 pr-10 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                      className="w-full appearance-none rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 pr-10 text-sm text-foreground focus:border-accent focus:outline-none"
                     >
                       <option value="">Select a skill...</option>
                       {targetSkills.map((s) => (
@@ -130,7 +130,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                       ))}
                       <option value="__custom__">Other (custom)</option>
                     </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
                   </div>
                 ) : (
                   <input
@@ -141,7 +141,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                       setSkill("__custom__");
                     }}
                     placeholder="e.g., Leadership, Beadwork, Grant Writing"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                   />
                 )}
                 {skill === "__custom__" && targetSkills.length > 0 && (
@@ -150,21 +150,21 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                     value={customSkill}
                     onChange={(e) => setCustomSkill(e.target.value)}
                     placeholder="Enter custom skill..."
-                    className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
+                    className="mt-2 w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none"
                   />
                 )}
               </div>
 
               {/* Relationship */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Your Relationship *
                 </label>
                 <div className="relative">
                   <select
                     value={relationship}
                     onChange={(e) => setRelationship(e.target.value as EndorsementRelationship)}
-                    className="w-full appearance-none rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 pr-10 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                    className="w-full appearance-none rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 pr-10 text-sm text-foreground focus:border-accent focus:outline-none"
                   >
                     <option value="">Select relationship...</option>
                     {RELATIONSHIPS.map((r) => (
@@ -173,17 +173,17 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
                 </div>
               </div>
 
               {/* Elder Toggle */}
-              <div className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-3">
+              <div className="flex items-center justify-between rounded-lg border border-[var(--card-border)] bg-surface p-3">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4 text-amber-400" />
                   <div>
-                    <p className="text-sm font-medium text-slate-200">Elder Endorsement</p>
-                    <p className="text-xs text-slate-500">Designate as an Elder-level endorsement</p>
+                    <p className="text-sm font-medium text-foreground">Elder Endorsement</p>
+                    <p className="text-xs text-foreground0">Designate as an Elder-level endorsement</p>
                   </div>
                 </div>
                 <button
@@ -192,11 +192,11 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                   aria-checked={isElder}
                   onClick={() => setIsElder(!isElder)}
                   className={`relative h-7 w-12 rounded-full transition-colors ${
-                    isElder ? "bg-emerald-500" : "bg-slate-700"
+                    isElder ? "bg-accent" : "bg-slate-700"
                   }`}
                 >
                   <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                    className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
                       isElder ? "left-6" : "left-1"
                     }`}
                   />
@@ -205,7 +205,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
 
               {/* Message */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Message (optional)
                 </label>
                 <textarea
@@ -213,7 +213,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                   onChange={(e) => setMessage(e.target.value)}
                   rows={2}
                   placeholder="Share why you're endorsing this skill..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none resize-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none resize-none"
                 />
               </div>
 
@@ -225,7 +225,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                     setIsOpen(false);
                     resetForm();
                   }}
-                  className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                  className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
                 >
                   Cancel
                 </button>
@@ -236,7 +236,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                     !relationship ||
                     (skill === "__custom__" ? !customSkill.trim() : !skill)
                   }
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? "Endorsing..." : "Submit Endorsement"}
                 </button>

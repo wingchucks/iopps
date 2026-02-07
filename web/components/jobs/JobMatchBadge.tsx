@@ -114,25 +114,25 @@ export default function JobMatchBadge({ job, profile, showDetails = false }: Job
   const getBadgeStyle = (score: number) => {
     if (score >= 70) {
       return {
-        bg: 'bg-emerald-500/20',
-        border: 'border-emerald-500/40',
-        text: 'text-emerald-400',
-        icon: 'text-emerald-400',
+        bg: 'bg-accent/20',
+        border: 'border-accent/40',
+        text: 'text-accent',
+        icon: 'text-accent',
       };
     }
     if (score >= 50) {
       return {
-        bg: 'bg-teal-500/20',
-        border: 'border-teal-500/40',
-        text: 'text-teal-400',
-        icon: 'text-teal-400',
+        bg: 'bg-accent/20',
+        border: 'border-accent/40',
+        text: 'text-accent',
+        icon: 'text-accent',
       };
     }
     return {
       bg: 'bg-slate-700/50',
-      border: 'border-slate-600',
-      text: 'text-slate-300',
-      icon: 'text-slate-400',
+      border: 'border-[var(--card-border)]',
+      text: 'text-[var(--text-secondary)]',
+      icon: 'text-[var(--text-muted)]',
     };
   };
 
@@ -150,18 +150,18 @@ export default function JobMatchBadge({ job, profile, showDetails = false }: Job
       {/* Tooltip with reasons */}
       {(showDetails || match.reasons.length > 0) && (
         <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50">
-          <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 shadow-xl min-w-[180px]">
-            <p className="text-xs font-semibold text-slate-300 mb-2">Why this matches:</p>
+          <div className="bg-surface border border-[var(--card-border)] rounded-lg p-3 shadow-xl min-w-[180px]">
+            <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2">Why this matches:</p>
             <ul className="space-y-1">
               {match.reasons.map((reason, i) => (
-                <li key={i} className="flex items-center gap-2 text-xs text-slate-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                <li key={i} className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                   {reason}
                 </li>
               ))}
             </ul>
             {match.score >= 70 && (
-              <p className="mt-2 pt-2 border-t border-slate-800 text-xs text-emerald-400 font-medium">
+              <p className="mt-2 pt-2 border-t border-[var(--card-border)] text-xs text-accent font-medium">
                 Great match for you!
               </p>
             )}

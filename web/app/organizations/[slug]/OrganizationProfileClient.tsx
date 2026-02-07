@@ -301,8 +301,8 @@ export function OrganizationProfileClient({ organization: org }: Props) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-teal-500 border-r-transparent"></div>
-          <p className="mt-4 text-slate-500">Redirecting...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-accent border-r-transparent"></div>
+          <p className="mt-4 text-foreground0">Redirecting...</p>
         </div>
       </div>
     );
@@ -343,12 +343,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
       {/* Dormant/Hidden Banner - shown to owners when org is approved but not directory-visible */}
       {!isDraft && canEdit && org.status === 'approved' && org.isDirectoryVisible === false && (
-        <div className="mb-6 rounded-xl bg-slate-100 border border-slate-300 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="mb-6 rounded-xl bg-surface border border-[var(--border)] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3">
-            <EyeIcon className="h-5 w-5 text-slate-500 mt-0.5 sm:mt-0 flex-shrink-0" />
+            <EyeIcon className="h-5 w-5 text-foreground0 mt-0.5 sm:mt-0 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-slate-600">Hidden from Directory</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Hidden from Directory</p>
+              <p className="text-xs text-foreground0">
                 Your organization is not visible in the public directory.
                 {org.visibilityReason === 'expired' && (
                   <> Post a job or subscribe to a plan to appear in search results.</>
@@ -359,7 +359,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
           <div className="flex gap-2 w-full sm:w-auto">
             <Link
               href="/organization/jobs/new"
-              className="flex-1 sm:flex-none text-center rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+              className="flex-1 sm:flex-none text-center rounded-full bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
             >
               Post a Job
             </Link>
@@ -374,7 +374,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       )}
 
       {/* Header Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 border border-slate-200 mb-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-100 border border-[var(--border)] mb-8">
         {/* Banner */}
         <div className="relative h-48 sm:h-64 bg-gradient-to-br from-slate-100 to-slate-200">
           {org.bannerUrl && (
@@ -398,13 +398,13 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               </span>
             )}
             {org.indigenousVerification?.status === 'approved' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
                 <CheckBadgeIcon className="h-4 w-4" />
                 Verified
               </span>
             )}
             {jobCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 px-3 py-1 text-sm font-medium text-white shadow-lg">
                 <BriefcaseIcon className="h-4 w-4" />
                 Hiring
               </span>
@@ -414,7 +414,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                 TRC Committed
               </span>
             )}
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--card-bg)]/80 px-3 py-1 text-sm font-medium text-[var(--text-secondary)]">
               <Icon className="h-4 w-4" />
               {ORG_TYPE_LABELS[org.orgType || 'EMPLOYER']}
             </span>
@@ -425,7 +425,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             {(org.contactEmail || org.contactPhone) && (
               <a
                 href={org.contactEmail ? `mailto:${org.contactEmail}` : `tel:${org.contactPhone}`}
-                className="flex items-center gap-1.5 rounded-full bg-teal-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent transition-colors"
               >
                 <EnvelopeIcon className="h-4 w-4" />
                 Contact
@@ -433,7 +433,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-sm text-slate-900 hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/80 px-3 py-1.5 text-sm text-[var(--text-primary)] hover:bg-surface transition-colors"
             >
               <ShareIcon className="h-4 w-4" />
               {copied ? 'Copied!' : 'Share'}
@@ -441,7 +441,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             {canEdit && (
               <Link
                 href="/organization/profile"
-                className="flex items-center gap-1.5 rounded-full bg-teal-500 px-3 py-1.5 text-sm text-white hover:bg-teal-600 transition-colors"
+                className="flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-sm text-white hover:bg-accent transition-colors"
               >
                 <PencilIcon className="h-4 w-4" />
                 Edit Profile
@@ -454,7 +454,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
         <div className="relative px-6 pb-6 sm:px-8 sm:pb-8">
           {/* Logo */}
           <div className="absolute -top-16 sm:-top-20">
-            <div className="h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-white bg-slate-100 shadow-xl">
+            <div className="h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-white bg-surface shadow-xl">
               {org.logoUrl ? (
                 <Image
                   src={org.logoUrl}
@@ -473,12 +473,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
 
           {/* Name and Details */}
           <div className="pt-12 sm:pt-16 sm:ml-36">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">
               {org.organizationName}
             </h1>
 
             {org.tagline && (
-              <p className="mt-2 text-lg text-slate-600">{org.tagline}</p>
+              <p className="mt-2 text-lg text-[var(--text-secondary)]">{org.tagline}</p>
             )}
 
             {/* Stats Row */}
@@ -486,12 +486,12 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               <div className="mt-4 flex flex-wrap items-center gap-6">
                 {jobCount > 0 && (
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                      <BriefcaseIcon className="h-4 w-4 text-emerald-400" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                      <BriefcaseIcon className="h-4 w-4 text-accent" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-slate-900">{jobCount}</p>
-                      <p className="text-xs text-slate-500">Active Jobs</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)]">{jobCount}</p>
+                      <p className="text-xs text-foreground0">Active Jobs</p>
                     </div>
                   </div>
                 )}
@@ -501,8 +501,8 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                       <CalendarIcon className="h-4 w-4 text-purple-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-slate-900">{eventCount}</p>
-                      <p className="text-xs text-slate-500">Events</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)]">{eventCount}</p>
+                      <p className="text-xs text-foreground0">Events</p>
                     </div>
                   </div>
                 )}
@@ -512,23 +512,23 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                       <AcademicCapIcon className="h-4 w-4 text-amber-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-slate-900">{scholarshipCount}</p>
-                      <p className="text-xs text-slate-500">Scholarships</p>
+                      <p className="text-lg font-bold text-[var(--text-primary)]">{scholarshipCount}</p>
+                      <p className="text-xs text-foreground0">Scholarships</p>
                     </div>
                   </div>
                 )}
                 {org.createdAt && (
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
-                      <CheckBadgeIcon className="h-4 w-4 text-slate-500" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface">
+                      <CheckBadgeIcon className="h-4 w-4 text-foreground0" />
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-slate-900">
+                      <p className="text-lg font-bold text-[var(--text-primary)]">
                         {typeof org.createdAt === 'object' && 'toDate' in org.createdAt
                           ? org.createdAt.toDate().getFullYear()
                           : new Date(org.createdAt as unknown as string).getFullYear()}
                       </p>
-                      <p className="text-xs text-slate-500">Member Since</p>
+                      <p className="text-xs text-foreground0">Member Since</p>
                     </div>
                   </div>
                 )}
@@ -536,7 +536,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
             )}
 
             {/* Location & Industry */}
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-foreground0">
               {(org.city || org.province || org.location) && (
                 <span className="flex items-center gap-1.5">
                   <MapPinIcon className="h-4 w-4" />
@@ -560,7 +560,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                   href={links.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-surface hover:text-[var(--text-primary)] transition-colors"
                 >
                   <GlobeAltIcon className="h-4 w-4" />
                   Website
@@ -570,7 +570,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               {links.email && (
                 <a
                   href={`mailto:${links.email}`}
-                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-surface hover:text-[var(--text-primary)] transition-colors"
                 >
                   <EnvelopeIcon className="h-4 w-4" />
                   Email
@@ -579,7 +579,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               {links.phone && (
                 <a
                   href={`tel:${links.phone}`}
-                  className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm text-[var(--text-secondary)] hover:bg-surface hover:text-[var(--text-primary)] transition-colors"
                 >
                   <PhoneIcon className="h-4 w-4" />
                   Call
@@ -595,7 +595,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                     href={value}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center rounded-full bg-slate-100 p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    className="flex items-center justify-center rounded-full bg-surface p-2 text-[var(--text-secondary)] hover:bg-surface hover:text-[var(--text-primary)] transition-colors"
                     title={key.charAt(0).toUpperCase() + key.slice(1)}
                   >
                     <IconComponent className="h-4 w-4" />
@@ -608,7 +608,7 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+      <div className="mb-8 flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--border)]">
         {availableTabs.map((tab) => {
           const TabIcon = tab.icon;
           return (
@@ -617,8 +617,8 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-teal-500 text-white'
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-accent text-white'
+                  : 'text-foreground0 hover:bg-surface hover:text-[var(--text-primary)]'
               }`}
             >
               <TabIcon className="h-4 w-4" />
@@ -660,29 +660,29 @@ export function OrganizationProfileClient({ organization: org }: Props) {
       {/* Intro Video Modal */}
       {showIntroVideoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white border border-slate-200 p-6 shadow-xl">
+          <div className="relative w-full max-w-lg rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6 shadow-xl">
             {/* Close button */}
             <button
               onClick={() => setShowIntroVideoModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900"
+              className="absolute top-4 right-4 text-foreground0 hover:text-[var(--text-primary)]"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
 
-            <h2 className="text-xl font-bold text-slate-900 mb-2">
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">
               {introVideoUrl ? 'Edit Intro Video' : 'Add Intro Video'}
             </h2>
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-foreground0 mb-6">
               Add a short YouTube or Vimeo video to introduce your organization
             </p>
 
             {/* URL Input */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-900 mb-2">
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                 Video URL
               </label>
               <div className="relative">
-                <VideoCameraIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                <VideoCameraIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground0" />
                 <input
                   type="url"
                   value={introVideoInput}
@@ -691,15 +691,15 @@ export function OrganizationProfileClient({ organization: org }: Props) {
                     setIntroVideoError('');
                   }}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className={`w-full rounded-xl bg-slate-100 border pl-10 pr-4 py-3 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
-                    introVideoError ? 'border-red-500' : 'border-slate-200 focus:border-teal-500'
+                  className={`w-full rounded-xl bg-surface border pl-10 pr-4 py-3 text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
+                    introVideoError ? 'border-red-500' : 'border-[var(--border)] focus:border-accent'
                   }`}
                 />
               </div>
               {introVideoError ? (
                 <p className="mt-1 text-xs text-red-400">{introVideoError}</p>
               ) : (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground0">
                   Paste a YouTube or Vimeo link (short intro recommended)
                 </p>
               )}
@@ -722,14 +722,14 @@ export function OrganizationProfileClient({ organization: org }: Props) {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowIntroVideoModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900"
+                  className="px-4 py-2 text-sm font-medium text-foreground0 hover:text-[var(--text-primary)]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveIntroVideo}
                   disabled={savingIntroVideo}
-                  className="flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent disabled:opacity-50 transition-colors"
                 >
                   {savingIntroVideo ? (
                     <>
@@ -829,11 +829,11 @@ function OverviewTab({
       {/* Main Content */}
       <div className="lg:col-span-2 space-y-8">
         {/* About */}
-        <section className="rounded-2xl bg-white border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">About</h2>
+        <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">About</h2>
           {org.description ? (
             <div className="prose prose-sm max-w-none">
-              <p className="text-slate-600 whitespace-pre-wrap">{org.description}</p>
+              <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{org.description}</p>
             </div>
           ) : canEdit ? (
             <EmptyStateCard
@@ -848,11 +848,11 @@ function OverviewTab({
 
         {/* Story */}
         {(currentStory || canEdit) && (
-          <section className="rounded-2xl bg-white border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Our Story</h2>
+          <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Our Story</h2>
             {currentStory ? (
               <div className="prose prose-sm max-w-none">
-                <p className="text-slate-600 whitespace-pre-wrap">{currentStory}</p>
+                <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{currentStory}</p>
               </div>
             ) : canEdit ? (
               <EmptyStateCard
@@ -876,16 +876,16 @@ function OverviewTab({
 
         {/* 10-Second Intro Video */}
         {introVideoUrl ? (
-          <section className="rounded-2xl bg-white border border-slate-200 p-6">
+          <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                <VideoCameraIcon className="h-5 w-5 text-teal-400" />
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <VideoCameraIcon className="h-5 w-5 text-accent" />
                 Quick Intro
               </h2>
               {canEdit && (
                 <button
                   onClick={onEditIntroVideo}
-                  className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                  className="text-sm text-accent hover:text-teal-300 flex items-center gap-1"
                 >
                   <PencilIcon className="h-4 w-4" />
                   Edit
@@ -902,18 +902,18 @@ function OverviewTab({
             />
           </section>
         ) : canEdit ? (
-          <section className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6">
+          <section className="rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--background)] p-6">
             <div className="text-center py-4">
-              <div className="mx-auto h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                <VideoCameraIcon className="h-6 w-6 text-slate-500" />
+              <div className="mx-auto h-12 w-12 rounded-full bg-surface flex items-center justify-center mb-3">
+                <VideoCameraIcon className="h-6 w-6 text-foreground0" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-1">Add a 10-Second Intro Video</h3>
-              <p className="text-sm text-slate-500 mb-4">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Add a 10-Second Intro Video</h3>
+              <p className="text-sm text-foreground0 mb-4">
                 Help visitors get to know your organization quickly with a short intro video
               </p>
               <button
                 onClick={onEditIntroVideo}
-                className="inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors"
               >
                 <VideoCameraIcon className="h-4 w-4" />
                 Add Intro Video
@@ -935,9 +935,9 @@ function OverviewTab({
                 <ShieldCheckIcon className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">Verified Indigenous Business</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Verified Indigenous Business</h2>
                 {verification?.reviewedAt && (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-foreground0">
                     Verified {typeof verification.reviewedAt === 'object' && 'toDate' in verification.reviewedAt
                       ? verification.reviewedAt.toDate().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
                       : ''}
@@ -949,8 +949,8 @@ function OverviewTab({
             <div className="space-y-3">
               {verification?.nationAffiliation && (
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 text-sm">Nation:</span>
-                  <span className="text-slate-900 font-medium">{verification.nationAffiliation}</span>
+                  <span className="text-foreground0 text-sm">Nation:</span>
+                  <span className="text-[var(--text-primary)] font-medium">{verification.nationAffiliation}</span>
                 </div>
               )}
 
@@ -970,13 +970,13 @@ function OverviewTab({
               </div>
 
               {verification?.certifications && verification.certifications.length > 0 && (
-                <div className="pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-500 mb-2">Certifications</p>
+                <div className="pt-3 border-t border-[var(--border)]">
+                  <p className="text-xs text-foreground0 mb-2">Certifications</p>
                   <div className="flex flex-wrap gap-2">
                     {verification.certifications.map((cert) => (
                       <span
                         key={cert}
-                        className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600"
+                        className="inline-flex items-center rounded-full bg-surface px-3 py-1 text-xs text-[var(--text-secondary)]"
                       >
                         {cert}
                       </span>
@@ -995,72 +995,72 @@ function OverviewTab({
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20">
                 <HeartIcon className="h-5 w-5 text-purple-400" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">TRC Commitment</h2>
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">TRC Commitment</h2>
             </div>
 
             {trc?.commitmentStatement && (
-              <p className="text-slate-600 mb-4">{trc.commitmentStatement}</p>
+              <p className="text-[var(--text-secondary)] mb-4">{trc.commitmentStatement}</p>
             )}
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className={`rounded-xl p-3 border ${
                 trc?.hasIndigenousHiringStrategy
-                  ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-white border-slate-200'
+                  ? 'bg-accent/10 border-accent/20'
+                  : 'bg-[var(--card-bg)] border-[var(--border)]'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {trc?.hasIndigenousHiringStrategy ? (
-                    <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
+                    <CheckBadgeIcon className="h-4 w-4 text-accent" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-slate-300" />
+                    <div className="h-4 w-4 rounded-full border border-[var(--border)]" />
                   )}
                   <span className={`text-sm font-medium ${
-                    trc?.hasIndigenousHiringStrategy ? 'text-emerald-400' : 'text-slate-500'
+                    trc?.hasIndigenousHiringStrategy ? 'text-accent' : 'text-foreground0'
                   }`}>
                     Hiring Strategy
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">Indigenous hiring initiatives</p>
+                <p className="text-xs text-foreground0">Indigenous hiring initiatives</p>
               </div>
 
               <div className={`rounded-xl p-3 border ${
                 trc?.leadershipTrainingComplete
-                  ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-white border-slate-200'
+                  ? 'bg-accent/10 border-accent/20'
+                  : 'bg-[var(--card-bg)] border-[var(--border)]'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {trc?.leadershipTrainingComplete ? (
-                    <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
+                    <CheckBadgeIcon className="h-4 w-4 text-accent" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-slate-300" />
+                    <div className="h-4 w-4 rounded-full border border-[var(--border)]" />
                   )}
                   <span className={`text-sm font-medium ${
-                    trc?.leadershipTrainingComplete ? 'text-emerald-400' : 'text-slate-500'
+                    trc?.leadershipTrainingComplete ? 'text-accent' : 'text-foreground0'
                   }`}>
                     Leadership Training
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">Cultural competency training</p>
+                <p className="text-xs text-foreground0">Cultural competency training</p>
               </div>
 
               <div className={`rounded-xl p-3 border ${
                 trc?.isIndigenousOwned
-                  ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-white border-slate-200'
+                  ? 'bg-accent/10 border-accent/20'
+                  : 'bg-[var(--card-bg)] border-[var(--border)]'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {trc?.isIndigenousOwned ? (
-                    <CheckBadgeIcon className="h-4 w-4 text-emerald-400" />
+                    <CheckBadgeIcon className="h-4 w-4 text-accent" />
                   ) : (
-                    <div className="h-4 w-4 rounded-full border border-slate-300" />
+                    <div className="h-4 w-4 rounded-full border border-[var(--border)]" />
                   )}
                   <span className={`text-sm font-medium ${
-                    trc?.isIndigenousOwned ? 'text-emerald-400' : 'text-slate-500'
+                    trc?.isIndigenousOwned ? 'text-accent' : 'text-foreground0'
                   }`}>
                     Indigenous-Owned
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">Majority Indigenous ownership</p>
+                <p className="text-xs text-foreground0">Majority Indigenous ownership</p>
               </div>
             </div>
           </section>
@@ -1073,50 +1073,50 @@ function OverviewTab({
         {canEdit && <ProfileStrengthCard org={org} />}
 
         {/* Quick Facts */}
-        <section className="rounded-2xl bg-white border border-slate-200 p-6">
-          <h3 className="text-sm font-semibold text-slate-900 mb-4">Quick Facts</h3>
+        <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Quick Facts</h3>
           <dl className="space-y-3 text-sm">
             {memberSince && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Member Since</dt>
-                <dd className="text-slate-900">{memberSince.getFullYear()}</dd>
+                <dt className="text-foreground0">Member Since</dt>
+                <dd className="text-[var(--text-primary)]">{memberSince.getFullYear()}</dd>
               </div>
             )}
             {jobCount > 0 && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Jobs Posted</dt>
-                <dd className="text-slate-900">{jobCount}</dd>
+                <dt className="text-foreground0">Jobs Posted</dt>
+                <dd className="text-[var(--text-primary)]">{jobCount}</dd>
               </div>
             )}
             {org.foundedYear && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Founded</dt>
-                <dd className="text-slate-900">{org.foundedYear}</dd>
+                <dt className="text-foreground0">Founded</dt>
+                <dd className="text-[var(--text-primary)]">{org.foundedYear}</dd>
               </div>
             )}
             {org.companySize && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Team Size</dt>
-                <dd className="text-slate-900">{org.companySize}</dd>
+                <dt className="text-foreground0">Team Size</dt>
+                <dd className="text-[var(--text-primary)]">{org.companySize}</dd>
               </div>
             )}
             {org.industry && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Industry</dt>
-                <dd className="text-slate-900 capitalize">{org.industry.replace('-', ' ')}</dd>
+                <dt className="text-foreground0">Industry</dt>
+                <dd className="text-[var(--text-primary)] capitalize">{org.industry.replace('-', ' ')}</dd>
               </div>
             )}
             {org.nation && (
               <div className="flex justify-between">
-                <dt className="text-slate-500">Nation</dt>
-                <dd className="text-slate-900">{org.nation}</dd>
+                <dt className="text-foreground0">Nation</dt>
+                <dd className="text-[var(--text-primary)]">{org.nation}</dd>
               </div>
             )}
           </dl>
 
           {/* Activity Indicator */}
           {org.updatedAt && (
-            <div className="mt-4 pt-4 border-t border-slate-200">
+            <div className="mt-4 pt-4 border-t border-[var(--border)]">
               <ActivityIndicator updatedAt={org.updatedAt} />
             </div>
           )}
@@ -1124,13 +1124,13 @@ function OverviewTab({
 
         {/* Categories */}
         {org.categories && org.categories.length > 0 && (
-          <section className="rounded-2xl bg-white border border-slate-200 p-6">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4">Categories</h3>
+          <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Categories</h3>
             <div className="flex flex-wrap gap-2">
               {org.categories.map((cat) => (
                 <span
                   key={cat}
-                  className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600"
+                  className="inline-flex rounded-full bg-surface px-3 py-1 text-xs text-[var(--text-secondary)]"
                 >
                   {cat}
                 </span>
@@ -1141,23 +1141,23 @@ function OverviewTab({
 
         {/* Connect With Us */}
         {(org.contactEmail || org.contactPhone || org.links?.website) && (
-          <section className="rounded-2xl bg-gradient-to-br from-teal-50 to-white border border-teal-500/20 p-5">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <EnvelopeIcon className="h-4 w-4 text-teal-400" />
+          <section className="rounded-2xl bg-gradient-to-br from-teal-50 to-white border border-accent/20 p-5">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+              <EnvelopeIcon className="h-4 w-4 text-accent" />
               Connect With Us
             </h3>
             <div className="space-y-3">
               {org.contactEmail && (
                 <a
                   href={`mailto:${org.contactEmail}`}
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--background)] hover:bg-surface transition-colors group"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
-                    <EnvelopeIcon className="h-4 w-4 text-teal-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                    <EnvelopeIcon className="h-4 w-4 text-accent" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-500">Email</p>
-                    <p className="text-sm text-slate-900 truncate group-hover:text-teal-400 transition-colors">
+                    <p className="text-xs text-foreground0">Email</p>
+                    <p className="text-sm text-[var(--text-primary)] truncate group-hover:text-accent transition-colors">
                       {org.contactEmail}
                     </p>
                   </div>
@@ -1166,14 +1166,14 @@ function OverviewTab({
               {org.contactPhone && (
                 <a
                   href={`tel:${org.contactPhone}`}
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--background)] hover:bg-surface transition-colors group"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
-                    <PhoneIcon className="h-4 w-4 text-teal-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                    <PhoneIcon className="h-4 w-4 text-accent" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-500">Phone</p>
-                    <p className="text-sm text-slate-900 group-hover:text-teal-400 transition-colors">
+                    <p className="text-xs text-foreground0">Phone</p>
+                    <p className="text-sm text-[var(--text-primary)] group-hover:text-accent transition-colors">
                       {org.contactPhone}
                     </p>
                   </div>
@@ -1184,33 +1184,33 @@ function OverviewTab({
                   href={org.links.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors group"
+                  className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--background)] hover:bg-surface transition-colors group"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10">
-                    <GlobeAltIcon className="h-4 w-4 text-teal-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                    <GlobeAltIcon className="h-4 w-4 text-accent" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-500">Website</p>
-                    <p className="text-sm text-slate-900 truncate group-hover:text-teal-400 transition-colors">
+                    <p className="text-xs text-foreground0">Website</p>
+                    <p className="text-sm text-[var(--text-primary)] truncate group-hover:text-accent transition-colors">
                       {org.links.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                     </p>
                   </div>
-                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 text-slate-500" />
+                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 text-foreground0" />
                 </a>
               )}
             </div>
 
             {/* Social Links Row */}
             {(org.links?.linkedin || org.links?.instagram || org.links?.facebook || org.links?.twitter) && (
-              <div className="mt-4 pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-500 mb-2">Follow Us</p>
+              <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                <p className="text-xs text-foreground0 mb-2">Follow Us</p>
                 <div className="flex gap-2">
                   {org.links.linkedin && (
                     <a
                       href={org.links.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface hover:bg-surface text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                       title="LinkedIn"
                     >
                       <SocialIcons.linkedin className="h-4 w-4" />
@@ -1221,7 +1221,7 @@ function OverviewTab({
                       href={org.links.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface hover:bg-surface text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                       title="Instagram"
                     >
                       <SocialIcons.instagram className="h-4 w-4" />
@@ -1232,7 +1232,7 @@ function OverviewTab({
                       href={org.links.facebook}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface hover:bg-surface text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                       title="Facebook"
                     >
                       <SocialIcons.facebook className="h-4 w-4" />
@@ -1243,7 +1243,7 @@ function OverviewTab({
                       href={org.links.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface hover:bg-surface text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                       title="X (Twitter)"
                     >
                       <SocialIcons.twitter className="h-4 w-4" />
@@ -1254,7 +1254,7 @@ function OverviewTab({
                       href={org.links.youtube}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface hover:bg-surface text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                       title="YouTube"
                     >
                       <SocialIcons.youtube className="h-4 w-4" />
@@ -1265,7 +1265,7 @@ function OverviewTab({
                       href={org.links.tiktok}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface hover:bg-surface text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                       title="TikTok"
                     >
                       <SocialIcons.tiktok className="h-4 w-4" />
@@ -1279,22 +1279,22 @@ function OverviewTab({
 
         {/* Team Section (Owner only) */}
         {canEdit && (
-          <section className="rounded-2xl bg-white border border-slate-200 p-6">
+          <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <UserGroupIcon className="h-4 w-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <UserGroupIcon className="h-4 w-4 text-foreground0" />
                 Team Members
               </h3>
               <Link
                 href="/organization/team"
-                className="text-xs text-teal-400 hover:text-teal-300"
+                className="text-xs text-accent hover:text-teal-300"
               >
                 Manage
               </Link>
             </div>
             {loadingTeam ? (
               <div className="flex justify-center py-4">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
               </div>
             ) : teamMembers.length > 0 ? (
               <div className="space-y-3">
@@ -1304,25 +1304,25 @@ function OverviewTab({
                       {member.displayName?.charAt(0) || member.email.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-900 truncate">
+                      <p className="text-sm text-[var(--text-primary)] truncate">
                         {member.displayName || member.email}
                       </p>
-                      <p className="text-xs text-slate-500 capitalize">{member.role}</p>
+                      <p className="text-xs text-foreground0 capitalize">{member.role}</p>
                     </div>
                   </div>
                 ))}
                 {teamMembers.length > 5 && (
-                  <p className="text-xs text-slate-500 pt-2">
+                  <p className="text-xs text-foreground0 pt-2">
                     +{teamMembers.length - 5} more team members
                   </p>
                 )}
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-xs text-slate-500 mb-2">No team members yet</p>
+                <p className="text-xs text-foreground0 mb-2">No team members yet</p>
                 <Link
                   href="/organization/team/invite"
-                  className="text-xs text-teal-400 hover:text-teal-300"
+                  className="text-xs text-accent hover:text-teal-300"
                 >
                   Invite team members
                 </Link>
@@ -1368,14 +1368,14 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
 
   if (jobs.length === 0) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
+      <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No jobs posted yet"
@@ -1385,7 +1385,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             icon={<BriefcaseIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-500">No job openings at this time.</p>
+          <p className="text-foreground0">No job openings at this time.</p>
         )}
       </div>
     );
@@ -1427,7 +1427,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
           <Link
             key={job.id}
             href={`/jobs/${job.id}`}
-            className="group flex flex-col rounded-xl bg-white border border-slate-200 p-5 hover:border-teal-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-5 hover:border-accent/50 transition-colors"
           >
             {/* Header with badges */}
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -1443,7 +1443,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
                   </span>
                 )}
                 {job.quickApplyEnabled && (
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                  <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
                     Quick Apply
                   </span>
                 )}
@@ -1457,15 +1457,15 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
 
             {/* Title and location */}
             <div className="flex-1">
-              <h3 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
+              <h3 className="font-semibold text-[var(--text-primary)] group-hover:text-accent transition-colors line-clamp-2">
                 {job.title}
               </h3>
-              <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+              <div className="flex items-center gap-2 text-sm text-foreground0 mt-1">
                 <span className="truncate">{job.location || 'Location flexible'}</span>
                 {postedDate && (
                   <>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-slate-500 whitespace-nowrap">{formatTimeAgo(postedDate)}</span>
+                    <span className="text-[var(--text-secondary)]">•</span>
+                    <span className="text-foreground0 whitespace-nowrap">{formatTimeAgo(postedDate)}</span>
                   </>
                 )}
               </div>
@@ -1474,12 +1474,12 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
             {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {job.employmentType && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-[var(--text-secondary)] capitalize">
                   {job.employmentType.replace('-', ' ')}
                 </span>
               )}
               {salary && (
-                <span className="rounded-full bg-teal-500/10 px-2 py-0.5 text-xs text-teal-400">
+                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
                   {salary}
                 </span>
               )}
@@ -1492,7 +1492,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
 
             {/* Footer with deadline and applicants */}
             {(closingText || (job.applicationsCount && job.applicationsCount > 0)) && (
-              <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+              <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between text-xs text-foreground0">
                 {closingText && (
                   <span className="text-amber-400">{closingText}</span>
                 )}
@@ -1545,14 +1545,14 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
 
   if (scholarships.length === 0) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
+      <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No programs listed"
@@ -1562,7 +1562,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             icon={<AcademicCapIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-500">No programs available at this time.</p>
+          <p className="text-foreground0">No programs available at this time.</p>
         )}
       </div>
     );
@@ -1595,7 +1595,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
           <Link
             key={scholarship.id}
             href={`/scholarships/${scholarship.id}`}
-            className="group flex flex-col rounded-xl bg-white border border-slate-200 p-5 hover:border-teal-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-5 hover:border-accent/50 transition-colors"
           >
             {/* Header with icon and amount */}
             <div className="flex items-start gap-3">
@@ -1603,11 +1603,11 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
                 <AcademicCapIcon className="h-6 w-6 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
+                <h3 className="font-semibold text-[var(--text-primary)] group-hover:text-accent transition-colors line-clamp-2">
                   {scholarship.title}
                 </h3>
                 {amountStr && (
-                  <p className="text-lg font-bold text-teal-400 mt-1">{amountStr}</p>
+                  <p className="text-lg font-bold text-accent mt-1">{amountStr}</p>
                 )}
               </div>
             </div>
@@ -1615,7 +1615,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
             {/* Tags */}
             <div className="mt-3 flex flex-wrap gap-2">
               {scholarship.level && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-[var(--text-secondary)] capitalize">
                   {scholarship.level}
                 </span>
               )}
@@ -1633,8 +1633,8 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
 
             {/* Deadline footer */}
             {deadlineStatus && !deadlineStatus.closed && (
-              <div className={`mt-3 pt-3 border-t border-slate-200 flex items-center gap-1.5 text-xs ${
-                deadlineStatus.urgent ? 'text-amber-400' : 'text-slate-500'
+              <div className={`mt-3 pt-3 border-t border-[var(--border)] flex items-center gap-1.5 text-xs ${
+                deadlineStatus.urgent ? 'text-amber-400' : 'text-foreground0'
               }`}>
                 <CalendarIcon className="h-3.5 w-3.5" />
                 {deadlineStatus.urgent ? deadlineStatus.text : `Deadline: ${deadlineStatus.text}`}
@@ -1669,14 +1669,14 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
 
   if (services.length === 0) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
+      <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No products or services listed"
@@ -1686,7 +1686,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             icon={<BuildingStorefrontIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-500">No products or services available at this time.</p>
+          <p className="text-foreground0">No products or services available at this time.</p>
         )}
       </div>
     );
@@ -1698,7 +1698,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
         <Link
           key={service.id}
           href={`/business/services/${service.id}`}
-          className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-teal-500/50 transition-colors"
+          className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 transition-colors"
         >
           {/* Cover Image */}
           <div className="relative h-36 bg-gradient-to-br from-slate-100 to-slate-200">
@@ -1711,7 +1711,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <BuildingStorefrontIcon className="h-12 w-12 text-slate-600" />
+                <BuildingStorefrontIcon className="h-12 w-12 text-[var(--text-secondary)]" />
               </div>
             )}
             {/* Overlay badges */}
@@ -1731,7 +1731,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
             {/* Logo overlay */}
             {service.logoUrl && (
               <div className="absolute -bottom-5 left-4">
-                <div className="h-10 w-10 rounded-lg border-2 border-slate-200 bg-slate-100 overflow-hidden shadow-lg">
+                <div className="h-10 w-10 rounded-lg border-2 border-[var(--border)] bg-surface overflow-hidden shadow-lg">
                   <Image
                     src={service.logoUrl}
                     alt={service.businessName}
@@ -1746,17 +1746,17 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
 
           {/* Content */}
           <div className="flex-1 p-4 pt-7">
-            <h3 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
+            <h3 className="font-semibold text-[var(--text-primary)] group-hover:text-accent transition-colors line-clamp-2">
               {service.title}
             </h3>
             {service.tagline && (
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{service.tagline}</p>
+              <p className="text-xs text-foreground0 mt-1 line-clamp-2">{service.tagline}</p>
             )}
 
             {/* Tags row */}
             <div className="mt-3 flex flex-wrap gap-2">
               {service.category && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-[var(--text-secondary)] capitalize">
                   {service.category.replace(/-/g, ' ')}
                 </span>
               )}
@@ -1766,21 +1766,21 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
                 </span>
               )}
               {service.freeConsultation && (
-                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-400">
+                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
                   Free Consultation
                 </span>
               )}
             </div>
 
             {/* Footer with price and experience */}
-            <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
+            <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
               {service.priceRange ? (
-                <span className="text-sm font-medium text-teal-400">{service.priceRange}</span>
+                <span className="text-sm font-medium text-accent">{service.priceRange}</span>
               ) : (
-                <span className="text-xs text-slate-500">Contact for pricing</span>
+                <span className="text-xs text-foreground0">Contact for pricing</span>
               )}
               {service.yearsExperience && service.yearsExperience > 0 && (
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-foreground0">
                   {service.yearsExperience}+ yrs exp
                 </span>
               )}
@@ -1860,7 +1860,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -1869,7 +1869,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
   if (!hasEvents) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
+      <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No events scheduled"
@@ -1879,7 +1879,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
             icon={<CalendarIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-500">No upcoming events.</p>
+          <p className="text-foreground0">No upcoming events.</p>
         )}
       </div>
     );
@@ -1890,7 +1890,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
       {/* Conferences */}
       {conferences.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Conferences</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Conferences</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {conferences.map((conf) => {
               const status = getEventStatus(conf.startDate, conf.endDate);
@@ -1898,7 +1898,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                 <Link
                   key={conf.id}
                   href={`/conferences/${conf.id}`}
-                  className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-teal-500/50 transition-colors"
+                  className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 transition-colors"
                 >
                   {/* Cover Image */}
                   <div className="relative h-36 bg-gradient-to-br from-purple-50 to-slate-100">
@@ -1923,7 +1923,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                       )}
                       {status && (
                         <span className={`rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm ${
-                          status.color === 'emerald' ? 'bg-emerald-500/90' :
+                          status.color === 'emerald' ? 'bg-accent/90' :
                           status.color === 'amber' ? 'bg-amber-500/90' : 'bg-blue-500/90'
                         }`}>
                           {status.text}
@@ -1933,7 +1933,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     {/* Format badge */}
                     {conf.format && (
                       <div className="absolute top-2 right-2">
-                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-600 capitalize">
+                        <span className="rounded-full bg-[var(--card-bg)]/80 px-2 py-0.5 text-xs text-[var(--text-secondary)] capitalize">
                           {conf.format}
                         </span>
                       </div>
@@ -1942,12 +1942,12 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
                   {/* Content */}
                   <div className="flex-1 p-4">
-                    <h4 className="font-semibold text-slate-900 group-hover:text-teal-400 transition-colors line-clamp-2">
+                    <h4 className="font-semibold text-[var(--text-primary)] group-hover:text-accent transition-colors line-clamp-2">
                       {conf.title}
                     </h4>
 
                     <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <div className="flex items-center gap-1.5 text-xs text-foreground0">
                         <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>{formatEventDate(conf.startDate)}</span>
                         {conf.endDate && conf.endDate !== conf.startDate && (
@@ -1955,7 +1955,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                         )}
                       </div>
                       {conf.location && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <div className="flex items-center gap-1.5 text-xs text-foreground0">
                           <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate">{conf.location}</span>
                         </div>
@@ -1963,18 +1963,18 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <div className="mt-3 pt-3 border-t border-[var(--border)] flex items-center justify-between">
                       {conf.cost ? (
                         <span className={`text-xs font-medium ${
-                          conf.cost.toLowerCase().includes('free') ? 'text-emerald-400' : 'text-slate-500'
+                          conf.cost.toLowerCase().includes('free') ? 'text-accent' : 'text-foreground0'
                         }`}>
                           {conf.cost}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-500">See details</span>
+                        <span className="text-xs text-foreground0">See details</span>
                       )}
                       {conf.viewsCount && conf.viewsCount > 0 && (
-                        <span className="text-xs text-slate-500">{conf.viewsCount} views</span>
+                        <span className="text-xs text-foreground0">{conf.viewsCount} views</span>
                       )}
                     </div>
                   </div>
@@ -1988,7 +1988,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
       {/* Pow Wows */}
       {powwows.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Pow Wows</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Pow Wows</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {powwows.map((powwow) => {
               const status = getEventStatus(powwow.startDate || null, powwow.endDate || null);
@@ -1996,7 +1996,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                 <Link
                   key={powwow.id}
                   href={`/powwows/${powwow.id}`}
-                  className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-rose-500/50 transition-colors"
+                  className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-rose-500/50 transition-colors"
                 >
                   {/* Cover Image */}
                   <div className="relative h-36 bg-gradient-to-br from-rose-50 to-slate-100">
@@ -2021,7 +2021,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                       )}
                       {status && (
                         <span className={`rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm ${
-                          status.color === 'emerald' ? 'bg-emerald-500/90' :
+                          status.color === 'emerald' ? 'bg-accent/90' :
                           status.color === 'amber' ? 'bg-amber-500/90' : 'bg-blue-500/90'
                         }`}>
                           {status.text}
@@ -2029,7 +2029,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                       )}
                       {powwow.livestream && (
                         <span className="rounded-full bg-red-500/90 px-2 py-0.5 text-xs font-medium text-white shadow-sm flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--card-bg)] animate-pulse" />
                           Livestream
                         </span>
                       )}
@@ -2037,7 +2037,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                     {/* Event type badge */}
                     {powwow.eventType && (
                       <div className="absolute top-2 right-2">
-                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs text-slate-600 capitalize">
+                        <span className="rounded-full bg-[var(--card-bg)]/80 px-2 py-0.5 text-xs text-[var(--text-secondary)] capitalize">
                           {powwow.eventType}
                         </span>
                       </div>
@@ -2046,15 +2046,15 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
                   {/* Content */}
                   <div className="flex-1 p-4">
-                    <h4 className="font-semibold text-slate-900 group-hover:text-rose-400 transition-colors line-clamp-2">
+                    <h4 className="font-semibold text-[var(--text-primary)] group-hover:text-rose-400 transition-colors line-clamp-2">
                       {powwow.name}
                     </h4>
                     {powwow.host && (
-                      <p className="text-xs text-slate-500 mt-1">Hosted by {powwow.host}</p>
+                      <p className="text-xs text-foreground0 mt-1">Hosted by {powwow.host}</p>
                     )}
 
                     <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <div className="flex items-center gap-1.5 text-xs text-foreground0">
                         <CalendarIcon className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>
                           {powwow.dateRange || formatEventDate(powwow.startDate)}
@@ -2064,7 +2064,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                         </span>
                       </div>
                       {powwow.location && (
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <div className="flex items-center gap-1.5 text-xs text-foreground0">
                           <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate">{powwow.location}</span>
                         </div>
@@ -2073,7 +2073,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
 
                     {/* Season tag */}
                     {powwow.season && (
-                      <div className="mt-3 pt-3 border-t border-slate-200">
+                      <div className="mt-3 pt-3 border-t border-[var(--border)]">
                         <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-xs text-rose-400 capitalize">
                           {powwow.season}
                         </span>
@@ -2148,14 +2148,14 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
 
   if (grants.length === 0) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 p-8 text-center">
+      <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-8 text-center">
         {canEdit ? (
           <EmptyStateCard
             title="No funding opportunities"
@@ -2165,7 +2165,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
             icon={<CurrencyDollarIcon className="h-7 w-7" />}
           />
         ) : (
-          <p className="text-slate-500">No funding opportunities available at this time.</p>
+          <p className="text-foreground0">No funding opportunities available at this time.</p>
         )}
       </div>
     );
@@ -2181,7 +2181,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
           <Link
             key={grant.id}
             href={`/business/funding/${grant.slug || grant.id}`}
-            className="group flex flex-col rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-emerald-500/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 transition-colors"
           >
             {/* Header with gradient */}
             <div className="relative h-24 bg-gradient-to-br from-emerald-50 to-slate-100 p-4">
@@ -2193,7 +2193,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
               )}
               {/* Provider logo or icon */}
               <div className="absolute bottom-0 translate-y-1/2 left-4">
-                <div className="h-12 w-12 rounded-xl border-2 border-slate-200 bg-slate-100 overflow-hidden shadow-lg flex items-center justify-center">
+                <div className="h-12 w-12 rounded-xl border-2 border-[var(--border)] bg-surface overflow-hidden shadow-lg flex items-center justify-center">
                   {grant.providerLogo ? (
                     <Image
                       src={grant.providerLogo}
@@ -2203,14 +2203,14 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <CurrencyDollarIcon className="h-6 w-6 text-emerald-400" />
+                    <CurrencyDollarIcon className="h-6 w-6 text-accent" />
                   )}
                 </div>
               </div>
               {/* Amount display */}
               {amountStr && (
                 <div className="absolute top-2 right-2">
-                  <span className="rounded-lg bg-emerald-500/90 px-2.5 py-1 text-sm font-bold text-white shadow-sm">
+                  <span className="rounded-lg bg-accent/90 px-2.5 py-1 text-sm font-bold text-white shadow-sm">
                     {amountStr}
                   </span>
                 </div>
@@ -2219,15 +2219,15 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
             {/* Content */}
             <div className="flex-1 p-4 pt-8">
-              <h3 className="font-semibold text-slate-900 group-hover:text-emerald-400 transition-colors line-clamp-2">
+              <h3 className="font-semibold text-[var(--text-primary)] group-hover:text-accent transition-colors line-clamp-2">
                 {grant.title}
               </h3>
-              <p className="text-xs text-slate-500 mt-1">{grant.provider}</p>
+              <p className="text-xs text-foreground0 mt-1">{grant.provider}</p>
 
               {/* Eligibility badges */}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {grant.grantType && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 capitalize">
+                  <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-[var(--text-secondary)] capitalize">
                     {grant.grantType.replace(/-/g, ' ')}
                   </span>
                 )}
@@ -2250,7 +2250,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
               {/* Provinces if applicable */}
               {eligibility.provinces && eligibility.provinces.length > 0 && eligibility.provinces.length <= 3 && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-foreground0">
                   <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>{eligibility.provinces.join(', ')}</span>
                 </div>
@@ -2258,8 +2258,8 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
 
               {/* Deadline footer */}
               {deadlineStatus && !deadlineStatus.closed && (
-                <div className={`mt-3 pt-3 border-t border-slate-200 flex items-center gap-1.5 text-xs ${
-                  deadlineStatus.urgent ? 'text-amber-400' : 'text-slate-500'
+                <div className={`mt-3 pt-3 border-t border-[var(--border)] flex items-center gap-1.5 text-xs ${
+                  deadlineStatus.urgent ? 'text-amber-400' : 'text-foreground0'
                 }`}>
                   <CalendarIcon className="h-3.5 w-3.5" />
                   {deadlineStatus.urgent ? deadlineStatus.text : `Deadline: ${deadlineStatus.text}`}
@@ -2290,15 +2290,15 @@ function ActivityIndicator({ updatedAt }: { updatedAt: OrganizationProfile['upda
 
   if (diffDays <= 7) {
     statusText = 'Very Active';
-    statusColor = 'text-emerald-400';
+    statusColor = 'text-accent';
     dotColor = 'bg-emerald-400';
   } else if (diffDays <= 30) {
     statusText = 'Recently Active';
-    statusColor = 'text-teal-400';
+    statusColor = 'text-accent';
     dotColor = 'bg-teal-400';
   } else if (diffDays <= 90) {
     statusText = 'Active';
-    statusColor = 'text-slate-500';
+    statusColor = 'text-foreground0';
     dotColor = 'bg-slate-400';
   } else {
     return null; // Don't show if inactive for too long
@@ -2306,7 +2306,7 @@ function ActivityIndicator({ updatedAt }: { updatedAt: OrganizationProfile['upda
 
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-slate-500">Activity</span>
+      <span className="text-xs text-foreground0">Activity</span>
       <span className={`flex items-center gap-1.5 text-xs font-medium ${statusColor}`}>
         <span className={`h-1.5 w-1.5 rounded-full ${dotColor} ${diffDays <= 7 ? 'animate-pulse' : ''}`} />
         {statusText}
@@ -2336,7 +2336,7 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
   const incompleteItems = items.filter(i => !i.completed);
 
   const getScoreColor = (s: number) => {
-    if (s >= 80) return 'text-emerald-400';
+    if (s >= 80) return 'text-accent';
     if (s >= 60) return 'text-amber-400';
     if (s >= 40) return 'text-orange-400';
     return 'text-red-400';
@@ -2351,10 +2351,10 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
 
   if (score === 100) {
     return (
-      <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+      <section className="rounded-2xl border border-accent/30 bg-accent/10 p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20">
-            <CheckBadgeIcon className="h-5 w-5 text-emerald-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20">
+            <CheckBadgeIcon className="h-5 w-5 text-accent" />
           </div>
           <div>
             <p className="font-semibold text-emerald-300">Profile Complete!</p>
@@ -2366,14 +2366,14 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
   }
 
   return (
-    <section className="rounded-2xl bg-white border border-slate-200 p-5">
+    <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-900">Profile Strength</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Profile Strength</h3>
         <span className={`text-xl font-bold ${getScoreColor(score)}`}>{score}%</span>
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 mb-4">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-surface mb-4">
         <div
           className={`h-full rounded-full bg-gradient-to-r ${getProgressColor(score)} transition-all duration-500`}
           style={{ width: `${score}%` }}
@@ -2383,19 +2383,19 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
       {/* Quick wins */}
       {incompleteItems.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-slate-500">Missing:</p>
+          <p className="text-xs text-foreground0">Missing:</p>
           <div className="flex flex-wrap gap-1.5">
             {incompleteItems.slice(0, 4).map((item) => (
               <span
                 key={item.id}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-xs text-foreground0"
               >
-                <span className="text-slate-500">+{item.weight}</span>
+                <span className="text-foreground0">+{item.weight}</span>
                 {item.label}
               </span>
             ))}
             {incompleteItems.length > 4 && (
-              <span className="text-xs text-slate-500">+{incompleteItems.length - 4} more</span>
+              <span className="text-xs text-foreground0">+{incompleteItems.length - 4} more</span>
             )}
           </div>
         </div>
@@ -2403,7 +2403,7 @@ function ProfileStrengthCard({ org }: { org: OrganizationProfile }) {
 
       <Link
         href="/organization/profile"
-        className="mt-4 flex items-center justify-center gap-1.5 w-full rounded-lg bg-teal-500/10 border border-teal-500/20 py-2 text-xs font-medium text-teal-400 hover:bg-teal-500/20 transition-colors"
+        className="mt-4 flex items-center justify-center gap-1.5 w-full rounded-lg bg-accent/10 border border-accent/20 py-2 text-xs font-medium text-accent hover:bg-accent/20 transition-colors"
       >
         <PencilIcon className="h-3.5 w-3.5" />
         Complete Profile
@@ -2429,17 +2429,17 @@ function EmptyStateCard({
   icon?: React.ReactNode;
 }) {
   const buttonClass =
-    "inline-flex items-center gap-2 rounded-full bg-teal-500 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 transition-colors";
+    "inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent transition-colors";
 
   return (
     <div className="flex flex-col items-center py-6">
       {icon && (
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface text-foreground0">
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
-      <p className="text-sm text-slate-500 mb-4 max-w-sm text-center">{description}</p>
+      <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{title}</h3>
+      <p className="text-sm text-foreground0 mb-4 max-w-sm text-center">{description}</p>
       {onCtaClick ? (
         <button onClick={onCtaClick} className={buttonClass}>
           {ctaText}

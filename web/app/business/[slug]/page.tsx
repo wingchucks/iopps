@@ -81,8 +81,8 @@ function StatusBanner({ status }: { status: string }) {
   const statusConfig = {
     draft: {
       icon: EyeIcon,
-      bgColor: 'bg-amber-50 border-amber-200',
-      textColor: 'text-amber-600',
+      bgColor: 'bg-[var(--amber-bg)] border-[var(--amber)]',
+      textColor: 'text-[var(--amber)]',
       title: 'Preview Mode - Draft Listing',
       message: 'This listing is not yet published. Only you can see this preview.',
     },
@@ -111,7 +111,7 @@ function StatusBanner({ status }: { status: string }) {
         <Icon className={`h-6 w-6 flex-shrink-0 ${config.textColor}`} />
         <div>
           <h3 className={`font-semibold ${config.textColor}`}>{config.title}</h3>
-          <p className="mt-1 text-sm text-slate-500">{config.message}</p>
+          <p className="mt-1 text-sm text-foreground0">{config.message}</p>
         </div>
       </div>
     </div>
@@ -170,14 +170,14 @@ async function VendorPage({ params, searchParams }: Props) {
         {/* Back Link */}
         <Link
           href="/business"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-teal-600 mb-6"
+          className="inline-flex items-center gap-2 text-sm text-foreground0 transition-colors hover:text-accent mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Indigenous Marketplace
         </Link>
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 mb-8">
+        <div className="relative overflow-hidden rounded-3xl bg-[var(--card-bg)] border border-[var(--border)] mb-8">
           {/* Cover Image */}
           <div className="relative h-64 sm:h-80 overflow-hidden">
             {vendor.coverImageUrl ? (
@@ -228,7 +228,7 @@ async function VendorPage({ params, searchParams }: Props) {
                 </span>
               )}
               {vendor.verified && (
-                <span className="flex items-center gap-1.5 rounded-full bg-teal-500/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
+                <span className="flex items-center gap-1.5 rounded-full bg-accent/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white shadow-lg">
                   <CheckBadgeIcon className="h-4 w-4" />
                   Verified
                 </span>
@@ -240,7 +240,7 @@ async function VendorPage({ params, searchParams }: Props) {
           <div className="relative px-6 pb-6 sm:px-8">
             {/* Logo */}
             <div className="absolute -top-12 left-6 sm:left-8">
-              <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-white bg-slate-100 shadow-xl">
+              <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-white bg-surface shadow-xl">
                 {vendor.logoUrl ? (
                   <Image
                     src={vendor.logoUrl}
@@ -264,19 +264,19 @@ async function VendorPage({ params, searchParams }: Props) {
             <div className="pt-16 sm:pt-4 sm:pl-32">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-slate-900">{vendor.businessName}</h1>
+                  <h1 className="text-3xl font-bold text-[var(--text-primary)]">{vendor.businessName}</h1>
                   {vendor.tagline && (
-                    <p className="mt-1 text-lg text-slate-500">{vendor.tagline}</p>
+                    <p className="mt-1 text-lg text-foreground0">{vendor.tagline}</p>
                   )}
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <span
-                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-slate-900"
+                      className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-[var(--text-primary)]"
                       style={{ backgroundColor: `${vendor.themeColor || '#14b8a6'}33`, color: vendor.themeColor || '#2dd4bf' }}
                     >
                       {vendor.category}
                     </span>
                     {vendor.nation && (
-                      <span className="text-sm text-slate-500">{vendor.nation}</span>
+                      <span className="text-sm text-foreground0">{vendor.nation}</span>
                     )}
                   </div>
                 </div>
@@ -288,7 +288,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-pink-50 hover:text-pink-600"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-foreground0 transition-colors hover:bg-pink-50 hover:text-pink-600"
                     >
                       <InstagramIcon className="h-5 w-5" />
                     </a>
@@ -298,7 +298,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-foreground0 transition-colors hover:bg-blue-50 hover:text-blue-600"
                     >
                       <FacebookIcon className="h-5 w-5" />
                     </a>
@@ -308,7 +308,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={`https://tiktok.com/@${vendor.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-foreground0 transition-colors hover:bg-surface hover:text-[var(--text-primary)]"
                     >
                       <TikTokIcon className="h-5 w-5" />
                     </a>
@@ -318,7 +318,7 @@ async function VendorPage({ params, searchParams }: Props) {
                       href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-teal-50 hover:text-teal-600"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-foreground0 transition-colors hover:bg-[var(--accent-bg)] hover:text-accent"
                     >
                       <GlobeAltIcon className="h-5 w-5" />
                     </a>
@@ -333,23 +333,23 @@ async function VendorPage({ params, searchParams }: Props) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About */}
-            <section className="rounded-2xl bg-white border border-slate-200 p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-4">About</h2>
-              <p className="text-slate-600 whitespace-pre-wrap">{vendor.description}</p>
+            <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+              <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">About</h2>
+              <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{vendor.description}</p>
             </section>
 
             {/* Community Story */}
             {vendor.communityStory && (
-              <section className="rounded-2xl bg-white border border-slate-200 p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-4">Our Story</h2>
-                <p className="text-slate-600 whitespace-pre-wrap">{vendor.communityStory}</p>
+              <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Our Story</h2>
+                <p className="text-[var(--text-secondary)] whitespace-pre-wrap">{vendor.communityStory}</p>
               </section>
             )}
 
             {/* Products */}
             {products.length > 0 && (
-              <section className="rounded-2xl bg-white border border-slate-200 p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Products & Services</h2>
+              <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">Products & Services</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {products.map((product) => (
                     <ProductCard key={product.id} product={product} themeColor={vendor.themeColor} />
@@ -360,8 +360,8 @@ async function VendorPage({ params, searchParams }: Props) {
 
             {/* Gallery */}
             {vendor.galleryImages && vendor.galleryImages.length > 0 && (
-              <section className="rounded-2xl bg-white border border-slate-200 p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Gallery</h2>
+              <section className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6">Gallery</h2>
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {vendor.galleryImages.map((image, index) => (
                     <div key={index} className="relative aspect-square overflow-hidden rounded-xl">
@@ -381,33 +381,33 @@ async function VendorPage({ params, searchParams }: Props) {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Contact Card */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Contact</h3>
+            <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Contact</h3>
               <div className="space-y-3">
                 {vendor.location && (
-                  <div className="flex items-start gap-3 text-slate-600">
-                    <MapPinIcon className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 text-[var(--text-secondary)]">
+                    <MapPinIcon className="h-5 w-5 text-foreground0 flex-shrink-0 mt-0.5" />
                     <div>
                       <p>{vendor.location}</p>
-                      <p className="text-sm text-slate-500">{vendor.region}</p>
+                      <p className="text-sm text-foreground0">{vendor.region}</p>
                     </div>
                   </div>
                 )}
                 {vendor.email && (
                   <a
                     href={`mailto:${vendor.email}`}
-                    className="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors"
+                    className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-accent transition-colors"
                   >
-                    <EnvelopeIcon className="h-5 w-5 text-slate-500" />
+                    <EnvelopeIcon className="h-5 w-5 text-foreground0" />
                     {vendor.email}
                   </a>
                 )}
                 {vendor.phone && (
                   <a
                     href={`tel:${vendor.phone}`}
-                    className="flex items-center gap-3 text-slate-600 hover:text-teal-600 transition-colors"
+                    className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-accent transition-colors"
                   >
-                    <PhoneIcon className="h-5 w-5 text-slate-500" />
+                    <PhoneIcon className="h-5 w-5 text-foreground0" />
                     {vendor.phone}
                   </a>
                 )}
@@ -429,8 +429,8 @@ async function VendorPage({ params, searchParams }: Props) {
             </div>
 
             {/* Shipping Info */}
-            <div className="rounded-2xl bg-white border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Shipping & Location</h3>
+            <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Shipping & Location</h3>
               <div className="space-y-3">
                 {vendor.offersShipping && (
                   <div className="flex items-center gap-3" style={{ color: vendor.themeColor || '#2dd4bf' }}>
@@ -439,12 +439,12 @@ async function VendorPage({ params, searchParams }: Props) {
                   </div>
                 )}
                 {vendor.onlineOnly ? (
-                  <div className="flex items-center gap-3 text-slate-500">
+                  <div className="flex items-center gap-3 text-foreground0">
                     <GlobeAltIcon className="h-5 w-5" />
                     <span>Online only</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 text-slate-500">
+                  <div className="flex items-center gap-3 text-foreground0">
                     <MapPinIcon className="h-5 w-5" />
                     <span>Physical location available</span>
                   </div>
@@ -471,7 +471,7 @@ function ProductCard({ product, themeColor }: { product: VendorProduct; themeCol
   const color = themeColor || '#2dd4bf'; // Default teal-400
   return (
     <div
-      className="group overflow-hidden rounded-xl bg-white border border-slate-200 transition-all hover:border-opacity-100"
+      className="group overflow-hidden rounded-xl bg-[var(--card-bg)] border border-[var(--border)] transition-all hover:border-opacity-100"
       style={{ borderColor: 'rgba(226, 232, 240, 1)' }} // Default border
     >
       {product.imageUrl && (
@@ -485,18 +485,18 @@ function ProductCard({ product, themeColor }: { product: VendorProduct; themeCol
         </div>
       )}
       <div className="p-4">
-        <h4 className="font-semibold text-slate-900 group-hover:text-teal-600 transition-colors" style={{ color: undefined }} /* We want hover effect */>
+        <h4 className="font-semibold text-[var(--text-primary)] group-hover:text-accent transition-colors" style={{ color: undefined }} /* We want hover effect */>
           {product.name}
         </h4>
-        <p className="mt-1 text-sm text-slate-500 line-clamp-2">{product.description}</p>
+        <p className="mt-1 text-sm text-foreground0 line-clamp-2">{product.description}</p>
         {(product.priceDisplay || product.price) && (
           <p className="mt-2 font-semibold" style={{ color }}>
             {product.priceDisplay || `$${(product.price! / 100).toFixed(2)}`}
           </p>
         )}
-        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
-          {product.madeToOrder && <span className="rounded bg-slate-100 px-2 py-0.5">Made to order</span>}
-          {!product.inStock && <span className="rounded bg-amber-50 text-amber-600 px-2 py-0.5">Out of stock</span>}
+        <div className="mt-2 flex items-center gap-2 text-xs text-foreground0">
+          {product.madeToOrder && <span className="rounded bg-surface px-2 py-0.5">Made to order</span>}
+          {!product.inStock && <span className="rounded bg-[var(--amber-bg)] text-[var(--amber)] px-2 py-0.5">Out of stock</span>}
         </div>
       </div>
     </div>

@@ -63,13 +63,13 @@ export function TrustedPartners() {
   return (
     <section className="relative py-20 sm:py-24 overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-accent/10 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="relative mx-auto max-w-7xl px-4 z-10">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
           {/* Bigger badge */}
-          <p className="inline-block px-5 py-2 sm:px-6 sm:py-2.5 mb-6 text-sm sm:text-base font-semibold tracking-[0.15em] text-teal-400 uppercase bg-teal-950/40 rounded-full border border-teal-700/50 backdrop-blur-sm shadow-lg">
+          <p className="inline-block px-5 py-2 sm:px-6 sm:py-2.5 mb-6 text-sm sm:text-base font-semibold tracking-[0.15em] text-accent uppercase bg-teal-950/40 rounded-full border border-teal-700/50 backdrop-blur-sm shadow-lg">
             Trusted Partners
           </p>
           {/* Bigger heading */}
@@ -87,7 +87,7 @@ export function TrustedPartners() {
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="h-28 w-52 sm:h-36 sm:w-72 shrink-0 rounded-xl sm:rounded-2xl bg-slate-800/50 animate-pulse"
+                className="h-28 w-52 sm:h-36 sm:w-72 shrink-0 rounded-xl sm:rounded-2xl bg-surface animate-pulse"
               />
             ))}
           </div>
@@ -101,7 +101,7 @@ export function TrustedPartners() {
                   className="group relative flex-shrink-0 flex items-center justify-center
                     h-28 w-52 sm:h-36 sm:w-72
                     rounded-xl sm:rounded-2xl
-                    bg-slate-50 border border-slate-200
+                    bg-[var(--background)] border border-[var(--border)]
                     p-4 sm:p-6
                     shadow-lg shadow-black/10
                     transition-all duration-300 ease-out
@@ -118,7 +118,7 @@ export function TrustedPartners() {
                         sizes="(max-width: 640px) 208px, 288px"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-slate-400">
+                      <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-[var(--text-muted)]">
                         {partner.organizationName?.charAt(0) || "?"}
                       </div>
                     )}
@@ -131,14 +131,14 @@ export function TrustedPartners() {
 
         {/* Counter and CTA */}
         <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-          <p className="text-slate-400 font-medium text-center sm:text-left">
+          <p className="text-[var(--text-muted)] font-medium text-center sm:text-left">
             Join the{" "}
             <span className="text-white font-bold">growing network</span> of
             inclusive employers
           </p>
           <Link
             href={buttonHref}
-            className="group relative inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-slate-900 transition-all duration-200 bg-teal-400 rounded-full hover:bg-teal-300 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 focus:ring-offset-slate-900"
+            className="group relative inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-[var(--text-primary)] transition-all duration-200 bg-teal-400 rounded-full hover:bg-teal-300 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 focus:ring-offset-background"
           >
             {buttonText}
             <svg

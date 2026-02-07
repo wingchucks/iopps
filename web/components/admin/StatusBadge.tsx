@@ -19,7 +19,7 @@ const variantStyles: Record<StatusVariant, string> = {
   warning: "bg-yellow-500/10 text-yellow-400",
   error: "bg-red-500/10 text-red-400",
   info: "bg-blue-500/10 text-blue-400",
-  neutral: "bg-slate-500/10 text-slate-400",
+  neutral: "bg-slate-500/10 text-[var(--text-muted)]",
   pending: "bg-orange-500/10 text-orange-400",
 };
 

@@ -125,9 +125,9 @@ export default function MemberApplicationsPage() {
     const s = status.toLowerCase();
     if (s === "hired" || s === "accepted") return "bg-green-500/20 text-green-300 border-green-500/40";
     if (s === "in review" || s === "reviewing") return "bg-blue-500/20 text-blue-300 border-blue-500/40";
-    if (s === "not selected" || s === "rejected") return "bg-slate-500/20 text-slate-400 border-slate-500/40";
+    if (s === "not selected" || s === "rejected") return "bg-slate-500/20 text-[var(--text-muted)] border-slate-500/40";
     if (s === "withdrawn") return "bg-orange-500/20 text-orange-300 border-orange-500/40";
-    return "bg-[#14B8A6]/20 text-[#14B8A6] border-[#14B8A6]/40";
+    return "bg-accent/20 text-[#14B8A6] border-[#14B8A6]/40";
   };
 
   const canWithdraw = (status: string) => {
@@ -178,28 +178,28 @@ export default function MemberApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-slate-300">Loading your account...</div>
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="text-[var(--text-secondary)]">Loading your account...</div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-surface">
         <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-          <h1 className="text-3xl font-bold text-slate-50">Sign in to view your applications</h1>
-          <p className="mt-3 text-slate-400">Log in or create an account to track your job applications.</p>
+          <h1 className="text-3xl font-bold text-foreground">Sign in to view your applications</h1>
+          <p className="mt-3 text-[var(--text-muted)]">Log in or create an account to track your job applications.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-[#14B8A6] px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8]"
+              className="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
             >
               Login
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-800/60 px-6 py-3 font-semibold text-slate-100 hover:border-[#14B8A6] hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-6 py-3 font-semibold text-foreground hover:border-[#14B8A6] hover:bg-surface"
             >
               Create Account
             </Link>
@@ -211,27 +211,27 @@ export default function MemberApplicationsPage() {
 
   if (role !== "community") {
     return (
-      <div className="min-h-screen bg-slate-900">
+      <div className="min-h-screen bg-surface">
         <div className="mx-auto max-w-4xl px-4 py-12 text-center">
-          <h1 className="text-2xl font-bold text-slate-50">Community Member Area</h1>
-          <p className="mt-3 text-slate-400">Switch to your community account to view job applications.</p>
+          <h1 className="text-2xl font-bold text-foreground">Community Member Area</h1>
+          <p className="mt-3 text-[var(--text-muted)]">Switch to your community account to view job applications.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-surface">
       <div className="mx-auto max-w-6xl px-4 py-12">
         {/* Header */}
         <div className="mb-10">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#14B8A6]">My Applications</p>
-          <h1 className="mt-2 text-4xl font-bold text-slate-50">Track Your Applications</h1>
-          <p className="mt-3 text-slate-400">Monitor the status of all your job applications in one place.</p>
+          <h1 className="mt-2 text-4xl font-bold text-foreground">Track Your Applications</h1>
+          <p className="mt-3 text-[var(--text-muted)]">Monitor the status of all your job applications in one place.</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
               href="/member/profile"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-2 text-slate-200 transition hover:border-[#14B8A6] hover:bg-slate-800 hover:text-[#14B8A6]"
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground transition hover:border-[#14B8A6] hover:bg-surface hover:text-[#14B8A6]"
             >
               Edit Profile
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -240,7 +240,7 @@ export default function MemberApplicationsPage() {
             </Link>
             <Link
               href="/saved"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-2 text-slate-200 transition hover:border-[#14B8A6] hover:bg-slate-800 hover:text-[#14B8A6]"
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-surface px-4 py-2 text-foreground transition hover:border-[#14B8A6] hover:bg-surface hover:text-[#14B8A6]"
             >
               Saved Jobs
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,10 +253,10 @@ export default function MemberApplicationsPage() {
         {/* Stats Dashboard */}
         {!appsLoading && (
           <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Total Applications</p>
-              <p className="mt-3 text-3xl font-bold text-slate-50">{counts.total}</p>
-              <p className="mt-2 text-xs text-slate-500">{counts.last30} in last 30 days</p>
+            <div className="rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Total Applications</p>
+              <p className="mt-3 text-3xl font-bold text-foreground">{counts.total}</p>
+              <p className="mt-2 text-xs text-foreground0">{counts.last30} in last 30 days</p>
             </div>
 
             {Array.from(counts.statusMap.entries()).map(([status, value]) => {
@@ -264,15 +264,15 @@ export default function MemberApplicationsPage() {
               const statusColors: Record<string, { bg: string; text: string }> = {
                 SUBMITTED: { bg: "bg-blue-500/10", text: "text-blue-300" },
                 REVIEWED: { bg: "bg-amber-500/10", text: "text-amber-300" },
-                SHORTLISTED: { bg: "bg-emerald-500/10", text: "text-emerald-300" },
+                SHORTLISTED: { bg: "bg-accent/10", text: "text-emerald-300" },
                 HIRED: { bg: "bg-green-500/10", text: "text-green-300" },
                 REJECTED: { bg: "bg-red-500/10", text: "text-red-300" },
-                WITHDRAWN: { bg: "bg-slate-500/10", text: "text-slate-300" },
+                WITHDRAWN: { bg: "bg-slate-500/10", text: "text-[var(--text-secondary)]" },
               };
-              const colors = statusColors[statusUpper] || { bg: "bg-slate-500/10", text: "text-slate-300" };
+              const colors = statusColors[statusUpper] || { bg: "bg-slate-500/10", text: "text-[var(--text-secondary)]" };
               return (
-                <div key={status} className={`rounded-xl border border-slate-800 ${colors.bg} p-6`}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{status}</p>
+                <div key={status} className={`rounded-xl border border-[var(--card-border)] ${colors.bg} p-6`}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">{status}</p>
                   <p className={`mt-3 text-3xl font-bold ${colors.text}`}>{value}</p>
                 </div>
               );
@@ -281,13 +281,13 @@ export default function MemberApplicationsPage() {
         )}
 
         {/* Filter Section */}
-        <div className="mb-8 rounded-xl border border-slate-800 bg-slate-800/20 p-4">
+        <div className="mb-8 rounded-xl border border-[var(--card-border)] bg-slate-800/20 p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             {/* Search */}
             <div className="flex-1 max-w-md">
-              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2 block">Search</label>
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2 block">Search</label>
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -295,7 +295,7 @@ export default function MemberApplicationsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by job title, company, or location..."
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800/60 pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-800/60 pl-10 pr-4 py-2.5 text-sm text-foreground placeholder-slate-500 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
                 />
               </div>
             </div>
@@ -304,11 +304,11 @@ export default function MemberApplicationsPage() {
             <div className="flex flex-wrap gap-3">
               {/* Status Filter */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Status</label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                  className="rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2.5 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
                 >
                   <option value="all">All statuses</option>
                   <option value="submitted">Submitted</option>
@@ -324,11 +324,11 @@ export default function MemberApplicationsPage() {
 
               {/* Date Range */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Applied</label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Applied</label>
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
-                  className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                  className="rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2.5 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
                 >
                   <option value="all">All time</option>
                   <option value="7">Last 7 days</option>
@@ -339,11 +339,11 @@ export default function MemberApplicationsPage() {
 
               {/* Sort By */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Sort by</label>
+                <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Sort by</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2.5 text-sm text-slate-100 focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
+                  className="rounded-lg border border-[var(--card-border)] bg-slate-800/60 px-4 py-2.5 text-sm text-foreground focus:border-[#14B8A6] focus:outline-none focus:ring-2 focus:ring-[#14B8A6]/20"
                 >
                   <option value="date-desc">Newest first</option>
                   <option value="date-asc">Oldest first</option>
@@ -356,22 +356,22 @@ export default function MemberApplicationsPage() {
 
           {/* Active Filters Summary */}
           {(statusFilter !== "all" || searchQuery || dateRange !== "all") && (
-            <div className="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-slate-500">Active filters:</span>
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-foreground0">Active filters:</span>
               {searchQuery && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs text-[#14B8A6]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs text-[#14B8A6]">
                   Search: {searchQuery}
                   <button onClick={() => setSearchQuery("")} className="ml-1 hover:text-white">×</button>
                 </span>
               )}
               {statusFilter !== "all" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs text-[#14B8A6]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs text-[#14B8A6]">
                   Status: {statusFilter}
                   <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-white">×</button>
                 </span>
               )}
               {dateRange !== "all" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#14B8A6]/10 px-3 py-1 text-xs text-[#14B8A6]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs text-[#14B8A6]">
                   Last {dateRange} days
                   <button onClick={() => setDateRange("all")} className="ml-1 hover:text-white">×</button>
                 </span>
@@ -383,7 +383,7 @@ export default function MemberApplicationsPage() {
                   setDateRange("all");
                   setSortBy("date-desc");
                 }}
-                className="text-xs text-slate-400 hover:text-[#14B8A6] ml-2"
+                className="text-xs text-[var(--text-muted)] hover:text-[#14B8A6] ml-2"
               >
                 Clear all
               </button>
@@ -392,10 +392,10 @@ export default function MemberApplicationsPage() {
         </div>
 
         {/* Applications Section */}
-        <div className="rounded-xl border border-slate-800 bg-slate-800/20 p-6">
+        <div className="rounded-xl border border-[var(--card-border)] bg-slate-800/20 p-6">
           {/* Results Count */}
           {!appsLoading && applications.length > 0 && (
-            <div className="mb-4 text-sm text-slate-400">
+            <div className="mb-4 text-sm text-[var(--text-muted)]">
               Showing {filteredApplications.length} of {applications.length} application{applications.length !== 1 ? "s" : ""}
             </div>
           )}
@@ -408,18 +408,18 @@ export default function MemberApplicationsPage() {
 
           {appsLoading ? (
             <div className="py-12 text-center">
-              <p className="text-slate-400">Loading your applications...</p>
+              <p className="text-[var(--text-muted)]">Loading your applications...</p>
             </div>
           ) : applications.length === 0 ? (
-            <div className="rounded-lg border border-slate-700 bg-slate-900/50 py-12 text-center">
-              <svg className="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="rounded-lg border border-[var(--card-border)] bg-surface py-12 text-center">
+              <svg className="mx-auto h-12 w-12 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="mt-4 text-slate-400">No applications yet</p>
-              <p className="mt-1 text-sm text-slate-500">Start applying to jobs to track your progress.</p>
+              <p className="mt-4 text-[var(--text-muted)]">No applications yet</p>
+              <p className="mt-1 text-sm text-foreground0">Start applying to jobs to track your progress.</p>
               <Link
                 href="/careers"
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-6 py-2.5 font-semibold text-slate-900 hover:bg-[#16cdb8]"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
               >
                 Browse Jobs
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -428,30 +428,30 @@ export default function MemberApplicationsPage() {
               </Link>
             </div>
           ) : filteredApplications.length === 0 ? (
-            <div className="rounded-lg border border-slate-700 bg-slate-900/50 py-12 text-center">
-              <p className="text-slate-400">No applications match your filter</p>
+            <div className="rounded-lg border border-[var(--card-border)] bg-surface py-12 text-center">
+              <p className="text-[var(--text-muted)]">No applications match your filter</p>
             </div>
           ) : (
             <div className="space-y-3">
               {filteredApplications.map((app) => (
                 <div
                   key={app.id}
-                  className="rounded-lg border border-slate-700 bg-slate-900/50 p-5 transition hover:border-slate-600 hover:bg-slate-900"
+                  className="rounded-lg border border-[var(--card-border)] bg-surface p-5 transition hover:border-[var(--card-border)] hover:bg-surface"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex-1">
                       <Link
                         href={`/careers/${app.jobId}`}
-                        className="inline-flex text-lg font-semibold text-slate-50 hover:text-[#14B8A6]"
+                        className="inline-flex text-lg font-semibold text-foreground hover:text-[#14B8A6]"
                       >
                         {app.job?.title ?? "Job"}
                         <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </Link>
-                      <p className="mt-1 text-sm text-slate-400">{app.job?.employerName ?? "Employer"}</p>
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">{app.job?.employerName ?? "Employer"}</p>
                       {app.job?.location && (
-                        <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
+                        <p className="mt-2 flex items-center gap-2 text-sm text-foreground0">
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -477,7 +477,7 @@ export default function MemberApplicationsPage() {
                             <button
                               onClick={() => setConfirmWithdrawId(null)}
                               disabled={withdrawingId === app.id}
-                              className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+                              className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-surface disabled:opacity-50"
                             >
                               Cancel
                             </button>
@@ -493,15 +493,15 @@ export default function MemberApplicationsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+                  <div className="mt-4 flex flex-wrap gap-4 text-xs text-foreground0">
                     <div className="flex items-center gap-1">
                       <span>Applied:</span>
-                      <span className="text-slate-400">{toDateValue(app.createdAt)?.toLocaleDateString("en-CA") ?? "—"}</span>
+                      <span className="text-[var(--text-muted)]">{toDateValue(app.createdAt)?.toLocaleDateString("en-CA") ?? "—"}</span>
                     </div>
                     {app.updatedAt && toDateValue(app.updatedAt) && (
                       <div className="flex items-center gap-1">
                         <span>Updated:</span>
-                        <span className="text-slate-400">{toDateValue(app.updatedAt)?.toLocaleDateString("en-CA")}</span>
+                        <span className="text-[var(--text-muted)]">{toDateValue(app.updatedAt)?.toLocaleDateString("en-CA")}</span>
                       </div>
                     )}
                   </div>

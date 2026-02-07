@@ -5,14 +5,14 @@ interface SkeletonProps {
 export function Skeleton({ className = "" }: SkeletonProps) {
     return (
         <div
-            className={`animate-pulse rounded-lg bg-slate-800/50 ${className}`}
+            className={`animate-pulse rounded-lg bg-surface ${className}`}
         />
     );
 }
 
 export function CardSkeleton() {
     return (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
             <Skeleton className="mb-4 h-40 w-full rounded-xl" />
             <Skeleton className="mb-2 h-6 w-3/4" />
             <Skeleton className="mb-4 h-4 w-1/2" />
@@ -24,7 +24,7 @@ export function CardSkeleton() {
 
 export function JobCardSkeleton() {
     return (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-6">
             <div className="flex items-start gap-4">
                 <Skeleton className="h-12 w-12 rounded-lg flex-shrink-0" />
                 <div className="flex-1">
@@ -54,7 +54,7 @@ export function ListingSkeleton({ count = 6 }: { count?: number }) {
 
 export function TableRowSkeleton() {
     return (
-        <div className="flex items-center gap-4 border-b border-slate-800 px-4 py-3">
+        <div className="flex items-center gap-4 border-b border-[var(--card-border)] px-4 py-3">
             <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
             <div className="flex-1">
                 <Skeleton className="mb-1 h-4 w-1/3" />

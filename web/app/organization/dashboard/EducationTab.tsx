@@ -144,10 +144,10 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
       {/* Header */}
       <div className="rounded-3xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-8 shadow-xl shadow-emerald-900/20">
         <div className="flex items-center gap-3">
-          <AcademicCapIcon className="h-8 w-8 text-emerald-400" />
+          <AcademicCapIcon className="h-8 w-8 text-accent" />
           <div>
             <h2 className="text-2xl font-bold text-white">Education</h2>
-            <p className="mt-1 text-slate-400">
+            <p className="mt-1 text-[var(--text-muted)]">
               Manage your school profile, programs, scholarships, and student inquiries
             </p>
           </div>
@@ -155,12 +155,12 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-2 border-b border-slate-800 pb-px overflow-x-auto">
+      <div className="flex gap-2 border-b border-[var(--card-border)] pb-px overflow-x-auto">
         <button
           onClick={() => setEducationType("school")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "school"
-            ? "border-b-2 border-emerald-500 bg-emerald-500/10 text-emerald-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-accent bg-accent/10 text-accent"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BuildingLibraryIcon className="h-4 w-4" />
@@ -169,8 +169,8 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
         <button
           onClick={() => setEducationType("programs")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "programs"
-            ? "border-b-2 border-teal-500 bg-teal-500/10 text-teal-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            ? "border-b-2 border-accent bg-accent/10 text-accent"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BookOpenIcon className="h-4 w-4" />
@@ -180,7 +180,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
           onClick={() => setEducationType("scholarships")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "scholarships"
             ? "border-b-2 border-amber-500 bg-amber-500/10 text-amber-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <BanknotesIcon className="h-4 w-4" />
@@ -190,7 +190,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
           onClick={() => setEducationType("inquiries")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "inquiries"
             ? "border-b-2 border-blue-500 bg-blue-500/10 text-blue-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <EnvelopeIcon className="h-4 w-4" />
@@ -205,7 +205,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
           onClick={() => setEducationType("events")}
           className={`flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all whitespace-nowrap ${educationType === "events"
             ? "border-b-2 border-purple-500 bg-purple-500/10 text-purple-400"
-            : "border-b-2 border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-300"
+            : "border-b-2 border-transparent text-[var(--text-muted)] hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
             }`}
         >
           <CalendarDaysIcon className="h-4 w-4" />
@@ -215,10 +215,10 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
 
       {/* School Profile Tab */}
       {educationType === "school" && (
-        <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-8">
+        <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
             </div>
           ) : school ? (
             <div className="space-y-6">
@@ -233,7 +233,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                     className="rounded-xl"
                   />
                 ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-emerald-500/20 text-3xl font-bold text-emerald-400">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-accent/20 text-3xl font-bold text-accent">
                     {school.name.charAt(0)}
                   </div>
                 )}
@@ -241,7 +241,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                   <div className="flex items-center gap-3">
                     <h3 className="text-2xl font-bold text-white">{school.name}</h3>
                     {school.isPublished ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-accent">
                         <CheckCircleIcon className="h-3.5 w-3.5" />
                         Published
                       </span>
@@ -252,16 +252,16 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-slate-400">{school.type}</p>
+                  <p className="mt-1 text-[var(--text-muted)]">{school.type}</p>
                   {school.headOffice && (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-foreground0">
                       {school.headOffice.city}, {school.headOffice.province}
                     </p>
                   )}
                 </div>
                 <Link
                   href={`/organization/education/school/edit`}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                  className="flex items-center gap-2 rounded-xl bg-accent/20 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/30 transition-colors"
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                   Edit Profile
@@ -270,8 +270,8 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
 
               {/* Stats */}
               <div className="grid gap-4 sm:grid-cols-4">
-                <div className="rounded-xl bg-slate-900/50 p-4">
-                  <div className="flex items-center gap-2 text-slate-400">
+                <div className="rounded-xl bg-surface p-4">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)]">
                     <EyeIcon className="h-4 w-4" />
                     <span className="text-xs uppercase tracking-wider">Views</span>
                   </div>
@@ -279,22 +279,22 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                     {school.stats?.viewsCount || 0}
                   </p>
                 </div>
-                <div className="rounded-xl bg-slate-900/50 p-4">
-                  <div className="flex items-center gap-2 text-slate-400">
+                <div className="rounded-xl bg-surface p-4">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)]">
                     <BookOpenIcon className="h-4 w-4" />
                     <span className="text-xs uppercase tracking-wider">Programs</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-white">{programs.length}</p>
                 </div>
-                <div className="rounded-xl bg-slate-900/50 p-4">
-                  <div className="flex items-center gap-2 text-slate-400">
+                <div className="rounded-xl bg-surface p-4">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)]">
                     <EnvelopeIcon className="h-4 w-4" />
                     <span className="text-xs uppercase tracking-wider">Inquiries</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-white">{inquiries.length}</p>
                 </div>
-                <div className="rounded-xl bg-slate-900/50 p-4">
-                  <div className="flex items-center gap-2 text-slate-400">
+                <div className="rounded-xl bg-surface p-4">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)]">
                     <UserGroupIcon className="h-4 w-4" />
                     <span className="text-xs uppercase tracking-wider">Students</span>
                   </div>
@@ -307,7 +307,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               {school.isPublished && (
                 <Link
                   href={`/education/schools/${school.slug}`}
-                  className="inline-flex items-center gap-2 text-sm text-emerald-400 hover:underline"
+                  className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
                 >
                   <EyeIcon className="h-4 w-4" />
                   View public profile
@@ -316,11 +316,11 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
             </div>
           ) : (
             <div className="text-center py-12">
-              <BuildingLibraryIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BuildingLibraryIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 No school profile yet
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 Create your school profile to list programs and connect with students.
               </p>
               <Link
@@ -345,7 +345,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                 placeholder="Search programs..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-teal-500 focus:outline-none"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-accent focus:outline-none"
               />
             </div>
             <Link
@@ -359,15 +359,15 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
             </div>
           ) : filteredPrograms.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-              <BookOpenIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
+              <BookOpenIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No programs found" : "No programs yet"}
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {keyword ? "Try adjusting your search" : "Create your first education program."}
               </p>
             </div>
@@ -376,7 +376,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               {filteredPrograms.map((program) => (
                 <div
                   key={program.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -384,37 +384,37 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                         {program.name}
                       </h3>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-xs font-medium text-teal-300">
+                        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-teal-300">
                           {program.level}
                         </span>
-                        <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
+                        <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-[var(--text-secondary)]">
                           {program.category}
                         </span>
                         {program.delivery && (
-                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
+                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-[var(--text-secondary)]">
                             {program.delivery}
                           </span>
                         )}
                       </div>
                       {program.description && (
-                        <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                        <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                           {program.description}
                         </p>
                       )}
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${program.isPublished
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-slate-700 text-slate-400"
+                        ? "bg-accent/20 text-accent"
+                        : "bg-slate-700 text-[var(--text-muted)]"
                         }`}
                     >
                       {program.isPublished ? "Published" : "Draft"}
                     </span>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/organization/education/programs/${program.id}/edit`}
-                      className="rounded-lg px-3 py-1.5 text-sm text-teal-400 hover:bg-teal-500/10 transition-colors"
+                      className="rounded-lg px-3 py-1.5 text-sm text-accent hover:bg-accent/10 transition-colors"
                     >
                       Edit
                     </Link>
@@ -450,7 +450,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                 placeholder="Search scholarships..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
               />
             </div>
             <Link
@@ -467,12 +467,12 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" />
             </div>
           ) : filteredScholarships.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-              <BanknotesIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
+              <BanknotesIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No scholarships found" : "No scholarships yet"}
               </h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {keyword ? "Try adjusting your search" : "Create scholarships to support Indigenous students."}
               </p>
             </div>
@@ -481,7 +481,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               {filteredScholarships.map((scholarship) => (
                 <div
                   key={scholarship.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -489,9 +489,9 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                         {scholarship.title}
                       </h3>
                       <p className="mt-1 text-sm text-amber-400">{scholarship.providerName}</p>
-                      <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
+                      <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                         {scholarship.amount?.display && (
-                          <span className="text-emerald-400 font-medium">
+                          <span className="text-accent font-medium">
                             {scholarship.amount.display}
                           </span>
                         )}
@@ -507,10 +507,10 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${scholarship.status === "active"
-                        ? "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-accent/20 text-accent"
                         : scholarship.status === "upcoming"
                           ? "bg-amber-500/20 text-amber-400"
-                          : "bg-slate-700 text-slate-400"
+                          : "bg-slate-700 text-[var(--text-muted)]"
                         }`}
                     >
                       {scholarship.status === "active"
@@ -520,7 +520,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                           : "Closed"}
                     </span>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/organization/scholarships/${scholarship.id}/edit`}
                       className="rounded-lg px-3 py-1.5 text-sm text-amber-400 hover:bg-amber-500/10 transition-colors"
@@ -555,10 +555,10 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
             </div>
           ) : inquiries.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-              <EnvelopeIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
+              <EnvelopeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">No inquiries yet</h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 Student inquiries will appear here when they contact your school.
               </p>
             </div>
@@ -567,9 +567,9 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               {inquiries.map((inquiry) => (
                 <div
                   key={inquiry.id}
-                  className={`rounded-2xl border bg-slate-800/50 p-6 transition-colors ${inquiry.status === "new"
+                  className={`rounded-2xl border bg-surface p-6 transition-colors ${inquiry.status === "new"
                     ? "border-blue-500/50"
-                    : "border-slate-700 hover:border-slate-600"
+                    : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                     }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -582,8 +582,8 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${inquiry.status === "new"
                             ? "bg-blue-500/20 text-blue-400"
                             : inquiry.status === "replied"
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-slate-700 text-slate-400"
+                              ? "bg-accent/20 text-accent"
+                              : "bg-slate-700 text-[var(--text-muted)]"
                             }`}
                         >
                           {inquiry.status === "new"
@@ -595,19 +595,19 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                       </div>
                       <p className="mt-1 text-sm text-blue-400">{inquiry.studentEmail}</p>
                       {inquiry.programId && (
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-foreground0">
                           Interested in: {inquiry.programId}
                         </p>
                       )}
-                      <p className="mt-3 text-sm text-slate-300">{inquiry.message}</p>
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-3 text-sm text-[var(--text-secondary)]">{inquiry.message}</p>
+                      <p className="mt-2 text-xs text-foreground0">
                         {inquiry.createdAt && typeof inquiry.createdAt === "object" && "toDate" in inquiry.createdAt
                           ? (inquiry.createdAt as any).toDate().toLocaleDateString()
                           : inquiry.createdAt ? new Date(inquiry.createdAt as any).toLocaleDateString() : ""}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <a
                       href={`mailto:${inquiry.studentEmail}`}
                       className="rounded-lg bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400 hover:bg-blue-500/30 transition-colors"
@@ -617,7 +617,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                     {inquiry.status === "new" && (
                       <button
                         onClick={() => handleUpdateInquiryStatus(inquiry.id, "read")}
-                        className="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:bg-slate-700 transition-colors"
+                        className="rounded-lg px-3 py-1.5 text-sm text-[var(--text-muted)] hover:bg-slate-700 transition-colors"
                       >
                         Mark as Read
                       </button>
@@ -625,7 +625,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                     {inquiry.status !== "replied" && (
                       <button
                         onClick={() => handleUpdateInquiryStatus(inquiry.id, "replied")}
-                        className="rounded-lg px-3 py-1.5 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                        className="rounded-lg px-3 py-1.5 text-sm text-accent hover:bg-accent/10 transition-colors"
                       >
                         Mark as Replied
                       </button>
@@ -656,10 +656,10 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
             </div>
           ) : events.length === 0 ? (
-            <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-12 text-center">
-              <CalendarDaysIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
+              <CalendarDaysIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">No events yet</h3>
-              <p className="mt-2 text-slate-400">
+              <p className="mt-2 text-[var(--text-muted)]">
                 Create education events like open houses, info sessions, or webinars.
               </p>
             </div>
@@ -668,14 +668,14 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
               {events.map((event) => (
                 <div
                   key={event.id}
-                  className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6 hover:border-slate-600 transition-colors"
+                  className="rounded-2xl border border-[var(--card-border)] bg-surface p-6 hover:border-[var(--card-border)] transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-white truncate">
                         {event.title}
                       </h3>
-                      <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
+                      <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                         <span className="flex items-center gap-1.5">
                           <CalendarDaysIcon className="h-4 w-4" />
                           {event.startDate && typeof event.startDate === "object" && "toDate" in event.startDate
@@ -686,14 +686,14 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
                           {event.eventType}
                         </span>
                         {event.format && (
-                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-300">
+                          <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-[var(--text-secondary)]">
                             {event.format}
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 border-t border-slate-700 pt-4">
+                  <div className="mt-4 flex items-center gap-2 border-t border-[var(--card-border)] pt-4">
                     <Link
                       href={`/organization/education/events/${event.id}/edit`}
                       className="rounded-lg px-3 py-1.5 text-sm text-purple-400 hover:bg-purple-500/10 transition-colors"

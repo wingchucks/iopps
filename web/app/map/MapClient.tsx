@@ -100,8 +100,8 @@ export default function MapClient({
 
   if (!isMounted) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-500">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      <div className="flex h-full w-full items-center justify-center bg-[var(--background)] text-foreground0">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function MapClient({
   return (
     <div className="flex flex-col h-full">
       {/* Filters Header */}
-      <div className="bg-white/95 backdrop-blur-sm border-b border-slate-200 px-4 py-3 z-10">
+      <div className="bg-[var(--card-bg)]/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-3 z-10">
         <MapFiltersComponent
           filters={filters}
           onFiltersChange={onFiltersChange}
@@ -128,10 +128,10 @@ export default function MapClient({
       {/* Map Container */}
       <div className="flex-1 relative">
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-[var(--card-bg)]/50 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-              <span className="text-sm text-slate-500">Loading opportunities...</span>
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+              <span className="text-sm text-foreground0">Loading opportunities...</span>
             </div>
           </div>
         )}
@@ -229,11 +229,11 @@ function MapControls({ userLocation }: { userLocation?: { lat: number; lng: numb
 
   return (
     <div className="leaflet-bottom leaflet-left">
-      <div className="leaflet-control flex flex-col gap-1 bg-white rounded-lg shadow-lg p-1 m-3">
+      <div className="leaflet-control flex flex-col gap-1 bg-[var(--card-bg)] rounded-lg shadow-lg p-1 m-3">
         {userLocation && (
           <button
             onClick={handleFitToLocation}
-            className="p-2 hover:bg-slate-100 rounded transition-colors"
+            className="p-2 hover:bg-surface rounded transition-colors"
             title="Go to my location"
           >
             <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,10 +244,10 @@ function MapControls({ userLocation }: { userLocation?: { lat: number; lng: numb
         )}
         <button
           onClick={handleResetView}
-          className="p-2 hover:bg-slate-100 rounded transition-colors"
+          className="p-2 hover:bg-surface rounded transition-colors"
           title="Reset view"
         >
-          <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </button>

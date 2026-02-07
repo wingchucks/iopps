@@ -37,7 +37,7 @@ function NavItemRow({ item, isActive }: NavItemRowProps) {
   const Icon = item.icon;
 
   const badgeColors = {
-    default: "bg-slate-700 text-slate-300",
+    default: "bg-slate-700 text-[var(--text-secondary)]",
     warning: "bg-amber-500/20 text-amber-400",
     danger: "bg-red-500/20 text-red-400",
   };
@@ -47,14 +47,14 @@ function NavItemRow({ item, isActive }: NavItemRowProps) {
       href={item.href}
       className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
         isActive
-          ? "bg-slate-800 text-teal-400"
-          : "text-slate-300 hover:bg-slate-800/50 hover:text-white"
+          ? "bg-surface text-accent"
+          : "text-[var(--text-secondary)] hover:bg-surface hover:text-white"
       }`}
     >
       <div className="flex items-center gap-3">
         <Icon
           className={`h-5 w-5 flex-shrink-0 ${
-            isActive ? "text-teal-400" : "text-slate-500 group-hover:text-slate-400"
+            isActive ? "text-accent" : "text-foreground0 group-hover:text-[var(--text-muted)]"
           }`}
           aria-hidden="true"
         />
@@ -100,7 +100,7 @@ export function AdminNavGroup({
       {collapsible ? (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-400"
+          className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground0 hover:text-[var(--text-muted)]"
           aria-expanded={effectiveOpen}
           aria-label={`${label} navigation group`}
         >
@@ -113,7 +113,7 @@ export function AdminNavGroup({
           />
         </button>
       ) : (
-        <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground0">
           {label}
         </div>
       )}

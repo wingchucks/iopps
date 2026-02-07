@@ -86,7 +86,7 @@ export default function ConferenceCard({
       className={`group relative overflow-hidden rounded-2xl border shadow-lg shadow-black/30 transition-all duration-300 hover:-translate-y-1 ${
         conference.featured
           ? "border-amber-500/50 bg-gradient-to-br from-amber-500/5 to-amber-600/5 hover:border-amber-500/70"
-          : "border-slate-800/80 bg-[#08090C] hover:border-[#14B8A6]/70"
+          : "border-[var(--card-border)]/80 bg-surface hover:border-[#14B8A6]/70"
       }`}
     >
       {/* Banner Image */}
@@ -102,7 +102,7 @@ export default function ConferenceCard({
           {/* Floating badges on image */}
           <div className="absolute left-4 top-4 flex flex-wrap gap-2">
             {conference.featured && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1 text-xs font-semibold text-slate-900 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/90 px-3 py-1 text-xs font-semibold text-[var(--text-primary)] backdrop-blur-sm">
                 <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
@@ -111,12 +111,12 @@ export default function ConferenceCard({
             )}
             {isHappening && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/90 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm animate-pulse">
-                <span className="h-2 w-2 rounded-full bg-white" />
+                <span className="h-2 w-2 rounded-full bg-[var(--card-bg)]" />
                 Happening Now
               </span>
             )}
             {isUpcoming && !isHappening && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#14B8A6]/90 px-3 py-1 text-xs font-semibold text-slate-900 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/90 px-3 py-1 text-xs font-semibold text-[var(--text-primary)] backdrop-blur-sm">
                 In {daysUntil} day{daysUntil !== 1 ? "s" : ""}
               </span>
             )}
@@ -125,7 +125,7 @@ export default function ConferenceCard({
           {/* Save button on image */}
           <button
             onClick={handleSave}
-            className="absolute right-4 top-4 rounded-full bg-slate-900/80 p-2 text-slate-300 backdrop-blur-sm transition-colors hover:bg-slate-800 hover:text-[#14B8A6]"
+            className="absolute right-4 top-4 rounded-full bg-slate-900/80 p-2 text-[var(--text-secondary)] backdrop-blur-sm transition-colors hover:bg-surface hover:text-[#14B8A6]"
             aria-label={saved ? "Remove from saved" : "Save conference"}
           >
             <svg
@@ -165,7 +165,7 @@ export default function ConferenceCard({
               </span>
             )}
             {isUpcoming && !isHappening && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#14B8A6]/20 px-3 py-1 text-xs font-semibold text-[#14B8A6]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-[#14B8A6]">
                 In {daysUntil} day{daysUntil !== 1 ? "s" : ""}
               </span>
             )}
@@ -182,16 +182,16 @@ export default function ConferenceCard({
             {/* Title */}
             <Link
               href={`/conferences/${conference.id}`}
-              className="mt-1 block text-xl font-semibold text-slate-50 hover:text-[#14B8A6] transition-colors"
+              className="mt-1 block text-xl font-semibold text-foreground hover:text-[#14B8A6] transition-colors"
             >
               {conference.title}
             </Link>
 
             {/* Meta info row */}
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--text-muted)]">
               {/* Location */}
               <span className="inline-flex items-center gap-1.5">
-                <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 text-foreground0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -201,7 +201,7 @@ export default function ConferenceCard({
               {/* Date */}
               {conference.startDate && (
                 <span className="inline-flex items-center gap-1.5">
-                  <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 text-foreground0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   {formatDate(conference.startDate)}
@@ -244,14 +244,14 @@ export default function ConferenceCard({
 
               {/* Indigenous focused */}
               {conference.indigenousFocused && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-2.5 py-0.5 text-xs font-medium text-[#14B8A6]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#14B8A6]/30 bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-[#14B8A6]">
                   Indigenous Focused
                 </span>
               )}
 
               {/* Speaker count */}
               {conference.speakers && conference.speakers.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--card-border)] bg-surface px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -261,7 +261,7 @@ export default function ConferenceCard({
 
               {/* Expected attendees */}
               {conference.expectedAttendees && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--card-border)] bg-surface px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">
                   {conference.expectedAttendees}+ expected
                 </span>
               )}
@@ -273,7 +273,7 @@ export default function ConferenceCard({
             {!conference.bannerImageUrl && (
               <button
                 onClick={handleSave}
-                className="rounded-full border border-slate-700 bg-slate-800/50 p-2 text-slate-400 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                className="rounded-full border border-[var(--card-border)] bg-surface p-2 text-[var(--text-muted)] transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
                 aria-label={saved ? "Remove from saved" : "Save conference"}
               >
                 <svg
@@ -295,15 +295,15 @@ export default function ConferenceCard({
             {/* Price badge */}
             <div className="text-right">
               {conference.cost ? (
-                <span className="rounded-full border border-slate-700 bg-slate-800/50 px-3 py-1 text-xs font-medium text-slate-300">
+                <span className="rounded-full border border-[var(--card-border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                   {conference.cost}
                 </span>
               ) : conference.registrationOptions?.regularPrice ? (
-                <span className="rounded-full border border-slate-700 bg-slate-800/50 px-3 py-1 text-xs font-medium text-slate-300">
+                <span className="rounded-full border border-[var(--card-border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                   From {conference.registrationOptions.indigenousRate || conference.registrationOptions.regularPrice}
                 </span>
               ) : (
-                <span className="rounded-full border border-[#14B8A6]/30 bg-[#14B8A6]/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
+                <span className="rounded-full border border-[#14B8A6]/30 bg-accent/10 px-3 py-1 text-xs font-medium text-[#14B8A6]">
                   Free / Community
                 </span>
               )}
@@ -312,7 +312,7 @@ export default function ConferenceCard({
         </div>
 
         {/* Description */}
-        <p className="mt-4 text-sm leading-relaxed text-slate-300">
+        <p className="mt-4 text-sm leading-relaxed text-[var(--text-secondary)]">
           {conference.description.slice(0, 200)}
           {conference.description.length > 200 ? "..." : ""}
         </p>
@@ -323,13 +323,13 @@ export default function ConferenceCard({
             {conference.topics.slice(0, 4).map((topic, index) => (
               <span
                 key={index}
-                className="rounded-full bg-slate-800/80 px-2.5 py-0.5 text-xs text-slate-400"
+                className="rounded-full bg-slate-800/80 px-2.5 py-0.5 text-xs text-[var(--text-muted)]"
               >
                 {topic}
               </span>
             ))}
             {conference.topics.length > 4 && (
-              <span className="rounded-full bg-slate-800/80 px-2.5 py-0.5 text-xs text-slate-500">
+              <span className="rounded-full bg-slate-800/80 px-2.5 py-0.5 text-xs text-foreground0">
                 +{conference.topics.length - 4} more
               </span>
             )}
@@ -340,7 +340,7 @@ export default function ConferenceCard({
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Link
             href={`/conferences/${conference.id}`}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#14B8A6]/90"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:bg-accent/90"
           >
             View Details
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,7 +353,7 @@ export default function ConferenceCard({
               href={conference.registrationLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
+              className="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[#14B8A6] hover:text-[#14B8A6]"
             >
               Register Now
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

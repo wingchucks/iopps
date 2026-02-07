@@ -22,10 +22,10 @@ export default function RadarPage() {
         <div className="container max-w-2xl px-0 sm:px-4 pb-24 pt-4">
             {/* Search Header for Mobile */}
             <div className="flex items-center gap-3 px-4 mb-4 sm:hidden">
-                <div className="h-10 w-10 bg-slate-800 rounded-full flex items-center justify-center text-teal-500 font-bold border border-slate-700">
+                <div className="h-10 w-10 bg-surface rounded-full flex items-center justify-center text-accent font-bold border border-[var(--card-border)]">
                     I
                 </div>
-                <div className="flex-1 h-10 bg-slate-800/50 rounded-full flex items-center px-4 text-slate-500 text-sm border border-slate-700/50">
+                <div className="flex-1 h-10 bg-surface rounded-full flex items-center px-4 text-foreground0 text-sm border border-[var(--card-border)]">
                     Search opportunities...
                 </div>
             </div>

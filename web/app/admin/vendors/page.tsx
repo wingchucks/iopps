@@ -348,29 +348,29 @@ function AdminVendorsContent() {
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]">
         No Subscription
       </span>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/admin"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Admin Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Shop Indigenous - Vendors
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {filteredVendors.length} vendor{filteredVendors.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -382,28 +382,28 @@ function AdminVendorsContent() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Stats */}
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Total</p>
-            <p className="mt-1 text-2xl font-bold text-slate-100">{vendors.length}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Total</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{vendors.length}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Pending</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Pending</p>
             <p className="mt-1 text-2xl font-bold text-amber-400">{pendingCount}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Active</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Active</p>
             <p className="mt-1 text-2xl font-bold text-green-400">{activeCount}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Featured</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Featured</p>
             <p className="mt-1 text-2xl font-bold text-yellow-400">{featuredCount}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Paid Subs</p>
-            <p className="mt-1 text-2xl font-bold text-teal-400">{paidCount}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Paid Subs</p>
+            <p className="mt-1 text-2xl font-bold text-accent">{paidCount}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Free Grants</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Free Grants</p>
             <p className="mt-1 text-2xl font-bold text-purple-400">{freeCount}</p>
           </div>
         </div>
@@ -413,8 +413,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-[#14B8A6] text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-[#14B8A6]"
+              ? "bg-accent text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
             All ({vendors.length})
@@ -422,8 +422,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("pending")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "pending"
-              ? "bg-amber-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-amber-500"
+              ? "bg-amber-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
               } ${pendingCount > 0 ? "animate-pulse" : ""}`}
           >
             Pending Review ({pendingCount})
@@ -431,8 +431,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-green-500"
+              ? "bg-green-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
             Active ({activeCount})
@@ -440,8 +440,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-slate-500"
+              ? "bg-slate-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
             Inactive ({inactiveCount})
@@ -449,8 +449,8 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("featured")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "featured"
-              ? "bg-yellow-500 text-slate-900"
-              : "border border-slate-700 text-slate-300 hover:border-yellow-500"
+              ? "bg-yellow-500 text-[var(--text-primary)]"
+              : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-yellow-500"
               }`}
           >
             Featured ({featuredCount})
@@ -473,7 +473,7 @@ function AdminVendorsContent() {
               return (
                 <div
                   key={vendor.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-slate-700"
+                  className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-6 transition hover:border-[var(--card-border)]"
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     {/* Vendor Info */}
@@ -483,17 +483,17 @@ function AdminVendorsContent() {
                           <img
                             src={vendor.logoUrl}
                             alt={vendor.businessName}
-                            className="h-16 w-16 rounded-lg border border-slate-700 object-cover"
+                            className="h-16 w-16 rounded-lg border border-[var(--card-border)] object-cover"
                           />
                         )}
                         <div className="flex-1">
                           <div className="flex items-start justify-between gap-4">
                             <div>
-                              <h3 className="text-xl font-semibold text-slate-50">
+                              <h3 className="text-xl font-semibold text-foreground">
                                 {vendor.businessName}
                               </h3>
                               {vendor.tagline && (
-                                <p className="mt-1 text-sm text-slate-400">
+                                <p className="mt-1 text-sm text-[var(--text-muted)]">
                                   {vendor.tagline}
                                 </p>
                               )}
@@ -517,7 +517,7 @@ function AdminVendorsContent() {
                             </div>
                           </div>
 
-                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-400">
+                          <div className="mt-2 flex flex-wrap gap-3 text-sm text-[var(--text-muted)]">
                             {vendor.location && (
                               <span className="flex items-center gap-1">
                                 <svg
@@ -548,19 +548,19 @@ function AdminVendorsContent() {
                               </span>
                             )}
                             {vendor.nation && (
-                              <span className="rounded-full bg-[#14B8A6]/10 px-2 py-0.5 text-xs text-[#14B8A6]">
+                              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-[#14B8A6]">
                                 {vendor.nation}
                               </span>
                             )}
                             {vendor.offersShipping && (
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-foreground0">
                                 Offers Shipping
                               </span>
                             )}
                           </div>
 
                           {vendor.description && (
-                            <p className="mt-3 text-sm text-slate-300 line-clamp-2">
+                            <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2">
                               {vendor.description}
                             </p>
                           )}
@@ -576,7 +576,7 @@ function AdminVendorsContent() {
                             </a>
                           )}
 
-                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                          <div className="mt-3 flex flex-wrap gap-4 text-xs text-foreground0">
                             {typeof vendor.viewCount === 'number' && (
                               <span className="flex items-center gap-1">
                                 <EyeIcon className="h-3.5 w-3.5" />
@@ -595,7 +595,7 @@ function AdminVendorsContent() {
                             )}
                             {vendor.region && <span>Region: {vendor.region}</span>}
                             {vendor.subscriptionEndsAt && (
-                              <span className="text-teal-400">
+                              <span className="text-accent">
                                 Subscription expires:{" "}
                                 {typeof vendor.subscriptionEndsAt === 'object' && 'toDate' in vendor.subscriptionEndsAt
                                   ? (vendor.subscriptionEndsAt as any).toDate().toLocaleDateString()
@@ -611,7 +611,7 @@ function AdminVendorsContent() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/shop/${vendor.slug}`}
-                        className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
+                        className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm text-foreground transition hover:border-[#14B8A6] hover:text-[#14B8A6] text-center"
                       >
                         View
                       </Link>
@@ -736,16 +736,16 @@ function AdminVendorsContent() {
       {/* Free Listing Modal */}
       {freeListingModalId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-lg border border-[var(--card-border)] bg-surface p-6 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10">
-                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
+                <svg className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-slate-100">Grant Free Listing</h3>
+              <h3 className="text-xl font-bold text-foreground">Grant Free Listing</h3>
             </div>
-            <p className="mt-3 text-sm text-slate-400">
+            <p className="mt-3 text-sm text-[var(--text-muted)]">
               This vendor will have their shop listing active without requiring a subscription. Optionally add a reason for your records.
             </p>
             <input
@@ -753,7 +753,7 @@ function AdminVendorsContent() {
               value={freeListingReason}
               onChange={(e) => setFreeListingReason(e.target.value)}
               placeholder="e.g., Partner, Promotion, Sponsorship (optional)"
-              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-800 p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="mt-4 w-full rounded-md border border-[var(--card-border)] bg-surface p-3 text-sm text-foreground placeholder-slate-500 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -761,14 +761,14 @@ function AdminVendorsContent() {
                   setFreeListingModalId(null);
                   setFreeListingReason("");
                 }}
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
               >
                 Cancel
               </button>
               <button
                 onClick={() => confirmGrantFreeListing(freeListingModalId)}
                 disabled={!!processing}
-                className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Grant Free Listing
               </button>

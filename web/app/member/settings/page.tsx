@@ -88,25 +88,25 @@ function SettingsHubContent() {
   const location = profile?.location || null;
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
         {/* Back nav */}
         <Link
           href="/member/dashboard"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#14B8A6] transition-colors"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[#14B8A6] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
         </Link>
 
-        <h1 className="mb-6 text-2xl font-bold text-slate-100">Settings</h1>
+        <h1 className="mb-6 text-2xl font-bold text-foreground">Settings</h1>
 
         {/* Profile Card */}
-        <Card className="mb-6 border-slate-800 bg-[#08090C]">
+        <Card className="mb-6 border-[var(--card-border)] bg-surface">
           <CardContent className="p-5">
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-accent" />
               </div>
             ) : (
               <div className="flex items-center gap-4">
@@ -114,26 +114,26 @@ function SettingsHubContent() {
                   <img
                     src={avatarUrl}
                     alt={displayName}
-                    className="h-14 w-14 rounded-full object-cover border border-slate-700"
+                    className="h-14 w-14 rounded-full object-cover border border-[var(--card-border)]"
                   />
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30">
-                    <User className="h-7 w-7 text-emerald-400" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/20 border border-accent/30">
+                    <User className="h-7 w-7 text-accent" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-lg font-semibold text-slate-100 truncate">
+                  <p className="text-lg font-semibold text-foreground truncate">
                     {displayName}
                   </p>
                   {(affiliation || location) && (
-                    <p className="text-sm text-slate-400 truncate">
+                    <p className="text-sm text-[var(--text-muted)] truncate">
                       {[affiliation, location].filter(Boolean).join(" · ")}
                     </p>
                   )}
                 </div>
                 <Link
                   href="/member/profile"
-                  className="shrink-0 rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-300 hover:bg-slate-800/50 transition-colors"
+                  className="shrink-0 rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
                 >
                   Edit Profile
                 </Link>
@@ -143,9 +143,9 @@ function SettingsHubContent() {
         </Card>
 
         {/* Account Section */}
-        <Card className="mb-4 border-slate-800 bg-[#08090C]">
+        <Card className="mb-4 border-[var(--card-border)] bg-surface">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-400">
+            <CardTitle className="text-base font-semibold text-[var(--text-muted)]">
               Account
             </CardTitle>
           </CardHeader>
@@ -171,9 +171,9 @@ function SettingsHubContent() {
         </Card>
 
         {/* Preferences Section */}
-        <Card className="mb-4 border-slate-800 bg-[#08090C]">
+        <Card className="mb-4 border-[var(--card-border)] bg-surface">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-400">
+            <CardTitle className="text-base font-semibold text-[var(--text-muted)]">
               Preferences
             </CardTitle>
           </CardHeader>
@@ -197,9 +197,9 @@ function SettingsHubContent() {
         </Card>
 
         {/* Data & Sovereignty Section */}
-        <Card className="mb-4 border-slate-800 bg-[#08090C]">
+        <Card className="mb-4 border-[var(--card-border)] bg-surface">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-400">
+            <CardTitle className="text-base font-semibold text-[var(--text-muted)]">
               Data & Sovereignty
             </CardTitle>
           </CardHeader>
@@ -218,9 +218,9 @@ function SettingsHubContent() {
         </Card>
 
         {/* Support Section */}
-        <Card className="mb-6 border-slate-800 bg-[#08090C]">
+        <Card className="mb-6 border-[var(--card-border)] bg-surface">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-slate-400">
+            <CardTitle className="text-base font-semibold text-[var(--text-muted)]">
               Support
             </CardTitle>
           </CardHeader>
@@ -267,13 +267,13 @@ function SettingsLink({
     return (
       <a
         href={href}
-        className="flex items-center justify-between rounded-xl px-3 py-3 text-slate-100 transition-colors hover:bg-slate-800/50"
+        className="flex items-center justify-between rounded-xl px-3 py-3 text-foreground transition-colors hover:bg-surface"
       >
         <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-slate-400" />
+          <Icon className="h-5 w-5 text-[var(--text-muted)]" />
           <span className="text-sm font-medium">{label}</span>
         </div>
-        <ChevronRight className="h-4 w-4 text-slate-600" />
+        <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
       </a>
     );
   }
@@ -281,13 +281,13 @@ function SettingsLink({
   return (
     <Link
       href={href}
-      className="flex items-center justify-between rounded-xl px-3 py-3 text-slate-100 transition-colors hover:bg-slate-800/50"
+      className="flex items-center justify-between rounded-xl px-3 py-3 text-foreground transition-colors hover:bg-surface"
     >
       <div className="flex items-center gap-3">
-        <Icon className="h-5 w-5 text-slate-400" />
+        <Icon className="h-5 w-5 text-[var(--text-muted)]" />
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <ChevronRight className="h-4 w-4 text-slate-600" />
+      <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
     </Link>
   );
 }
@@ -309,12 +309,12 @@ function SettingsButton({
     <button
       onClick={onClick}
       disabled={loading}
-      className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-slate-100 transition-colors hover:bg-slate-800/50 disabled:opacity-50"
+      className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-foreground transition-colors hover:bg-surface disabled:opacity-50"
     >
       <div className="flex items-center gap-3">
         <Icon
           className={`h-5 w-5 ${
-            variant === "danger" ? "text-red-400" : "text-slate-400"
+            variant === "danger" ? "text-red-400" : "text-[var(--text-muted)]"
           }`}
         />
         <span
@@ -326,9 +326,9 @@ function SettingsButton({
         </span>
       </div>
       {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" />
       ) : (
-        <ChevronRight className="h-4 w-4 text-slate-600" />
+        <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
       )}
     </button>
   );

@@ -33,7 +33,7 @@ export default function AppPage() {
       <header className="hub-header">
         <div className="hub-header-inner">
           {/* Logo */}
-          <Link href="/hub" className="hub-logo">
+          <Link href="/discover" className="hub-logo">
             <span className="hub-logo-text">IOPPS</span>
             <span className="hub-logo-tagline">Empowering Indigenous Success</span>
           </Link>
@@ -67,7 +67,7 @@ export default function AppPage() {
         <div className="hub-mobile-nav">
           <nav>
             {[
-              { id: "feed", icon: "home", label: "Home Feed", href: "/hub", active: true },
+              { id: "feed", icon: "home", label: "Home Feed", href: "/discover", active: true },
               { id: "careers", icon: "briefcase", label: "Careers", href: "/careers" },
               { id: "education", icon: "academic", label: "Education", href: "/education" },
               { id: "events", icon: "calendar", label: "Events", href: "/community" },
@@ -114,7 +114,7 @@ export default function AppPage() {
             {/* Navigation */}
             <nav className="hub-nav">
               {[
-                { id: "feed", icon: "home", label: "Home Feed", href: "/hub", active: true },
+                { id: "feed", icon: "home", label: "Home Feed", href: "/discover", active: true },
                 { id: "careers", icon: "briefcase", label: "Careers", href: "/careers" },
                 { id: "education", icon: "academic", label: "Education", href: "/education" },
                 { id: "events", icon: "calendar", label: "Events", href: "/community" },
@@ -209,7 +209,7 @@ export default function AppPage() {
       {/* Mobile Bottom Nav */}
       <nav className="hub-mobile-bottom-nav">
         {[
-          { icon: "home", label: "Feed", href: "/hub", active: true },
+          { icon: "home", label: "Feed", href: "/discover", active: true },
           { icon: "briefcase", label: "Jobs", href: "/careers" },
           { icon: "search", label: "Search", href: "/careers" },
           { icon: "bell", label: "Alerts", href: isLoggedIn ? "/member/dashboard?tab=alerts" : "/login" },

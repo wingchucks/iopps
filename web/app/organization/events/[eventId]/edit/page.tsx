@@ -158,7 +158,7 @@ export default function EditEventPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -166,7 +166,7 @@ export default function EditEventPage() {
 
   if (error && !event) {
     return (
-      <div className="min-h-screen bg-slate-950 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-red-400 mb-4">{error}</p>
           <Link
@@ -186,7 +186,7 @@ export default function EditEventPage() {
 
   if (!canEdit) {
     return (
-      <div className="min-h-screen bg-slate-950 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-red-400 mb-4">You don't have permission to edit this event.</p>
           <Link
@@ -209,18 +209,18 @@ export default function EditEventPage() {
         <div className="mb-8">
           <Link
             href="/organization/host/events"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-white transition-colors mb-4"
           >
             <ArrowLeftIcon className="w-4 h-4" />
             Back to Events
           </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-white">Edit Event</h1>
-            <span className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-full bg-accent/20 text-accent border border-accent/30">
               Free
             </span>
           </div>
-          <p className="mt-2 text-slate-400">
+          <p className="mt-2 text-[var(--text-muted)]">
             Update your event details below.
           </p>
         </div>
@@ -233,11 +233,11 @@ export default function EditEventPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Status Toggle */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <div className="flex items-center justify-between">
               <div>
                 <label className="block text-sm font-medium text-white">Event Status</label>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-[var(--text-muted)] mt-1">
                   {active ? "This event is visible to the public" : "This event is hidden from the public"}
                 </p>
               </div>
@@ -249,7 +249,7 @@ export default function EditEventPage() {
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--card-bg)] transition-transform ${
                     active ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
@@ -258,7 +258,7 @@ export default function EditEventPage() {
           </div>
 
           {/* Event Type */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6">
             <label className="block text-sm font-medium text-white mb-3">
               Event Type *
             </label>
@@ -271,7 +271,7 @@ export default function EditEventPage() {
                   className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
                     eventType === type
                       ? "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
-                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                      : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                   }`}
                 >
                   {type}
@@ -281,11 +281,11 @@ export default function EditEventPage() {
           </div>
 
           {/* Event Details */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6 space-y-5">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6 space-y-5">
             <h3 className="text-lg font-semibold text-white">Event Details</h3>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Event Name *
               </label>
               <input
@@ -294,12 +294,12 @@ export default function EditEventPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Annual Traditional Pow Wow"
-                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Description *
               </label>
               <textarea
@@ -308,12 +308,12 @@ export default function EditEventPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Tell attendees about your event..."
-                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Host / Organizer
               </label>
               <input
@@ -321,18 +321,18 @@ export default function EditEventPage() {
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
                 placeholder="e.g., Mohawk Nation Council"
-                className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>
           </div>
 
           {/* Location & Date */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6 space-y-5">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6 space-y-5">
             <h3 className="text-lg font-semibold text-white">Location & Date</h3>
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Location *
                 </label>
                 <input
@@ -341,18 +341,18 @@ export default function EditEventPage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g., Six Nations Arena, Ohsweken"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Region
                 </label>
                 <select
                   value={region}
                   onChange={(e) => setRegion(e.target.value as NorthAmericanRegion)}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
                 >
                   <option value="">Select region...</option>
                   <optgroup label="Canada">
@@ -372,44 +372,44 @@ export default function EditEventPage() {
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Options */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6 space-y-5">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6 space-y-5">
             <h3 className="text-lg font-semibold text-white">Options</h3>
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Registration Status
                 </label>
                 <select
                   value={registrationStatus}
                   onChange={(e) => setRegistrationStatus(e.target.value)}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white focus:border-pink-500 focus:outline-none"
                 >
                   <option value="Open">Open</option>
                   <option value="Coming Soon">Coming Soon</option>
@@ -424,11 +424,11 @@ export default function EditEventPage() {
                     type="checkbox"
                     checked={livestream}
                     onChange={(e) => setLivestream(e.target.checked)}
-                    className="h-5 w-5 rounded border-slate-600 bg-slate-700 text-pink-500 focus:ring-pink-500"
+                    className="h-5 w-5 rounded border-[var(--card-border)] bg-slate-700 text-pink-500 focus:ring-pink-500"
                   />
                   <div>
                     <span className="text-sm font-medium text-white">Livestream Available</span>
-                    <p className="text-xs text-slate-400">Will this event be streamed online?</p>
+                    <p className="text-xs text-[var(--text-muted)]">Will this event be streamed online?</p>
                   </div>
                 </label>
               </div>
@@ -436,9 +436,9 @@ export default function EditEventPage() {
           </div>
 
           {/* Event Image */}
-          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-6 space-y-4">
+          <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-6 space-y-4">
             <h3 className="text-lg font-semibold text-white">Event Image</h3>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--text-muted)]">
               Upload a poster or image for your event.
             </p>
 
@@ -448,7 +448,7 @@ export default function EditEventPage() {
                   <img
                     src={currentImage}
                     alt="Preview"
-                    className="h-32 w-48 rounded-lg object-cover border border-slate-600"
+                    className="h-32 w-48 rounded-lg object-cover border border-[var(--card-border)]"
                   />
                   <button
                     type="button"
@@ -463,11 +463,11 @@ export default function EditEventPage() {
                   </button>
                 </div>
               ) : (
-                <label className="flex h-32 w-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-600 bg-slate-700/30 hover:border-pink-500/50 hover:bg-slate-700/50 transition-colors">
-                  <svg className="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <label className="flex h-32 w-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[var(--card-border)] bg-slate-700/30 hover:border-pink-500/50 hover:bg-slate-700/50 transition-colors">
+                  <svg className="h-8 w-8 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span className="mt-2 text-sm text-slate-400">Upload image</span>
+                  <span className="mt-2 text-sm text-[var(--text-muted)]">Upload image</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -490,7 +490,7 @@ export default function EditEventPage() {
             </button>
             <Link
               href="/organization/host/events"
-              className="text-sm text-slate-400 hover:text-white transition-colors"
+              className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
             >
               Cancel
             </Link>

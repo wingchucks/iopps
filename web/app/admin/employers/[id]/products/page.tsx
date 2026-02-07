@@ -232,7 +232,7 @@ export default function EmployerProductsPage() {
 
     if (isExpired) {
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-1 text-xs font-medium text-slate-400">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/10 px-2 py-1 text-xs font-medium text-[var(--text-muted)]">
           <ClockIcon className="h-3 w-3" /> Expired
         </span>
       );
@@ -279,10 +279,10 @@ export default function EmployerProductsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#020306]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-teal-500"></div>
-          <p className="mt-3 text-slate-400">Loading products...</p>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[var(--card-border)] border-t-teal-500"></div>
+          <p className="mt-3 text-[var(--text-muted)]">Loading products...</p>
         </div>
       </div>
     );
@@ -296,13 +296,13 @@ export default function EmployerProductsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#020306] pb-12">
+    <div className="min-h-screen bg-background pb-12">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-5xl px-4 py-6">
           <Link
             href="/admin/employers"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-teal-400"
+            className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-accent"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Back to Employers
@@ -313,21 +313,21 @@ export default function EmployerProductsPage() {
                 <img
                   src={employer.logoUrl}
                   alt={employer.organizationName}
-                  className="h-16 w-16 rounded-lg border border-slate-700 bg-white object-contain p-2"
+                  className="h-16 w-16 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xs text-slate-500">
+                <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-xs text-foreground0">
                   No Logo
                 </div>
               )}
               <div>
-                <h1 className="text-2xl font-bold text-slate-50">{employer?.organizationName}</h1>
-                <p className="mt-1 text-sm text-slate-400">Products & Subscriptions</p>
+                <h1 className="text-2xl font-bold text-foreground">{employer?.organizationName}</h1>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">Products & Subscriptions</p>
               </div>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-teal-400"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-teal-400"
             >
               <PlusIcon className="h-4 w-4" />
               Add Product
@@ -339,17 +339,17 @@ export default function EmployerProductsPage() {
       <div className="mx-auto max-w-5xl px-4 py-8">
         {/* Stats */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Total Products</p>
-            <p className="mt-1 text-2xl font-bold text-slate-100">{products.length}</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Total Products</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{products.length}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Active Products</p>
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Active Products</p>
             <p className="mt-1 text-2xl font-bold text-green-400">{activeProducts.length}</p>
           </div>
-          <div className="rounded-lg border border-slate-800 bg-[#08090C] p-4">
-            <p className="text-sm font-medium text-slate-400">Total Value</p>
-            <p className="mt-1 text-2xl font-bold text-teal-400">
+          <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+            <p className="text-sm font-medium text-[var(--text-muted)]">Total Value</p>
+            <p className="mt-1 text-2xl font-bold text-accent">
               {formatPrice(products.reduce((sum, p) => sum + p.price, 0))}
             </p>
           </div>
@@ -357,14 +357,14 @@ export default function EmployerProductsPage() {
 
         {/* Active Products */}
         <div className="mb-8">
-          <h2 className="mb-4 text-lg font-semibold text-slate-100">Active Products</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Active Products</h2>
           {activeProducts.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-[#08090C] p-8 text-center">
-              <GiftIcon className="mx-auto h-12 w-12 text-slate-600" />
-              <p className="mt-2 text-slate-400">No active products</p>
+            <div className="rounded-lg border border-[var(--card-border)] bg-surface p-8 text-center">
+              <GiftIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
+              <p className="mt-2 text-[var(--text-muted)]">No active products</p>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="mt-4 text-sm text-teal-400 hover:text-teal-300"
+                className="mt-4 text-sm text-accent hover:text-teal-300"
               >
                 Add a product
               </button>
@@ -374,16 +374,16 @@ export default function EmployerProductsPage() {
               {activeProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="rounded-lg border border-slate-800 bg-[#08090C] p-5"
+                  className="rounded-lg border border-[var(--card-border)] bg-surface p-5"
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold text-slate-100">{product.productName}</h3>
+                        <h3 className="text-lg font-semibold text-foreground">{product.productName}</h3>
                         {getStatusBadge(product.status, product.expiresAt)}
                         {getPaymentBadge(product.paymentMethod)}
                       </div>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">
                         {CATEGORY_LABELS[product.category]} • {formatPrice(product.price)} value
                         {product.paidAmount !== product.price && (
                           <span className="text-green-400"> (paid {formatPrice(product.paidAmount)})</span>
@@ -396,7 +396,7 @@ export default function EmployerProductsPage() {
                           setExtendDays(30);
                           setShowExtendModal(product.id);
                         }}
-                        className="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-teal-500 hover:text-teal-400"
+                        className="rounded-md border border-[var(--card-border)] px-3 py-1 text-xs text-[var(--text-secondary)] transition hover:border-accent hover:text-accent"
                       >
                         <ArrowPathIcon className="h-4 w-4" />
                       </button>
@@ -412,17 +412,17 @@ export default function EmployerProductsPage() {
 
                   <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <div>
-                      <p className="text-xs text-slate-500">Activated</p>
-                      <p className="text-sm text-slate-300">{formatDate(product.activatedAt)}</p>
+                      <p className="text-xs text-foreground0">Activated</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{formatDate(product.activatedAt)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Expires</p>
-                      <p className="text-sm text-slate-300">{formatDate(product.expiresAt)}</p>
+                      <p className="text-xs text-foreground0">Expires</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{formatDate(product.expiresAt)}</p>
                     </div>
                     {product.grantReason && (
                       <div className="col-span-2">
-                        <p className="text-xs text-slate-500">Reason</p>
-                        <p className="text-sm text-slate-300">{product.grantReason}</p>
+                        <p className="text-xs text-foreground0">Reason</p>
+                        <p className="text-sm text-[var(--text-secondary)]">{product.grantReason}</p>
                       </div>
                     )}
                   </div>
@@ -431,13 +431,13 @@ export default function EmployerProductsPage() {
                   {(product.stats.jobsRemaining !== undefined ||
                     product.stats.featuredJobsRemaining !== undefined ||
                     product.stats.conferencesRemaining !== undefined) && (
-                    <div className="mt-4 rounded-md bg-slate-800/50 p-3">
-                      <p className="mb-2 text-xs font-medium text-slate-400">Usage Stats</p>
+                    <div className="mt-4 rounded-md bg-surface p-3">
+                      <p className="mb-2 text-xs font-medium text-[var(--text-muted)]">Usage Stats</p>
                       <div className="flex flex-wrap gap-4 text-sm">
                         {product.stats.jobsRemaining !== undefined && (
                           <div>
-                            <span className="text-slate-400">Jobs:</span>{" "}
-                            <span className="text-slate-200">
+                            <span className="text-[var(--text-muted)]">Jobs:</span>{" "}
+                            <span className="text-foreground">
                               {product.stats.jobsPosted || 0} used,{" "}
                               {product.stats.jobsRemaining === "unlimited"
                                 ? "unlimited"
@@ -448,8 +448,8 @@ export default function EmployerProductsPage() {
                         )}
                         {product.stats.featuredJobsRemaining !== undefined && (
                           <div>
-                            <span className="text-slate-400">Featured:</span>{" "}
-                            <span className="text-slate-200">
+                            <span className="text-[var(--text-muted)]">Featured:</span>{" "}
+                            <span className="text-foreground">
                               {product.stats.featuredJobsUsed || 0} used, {product.stats.featuredJobsRemaining}{" "}
                               remaining
                             </span>
@@ -457,8 +457,8 @@ export default function EmployerProductsPage() {
                         )}
                         {product.stats.conferencesRemaining !== undefined && (
                           <div>
-                            <span className="text-slate-400">Conferences:</span>{" "}
-                            <span className="text-slate-200">
+                            <span className="text-[var(--text-muted)]">Conferences:</span>{" "}
+                            <span className="text-foreground">
                               {product.stats.conferencesPosted || 0} used, {product.stats.conferencesRemaining}{" "}
                               remaining
                             </span>
@@ -476,18 +476,18 @@ export default function EmployerProductsPage() {
         {/* Inactive/Expired Products */}
         {inactiveProducts.length > 0 && (
           <div>
-            <h2 className="mb-4 text-lg font-semibold text-slate-400">Expired / Cancelled</h2>
+            <h2 className="mb-4 text-lg font-semibold text-[var(--text-muted)]">Expired / Cancelled</h2>
             <div className="space-y-2">
               {inactiveProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/30 px-4 py-3"
+                  className="flex items-center justify-between rounded-lg border border-[var(--card-border)] bg-slate-900/30 px-4 py-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-slate-400">{product.productName}</span>
+                    <span className="text-sm text-[var(--text-muted)]">{product.productName}</span>
                     {getStatusBadge(product.status, product.expiresAt)}
                   </div>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-foreground0">
                     {product.status === "cancelled" ? "Cancelled" : `Expired ${formatDate(product.expiresAt)}`}
                   </span>
                 </div>
@@ -500,21 +500,21 @@ export default function EmployerProductsPage() {
       {/* Add Product Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-surface p-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-slate-100">Add Product</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-200">
+              <h3 className="text-xl font-bold text-foreground">Add Product</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-[var(--text-muted)] hover:text-foreground">
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
               Adding product to <strong>{employer?.organizationName}</strong>
             </p>
 
             <div className="mt-6 space-y-5">
               {/* Category Selection */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Category</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Category</label>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(CATEGORY_LABELS) as ProductCategory[]).map((cat) => (
                     <button
@@ -529,8 +529,8 @@ export default function EmployerProductsPage() {
                       }}
                       className={`rounded-lg border px-3 py-1.5 text-sm transition ${
                         selectedCategory === cat
-                          ? "border-teal-500 bg-teal-500/10 text-teal-400"
-                          : "border-slate-700 text-slate-400 hover:border-slate-600"
+                          ? "border-accent bg-accent/10 text-accent"
+                          : "border-[var(--card-border)] text-[var(--text-muted)] hover:border-[var(--card-border)]"
                       }`}
                     >
                       {CATEGORY_LABELS[cat]}
@@ -541,7 +541,7 @@ export default function EmployerProductsPage() {
 
               {/* Product Selection */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Product</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Product</label>
                 <div className="grid gap-2">
                   {getProductsByCategory(selectedCategory).map(([type, config]) => (
                     <button
@@ -550,17 +550,17 @@ export default function EmployerProductsPage() {
                       onClick={() => setSelectedProduct(type as ProductType)}
                       className={`flex items-start justify-between rounded-lg border p-3 text-left transition ${
                         selectedProduct === type
-                          ? "border-teal-500 bg-teal-500/10"
-                          : "border-slate-700 hover:border-slate-600"
+                          ? "border-accent bg-accent/10"
+                          : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                       }`}
                     >
                       <div>
-                        <p className={`font-medium ${selectedProduct === type ? "text-teal-400" : "text-slate-200"}`}>
+                        <p className={`font-medium ${selectedProduct === type ? "text-accent" : "text-foreground"}`}>
                           {config.name}
                         </p>
-                        <p className="text-xs text-slate-500">{config.duration} days</p>
+                        <p className="text-xs text-foreground0">{config.duration} days</p>
                       </div>
-                      <span className="text-sm font-semibold text-teal-400">{formatPrice(config.price)}</span>
+                      <span className="text-sm font-semibold text-accent">{formatPrice(config.price)}</span>
                     </button>
                   ))}
                 </div>
@@ -569,12 +569,12 @@ export default function EmployerProductsPage() {
               {/* Quantity (for job products) */}
               {selectedCategory === "job" && (
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">Quantity</label>
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Quantity</label>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-slate-300 hover:bg-slate-700"
+                      className="rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-[var(--text-secondary)] hover:bg-slate-700"
                     >
                       −
                     </button>
@@ -583,12 +583,12 @@ export default function EmployerProductsPage() {
                       min="1"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-20 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-center text-sm text-slate-100"
+                      className="w-20 rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-center text-sm text-foreground"
                     />
                     <button
                       type="button"
                       onClick={() => setQuantity(quantity + 1)}
-                      className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-slate-300 hover:bg-slate-700"
+                      className="rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-[var(--text-secondary)] hover:bg-slate-700"
                     >
                       +
                     </button>
@@ -598,7 +598,7 @@ export default function EmployerProductsPage() {
 
               {/* Payment Method */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Payment Method</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Payment Method</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -606,11 +606,11 @@ export default function EmployerProductsPage() {
                     className={`flex flex-col items-center gap-1 rounded-lg border p-3 transition ${
                       paymentMethod === "free_grant"
                         ? "border-purple-500 bg-purple-500/10"
-                        : "border-slate-700 hover:border-slate-600"
+                        : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                     }`}
                   >
-                    <GiftIcon className={`h-5 w-5 ${paymentMethod === "free_grant" ? "text-purple-400" : "text-slate-400"}`} />
-                    <span className={`text-xs ${paymentMethod === "free_grant" ? "text-purple-400" : "text-slate-400"}`}>
+                    <GiftIcon className={`h-5 w-5 ${paymentMethod === "free_grant" ? "text-purple-400" : "text-[var(--text-muted)]"}`} />
+                    <span className={`text-xs ${paymentMethod === "free_grant" ? "text-purple-400" : "text-[var(--text-muted)]"}`}>
                       Free Grant
                     </span>
                   </button>
@@ -620,11 +620,11 @@ export default function EmployerProductsPage() {
                     className={`flex flex-col items-center gap-1 rounded-lg border p-3 transition ${
                       paymentMethod === "manual"
                         ? "border-yellow-500 bg-yellow-500/10"
-                        : "border-slate-700 hover:border-slate-600"
+                        : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                     }`}
                   >
-                    <DocumentTextIcon className={`h-5 w-5 ${paymentMethod === "manual" ? "text-yellow-400" : "text-slate-400"}`} />
-                    <span className={`text-xs ${paymentMethod === "manual" ? "text-yellow-400" : "text-slate-400"}`}>
+                    <DocumentTextIcon className={`h-5 w-5 ${paymentMethod === "manual" ? "text-yellow-400" : "text-[var(--text-muted)]"}`} />
+                    <span className={`text-xs ${paymentMethod === "manual" ? "text-yellow-400" : "text-[var(--text-muted)]"}`}>
                       Manual/Invoice
                     </span>
                   </button>
@@ -634,11 +634,11 @@ export default function EmployerProductsPage() {
                     className={`flex flex-col items-center gap-1 rounded-lg border p-3 transition ${
                       paymentMethod === "stripe"
                         ? "border-blue-500 bg-blue-500/10"
-                        : "border-slate-700 hover:border-slate-600"
+                        : "border-[var(--card-border)] hover:border-[var(--card-border)]"
                     }`}
                   >
-                    <CreditCardIcon className={`h-5 w-5 ${paymentMethod === "stripe" ? "text-blue-400" : "text-slate-400"}`} />
-                    <span className={`text-xs ${paymentMethod === "stripe" ? "text-blue-400" : "text-slate-400"}`}>
+                    <CreditCardIcon className={`h-5 w-5 ${paymentMethod === "stripe" ? "text-blue-400" : "text-[var(--text-muted)]"}`} />
+                    <span className={`text-xs ${paymentMethod === "stripe" ? "text-blue-400" : "text-[var(--text-muted)]"}`}>
                       Stripe
                     </span>
                   </button>
@@ -647,9 +647,9 @@ export default function EmployerProductsPage() {
 
               {/* Duration Override */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                   Duration (days)
-                  <span className="ml-2 text-xs text-slate-500">
+                  <span className="ml-2 text-xs text-foreground0">
                     Leave empty for default ({PRODUCT_CATALOG[selectedProduct]?.duration || 30} days)
                   </span>
                 </label>
@@ -658,16 +658,16 @@ export default function EmployerProductsPage() {
                   value={durationDays}
                   onChange={(e) => setDurationDays(e.target.value ? parseInt(e.target.value) : "")}
                   placeholder={`${PRODUCT_CATALOG[selectedProduct]?.duration || 30}`}
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500"
+                  className="w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500"
                 />
               </div>
 
               {/* Paid Amount (for manual/stripe) */}
               {paymentMethod !== "free_grant" && (
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-300">
+                  <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">
                     Amount Paid (cents)
-                    <span className="ml-2 text-xs text-slate-500">
+                    <span className="ml-2 text-xs text-foreground0">
                       Leave empty for full price ({formatPrice((PRODUCT_CATALOG[selectedProduct]?.price || 0) * quantity)})
                     </span>
                   </label>
@@ -676,53 +676,53 @@ export default function EmployerProductsPage() {
                     value={paidAmount}
                     onChange={(e) => setPaidAmount(e.target.value ? parseInt(e.target.value) : "")}
                     placeholder={`${(PRODUCT_CATALOG[selectedProduct]?.price || 0) * quantity}`}
-                    className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500"
+                    className="w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500"
                   />
                 </div>
               )}
 
               {/* Grant Reason */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Reason (optional)</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Reason (optional)</label>
                 <input
                   type="text"
                   value={grantReason}
                   onChange={(e) => setGrantReason(e.target.value)}
                   placeholder="e.g., Partner, Sponsorship, Promotion"
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500"
+                  className="w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500"
                 />
               </div>
 
               {/* Notes */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Notes (optional)</label>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Notes (optional)</label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder="Internal notes..."
-                  className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500"
+                  className="w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground placeholder-slate-500"
                 />
               </div>
 
               {/* Summary */}
-              <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-                <p className="text-sm text-slate-300">
-                  <span className="text-slate-400">Granting:</span>{" "}
+              <div className="rounded-lg border border-[var(--card-border)] bg-surface p-4">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  <span className="text-[var(--text-muted)]">Granting:</span>{" "}
                   <strong>
                     {quantity > 1 ? `${quantity}x ` : ""}
                     {PRODUCT_CATALOG[selectedProduct]?.name}
                   </strong>
                 </p>
-                <p className="text-sm text-slate-300">
-                  <span className="text-slate-400">Value:</span>{" "}
-                  <strong className="text-teal-400">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  <span className="text-[var(--text-muted)]">Value:</span>{" "}
+                  <strong className="text-accent">
                     {formatPrice((PRODUCT_CATALOG[selectedProduct]?.price || 0) * quantity)}
                   </strong>
                   {paymentMethod === "free_grant" && <span className="text-purple-400"> (FREE)</span>}
                 </p>
-                <p className="text-sm text-slate-300">
-                  <span className="text-slate-400">Duration:</span>{" "}
+                <p className="text-sm text-[var(--text-secondary)]">
+                  <span className="text-[var(--text-muted)]">Duration:</span>{" "}
                   {durationDays || PRODUCT_CATALOG[selectedProduct]?.duration} days
                 </p>
               </div>
@@ -731,14 +731,14 @@ export default function EmployerProductsPage() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddProduct}
                 disabled={processing}
-                className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:opacity-50"
               >
                 {processing ? "Adding..." : "Add Product"}
               </button>
@@ -750,16 +750,16 @@ export default function EmployerProductsPage() {
       {/* Extend Modal */}
       {showExtendModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6">
-            <h3 className="text-lg font-bold text-slate-100">Extend Product</h3>
-            <p className="mt-1 text-sm text-slate-400">Add more days to this product</p>
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--card-border)] bg-surface p-6">
+            <h3 className="text-lg font-bold text-foreground">Extend Product</h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Add more days to this product</p>
 
             <div className="mt-4">
-              <label className="mb-2 block text-sm font-medium text-slate-300">Additional Days</label>
+              <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Additional Days</label>
               <select
                 value={extendDays}
                 onChange={(e) => setExtendDays(parseInt(e.target.value))}
-                className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+                className="w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground"
               >
                 <option value={30}>30 days</option>
                 <option value={60}>60 days</option>
@@ -772,14 +772,14 @@ export default function EmployerProductsPage() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowExtendModal(null)}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleExtendProduct(showExtendModal)}
                 disabled={processing}
-                className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:opacity-50"
               >
                 {processing ? "Extending..." : "Extend"}
               </button>

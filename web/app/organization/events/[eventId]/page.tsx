@@ -52,7 +52,7 @@ export default function EventDetailPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -60,7 +60,7 @@ export default function EventDetailPage() {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-slate-950 px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-red-400 mb-4">{error || "Event not found"}</p>
           <Link
@@ -87,25 +87,25 @@ export default function EventDetailPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-5xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/organization/host/events"
-                className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-accent transition-colors mb-3"
+                className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-accent transition-colors mb-3"
               >
                 <ArrowLeftIcon className="w-4 h-4" />
                 Back to Events
               </Link>
-              <h1 className="text-2xl font-bold text-slate-50">{event.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{event.name}</h1>
               <div className="flex items-center gap-4 mt-2">
                 <span className={`px-2 py-1 text-xs font-medium rounded ${
                   event.eventType === "Pow Wow"
                     ? "bg-purple-900/50 text-purple-300"
-                    : "bg-slate-800 text-slate-300"
+                    : "bg-surface text-[var(--text-secondary)]"
                 }`}>
                   {event.eventType || "Event"}
                 </span>
@@ -114,7 +114,7 @@ export default function EventDetailPage() {
                     Active
                   </span>
                 ) : (
-                  <span className="px-2 py-1 text-xs font-medium rounded bg-slate-800 text-slate-400">
+                  <span className="px-2 py-1 text-xs font-medium rounded bg-surface text-[var(--text-muted)]">
                     Inactive
                   </span>
                 )}
@@ -140,7 +140,7 @@ export default function EventDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Image */}
             {event.imageUrl && (
-              <div className="rounded-2xl overflow-hidden border border-slate-800">
+              <div className="rounded-2xl overflow-hidden border border-[var(--card-border)]">
                 <img
                   src={event.imageUrl}
                   alt={event.name}
@@ -151,8 +151,8 @@ export default function EventDetailPage() {
 
             {/* Description */}
             <div className="bg-card border border-card-border rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-slate-50 mb-4">About This Event</h2>
-              <p className="text-slate-300 whitespace-pre-wrap">
+              <h2 className="text-lg font-semibold text-foreground mb-4">About This Event</h2>
+              <p className="text-[var(--text-secondary)] whitespace-pre-wrap">
                 {event.description || "No description provided."}
               </p>
             </div>
@@ -162,16 +162,16 @@ export default function EventDetailPage() {
           <div className="space-y-6">
             {/* Event Details */}
             <div className="bg-card border border-card-border rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-slate-50 mb-4">Event Details</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Event Details</h3>
               <div className="space-y-4">
                 {/* Date */}
                 {startDate && (
                   <div className="flex items-start gap-3">
-                    <CalendarDaysIcon className="w-5 h-5 text-slate-500 mt-0.5" />
+                    <CalendarDaysIcon className="w-5 h-5 text-foreground0 mt-0.5" />
                     <div>
-                      <p className="text-slate-200">{format(startDate, "MMMM d, yyyy")}</p>
+                      <p className="text-foreground">{format(startDate, "MMMM d, yyyy")}</p>
                       {endDate && startDate.getTime() !== endDate.getTime() && (
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-foreground0">
                           to {format(endDate, "MMMM d, yyyy")}
                         </p>
                       )}
@@ -182,11 +182,11 @@ export default function EventDetailPage() {
                 {/* Location */}
                 {event.location && (
                   <div className="flex items-start gap-3">
-                    <MapPinIcon className="w-5 h-5 text-slate-500 mt-0.5" />
+                    <MapPinIcon className="w-5 h-5 text-foreground0 mt-0.5" />
                     <div>
-                      <p className="text-slate-200">{event.location}</p>
+                      <p className="text-foreground">{event.location}</p>
                       {event.region && (
-                        <p className="text-sm text-slate-500">{event.region}</p>
+                        <p className="text-sm text-foreground0">{event.region}</p>
                       )}
                     </div>
                   </div>
@@ -195,10 +195,10 @@ export default function EventDetailPage() {
                 {/* Host */}
                 {event.host && (
                   <div className="flex items-start gap-3">
-                    <UserGroupIcon className="w-5 h-5 text-slate-500 mt-0.5" />
+                    <UserGroupIcon className="w-5 h-5 text-foreground0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-slate-500">Hosted by</p>
-                      <p className="text-slate-200">{event.host}</p>
+                      <p className="text-sm text-foreground0">Hosted by</p>
+                      <p className="text-foreground">{event.host}</p>
                     </div>
                   </div>
                 )}
@@ -206,10 +206,10 @@ export default function EventDetailPage() {
                 {/* Registration Status */}
                 {event.registrationStatus && (
                   <div className="flex items-start gap-3">
-                    <GlobeAltIcon className="w-5 h-5 text-slate-500 mt-0.5" />
+                    <GlobeAltIcon className="w-5 h-5 text-foreground0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-slate-500">Registration</p>
-                      <p className="text-slate-200">{event.registrationStatus}</p>
+                      <p className="text-sm text-foreground0">Registration</p>
+                      <p className="text-foreground">{event.registrationStatus}</p>
                     </div>
                   </div>
                 )}
@@ -227,11 +227,11 @@ export default function EventDetailPage() {
             {/* Actions */}
             {canEdit && (
               <div className="bg-card border border-card-border rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-slate-50 mb-4">Actions</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Actions</h3>
                 <div className="space-y-3">
                   <Link
                     href={`/organization/events/${eventId}/edit`}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-slate-800 text-slate-200 rounded-lg font-medium hover:bg-slate-700 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-surface text-foreground rounded-lg font-medium hover:bg-slate-700 transition-colors"
                   >
                     <PencilIcon className="w-4 h-4" />
                     Edit Event
@@ -239,7 +239,7 @@ export default function EventDetailPage() {
                   <Link
                     href={`/community/events/${eventId}`}
                     target="_blank"
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-slate-700 text-slate-300 rounded-lg font-medium hover:bg-slate-800 transition-colors"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-[var(--card-border)] text-[var(--text-secondary)] rounded-lg font-medium hover:bg-surface transition-colors"
                   >
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                     View Public Page

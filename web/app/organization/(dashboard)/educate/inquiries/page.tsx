@@ -83,8 +83,8 @@ export default function EducateInquiriesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-50">Student Inquiries</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Student Inquiries</h1>
+        <p className="text-[var(--text-muted)] mt-1">
           Messages from prospective students
           {unreadCount > 0 && (
             <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-accent/20 text-accent">
@@ -101,7 +101,7 @@ export default function EducateInquiriesPage() {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'all'
               ? 'bg-accent/10 text-accent border border-accent/20'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           All ({inquiries.length})
@@ -111,7 +111,7 @@ export default function EducateInquiriesPage() {
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'programs'
               ? 'bg-blue-900/30 text-blue-400 border border-blue-800/30'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           <BookOpenIcon className="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@ export default function EducateInquiriesPage() {
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'scholarships'
               ? 'bg-purple-900/30 text-purple-400 border border-purple-800/30'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           <AcademicCapIcon className="w-3.5 h-3.5" />
@@ -132,8 +132,8 @@ export default function EducateInquiriesPage() {
           onClick={() => setFilter('general')}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter === 'general'
-              ? 'bg-slate-700/50 text-slate-300 border border-slate-600'
-              : 'bg-slate-900/50 text-slate-400 border border-slate-800 hover:border-slate-700'
+              ? 'bg-slate-700/50 text-[var(--text-secondary)] border border-[var(--card-border)]'
+              : 'bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]'
           }`}
         >
           General ({generalCount})
@@ -143,11 +143,11 @@ export default function EducateInquiriesPage() {
       {/* Inquiries List */}
       {filteredInquiries.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <ChatBubbleLeftRightIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <ChatBubbleLeftRightIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'all' ? 'No inquiries yet' : `No ${filter} inquiries`}
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto">
+          <p className="text-foreground0 max-w-md mx-auto">
             {filter === 'all'
               ? 'When students contact you about programs or scholarships, their messages will appear here.'
               : 'No inquiries match this filter.'}
@@ -161,18 +161,18 @@ export default function EducateInquiriesPage() {
               href={`/organization/educate/inquiries/${inquiry.id}`}
               className={`block bg-card border rounded-xl p-4 transition-colors ${
                 inquiry.isRead
-                  ? 'border-card-border hover:border-slate-700'
+                  ? 'border-card-border hover:border-[var(--card-border)]'
                   : 'border-accent/30 bg-accent/5 hover:border-accent/50'
               }`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
-                    <UserIcon className="w-5 h-5 text-slate-500" />
+                  <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
+                    <UserIcon className="w-5 h-5 text-foreground0" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-200">
+                      <p className="font-semibold text-foreground">
                         {inquiry.displayName || 'Anonymous Student'}
                       </p>
                       {!inquiry.isRead && (
@@ -182,20 +182,20 @@ export default function EducateInquiriesPage() {
                       )}
                     </div>
                     {inquiry.relatedEntityTitle && (
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-[var(--text-muted)]">
                         Re: {inquiry.relatedEntityTitle}
                       </p>
                     )}
-                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">
+                    <p className="text-sm text-foreground0 line-clamp-2 mt-1">
                       {inquiry.message}
                     </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-foreground0">
                       <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded ${
                         inquiry.displayType === 'program'
                           ? 'bg-blue-900/30 text-blue-400'
                           : inquiry.displayType === 'scholarship'
                           ? 'bg-purple-900/30 text-purple-400'
-                          : 'bg-slate-800 text-slate-400'
+                          : 'bg-surface text-[var(--text-muted)]'
                       }`}>
                         {inquiry.displayType === 'program' && <BookOpenIcon className="w-3 h-3" />}
                         {inquiry.displayType === 'scholarship' && <AcademicCapIcon className="w-3 h-3" />}

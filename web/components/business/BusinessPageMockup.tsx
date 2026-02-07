@@ -10,7 +10,7 @@
  *
  * Design Tokens Used:
  * - Deep backgrounds: slate-950, slate-900
- * - Glass containers: backdrop-blur-xl, border-slate-700/50
+ * - Glass containers: backdrop-blur-xl, border-[var(--card-border)]
  * - Primary gradient: teal-400 to cyan-400
  * - Warm accents: amber-400, orange-500
  * - Northern Lights: teal to purple gradients
@@ -317,7 +317,7 @@ function HeroSection() {
           className="flex items-center gap-3 mb-6"
         >
           <motion.span
-            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-teal-500/30 px-4 py-1.5 text-sm font-semibold text-teal-300 backdrop-blur-sm"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-accent/30 px-4 py-1.5 text-sm font-semibold text-teal-300 backdrop-blur-sm"
             animate={{ boxShadow: ['0 0 20px rgba(20, 184, 166, 0.2)', '0 0 30px rgba(20, 184, 166, 0.4)', '0 0 20px rgba(20, 184, 166, 0.2)'] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
@@ -346,7 +346,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg sm:text-xl text-slate-300 max-w-2xl mb-8"
+          className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mb-8"
         >
           Discover authentic Indigenous-owned businesses, artisans, and service providers across Turtle Island.
         </motion.p>
@@ -372,7 +372,7 @@ function HeroSection() {
                   duration={2 + i * 0.3}
                 />
               </div>
-              <div className="text-sm text-slate-400">{stat.label}</div>
+              <div className="text-sm text-[var(--text-muted)]">{stat.label}</div>
             </div>
           ))}
         </motion.div>
@@ -395,19 +395,19 @@ function HeroSection() {
                 whileTap={{ scale: 0.98 }}
                 className={`relative flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-all duration-300 ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-lg shadow-white/20'
-                    : 'bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-700/60 hover:border-slate-600/50'
+                    ? 'bg-[var(--card-bg)] text-[var(--text-primary)] shadow-lg shadow-white/20'
+                    : 'bg-slate-800/60 text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-slate-700/60 hover:border-[var(--card-border)]/50'
                 }`}
               >
-                <Icon className={`h-5 w-5 ${isActive ? 'text-teal-600' : 'text-slate-400'}`} />
+                <Icon className={`h-5 w-5 ${isActive ? 'text-accent' : 'text-[var(--text-muted)]'}`} />
                 {tab.label}
-                <span className={`ml-1 text-xs ${isActive ? 'text-slate-500' : 'text-slate-500'}`}>
+                <span className={`ml-1 text-xs ${isActive ? 'text-foreground0' : 'text-foreground0'}`}>
                   ({tab.count})
                 </span>
                 {isActive && (
                   <motion.div
                     layoutId="activeTabIndicator"
-                    className="absolute inset-0 rounded-2xl bg-white"
+                    className="absolute inset-0 rounded-2xl bg-[var(--card-bg)]"
                     style={{ zIndex: -1 }}
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                   />
@@ -426,13 +426,13 @@ function HeroSection() {
         >
           <div className="absolute -inset-1 bg-gradient-to-r from-teal-500/30 via-cyan-500/30 to-teal-500/30 rounded-2xl blur-lg opacity-60" />
           <div className="relative flex items-center">
-            <MagnifyingGlassIcon className="absolute left-5 h-5 w-5 text-slate-400 pointer-events-none" />
+            <MagnifyingGlassIcon className="absolute left-5 h-5 w-5 text-[var(--text-muted)] pointer-events-none" />
             <input
               type="text"
               placeholder="Search businesses, products, services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 py-4 pl-14 pr-32 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-all"
+              className="w-full rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-[var(--card-border)] py-4 pl-14 pr-32 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-accent/50 transition-all"
             />
             <button className="absolute right-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 hover:scale-[1.02] transition-all">
               Search
@@ -471,7 +471,7 @@ function BusinessSpotlight() {
             <StarIcon className="h-5 w-5 text-amber-400" />
             <span className="text-sm font-bold text-amber-400">Business Spotlight</span>
           </motion.div>
-          <span className="text-sm text-slate-500">Featured Today</span>
+          <span className="text-sm text-foreground0">Featured Today</span>
         </motion.div>
 
         {/* Spotlight Card */}
@@ -479,7 +479,7 @@ function BusinessSpotlight() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
           variants={scaleInVariants}
-          className="group relative overflow-hidden rounded-3xl bg-slate-900/50 border border-slate-700/50 backdrop-blur-xl shadow-2xl shadow-black/20"
+          className="group relative overflow-hidden rounded-3xl bg-surface border border-[var(--card-border)] backdrop-blur-xl shadow-2xl shadow-black/20"
         >
           {/* Cover Image Container */}
           <div className="relative h-64 sm:h-80 lg:h-96 overflow-hidden">
@@ -513,7 +513,7 @@ function BusinessSpotlight() {
             {/* Logo with Glow Effect */}
             <div className="absolute -bottom-10 left-8 sm:left-12">
               <motion.div
-                className="relative h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-slate-900 bg-slate-800 shadow-2xl"
+                className="relative h-24 w-24 sm:h-32 sm:w-32 overflow-hidden rounded-2xl border-4 border-slate-900 bg-surface shadow-2xl"
                 whileHover={{ scale: 1.05, rotate: 2 }}
                 animate={{
                   boxShadow: [
@@ -539,8 +539,8 @@ function BusinessSpotlight() {
 
                 {/* Verified Badge */}
                 {business.verified && (
-                  <div className="absolute -bottom-2 -right-2 rounded-full bg-slate-900 p-1">
-                    <CheckBadgeIcon className="h-6 w-6 text-teal-400" />
+                  <div className="absolute -bottom-2 -right-2 rounded-full bg-surface p-1">
+                    <CheckBadgeIcon className="h-6 w-6 text-accent" />
                   </div>
                 )}
               </motion.div>
@@ -556,27 +556,27 @@ function BusinessSpotlight() {
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
                     {business.businessName}
                   </h2>
-                  <CheckBadgeIcon className="h-7 w-7 text-teal-400" />
+                  <CheckBadgeIcon className="h-7 w-7 text-accent" />
                 </div>
 
-                <p className="text-lg text-slate-300 mb-4 max-w-2xl">
+                <p className="text-lg text-[var(--text-secondary)] mb-4 max-w-2xl">
                   {business.tagline}
                 </p>
 
-                <p className="text-slate-400 mb-6 max-w-2xl line-clamp-2">
+                <p className="text-[var(--text-muted)] mb-6 max-w-2xl line-clamp-2">
                   {business.description}
                 </p>
 
                 {/* Meta Info */}
                 <div className="flex flex-wrap items-center gap-4 mb-6">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 px-3 py-1 text-sm font-medium text-teal-400">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/30 px-3 py-1 text-sm font-medium text-accent">
                     {business.category}
                   </span>
-                  <span className="flex items-center gap-1.5 text-sm text-slate-400">
+                  <span className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">
                     <MapPinIcon className="h-4 w-4" />
                     {business.location}
                   </span>
-                  <span className="text-sm text-slate-500 italic">
+                  <span className="text-sm text-foreground0 italic">
                     {business.nation}
                   </span>
                 </div>
@@ -586,13 +586,13 @@ function BusinessSpotlight() {
                   {[
                     { icon: StarIcon, value: business.stats.rating, label: 'Rating', color: 'text-amber-400' },
                     { icon: HeartIcon, value: business.stats.followers.toLocaleString(), label: 'Followers', color: 'text-rose-400' },
-                    { icon: ShoppingBagIcon, value: business.stats.products, label: 'Products', color: 'text-teal-400' },
+                    { icon: ShoppingBagIcon, value: business.stats.products, label: 'Products', color: 'text-accent' },
                     { icon: EyeIcon, value: business.stats.reviews, label: 'Reviews', color: 'text-purple-400' },
                   ].map((stat) => (
                     <div key={stat.label} className="flex items-center gap-2">
                       <stat.icon className={`h-5 w-5 ${stat.color}`} />
                       <span className="font-semibold text-white">{stat.value}</span>
-                      <span className="text-sm text-slate-500">{stat.label}</span>
+                      <span className="text-sm text-foreground0">{stat.label}</span>
                     </div>
                   ))}
                 </div>
@@ -612,7 +612,7 @@ function BusinessSpotlight() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800/60 border border-slate-600/50 px-8 py-4 font-semibold text-slate-200 hover:bg-slate-700/60 hover:border-slate-500/50 transition-all"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800/60 border border-[var(--card-border)]/50 px-8 py-4 font-semibold text-foreground hover:bg-slate-700/60 hover:border-slate-500/50 transition-all"
                 >
                   <HeartIcon className="h-5 w-5" />
                   Follow
@@ -649,11 +649,11 @@ function FeaturedVendorsCarousel() {
         >
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Featured Vendors</h2>
-            <p className="text-slate-400">Handpicked businesses making waves in our community</p>
+            <p className="text-[var(--text-muted)]">Handpicked businesses making waves in our community</p>
           </div>
           <Link
             href="/business/directory"
-            className="hidden sm:flex items-center gap-2 text-teal-400 font-semibold hover:text-teal-300 transition-colors"
+            className="hidden sm:flex items-center gap-2 text-accent font-semibold hover:text-teal-300 transition-colors"
           >
             View All
             <ArrowRightIcon className="h-4 w-4" />
@@ -683,7 +683,7 @@ function FeaturedVendorsCarousel() {
               whileHover={{ scale: 1.03, y: -5 }}
               className="flex-shrink-0 w-72"
             >
-              <div className="group relative overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 hover:border-teal-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/10">
+              <div className="group relative overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border border-[var(--card-border)] hover:border-accent/30 transition-all duration-300 hover:shadow-2xl hover:shadow-teal-500/10">
                 {/* Cover Image */}
                 <div className="relative h-40 overflow-hidden">
                   {vendor.coverImageUrl ? (
@@ -700,8 +700,8 @@ function FeaturedVendorsCarousel() {
 
                   {/* Verified Badge */}
                   {vendor.verified && (
-                    <div className="absolute top-3 right-3 rounded-full bg-teal-500/20 backdrop-blur-sm p-1.5">
-                      <CheckBadgeIcon className="h-4 w-4 text-teal-400" />
+                    <div className="absolute top-3 right-3 rounded-full bg-accent/20 backdrop-blur-sm p-1.5">
+                      <CheckBadgeIcon className="h-4 w-4 text-accent" />
                     </div>
                   )}
 
@@ -715,13 +715,13 @@ function FeaturedVendorsCarousel() {
 
                 {/* Content */}
                 <div className="p-4 pt-7">
-                  <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors line-clamp-1">
+                  <h3 className="font-semibold text-white group-hover:text-accent transition-colors line-clamp-1">
                     {vendor.businessName}
                   </h3>
-                  <p className="text-sm text-slate-400 line-clamp-1 mt-1">{vendor.tagline}</p>
+                  <p className="text-sm text-[var(--text-muted)] line-clamp-1 mt-1">{vendor.tagline}</p>
 
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs text-slate-500">{vendor.category}</span>
+                    <span className="text-xs text-foreground0">{vendor.category}</span>
                     <div className="flex items-center gap-1">
                       <StarIcon className="h-3.5 w-3.5 text-amber-400" />
                       <span className="text-sm font-medium text-white">{vendor.rating}</span>
@@ -755,7 +755,7 @@ function EnhancedCategories() {
           className="text-center mb-10"
         >
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Browse Categories</h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
+          <p className="text-[var(--text-muted)] max-w-xl mx-auto">
             Explore our curated collection of Indigenous businesses across diverse industries
           </p>
         </motion.div>
@@ -774,7 +774,7 @@ function EnhancedCategories() {
               whileTap={{ scale: 0.98 }}
               className="group relative cursor-pointer"
             >
-              <div className="relative overflow-hidden rounded-2xl bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 transition-all duration-300 group-hover:border-slate-600/50 group-hover:shadow-2xl group-hover:shadow-teal-500/10">
+              <div className="relative overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border border-[var(--card-border)] p-6 transition-all duration-300 group-hover:border-[var(--card-border)]/50 group-hover:shadow-2xl group-hover:shadow-teal-500/10">
                 {/* Gradient Background on Hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
 
@@ -784,7 +784,7 @@ function EnhancedCategories() {
                 </div>
 
                 {/* Label */}
-                <h3 className="relative text-center font-semibold text-white group-hover:text-teal-400 transition-colors">
+                <h3 className="relative text-center font-semibold text-white group-hover:text-accent transition-colors">
                   {category.label}
                 </h3>
 
@@ -794,7 +794,7 @@ function EnhancedCategories() {
                   whileHover={{ opacity: 1, y: 0 }}
                   className="text-center mt-2"
                 >
-                  <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+                  <span className="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] transition-colors">
                     {category.count} businesses
                   </span>
                 </motion.div>
@@ -830,10 +830,10 @@ function VerifiedVendorsBanner() {
         className="relative mx-auto max-w-7xl px-4 sm:px-6 mb-6"
       >
         <div className="flex items-center justify-center gap-3 text-center">
-          <CheckBadgeIcon className="h-6 w-6 text-teal-400" />
+          <CheckBadgeIcon className="h-6 w-6 text-accent" />
           <h3 className="text-lg font-semibold text-white">Verified Indigenous-Owned Businesses</h3>
         </div>
-        <p className="text-center text-sm text-slate-400 mt-2">
+        <p className="text-center text-sm text-[var(--text-muted)] mt-2">
           Trusted vendors verified by IOPPS for authentic Indigenous ownership
         </p>
       </motion.div>
@@ -848,13 +848,13 @@ function VerifiedVendorsBanner() {
           {duplicatedLogos.map((logo, index) => (
             <div
               key={`${logo.id}-${index}`}
-              className="flex-shrink-0 flex items-center gap-3 rounded-full bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 px-4 py-2"
+              className="flex-shrink-0 flex items-center gap-3 rounded-full bg-slate-800/60 backdrop-blur-sm border border-[var(--card-border)] px-4 py-2"
             >
               <div className={`h-10 w-10 rounded-full bg-gradient-to-br ${logo.color} flex items-center justify-center text-sm font-bold text-white`}>
                 {logo.initial}
               </div>
-              <span className="text-sm font-medium text-slate-300 whitespace-nowrap">{logo.name}</span>
-              <CheckBadgeIcon className="h-4 w-4 text-teal-400" />
+              <span className="text-sm font-medium text-[var(--text-secondary)] whitespace-nowrap">{logo.name}</span>
+              <CheckBadgeIcon className="h-4 w-4 text-accent" />
             </div>
           ))}
         </motion.div>
@@ -876,11 +876,11 @@ function VendorLeaderboard() {
       case 1:
         return <TrophyIcon className="h-6 w-6 text-amber-400" />;
       case 2:
-        return <TrophyIcon className="h-5 w-5 text-slate-300" />;
+        return <TrophyIcon className="h-5 w-5 text-[var(--text-secondary)]" />;
       case 3:
-        return <TrophyIcon className="h-5 w-5 text-amber-600" />;
+        return <TrophyIcon className="h-5 w-5 text-[var(--amber)]" />;
       default:
-        return <span className="text-lg font-bold text-slate-500">#{rank}</span>;
+        return <span className="text-lg font-bold text-foreground0">#{rank}</span>;
     }
   };
 
@@ -893,7 +893,7 @@ function VendorLeaderboard() {
       case 3:
         return 'bg-gradient-to-r from-amber-600/20 to-amber-700/20 border-amber-600/30';
       default:
-        return 'bg-slate-800/50 border-slate-700/50';
+        return 'bg-surface border-[var(--card-border)]';
     }
   };
 
@@ -917,18 +917,18 @@ function VendorLeaderboard() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
           variants={scaleInVariants}
-          className="relative overflow-hidden rounded-3xl bg-slate-900/50 border border-slate-700/50 backdrop-blur-xl shadow-2xl shadow-black/20"
+          className="relative overflow-hidden rounded-3xl bg-surface border border-[var(--card-border)] backdrop-blur-xl shadow-2xl shadow-black/20"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-700/50">
+          <div className="p-6 border-b border-[var(--card-border)]">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <ArrowTrendingUpIcon className="h-6 w-6 text-teal-400" />
+              <ArrowTrendingUpIcon className="h-6 w-6 text-accent" />
               Fastest Growing Businesses
             </h2>
           </div>
 
           {/* Leaderboard List */}
-          <div className="divide-y divide-slate-700/30">
+          <div className="divide-y divide-[var(--card-border)]/30">
             {MOCK_LEADERBOARD.map((business, index) => (
               <motion.div
                 key={business.id}
@@ -946,22 +946,22 @@ function VendorLeaderboard() {
                 {/* Business Info */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white truncate">{business.name}</h3>
-                  <p className="text-sm text-slate-400">{business.category}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{business.category}</p>
                 </div>
 
                 {/* Stats */}
                 <div className="hidden sm:flex items-center gap-6">
                   <div className="text-right">
-                    <div className="text-sm font-bold text-emerald-400">{business.growth}</div>
-                    <div className="text-xs text-slate-500">Growth</div>
+                    <div className="text-sm font-bold text-accent">{business.growth}</div>
+                    <div className="text-xs text-foreground0">Growth</div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-semibold text-white">{business.followers.toLocaleString()}</div>
-                    <div className="text-xs text-slate-500">Followers</div>
+                    <div className="text-xs text-foreground0">Followers</div>
                   </div>
                 </div>
 
-                <ChevronRightIcon className="h-5 w-5 text-slate-600" />
+                <ChevronRightIcon className="h-5 w-5 text-[var(--text-secondary)]" />
               </motion.div>
             ))}
           </div>
@@ -1000,22 +1000,22 @@ function ForVendorsSection() {
             initial="hidden"
             animate={isInView ? 'visible' : 'hidden'}
             variants={slideInFromLeft}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-slate-700/50 backdrop-blur-xl p-8"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-[var(--card-border)] backdrop-blur-xl p-8"
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-3xl" />
 
             <h3 className="text-xl font-bold text-white mb-2">Your Business Preview</h3>
-            <p className="text-slate-400 mb-6">See how your business would appear in the marketplace</p>
+            <p className="text-[var(--text-muted)] mb-6">See how your business would appear in the marketplace</p>
 
             {/* Mock Business Card Preview */}
-            <div className="relative rounded-2xl bg-slate-900/80 border border-slate-700/50 overflow-hidden mb-6">
+            <div className="relative rounded-2xl bg-slate-900/80 border border-[var(--card-border)] overflow-hidden mb-6">
               <div className="h-32 bg-gradient-to-br from-purple-600/20 to-teal-600/20" />
               <div className="p-4 pt-10 relative">
                 <div className="absolute -top-8 left-4 h-16 w-16 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-2xl font-bold text-white border-4 border-slate-900">
                   YB
                 </div>
                 <h4 className="font-semibold text-white">Your Business Name</h4>
-                <p className="text-sm text-slate-400">Your amazing tagline here</p>
+                <p className="text-sm text-[var(--text-muted)]">Your amazing tagline here</p>
                 <div className="flex items-center gap-2 mt-3">
                   <span className="text-xs rounded-full bg-purple-500/10 text-purple-400 px-2 py-0.5">Your Category</span>
                 </div>
@@ -1029,10 +1029,10 @@ function ForVendorsSection() {
                 { label: 'Inquiries', value: '0', icon: UsersIcon },
                 { label: 'Followers', value: '0', icon: HeartIcon },
               ].map((stat) => (
-                <div key={stat.label} className="text-center p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                  <stat.icon className="h-5 w-5 text-slate-500 mx-auto mb-1" />
+                <div key={stat.label} className="text-center p-3 rounded-xl bg-surface border border-[var(--card-border)]">
+                  <stat.icon className="h-5 w-5 text-foreground0 mx-auto mb-1" />
                   <div className="text-lg font-bold text-white">{stat.value}</div>
-                  <div className="text-xs text-slate-500">{stat.label}</div>
+                  <div className="text-xs text-foreground0">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -1050,7 +1050,7 @@ function ForVendorsSection() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800/60 border border-slate-600/50 px-6 py-3 font-semibold text-slate-200 hover:bg-slate-700/60 transition-all"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800/60 border border-[var(--card-border)]/50 px-6 py-3 font-semibold text-foreground hover:bg-slate-700/60 transition-all"
               >
                 <PencilSquareIcon className="h-5 w-5" />
                 Edit Profile
@@ -1079,14 +1079,14 @@ function ForVendorsSection() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: 0.3 + index * 0.1 }}
-                  className="flex items-start gap-4 p-4 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-slate-600/50 transition-colors"
+                  className="flex items-start gap-4 p-4 rounded-xl bg-slate-800/30 border border-[var(--card-border)]/30 hover:border-[var(--card-border)]/50 transition-colors"
                 >
-                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
-                    <benefit.icon className="h-5 w-5 text-teal-400" />
+                  <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <benefit.icon className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-white">{benefit.title}</h4>
-                    <p className="text-sm text-slate-400">{benefit.description}</p>
+                    <p className="text-sm text-[var(--text-muted)]">{benefit.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -1121,11 +1121,11 @@ function DualCTASection() {
             <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-cyan-600 to-teal-700" />
 
             {/* Decorative Elements */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--card-bg)]/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-cyan-400/20 rounded-full blur-2xl" />
 
             <div className="relative p-8 sm:p-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
                 <ShoppingBagIcon className="h-4 w-4" />
                 For Shoppers
               </div>
@@ -1140,7 +1140,7 @@ function DualCTASection() {
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 font-bold text-teal-700 shadow-lg shadow-black/20 hover:shadow-xl transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--card-bg)] px-8 py-4 font-bold text-accent shadow-lg shadow-black/20 hover:shadow-xl transition-all"
               >
                 Start Shopping
                 <ArrowRightIcon className="h-5 w-5" />
@@ -1159,11 +1159,11 @@ function DualCTASection() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-violet-600 to-purple-700" />
 
             {/* Decorative Elements */}
-            <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-[var(--card-bg)]/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-violet-400/20 rounded-full blur-2xl" />
 
             <div className="relative p-8 sm:p-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
                 <BuildingStorefrontIcon className="h-4 w-4" />
                 For Vendors
               </div>
@@ -1178,7 +1178,7 @@ function DualCTASection() {
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 font-bold text-purple-700 shadow-lg shadow-black/20 hover:shadow-xl transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--card-bg)] px-8 py-4 font-bold text-purple-700 shadow-lg shadow-black/20 hover:shadow-xl transition-all"
               >
                 List Your Business
                 <ArrowRightIcon className="h-5 w-5" />
@@ -1197,7 +1197,7 @@ function DualCTASection() {
 
 export default function BusinessPageMockup() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-background text-white">
       {/* Hero with Ocean Wave Gradient & Stats */}
       <HeroSection />
 

@@ -4,13 +4,13 @@ import Link from "next/link";
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Minimal header */}
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-[var(--border)] bg-[var(--card-bg)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="text-xl font-black tracking-tight text-teal-600"
+            className="text-xl font-black tracking-tight text-accent"
           >
             IOPPS
           </Link>
@@ -21,10 +21,10 @@ export default function SignupPage() {
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-2xl">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
               Join IOPPS
             </h1>
-            <p className="mt-2 text-sm text-slate-500 sm:text-base">
+            <p className="mt-2 text-sm text-[var(--text-secondary)] sm:text-base">
               Choose how you&apos;d like to get started
             </p>
           </div>
@@ -32,16 +32,16 @@ export default function SignupPage() {
           <div className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 sm:gap-6">
             {/* Community Member Card */}
             <Link
-              href="/register?role=community"
-              className="group relative rounded-2xl border-l-4 border-l-teal-500 border-y border-r border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8"
+              href="/signup/member"
+              className="group relative rounded-2xl border-l-4 border-l-accent border-y border-r border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8"
             >
-              <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-700">
+              <span className="inline-flex items-center rounded-full bg-[var(--accent-bg)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
                 Always free
               </span>
 
-              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50">
+              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
-                  className="h-6 w-6 text-teal-600"
+                  className="h-6 w-6 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -55,15 +55,15 @@ export default function SignupPage() {
                 </svg>
               </div>
 
-              <h2 className="mt-4 text-lg font-bold text-slate-900">
+              <h2 className="mt-4 text-lg font-bold text-[var(--text-primary)]">
                 Community Member
               </h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Search jobs, save opportunities, discover events, connect with
                 your community, and build your professional profile.
               </p>
 
-              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-teal-600 transition group-hover:gap-2">
+              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-accent transition group-hover:gap-2">
                 Get started
                 <svg
                   className="h-4 w-4"
@@ -84,15 +84,15 @@ export default function SignupPage() {
             {/* Organization Card */}
             <Link
               href="/signup/organization"
-              className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8"
+              className="group relative rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8"
             >
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="inline-flex items-center rounded-full bg-[var(--border-lt)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 Free &amp; paid tiers
               </span>
 
-              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--border-lt)]">
                 <svg
-                  className="h-6 w-6 text-slate-600"
+                  className="h-6 w-6 text-[var(--text-secondary)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -106,15 +106,15 @@ export default function SignupPage() {
                 </svg>
               </div>
 
-              <h2 className="mt-4 text-lg font-bold text-slate-900">
+              <h2 className="mt-4 text-lg font-bold text-[var(--text-primary)]">
                 Organization
               </h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Post jobs, promote events and scholarships, list your business
                 in Shop Indigenous, and reach the Indigenous community.
               </p>
 
-              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-slate-600 transition group-hover:gap-2 group-hover:text-slate-900">
+              <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--text-secondary)] transition group-hover:gap-2 group-hover:text-[var(--text-primary)]">
                 Get started
                 <svg
                   className="h-4 w-4"
@@ -133,11 +133,11 @@ export default function SignupPage() {
             </Link>
           </div>
 
-          <p className="mt-8 text-center text-sm text-slate-500">
+          <p className="mt-8 text-center text-sm text-[var(--text-secondary)]">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold text-teal-600 hover:underline"
+              className="font-semibold text-accent hover:underline"
             >
               Log in
             </Link>

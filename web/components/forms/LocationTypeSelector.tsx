@@ -32,8 +32,8 @@ export function LocationTypeSelector({
             key={type.value}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
               locationType === type.value
-                ? "border-[#14B8A6] bg-[#14B8A6]/10"
-                : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                ? "border-[#14B8A6] bg-accent/10"
+                : "border-[var(--card-border)] bg-surface hover:border-[var(--card-border)]"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <input
@@ -43,11 +43,11 @@ export function LocationTypeSelector({
               checked={locationType === type.value}
               onChange={(e) => onLocationTypeChange(e.target.value as LocationType)}
               disabled={disabled}
-              className="w-4 h-4 border-slate-600 bg-slate-800 text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-slate-900"
+              className="w-4 h-4 border-[var(--card-border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6] focus:ring-offset-background"
             />
             <div>
-              <div className="text-sm font-medium text-slate-100">{type.label}</div>
-              <div className="text-xs text-slate-400">{type.description}</div>
+              <div className="text-sm font-medium text-foreground">{type.label}</div>
+              <div className="text-xs text-[var(--text-muted)]">{type.description}</div>
             </div>
           </label>
         ))}
@@ -56,10 +56,10 @@ export function LocationTypeSelector({
       {/* Location Address Input - show for onsite and hybrid */}
       {(locationType === "onsite" || locationType === "hybrid") && (
         <div>
-          <label className="block text-sm text-slate-300 mb-2">
+          <label className="block text-sm text-[var(--text-secondary)] mb-2">
             Office Location
             {locationType === "hybrid" && (
-              <span className="text-slate-500 ml-1">(primary office)</span>
+              <span className="text-foreground0 ml-1">(primary office)</span>
             )}
           </label>
           <input
@@ -68,14 +68,14 @@ export function LocationTypeSelector({
             onChange={(e) => onAddressChange(e.target.value)}
             placeholder="e.g., Saskatoon, SK, Canada"
             disabled={disabled}
-            className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
+            className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]"
           />
         </div>
       )}
 
       {/* Remote info message */}
       {locationType === "remote" && (
-        <div className="flex items-start gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-xl">
+        <div className="flex items-start gap-2 p-3 bg-surface border border-[var(--card-border)] rounded-xl">
           <svg
             className="w-5 h-5 text-[#14B8A6] mt-0.5 flex-shrink-0"
             fill="currentColor"
@@ -87,7 +87,7 @@ export function LocationTypeSelector({
               clipRule="evenodd"
             />
           </svg>
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-[var(--text-muted)]">
             This position can be performed from anywhere. You can optionally specify a preferred
             region or timezone requirements in the job description.
           </div>

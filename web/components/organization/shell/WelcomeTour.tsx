@@ -99,7 +99,7 @@ export default function WelcomeTour({ userId }: WelcomeTourProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-background/90 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -113,7 +113,7 @@ export default function WelcomeTour({ userId }: WelcomeTourProps) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-slate-900 border border-slate-700 shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-surface border border-[var(--card-border)] shadow-xl transition-all">
                 {/* Progress Dots */}
                 <div className="flex justify-center gap-2 pt-6">
                   {TOUR_STEPS.map((_, index) => (
@@ -136,16 +136,16 @@ export default function WelcomeTour({ userId }: WelcomeTourProps) {
                     <Icon className="w-8 h-8 text-accent" />
                   </div>
 
-                  <Dialog.Title className="text-2xl font-bold text-slate-50 mb-3">
+                  <Dialog.Title className="text-2xl font-bold text-foreground mb-3">
                     {step.title}
                   </Dialog.Title>
 
-                  <p className="text-slate-400 mb-4 leading-relaxed">
+                  <p className="text-[var(--text-muted)] mb-4 leading-relaxed">
                     {step.description}
                   </p>
 
                   {step.tip && (
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800/50 text-sm text-slate-300">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface text-sm text-[var(--text-secondary)]">
                       <SparklesIcon className="w-4 h-4 text-accent" />
                       {step.tip}
                     </div>
@@ -156,7 +156,7 @@ export default function WelcomeTour({ userId }: WelcomeTourProps) {
                 <div className="px-8 pb-8 flex items-center justify-between">
                   <button
                     onClick={handleSkip}
-                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                    className="text-sm text-foreground0 hover:text-[var(--text-secondary)] transition-colors"
                   >
                     Skip tour
                   </button>

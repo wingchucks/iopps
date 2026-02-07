@@ -17,9 +17,9 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
     return (
       <FeedLayout activeNav="events" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <div className="inline-flex items-center justify-center rounded-full bg-slate-100 p-6 mb-6">
+          <div className="inline-flex items-center justify-center rounded-full bg-surface p-6 mb-6">
             <svg
-              className="h-12 w-12 text-slate-400"
+              className="h-12 w-12 text-[var(--text-muted)]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -41,10 +41,10 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
               )}
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             {isEnded ? "Event Has Ended" : "Event Not Found"}
           </h1>
-          <p className="mt-3 text-slate-500 max-w-md mx-auto">
+          <p className="mt-3 text-foreground0 max-w-md mx-auto">
             {isEnded
               ? "This pow wow or cultural event has concluded. Check out other upcoming events below."
               : "Sorry, we couldn't find the event you're looking for. It may have been removed."}
@@ -96,7 +96,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
       <div className="mx-auto max-w-4xl py-8">
         <Link
           href="/community"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-[#0D9488]"
+          className="inline-flex items-center gap-2 text-sm text-foreground0 transition-colors hover:text-[#0D9488]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -105,13 +105,13 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
         </Link>
 
         {/* Pow Wow Header */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8 shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-[#0D9488]/20 bg-[#0D9488]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#0D9488]">
               Event
             </span>
             {powwow.season && (
-              <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              <span className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                 {powwow.season}
               </span>
             )}
@@ -125,18 +125,18 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
             )}
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">{powwow.name}</h1>
+          <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">{powwow.name}</h1>
 
           <div className="mt-3 flex flex-col gap-2 text-base">
             {powwow.host && (
-              <div className="flex items-center gap-2 text-slate-700">
+              <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                 <svg className="h-5 w-5 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <span>Hosted by <span className="font-semibold">{powwow.host}</span></span>
               </div>
             )}
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-[var(--text-secondary)]">
               <svg className="h-5 w-5 text-[#0D9488]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -176,7 +176,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
               </span>
             )}
             {powwow.registrationStatus && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/30 bg-emerald-50 px-4 py-2 text-base font-medium text-emerald-700">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/30 bg-[var(--accent-bg)] px-4 py-2 text-base font-medium text-accent">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -186,7 +186,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
           </div>
 
           {/* Share Buttons */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-6 pt-6 border-t border-[var(--border)]">
             <ShareButtons
               item={{
                 id: powwow.id,
@@ -199,9 +199,9 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
 
         {/* Event Poster */}
         {powwow.imageUrl && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-slate-800">Event Poster</h2>
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Event Poster</h2>
               <a
                 href={powwow.imageUrl}
                 download={`${powwow.name.replace(/[^a-zA-Z0-9]/g, '_')}_poster`}
@@ -215,7 +215,7 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
                 Download Poster
               </a>
             </div>
-            <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+            <div className="relative w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--background)]">
               <div className="relative aspect-[3/4] w-full max-w-2xl mx-auto">
                 <Image
                   src={powwow.imageUrl}
@@ -226,16 +226,16 @@ export default function PowwowDetailClient({ powwow, error }: PowwowDetailClient
                 />
               </div>
             </div>
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-4 text-center text-sm text-foreground0">
               Click the download button to save the full poster image
             </p>
           </div>
         )}
 
         {/* Description */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h2 className="text-xl font-bold text-slate-800">About This Event</h2>
-          <div className="mt-4 space-y-4 text-slate-600">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8 shadow-sm">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">About This Event</h2>
+          <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
             {powwow.description.split("\n").map((paragraph, i) => (
               <p key={i} className="leading-relaxed">
                 {paragraph}

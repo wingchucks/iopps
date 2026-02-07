@@ -18,7 +18,7 @@ export function GoogleSignInButton({
       type="button"
       onClick={onClick}
       disabled={loading || disabled}
-      className="w-full flex items-center justify-center gap-3 rounded-2xl border border-slate-800/80 bg-[#08090C] px-6 py-3.5 text-sm font-semibold text-slate-100 shadow-lg shadow-black/30 transition-all hover:border-[#14B8A6] hover:bg-slate-900/60 hover:shadow-[#14B8A6]/10 disabled:opacity-60 disabled:cursor-not-allowed group"
+      className="w-full flex items-center justify-center gap-3 rounded-2xl border border-[var(--card-border)]/80 bg-surface px-6 py-3.5 text-sm font-semibold text-foreground shadow-lg shadow-black/30 transition-all hover:border-[#14B8A6] hover:bg-slate-900/60 hover:shadow-[#14B8A6]/10 disabled:opacity-60 disabled:cursor-not-allowed group"
     >
       {loading ? (
         <LoadingSpinner />

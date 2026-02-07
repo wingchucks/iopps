@@ -114,13 +114,13 @@ export default function SavedTalentPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/organization/hire/talent"
-            className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-2 rounded-lg bg-surface text-[var(--text-muted)] hover:text-foreground transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-50">Saved Talent</h1>
-            <p className="text-slate-400 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Saved Talent</h1>
+            <p className="text-[var(--text-muted)] mt-1">
               {savedTalent.length} professional{savedTalent.length !== 1 ? 's' : ''} in your talent pool
             </p>
           </div>
@@ -137,13 +137,13 @@ export default function SavedTalentPage() {
       {/* Search */}
       {savedTalent.length > 0 && (
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search saved talent by name or notes..."
-            className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent/50"
+            className="w-full pl-12 pr-4 py-3 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-accent/50"
           />
         </div>
       )}
@@ -151,11 +151,11 @@ export default function SavedTalentPage() {
       {/* Empty State */}
       {savedTalent.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <BookmarkIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <BookmarkIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             No saved talent yet
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">
+          <p className="text-foreground0 max-w-md mx-auto mb-6">
             Start building your talent pool by searching for Indigenous professionals and saving the ones you are interested in.
           </p>
           <Link
@@ -168,11 +168,11 @@ export default function SavedTalentPage() {
         </div>
       ) : filteredTalent.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <MagnifyingGlassIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <MagnifyingGlassIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             No matching talent
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto">
+          <p className="text-foreground0 max-w-md mx-auto">
             No saved talent matches your search. Try a different search term.
           </p>
         </div>
@@ -182,10 +182,10 @@ export default function SavedTalentPage() {
           {filteredTalent.map((talent) => (
             <div
               key={talent.id}
-              className="bg-card border border-card-border rounded-2xl p-5 hover:border-slate-700 transition-all group"
+              className="bg-card border border-card-border rounded-2xl p-5 hover:border-[var(--card-border)] transition-all group"
             >
               <div className="flex items-start gap-4">
-                <Avatar className="h-12 w-12 border-2 border-slate-800">
+                <Avatar className="h-12 w-12 border-2 border-[var(--card-border)]">
                   <AvatarImage src={talent.memberAvatar} />
                   <AvatarFallback className="bg-gradient-to-br from-accent to-teal-500 text-white">
                     {getInitials(talent.memberName)}
@@ -193,17 +193,17 @@ export default function SavedTalentPage() {
                 </Avatar>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-200 truncate">
+                  <h3 className="font-semibold text-foreground truncate">
                     {talent.memberName}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-foreground0">
                     Saved {talent.savedAt ? new Date(talent.savedAt.toDate()).toLocaleDateString() : 'recently'}
                   </p>
                 </div>
 
                 <button
                   onClick={() => handleRemove(talent.memberId, talent.memberName)}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-1.5 rounded-lg text-foreground0 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
                   title="Remove from talent pool"
                 >
                   <TrashIcon className="w-4 h-4" />
@@ -218,14 +218,14 @@ export default function SavedTalentPage() {
                       value={notesValue}
                       onChange={(e) => setNotesValue(e.target.value)}
                       placeholder="Add notes about this candidate..."
-                      className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent/50 resize-none"
+                      className="w-full px-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-accent/50 resize-none"
                       rows={3}
                       autoFocus
                     />
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setEditingNotes(null)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-foreground hover:bg-slate-700 transition-colors"
                       >
                         <XMarkIcon className="w-4 h-4" />
                       </button>
@@ -243,10 +243,10 @@ export default function SavedTalentPage() {
                       setEditingNotes(talent.id);
                       setNotesValue(talent.notes || '');
                     }}
-                    className="w-full text-left px-3 py-2 bg-slate-900/50 border border-slate-800 rounded-lg text-sm text-slate-400 hover:border-slate-700 transition-colors"
+                    className="w-full text-left px-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-[var(--text-muted)] hover:border-[var(--card-border)] transition-colors"
                   >
                     {talent.notes ? (
-                      <span className="text-slate-300">{talent.notes}</span>
+                      <span className="text-[var(--text-secondary)]">{talent.notes}</span>
                     ) : (
                       <span className="flex items-center gap-2">
                         <PencilIcon className="w-3.5 h-3.5" />
@@ -263,7 +263,7 @@ export default function SavedTalentPage() {
                   {talent.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-surface text-[var(--text-muted)]"
                     >
                       <TagIcon className="w-3 h-3" />
                       {tag}
@@ -273,7 +273,7 @@ export default function SavedTalentPage() {
               )}
 
               {/* Actions */}
-              <div className="mt-4 pt-4 border-t border-slate-800 flex items-center gap-2">
+              <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex items-center gap-2">
                 <Link
                   href={`/member/${talent.memberId}`}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent text-slate-950 rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
@@ -283,7 +283,7 @@ export default function SavedTalentPage() {
                 </Link>
                 <Link
                   href={`/organization/messages?to=${talent.memberId}`}
-                  className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-accent transition-colors"
+                  className="p-2 rounded-lg bg-surface text-[var(--text-muted)] hover:text-accent transition-colors"
                   title="Send message"
                 >
                   <EnvelopeIcon className="w-5 h-5" />

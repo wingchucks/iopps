@@ -57,7 +57,7 @@ export default function NewSchoolPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10">
-        <p className="text-sm text-slate-300">Loading...</p>
+        <p className="text-sm text-[var(--text-secondary)]">Loading...</p>
       </div>
     );
   }
@@ -68,12 +68,12 @@ export default function NewSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Please sign in
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Organizations must be signed in to create a school profile.
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -89,7 +89,7 @@ export default function NewSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Organization access required
         </h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Switch to an organization account to create a school profile.
         </p>
       </div>
@@ -155,7 +155,7 @@ export default function NewSchoolPage() {
         <div className="mb-6">
           <Link
             href="/organization/dashboard?tab=education"
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-[var(--text-muted)] hover:text-white transition-colors"
           >
             ← Back to Education Dashboard
           </Link>
@@ -164,7 +164,7 @@ export default function NewSchoolPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-white">
           Create Your School Profile
         </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           Share your institution with Indigenous students across Turtle Island.
         </p>
 
@@ -177,12 +177,12 @@ export default function NewSchoolPage() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-8">
           {/* Basic Info */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Basic Information
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Institution Name *
               </label>
               <input
@@ -191,13 +191,13 @@ export default function NewSchoolPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., First Nations University of Canada"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Short Name / Acronym
                 </label>
                 <input
@@ -205,19 +205,19 @@ export default function NewSchoolPage() {
                   value={shortName}
                   onChange={(e) => setShortName(e.target.value)}
                   placeholder="e.g., FNUniv"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Institution Type *
                 </label>
                 <select
                   required
                   value={type}
                   onChange={(e) => setType(e.target.value as SchoolType)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   {SCHOOL_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -230,7 +230,7 @@ export default function NewSchoolPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Year Established
                 </label>
                 <input
@@ -240,12 +240,12 @@ export default function NewSchoolPage() {
                   placeholder="e.g., 1976"
                   min="1800"
                   max={new Date().getFullYear()}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Website
                 </label>
                 <input
@@ -253,13 +253,13 @@ export default function NewSchoolPage() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://your-school.ca"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Description
               </label>
               <textarea
@@ -267,19 +267,19 @@ export default function NewSchoolPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Tell prospective students about your institution, its mission, and what makes it unique..."
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
           </div>
 
           {/* Location */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Head Office Location
             </h2>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Street Address *
               </label>
               <input
@@ -288,13 +288,13 @@ export default function NewSchoolPage() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="e.g., 1 First Nations Way"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   City *
                 </label>
                 <input
@@ -303,19 +303,19 @@ export default function NewSchoolPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="e.g., Regina"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Province *
                 </label>
                 <select
                   required
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 >
                   <option value="">Select province</option>
                   {PROVINCES.map((p) => (
@@ -327,7 +327,7 @@ export default function NewSchoolPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   Postal Code
                 </label>
                 <input
@@ -335,13 +335,13 @@ export default function NewSchoolPage() {
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   placeholder="e.g., S4S 7K2"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-200">
+              <label className="block text-sm font-medium text-foreground">
                 Reserve / First Nation Territory Name
               </label>
               <input
@@ -349,9 +349,9 @@ export default function NewSchoolPage() {
                 value={reserveName}
                 onChange={(e) => setReserveName(e.target.value)}
                 placeholder="e.g., Muscowpetung First Nation"
-                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-foreground0">
                 If your campus is located on reserve land
               </p>
             </div>
@@ -359,13 +359,13 @@ export default function NewSchoolPage() {
 
           {/* Contact */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Contact Information
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   General Phone
                 </label>
                 <input
@@ -373,12 +373,12 @@ export default function NewSchoolPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="e.g., (306) 555-1234"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-200">
+                <label className="block text-sm font-medium text-foreground">
                   General Email
                 </label>
                 <input
@@ -386,7 +386,7 @@ export default function NewSchoolPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g., info@your-school.ca"
-                  className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-emerald-500 focus:outline-none"
+                  className="mt-1 w-full rounded-md border border-[var(--card-border)] bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
                 />
               </div>
             </div>
@@ -394,17 +394,17 @@ export default function NewSchoolPage() {
 
           {/* Indigenous Verification */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-white border-b border-slate-800 pb-2">
+            <h2 className="text-lg font-semibold text-white border-b border-[var(--card-border)] pb-2">
               Indigenous Verification
             </h2>
 
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
+            <div className="rounded-lg border border-accent/30 bg-accent/10 p-4">
               <label className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   checked={indigenousControlled}
                   onChange={(e) => setIndigenousControlled(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                  className="mt-1 h-4 w-4 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-accent"
                 />
                 <div>
                   <span className="text-sm font-medium text-emerald-200">
@@ -419,7 +419,7 @@ export default function NewSchoolPage() {
           </div>
 
           {/* Submit */}
-          <div className="pt-4 border-t border-slate-800">
+          <div className="pt-4 border-t border-[var(--card-border)]">
             <button
               type="submit"
               disabled={saving}
@@ -427,7 +427,7 @@ export default function NewSchoolPage() {
             >
               {saving ? "Creating..." : "Create School Profile"}
             </button>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-foreground0">
               Your school profile will start as a draft. Publish it when you&apos;re ready for students to see it.
             </p>
           </div>

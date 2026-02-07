@@ -107,9 +107,9 @@ function EmployerMessagesContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#020306] px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <div className="mx-auto max-w-7xl">
-          <p className="text-slate-400">Loading messages...</p>
+          <p className="text-[var(--text-muted)]">Loading messages...</p>
         </div>
       </div>
     );
@@ -120,22 +120,22 @@ function EmployerMessagesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020306]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-[#08090C]">
+      <div className="border-b border-[var(--card-border)] bg-surface">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <Link
                 href="/organization/dashboard"
-                className="text-sm text-slate-400 hover:text-[#14B8A6]"
+                className="text-sm text-[var(--text-muted)] hover:text-[#14B8A6]"
               >
                 ← Dashboard
               </Link>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
                 Messages
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Communicate with applicants
               </p>
             </div>
@@ -145,21 +145,21 @@ function EmployerMessagesContent() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+        <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-slate-900/60">
           <div className="grid h-[calc(100vh-280px)] min-h-[500px] md:grid-cols-[320px_1fr]">
             {/* Conversation List */}
-            <div className="border-r border-slate-800 overflow-y-auto">
-              <div className="border-b border-slate-800 p-4 space-y-3">
+            <div className="border-r border-[var(--card-border)] overflow-y-auto">
+              <div className="border-b border-[var(--card-border)] p-4 space-y-3">
                 <h2 className="font-semibold text-white">Conversations</h2>
                 {/* Search */}
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground0" />
                   <input
                     type="text"
                     placeholder="Search conversations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
+                    className="w-full pl-9 pr-3 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
                   />
                 </div>
               </div>
@@ -182,10 +182,10 @@ function EmployerMessagesContent() {
                   onMessageSent={handleMessageSent}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-slate-400">
+                <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
                   <div className="text-center">
                     <svg
-                      className="mx-auto h-16 w-16 text-slate-600"
+                      className="mx-auto h-16 w-16 text-[var(--text-secondary)]"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -205,11 +205,11 @@ function EmployerMessagesContent() {
 
             {/* Mobile: Show thread if selected */}
             {selectedConversation && (
-              <div className="absolute inset-0 z-10 bg-[#020306] md:hidden">
+              <div className="absolute inset-0 z-10 bg-background md:hidden">
                 <div className="h-full">
                   <button
                     onClick={() => setSelectedConversation(null)}
-                    className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-400"
+                    className="flex items-center gap-2 border-b border-[var(--card-border)] bg-surface px-4 py-3 text-sm text-[var(--text-muted)]"
                   >
                     <svg
                       className="h-5 w-5"
@@ -248,9 +248,9 @@ export default function EmployerMessagesPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#020306] px-4 py-10">
+        <div className="min-h-screen bg-background px-4 py-10">
           <div className="mx-auto max-w-7xl">
-            <p className="text-slate-400">Loading messages...</p>
+            <p className="text-[var(--text-muted)]">Loading messages...</p>
           </div>
         </div>
       }

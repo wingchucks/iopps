@@ -65,7 +65,6 @@ function useNavigationGroups(): NavGroup[] {
       label: "People",
       items: [
         { name: "Users", href: "/admin/users", icon: UsersIcon },
-        { name: "Members", href: "/admin/members", icon: UserGroupIcon },
         {
           name: "Employers",
           href: "/admin/employers",
@@ -149,15 +148,15 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
       <div className="fixed inset-0 bg-black/60" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 left-0 w-72 bg-[#08090C] shadow-xl">
-        <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-slate-100" onClick={onClose}>
-            <ShieldCheckIcon className="h-6 w-6 text-teal-500" />
+      <div className="fixed inset-y-0 left-0 w-72 bg-surface shadow-xl">
+        <div className="flex h-16 items-center justify-between border-b border-[var(--card-border)] px-4">
+          <Link href="/" className="flex items-center gap-2 font-bold text-foreground" onClick={onClose}>
+            <ShieldCheckIcon className="h-6 w-6 text-accent" />
             <span>IOPPS Admin</span>
           </Link>
           <button
             onClick={onClose}
-            className="rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -175,13 +174,13 @@ function MobileNav({ isOpen, onClose, groups }: MobileNavProps) {
           ))}
         </nav>
 
-        <div className="border-t border-slate-800 p-4">
+        <div className="border-t border-[var(--card-border)] p-4">
           <Link
             href="/"
-            className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-white"
             onClick={onClose}
           >
-            <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-slate-500 group-hover:text-slate-400" />
+            <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-foreground0 group-hover:text-[var(--text-muted)]" />
             Back to Site
           </Link>
         </div>
@@ -223,9 +222,9 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0B0D10] text-slate-400">
+      <div className="flex min-h-screen items-center justify-center bg-background text-[var(--text-muted)]" data-admin>
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-teal-500" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-accent" />
           <span>Loading admin panel...</span>
         </div>
       </div>
@@ -237,14 +236,14 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0D10]">
+    <div className="min-h-screen bg-background" data-admin>
       <div className="flex h-screen overflow-hidden">
         {/* Desktop Sidebar */}
-        <div className="hidden w-64 flex-col border-r border-slate-800 bg-[#08090C] md:flex">
+        <div className="hidden w-64 flex-col border-r border-[var(--card-border)] bg-surface md:flex">
           {/* Logo */}
-          <div className="flex h-16 items-center border-b border-slate-800 px-6">
-            <Link href="/" className="flex items-center gap-2 font-bold text-slate-100">
-              <ShieldCheckIcon className="h-6 w-6 text-teal-500" />
+          <div className="flex h-16 items-center border-b border-[var(--card-border)] px-6">
+            <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
+              <ShieldCheckIcon className="h-6 w-6 text-accent" />
               <span>IOPPS Admin</span>
             </Link>
           </div>
@@ -263,12 +262,12 @@ export default function AdminLayout({
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-slate-800 p-4">
+          <div className="border-t border-[var(--card-border)] p-4">
             <Link
               href="/"
-              className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white"
+              className="group flex items-center rounded-md px-3 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-surface hover:text-white"
             >
-              <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-slate-500 group-hover:text-slate-400" />
+              <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-foreground0 group-hover:text-[var(--text-muted)]" />
               Back to Site
             </Link>
           </div>
@@ -277,15 +276,15 @@ export default function AdminLayout({
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Mobile Header */}
-          <header className="flex h-16 items-center justify-between border-b border-slate-800 bg-[#08090C] px-4 md:hidden">
+          <header className="flex h-16 items-center justify-between border-b border-[var(--card-border)] bg-surface px-4 md:hidden">
             <button
               onClick={() => setMobileNavOpen(true)}
-              className="rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
+              className="rounded-md p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
             >
               <Bars3Icon className="h-6 w-6" />
             </button>
-            <div className="flex items-center gap-2 font-bold text-slate-100">
-              <ShieldCheckIcon className="h-6 w-6 text-teal-500" />
+            <div className="flex items-center gap-2 font-bold text-foreground">
+              <ShieldCheckIcon className="h-6 w-6 text-accent" />
               <span>Admin</span>
             </div>
             <div className="w-10" /> {/* Spacer for centering */}
@@ -297,7 +296,7 @@ export default function AdminLayout({
           </div>
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto bg-[#0B0D10] p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
         </div>
       </div>
 

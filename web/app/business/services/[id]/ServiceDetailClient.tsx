@@ -48,7 +48,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
         {/* Back Link */}
         <Link
           href="/business/services"
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-foreground0 hover:text-[var(--text-primary)] transition-colors mb-6"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Services
@@ -75,7 +75,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
           <div className="relative px-6 py-12 sm:px-12 sm:py-16">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
               {/* Logo */}
-              <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-white bg-slate-100 shadow-xl flex-shrink-0">
+              <div className="h-20 w-20 overflow-hidden rounded-2xl border-4 border-white bg-surface shadow-xl flex-shrink-0">
                 {service.logoUrl ? (
                   <Image
                     src={service.logoUrl}
@@ -85,7 +85,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl font-bold text-slate-900">
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl font-bold text-[var(--text-primary)]">
                     {service.businessName.charAt(0)}
                   </div>
                 )}
@@ -95,7 +95,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   {service.featured && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-bold text-slate-900">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-xs font-bold text-[var(--text-primary)]">
                       <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
@@ -110,30 +110,30 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                   )}
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+                <h1 className="text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
                   {service.title}
                 </h1>
 
                 <p className="mt-2 text-lg text-indigo-600">{service.businessName}</p>
 
                 {service.tagline && (
-                  <p className="mt-2 text-slate-600">{service.tagline}</p>
+                  <p className="mt-2 text-[var(--text-secondary)]">{service.tagline}</p>
                 )}
 
                 {/* Quick Info */}
-                <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                <div className="mt-4 flex flex-wrap gap-4 text-sm text-[var(--text-secondary)]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/10 px-3 py-1">
                     <BriefcaseIcon className="h-4 w-4" />
                     {service.category}
                   </span>
                   {service.location && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/10 px-3 py-1">
                       <MapPinIcon className="h-4 w-4" />
                       {service.location}, {service.region}
                     </span>
                   )}
                   {service.servesRemote && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/10 px-3 py-1">
                       <GlobeAltIcon className="h-4 w-4" />
                       Remote Available
                     </span>
@@ -149,10 +149,10 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">About</h2>
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">About</h2>
               <div className="prose max-w-none">
-                <p className="text-slate-600 whitespace-pre-line">
+                <p className="text-[var(--text-secondary)] whitespace-pre-line">
                   {service.description}
                 </p>
               </div>
@@ -160,11 +160,11 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
 
             {/* Services Offered */}
             {service.services && service.services.length > 0 && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Services Offered</h2>
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Services Offered</h2>
                 <ul className="space-y-2">
                   {service.services.map((svc, index) => (
-                    <li key={index} className="flex items-start gap-3 text-slate-600">
+                    <li key={index} className="flex items-start gap-3 text-[var(--text-secondary)]">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-600">
                         {index + 1}
                       </span>
@@ -177,13 +177,13 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
 
             {/* Industries Served */}
             {service.industries && service.industries.length > 0 && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Industries Served</h2>
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Industries Served</h2>
                 <div className="flex flex-wrap gap-2">
                   {service.industries.map((industry, index) => (
                     <span
                       key={index}
-                      className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-600"
+                      className="rounded-full bg-surface px-3 py-1.5 text-sm text-[var(--text-secondary)]"
                     >
                       {industry}
                     </span>
@@ -194,13 +194,13 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
 
             {/* Certifications */}
             {service.certifications && service.certifications.length > 0 && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Certifications</h2>
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Certifications</h2>
                 <div className="flex flex-wrap gap-2">
                   {service.certifications.map((cert, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm text-emerald-600"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-bg)] px-3 py-1.5 text-sm text-accent"
                     >
                       <CheckBadgeIcon className="h-4 w-4" />
                       {cert}
@@ -213,8 +213,8 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
             {/* Community Story */}
             {service.communityStory && (
               <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Our Story</h2>
-                <p className="text-slate-600 whitespace-pre-line">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Our Story</h2>
+                <p className="text-[var(--text-secondary)] whitespace-pre-line">
                   {service.communityStory}
                 </p>
                 {service.nation && (
@@ -227,13 +227,13 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
 
             {/* Portfolio Images */}
             {service.portfolioImages && service.portfolioImages.length > 0 && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Portfolio</h2>
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Portfolio</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {service.portfolioImages.map((img, index) => (
                     <div
                       key={index}
-                      className="relative aspect-video overflow-hidden rounded-xl bg-slate-100"
+                      className="relative aspect-video overflow-hidden rounded-xl bg-surface"
                     >
                       <Image
                         src={img}
@@ -251,8 +251,8 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
             {/* Contact Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Contact</h3>
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Contact</h3>
 
               <div className="space-y-4">
                 {contact.bookingUrl && (
@@ -261,7 +261,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleContactClick}
-                    className="block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center font-semibold text-slate-900 hover:from-indigo-600 hover:to-purple-600 transition-colors"
+                    className="block w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 py-3 text-center font-semibold text-[var(--text-primary)] hover:from-indigo-600 hover:to-purple-600 transition-colors"
                   >
                     {service.freeConsultation ? "Book Free Consultation" : "Get in Touch"}
                   </a>
@@ -271,7 +271,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                   <a
                     href={`mailto:${contact.email}`}
                     onClick={handleContactClick}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-600 hover:border-indigo-300 hover:text-slate-900 transition-colors"
+                    className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 text-[var(--text-secondary)] hover:border-indigo-300 hover:text-[var(--text-primary)] transition-colors"
                   >
                     <EnvelopeIcon className="h-5 w-5 text-indigo-600" />
                     <span className="truncate">{contact.email}</span>
@@ -282,7 +282,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                   <a
                     href={`tel:${contact.phone}`}
                     onClick={handleContactClick}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-600 hover:border-indigo-300 hover:text-slate-900 transition-colors"
+                    className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 text-[var(--text-secondary)] hover:border-indigo-300 hover:text-[var(--text-primary)] transition-colors"
                   >
                     <PhoneIcon className="h-5 w-5 text-indigo-600" />
                     <span>{contact.phone}</span>
@@ -295,7 +295,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleContactClick}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-600 hover:border-indigo-300 hover:text-slate-900 transition-colors"
+                    className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 text-[var(--text-secondary)] hover:border-indigo-300 hover:text-[var(--text-primary)] transition-colors"
                   >
                     <LinkIcon className="h-5 w-5 text-indigo-600" />
                     <span className="truncate">Visit Website</span>
@@ -308,7 +308,7 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleContactClick}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-slate-600 hover:border-indigo-300 hover:text-slate-900 transition-colors"
+                    className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 text-[var(--text-secondary)] hover:border-indigo-300 hover:text-[var(--text-primary)] transition-colors"
                   >
                     <BuildingOfficeIcon className="h-5 w-5 text-indigo-600" />
                     <span>LinkedIn Profile</span>
@@ -318,33 +318,33 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
             </div>
 
             {/* Details Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Details</h3>
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Details</h3>
 
               <dl className="space-y-4">
                 {service.priceRange && (
                   <div>
-                    <dt className="text-sm text-slate-500">Pricing</dt>
-                    <dd className="text-slate-800 font-medium">{service.priceRange}</dd>
+                    <dt className="text-sm text-foreground0">Pricing</dt>
+                    <dd className="text-[var(--text-primary)] font-medium">{service.priceRange}</dd>
                   </div>
                 )}
 
                 {service.yearsExperience && (
                   <div>
-                    <dt className="text-sm text-slate-500">Experience</dt>
-                    <dd className="text-slate-800">{service.yearsExperience}+ years</dd>
+                    <dt className="text-sm text-foreground0">Experience</dt>
+                    <dd className="text-[var(--text-primary)]">{service.yearsExperience}+ years</dd>
                   </div>
                 )}
 
                 {service.serviceAreas && service.serviceAreas.length > 0 && (
                   <div>
-                    <dt className="text-sm text-slate-500">Service Areas</dt>
-                    <dd className="text-slate-800">{service.serviceAreas.join(", ")}</dd>
+                    <dt className="text-sm text-foreground0">Service Areas</dt>
+                    <dd className="text-[var(--text-primary)]">{service.serviceAreas.join(", ")}</dd>
                   </div>
                 )}
 
                 {service.freeConsultation && (
-                  <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-600">
+                  <div className="flex items-center gap-2 rounded-lg bg-[var(--accent-bg)] px-3 py-2 text-sm text-accent">
                     <CalendarIcon className="h-4 w-4" />
                     Free Consultation Available
                   </div>
@@ -360,8 +360,8 @@ export default function ServiceDetailClient({ service, orgProfile }: Props) {
             </div>
 
             {/* Share */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Share</h3>
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Share</h3>
               <ShareButtons
                 item={{
                   id: service.id,

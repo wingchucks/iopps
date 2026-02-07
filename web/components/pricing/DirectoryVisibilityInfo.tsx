@@ -8,9 +8,9 @@ import { DIRECTORY_VISIBILITY_INFO } from "@/lib/constants/directory-visibility"
  */
 export default function DirectoryVisibilityInfo() {
   return (
-    <div className="rounded-xl border border-[#14B8A6]/30 bg-[#14B8A6]/5 p-5">
+    <div className="rounded-xl border border-[#14B8A6]/30 bg-accent/5 p-5">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#14B8A6]/20">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-accent/20">
           <svg
             className="h-5 w-5 text-[#14B8A6]"
             fill="none"
@@ -35,7 +35,7 @@ export default function DirectoryVisibilityInfo() {
           <h3 className="font-semibold text-[#14B8A6]">
             {DIRECTORY_VISIBILITY_INFO.title}
           </h3>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             {DIRECTORY_VISIBILITY_INFO.body}
           </p>
         </div>

@@ -7,19 +7,19 @@ export default function ProfileNotFound() {
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="flex justify-center mb-6">
-          <div className="h-24 w-24 rounded-full bg-slate-800 flex items-center justify-center">
-            <UserX className="h-12 w-12 text-slate-500" />
+          <div className="h-24 w-24 rounded-full bg-surface flex items-center justify-center">
+            <UserX className="h-12 w-12 text-foreground0" />
           </div>
         </div>
 
         <h1 className="text-2xl font-bold text-white mb-2">Profile Not Found</h1>
-        <p className="text-slate-400 mb-8">
+        <p className="text-[var(--text-muted)] mb-8">
           This profile doesn&apos;t exist or may have been set to private.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/">
-            <Button variant="outline" className="w-full sm:w-auto border-slate-700 hover:bg-slate-800">
+            <Button variant="outline" className="w-full sm:w-auto border-[var(--card-border)] hover:bg-surface">
               <Home className="h-4 w-4 mr-2" />
               Go Home
             </Button>

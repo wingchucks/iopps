@@ -40,19 +40,19 @@ function MemberRow({ member, isOwner, currentUserId, onRoleChange, onRemove }: M
   const isCurrentUser = member.id === currentUserId;
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-800 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-[var(--card-border)] last:border-0">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
-          <span className="text-sm font-semibold text-slate-400">
+        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center">
+          <span className="text-sm font-semibold text-[var(--text-muted)]">
             {(member.displayName || member.email).charAt(0).toUpperCase()}
           </span>
         </div>
         <div>
-          <p className="text-slate-200 font-medium">
+          <p className="text-foreground font-medium">
             {member.displayName || member.email}
-            {isCurrentUser && <span className="text-xs text-slate-500 ml-2">(you)</span>}
+            {isCurrentUser && <span className="text-xs text-foreground0 ml-2">(you)</span>}
           </p>
-          <p className="text-sm text-slate-500">{member.email}</p>
+          <p className="text-sm text-foreground0">{member.email}</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ function MemberRow({ member, isOwner, currentUserId, onRoleChange, onRemove }: M
             value={member.role}
             onChange={e => onRoleChange(member.id, e.target.value as TeamRole)}
             disabled={isCurrentUser}
-            className="px-2 py-1 text-sm bg-slate-900 border border-slate-700 rounded-lg text-slate-300 focus:outline-none focus:border-accent/50 disabled:opacity-50"
+            className="px-2 py-1 text-sm bg-surface border border-[var(--card-border)] rounded-lg text-[var(--text-secondary)] focus:outline-none focus:border-accent/50 disabled:opacity-50"
           >
             {ROLE_OPTIONS.map(option => (
               <option key={option.value} value={option.value}>
@@ -79,7 +79,7 @@ function MemberRow({ member, isOwner, currentUserId, onRoleChange, onRemove }: M
         {!isOwner && !isCurrentUser && (
           <button
             onClick={() => onRemove(member.id)}
-            className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+            className="p-1.5 text-foreground0 hover:text-red-400 transition-colors"
           >
             <TrashIcon className="w-4 h-4" />
           </button>
@@ -96,24 +96,24 @@ interface InvitationRowProps {
 
 function InvitationRow({ invitation, onRevoke }: InvitationRowProps) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-800 last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-[var(--card-border)] last:border-0">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-amber-900/30 flex items-center justify-center">
           <ClockIcon className="w-5 h-5 text-amber-400" />
         </div>
         <div>
-          <p className="text-slate-300">{invitation.invitedEmail}</p>
+          <p className="text-[var(--text-secondary)]">{invitation.invitedEmail}</p>
           <p className="text-sm text-amber-400/80">Pending invitation</p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="px-2 py-1 text-xs font-medium rounded bg-slate-800 text-slate-400">
+        <span className="px-2 py-1 text-xs font-medium rounded bg-surface text-[var(--text-muted)]">
           {invitation.role}
         </span>
         <button
           onClick={() => onRevoke(invitation.id)}
-          className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+          className="p-1.5 text-foreground0 hover:text-red-400 transition-colors"
         >
           <XMarkIcon className="w-4 h-4" />
         </button>
@@ -229,8 +229,8 @@ export default function TeamPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Team & Permissions</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Team & Permissions</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Manage who has access to your organization
           </p>
         </div>
@@ -247,8 +247,8 @@ export default function TeamPage() {
       <div className="bg-card border border-card-border rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <UsersIcon className="w-5 h-5 text-accent" />
-          <h2 className="text-lg font-semibold text-slate-50">Team Members</h2>
-          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-800 text-slate-400">
+          <h2 className="text-lg font-semibold text-foreground">Team Members</h2>
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-surface text-[var(--text-muted)]">
             {members.length + 1}
           </span>
         </div>
@@ -291,7 +291,7 @@ export default function TeamPage() {
         <div className="bg-card border border-card-border rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <EnvelopeIcon className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-semibold text-slate-50">Pending Invitations</h2>
+            <h2 className="text-lg font-semibold text-foreground">Pending Invitations</h2>
             <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-900/30 text-amber-400">
               {invitations.length}
             </span>
@@ -310,13 +310,13 @@ export default function TeamPage() {
       )}
 
       {/* Role Descriptions */}
-      <div className="bg-slate-900/30 border border-slate-800 rounded-xl p-4">
-        <h3 className="font-semibold text-slate-300 mb-3">Role Permissions</h3>
+      <div className="bg-slate-900/30 border border-[var(--card-border)] rounded-xl p-4">
+        <h3 className="font-semibold text-[var(--text-secondary)] mb-3">Role Permissions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {ROLE_OPTIONS.map(role => (
             <div key={role.value} className="text-sm">
-              <p className="font-medium text-slate-200">{role.label}</p>
-              <p className="text-slate-500">{role.description}</p>
+              <p className="font-medium text-foreground">{role.label}</p>
+              <p className="text-foreground0">{role.description}</p>
             </div>
           ))}
         </div>
@@ -324,13 +324,13 @@ export default function TeamPage() {
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-slate-50 mb-4">Invite Team Member</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="bg-surface border border-[var(--card-border)] rounded-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Invite Team Member</h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">
+                <label className="block text-sm text-[var(--text-muted)] mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -338,18 +338,18 @@ export default function TeamPage() {
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent/50"
+                  className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-accent/50"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">
+                <label className="block text-sm text-[var(--text-muted)] mb-1.5">
                   Role
                 </label>
                 <select
                   value={inviteRole}
                   onChange={e => setInviteRole(e.target.value as TeamRole)}
-                  className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 focus:outline-none focus:border-accent/50"
+                  className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-xl text-foreground focus:outline-none focus:border-accent/50"
                 >
                   {ROLE_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -363,7 +363,7 @@ export default function TeamPage() {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="px-4 py-2 text-slate-400 hover:text-slate-200 transition-colors"
+                className="px-4 py-2 text-[var(--text-muted)] hover:text-foreground transition-colors"
               >
                 Cancel
               </button>

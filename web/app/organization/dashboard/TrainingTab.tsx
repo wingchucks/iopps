@@ -140,18 +140,18 @@ export default function TrainingTab() {
         }
     };
 
-    if (loading) return <div className="text-slate-400 p-4">Loading training programs...</div>;
+    if (loading) return <div className="text-[var(--text-muted)] p-4">Loading training programs...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">Training Programs</h2>
-                    <p className="text-sm text-slate-400">Manage your courses, workshops, and certifications.</p>
+                    <p className="text-sm text-[var(--text-muted)]">Manage your courses, workshops, and certifications.</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500"
+                    className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent"
                 >
                     <PlusIcon className="h-4 w-4" />
                     Add Program
@@ -159,32 +159,32 @@ export default function TrainingTab() {
             </div>
 
             {programs.length === 0 ? (
-                <div className="rounded-2xl border border-slate-800 bg-slate-800/30 p-12 text-center">
-                    <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
+                <div className="rounded-2xl border border-[var(--card-border)] bg-slate-800/30 p-12 text-center">
+                    <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
                     <h3 className="mt-4 text-lg font-medium text-white">No programs yet</h3>
-                    <p className="mt-2 text-slate-400">Create your first training program to start accepting enrollments.</p>
+                    <p className="mt-2 text-[var(--text-muted)]">Create your first training program to start accepting enrollments.</p>
                 </div>
             ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {programs.map(program => (
-                        <div key={program.id} className="group relative overflow-hidden rounded-xl border border-slate-700 bg-slate-800 p-5 hover:border-teal-500/50 transition-colors">
+                        <div key={program.id} className="group relative overflow-hidden rounded-xl border border-[var(--card-border)] bg-surface p-5 hover:border-accent/50 transition-colors">
                             <div className="flex justify-between items-start mb-2">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${program.active ? "bg-teal-500/10 text-teal-400" : "bg-slate-700 text-slate-400"
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${program.active ? "bg-accent/10 text-accent" : "bg-slate-700 text-[var(--text-muted)]"
                                     }`}>
                                     {program.active ? "Active" : "Inactive"}
                                 </span>
                                 <div className="flex gap-2">
-                                    <button onClick={() => handleOpenModal(program)} className="text-slate-400 hover:text-white">
+                                    <button onClick={() => handleOpenModal(program)} className="text-[var(--text-muted)] hover:text-white">
                                         <PencilSquareIcon className="h-4 w-4" />
                                     </button>
-                                    <button onClick={() => handleDelete(program.id)} className="text-slate-400 hover:text-red-400">
+                                    <button onClick={() => handleDelete(program.id)} className="text-[var(--text-muted)] hover:text-red-400">
                                         <TrashIcon className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
                             <h3 className="font-semibold text-white mb-1 line-clamp-1">{program.title}</h3>
-                            <p className="text-sm text-slate-400 line-clamp-2 mb-4">{program.description}</p>
-                            <div className="text-xs text-slate-500 space-y-1">
+                            <p className="text-sm text-[var(--text-muted)] line-clamp-2 mb-4">{program.description}</p>
+                            <div className="text-xs text-foreground0 space-y-1">
                                 <p>{program.format} • {program.duration}</p>
                                 <p>{program.startDate ? `Starts: ${program.startDate}` : "Flexible Start"}</p>
                             </div>
@@ -196,40 +196,40 @@ export default function TrainingTab() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between border-b border-slate-800 p-6">
+                    <div className="w-full max-w-2xl rounded-2xl bg-surface border border-[var(--card-border)] shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-[var(--card-border)] p-6">
                             <h3 className="text-lg font-bold text-white">
                                 {editingProgram ? "Edit Program" : "New Training Program"}
                             </h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white">
+                            <button onClick={() => setShowModal(false)} className="text-[var(--text-muted)] hover:text-white">
                                 <XMarkIcon className="h-6 w-6" />
                             </button>
                         </div>
                         <form onSubmit={handleSave} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Title</label>
                                 <input
                                     required
-                                    className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                    className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
                                 <textarea
                                     required
                                     rows={3}
-                                    className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                    className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Category</label>
                                     <select
-                                        className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                        className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value as any })}
                                     >
@@ -240,9 +240,9 @@ export default function TrainingTab() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Format</label>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Format</label>
                                     <select
-                                        className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                        className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                         value={formData.format}
                                         onChange={e => setFormData({ ...formData, format: e.target.value as any })}
                                     >
@@ -255,19 +255,19 @@ export default function TrainingTab() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Duration</label>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Duration</label>
                                     <input
                                         placeholder="e.g. 12 weeks"
-                                        className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                        className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                         value={formData.duration}
                                         onChange={e => setFormData({ ...formData, duration: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Cost</label>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Cost</label>
                                     <input
                                         placeholder="e.g. Free, $299, Sponsored"
-                                        className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                        className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                         value={formData.cost}
                                         onChange={e => setFormData({ ...formData, cost: e.target.value })}
                                     />
@@ -275,31 +275,31 @@ export default function TrainingTab() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Start Date (Optional)</label>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Start Date (Optional)</label>
                                     <input
                                         type="date"
-                                        className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                        className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                         value={formData.startDate}
                                         onChange={e => setFormData({ ...formData, startDate: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Active?</label>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Active?</label>
                                     <div className="flex items-center h-10">
                                         <input
                                             type="checkbox"
-                                            className="h-5 w-5 rounded border-slate-700 bg-slate-800 text-teal-600 focus:ring-teal-500"
+                                            className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                                             checked={formData.active}
                                             onChange={e => setFormData({ ...formData, active: e.target.checked })}
                                         />
-                                        <span className="ml-2 text-sm text-slate-400">Visible to public</span>
+                                        <span className="ml-2 text-sm text-[var(--text-muted)]">Visible to public</span>
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">External Registration URL</label>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">External Registration URL</label>
                                 <input
-                                    className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white focus:border-teal-500 focus:outline-none"
+                                    className="w-full rounded-lg bg-surface border border-[var(--card-border)] px-3 py-2 text-white focus:border-accent focus:outline-none"
                                     value={formData.registrationUrl}
                                     onChange={e => setFormData({ ...formData, registrationUrl: e.target.value })}
                                     placeholder="https://..."
@@ -309,14 +309,14 @@ export default function TrainingTab() {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800"
+                                    className="px-4 py-2 rounded-lg text-[var(--text-secondary)] hover:text-white hover:bg-surface"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="px-6 py-2 rounded-lg bg-teal-600 font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
+                                    className="px-6 py-2 rounded-lg bg-accent font-semibold text-white hover:bg-accent disabled:opacity-50"
                                 >
                                     {saving ? "Saving..." : "Save Program"}
                                 </button>

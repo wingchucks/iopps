@@ -56,7 +56,7 @@ export default function DirectoryStatusCard({
     : "bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/30";
 
   const iconBgStyles = isVisible
-    ? "bg-[#14B8A6]/20 text-[#14B8A6]"
+    ? "bg-accent/20 text-[#14B8A6]"
     : "bg-amber-500/20 text-amber-400";
 
   return (
@@ -73,7 +73,7 @@ export default function DirectoryStatusCard({
             )}
           </div>
           <div>
-            <h3 className="font-semibold text-slate-50">Directory Status</h3>
+            <h3 className="font-semibold text-foreground">Directory Status</h3>
             <p className={`text-sm mt-0.5 ${isVisible ? "text-[#14B8A6]" : "text-amber-400"}`}>
               {isGrandfathered
                 ? DIRECTORY_STATUS_COPY.GRANDFATHERED.status
@@ -88,12 +88,12 @@ export default function DirectoryStatusCard({
       <div className="mt-4">
         {isGrandfathered ? (
           // Grandfathered status
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             {DIRECTORY_STATUS_COPY.GRANDFATHERED.subtext}
           </p>
         ) : isVisible ? (
           // Visible with expiry date
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--text-muted)]">
             {directoryVisibleUntil
               ? DIRECTORY_STATUS_COPY.VISIBLE.subtextTemplate.replace(
                   "{date}",
@@ -104,19 +104,19 @@ export default function DirectoryStatusCard({
         ) : (
           // Not visible - show CTAs
           <>
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-sm text-[var(--text-muted)] mb-4">
               {DIRECTORY_STATUS_COPY.NOT_VISIBLE.subtext}
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/organization/jobs/new"
-                className="inline-flex items-center px-4 py-2 bg-[#14B8A6] text-slate-950 rounded-lg text-sm font-medium hover:bg-[#14B8A6]/90 transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-accent text-slate-950 rounded-lg text-sm font-medium hover:bg-accent/90 transition-colors"
               >
                 {DIRECTORY_STATUS_COPY.NOT_VISIBLE.ctaPostJob}
               </Link>
               <Link
                 href="/pricing"
-                className="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800/60 text-slate-100 rounded-lg text-sm font-medium hover:border-[#14B8A6] hover:bg-slate-800 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-[var(--card-border)] bg-slate-800/60 text-foreground rounded-lg text-sm font-medium hover:border-[#14B8A6] hover:bg-surface transition-colors"
               >
                 {DIRECTORY_STATUS_COPY.NOT_VISIBLE.ctaViewPlans}
               </Link>

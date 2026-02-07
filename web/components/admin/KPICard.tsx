@@ -56,9 +56,9 @@ const colorConfig: Record<
   }
 > = {
   teal: {
-    iconBg: "bg-teal-500/10",
-    iconColor: "text-teal-400",
-    accentColor: "text-teal-400",
+    iconBg: "bg-accent/10",
+    iconColor: "text-accent",
+    accentColor: "text-accent",
   },
   blue: {
     iconBg: "bg-blue-500/10",
@@ -82,8 +82,8 @@ const colorConfig: Record<
   },
   slate: {
     iconBg: "bg-slate-500/10",
-    iconColor: "text-slate-400",
-    accentColor: "text-slate-400",
+    iconColor: "text-[var(--text-muted)]",
+    accentColor: "text-[var(--text-muted)]",
   },
 };
 
@@ -129,7 +129,7 @@ function Tooltip({ content, children }: TooltipProps) {
         <div
           ref={tooltipRef}
           role="tooltip"
-          className="absolute z-50 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300 shadow-lg whitespace-nowrap"
+          className="absolute z-50 rounded-lg border border-[var(--card-border)] bg-surface px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg whitespace-nowrap"
           style={{ top: position.top, left: position.left }}
         >
           {content}
@@ -146,13 +146,13 @@ function Tooltip({ content, children }: TooltipProps) {
 
 function KPICardSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 animate-pulse">
+    <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-5 animate-pulse">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-slate-800" />
-        <div className="h-4 w-20 rounded bg-slate-800" />
+        <div className="h-10 w-10 rounded-lg bg-surface" />
+        <div className="h-4 w-20 rounded bg-surface" />
       </div>
-      <div className="mt-3 h-8 w-16 rounded bg-slate-800" />
-      <div className="mt-2 h-3 w-12 rounded bg-slate-800" />
+      <div className="mt-3 h-8 w-16 rounded bg-surface" />
+      <div className="mt-2 h-3 w-12 rounded bg-surface" />
     </div>
   );
 }
@@ -207,7 +207,7 @@ export function KPICard({
   return (
     <Wrapper
       {...wrapperProps}
-      className={`block rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-colors hover:border-slate-700 ${
+      className={`block rounded-xl border border-[var(--card-border)] bg-slate-900/60 p-5 transition-colors hover:border-[var(--card-border)] ${
         href ? "cursor-pointer" : ""
       }`}
     >
@@ -222,15 +222,15 @@ export function KPICard({
             </div>
           )}
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium text-slate-400">{label}</span>
+            <span className="text-sm font-medium text-[var(--text-muted)]">{label}</span>
             {definition && (
               <Tooltip content={definition}>
                 <button
                   type="button"
-                  className="focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-slate-900 rounded"
+                  className="focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-background rounded"
                   aria-label={`Information: ${definition}`}
                 >
-                  <InformationCircleIcon className="h-4 w-4 text-slate-600 hover:text-slate-400 cursor-help" aria-hidden="true" />
+                  <InformationCircleIcon className="h-4 w-4 text-[var(--text-secondary)] hover:text-[var(--text-muted)] cursor-help" aria-hidden="true" />
                 </button>
               </Tooltip>
             )}
@@ -254,7 +254,7 @@ export function KPICard({
             ) : change.direction === "down" ? (
               <ArrowTrendingDownIcon className="h-4 w-4 text-red-400" aria-hidden="true" />
             ) : (
-              <MinusIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />
+              <MinusIcon className="h-4 w-4 text-foreground0" aria-hidden="true" />
             )}
             <span
               className={
@@ -262,19 +262,19 @@ export function KPICard({
                   ? "text-green-400"
                   : change.direction === "down"
                   ? "text-red-400"
-                  : "text-slate-500"
+                  : "text-foreground0"
               }
             >
               {change.direction === "up" ? "+" : change.direction === "down" ? "-" : ""}
               {change.value}
             </span>
             {change.period && (
-              <span className="text-slate-500">{change.period}</span>
+              <span className="text-foreground0">{change.period}</span>
             )}
           </div>
         )}
         {breakdown && (
-          <span className="text-xs text-slate-500">{breakdown}</span>
+          <span className="text-xs text-foreground0">{breakdown}</span>
         )}
       </div>
     </Wrapper>

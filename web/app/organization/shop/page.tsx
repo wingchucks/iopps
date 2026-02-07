@@ -44,7 +44,7 @@ export default function ShopRedirect() {
   if (authLoading || checking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
@@ -54,19 +54,19 @@ export default function ShopRedirect() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Employer Account Required</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           To list your business on Shop Indigenous, you need an employer account.
         </p>
         <div className="flex gap-3">
           <Link
             href="/register?role=employer"
-            className="inline-block rounded-md bg-[#14B8A6] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#14B8A6]/90 transition-colors"
+            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Register as Employer
           </Link>
           <Link
             href="/business"
-            className="inline-block rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition-colors"
+            className="inline-block rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] hover:bg-surface transition-colors"
           >
             Browse Marketplace
           </Link>

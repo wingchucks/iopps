@@ -153,14 +153,14 @@ export default function HireTalentPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-50">Talent Search</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Talent Search</h1>
+          <p className="text-[var(--text-muted)] mt-1">
             Discover Indigenous professionals for your team
           </p>
         </div>
         <Link
           href="/organization/hire/talent/saved"
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-[var(--text-secondary)] hover:bg-slate-700 transition-colors"
         >
           <BookmarkSolidIcon className="w-4 h-4 text-accent" />
           Saved Talent
@@ -170,13 +170,13 @@ export default function HireTalentPage() {
       {/* Search Bar */}
       <div className="flex gap-3">
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+          <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, skills, or keywords..."
-            className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-accent/50"
+            className="w-full pl-12 pr-4 py-3 bg-surface border border-[var(--card-border)] rounded-xl text-foreground placeholder-slate-500 focus:outline-none focus:border-accent/50"
           />
         </div>
         <button
@@ -184,7 +184,7 @@ export default function HireTalentPage() {
           className={`flex items-center gap-2 px-4 py-3 border rounded-xl transition-colors ${
             showFilters
               ? 'bg-accent/10 border-accent/30 text-accent'
-              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+              : 'bg-surface border-[var(--card-border)] text-[var(--text-muted)] hover:border-[var(--card-border)]'
           }`}
         >
           <FunnelIcon className="w-5 h-5" />
@@ -197,15 +197,15 @@ export default function HireTalentPage() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-6">
+        <div className="bg-surface border border-[var(--card-border)] rounded-2xl p-6 space-y-6">
           {/* Location & Experience */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-2">Location</label>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Location</label>
               <select
                 value={filters.location}
                 onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-accent/50"
+                className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-lg text-foreground focus:outline-none focus:border-accent/50"
               >
                 <option value="">All Locations</option>
                 <option value="remote">Open to Remote</option>
@@ -221,11 +221,11 @@ export default function HireTalentPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-2">Experience Level</label>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Experience Level</label>
               <select
                 value={filters.experience}
                 onChange={(e) => setFilters({ ...filters, experience: e.target.value as TalentSearchFilters['experience'] })}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-accent/50"
+                className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-lg text-foreground focus:outline-none focus:border-accent/50"
               >
                 <option value="">Any Experience</option>
                 <option value="entry">Entry Level (0-2 years)</option>
@@ -235,11 +235,11 @@ export default function HireTalentPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-2">Availability</label>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Availability</label>
               <select
                 value={filters.availability}
                 onChange={(e) => setFilters({ ...filters, availability: e.target.value as TalentSearchFilters['availability'] })}
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-accent/50"
+                className="w-full px-4 py-2.5 bg-surface border border-[var(--card-border)] rounded-lg text-foreground focus:outline-none focus:border-accent/50"
               >
                 <option value="">Open to Opportunities</option>
                 <option value="yes">Actively Looking</option>
@@ -250,7 +250,7 @@ export default function HireTalentPage() {
 
           {/* Skills */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
               Popular Skills {selectedSkills.length > 0 && `(${selectedSkills.length} selected)`}
             </label>
             <div className="flex flex-wrap gap-2">
@@ -261,7 +261,7 @@ export default function HireTalentPage() {
                   className={`px-3 py-1.5 rounded-lg text-sm capitalize transition-colors ${
                     selectedSkills.includes(skill)
                       ? 'bg-accent text-slate-950 font-medium'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      : 'bg-surface text-[var(--text-muted)] hover:bg-slate-700'
                   }`}
                 >
                   {skill}
@@ -278,7 +278,7 @@ export default function HireTalentPage() {
                 setFilters({ location: '', experience: '', availability: '' });
                 setSelectedSkills([]);
               }}
-              className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200"
+              className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-foreground"
             >
               <XMarkIcon className="w-4 h-4" />
               Clear all filters
@@ -294,11 +294,11 @@ export default function HireTalentPage() {
         </div>
       ) : results.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <UserGroupIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">
+          <UserGroupIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {searchQuery || selectedSkills.length > 0 ? 'No matching talent found' : 'Start Your Search'}
           </h3>
-          <p className="text-slate-500 max-w-md mx-auto">
+          <p className="text-foreground0 max-w-md mx-auto">
             {searchQuery || selectedSkills.length > 0
               ? 'Try adjusting your filters or search terms to find more candidates.'
               : 'Use the search bar and filters above to find Indigenous professionals who match your hiring needs.'}
@@ -306,7 +306,7 @@ export default function HireTalentPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground0">
             Found {results.length} professional{results.length !== 1 ? 's' : ''}
             {hasMore && '+'}
           </p>
@@ -315,10 +315,10 @@ export default function HireTalentPage() {
             {results.map(({ member, matchScore, matchReasons }) => (
               <div
                 key={member.id}
-                className="bg-card border border-card-border rounded-2xl p-5 hover:border-slate-700 transition-all group"
+                className="bg-card border border-card-border rounded-2xl p-5 hover:border-[var(--card-border)] transition-all group"
               >
                 <div className="flex items-start gap-4">
-                  <Avatar className="h-14 w-14 border-2 border-slate-800">
+                  <Avatar className="h-14 w-14 border-2 border-[var(--card-border)]">
                     <AvatarImage src={member.avatarUrl} />
                     <AvatarFallback className="bg-gradient-to-br from-accent to-teal-500 text-white">
                       {getInitials(member.displayName)}
@@ -327,11 +327,11 @@ export default function HireTalentPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-slate-200 truncate">
+                      <h3 className="font-semibold text-foreground truncate">
                         {member.displayName}
                       </h3>
                       {matchScore && matchScore >= 70 && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs">
                           <SparklesIcon className="w-3 h-3" />
                           Top Match
                         </span>
@@ -339,10 +339,10 @@ export default function HireTalentPage() {
                     </div>
 
                     {member.tagline && (
-                      <p className="text-sm text-slate-400 truncate">{member.tagline}</p>
+                      <p className="text-sm text-[var(--text-muted)] truncate">{member.tagline}</p>
                     )}
 
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-foreground0">
                       {member.location && (
                         <span className="flex items-center gap-1">
                           <MapPinIcon className="w-3.5 h-3.5" />
@@ -365,7 +365,7 @@ export default function HireTalentPage() {
 
                     {/* Indigenous Affiliation */}
                     {member.indigenousAffiliation && (
-                      <p className="mt-2 text-xs text-emerald-400">
+                      <p className="mt-2 text-xs text-accent">
                         {member.indigenousAffiliation}
                       </p>
                     )}
@@ -381,14 +381,14 @@ export default function HireTalentPage() {
                         className={`px-2 py-0.5 rounded text-xs ${
                           selectedSkills.includes(skill.toLowerCase())
                             ? 'bg-accent/20 text-accent'
-                            : 'bg-slate-800 text-slate-400'
+                            : 'bg-surface text-[var(--text-muted)]'
                         }`}
                       >
                         {skill}
                       </span>
                     ))}
                     {member.skills.length > 5 && (
-                      <span className="px-2 py-0.5 text-xs text-slate-500">
+                      <span className="px-2 py-0.5 text-xs text-foreground0">
                         +{member.skills.length - 5} more
                       </span>
                     )}
@@ -399,7 +399,7 @@ export default function HireTalentPage() {
                 {matchReasons && matchReasons.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {matchReasons.slice(0, 2).map((reason, i) => (
-                      <span key={i} className="text-xs text-slate-500">
+                      <span key={i} className="text-xs text-foreground0">
                         {i > 0 && '•'} {reason}
                       </span>
                     ))}
@@ -407,7 +407,7 @@ export default function HireTalentPage() {
                 )}
 
                 {/* Actions */}
-                <div className="mt-4 pt-4 border-t border-slate-800 flex items-center gap-2">
+                <div className="mt-4 pt-4 border-t border-[var(--card-border)] flex items-center gap-2">
                   <Link
                     href={`/member/${member.id}`}
                     onClick={() => handleViewProfile(member.id)}
@@ -421,7 +421,7 @@ export default function HireTalentPage() {
                     className={`p-2 rounded-lg transition-colors ${
                       savedMembers.has(member.id)
                         ? 'bg-accent/10 text-accent'
-                        : 'bg-slate-800 text-slate-400 hover:text-accent'
+                        : 'bg-surface text-[var(--text-muted)] hover:text-accent'
                     }`}
                     title={savedMembers.has(member.id) ? 'Remove from saved' : 'Save to talent pool'}
                   >
@@ -433,7 +433,7 @@ export default function HireTalentPage() {
                   </button>
                   <Link
                     href={`/organization/messages?to=${member.id}`}
-                    className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-accent transition-colors"
+                    className="p-2 rounded-lg bg-surface text-[var(--text-muted)] hover:text-accent transition-colors"
                     title="Send message"
                   >
                     <EnvelopeIcon className="w-5 h-5" />
@@ -447,7 +447,7 @@ export default function HireTalentPage() {
             <div className="text-center pt-4">
               <button
                 onClick={performSearch}
-                className="px-6 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors"
+                className="px-6 py-2 bg-surface border border-[var(--card-border)] rounded-lg text-[var(--text-secondary)] hover:bg-slate-700 transition-colors"
               >
                 Load More
               </button>

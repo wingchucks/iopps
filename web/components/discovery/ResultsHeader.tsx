@@ -23,7 +23,7 @@ export function ResultsHeader({
   return (
     <div className="flex items-center justify-between mb-6">
       <h2 className="text-2xl font-bold text-white">{displayTitle}</h2>
-      <span className="text-sm text-slate-400">
+      <span className="text-sm text-[var(--text-muted)]">
         {loading ? "Loading..." : `${count} ${label}`}
       </span>
     </div>

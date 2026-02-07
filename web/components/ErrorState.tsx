@@ -41,12 +41,12 @@ export function ErrorState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-semibold text-slate-200">{title}</h3>
-      <p className="mt-2 max-w-md text-sm text-slate-400">{description}</p>
+      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <p className="mt-2 max-w-md text-sm text-[var(--text-muted)]">{description}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800 px-6 py-3 font-semibold text-white transition-all hover:border-slate-600 hover:bg-slate-700"
+          className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--card-border)] bg-surface px-6 py-3 font-semibold text-white transition-all hover:border-[var(--card-border)] hover:bg-slate-700"
         >
           <svg
             className="h-4 w-4"
