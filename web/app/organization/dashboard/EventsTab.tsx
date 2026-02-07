@@ -360,7 +360,7 @@ export default function EventsTab() {
             </div>
           ) : filteredPowwows.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <FireIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <FireIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword || statusFilter !== "all" ? "No events found" : "No events yet"}
               </h3>
@@ -505,7 +505,7 @@ export default function EventsTab() {
             </div>
           ) : filteredConferences.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <BuildingOfficeIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BuildingOfficeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword || statusFilter !== "all" ? "No conferences found" : "No conferences yet"}
               </h3>

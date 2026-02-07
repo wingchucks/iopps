@@ -169,7 +169,7 @@ export default function ServicesTab() {
 
             {services.length === 0 ? (
                 <div className="rounded-2xl border border-[var(--card-border)] bg-slate-800/30 p-12 text-center">
-                    <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-slate-600" />
+                    <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
                     <h3 className="mt-4 text-lg font-medium text-white">No services listed</h3>
                     <p className="mt-2 text-[var(--text-muted)]">List your professional services to reach new clients.</p>
                 </div>

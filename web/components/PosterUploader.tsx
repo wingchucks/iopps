@@ -325,7 +325,7 @@ export function PosterUploader({
         <p className="mt-1 text-xs text-foreground0">
           Our AI will automatically extract event details from the poster
         </p>
-        <p className="mt-2 text-xs text-slate-600">
+        <p className="mt-2 text-xs text-[var(--text-secondary)]">
           Supported: JPEG, PNG, WebP, GIF (max 10MB)
         </p>
       </div>

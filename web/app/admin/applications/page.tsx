@@ -295,7 +295,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-accent text-slate-900"
+                ? "bg-accent text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
@@ -304,7 +304,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("submitted")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "submitted"
-                ? "bg-blue-500 text-slate-900"
+                ? "bg-blue-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-blue-500"
               }`}
           >
@@ -313,7 +313,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("reviewed")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "reviewed"
-                ? "bg-purple-500 text-slate-900"
+                ? "bg-purple-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-purple-500"
               }`}
           >
@@ -322,7 +322,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("shortlisted")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "shortlisted"
-                ? "bg-yellow-500 text-slate-900"
+                ? "bg-yellow-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-yellow-500"
               }`}
           >
@@ -331,7 +331,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("interviewing")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "interviewing"
-                ? "bg-indigo-500 text-slate-900"
+                ? "bg-indigo-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-indigo-500"
               }`}
           >
@@ -340,7 +340,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("offered")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "offered"
-                ? "bg-cyan-500 text-slate-900"
+                ? "bg-cyan-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-cyan-500"
               }`}
           >
@@ -349,7 +349,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("hired")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "hired"
-                ? "bg-green-500 text-slate-900"
+                ? "bg-green-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
@@ -358,7 +358,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("rejected")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "rejected"
-                ? "bg-red-500 text-slate-900"
+                ? "bg-red-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-red-500"
               }`}
           >
@@ -367,7 +367,7 @@ function AdminApplicationsContent() {
           <button
             onClick={() => setFilter("withdrawn")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "withdrawn"
-                ? "bg-slate-500 text-slate-900"
+                ? "bg-slate-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >

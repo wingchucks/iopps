@@ -669,7 +669,7 @@ export default function VideosTab() {
                         {isDragging ? "Drop your video here" : "Drag & drop your video here"}
                       </p>
                       <p className="text-foreground0 text-sm mb-4">or click to browse files</p>
-                      <p className="text-xs text-slate-600">
+                      <p className="text-xs text-[var(--text-secondary)]">
                         MP4, WebM, MOV, AVI, MPEG • Max 100MB
                       </p>
                     </div>

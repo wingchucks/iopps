@@ -165,7 +165,7 @@ export default function TalentPoolPaywall({ employerId }: TalentPoolPaywallProps
 
                 {/* Annual Plan - Recommended */}
                 <div className="relative rounded-2xl border-2 border-accent bg-surface p-6">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-slate-900">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-[var(--text-primary)]">
                         <SparklesIcon className="h-3.5 w-3.5" />
                         BEST VALUE
                     </div>
@@ -193,7 +193,7 @@ export default function TalentPoolPaywall({ employerId }: TalentPoolPaywallProps
                     <button
                         onClick={() => handleSubscribe("ANNUAL")}
                         disabled={loading !== null}
-                        className="mt-6 w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-3 font-semibold text-slate-900 shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="mt-6 w-full rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-3 font-semibold text-[var(--text-primary)] shadow-lg shadow-teal-500/25 transition-all hover:shadow-xl hover:shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading === "ANNUAL" ? (
                             <span className="flex items-center justify-center gap-2">

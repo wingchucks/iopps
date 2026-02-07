@@ -544,7 +544,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
 
           {products.length === 0 ? (
             <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-12 text-center">
-              <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <PhotoIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
               <p className="mt-2 text-[var(--text-muted)]">
                 Add products or services to help customers discover what you offer.
@@ -569,7 +569,7 @@ export default function ShopTab({ onNavigate }: ShopTabProps) {
                     </div>
                   ) : (
                     <div className="h-40 bg-slate-700/50 flex items-center justify-center">
-                      <PhotoIcon className="h-12 w-12 text-slate-600" />
+                      <PhotoIcon className="h-12 w-12 text-[var(--text-secondary)]" />
                     </div>
                   )}
                   <div className="p-4">
@@ -898,7 +898,7 @@ function ProductModal({
                 </div>
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-surface border border-[var(--card-border)]">
-                  <PhotoIcon className="h-8 w-8 text-slate-600" />
+                  <PhotoIcon className="h-8 w-8 text-[var(--text-secondary)]" />
                 </div>
               )}
               <div>
@@ -1080,7 +1080,7 @@ function ProductPreviewModal({
             </div>
           ) : (
             <div className="w-full aspect-video max-h-60 bg-surface flex items-center justify-center">
-              <PhotoIcon className="h-20 w-20 text-slate-600" />
+              <PhotoIcon className="h-20 w-20 text-[var(--text-secondary)]" />
             </div>
           )}
 

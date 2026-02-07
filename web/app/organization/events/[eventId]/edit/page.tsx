@@ -249,7 +249,7 @@ export default function EditEventPage() {
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--card-bg)] transition-transform ${
                     active ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
@@ -294,7 +294,7 @@ export default function EditEventPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Annual Traditional Pow Wow"
-                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>
 
@@ -308,7 +308,7 @@ export default function EditEventPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 placeholder="Tell attendees about your event..."
-                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>
 
@@ -321,7 +321,7 @@ export default function EditEventPage() {
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
                 placeholder="e.g., Mohawk Nation Council"
-                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
             </div>
           </div>
@@ -341,7 +341,7 @@ export default function EditEventPage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g., Six Nations Arena, Ohsweken"
-                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-slate-400 focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-slate-700/50 px-4 py-2.5 text-white placeholder-[var(--text-muted)] focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
                 />
               </div>
 

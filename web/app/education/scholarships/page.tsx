@@ -165,12 +165,12 @@ function ScholarshipsContent() {
               placeholder="Search scholarships..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg bg-white border border-slate-200 py-3 pl-12 pr-4 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] py-3 pl-12 pr-4 text-[var(--text-primary)] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center gap-2 rounded-lg bg-white border border-slate-200 px-6 py-3 text-slate-900 transition-colors hover:bg-slate-100"
+            className="flex items-center justify-center gap-2 rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-6 py-3 text-[var(--text-primary)] transition-colors hover:bg-surface"
           >
             <FunnelIcon className="h-5 w-5" />
             Filters
@@ -183,26 +183,26 @@ function ScholarshipsContent() {
         </div>
         {/* Breadcrumb */}
         <nav className="mb-8 text-sm text-foreground0">
-          <Link href="/" className="hover:text-slate-900 transition-colors">
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
             Home
           </Link>
           <span className="mx-2">&rarr;</span>
-          <Link href="/education" className="hover:text-slate-900 transition-colors">
+          <Link href="/education" className="hover:text-[var(--text-primary)] transition-colors">
             Education
           </Link>
           <span className="mx-2">&rarr;</span>
-          <span className="text-slate-900">Scholarships</span>
+          <span className="text-[var(--text-primary)]">Scholarships</span>
         </nav>
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="mb-8 rounded-2xl bg-slate-50 backdrop-blur-sm border border-slate-200 p-6">
+          <div className="mb-8 rounded-2xl bg-[var(--background)] backdrop-blur-sm border border-[var(--border)] p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Filters</h3>
               {hasFilters && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-1 text-sm text-foreground0 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-1 text-sm text-foreground0 hover:text-[var(--text-primary)] transition-colors"
                 >
                   <XMarkIcon className="h-4 w-4" />
                   Clear all
@@ -221,7 +221,7 @@ function ScholarshipsContent() {
                       onClick={() => setAwardType(type)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${awardType === type
                         ? "bg-accent text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-surface text-[var(--text-secondary)] hover:bg-surface"
                         }`}
                     >
                       {type}
@@ -240,7 +240,7 @@ function ScholarshipsContent() {
                       onClick={() => setLevel(lvl)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${level === lvl
                         ? "bg-accent text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-surface text-[var(--text-secondary)] hover:bg-surface"
                         }`}
                     >
                       {lvl}
@@ -259,7 +259,7 @@ function ScholarshipsContent() {
                       onClick={() => setDeadlineRange(range.value)}
                       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${deadlineRange === range.value
                         ? "bg-accent text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-surface text-[var(--text-secondary)] hover:bg-surface"
                         }`}
                     >
                       {range.label}
@@ -278,7 +278,7 @@ function ScholarshipsContent() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500">
                 <CurrencyDollarIcon className="h-4 w-4 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">High-Value Awards</h2>
+              <h2 className="text-2xl font-bold text-[var(--text-primary)]">High-Value Awards</h2>
               <span className="text-sm text-foreground0">$5,000+</span>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -299,7 +299,7 @@ function ScholarshipsContent() {
         {/* All Scholarships */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
               {hasFilters ? "Search Results" : "All Scholarships"}
             </h2>
             <span className="text-sm text-foreground0">
@@ -310,25 +310,25 @@ function ScholarshipsContent() {
           {loading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-2xl bg-slate-50 h-64" />
+                <div key={i} className="animate-pulse rounded-2xl bg-[var(--background)] h-64" />
               ))}
             </div>
           ) : scholarships.length === 0 && !hasFilters ? (
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-12 text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <div className="rounded-2xl bg-[var(--background)] border border-[var(--border)] p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-surface flex items-center justify-center mb-4">
                 <AcademicCapIcon className="h-8 w-8 text-[var(--text-muted)]" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">No scholarships available yet</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No scholarships available yet</h3>
               <p className="text-foreground0">
                 Check back soon! Organizations are adding scholarship opportunities regularly.
               </p>
             </div>
           ) : sorted.length === 0 ? (
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-12 text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <div className="rounded-2xl bg-[var(--background)] border border-[var(--border)] p-12 text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-surface flex items-center justify-center mb-4">
                 <MagnifyingGlassIcon className="h-8 w-8 text-[var(--text-muted)]" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">No scholarships found</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No scholarships found</h3>
               <p className="text-foreground0 mb-4">
                 Try adjusting your filters or search terms.
               </p>
@@ -350,7 +350,7 @@ function ScholarshipsContent() {
                 <div className="mt-10 flex justify-center">
                   <button
                     onClick={() => setDisplayLimit((prev) => prev + 12)}
-                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-8 py-3.5 text-sm font-semibold text-slate-800 transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-8 py-3.5 text-sm font-semibold text-[var(--text-primary)] transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                   >
                     Load more scholarships
                     <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -376,7 +376,7 @@ function ScholarshipsContent() {
               </p>
               <Link
                 href="/organization/scholarships/new"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-lg font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)] px-8 py-3 text-lg font-bold text-blue-900 shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
               >
                 Post a Scholarship
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -430,13 +430,13 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
   const getTypeColor = (type: string) => {
     switch (type) {
       case "Scholarship":
-        return "bg-emerald-50 text-emerald-600";
+        return "bg-[var(--accent-bg)] text-accent";
       case "Grant":
         return "bg-blue-50 text-blue-600";
       case "Bursary":
         return "bg-purple-50 text-purple-600";
       default:
-        return "bg-slate-50 text-slate-600";
+        return "bg-[var(--background)] text-[var(--text-secondary)]";
     }
   };
 
@@ -452,7 +452,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
       href={`/education/scholarships/${scholarship.id}`}
       className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${featured
         ? "border-amber-300 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-        : "border-slate-200 bg-slate-50 hover:border-[#14B8A6]/50"
+        : "border-[var(--border)] bg-[var(--background)] hover:border-[#14B8A6]/50"
         }`}
     >
       {/* Header with Amount */}
@@ -490,7 +490,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
       {/* Content */}
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-bold text-slate-900 line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
+        <h3 className="text-lg font-bold text-[var(--text-primary)] line-clamp-2 group-hover:text-[#14B8A6] transition-colors">
           {scholarship.title}
         </h3>
 
@@ -498,17 +498,17 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
           {scholarship.provider}
         </p>
 
-        <p className="mt-3 text-sm text-slate-600 line-clamp-2 flex-1">
+        <p className="mt-3 text-sm text-[var(--text-secondary)] line-clamp-2 flex-1">
           {scholarship.description}
         </p>
 
         {/* Tags */}
         <div className="mt-4 flex flex-wrap gap-2">
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+          <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
             {scholarship.level}
           </span>
           {scholarship.region && (
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-foreground0">
+            <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-foreground0">
               {scholarship.region}
             </span>
           )}
@@ -516,7 +516,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
         {/* Deadline / Recurring Schedule */}
         {(deadline || showRecurringSchedule) && (
-          <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+          <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
             <div className="flex items-center gap-1.5 text-sm">
               {showRecurringSchedule ? (
                 <>
@@ -534,7 +534,7 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
                       ? "text-orange-600"
                       : urgency === "soon"
                         ? "text-yellow-600"
-                        : "text-slate-600"
+                        : "text-[var(--text-secondary)]"
                     }`}>
                     {urgency === "expired" ? "Expired" : `Due ${deadline}`}
                   </span>
@@ -551,14 +551,14 @@ function ScholarshipCard({ scholarship, featured = false }: { scholarship: Schol
 
         {/* Apply Now Button */}
         {scholarship.applicationMethod === "external_link" && scholarship.applicationUrl && !isExpired && (
-          <div className="mt-4 pt-3 border-t border-slate-200">
+          <div className="mt-4 pt-3 border-t border-[var(--border)]">
             <span
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 window.open(scholarship.applicationUrl!, "_blank", "noopener,noreferrer");
               }}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8] cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8] cursor-pointer"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -586,7 +586,7 @@ export default function ScholarshipsPage() {
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className="h-72 animate-pulse rounded-2xl bg-slate-50"
+                className="h-72 animate-pulse rounded-2xl bg-[var(--background)]"
               />
             ))}
           </div>

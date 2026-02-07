@@ -17,13 +17,13 @@ export default function JobHeader({ job, employerId }: JobHeaderProps) {
                 <svg className="mx-2 h-4 w-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-                <span className="text-slate-700 truncate max-w-[200px] sm:max-w-md">{job.title}</span>
+                <span className="text-[var(--text-secondary)] truncate max-w-[200px] sm:max-w-md">{job.title}</span>
             </nav>
 
             {/* Title & Badges */}
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{job.title}</h1>
+                    <h1 className="text-3xl font-bold text-[var(--text-primary)] sm:text-4xl">{job.title}</h1>
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                         {job.employerName && (
                             employerId ? (
@@ -61,7 +61,7 @@ export default function JobHeader({ job, employerId }: JobHeaderProps) {
                         ) : null}
                         {/* Category Badge */}
                         {job.category && (
-                            <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                            <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                                 {job.category}
                             </span>
                         )}

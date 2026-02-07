@@ -97,7 +97,7 @@ export default function CoverLetterBuilder() {
                                         key={t}
                                         onClick={() => setDesign(t)}
                                         className={`px-3 py-2 rounded-lg text-sm font-medium capitalize transition-all ${design === t
-                                            ? "bg-accent text-slate-900 shadow-lg shadow-[#14B8A6]/20"
+                                            ? "bg-accent text-[var(--text-primary)] shadow-lg shadow-[#14B8A6]/20"
                                             : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                                             }`}
                                     >
@@ -141,7 +141,7 @@ export default function CoverLetterBuilder() {
                         <button
                             onClick={generatePDF}
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] text-slate-900 font-bold py-3 px-6 rounded-xl hover:shadow-lg hover:shadow-[#14B8A6]/20 transition-all disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#14B8A6] to-[#0B8A7A] text-[var(--text-primary)] font-bold py-3 px-6 rounded-xl hover:shadow-lg hover:shadow-[#14B8A6]/20 transition-all disabled:opacity-50"
                         >
                             {loading ? (
                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />

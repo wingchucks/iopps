@@ -259,7 +259,7 @@ export function RichTextEditor({
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
             placeholder="Enter URL..."
-            className="flex-1 px-3 py-1.5 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-400 focus:outline-none focus:border-[#14B8A6]"
+            className="flex-1 px-3 py-1.5 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-[var(--text-muted)] focus:outline-none focus:border-[#14B8A6]"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -293,7 +293,7 @@ export function RichTextEditor({
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="Enter image URL..."
-            className="flex-1 px-3 py-1.5 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-slate-400 focus:outline-none focus:border-[#14B8A6]"
+            className="flex-1 px-3 py-1.5 bg-surface border border-[var(--card-border)] rounded-lg text-sm text-foreground placeholder-[var(--text-muted)] focus:outline-none focus:border-[#14B8A6]"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();

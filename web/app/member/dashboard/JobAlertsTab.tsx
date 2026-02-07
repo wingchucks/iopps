@@ -124,7 +124,7 @@ export default function JobAlertsTab() {
                 <h2 className="text-xl font-bold text-white">Job Alerts</h2>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
                 >
                     + Create New Alert
                 </button>
@@ -253,7 +253,7 @@ export default function JobAlertsTab() {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
+                                    className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] disabled:opacity-50"
                                 >
                                     {processing ? "Creating..." : "Create Alert"}
                                 </button>

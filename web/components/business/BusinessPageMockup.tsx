@@ -395,11 +395,11 @@ function HeroSection() {
                 whileTap={{ scale: 0.98 }}
                 className={`relative flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-all duration-300 ${
                   isActive
-                    ? 'bg-white text-slate-900 shadow-lg shadow-white/20'
+                    ? 'bg-[var(--card-bg)] text-[var(--text-primary)] shadow-lg shadow-white/20'
                     : 'bg-slate-800/60 text-[var(--text-secondary)] border border-[var(--card-border)] hover:bg-slate-700/60 hover:border-[var(--card-border)]/50'
                 }`}
               >
-                <Icon className={`h-5 w-5 ${isActive ? 'text-teal-600' : 'text-[var(--text-muted)]'}`} />
+                <Icon className={`h-5 w-5 ${isActive ? 'text-accent' : 'text-[var(--text-muted)]'}`} />
                 {tab.label}
                 <span className={`ml-1 text-xs ${isActive ? 'text-foreground0' : 'text-foreground0'}`}>
                   ({tab.count})
@@ -407,7 +407,7 @@ function HeroSection() {
                 {isActive && (
                   <motion.div
                     layoutId="activeTabIndicator"
-                    className="absolute inset-0 rounded-2xl bg-white"
+                    className="absolute inset-0 rounded-2xl bg-[var(--card-bg)]"
                     style={{ zIndex: -1 }}
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                   />
@@ -878,7 +878,7 @@ function VendorLeaderboard() {
       case 2:
         return <TrophyIcon className="h-5 w-5 text-[var(--text-secondary)]" />;
       case 3:
-        return <TrophyIcon className="h-5 w-5 text-amber-600" />;
+        return <TrophyIcon className="h-5 w-5 text-[var(--amber)]" />;
       default:
         return <span className="text-lg font-bold text-foreground0">#{rank}</span>;
     }
@@ -961,7 +961,7 @@ function VendorLeaderboard() {
                   </div>
                 </div>
 
-                <ChevronRightIcon className="h-5 w-5 text-slate-600" />
+                <ChevronRightIcon className="h-5 w-5 text-[var(--text-secondary)]" />
               </motion.div>
             ))}
           </div>
@@ -1121,11 +1121,11 @@ function DualCTASection() {
             <div className="absolute inset-0 bg-gradient-to-br from-teal-600 via-cyan-600 to-teal-700" />
 
             {/* Decorative Elements */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--card-bg)]/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-cyan-400/20 rounded-full blur-2xl" />
 
             <div className="relative p-8 sm:p-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
                 <ShoppingBagIcon className="h-4 w-4" />
                 For Shoppers
               </div>
@@ -1140,7 +1140,7 @@ function DualCTASection() {
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 font-bold text-teal-700 shadow-lg shadow-black/20 hover:shadow-xl transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--card-bg)] px-8 py-4 font-bold text-accent shadow-lg shadow-black/20 hover:shadow-xl transition-all"
               >
                 Start Shopping
                 <ArrowRightIcon className="h-5 w-5" />
@@ -1159,11 +1159,11 @@ function DualCTASection() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-violet-600 to-purple-700" />
 
             {/* Decorative Elements */}
-            <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -top-20 -left-20 w-64 h-64 bg-[var(--card-bg)]/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-20 -right-20 w-48 h-48 bg-violet-400/20 rounded-full blur-2xl" />
 
             <div className="relative p-8 sm:p-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white mb-6">
                 <BuildingStorefrontIcon className="h-4 w-4" />
                 For Vendors
               </div>
@@ -1178,7 +1178,7 @@ function DualCTASection() {
               <motion.button
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 font-bold text-purple-700 shadow-lg shadow-black/20 hover:shadow-xl transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--card-bg)] px-8 py-4 font-bold text-purple-700 shadow-lg shadow-black/20 hover:shadow-xl transition-all"
               >
                 List Your Business
                 <ArrowRightIcon className="h-5 w-5" />

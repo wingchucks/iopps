@@ -147,7 +147,7 @@ export default function StreakDisplay({ compact = false }: StreakDisplayProps) {
             ? "bg-gradient-to-br from-orange-500/20 to-red-500/20 border-2 border-orange-500/30"
             : "bg-surface border-2 border-[var(--card-border)]"
         }`}>
-          <Flame className={`h-10 w-10 ${status.currentStreak > 0 ? "text-orange-400" : "text-slate-600"}`} />
+          <Flame className={`h-10 w-10 ${status.currentStreak > 0 ? "text-orange-400" : "text-[var(--text-secondary)]"}`} />
           {status.isActiveToday && (
             <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent flex items-center justify-center">
               <CheckCircle className="h-3 w-3 text-white" />

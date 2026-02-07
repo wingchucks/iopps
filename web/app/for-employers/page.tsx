@@ -71,13 +71,13 @@ export default function ForEmployersPage() {
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/signup"
-              className="rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-navy shadow-lg hover:bg-slate-50 transition-colors"
+              className="rounded-xl bg-[var(--card-bg)] px-8 py-3.5 text-sm font-bold text-navy shadow-lg hover:bg-[var(--background)] transition-colors"
             >
               Start Hiring Today
             </Link>
             <Link
               href="/pricing"
-              className="rounded-xl border border-white/30 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+              className="rounded-xl border border-white/30 px-8 py-3.5 text-sm font-semibold text-white hover:bg-[var(--card-bg)]/10 transition-colors"
             >
               View Pricing
             </Link>
@@ -149,7 +149,7 @@ export default function ForEmployersPage() {
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-block rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-accent shadow-lg hover:bg-slate-50 transition-colors"
+            className="mt-8 inline-block rounded-xl bg-[var(--card-bg)] px-8 py-3.5 text-sm font-bold text-accent shadow-lg hover:bg-[var(--background)] transition-colors"
           >
             Create Your Organization Account
           </Link>

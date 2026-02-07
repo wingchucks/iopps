@@ -38,7 +38,7 @@ export default function MapPopup({ opportunity, onClose }: MapPopupProps) {
           {contentTypeLabels[type]}
         </span>
         {featured && (
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-[var(--amber)]">
             <StarSolidIcon className="w-3 h-3" />
             Featured
           </span>
@@ -46,10 +46,10 @@ export default function MapPopup({ opportunity, onClose }: MapPopupProps) {
       </div>
 
       {/* Title & Organization */}
-      <h3 className="text-base font-bold text-slate-900 leading-tight mb-1">
+      <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight mb-1">
         {title}
       </h3>
-      <p className="text-sm text-slate-600 mb-3">{organization}</p>
+      <p className="text-sm text-[var(--text-secondary)] mb-3">{organization}</p>
 
       {/* Type-specific metadata */}
       <div className="space-y-1.5 mb-3">
@@ -63,7 +63,7 @@ export default function MapPopup({ opportunity, onClose }: MapPopupProps) {
 
         {/* Distance (if available) */}
         {distance !== undefined && (
-          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-accent font-medium">
             <svg
               className="w-3.5 h-3.5"
               fill="none"
@@ -124,7 +124,7 @@ function MetaItem({
             </div>
           )}
           {meta.deadline && (
-            <div className="flex items-center gap-1.5 text-xs text-amber-600">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--amber)]">
               <CalendarIcon className="w-3.5 h-3.5" />
               <span>Closes {meta.deadline}</span>
             </div>
@@ -209,7 +209,7 @@ function MetaItem({
  */
 function getSecondaryAction(type: MapContentType, url: string) {
   const baseClasses =
-    "px-3 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors";
+    "px-3 py-2 rounded-lg text-sm font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--background)] transition-colors";
 
   switch (type) {
     case "job":

@@ -98,7 +98,7 @@ export default function KeyboardShortcutsModal() {
                                   <kbd className="px-2 py-1 text-xs font-mono rounded bg-surface text-[var(--text-muted)] border border-[var(--card-border)]">
                                     {shortcut.modifier}
                                   </kbd>
-                                  <span className="text-slate-600">+</span>
+                                  <span className="text-[var(--text-secondary)]">+</span>
                                 </>
                               )}
                               <kbd className="px-2 py-1 text-xs font-mono rounded bg-surface text-[var(--text-muted)] border border-[var(--card-border)] min-w-[28px] text-center">

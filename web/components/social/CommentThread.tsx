@@ -257,7 +257,7 @@ export default function CommentThread({ postId }: CommentThreadProps) {
                     <button
                       onClick={() => handleSubmitReply(comment.id)}
                       disabled={!replyText.trim() || submitting}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-accent disabled:text-slate-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-accent disabled:text-[var(--text-secondary)]"
                     >
                       <Send className="h-4 w-4" />
                     </button>
@@ -290,7 +290,7 @@ export default function CommentThread({ postId }: CommentThreadProps) {
             <button
               onClick={handleSubmitComment}
               disabled={!newComment.trim() || submitting}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-accent disabled:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-accent disabled:text-[var(--text-secondary)]"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -385,7 +385,7 @@ function CommentItem({
             {isOwner && onDelete && (
               <button
                 onClick={onDelete}
-                className="ml-auto opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all"
+                className="ml-auto opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-red-400 transition-all"
                 title="Delete comment"
               >
                 <Trash2 className="h-3.5 w-3.5" />

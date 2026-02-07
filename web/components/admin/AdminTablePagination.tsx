@@ -152,7 +152,7 @@ export function AdminTablePagination({
                   disabled={loading}
                   className={`min-w-[36px] rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
                     currentPage === page
-                      ? "bg-accent text-slate-900"
+                      ? "bg-accent text-[var(--text-primary)]"
                       : "border border-[var(--card-border)] text-[var(--text-muted)] hover:border-[var(--card-border)] hover:bg-surface hover:text-foreground"
                   }`}
                   aria-current={currentPage === page ? "page" : undefined}

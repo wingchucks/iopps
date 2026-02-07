@@ -107,7 +107,7 @@ export default function LiveStreamDetailPage() {
             Back to Live
           </Link>
           <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
-            <Radio className="mx-auto h-12 w-12 text-slate-600 mb-4" />
+            <Radio className="mx-auto h-12 w-12 text-[var(--text-secondary)] mb-4" />
             <h2 className="text-xl font-semibold text-[var(--text-secondary)] mb-2">
               Stream Not Found
             </h2>
@@ -157,7 +157,7 @@ export default function LiveStreamDetailPage() {
           </div>
         ) : (
           <div className="mb-6 rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
-            <Monitor className="mx-auto h-12 w-12 text-slate-600 mb-4" />
+            <Monitor className="mx-auto h-12 w-12 text-[var(--text-secondary)] mb-4" />
             <p className="text-sm font-medium text-[var(--text-secondary)] mb-1">
               Streaming on {stream.platform || "External Platform"}
             </p>

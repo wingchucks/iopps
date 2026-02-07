@@ -100,7 +100,7 @@ export function SponsorsTab({ conference, onChange }: SponsorsTabProps) {
 
                                     <div className="flex items-start gap-4">
                                         {/* Logo Upload */}
-                                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-white p-1">
+                                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-[var(--card-bg)] p-1">
                                             {sponsor.logoUrl ? (
                                                 <Image src={sponsor.logoUrl} alt={sponsor.name} fill className="object-contain" />
                                             ) : (

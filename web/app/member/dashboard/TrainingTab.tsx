@@ -150,7 +150,7 @@ export default function TrainingTab() {
         ) : viewMode === "saved" ? (
           savedTraining.length === 0 ? (
             <div className="rounded-xl bg-surface p-8 text-center">
-              <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <p className="mt-4 text-[var(--text-secondary)]">No saved training programs yet.</p>
               <p className="mt-2 text-sm text-foreground0">
                 Browse training programs and save ones you're interested in.
@@ -274,7 +274,7 @@ export default function TrainingTab() {
           // History View
           trainingHistory.length === 0 ? (
             <div className="rounded-xl bg-surface p-8 text-center">
-              <ClockIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <ClockIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <p className="mt-4 text-[var(--text-secondary)]">No enrollment history yet.</p>
               <p className="mt-2 text-sm text-foreground0">
                 When you click through to enroll in programs, they'll appear here.

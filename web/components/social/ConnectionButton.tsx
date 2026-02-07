@@ -68,7 +68,7 @@ export function ConnectionButton({ targetUserId, className }: ConnectionButtonPr
 
     if (status === 'accepted') {
         return (
-            <Button variant="outline" size="sm" className={`gap-2 text-emerald-600 border-emerald-200 bg-emerald-50 ${className}`}>
+            <Button variant="outline" size="sm" className={`gap-2 text-accent border-emerald-200 bg-[var(--accent-bg)] ${className}`}>
                 <UserCheck className="h-4 w-4" />
                 Connected
             </Button>

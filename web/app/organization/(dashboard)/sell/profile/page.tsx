@@ -56,7 +56,7 @@ export default function SellProfilePage() {
         </div>
 
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <BuildingStorefrontIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <BuildingStorefrontIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             No shop profile yet
           </h3>
@@ -150,7 +150,7 @@ export default function SellProfilePage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <PhotoIcon className="w-12 h-12 text-slate-700" />
+                <PhotoIcon className="w-12 h-12 text-[var(--text-secondary)]" />
               </div>
             )}
           </div>
@@ -167,7 +167,7 @@ export default function SellProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <BuildingStorefrontIcon className="w-10 h-10 text-slate-600" />
+                  <BuildingStorefrontIcon className="w-10 h-10 text-[var(--text-secondary)]" />
                 )}
               </div>
             </div>

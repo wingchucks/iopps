@@ -45,7 +45,7 @@ function PaymentSuccessContent() {
                     <p className="mt-4 text-red-300">{error}</p>
                     <Link
                         href="/organization/jobs"
-                        className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8]"
+                        className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#16cdb8]"
                     >
                         Back to Jobs
                     </Link>
@@ -60,7 +60,7 @@ function PaymentSuccessContent() {
                 {/* Success Icon */}
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent">
                     <svg
-                        className="h-8 w-8 text-slate-900"
+                        className="h-8 w-8 text-[var(--text-primary)]"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -101,7 +101,7 @@ function PaymentSuccessContent() {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <Link
                         href="/organization/jobs"
-                        className="rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8]"
+                        className="rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#16cdb8]"
                     >
                         View My Jobs
                     </Link>

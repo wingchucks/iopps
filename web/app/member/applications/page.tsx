@@ -193,7 +193,7 @@ export default function MemberApplicationsPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8]"
+              className="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
             >
               Login
             </Link>
@@ -412,14 +412,14 @@ export default function MemberApplicationsPage() {
             </div>
           ) : applications.length === 0 ? (
             <div className="rounded-lg border border-[var(--card-border)] bg-surface py-12 text-center">
-              <svg className="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-12 w-12 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="mt-4 text-[var(--text-muted)]">No applications yet</p>
               <p className="mt-1 text-sm text-foreground0">Start applying to jobs to track your progress.</p>
               <Link
                 href="/careers"
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 font-semibold text-slate-900 hover:bg-[#16cdb8]"
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
               >
                 Browse Jobs
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

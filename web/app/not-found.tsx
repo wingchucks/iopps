@@ -32,7 +32,7 @@ export default function NotFound() {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <Link
                         href="/"
-                        className="rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                        className="rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
                     >
                         Go Home
                     </Link>

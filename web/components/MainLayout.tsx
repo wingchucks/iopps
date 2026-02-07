@@ -17,7 +17,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/onboarding") ||
     pathname?.startsWith("/welcome") ||
-    pathname?.startsWith("/hub") ||
+    pathname?.startsWith("/discover") ||
     pathname?.startsWith("/discover") ||
     pathname?.startsWith("/for-employers") ||
     pathname?.startsWith("/pricing") ||

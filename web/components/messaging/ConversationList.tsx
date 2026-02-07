@@ -35,7 +35,7 @@ export default function ConversationList({
     return (
       <div className="p-6 text-center">
         <svg
-          className="mx-auto h-12 w-12 text-slate-600"
+          className="mx-auto h-12 w-12 text-[var(--text-secondary)]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -92,7 +92,7 @@ export default function ConversationList({
                     {displayName}
                   </span>
                   {unreadCount > 0 && (
-                    <span className="flex-shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-slate-900">
+                    <span className="flex-shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-[var(--text-primary)]">
                       {unreadCount}
                     </span>
                   )}

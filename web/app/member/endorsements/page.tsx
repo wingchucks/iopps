@@ -119,7 +119,7 @@ function EndorsementsContent() {
           /* Received Tab — grouped by skill */
           sortedSkills.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
-              <Award className="mx-auto h-10 w-10 text-slate-600 mb-3" />
+              <Award className="mx-auto h-10 w-10 text-[var(--text-secondary)] mb-3" />
               <p className="text-[var(--text-muted)] text-sm">No endorsements received yet.</p>
               <p className="text-foreground0 text-xs mt-1">
                 Endorsements from your connections will appear here.
@@ -190,7 +190,7 @@ function EndorsementsContent() {
           /* Given Tab */
           given.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
-              <Award className="mx-auto h-10 w-10 text-slate-600 mb-3" />
+              <Award className="mx-auto h-10 w-10 text-[var(--text-secondary)] mb-3" />
               <p className="text-[var(--text-muted)] text-sm">
                 You haven&apos;t endorsed anyone yet.
               </p>

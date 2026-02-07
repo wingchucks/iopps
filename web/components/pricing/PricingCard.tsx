@@ -58,7 +58,7 @@ export default function PricingCard({
         {badge && (
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
             highlighted
-              ? "border border-[#14B8A6] bg-accent text-slate-900"
+              ? "border border-[#14B8A6] bg-accent text-[var(--text-primary)]"
               : "border border-[#14B8A6]/30 bg-accent/10 text-[#14B8A6]"
           }`}>
             {badge}
@@ -95,7 +95,7 @@ export default function PricingCard({
             href={buttonHref}
             className={`block w-full rounded-lg px-4 py-3 text-center text-sm font-semibold transition-all ${
               highlighted
-                ? "bg-accent text-slate-900 hover:bg-[#16cdb8]"
+                ? "bg-accent text-[var(--text-primary)] hover:bg-[#16cdb8]"
                 : "border border-[var(--card-border)] bg-slate-800/60 text-foreground hover:border-[#14B8A6] hover:bg-surface"
             }`}
           >
@@ -111,7 +111,7 @@ export default function PricingCard({
                 : ""
             } ${
               highlighted
-                ? "bg-accent text-slate-900 hover:bg-[#16cdb8]"
+                ? "bg-accent text-[var(--text-primary)] hover:bg-[#16cdb8]"
                 : "border border-[var(--card-border)] bg-slate-800/60 text-foreground hover:border-[#14B8A6] hover:bg-surface"
             }`}
           >

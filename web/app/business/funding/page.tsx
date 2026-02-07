@@ -74,19 +74,19 @@ export default function BusinessFundingPage() {
     switch (grantStatus) {
       case "active":
         return (
-          <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-600">
+          <span className="rounded-md bg-[var(--accent-bg)] border border-emerald-200 px-2 py-1 text-xs font-semibold text-accent">
             Open
           </span>
         );
       case "upcoming":
         return (
-          <span className="rounded-md bg-amber-50 border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-600">
+          <span className="rounded-md bg-[var(--amber-bg)] border border-[var(--amber)] px-2 py-1 text-xs font-semibold text-[var(--amber)]">
             Coming Soon
           </span>
         );
       case "closed":
         return (
-          <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-semibold text-foreground0">
+          <span className="rounded-md bg-surface border border-[var(--border)] px-2 py-1 text-xs font-semibold text-foreground0">
             Closed
           </span>
         );
@@ -113,15 +113,15 @@ export default function BusinessFundingPage() {
     <FeedLayout activeNav="business">
       {/* Breadcrumb */}
       <nav className="mb-8 text-sm text-foreground0">
-        <Link href="/" className="hover:text-slate-900 transition-colors">
+        <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
           Home
         </Link>
         <span className="mx-2">→</span>
-        <Link href="/business" className="hover:text-slate-900 transition-colors">
+        <Link href="/business" className="hover:text-[var(--text-primary)] transition-colors">
           Business
         </Link>
         <span className="mx-2">→</span>
-        <span className="text-slate-900">Funding & Grants</span>
+        <span className="text-[var(--text-primary)]">Funding & Grants</span>
       </nav>
 
       {/* Hero Section */}
@@ -129,7 +129,7 @@ export default function BusinessFundingPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#14B8A6]">
           Business
         </p>
-        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-slate-900 sm:text-5xl">
+        <h1 className="mt-4 text-4xl font-bold italic tracking-tight text-[var(--text-primary)] sm:text-5xl">
           Business Funding & Grants
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-foreground0">
@@ -138,7 +138,7 @@ export default function BusinessFundingPage() {
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 mb-8">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 mb-8">
         <div className="grid gap-4 md:grid-cols-3">
           {/* Grant Type */}
           <div>
@@ -148,7 +148,7 @@ export default function BusinessFundingPage() {
             <select
               value={grantType}
               onChange={(e) => setGrantType(e.target.value as BusinessGrantType | "")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-sm text-[var(--text-primary)] focus:border-accent focus:outline-none"
             >
               {GRANT_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -166,7 +166,7 @@ export default function BusinessFundingPage() {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as BusinessGrantStatus | "")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-sm text-[var(--text-primary)] focus:border-accent focus:outline-none"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -184,7 +184,7 @@ export default function BusinessFundingPage() {
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value as NorthAmericanRegion | "")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--card-bg)] px-4 py-3 text-sm text-[var(--text-primary)] focus:border-accent focus:outline-none"
             >
               <option value="">All Regions</option>
               <optgroup label="Canada">
@@ -226,7 +226,7 @@ export default function BusinessFundingPage() {
       {loading ? (
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="animate-pulse rounded-2xl bg-white h-40" />
+            <div key={i} className="animate-pulse rounded-2xl bg-[var(--card-bg)] h-40" />
           ))}
         </div>
       ) : grants.length > 0 ? (
@@ -235,7 +235,7 @@ export default function BusinessFundingPage() {
             <Link
               key={grant.id}
               href={`/business/funding/${grant.slug || grant.id}`}
-              className="group flex flex-col sm:flex-row gap-6 rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:border-teal-300"
+              className="group flex flex-col sm:flex-row gap-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-teal-300"
             >
               {/* Icon/Logo */}
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 border border-[#14B8A6]/40 shrink-0">
@@ -254,17 +254,17 @@ export default function BusinessFundingPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   {getStatusBadge(grant.status)}
-                  <span className="rounded-md bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 capitalize">
+                  <span className="rounded-md bg-surface border border-[var(--border)] px-2 py-1 text-xs font-medium text-[var(--text-secondary)] capitalize">
                     {grant.grantType?.replace("_", " ")}
                   </span>
                   {grant.featured && (
-                    <span className="rounded-md bg-amber-50 border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-600">
+                    <span className="rounded-md bg-[var(--amber-bg)] border border-[var(--amber)] px-2 py-1 text-xs font-semibold text-[var(--amber)]">
                       Featured
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#14B8A6] transition-colors">
+                <h3 className="text-lg font-bold text-[var(--text-primary)] group-hover:text-[#14B8A6] transition-colors">
                   {grant.title}
                 </h3>
 
@@ -280,7 +280,7 @@ export default function BusinessFundingPage() {
 
                 <div className="flex flex-wrap gap-4 mt-3 text-sm text-foreground0">
                   {grant.amount?.display && (
-                    <span className="text-emerald-600 font-medium">
+                    <span className="text-accent font-medium">
                       💰 {grant.amount.display}
                     </span>
                   )}
@@ -301,9 +301,9 @@ export default function BusinessFundingPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-12 text-center">
           <span className="text-5xl mb-4 block">💰</span>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">No Funding Opportunities</h3>
+          <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Funding Opportunities</h3>
           <p className="text-foreground0 mb-6">
             {grantType || status || region
               ? "Try adjusting your filters."
@@ -311,7 +311,7 @@ export default function BusinessFundingPage() {
           </p>
           <Link
             href="/business"
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
           >
             Back to Business
           </Link>
@@ -320,15 +320,15 @@ export default function BusinessFundingPage() {
 
       {/* Info Section */}
       <section className="mt-16 grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-3">Indigenous Business Grants</h3>
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+          <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">Indigenous Business Grants</h3>
           <p className="text-sm text-foreground0 leading-relaxed">
             Many government and private organizations offer grants specifically for Indigenous-owned businesses.
             These programs support entrepreneurs in starting, growing, and scaling their ventures.
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-3">Application Tips</h3>
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+          <h3 className="text-lg font-bold text-[var(--text-primary)] mb-3">Application Tips</h3>
           <p className="text-sm text-foreground0 leading-relaxed">
             When applying for grants, ensure you have your business registration, financial statements,
             and a clear business plan ready. Many programs also require proof of Indigenous ownership or affiliation.
@@ -337,8 +337,8 @@ export default function BusinessFundingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="mt-12 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+      <section className="mt-12 rounded-2xl bg-gradient-to-r from-slate-100 to-slate-50 border border-[var(--border)] p-8 sm:p-12 text-center">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
           Know of a Grant Program?
         </h2>
         <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
@@ -346,7 +346,7 @@ export default function BusinessFundingPage() {
         </p>
         <Link
           href="/contact"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
         >
           Suggest a Grant
         </Link>

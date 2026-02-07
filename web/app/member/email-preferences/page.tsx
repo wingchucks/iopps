@@ -159,7 +159,7 @@ function EmailPreferencesContent() {
           </div>
           <button
             onClick={loadPreferences}
-            className="mt-4 rounded-lg bg-accent px-4 py-2 font-medium text-slate-900"
+            className="mt-4 rounded-lg bg-accent px-4 py-2 font-medium text-[var(--text-primary)]"
           >
             Try Again
           </button>
@@ -236,7 +236,7 @@ function EmailPreferencesContent() {
               disabled={saving}
               className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
                 isUnsubscribed
-                  ? "bg-accent text-slate-900 hover:bg-[#0D9488]"
+                  ? "bg-accent text-[var(--text-primary)] hover:bg-[#0D9488]"
                   : "border border-red-800 text-red-400 hover:bg-red-950/50"
               }`}
             >
@@ -411,7 +411,7 @@ function PreferenceSection({
     <div className="rounded-xl border border-[var(--card-border)] bg-surface p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className={`${enabled ? "text-[#14B8A6]" : "text-slate-600"}`}>
+          <div className={`${enabled ? "text-[#14B8A6]" : "text-[var(--text-secondary)]"}`}>
             {icon}
           </div>
           <div>
@@ -428,7 +428,7 @@ function PreferenceSection({
           }`}
         >
           <div
-            className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] shadow transition-transform ${
               enabled ? "translate-x-6" : "translate-x-1"
             }`}
           />
@@ -457,7 +457,7 @@ function FrequencySelect({
           disabled={disabled}
           className={`rounded-full px-3 py-1 text-xs font-medium transition disabled:opacity-50 ${
             value === option.value
-              ? "bg-accent text-slate-900"
+              ? "bg-accent text-[var(--text-primary)]"
               : "bg-surface text-[var(--text-muted)] hover:bg-slate-700"
           }`}
         >

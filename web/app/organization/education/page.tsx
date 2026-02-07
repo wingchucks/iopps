@@ -78,7 +78,7 @@ export default function OrganizationEducationPage() {
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -238,7 +238,7 @@ export default function OrganizationEducationPage() {
             <div className="h-12 w-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
               <BookOpenIcon className="h-6 w-6 text-violet-400" />
             </div>
-            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-violet-400 transition-colors" />
+            <ArrowRightIcon className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-violet-400 transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">
             Manage Programs
@@ -261,7 +261,7 @@ export default function OrganizationEducationPage() {
             <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
               <EnvelopeIcon className="h-6 w-6 text-accent" />
             </div>
-            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-accent transition-colors" />
+            <ArrowRightIcon className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-accent transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">
             Student Inquiries
@@ -288,7 +288,7 @@ export default function OrganizationEducationPage() {
             <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
               <CalendarDaysIcon className="h-6 w-6 text-blue-400" />
             </div>
-            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-blue-400 transition-colors" />
+            <ArrowRightIcon className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-blue-400 transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">
             Events & Open Houses
@@ -311,7 +311,7 @@ export default function OrganizationEducationPage() {
             <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
               <AcademicCapIcon className="h-6 w-6 text-amber-400" />
             </div>
-            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-amber-400 transition-colors" />
+            <ArrowRightIcon className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-amber-400 transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">Scholarships</h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
@@ -332,7 +332,7 @@ export default function OrganizationEducationPage() {
             <div className="h-12 w-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
               <ChartBarIcon className="h-6 w-6 text-purple-400" />
             </div>
-            <ArrowRightIcon className="h-5 w-5 text-slate-600 group-hover:text-purple-400 transition-colors" />
+            <ArrowRightIcon className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-purple-400 transition-colors" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-white">
             View Public Profile

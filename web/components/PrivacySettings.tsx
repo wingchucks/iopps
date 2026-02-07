@@ -407,7 +407,7 @@ function ToggleRow({
         }`}
       >
         <span
-          className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+          className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
             enabled ? "translate-x-5" : "translate-x-0"
           }`}
         />

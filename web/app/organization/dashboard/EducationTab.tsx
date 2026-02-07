@@ -316,7 +316,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
             </div>
           ) : (
             <div className="text-center py-12">
-              <BuildingLibraryIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BuildingLibraryIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 No school profile yet
               </h3>
@@ -363,7 +363,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
             </div>
           ) : filteredPrograms.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <BookOpenIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BookOpenIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No programs found" : "No programs yet"}
               </h3>
@@ -468,7 +468,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
             </div>
           ) : filteredScholarships.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <BanknotesIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BanknotesIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No scholarships found" : "No scholarships yet"}
               </h3>
@@ -556,7 +556,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
             </div>
           ) : inquiries.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <EnvelopeIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <EnvelopeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">No inquiries yet</h3>
               <p className="mt-2 text-[var(--text-muted)]">
                 Student inquiries will appear here when they contact your school.
@@ -657,7 +657,7 @@ export default function EducationTab({ initialView = "school" }: EducationTabPro
             </div>
           ) : events.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <CalendarDaysIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <CalendarDaysIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">No events yet</h3>
               <p className="mt-2 text-[var(--text-muted)]">
                 Create education events like open houses, info sessions, or webinars.

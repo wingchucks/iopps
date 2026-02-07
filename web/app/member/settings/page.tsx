@@ -273,7 +273,7 @@ function SettingsLink({
           <Icon className="h-5 w-5 text-[var(--text-muted)]" />
           <span className="text-sm font-medium">{label}</span>
         </div>
-        <ChevronRight className="h-4 w-4 text-slate-600" />
+        <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
       </a>
     );
   }
@@ -287,7 +287,7 @@ function SettingsLink({
         <Icon className="h-5 w-5 text-[var(--text-muted)]" />
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <ChevronRight className="h-4 w-4 text-slate-600" />
+      <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
     </Link>
   );
 }
@@ -328,7 +328,7 @@ function SettingsButton({
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" />
       ) : (
-        <ChevronRight className="h-4 w-4 text-slate-600" />
+        <ChevronRight className="h-4 w-4 text-[var(--text-secondary)]" />
       )}
     </button>
   );

@@ -106,7 +106,7 @@ export function OverviewTab({ conference, onChange }: OverviewTabProps) {
                                 </div>
                             )}
                             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity hover:opacity-100">
-                                <label className="cursor-pointer rounded-lg bg-white/10 px-4 py-2 font-medium text-white hover:bg-white/20">
+                                <label className="cursor-pointer rounded-lg bg-[var(--card-bg)]/10 px-4 py-2 font-medium text-white hover:bg-[var(--card-bg)]/20">
                                     {uploading ? "Uploading..." : "Change Image"}
                                     <input
                                         type="file"

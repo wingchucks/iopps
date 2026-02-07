@@ -62,7 +62,7 @@ export default function OrganizationPowwowsPage() {
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -83,7 +83,7 @@ export default function OrganizationPowwowsPage() {
         </div>
         <Link
           href="/organization/powwows/new"
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           + Create Pow Wow
         </Link>
@@ -96,7 +96,7 @@ export default function OrganizationPowwowsPage() {
           <p className="text-[var(--text-muted)]">You have not created any pow wows yet.</p>
           <Link
             href="/organization/powwows/new"
-            className="mt-4 inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+            className="mt-4 inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
           >
             Create your first pow wow
           </Link>

@@ -154,7 +154,7 @@ export default function HostConferencesPage() {
       {/* Conferences List */}
       {filteredConferences.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <BuildingOffice2Icon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <BuildingOffice2Icon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'all' ? 'No conferences yet' : `No ${filter} conferences`}
           </h3>
@@ -185,7 +185,7 @@ export default function HostConferencesPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-900/30 to-slate-900">
-                      <BuildingOffice2Icon className="w-12 h-12 text-slate-700" />
+                      <BuildingOffice2Icon className="w-12 h-12 text-[var(--text-secondary)]" />
                     </div>
                   )}
 

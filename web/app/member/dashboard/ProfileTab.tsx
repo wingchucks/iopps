@@ -461,7 +461,7 @@ export default function ProfileTab({ initialProfile, onProfileUpdate }: ProfileT
                 stroke="currentColor"
                 strokeWidth="8"
                 fill="transparent"
-                className="text-slate-800"
+                className="text-[var(--text-primary)]"
               />
               <circle
                 cx="48"

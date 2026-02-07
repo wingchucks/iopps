@@ -170,7 +170,7 @@ export function TrainingTabContent() {
             <FunnelIcon className="h-5 w-5" />
             Filters
             {hasFilters && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-slate-900">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-[var(--text-primary)]">
                 !
               </span>
             )}
@@ -224,7 +224,7 @@ export function TrainingTabContent() {
                     onClick={() => setCategory(cat)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       category === cat
-                        ? "bg-accent text-slate-900"
+                        ? "bg-accent text-[var(--text-primary)]"
                         : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                     }`}
                   >
@@ -246,7 +246,7 @@ export function TrainingTabContent() {
                     onClick={() => setFormat(f.value)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       format === f.value
-                        ? "bg-accent text-slate-900"
+                        ? "bg-accent text-[var(--text-primary)]"
                         : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                     }`}
                   >
@@ -265,7 +265,7 @@ export function TrainingTabContent() {
                 onClick={() => setIndigenousOnly(!indigenousOnly)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   indigenousOnly
-                    ? "bg-accent text-slate-900"
+                    ? "bg-accent text-[var(--text-primary)]"
                     : "bg-slate-700 text-[var(--text-secondary)] hover:bg-slate-600"
                 }`}
               >
@@ -338,7 +338,7 @@ export function TrainingTabContent() {
           <p className="text-[var(--text-muted)] mb-4">Try adjusting your filters or search terms.</p>
           <button
             onClick={clearFilters}
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-[#16cdb8] transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors"
           >
             Clear filters
           </button>
@@ -390,7 +390,7 @@ export function TrainingTabContent() {
         </p>
         <Link
           href="/organization/training/new"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors text-sm"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors text-sm"
         >
           Post a Training Program
         </Link>

@@ -65,7 +65,6 @@ function useNavigationGroups(): NavGroup[] {
       label: "People",
       items: [
         { name: "Users", href: "/admin/users", icon: UsersIcon },
-        { name: "Members", href: "/admin/members", icon: UserGroupIcon },
         {
           name: "Employers",
           href: "/admin/employers",

@@ -34,7 +34,7 @@ function SpeakerCard({
       className={`rounded-xl border transition-all ${
         isHighlighted
           ? "border-[#0D9488] bg-[#0D9488]/5 ring-2 ring-[#0D9488]/30"
-          : "border-slate-200 bg-slate-50 hover:border-slate-300"
+          : "border-[var(--border)] bg-[var(--background)] hover:border-[var(--border)]"
       }`}
     >
       <button
@@ -63,7 +63,7 @@ function SpeakerCard({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-800">{speaker.name}</h3>
+          <h3 className="font-semibold text-[var(--text-primary)]">{speaker.name}</h3>
           {speaker.title && (
             <p className="text-sm text-foreground0">{speaker.title}</p>
           )}
@@ -80,13 +80,13 @@ function SpeakerCard({
               {speaker.topics.slice(0, 3).map((topic, index) => (
                 <span
                   key={index}
-                  className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-foreground0"
+                  className="rounded-full bg-surface px-2 py-0.5 text-xs text-foreground0"
                 >
                   {topic}
                 </span>
               ))}
               {speaker.topics.length > 3 && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-foreground0">
+                <span className="rounded-full bg-surface px-2 py-0.5 text-xs text-foreground0">
                   +{speaker.topics.length - 3}
                 </span>
               )}
@@ -112,11 +112,11 @@ function SpeakerCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="border-t border-slate-200 px-4 py-4">
+        <div className="border-t border-[var(--border)] px-4 py-4">
           {/* Bio */}
           {speaker.bio && (
             <div className="mb-4">
-              <p className="text-sm leading-relaxed text-slate-600">
+              <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
                 {speaker.bio}
               </p>
             </div>
@@ -132,7 +132,7 @@ function SpeakerCard({
                 {sessions.map((session, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 text-sm"
+                    className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-2 text-sm"
                   >
                     <div className="text-xs text-foreground0">
                       <span className="block">{session.day}</span>
@@ -140,7 +140,7 @@ function SpeakerCard({
                         {session.time}
                       </span>
                     </div>
-                    <span className="text-slate-600">{session.title}</span>
+                    <span className="text-[var(--text-secondary)]">{session.title}</span>
                   </div>
                 ))}
               </div>
@@ -157,7 +157,7 @@ function SpeakerCard({
                   href={speaker.linkedinUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-[#0077B5] hover:text-[#0077B5]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-surface px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-[#0077B5] hover:text-[#0077B5]"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -174,7 +174,7 @@ function SpeakerCard({
                   href={speaker.twitterUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-slate-500 hover:text-slate-900"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-surface px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-slate-500 hover:text-[var(--text-primary)]"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -191,7 +191,7 @@ function SpeakerCard({
                   href={speaker.websiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-surface px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -254,10 +254,10 @@ export default function ConferenceSpeakers({
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-700">Speakers</h2>
+          <h2 className="text-xl font-bold text-[var(--text-secondary)]">Speakers</h2>
           <p className="mt-1 text-sm text-foreground0">
             Meet the {speakers.length} speaker{speakers.length > 1 ? "s" : ""}{" "}
             presenting at this conference

@@ -119,7 +119,7 @@ export function TeamActivityFeed({ limit = 10, showHeader = true }: TeamActivity
   if (activities.length === 0) {
     return (
       <div className="text-center py-8">
-        <ClockIcon className="mx-auto h-10 w-10 text-slate-600" />
+        <ClockIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
         <p className="mt-2 text-sm text-[var(--text-muted)]">No recent activity</p>
         <p className="text-xs text-foreground0">Team activities will appear here</p>
       </div>

@@ -119,7 +119,7 @@ export default function MessagesTab() {
               <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
                 <div className="text-center">
                   <svg
-                    className="mx-auto h-16 w-16 text-slate-600"
+                    className="mx-auto h-16 w-16 text-[var(--text-secondary)]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

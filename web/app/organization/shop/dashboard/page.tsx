@@ -768,7 +768,7 @@ export default function VendorDashboard() {
                   required
                   value={formData.businessName}
                   onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="Your business name"
                 />
               </div>
@@ -778,7 +778,7 @@ export default function VendorDashboard() {
                   type="text"
                   value={formData.tagline}
                   onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="A short tagline for your business"
                 />
               </div>
@@ -821,7 +821,7 @@ export default function VendorDashboard() {
                   type="text"
                   value={formData.nation}
                   onChange={(e) => setFormData({ ...formData, nation: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="e.g., Cree, Métis, Inuit"
                 />
               </div>
@@ -834,7 +834,7 @@ export default function VendorDashboard() {
                   rows={4}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="Tell customers about your business, what you offer, and what makes you unique..."
                 />
               </div>
@@ -846,7 +846,7 @@ export default function VendorDashboard() {
                   rows={3}
                   value={formData.communityStory}
                   onChange={(e) => setFormData({ ...formData, communityStory: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="Share your story, your connection to your community, and what inspires your work..."
                 />
               </div>
@@ -863,7 +863,7 @@ export default function VendorDashboard() {
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="e.g., Toronto"
                 />
               </div>
@@ -913,7 +913,7 @@ export default function VendorDashboard() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="contact@yourbusiness.com"
                 />
               </div>
@@ -923,7 +923,7 @@ export default function VendorDashboard() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="(555) 123-4567"
                 />
               </div>
@@ -933,7 +933,7 @@ export default function VendorDashboard() {
                   type="url"
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="https://yourbusiness.com"
                 />
               </div>
@@ -943,7 +943,7 @@ export default function VendorDashboard() {
                   type="text"
                   value={formData.instagram}
                   onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="@yourbusiness"
                 />
               </div>
@@ -953,7 +953,7 @@ export default function VendorDashboard() {
                   type="text"
                   value={formData.facebook}
                   onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="facebook.com/yourbusiness"
                 />
               </div>
@@ -963,7 +963,7 @@ export default function VendorDashboard() {
                   type="text"
                   value={formData.tiktok}
                   onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
-                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
                   placeholder="@yourbusiness"
                 />
               </div>
@@ -1016,7 +1016,7 @@ export default function VendorDashboard() {
 
             {products.length === 0 ? (
               <div className="rounded-2xl bg-surface border border-[var(--card-border)] p-12 text-center">
-                <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
+                <PhotoIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
                 <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
                 <p className="mt-2 text-[var(--text-muted)]">
                   Add products or services to help customers discover what you offer.
@@ -1041,7 +1041,7 @@ export default function VendorDashboard() {
                       </div>
                     ) : (
                       <div className="h-40 bg-slate-700/50 flex items-center justify-center">
-                        <PhotoIcon className="h-12 w-12 text-slate-600" />
+                        <PhotoIcon className="h-12 w-12 text-[var(--text-secondary)]" />
                       </div>
                     )}
                     <div className="p-4">
@@ -1379,7 +1379,7 @@ function ProductModal({
                 </div>
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-surface border border-[var(--card-border)]">
-                  <PhotoIcon className="h-8 w-8 text-slate-600" />
+                  <PhotoIcon className="h-8 w-8 text-[var(--text-secondary)]" />
                 </div>
               )}
               <div>
@@ -1561,7 +1561,7 @@ function ProductPreviewModal({
             </div>
           ) : (
             <div className="w-full aspect-video max-h-60 bg-surface flex items-center justify-center">
-              <PhotoIcon className="h-20 w-20 text-slate-600" />
+              <PhotoIcon className="h-20 w-20 text-[var(--text-secondary)]" />
             </div>
           )}
 

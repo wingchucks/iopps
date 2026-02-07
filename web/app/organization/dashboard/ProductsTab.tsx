@@ -136,7 +136,7 @@ export default function ProductsTab() {
   if (!vendor) {
     return (
       <div className="rounded-2xl bg-card border border-card-border p-8 text-center">
-        <CubeIcon className="mx-auto h-12 w-12 text-slate-600" />
+        <CubeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
         <h3 className="mt-4 text-lg font-semibold text-white">No Shop Profile Yet</h3>
         <p className="mt-2 text-[var(--text-muted)]">
           Create your shop profile first to start adding products.
@@ -170,7 +170,7 @@ export default function ProductsTab() {
       {/* Products Grid */}
       {products.length === 0 ? (
         <div className="rounded-2xl bg-card border border-card-border p-12 text-center">
-          <PhotoIcon className="mx-auto h-12 w-12 text-slate-600" />
+          <PhotoIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
           <h4 className="mt-4 text-lg font-semibold text-white">No products yet</h4>
           <p className="mt-2 text-[var(--text-muted)]">
             Add products or services to help customers discover what you offer.
@@ -205,7 +205,7 @@ export default function ProductsTab() {
                 </div>
               ) : (
                 <div className="h-40 bg-slate-700/50 flex items-center justify-center">
-                  <PhotoIcon className="h-12 w-12 text-slate-600" />
+                  <PhotoIcon className="h-12 w-12 text-[var(--text-secondary)]" />
                 </div>
               )}
               <div className="p-4">
@@ -465,7 +465,7 @@ function ProductModal({
                 </div>
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-surface border border-[var(--card-border)]">
-                  <PhotoIcon className="h-8 w-8 text-slate-600" />
+                  <PhotoIcon className="h-8 w-8 text-[var(--text-secondary)]" />
                 </div>
               )}
               <div>
@@ -538,7 +538,7 @@ function ProductModal({
                   disabled={uploadingGallery}
                   className={`flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
                     uploadingGallery
-                      ? 'border-[var(--card-border)] text-slate-600 cursor-not-allowed'
+                      ? 'border-[var(--card-border)] text-[var(--text-secondary)] cursor-not-allowed'
                       : 'border-[var(--card-border)] text-[var(--text-muted)] hover:border-accent hover:text-accent'
                   }`}
                 >
@@ -705,7 +705,7 @@ function ProductPreviewModal({
             </div>
           ) : (
             <div className="w-full aspect-video max-h-60 bg-surface flex items-center justify-center">
-              <PhotoIcon className="h-20 w-20 text-slate-600" />
+              <PhotoIcon className="h-20 w-20 text-[var(--text-secondary)]" />
             </div>
           )}
 

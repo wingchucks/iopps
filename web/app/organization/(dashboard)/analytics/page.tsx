@@ -406,7 +406,7 @@ ${analytics.applicationsByStatus.map(s => `${s.status},${s.count}`).join("\n")}
       {analytics.totalJobs === 0 && (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
           <svg
-            className="mx-auto h-12 w-12 text-slate-600"
+            className="mx-auto h-12 w-12 text-[var(--text-secondary)]"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

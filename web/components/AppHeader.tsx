@@ -18,7 +18,7 @@ export function AppHeader() {
   const isLoggedIn = !!user;
 
   const navItems = [
-    { id: "feed", icon: "home", label: "Home", href: "/hub" },
+    { id: "feed", icon: "home", label: "Home", href: "/discover" },
     { id: "careers", icon: "briefcase", label: "Careers", href: "/careers" },
     { id: "education", icon: "academic", label: "Education", href: "/education" },
     { id: "events", icon: "calendar", label: "Events", href: "/community" },
@@ -27,7 +27,7 @@ export function AppHeader() {
   ];
 
   const isActive = (href: string) => {
-    if (href === "/hub") return pathname === "/hub";
+    if (href === "/discover") return pathname === "/discover";
     return pathname?.startsWith(href);
   };
 
@@ -35,7 +35,7 @@ export function AppHeader() {
     <>
       <header className="app-header">
         <div className="app-header-inner">
-          <Link href="/hub" className="app-logo">
+          <Link href="/discover" className="app-logo">
             <span className="app-logo-text">IOPPS</span>
             <span className="app-logo-tagline">Empowering Indigenous Success</span>
           </Link>
@@ -82,7 +82,7 @@ export function AppHeader() {
 
       <nav className="app-mobile-bottom-nav">
         {[
-          { icon: "home", label: "Feed", href: "/hub" },
+          { icon: "home", label: "Feed", href: "/discover" },
           { icon: "briefcase", label: "Jobs", href: "/careers" },
           { icon: "search", label: "Search", href: "/careers" },
           { icon: "bell", label: "Alerts", href: isLoggedIn ? "/member/dashboard?tab=alerts" : "/login" },

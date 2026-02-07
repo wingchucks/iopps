@@ -103,7 +103,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
     return (
       <FeedLayout activeNav="careers" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <div className="inline-flex items-center justify-center rounded-full bg-slate-100 p-6 mb-6">
+          <div className="inline-flex items-center justify-center rounded-full bg-surface p-6 mb-6">
             <svg className="h-12 w-12 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {isExpired ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -112,7 +112,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
               )}
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             {isExpired ? "Job No Longer Available" : "Job Not Found"}
           </h1>
           <p className="mt-3 text-foreground0 max-w-md mx-auto">
@@ -124,7 +124,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
             <Link href="/careers/jobs" className="rounded-lg bg-[#0D9488] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#0F766E]">
               Browse All Jobs
             </Link>
-            <Link href="/careers" className="rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition-colors hover:border-[#0D9488] hover:text-[#0D9488]">
+            <Link href="/careers" className="rounded-lg border border-[var(--border)] px-6 py-3 font-semibold text-[var(--text-secondary)] transition-colors hover:border-[#0D9488] hover:text-[#0D9488]">
               Back to Careers
             </Link>
           </div>
@@ -139,7 +139,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
         <JobHeader job={job} employerId={job.employerId} />
 
         {/* Share & Save */}
-        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <ShareButtons
               item={{ id: job.id, title: `${job.title} at ${job.employerName || 'Company'}`, description: job.description?.substring(0, 150) + '...', type: 'job' }}
@@ -151,7 +151,7 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
               className={`flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium transition-all ${
                 isSaved
                   ? "bg-rose-50 text-rose-500 hover:bg-rose-100 border border-rose-300"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-300"
+                  : "bg-[var(--background)] text-[var(--text-secondary)] hover:bg-surface hover:text-[var(--text-primary)] border border-[var(--border)]"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {savingJob ? (
@@ -172,17 +172,17 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Main Content */}
           <div className="lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-800">Job Description</h2>
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm">
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Job Description</h2>
               <div
-                className="mt-4 prose prose-slate max-w-none prose-p:text-slate-600 prose-p:leading-relaxed prose-headings:text-slate-800 prose-strong:text-slate-800 prose-ul:text-slate-600 prose-li:text-slate-600"
+                className="mt-4 prose prose-slate max-w-none prose-p:text-[var(--text-secondary)] prose-p:leading-relaxed prose-headings:text-[var(--text-primary)] prose-strong:text-[var(--text-primary)] prose-ul:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]"
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description || '') }}
               />
 
               {job.responsibilities && job.responsibilities.length > 0 && (
                 <>
-                  <h3 className="mt-8 text-lg font-bold text-slate-800">Responsibilities</h3>
-                  <ul className="mt-3 space-y-2 text-slate-600">
+                  <h3 className="mt-8 text-lg font-bold text-[var(--text-primary)]">Responsibilities</h3>
+                  <ul className="mt-3 space-y-2 text-[var(--text-secondary)]">
                     {job.responsibilities.map((item, i) => (
                       <li key={i} className="leading-relaxed flex items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0D9488]"></span>
@@ -195,8 +195,8 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
 
               {job.qualifications && job.qualifications.length > 0 && (
                 <>
-                  <h3 className="mt-8 text-lg font-bold text-slate-800">Qualifications</h3>
-                  <ul className="mt-3 space-y-2 text-slate-600">
+                  <h3 className="mt-8 text-lg font-bold text-[var(--text-primary)]">Qualifications</h3>
+                  <ul className="mt-3 space-y-2 text-[var(--text-secondary)]">
                     {job.qualifications.map((item, i) => (
                       <li key={i} className="leading-relaxed flex items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500"></span>
@@ -209,8 +209,8 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
 
               {job.requirements && (
                 <>
-                  <h3 className="mt-8 text-lg font-bold text-slate-800">Requirements</h3>
-                  <div className="mt-3 space-y-2 text-slate-600">
+                  <h3 className="mt-8 text-lg font-bold text-[var(--text-primary)]">Requirements</h3>
+                  <div className="mt-3 space-y-2 text-[var(--text-secondary)]">
                     {job.requirements.split("\n").map((req, i) => (
                       <p key={i} className="leading-relaxed flex items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0D9488]"></span>
@@ -223,8 +223,8 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
 
               {job.benefits && (
                 <>
-                  <h3 className="mt-8 text-lg font-bold text-slate-800">Benefits</h3>
-                  <div className="mt-3 space-y-2 text-slate-600">
+                  <h3 className="mt-8 text-lg font-bold text-[var(--text-primary)]">Benefits</h3>
+                  <div className="mt-3 space-y-2 text-[var(--text-secondary)]">
                     {job.benefits.split("\n").map((benefit, i) => (
                       <p key={i} className="leading-relaxed flex items-start gap-2">
                         <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500"></span>
@@ -250,8 +250,8 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
 
             {/* Application Section */}
             {job.applicationLink ? (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm" id="apply">
-                <h2 className="text-xl font-bold text-slate-800 text-center mb-6">Apply for this position</h2>
+              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm" id="apply">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] text-center mb-6">Apply for this position</h2>
                 <div className="text-center">
                   <a
                     href={job.applicationLink}
@@ -268,12 +268,12 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
                 </div>
               </div>
             ) : isCommunityMember && user ? (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm" id="apply">
-                <h2 className="text-xl font-bold text-slate-800 text-center mb-6">Apply for this position</h2>
+              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm" id="apply">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] text-center mb-6">Apply for this position</h2>
                 {success ? (
                   <div className="rounded-lg border border-green-300 bg-green-50 p-6 text-center">
                     <p className="text-lg font-semibold text-green-700">Application submitted successfully!</p>
-                    <p className="mt-2 text-sm text-slate-600">Redirecting to your applications...</p>
+                    <p className="mt-2 text-sm text-[var(--text-secondary)]">Redirecting to your applications...</p>
                   </div>
                 ) : (
                   <div className="flex justify-center">
@@ -282,26 +282,26 @@ export default function JobDetailClient({ job, error }: JobDetailClientProps) {
                 )}
               </div>
             ) : !user ? (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm text-center" id="apply">
-                <h3 className="text-lg font-bold text-slate-800">Sign in to apply</h3>
+              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm text-center" id="apply">
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">Sign in to apply</h3>
                 <p className="mt-2 text-foreground0">Create a community member account to apply for this position.</p>
                 <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
                   <Link href="/login" className="rounded-lg bg-[#0D9488] px-6 py-3.5 font-semibold text-white transition-colors hover:bg-[#0F766E] text-center">Sign In</Link>
-                  <Link href="/register" className="rounded-lg border border-slate-300 px-6 py-3.5 font-semibold text-slate-700 transition-colors hover:border-[#0D9488] hover:text-[#0D9488] text-center">Create Account</Link>
+                  <Link href="/register" className="rounded-lg border border-[var(--border)] px-6 py-3.5 font-semibold text-[var(--text-secondary)] transition-colors hover:border-[#0D9488] hover:text-[#0D9488] text-center">Create Account</Link>
                 </div>
               </div>
             ) : role === 'employer' ? (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface">
                   <svg className="h-6 w-6 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">Employer View</h3>
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">Employer View</h3>
                 <p className="mt-2 text-foreground0">You are viewing this as an Organization. Switch to a &quot;Community Member&quot; account to apply.</p>
               </div>
             ) : (
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm text-center">
+              <div className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm text-center">
                 <p className="text-foreground0">Switch to a community member account to apply for jobs.</p>
               </div>
             )}

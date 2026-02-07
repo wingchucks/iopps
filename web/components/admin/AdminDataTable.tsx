@@ -154,7 +154,7 @@ export function AdminDataTable<T extends { id: string }>({
 
   const getSortIcon = (columnId: string) => {
     if (sortField !== columnId) {
-      return <ChevronUpDownIcon className="ml-1 h-4 w-4 text-slate-600" />;
+      return <ChevronUpDownIcon className="ml-1 h-4 w-4 text-[var(--text-secondary)]" />;
     }
     return sortDirection === "asc" ? (
       <ChevronUpIcon className="ml-1 h-4 w-4 text-accent" />

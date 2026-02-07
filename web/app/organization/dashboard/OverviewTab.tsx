@@ -338,7 +338,7 @@ export default function OverviewTab({ onNavigate }: OverviewTabProps = {}) {
 
         {recentApplications.length === 0 ? (
           <div className="text-center py-8">
-            <UsersIcon className="mx-auto h-10 w-10 text-slate-600" />
+            <UsersIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
             <p className="mt-2 text-[var(--text-muted)]">No applications yet</p>
             <p className="mt-1 text-sm text-foreground0">Applications will appear here as candidates apply to your jobs</p>
           </div>

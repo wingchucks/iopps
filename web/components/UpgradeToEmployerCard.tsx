@@ -248,7 +248,7 @@ export default function UpgradeToEmployerCard({ onSuccess }: UpgradeToEmployerCa
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
               placeholder="Your business or organization name"
-              className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -283,7 +283,7 @@ export default function UpgradeToEmployerCard({ onSuccess }: UpgradeToEmployerCa
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tell us about your organization, what you do, and how you serve Indigenous communities..."
-              className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
             />
           </div>
 
@@ -297,7 +297,7 @@ export default function UpgradeToEmployerCard({ onSuccess }: UpgradeToEmployerCa
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
               placeholder="https://yourwebsite.com"
-              className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-slate-400 focus:border-accent focus:outline-none"
+              className="w-full rounded-lg bg-slate-700 border border-[var(--card-border)] px-4 py-3 text-white placeholder-[var(--text-muted)] focus:border-accent focus:outline-none"
             />
           </div>
 

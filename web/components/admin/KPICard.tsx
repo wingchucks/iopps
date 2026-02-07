@@ -230,7 +230,7 @@ export function KPICard({
                   className="focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:ring-offset-background rounded"
                   aria-label={`Information: ${definition}`}
                 >
-                  <InformationCircleIcon className="h-4 w-4 text-slate-600 hover:text-[var(--text-muted)] cursor-help" aria-hidden="true" />
+                  <InformationCircleIcon className="h-4 w-4 text-[var(--text-secondary)] hover:text-[var(--text-muted)] cursor-help" aria-hidden="true" />
                 </button>
               </Tooltip>
             )}

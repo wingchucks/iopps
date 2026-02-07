@@ -658,7 +658,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 <button
                   onClick={() => handleFixJobs(false)}
                   disabled={isFixingJobs}
-                  className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-slate-900 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Fix {fixJobsResult.deactivated} Jobs
                 </button>
@@ -729,7 +729,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
               onClick={() => setFilter(status)}
               className={`rounded-md px-3 py-2 text-sm font-medium capitalize transition-colors ${
                 filter === status
-                  ? "bg-accent text-slate-900 shadow-lg"
+                  ? "bg-accent text-[var(--text-primary)] shadow-lg"
                   : "text-[var(--text-muted)] hover:text-foreground"
               }`}
             >
@@ -783,7 +783,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
         </div>
       ) : paginatedEmployers.length === 0 ? (
         <div className="rounded-lg border border-[var(--card-border)] bg-surface p-12 text-center">
-          <BuildingOfficeIcon className="mx-auto h-12 w-12 text-slate-600" />
+          <BuildingOfficeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
           <h3 className="mt-4 text-lg font-medium text-[var(--text-secondary)]">No employers found</h3>
           <p className="mt-2 text-sm text-foreground0">
             {searchQuery
@@ -810,7 +810,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                         <img
                           src={employer.logoUrl}
                           alt={`${employer.organizationName} logo`}
-                          className="h-16 w-16 flex-shrink-0 rounded-lg border border-[var(--card-border)] bg-white object-contain p-2"
+                          className="h-16 w-16 flex-shrink-0 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                         />
                       ) : (
                         <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-xs text-foreground0">
@@ -1316,7 +1316,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     <img
                       src={employer.logoUrl}
                       alt={`${employer.organizationName} logo`}
-                      className="h-16 w-16 flex-shrink-0 rounded-lg border border-[var(--card-border)] bg-white object-contain p-2"
+                      className="h-16 w-16 flex-shrink-0 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                     />
                   ) : (
                     <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-xs text-foreground0">
@@ -1466,7 +1466,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                 )}
                 <Link
                   href={`/admin/employers/${employer.id}/edit`}
-                  className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-accent/90"
+                  className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-accent/90"
                 >
                   Edit
                 </Link>

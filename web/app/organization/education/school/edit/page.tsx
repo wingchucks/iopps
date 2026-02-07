@@ -116,7 +116,7 @@ export default function EditSchoolPage() {
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -150,7 +150,7 @@ export default function EditSchoolPage() {
         </p>
         <Link
           href="/organization/education/school/new"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Create School Profile
         </Link>
@@ -265,7 +265,7 @@ export default function EditSchoolPage() {
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--card-bg)] transition-transform ${
                     isPublished ? "translate-x-6" : "translate-x-1"
                   }`}
                 />

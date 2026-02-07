@@ -71,7 +71,7 @@ export default function EmployerJobDetailPage({ params }: { params: Promise<{ jo
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90"
         >
           Sign In
         </Link>
@@ -87,7 +87,7 @@ export default function EmployerJobDetailPage({ params }: { params: Promise<{ jo
         </h1>
         <Link
           href="/organization/jobs"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90"
         >
           Back to Jobs
         </Link>
@@ -133,7 +133,7 @@ export default function EmployerJobDetailPage({ params }: { params: Promise<{ jo
         </div>
         <Link
           href={`/organization/jobs/${jobId}/edit`}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Edit Job
         </Link>

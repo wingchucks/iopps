@@ -334,7 +334,7 @@ function AdminUsersContent() {
                           <div>
                             <p className="font-medium text-foreground">{userData.displayName || userData.email}</p>
                             {userData.displayName && <p className="mt-1 text-sm text-foreground0">{userData.email}</p>}
-                            <p className="mt-1 text-xs text-slate-600">ID: {userData.id}</p>
+                            <p className="mt-1 text-xs text-[var(--text-secondary)]">ID: {userData.id}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4">

@@ -308,7 +308,7 @@ export default function ProfileWizard({ isOpen, onClose, onComplete }: ProfileWi
                         <button
                             onClick={handleBack}
                             disabled={step === 1}
-                            className={`px-6 py-3 rounded-xl font-medium transition-colors ${step === 1 ? "text-slate-600 cursor-not-allowed" : "text-[var(--text-muted)] hover:text-white hover:bg-surface"}`}
+                            className={`px-6 py-3 rounded-xl font-medium transition-colors ${step === 1 ? "text-[var(--text-secondary)] cursor-not-allowed" : "text-[var(--text-muted)] hover:text-white hover:bg-surface"}`}
                         >
                             Back
                         </button>

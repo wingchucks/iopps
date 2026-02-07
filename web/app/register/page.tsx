@@ -202,7 +202,7 @@ function RegisterPageInner() {
         setSuccess(true);
       } catch (verifyError) {
         console.error("Email verification error:", verifyError);
-        router.push(role === "employer" ? "/onboarding/organization" : "/hub");
+        router.push(role === "employer" ? "/onboarding/organization" : "/discover");
       }
     } catch (err) {
       console.error(err);
@@ -223,7 +223,7 @@ function RegisterPageInner() {
         setShowRoleSelector(true);
         setGoogleLoading(false);
       } else {
-        router.push("/hub");
+        router.push("/discover");
       }
     } catch (err) {
       console.error(err);
@@ -301,7 +301,7 @@ function RegisterPageInner() {
         });
       }
 
-      router.push(selectedRole === "employer" ? "/onboarding/organization" : "/hub");
+      router.push(selectedRole === "employer" ? "/onboarding/organization" : "/discover");
     } catch (err) {
       console.error(err);
       setError("Failed to update role. Please try again.");
@@ -315,8 +315,8 @@ function RegisterPageInner() {
       {/* Role Selector Modal for Google Sign-In */}
       {showRoleSelector && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-lg animate-fade-in">
-            <h2 className="text-xl font-semibold text-slate-900">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-lg animate-fade-in">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               Choose your account type
             </h2>
             <p className="mt-2 text-sm text-foreground0">
@@ -346,8 +346,8 @@ function RegisterPageInner() {
       {/* Intent Selector Modal for Google Sign-In (Employers) */}
       {showIntentSelector && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-lg animate-fade-in">
-            <h2 className="text-xl font-semibold text-slate-900">
+          <div className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-lg animate-fade-in">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
               What would you like to do on IOPPS?
             </h2>
             <p className="mt-2 text-sm text-foreground0">
@@ -359,11 +359,11 @@ function RegisterPageInner() {
                 <button
                   key={option.id}
                   onClick={() => handleIntentSelection(option.id)}
-                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-accent/50 hover:bg-slate-100"
+                  className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-left transition hover:border-accent/50 hover:bg-surface"
                 >
                   <option.icon className="h-6 w-6 flex-shrink-0 text-accent" />
                   <div>
-                    <p className="font-medium text-slate-800">{option.title}</p>
+                    <p className="font-medium text-[var(--text-primary)]">{option.title}</p>
                     <p className="mt-0.5 text-xs text-foreground0">{option.description}</p>
                   </div>
                 </button>
@@ -376,7 +376,7 @@ function RegisterPageInner() {
                 setShowRoleSelector(true);
                 setPendingGoogleRole(null);
               }}
-              className="mt-4 text-sm text-foreground0 hover:text-slate-700"
+              className="mt-4 text-sm text-foreground0 hover:text-[var(--text-secondary)]"
             >
               ← Back to role selection
             </button>
@@ -438,10 +438,10 @@ function RegisterPageInner() {
 
             <AuthDivider text="Or register with email" />
 
-            <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm">
               {/* Step 1: Account Type Selection - FIRST */}
               <div>
-                <p className="block text-sm font-medium text-slate-700 mb-3">
+                <p className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
                   I am signing up as:
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -468,7 +468,7 @@ function RegisterPageInner() {
               {/* Intent Selection for Employers */}
               {role === "employer" && (
                 <div className="animate-fade-in">
-                  <p className="block text-sm font-medium text-slate-700 mb-3">
+                  <p className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
                     What would you like to do on IOPPS?
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -479,8 +479,8 @@ function RegisterPageInner() {
                         onClick={() => setEmployerIntent(option.id)}
                         className={`flex items-start gap-3 rounded-xl border p-3 text-left transition ${
                           employerIntent === option.id
-                            ? "border-accent bg-teal-50"
-                            : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                            ? "border-accent bg-[var(--accent-bg)]"
+                            : "border-[var(--border)] bg-[var(--background)] hover:border-[var(--border)]"
                         }`}
                       >
                         <option.icon className={`h-5 w-5 flex-shrink-0 ${
@@ -488,7 +488,7 @@ function RegisterPageInner() {
                         }`} />
                         <div>
                           <p className={`text-sm font-medium ${
-                            employerIntent === option.id ? "text-teal-600" : "text-slate-700"
+                            employerIntent === option.id ? "text-accent" : "text-[var(--text-secondary)]"
                           }`}>{option.title}</p>
                           <p className="mt-0.5 text-xs text-foreground0">{option.description}</p>
                         </div>
@@ -500,7 +500,7 @@ function RegisterPageInner() {
 
               {/* Step 2: Account Details - Only show after role is selected */}
               {role && (
-                <div className="space-y-5 animate-fade-in pt-2 border-t border-slate-200">
+                <div className="space-y-5 animate-fade-in pt-2 border-t border-[var(--border)]">
                   <AuthInput
                     label={role === "employer" ? "Organization Name" : "Your Full Name"}
                     type="text"
@@ -549,7 +549,7 @@ function RegisterPageInner() {
                 <button
                   type="submit"
                   disabled={loading || googleLoading || (role === "employer" && !employerIntent)}
-                  className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -569,7 +569,7 @@ function RegisterPageInner() {
 
               {/* Prompt to select role if not selected */}
               {!role && (
-                <div className="text-center py-4 px-6 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="text-center py-4 px-6 rounded-xl bg-[var(--background)] border border-[var(--border)]">
                   <p className="text-sm text-foreground0">
                     Select an account type above to continue
                   </p>

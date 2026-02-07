@@ -413,7 +413,7 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-accent text-slate-900"
+              ? "bg-accent text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
@@ -422,7 +422,7 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("pending")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "pending"
-              ? "bg-amber-500 text-slate-900"
+              ? "bg-amber-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
               } ${pendingCount > 0 ? "animate-pulse" : ""}`}
           >
@@ -431,7 +431,7 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-slate-900"
+              ? "bg-green-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
@@ -440,7 +440,7 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-slate-900"
+              ? "bg-slate-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
@@ -449,7 +449,7 @@ function AdminVendorsContent() {
           <button
             onClick={() => setFilter("featured")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "featured"
-              ? "bg-yellow-500 text-slate-900"
+              ? "bg-yellow-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-yellow-500"
               }`}
           >

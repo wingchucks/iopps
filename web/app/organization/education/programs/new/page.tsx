@@ -96,7 +96,7 @@ export default function NewProgramPage() {
         </p>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -130,7 +130,7 @@ export default function NewProgramPage() {
         </p>
         <Link
           href="/organization/education/school/new"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Create School Profile
         </Link>

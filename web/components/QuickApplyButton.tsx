@@ -146,7 +146,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className="rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-accent-hover"
+                className="rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-accent-hover"
             >
                 ⚡ Quick Apply
             </button>
@@ -449,7 +449,7 @@ export default function QuickApplyButton({ job, memberProfile }: QuickApplyButto
                                         <button
                                             onClick={handleQuickApply}
                                             disabled={applying || !((resumeSource === "saved" && hasResume) || (resumeSource === "upload" && uploadedResume))}
-                                            className="flex-1 rounded-full bg-gradient-to-r from-accent to-accent-soft px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-accent/20 transition-all hover:shadow-accent/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex-1 rounded-full bg-gradient-to-r from-accent to-accent-soft px-6 py-3 font-semibold text-[var(--text-primary)] shadow-lg shadow-accent/20 transition-all hover:shadow-accent/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {applying ? "Submitting Application..." : "Submit Application"}
                                         </button>

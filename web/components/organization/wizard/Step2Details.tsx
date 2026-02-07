@@ -166,7 +166,7 @@ export default function Step2Details({
                 <button
                     onClick={onNext}
                     disabled={!isValid}
-                    className="rounded-xl bg-accent px-8 py-3 font-semibold text-slate-900 transition-all hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl bg-accent px-8 py-3 font-semibold text-[var(--text-primary)] transition-all hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     Next: Preferences
                 </button>

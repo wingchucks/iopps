@@ -263,7 +263,7 @@ function MemberMessagesContent() {
       <div className="mx-auto max-w-7xl px-4 py-4">
         {allConversations.length === 0 ? (
           <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
-            <MessageSquare className="mx-auto h-16 w-16 text-slate-600" />
+            <MessageSquare className="mx-auto h-16 w-16 text-[var(--text-secondary)]" />
             <h3 className="mt-4 text-lg font-semibold text-white">
               No messages yet
             </h3>
@@ -326,7 +326,7 @@ function MemberMessagesContent() {
                 ) : (
                   <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
                     <div className="text-center">
-                      <MessageSquare className="mx-auto h-16 w-16 text-slate-600" />
+                      <MessageSquare className="mx-auto h-16 w-16 text-[var(--text-secondary)]" />
                       <p className="mt-4">
                         Select a conversation to view messages
                       </p>
@@ -434,7 +434,7 @@ function PeerAwareConversationList({
   if (conversations.length === 0) {
     return (
       <div className="p-6 text-center">
-        <MessageSquare className="mx-auto h-12 w-12 text-slate-600" />
+        <MessageSquare className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
         <p className="mt-3 text-sm text-[var(--text-muted)]">No conversations found</p>
       </div>
     );
@@ -498,7 +498,7 @@ function PeerAwareConversationList({
                     {displayName}
                   </span>
                   {unreadCount > 0 && (
-                    <span className="flex-shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-slate-900">
+                    <span className="flex-shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-[var(--text-primary)]">
                       {unreadCount}
                     </span>
                   )}

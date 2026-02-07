@@ -75,11 +75,11 @@ export default function ServicesPage() {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-[var(--card-bg)]/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-purple-400/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm text-indigo-600">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)]/20 px-4 py-2 text-sm text-indigo-600">
             <BriefcaseIcon className="h-5 w-5" />
             Indigenous Marketplace
           </div>
@@ -100,17 +100,17 @@ export default function ServicesPage() {
                 placeholder="Search services..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full bg-white/20 backdrop-blur-sm border border-white/30 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="w-full rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm border border-white/30 py-3 pl-12 pr-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
               />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-6 py-3 text-white transition-colors hover:bg-white/20"
+              className="flex items-center justify-center gap-2 rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm border border-white/30 px-6 py-3 text-white transition-colors hover:bg-[var(--card-bg)]/20"
             >
               <FunnelIcon className="h-5 w-5" />
               Filters
               {hasFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-indigo-600">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--card-bg)] text-xs font-bold text-indigo-600">
                   !
                 </span>
               )}
@@ -121,13 +121,13 @@ export default function ServicesPage() {
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="mb-8 rounded-2xl bg-white backdrop-blur-sm border border-slate-200 p-6">
+        <div className="mb-8 rounded-2xl bg-[var(--card-bg)] backdrop-blur-sm border border-[var(--border)] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Filters</h3>
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-foreground0 hover:text-slate-900 transition-colors"
+                className="flex items-center gap-1 text-sm text-foreground0 hover:text-[var(--text-primary)] transition-colors"
               >
                 <XMarkIcon className="h-4 w-4" />
                 Clear all
@@ -144,7 +144,7 @@ export default function ServicesPage() {
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   category === null
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                 }`}
               >
                 All Categories
@@ -156,7 +156,7 @@ export default function ServicesPage() {
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     category === cat
                       ? 'bg-indigo-500 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                   }`}
                 >
                   {cat}
@@ -174,7 +174,7 @@ export default function ServicesPage() {
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   servesRemote === null
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                 }`}
               >
                 All
@@ -184,7 +184,7 @@ export default function ServicesPage() {
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   servesRemote === true
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                 }`}
               >
                 Remote Available
@@ -201,7 +201,7 @@ export default function ServicesPage() {
                 className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                   region === null
                     ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                 }`}
               >
                 All Regions
@@ -213,7 +213,7 @@ export default function ServicesPage() {
                   className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                     region === r
                       ? 'bg-indigo-500 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-surface text-[var(--text-secondary)] hover:bg-surface'
                   }`}
                 >
                   {r}
@@ -233,7 +233,7 @@ export default function ServicesPage() {
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">Featured Services</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)]">Featured Services</h2>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featuredServices.map((service) => (
@@ -246,7 +246,7 @@ export default function ServicesPage() {
       {/* All Services */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
             {hasFilters ? 'Search Results' : 'All Services'}
           </h2>
           <span className="text-sm text-foreground0">
@@ -257,15 +257,15 @@ export default function ServicesPage() {
         {loading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse rounded-2xl bg-slate-100 h-72" />
+              <div key={i} className="animate-pulse rounded-2xl bg-surface h-72" />
             ))}
           </div>
         ) : services.length === 0 ? (
-          <div className="rounded-2xl bg-white border border-slate-200 p-12 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+          <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] p-12 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-surface flex items-center justify-center mb-4">
               <BriefcaseIcon className="h-8 w-8 text-foreground0" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No services found</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No services found</h3>
             <p className="text-foreground0 mb-4">
               {hasFilters
                 ? "Try adjusting your filters or search terms."
@@ -291,8 +291,8 @@ export default function ServicesPage() {
 
       {/* CTA Section - Only for employers/admins */}
       {canListServices && (
-        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-[var(--border)] p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
             Offer Professional Services?
           </h2>
           <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
@@ -310,7 +310,7 @@ export default function ServicesPage() {
             </Link>
             <Link
               href="/business"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3 text-lg font-semibold text-slate-900 transition-all hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-8 py-3 text-lg font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--background)]"
             >
               Browse Products
             </Link>

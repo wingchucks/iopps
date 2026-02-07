@@ -287,7 +287,7 @@ export default function ModerationQueuePage() {
         </div>
       ) : filteredFlags.length === 0 ? (
         <div className="rounded-xl border border-[var(--card-border)] bg-slate-800/20 p-12 text-center">
-          <FlagIcon className="mx-auto h-12 w-12 text-slate-600" />
+          <FlagIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
           <h3 className="mt-4 text-lg font-semibold text-[var(--text-secondary)]">No flagged content</h3>
           <p className="mt-2 text-foreground0">
             {statusFilter === "pending"
@@ -378,7 +378,7 @@ export default function ModerationQueuePage() {
                     <>
                       <button
                         onClick={() => setSelectedFlag(flag)}
-                        className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 transition-colors"
+                        className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 transition-colors"
                       >
                         <CheckCircleIcon className="h-4 w-4" />
                         Review
@@ -397,7 +397,7 @@ export default function ModerationQueuePage() {
                   {flag.status === "reviewed" && (
                     <button
                       onClick={() => setSelectedFlag(flag)}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-400 transition-colors"
+                      className="flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-emerald-400 transition-colors"
                     >
                       <CheckCircleIcon className="h-4 w-4" />
                       Resolve
@@ -470,7 +470,7 @@ export default function ModerationQueuePage() {
               <button
                 onClick={() => handleUpdateFlag(selectedFlag.id, "resolved", selectedAction, moderatorNotes)}
                 disabled={actionLoading}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-emerald-400 transition-colors disabled:opacity-50"
               >
                 {actionLoading ? "Saving..." : "Resolve"}
               </button>

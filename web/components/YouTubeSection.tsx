@@ -313,7 +313,7 @@ export function YouTubeSection() {
           </div>
         ) : error || videos.length === 0 ? (
           <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-8 text-center">
-            <VideoCameraIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <VideoCameraIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
             <h4 className="mt-4 text-lg font-semibold text-white">
               No videos available
             </h4>

@@ -286,7 +286,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
             }`}
           >
             <span
-              className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+              className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
                 preferences.globalEnabled ? "translate-x-5" : "translate-x-0"
               }`}
             />
@@ -315,7 +315,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
               } ${pushPermission === "denied" ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span
-                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
                   preferences.pushEnabled ? "translate-x-5" : "translate-x-0"
                 }`}
               />
@@ -344,7 +344,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
             }`}
           >
             <span
-              className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+              className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
                 preferences.quietHoursEnabled ? "translate-x-5" : "translate-x-0"
               }`}
             />
@@ -403,7 +403,7 @@ export default function NotificationSettings({ compact = false }: NotificationSe
                               }`}
                             >
                               <span
-                                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
                                   pref.enabled ? "translate-x-4" : "translate-x-0"
                                 }`}
                               />

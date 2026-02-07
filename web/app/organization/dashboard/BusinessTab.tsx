@@ -214,7 +214,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
             </div>
           ) : filteredServices.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No services found" : "No services yet"}
               </h3>
@@ -339,7 +339,7 @@ export default function BusinessTab({ initialView = "shop", onNavigate }: Busine
             </div>
           ) : filteredGrants.length === 0 ? (
             <div className="rounded-2xl border border-[var(--card-border)] bg-surface p-12 text-center">
-              <BanknotesIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BanknotesIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-semibold text-white">
                 {keyword ? "No funding opportunities found" : "No funding opportunities yet"}
               </h3>

@@ -193,7 +193,7 @@ export default function NotificationBell() {
         </svg>
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-slate-900">
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-[var(--text-primary)]">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -224,7 +224,7 @@ export default function NotificationBell() {
             ) : notifications.length === 0 ? (
               <div className="p-6 text-center">
                 <svg
-                  className="mx-auto h-10 w-10 text-slate-600"
+                  className="mx-auto h-10 w-10 text-[var(--text-secondary)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -259,7 +259,7 @@ export default function NotificationBell() {
                         <p className="mt-0.5 text-xs text-foreground0 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="mt-1 text-xs text-slate-600">
+                        <p className="mt-1 text-xs text-[var(--text-secondary)]">
                           {formatTimeAgo(notification.createdAt)}
                         </p>
                       </div>
@@ -286,7 +286,7 @@ export default function NotificationBell() {
                         <p className="mt-0.5 text-xs text-foreground0 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="mt-1 text-xs text-slate-600">
+                        <p className="mt-1 text-xs text-[var(--text-secondary)]">
                           {formatTimeAgo(notification.createdAt)}
                         </p>
                       </div>

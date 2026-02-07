@@ -638,7 +638,7 @@ function NewJobPageContent() {
         </p>
         <Link
           href="/login?redirect=/organization/jobs/new"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -656,7 +656,7 @@ function NewJobPageContent() {
         <div className="flex gap-3">
           <Link
             href="/register?role=employer"
-            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Register as Employer
           </Link>
@@ -765,7 +765,7 @@ function NewJobPageContent() {
                 type="button"
                 onClick={handleSaveAsTemplate}
                 disabled={!templateName.trim() || savingTemplate}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {savingTemplate ? "Saving..." : "Save Template"}
               </button>
@@ -1200,7 +1200,7 @@ function NewJobPageContent() {
                         You have {jobCredits} prepaid job credit{jobCredits > 1 ? 's' : ''} to use
                       </div>
                     </div>
-                    <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-accent py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
+                    <button onClick={() => handlePostJob("SINGLE")} disabled={submitting} className="w-full rounded-lg bg-accent py-3 font-bold text-[var(--text-primary)] hover:bg-[#16cdb8]">
                       {submitting ? "Posting..." : "Post using Credit"}
                     </button>
                   </>
@@ -1212,7 +1212,7 @@ function NewJobPageContent() {
                         {subscription.unlimitedPosts ? "Unlimited job postings" : "1 Credit will be deducted"}
                       </div>
                     </div>
-                    <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-accent py-3 font-bold text-slate-900 hover:bg-[#16cdb8]">
+                    <button onClick={() => handlePostJob("SUBSCRIPTION")} disabled={submitting} className="w-full rounded-lg bg-accent py-3 font-bold text-[var(--text-primary)] hover:bg-[#16cdb8]">
                       {submitting ? "Posting..." : subscription.unlimitedPosts ? "Post Job" : "Post using Credit"}
                     </button>
                   </>

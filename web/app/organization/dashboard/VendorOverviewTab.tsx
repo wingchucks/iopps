@@ -84,7 +84,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
   if (!vendor) {
     return (
       <div className="rounded-2xl bg-card border border-card-border p-8 text-center">
-        <CubeIcon className="mx-auto h-12 w-12 text-slate-600" />
+        <CubeIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
         <h3 className="mt-4 text-lg font-semibold text-white">No Shop Profile Yet</h3>
         <p className="mt-2 text-[var(--text-muted)]">
           Create your shop profile to start selling on the Indigenous Marketplace.
@@ -257,7 +257,7 @@ export default function VendorOverviewTab({ onNavigate }: VendorOverviewTabProps
           </div>
           {products.length === 0 && (
             <div className="text-center py-8">
-              <CubeIcon className="mx-auto h-10 w-10 text-slate-600" />
+              <CubeIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
               <p className="mt-2 text-[var(--text-muted)]">No products yet</p>
               <button
                 onClick={() => onNavigate?.('products')}

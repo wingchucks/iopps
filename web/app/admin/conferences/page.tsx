@@ -242,7 +242,7 @@ function AdminConferencesContent() {
             </div>
             <Link
               href="/organization/conferences/new"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
             >
               + Create New
             </Link>
@@ -277,7 +277,7 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                ? "bg-accent text-slate-900"
+                ? "bg-accent text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
@@ -286,7 +286,7 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-                ? "bg-green-500 text-slate-900"
+                ? "bg-green-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
@@ -295,7 +295,7 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-                ? "bg-slate-500 text-slate-900"
+                ? "bg-slate-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
@@ -304,7 +304,7 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("featured")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "featured"
-                ? "bg-amber-500 text-slate-900"
+                ? "bg-amber-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
               }`}
           >
@@ -313,7 +313,7 @@ function AdminConferencesContent() {
           <button
             onClick={() => setFilter("paid")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "paid"
-                ? "bg-accent text-slate-900"
+                ? "bg-accent text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent"
               }`}
           >

@@ -118,7 +118,7 @@ export default function AdminContentPage() {
                     <button
                         onClick={() => setFilter("all")}
                         className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-                                ? "bg-accent text-slate-900"
+                                ? "bg-accent text-[var(--text-primary)]"
                                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
                             }`}
                     >
@@ -210,7 +210,7 @@ export default function AdminContentPage() {
                                             <button
                                                 onClick={() => updateStatus(sub.id, "responded")}
                                                 disabled={processing === sub.id}
-                                                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-[#12a695] disabled:opacity-50"
+                                                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] hover:bg-[#12a695] disabled:opacity-50"
                                             >
                                                 Mark Responded
                                             </button>

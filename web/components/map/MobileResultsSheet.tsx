@@ -107,7 +107,7 @@ export default function MobileResultsSheet({
   return (
     <div
       ref={sheetRef}
-      className="fixed bottom-0 left-0 right-0 z-30 bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transition-[height] duration-300 ease-out md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-30 bg-[var(--card-bg)] rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transition-[height] duration-300 ease-out md:hidden"
       style={{ height: displayHeight }}
     >
       {/* Drag Handle */}
@@ -143,7 +143,7 @@ export default function MobileResultsSheet({
       >
         {/* Filters (horizontally scrollable) */}
         {children && (
-          <div className="px-4 pb-3 overflow-x-auto scrollbar-hide border-b border-slate-200">
+          <div className="px-4 pb-3 overflow-x-auto scrollbar-hide border-b border-[var(--border)]">
             {children}
           </div>
         )}

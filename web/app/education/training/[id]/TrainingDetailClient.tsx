@@ -96,10 +96,10 @@ export default function TrainingDetailClient({
     return (
       <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center mb-4">
+          <div className="mx-auto h-16 w-16 rounded-full bg-surface flex items-center justify-center mb-4">
             <AcademicCapIcon className="h-8 w-8 text-[var(--text-muted)]" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             {error || "Training program not found"}
           </h1>
           <p className="mt-2 text-foreground0">
@@ -107,7 +107,7 @@ export default function TrainingDetailClient({
           </p>
           <Link
             href="/education/programs?source=provider"
-            className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+            className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
           >
             Browse Training Programs
           </Link>
@@ -176,19 +176,19 @@ export default function TrainingDetailClient({
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="text-sm text-foreground0 mb-6">
-          <Link href="/" className="hover:text-slate-900 transition-colors">
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
             Home
           </Link>
           <span className="mx-2">→</span>
-          <Link href="/education" className="hover:text-slate-900 transition-colors">
+          <Link href="/education" className="hover:text-[var(--text-primary)] transition-colors">
             Education
           </Link>
           <span className="mx-2">→</span>
-          <Link href="/education/programs?source=provider" className="hover:text-slate-900 transition-colors">
+          <Link href="/education/programs?source=provider" className="hover:text-[var(--text-primary)] transition-colors">
             Training Programs
           </Link>
           <span className="mx-2">→</span>
-          <span className="text-slate-900">{program.title}</span>
+          <span className="text-[var(--text-primary)]">{program.title}</span>
         </nav>
 
         {/* Header Section */}
@@ -226,7 +226,7 @@ export default function TrainingDetailClient({
                   Featured
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
                 {getFormatIcon(program.format)}
                 {getFormatLabel(program.format)}
               </span>
@@ -237,7 +237,7 @@ export default function TrainingDetailClient({
                 </span>
               )}
               {program.category && (
-                <span className="rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
+                <span className="rounded-full bg-[var(--card-bg)]/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
                   {program.category}
                 </span>
               )}
@@ -282,7 +282,7 @@ export default function TrainingDetailClient({
             <div className="mt-8 flex flex-wrap gap-4">
               <button
                 onClick={handleEnrollClick}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-teal-700 shadow-xl shadow-teal-500/15 transition-all hover:bg-teal-50 hover:scale-105"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--card-bg)] px-8 py-4 text-lg font-bold text-accent shadow-xl shadow-teal-500/15 transition-all hover:bg-[var(--accent-bg)] hover:scale-105"
               >
                 Learn More & Enroll
                 <ArrowTopRightOnSquareIcon className="h-5 w-5" />
@@ -294,7 +294,7 @@ export default function TrainingDetailClient({
                   className={`inline-flex items-center gap-2 rounded-full px-6 py-4 text-lg font-semibold transition-all ${
                     isSaved
                       ? "bg-amber-500 text-white hover:bg-amber-600"
-                      : "bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
+                      : "bg-[var(--card-bg)]/20 backdrop-blur-sm text-white hover:bg-[var(--card-bg)]/30"
                   }`}
                 >
                   {isSaved ? (
@@ -315,7 +315,7 @@ export default function TrainingDetailClient({
         </div>
 
         {/* Share Section */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 mb-8">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 mb-8">
           <ShareButtons
             item={{
               id: program.id,
@@ -331,11 +331,11 @@ export default function TrainingDetailClient({
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Main Content */}
           <div className="lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-800">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">
                 About This Program
               </h2>
-              <div className="mt-4 space-y-4 text-slate-600">
+              <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
                 {program.description?.split("\n").map((paragraph, i) => (
                   <p key={i} className="leading-relaxed">
                     {paragraph}
@@ -346,7 +346,7 @@ export default function TrainingDetailClient({
               {/* Skills Section */}
               {program.skills && program.skills.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-800">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">
                     Skills You&apos;ll Learn
                   </h3>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -365,13 +365,13 @@ export default function TrainingDetailClient({
               {/* Certification */}
               {program.certificationOffered && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-800">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">
                     Certification
                   </h3>
-                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4">
-                    <AcademicCapIcon className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-300 bg-[var(--accent-bg)] p-4">
+                    <AcademicCapIcon className="h-6 w-6 text-accent flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-emerald-600">
+                      <p className="font-semibold text-accent">
                         {program.certificationOffered}
                       </p>
                       <p className="mt-1 text-sm text-foreground0">
@@ -386,11 +386,11 @@ export default function TrainingDetailClient({
               {/* Funding Info */}
               {program.fundingAvailable && program.scholarshipInfo && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-bold text-slate-800">
+                  <h3 className="text-lg font-bold text-[var(--text-primary)]">
                     Funding & Financial Aid
                   </h3>
-                  <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
-                    <p className="text-slate-600">{program.scholarshipInfo}</p>
+                  <div className="mt-4 rounded-xl border border-amber-300 bg-[var(--amber-bg)] p-4">
+                    <p className="text-[var(--text-secondary)]">{program.scholarshipInfo}</p>
                   </div>
                 </div>
               )}
@@ -399,12 +399,12 @@ export default function TrainingDetailClient({
               {program.targetCommunities &&
                 program.targetCommunities.length > 0 && (
                   <div className="mt-8">
-                    <h3 className="text-lg font-bold text-slate-800">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
                       Target Communities
                     </h3>
                     <div className="mt-4 flex items-start gap-3">
-                      <UserGroupIcon className="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-slate-600">
+                      <UserGroupIcon className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                      <p className="text-[var(--text-secondary)]">
                         {program.targetCommunities.join(", ")}
                       </p>
                     </div>
@@ -416,15 +416,15 @@ export default function TrainingDetailClient({
           {/* Sidebar */}
           <div className="lg:col-span-4 space-y-6">
             {/* Program Details Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
                 Program Details
               </h3>
               <div className="space-y-4">
                 {/* Format */}
                 <div className="flex items-center justify-between">
                   <span className="text-foreground0">Format</span>
-                  <span className="flex items-center gap-2 font-medium text-slate-800">
+                  <span className="flex items-center gap-2 font-medium text-[var(--text-primary)]">
                     {getFormatIcon(program.format)}
                     {getFormatLabel(program.format)}
                   </span>
@@ -434,7 +434,7 @@ export default function TrainingDetailClient({
                 {program.duration && (
                   <div className="flex items-center justify-between">
                     <span className="text-foreground0">Duration</span>
-                    <span className="font-medium text-slate-800">
+                    <span className="font-medium text-[var(--text-primary)]">
                       {program.duration}
                     </span>
                   </div>
@@ -444,7 +444,7 @@ export default function TrainingDetailClient({
                 {(startDate || program.ongoing) && (
                   <div className="flex items-center justify-between">
                     <span className="text-foreground0">Start Date</span>
-                    <span className="font-medium text-slate-800">
+                    <span className="font-medium text-[var(--text-primary)]">
                       {program.ongoing ? "Ongoing Enrollment" : startDate}
                     </span>
                   </div>
@@ -453,7 +453,7 @@ export default function TrainingDetailClient({
                 {endDate && !program.ongoing && (
                   <div className="flex items-center justify-between">
                     <span className="text-foreground0">End Date</span>
-                    <span className="font-medium text-slate-800">{endDate}</span>
+                    <span className="font-medium text-[var(--text-primary)]">{endDate}</span>
                   </div>
                 )}
 
@@ -461,7 +461,7 @@ export default function TrainingDetailClient({
                 {program.location && program.format !== "online" && (
                   <div className="flex items-center justify-between">
                     <span className="text-foreground0">Location</span>
-                    <span className="font-medium text-slate-800 text-right">
+                    <span className="font-medium text-[var(--text-primary)] text-right">
                       {program.location}
                     </span>
                   </div>
@@ -472,11 +472,11 @@ export default function TrainingDetailClient({
                   <div className="flex items-center justify-between">
                     <span className="text-foreground0">Cost</span>
                     <div className="text-right">
-                      <span className="font-medium text-emerald-600">
+                      <span className="font-medium text-accent">
                         {program.cost}
                       </span>
                       {program.fundingAvailable && (
-                        <p className="text-xs text-emerald-600">
+                        <p className="text-xs text-accent">
                           Funding available
                         </p>
                       )}
@@ -488,7 +488,7 @@ export default function TrainingDetailClient({
                 {program.category && (
                   <div className="flex items-center justify-between">
                     <span className="text-foreground0">Category</span>
-                    <span className="font-medium text-slate-800">
+                    <span className="font-medium text-[var(--text-primary)]">
                       {program.category}
                     </span>
                   </div>
@@ -510,8 +510,8 @@ export default function TrainingDetailClient({
                     disabled={savingState === "saving"}
                     className={`w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold transition-all ${
                       isSaved
-                        ? "bg-amber-50 text-amber-600 border border-amber-300 hover:bg-amber-500/30"
-                        : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
+                        ? "bg-[var(--amber-bg)] text-[var(--amber)] border border-amber-300 hover:bg-amber-500/30"
+                        : "bg-surface text-[var(--text-secondary)] border border-[var(--border)] hover:bg-surface"
                     }`}
                   >
                     {isSaved ? (
@@ -531,8 +531,8 @@ export default function TrainingDetailClient({
             </div>
 
             {/* Provider Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-4">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">
                 Training Provider
               </h3>
               <div className="flex items-center gap-4">
@@ -550,7 +550,7 @@ export default function TrainingDetailClient({
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-slate-800">
+                  <p className="font-semibold text-[var(--text-primary)]">
                     {program.providerName}
                   </p>
                   {program.organizationName &&
@@ -577,8 +577,8 @@ export default function TrainingDetailClient({
             </div>
 
             {/* Similar Programs Link */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-bold text-slate-800 mb-2">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
                 Looking for More?
               </h3>
               <p className="text-sm text-foreground0 mb-4">

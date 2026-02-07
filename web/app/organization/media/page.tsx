@@ -235,7 +235,7 @@ export default function MediaFeaturesPage() {
 
             {/* Footer */}
             <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 text-center">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-[var(--text-secondary)]">
                     Questions about media features?{" "}
                     <a href="mailto:hello@iopps.ca" className="text-purple-400 hover:underline">
                         Reach out anytime

@@ -287,7 +287,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
@@ -323,7 +323,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         </h1>
         <Link
           href="/organization/dashboard"
-          className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Back to Dashboard
         </Link>
@@ -343,7 +343,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
         </p>
         <Link
           href="/organization/dashboard"
-          className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="inline-flex rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Back to Dashboard
         </Link>
@@ -361,9 +361,9 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
           </p>
         </div>
         <Link
-          href={`/jobs-training/${jobId}`}
+          href={`/careers/${jobId}`}
           target="_blank"
-          className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-sm text-foreground hover:border-[#14B8A6] hover:text-[#14B8A6] transition-colors whitespace-nowrap"
+          className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-sm text-foreground hover:border-accent hover:text-accent transition-colors whitespace-nowrap"
         >
           View public listing
         </Link>
@@ -715,7 +715,7 @@ export default function EditJobPage({ params }: { params: Promise<{ jobId: strin
             <button
               type="submit"
               disabled={saving || deleting}
-              className="rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60"
+              className="rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

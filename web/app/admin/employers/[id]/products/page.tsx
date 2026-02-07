@@ -313,7 +313,7 @@ export default function EmployerProductsPage() {
                 <img
                   src={employer.logoUrl}
                   alt={employer.organizationName}
-                  className="h-16 w-16 rounded-lg border border-[var(--card-border)] bg-white object-contain p-2"
+                  className="h-16 w-16 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                 />
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-xs text-foreground0">
@@ -327,7 +327,7 @@ export default function EmployerProductsPage() {
             </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-teal-400"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-teal-400"
             >
               <PlusIcon className="h-4 w-4" />
               Add Product
@@ -360,7 +360,7 @@ export default function EmployerProductsPage() {
           <h2 className="mb-4 text-lg font-semibold text-foreground">Active Products</h2>
           {activeProducts.length === 0 ? (
             <div className="rounded-lg border border-[var(--card-border)] bg-surface p-8 text-center">
-              <GiftIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <GiftIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <p className="mt-2 text-[var(--text-muted)]">No active products</p>
               <button
                 onClick={() => setShowAddModal(true)}
@@ -738,7 +738,7 @@ export default function EmployerProductsPage() {
               <button
                 onClick={handleAddProduct}
                 disabled={processing}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:opacity-50"
               >
                 {processing ? "Adding..." : "Add Product"}
               </button>
@@ -779,7 +779,7 @@ export default function EmployerProductsPage() {
               <button
                 onClick={() => handleExtendProduct(showExtendModal)}
                 disabled={processing}
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:opacity-50"
               >
                 {processing ? "Extending..." : "Extend"}
               </button>

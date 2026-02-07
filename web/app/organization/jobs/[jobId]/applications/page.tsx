@@ -78,7 +78,7 @@ export default function EmployerJobApplicationsPage() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>

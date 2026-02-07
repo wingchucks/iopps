@@ -7,12 +7,12 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white font-sans antialiased">
+    <div className="min-h-screen bg-[var(--card-bg)] font-sans antialiased">
       {/* ── Header ── */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--card-bg)]/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-baseline gap-1.5">
-            <span className="text-xl font-black tracking-tight text-teal-600">
+            <span className="text-xl font-black tracking-tight text-accent">
               IOPPS
             </span>
             <span className="hidden text-xs font-medium text-[var(--text-muted)] sm:inline">
@@ -24,25 +24,25 @@ export default function LandingPage() {
           <nav className="hidden items-center gap-8 md:flex">
             <Link
               href="/careers"
-              className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+              className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
             >
               Jobs
             </Link>
             <Link
               href="/education"
-              className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+              className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
             >
               Education
             </Link>
             <Link
               href="/community"
-              className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+              className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
             >
               Events
             </Link>
             <Link
               href="/business"
-              className="text-sm font-medium text-slate-600 transition hover:text-slate-900"
+              className="text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
             >
               Shop Indigenous
             </Link>
@@ -52,7 +52,7 @@ export default function LandingPage() {
           <div className="hidden items-center gap-3 md:flex">
             <Link
               href="/login"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-surface"
             >
               Log in
             </Link>
@@ -66,7 +66,7 @@ export default function LandingPage() {
 
           {/* Mobile Menu Button */}
           <button
-            className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 md:hidden"
+            className="rounded-lg p-2 text-[var(--text-secondary)] transition hover:bg-surface md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -104,41 +104,41 @@ export default function LandingPage() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-slate-200 bg-white px-4 pb-4 pt-2 md:hidden">
+          <div className="border-t border-[var(--border)] bg-[var(--card-bg)] px-4 pb-4 pt-2 md:hidden">
             <nav className="flex flex-col gap-1">
               <Link
                 href="/careers"
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--background)]"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Jobs
               </Link>
               <Link
                 href="/education"
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--background)]"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Education
               </Link>
               <Link
                 href="/community"
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--background)]"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Events
               </Link>
               <Link
                 href="/business"
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--background)]"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Shop Indigenous
               </Link>
             </nav>
-            <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
+            <div className="mt-3 flex flex-col gap-2 border-t border-[var(--border-lt)] pt-3">
               <Link
                 href="/login"
-                className="rounded-lg px-3 py-2.5 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-lg px-3 py-2.5 text-center text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--background)]"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Log in
@@ -243,26 +243,26 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ── */}
-      <section className="bg-slate-50 py-16 sm:py-24">
+      <section className="bg-[var(--background)] py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-teal-600">
+            <p className="text-sm font-semibold uppercase tracking-widest text-accent">
               Built for community
             </p>
-            <h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">
+            <h2 className="mt-3 text-2xl font-bold text-[var(--text-primary)] sm:text-3xl lg:text-4xl">
               Everything your community needs
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg">
+            <p className="mx-auto mt-4 max-w-2xl text-base text-[var(--text-secondary)] sm:text-lg">
               Purpose-built tools that respect Indigenous values and sovereignty.
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {/* Territory Discovery */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
-                  className="h-6 w-6 text-teal-600"
+                  className="h-6 w-6 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -275,10 +275,10 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900">
+              <h3 className="mt-4 text-lg font-bold text-[var(--text-primary)]">
                 Territory Discovery
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Explore opportunities by Treaty territory with our interactive
                 Nations Map. Find jobs, events, and programs specific to your
                 region and community.
@@ -286,10 +286,10 @@ export default function LandingPage() {
             </div>
 
             {/* Community Endorsements */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
-                  className="h-6 w-6 text-teal-600"
+                  className="h-6 w-6 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -302,10 +302,10 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900">
+              <h3 className="mt-4 text-lg font-bold text-[var(--text-primary)]">
                 Community Endorsements
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Build trust through community-driven endorsements. Members
                 uplift each other, creating an authentic professional network
                 grounded in relationships.
@@ -313,10 +313,10 @@ export default function LandingPage() {
             </div>
 
             {/* Data Sovereignty */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
-                  className="h-6 w-6 text-teal-600"
+                  className="h-6 w-6 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -329,10 +329,10 @@ export default function LandingPage() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900">
+              <h3 className="mt-4 text-lg font-bold text-[var(--text-primary)]">
                 Data Sovereignty
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
                 Your data belongs to you. Export everything, control your
                 visibility, and know exactly how your information is used —
                 aligned with OCAP principles.
@@ -343,7 +343,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Testimonial ── */}
-      <section className="bg-white py-16 sm:py-24">
+      <section className="bg-[var(--card-bg)] py-16 sm:py-24">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <svg
             className="mx-auto h-10 w-10 text-accent/30"
@@ -353,14 +353,14 @@ export default function LandingPage() {
             <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
           </svg>
           <blockquote className="mt-6">
-            <p className="text-xl font-medium leading-relaxed text-slate-800 sm:text-2xl">
+            <p className="text-xl font-medium leading-relaxed text-[var(--text-primary)] sm:text-2xl">
               IOPPS has transformed how we connect with Indigenous talent. The
               platform respects our values while delivering real results for our
               hiring needs.
             </p>
           </blockquote>
           <div className="mt-6">
-            <p className="text-base font-semibold text-slate-900">
+            <p className="text-base font-semibold text-[var(--text-primary)]">
               David Couture
             </p>
             <p className="text-sm text-foreground0">
@@ -383,13 +383,13 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/signup"
-              className="w-full rounded-lg bg-white px-8 py-3.5 text-center text-sm font-bold text-teal-700 shadow transition hover:bg-slate-50 sm:w-auto sm:text-base"
+              className="w-full rounded-lg bg-[var(--card-bg)] px-8 py-3.5 text-center text-sm font-bold text-accent shadow transition hover:bg-[var(--background)] sm:w-auto sm:text-base"
             >
               Create Free Account
             </Link>
             <Link
-              href="/hub"
-              className="w-full rounded-lg border border-white/30 bg-transparent px-8 py-3.5 text-center text-sm font-bold text-white transition hover:bg-white/10 sm:w-auto sm:text-base"
+              href="/discover"
+              className="w-full rounded-lg border border-white/30 bg-transparent px-8 py-3.5 text-center text-sm font-bold text-white transition hover:bg-[var(--card-bg)]/10 sm:w-auto sm:text-base"
             >
               Browse Opportunities
             </Link>

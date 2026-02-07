@@ -118,7 +118,7 @@ export default function EducateProgramsPage() {
       {/* Programs List */}
       {filteredPrograms.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <BookOpenIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <BookOpenIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'all' ? 'No programs yet' : `No ${filter} programs`}
           </h3>

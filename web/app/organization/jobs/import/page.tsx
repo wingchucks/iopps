@@ -90,7 +90,7 @@ export default function ImportJobsPage() {
                             file:mr-4 file:py-2 file:px-4
                             file:rounded-full file:border-0
                             file:text-sm file:font-semibold
-                            file:bg-accent file:text-slate-900
+                            file:bg-accent file:text-[var(--text-primary)]
                             hover:file:bg-[#16cdb8]
                             cursor-pointer
                         "/>
@@ -103,7 +103,7 @@ export default function ImportJobsPage() {
                             <h3 className="text-lg font-bold text-foreground">Preview ({jobs.length} Jobs)</h3>
                             <div className="flex gap-3">
                                 <button onClick={() => setStep("UPLOAD")} className="text-[var(--text-muted)] text-sm hover:text-white">Cancel</button>
-                                <button onClick={handleImport} className="bg-accent text-slate-900 px-6 py-2 rounded-lg font-bold hover:bg-[#16cdb8]">Import as Drafts</button>
+                                <button onClick={handleImport} className="bg-accent text-[var(--text-primary)] px-6 py-2 rounded-lg font-bold hover:bg-[#16cdb8]">Import as Drafts</button>
                             </div>
                         </div>
 
@@ -139,7 +139,7 @@ export default function ImportJobsPage() {
                         <div className="mx-auto w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mb-6 text-accent text-3xl">✓</div>
                         <h3 className="text-2xl font-bold text-foreground mb-2">Import Complete!</h3>
                         <p className="text-[var(--text-muted)] mb-8">Your jobs have been saved as drafts. You can review and publish them from your dashboard.</p>
-                        <Link href="/organization/jobs" className="bg-accent text-slate-900 px-8 py-3 rounded-xl font-bold hover:bg-[#16cdb8]">
+                        <Link href="/organization/jobs" className="bg-accent text-[var(--text-primary)] px-8 py-3 rounded-xl font-bold hover:bg-[#16cdb8]">
                             View My Jobs
                         </Link>
                     </div>

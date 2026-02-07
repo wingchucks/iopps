@@ -156,9 +156,9 @@ export default function SchoolInquiryPage({
     return (
       <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-2xl px-4 py-16">
-          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-8 text-center">
             <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-muted)]" />
-            <h2 className="mt-4 text-xl font-semibold text-slate-900">
+            <h2 className="mt-4 text-xl font-semibold text-[var(--text-primary)]">
               School Not Found
             </h2>
             <p className="mt-2 text-foreground0">
@@ -181,16 +181,16 @@ export default function SchoolInquiryPage({
     return (
       <FeedLayout activeNav="education" fullWidth>
         <div className="mx-auto max-w-2xl px-4 py-16">
-          <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-8 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
-              <CheckCircleIcon className="h-8 w-8 text-emerald-600" />
+          <div className="rounded-2xl border border-emerald-300 bg-[var(--accent-bg)] p-8 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-[var(--accent-bg)] flex items-center justify-center mb-4">
+              <CheckCircleIcon className="h-8 w-8 text-accent" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
               Inquiry Sent!
             </h1>
             <p className="text-foreground0 mb-6">
               Your message has been sent to {school.name}. They will respond to
-              you at <strong className="text-slate-900">{email}</strong>.
+              you at <strong className="text-[var(--text-primary)]">{email}</strong>.
             </p>
             <div className="flex justify-center gap-4">
               <Link
@@ -201,7 +201,7 @@ export default function SchoolInquiryPage({
               </Link>
               <Link
                 href="/education/programs"
-                className="rounded-lg border border-slate-200 px-6 py-3 text-slate-600 hover:bg-slate-100"
+                className="rounded-lg border border-[var(--border)] px-6 py-3 text-[var(--text-secondary)] hover:bg-surface"
               >
                 Explore Programs
               </Link>
@@ -219,7 +219,7 @@ export default function SchoolInquiryPage({
         <div className="mb-8">
           <Link
             href={`/education/schools/${slug}`}
-            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-slate-900 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-[var(--text-primary)] mb-4"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Back to {school.name}
@@ -229,7 +229,7 @@ export default function SchoolInquiryPage({
               <img
                 src={school.logoUrl}
                 alt={school.name}
-                className="h-14 w-14 rounded-xl object-cover border border-slate-200"
+                className="h-14 w-14 rounded-xl object-cover border border-[var(--border)]"
               />
             ) : (
               <div className="h-14 w-14 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -237,7 +237,7 @@ export default function SchoolInquiryPage({
               </div>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">
                 Contact {school.name}
               </h1>
               <p className="text-sm text-foreground0">
@@ -249,11 +249,11 @@ export default function SchoolInquiryPage({
 
         {/* Login prompt for non-authenticated users */}
         {!user && (
-          <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
             <div className="flex items-center gap-3">
               <UserIcon className="h-5 w-5 text-foreground0" />
               <div className="flex-1">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-[var(--text-secondary)]">
                   <Link
                     href={`/login?redirect=/education/schools/${slug}/inquiry${programId ? `?program=${programId}` : ""}`}
                     className="text-[#14B8A6] hover:text-[#0D9488]"
@@ -275,15 +275,15 @@ export default function SchoolInquiryPage({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Contact Information */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
               <EnvelopeIcon className="h-5 w-5 text-[#14B8A6]" />
               Your Information
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Your Name *
                 </label>
                 <input
@@ -291,13 +291,13 @@ export default function SchoolInquiryPage({
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg bg-white border border-slate-200 px-4 py-2 text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+                  className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-4 py-2 text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
                   placeholder="Your full name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Email Address *
                 </label>
                 <input
@@ -305,7 +305,7 @@ export default function SchoolInquiryPage({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg bg-white border border-slate-200 px-4 py-2 text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+                  className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-4 py-2 text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
                   placeholder="your.email@example.com"
                 />
               </div>
@@ -314,8 +314,8 @@ export default function SchoolInquiryPage({
 
           {/* Programs of Interest */}
           {programs.length > 0 && (
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
                 Programs of Interest
               </h2>
               <p className="text-sm text-foreground0 mb-4">
@@ -327,16 +327,16 @@ export default function SchoolInquiryPage({
                 {programs.map((program) => (
                   <label
                     key={program.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer hover:border-[#14B8A6]/50 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] cursor-pointer hover:border-[#14B8A6]/50 transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={interestedPrograms.includes(program.id)}
                       onChange={() => handleProgramToggle(program.id)}
-                      className="h-5 w-5 rounded border-slate-300 bg-slate-100 text-[#14B8A6] focus:ring-[#14B8A6]"
+                      className="h-5 w-5 rounded border-[var(--border)] bg-surface text-[#14B8A6] focus:ring-[#14B8A6]"
                     />
                     <div>
-                      <span className="block text-sm font-medium text-slate-900">
+                      <span className="block text-sm font-medium text-[var(--text-primary)]">
                         {program.name}
                       </span>
                       <span className="text-xs text-foreground0">
@@ -350,21 +350,21 @@ export default function SchoolInquiryPage({
           )}
 
           {/* Additional Details */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
               Additional Details
             </h2>
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Intended Start Term
                   </label>
                   <select
                     value={intendedStartDate}
                     onChange={(e) => setIntendedStartDate(e.target.value)}
-                    className="w-full rounded-lg bg-white border border-slate-200 px-4 py-2 text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+                    className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-4 py-2 text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
                   >
                     <option value="">Select</option>
                     <option value="fall-2025">Fall 2025</option>
@@ -376,13 +376,13 @@ export default function SchoolInquiryPage({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Current Education Level
                   </label>
                   <select
                     value={educationLevel}
                     onChange={(e) => setEducationLevel(e.target.value)}
-                    className="w-full rounded-lg bg-white border border-slate-200 px-4 py-2 text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+                    className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-4 py-2 text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
                   >
                     <option value="">Select</option>
                     <option value="high-school">High School</option>
@@ -399,14 +399,14 @@ export default function SchoolInquiryPage({
           </div>
 
           {/* Message */}
-          <div className="rounded-xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
               Your Message
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Subject *
                 </label>
                 <input
@@ -414,13 +414,13 @@ export default function SchoolInquiryPage({
                   required
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full rounded-lg bg-white border border-slate-200 px-4 py-2 text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+                  className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-4 py-2 text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
                   placeholder="e.g., Questions about admissions"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   Message *
                 </label>
                 <textarea
@@ -428,7 +428,7 @@ export default function SchoolInquiryPage({
                   rows={5}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full rounded-lg bg-white border border-slate-200 px-4 py-2 text-slate-900 focus:border-[#14B8A6] focus:outline-none"
+                  className="w-full rounded-lg bg-[var(--card-bg)] border border-[var(--border)] px-4 py-2 text-[var(--text-primary)] focus:border-[#14B8A6] focus:outline-none"
                   placeholder="Tell us about yourself and what you'd like to know..."
                 />
               </div>
@@ -439,7 +439,7 @@ export default function SchoolInquiryPage({
           <div className="flex items-center justify-end gap-4">
             <Link
               href={`/education/schools/${slug}`}
-              className="rounded-lg border border-slate-200 px-6 py-2 text-slate-600 hover:bg-slate-100"
+              className="rounded-lg border border-[var(--border)] px-6 py-2 text-[var(--text-secondary)] hover:bg-surface"
             >
               Cancel
             </Link>

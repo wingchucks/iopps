@@ -44,7 +44,7 @@ export default function Error({
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <button
                         onClick={reset}
-                        className="rounded-full bg-accent px-6 py-3 font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                        className="rounded-full bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
                     >
                         Try Again
                     </button>
@@ -58,7 +58,7 @@ export default function Error({
 
                 {error.digest && (
                     <div className="mt-8">
-                        <p className="text-xs text-slate-600">Error ID: {error.digest}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">Error ID: {error.digest}</p>
                     </div>
                 )}
 

@@ -321,7 +321,7 @@ function MemberOnboarding() {
                       openToWork ? "bg-accent" : "bg-[var(--border)]"
                     }`}
                   >
-                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] shadow transition-transform ${
                       openToWork ? "translate-x-6" : "translate-x-1"
                     }`} />
                   </button>
@@ -371,7 +371,7 @@ function MemberOnboarding() {
                       willingToRelocate ? "bg-accent" : "bg-[var(--border)]"
                     }`}
                   >
-                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] shadow transition-transform ${
                       willingToRelocate ? "translate-x-6" : "translate-x-1"
                     }`} />
                   </button>

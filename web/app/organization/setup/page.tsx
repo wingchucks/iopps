@@ -111,7 +111,7 @@ export default function EmployerSetupPage() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-400"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-teal-400"
           >
             Login
           </Link>
@@ -267,7 +267,7 @@ export default function EmployerSetupPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>

@@ -82,7 +82,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="text-center max-w-lg">
-        <div className="inline-flex items-center justify-center rounded-full bg-slate-100 p-6">
+        <div className="inline-flex items-center justify-center rounded-full bg-surface p-6">
           {isNetworkError ? (
             <BuildingOffice2Icon className="h-16 w-16 text-foreground0" />
           ) : (
@@ -90,7 +90,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
           )}
         </div>
 
-        <h1 className="mt-6 text-2xl font-bold text-slate-900">
+        <h1 className="mt-6 text-2xl font-bold text-[var(--text-primary)]">
           {title}
         </h1>
 
@@ -111,7 +111,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
             href="/organizations"
             className={`rounded-full px-6 py-3 font-semibold transition ${
               showRetry
-                ? "border border-slate-200 text-slate-800 hover:border-accent hover:text-teal-600"
+                ? "border border-[var(--border)] text-[var(--text-primary)] hover:border-accent hover:text-accent"
                 : "bg-accent text-white hover:bg-accent"
             }`}
           >
@@ -123,7 +123,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
           <div className="mt-6">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm text-accent hover:text-teal-600 transition"
+              className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent transition"
             >
               <ArrowLeftIcon className="h-4 w-4" />
               Log in to your account
@@ -132,7 +132,7 @@ export default function BusinessProfileError({ error, reset }: ErrorProps) {
         )}
 
         {error.digest && (
-          <p className="mt-8 text-xs text-slate-600">Error ID: {error.digest}</p>
+          <p className="mt-8 text-xs text-[var(--text-secondary)]">Error ID: {error.digest}</p>
         )}
 
         <div className="mt-4">

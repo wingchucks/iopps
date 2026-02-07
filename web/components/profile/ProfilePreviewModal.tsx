@@ -201,7 +201,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
             ) : !showBio && profile.bio ? (
               <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
                 <h4 className="mb-2 text-sm font-semibold text-foreground0">About</h4>
-                <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
+                <p className="text-sm text-[var(--text-secondary)] italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
@@ -223,7 +223,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
             ) : !showSkills && profile.skills.length > 0 ? (
               <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
                 <h4 className="mb-2 text-sm font-semibold text-foreground0">Skills</h4>
-                <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
+                <p className="text-sm text-[var(--text-secondary)] italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
@@ -246,7 +246,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
             ) : !showExperience && profile.experience.length > 0 ? (
               <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
                 <h4 className="mb-2 text-sm font-semibold text-foreground0">Work Experience</h4>
-                <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
+                <p className="text-sm text-[var(--text-secondary)] italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
@@ -269,7 +269,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
             ) : !showEducation && profile.education.length > 0 ? (
               <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
                 <h4 className="mb-2 text-sm font-semibold text-foreground0">Education</h4>
-                <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
+                <p className="text-sm text-[var(--text-secondary)] italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
@@ -289,7 +289,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
             ) : !showPortfolio && profile.portfolio.length > 0 ? (
               <div className="mb-6 rounded-xl border border-[var(--card-border)] bg-slate-800/30 p-4 opacity-50">
                 <h4 className="mb-2 text-sm font-semibold text-foreground0">Portfolio</h4>
-                <p className="text-sm text-slate-600 italic">Hidden from this viewer</p>
+                <p className="text-sm text-[var(--text-secondary)] italic">Hidden from this viewer</p>
               </div>
             ) : null}
 
@@ -297,7 +297,7 @@ export function ProfilePreviewModal({ profile, fieldPrivacy, onClose }: ProfileP
             {!profile.bio && profile.skills.length === 0 && profile.experience.length === 0 && (
               <div className="rounded-xl border border-dashed border-[var(--card-border)] bg-slate-800/30 p-8 text-center">
                 <p className="text-foreground0">Your profile looks a bit empty.</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
                   Add more information to help others learn about you.
                 </p>
               </div>

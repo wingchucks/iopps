@@ -107,7 +107,7 @@ export default function ProfileNudge() {
         </div>
         <button
           onClick={handleDismiss}
-          className="text-slate-600 hover:text-[var(--text-muted)] transition-colors"
+          className="text-[var(--text-secondary)] hover:text-[var(--text-muted)] transition-colors"
         >
           <X className="h-4 w-4" />
         </button>

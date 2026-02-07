@@ -160,7 +160,7 @@ export default function TrainingTab() {
 
             {programs.length === 0 ? (
                 <div className="rounded-2xl border border-[var(--card-border)] bg-slate-800/30 p-12 text-center">
-                    <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
+                    <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
                     <h3 className="mt-4 text-lg font-medium text-white">No programs yet</h3>
                     <p className="mt-2 text-[var(--text-muted)]">Create your first training program to start accepting enrollments.</p>
                 </div>
@@ -288,7 +288,7 @@ export default function TrainingTab() {
                                     <div className="flex items-center h-10">
                                         <input
                                             type="checkbox"
-                                            className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-teal-600 focus:ring-teal-500"
+                                            className="h-5 w-5 rounded border-[var(--card-border)] bg-surface text-accent focus:ring-teal-500"
                                             checked={formData.active}
                                             onChange={e => setFormData({ ...formData, active: e.target.checked })}
                                         />

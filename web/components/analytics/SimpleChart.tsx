@@ -109,7 +109,7 @@ export function LineChart({
                 y2={y}
                 stroke="currentColor"
                 strokeWidth="0.2"
-                className="text-slate-600"
+                className="text-[var(--text-secondary)]"
               />
             ))}
           </g>

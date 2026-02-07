@@ -670,7 +670,7 @@ export default function OrganizationDashboardHome() {
             ) : (
               <>
                 <Link
-                  href="/hub"
+                  href="/discover"
                   className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-teal-500/10 to-slate-900/50 border border-accent/20 hover:border-accent/40 transition-colors"
                 >
                   <SparklesIcon className="w-5 h-5 text-accent" />

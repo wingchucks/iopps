@@ -56,11 +56,11 @@ export default function LeaderboardPage() {
   return (
     <FeedLayout activeNav="community" fullWidth>
       {/* Header */}
-      <div className="border-b border-slate-200 bg-white">
+      <div className="border-b border-[var(--border)] bg-[var(--card-bg)]">
         <div className="container max-w-6xl mx-auto px-4 py-6">
           <Link
             href="/members"
-            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-slate-900 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-[var(--text-primary)] mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Community
@@ -70,7 +70,7 @@ export default function LeaderboardPage() {
               <Trophy className="h-8 w-8 text-amber-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Community Leaderboard</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Community Leaderboard</h1>
               <p className="text-foreground0 text-sm">
                 Recognize and celebrate our most engaged community members
               </p>
@@ -83,7 +83,7 @@ export default function LeaderboardPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Leaderboard */}
           <div className="lg:col-span-2">
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
               <CommunityLeaderboard maxDisplay={25} showFilters />
             </div>
           </div>
@@ -91,16 +91,16 @@ export default function LeaderboardPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Monthly Spotlight */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Crown className="h-5 w-5 text-yellow-400" />
-                <h2 className="font-semibold text-slate-900">Top Performers</h2>
+                <h2 className="font-semibold text-[var(--text-primary)]">Top Performers</h2>
               </div>
 
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 rounded-lg bg-slate-100 animate-pulse" />
+                    <div key={i} className="h-16 rounded-lg bg-surface animate-pulse" />
                   ))}
                 </div>
               ) : spotlight.length > 0 ? (
@@ -109,10 +109,10 @@ export default function LeaderboardPage() {
                     <Link
                       key={entry.userId}
                       href={`/member/${entry.userId}`}
-                      className={`flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-slate-100 ${
+                      className={`flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-surface ${
                         index === 0
                           ? "bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20"
-                          : "border border-slate-200"
+                          : "border border-[var(--border)]"
                       }`}
                     >
                       <div className="relative">
@@ -129,7 +129,7 @@ export default function LeaderboardPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-900 truncate">
+                        <p className="font-medium text-[var(--text-primary)] truncate">
                           {entry.displayName}
                         </p>
                         {entry.indigenousAffiliation && (
@@ -139,7 +139,7 @@ export default function LeaderboardPage() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-slate-900">{entry.score}</p>
+                        <p className="font-bold text-[var(--text-primary)]">{entry.score}</p>
                         <p className="text-xs text-foreground0">pts</p>
                       </div>
                     </Link>
@@ -153,16 +153,16 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Rising Stars */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="h-5 w-5 text-accent" />
-                <h2 className="font-semibold text-slate-900">Rising Stars</h2>
+                <h2 className="font-semibold text-[var(--text-primary)]">Rising Stars</h2>
               </div>
 
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-14 rounded-lg bg-slate-100 animate-pulse" />
+                    <div key={i} className="h-14 rounded-lg bg-surface animate-pulse" />
                   ))}
                 </div>
               ) : risingStars.length > 0 ? (
@@ -171,7 +171,7 @@ export default function LeaderboardPage() {
                     <Link
                       key={entry.userId}
                       href={`/member/${entry.userId}`}
-                      className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] hover:bg-surface transition-colors"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={entry.avatarUrl} />
@@ -180,7 +180,7 @@ export default function LeaderboardPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-900 truncate text-sm">
+                        <p className="font-medium text-[var(--text-primary)] truncate text-sm">
                           {entry.displayName}
                         </p>
                         <p className="text-xs text-foreground0">
@@ -199,31 +199,31 @@ export default function LeaderboardPage() {
             </div>
 
             {/* How Points Work */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="h-5 w-5 text-purple-400" />
-                <h2 className="font-semibold text-slate-900">How Points Work</h2>
+                <h2 className="font-semibold text-[var(--text-primary)]">How Points Work</h2>
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-foreground0">
                   <span>Per connection</span>
-                  <span className="text-slate-900">+10 pts</span>
+                  <span className="text-[var(--text-primary)]">+10 pts</span>
                 </div>
                 <div className="flex justify-between text-foreground0">
                   <span>Per post</span>
-                  <span className="text-slate-900">+15 pts</span>
+                  <span className="text-[var(--text-primary)]">+15 pts</span>
                 </div>
                 <div className="flex justify-between text-foreground0">
                   <span>Per streak day</span>
-                  <span className="text-slate-900">+5 pts</span>
+                  <span className="text-[var(--text-primary)]">+5 pts</span>
                 </div>
                 <div className="flex justify-between text-foreground0">
                   <span>Badge points</span>
-                  <span className="text-slate-900">Varies</span>
+                  <span className="text-[var(--text-primary)]">Varies</span>
                 </div>
                 <div className="flex justify-between text-foreground0">
                   <span>Per profile view</span>
-                  <span className="text-slate-900">+0.5 pts</span>
+                  <span className="text-[var(--text-primary)]">+0.5 pts</span>
                 </div>
               </div>
               <p className="mt-4 text-xs text-foreground0">

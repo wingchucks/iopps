@@ -317,7 +317,7 @@ export default function IndigenousVerificationRequest({
           <button
             type="submit"
             disabled={loading || (!isIndigenousOwned && !isIndigenousLed)}
-            className="flex-1 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Submitting..." : "Submit Verification Request"}
           </button>

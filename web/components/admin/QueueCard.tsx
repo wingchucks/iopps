@@ -153,7 +153,7 @@ export function QueueCard({
           </div>
         </div>
         {href && (
-          <ArrowRightIcon className="h-4 w-4 text-slate-600" aria-hidden="true" />
+          <ArrowRightIcon className="h-4 w-4 text-[var(--text-secondary)]" aria-hidden="true" />
         )}
       </div>
 

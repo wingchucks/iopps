@@ -507,7 +507,7 @@ export default function AdminEmailsPage() {
                     }
                   }}
                   disabled={sendingCampaign || !campaignSubject || !campaignContent}
-                  className="px-6 py-3 bg-accent text-slate-900 font-semibold rounded-lg hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-3 bg-accent text-[var(--text-primary)] font-semibold rounded-lg hover:bg-[#0D9488] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {sendingCampaign ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-white" />

@@ -27,8 +27,8 @@ export default function ConferenceVenue({
   )}`;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-      <h2 className="text-xl font-bold text-slate-700">Venue & Travel</h2>
+    <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
+      <h2 className="text-xl font-bold text-[var(--text-secondary)]">Venue & Travel</h2>
       <p className="mt-1 text-sm text-foreground0">
         Everything you need to know about getting there
       </p>
@@ -37,7 +37,7 @@ export default function ConferenceVenue({
         {/* Map & Location */}
         <div className="space-y-4">
           {/* Map Embed or Placeholder */}
-          <div className="relative aspect-video overflow-hidden rounded-xl border border-slate-300 bg-slate-50">
+          <div className="relative aspect-video overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--background)]">
             {venue.mapUrl ? (
               <iframe
                 src={venue.mapUrl}
@@ -73,7 +73,7 @@ export default function ConferenceVenue({
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-slate-600">
+                <span className="text-sm font-medium text-[var(--text-secondary)]">
                   View on Google Maps
                 </span>
               </a>
@@ -81,8 +81,8 @@ export default function ConferenceVenue({
           </div>
 
           {/* Venue Card */}
-          <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
-            <h3 className="font-semibold text-slate-800">{venue.name}</h3>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
+            <h3 className="font-semibold text-[var(--text-primary)]">{venue.name}</h3>
             {fullAddress && (
               <p className="mt-1 text-sm text-foreground0">{fullAddress}</p>
             )}
@@ -118,7 +118,7 @@ export default function ConferenceVenue({
         <div className="space-y-4">
           {/* Parking */}
           {venue.parkingInfo && (
-            <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
                   <svg
@@ -136,7 +136,7 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-700">Parking</h4>
+                  <h4 className="font-medium text-[var(--text-secondary)]">Parking</h4>
                   <p className="text-sm text-foreground0">{venue.parkingInfo}</p>
                 </div>
               </div>
@@ -145,7 +145,7 @@ export default function ConferenceVenue({
 
           {/* Public Transit */}
           {venue.transitInfo && (
-            <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
                   <svg
@@ -163,7 +163,7 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-700">Public Transit</h4>
+                  <h4 className="font-medium text-[var(--text-secondary)]">Public Transit</h4>
                   <p className="text-sm text-foreground0">{venue.transitInfo}</p>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function ConferenceVenue({
 
           {/* Nearby Hotels */}
           {venue.nearbyHotels && (
-            <div className="rounded-xl border border-slate-300 bg-slate-50 p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
                   <svg
@@ -190,7 +190,7 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-700">Nearby Hotels</h4>
+                  <h4 className="font-medium text-[var(--text-secondary)]">Nearby Hotels</h4>
                   <p className="text-sm text-foreground0">{venue.nearbyHotels}</p>
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default function ConferenceVenue({
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-700">Accessibility</h4>
+                  <h4 className="font-medium text-[var(--text-secondary)]">Accessibility</h4>
                   {venue.accessibilityInfo && (
                     <p className="mt-1 text-sm text-foreground0">
                       {venue.accessibilityInfo}

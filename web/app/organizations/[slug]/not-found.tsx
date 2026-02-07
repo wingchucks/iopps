@@ -6,11 +6,11 @@ export default function OrganizationNotFound() {
   return (
     <FeedLayout activeNav="organizations">
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="mx-auto h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center mb-6">
+        <div className="mx-auto h-20 w-20 rounded-full bg-surface flex items-center justify-center mb-6">
           <BuildingOffice2Icon className="h-10 w-10 text-[var(--text-muted)]" />
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Organization Not Found</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Organization Not Found</h1>
         <p className="text-foreground0 text-center max-w-md mb-8">
           The organization you&apos;re looking for doesn&apos;t exist or may have been removed.
         </p>
@@ -24,7 +24,7 @@ export default function OrganizationNotFound() {
           </Link>
           <Link
             href="/"
-            className="rounded-full bg-slate-100 px-6 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-200 transition-colors"
+            className="rounded-full bg-surface px-6 py-2.5 text-sm font-medium text-[var(--text-primary)] hover:bg-surface transition-colors"
           >
             Go Home
           </Link>

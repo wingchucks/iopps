@@ -137,7 +137,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading || googleLoading}
-          className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">

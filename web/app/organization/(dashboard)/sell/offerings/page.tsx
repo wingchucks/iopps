@@ -139,7 +139,7 @@ export default function SellOfferingsPage() {
       {/* Offerings Grid */}
       {filteredOfferings.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <CubeIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <CubeIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">No offerings yet</h3>
           <p className="text-foreground0 max-w-md mx-auto mb-6">
             Add offerings to help customers discover what you offer. You can add products or services.
@@ -179,9 +179,9 @@ export default function SellOfferingsPage() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     {offering.type === 'product' ? (
-                      <CubeIcon className="w-12 h-12 text-slate-700" />
+                      <CubeIcon className="w-12 h-12 text-[var(--text-secondary)]" />
                     ) : (
-                      <WrenchScrewdriverIcon className="w-12 h-12 text-slate-700" />
+                      <WrenchScrewdriverIcon className="w-12 h-12 text-[var(--text-secondary)]" />
                     )}
                   </div>
                 )}

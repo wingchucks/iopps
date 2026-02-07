@@ -147,7 +147,7 @@ export default function HostEventsPage() {
       {/* Events List */}
       {filteredEvents.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <SparklesIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <SparklesIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
             {filter === 'all' ? 'No events yet' : `No ${filter} events`}
           </h3>
@@ -179,7 +179,7 @@ export default function HostEventsPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/30 to-slate-900">
-                      <MusicalNoteIcon className="w-12 h-12 text-slate-700" />
+                      <MusicalNoteIcon className="w-12 h-12 text-[var(--text-secondary)]" />
                     </div>
                   )}
 

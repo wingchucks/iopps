@@ -254,7 +254,7 @@ function AdminMembersContent() {
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "all"
-                ? "bg-accent text-slate-900"
+                ? "bg-accent text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
             }`}
           >
@@ -264,7 +264,7 @@ function AdminMembersContent() {
             onClick={() => setFilter("with_resume")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "with_resume"
-                ? "bg-accent text-slate-900"
+                ? "bg-accent text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-accent"
             }`}
           >
@@ -274,7 +274,7 @@ function AdminMembersContent() {
             onClick={() => setFilter("with_skills")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "with_skills"
-                ? "bg-purple-500 text-slate-900"
+                ? "bg-purple-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-purple-500"
             }`}
           >
@@ -284,7 +284,7 @@ function AdminMembersContent() {
             onClick={() => setFilter("recent")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               filter === "recent"
-                ? "bg-amber-500 text-slate-900"
+                ? "bg-amber-500 text-[var(--text-primary)]"
                 : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
             }`}
           >
@@ -412,7 +412,7 @@ function AdminMembersContent() {
                                 Joined: {new Date(member.userCreatedAt.seconds * 1000).toLocaleDateString()}
                               </span>
                             )}
-                            <span className="text-slate-600">ID: {member.userId}</span>
+                            <span className="text-[var(--text-secondary)]">ID: {member.userId}</span>
                           </div>
                         </div>
                       </div>

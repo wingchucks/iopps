@@ -41,7 +41,7 @@ export default function Error({
             <div className="flex gap-4">
                 <button
                     onClick={reset}
-                    className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-accent/90"
+                    className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-accent/90"
                 >
                     Try Again
                 </button>

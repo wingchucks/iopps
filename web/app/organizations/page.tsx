@@ -154,7 +154,7 @@ export default function OrganizationsPage() {
               <Link
                 key={org.id}
                 href={org.slug ? `/organizations/${org.slug}` : `/employers/${org.id}`}
-                className="group relative block overflow-hidden rounded-2xl bg-white border border-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
+                className="group relative block overflow-hidden rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
               >
                 {/* Banner/Cover */}
                 <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
@@ -172,7 +172,7 @@ export default function OrganizationsPage() {
 
                   {/* Logo */}
                   <div className="absolute -bottom-8 left-4">
-                    <div className="h-16 w-16 overflow-hidden rounded-xl border-4 border-white bg-white shadow-xl">
+                    <div className="h-16 w-16 overflow-hidden rounded-xl border-4 border-white bg-[var(--card-bg)] shadow-xl">
                       {org.logoUrl ? (
                         <Image
                           src={org.logoUrl}
@@ -193,7 +193,7 @@ export default function OrganizationsPage() {
                 {/* Content */}
                 <div className="p-4 pt-10">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-slate-900 group-hover:text-[#14B8A6] transition-colors line-clamp-1">
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] group-hover:text-[#14B8A6] transition-colors line-clamp-1">
                       {org.organizationName}
                     </h3>
                     {org.status === "approved" && (
@@ -216,7 +216,7 @@ export default function OrganizationsPage() {
                       </span>
                     )}
                     {org.companySize && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-[var(--text-secondary)]">
                         <UsersIcon className="h-3 w-3" />
                         {org.companySize}
                       </span>
@@ -239,8 +239,8 @@ export default function OrganizationsPage() {
         )}
 
         {/* CTA Section */}
-        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 p-8 sm:p-12 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <section className="mt-16 rounded-3xl bg-gradient-to-r from-slate-100 to-slate-50 border border-[var(--border)] p-8 sm:p-12 text-center">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
             Looking for Opportunities?
           </h2>
           <p className="mt-3 text-foreground0 max-w-2xl mx-auto">
@@ -256,7 +256,7 @@ export default function OrganizationsPage() {
             </Link>
             <Link
               href="/careers/programs"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3 text-lg font-semibold text-slate-900 transition-all hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-8 py-3 text-lg font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--background)]"
             >
               View Training Programs
             </Link>

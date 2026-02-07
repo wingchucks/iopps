@@ -268,7 +268,7 @@ export default function MemberAlertsPage() {
                 resetForm();
                 setShowCreateForm(true);
               }}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
             >
               Create Alert
             </button>
@@ -438,7 +438,7 @@ export default function MemberAlertsPage() {
                 <button
                   type="submit"
                   disabled={processing}
-                  className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
+                  className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488] disabled:opacity-50"
                 >
                   {processing
                     ? "Saving..."
@@ -504,7 +504,7 @@ export default function MemberAlertsPage() {
           {alerts.length === 0 && (
             <div className="rounded-2xl border border-[var(--card-border)] bg-slate-900/60 p-12 text-center">
               <svg
-                className="mx-auto h-12 w-12 text-slate-600"
+                className="mx-auto h-12 w-12 text-[var(--text-secondary)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -527,7 +527,7 @@ export default function MemberAlertsPage() {
                   resetForm();
                   setShowCreateForm(true);
                 }}
-                className="mt-6 rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                className="mt-6 rounded-md bg-accent px-6 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
               >
                 Create Your First Alert
               </button>

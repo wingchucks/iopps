@@ -27,7 +27,7 @@ interface FeedLayoutProps {
 }
 
 const NAV_ITEMS: { id: NavId; icon: IconName; label: string; href: string }[] = [
-  { id: "feed", icon: "home", label: "Home Feed", href: "/hub" },
+  { id: "feed", icon: "home", label: "Home Feed", href: "/discover" },
   { id: "careers", icon: "briefcase", label: "Careers", href: "/careers" },
   { id: "education", icon: "academic", label: "Education", href: "/education" },
   { id: "events", icon: "calendar", label: "Events", href: "/community" },
@@ -36,7 +36,7 @@ const NAV_ITEMS: { id: NavId; icon: IconName; label: string; href: string }[] = 
 ];
 
 const BOTTOM_NAV: { icon: IconName; label: string; href: string | ((loggedIn: boolean) => string) }[] = [
-  { icon: "home", label: "Feed", href: "/hub" },
+  { icon: "home", label: "Feed", href: "/discover" },
   { icon: "briefcase", label: "Jobs", href: "/careers" },
   { icon: "search", label: "Search", href: "/search" },
   { icon: "bell", label: "Alerts", href: (loggedIn) => loggedIn ? "/member/dashboard?tab=alerts" : "/login" },
@@ -64,15 +64,15 @@ export function FeedLayout({
 
   // Auto-detect active nav from pathname if not explicitly set
   const resolvedActiveNav: NavId | undefined = activeNav ?? (() => {
-    if (pathname === "/hub") return "feed";
-    const match = NAV_ITEMS.find((item) => item.href !== "/hub" && pathname?.startsWith(item.href));
+    if (pathname === "/discover") return "feed";
+    const match = NAV_ITEMS.find((item) => item.href !== "/discover" && pathname?.startsWith(item.href));
     return match?.id;
   })();
 
   const isNavActive = (id: NavId) => resolvedActiveNav === id;
 
   const isBottomNavActive = (href: string) => {
-    if (href === "/hub") return pathname === "/hub";
+    if (href === "/discover") return pathname === "/discover";
     return pathname?.startsWith(href) ?? false;
   };
 
@@ -81,7 +81,7 @@ export function FeedLayout({
       {/* Sticky Header */}
       <header className="feed-header">
         <div className="feed-header-inner">
-          <Link href="/hub" className="feed-logo">
+          <Link href="/discover" className="feed-logo">
             <span className="feed-logo-text">IOPPS</span>
             <span className="feed-logo-tagline">Empowering Indigenous Success</span>
           </Link>

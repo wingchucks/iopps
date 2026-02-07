@@ -270,7 +270,7 @@ export default function AnalyticsDashboardPage() {
                       key={employer.id}
                       className="group flex items-center gap-4 rounded-lg border border-[var(--card-border)]/50 bg-slate-900/30 p-4 transition hover:border-[#14B8A6]/50"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#14B8A6] to-[#0D9488] text-sm font-bold text-slate-900 shadow-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#14B8A6] to-[#0D9488] text-sm font-bold text-[var(--text-primary)] shadow-lg">
                         {index + 1}
                       </div>
                       <div className="flex-1">
@@ -343,7 +343,7 @@ export default function AnalyticsDashboardPage() {
                           <p className="mt-0.5 text-xs text-foreground0">
                             {activity.description}
                           </p>
-                          <div className="mt-2 flex items-center gap-1 text-xs text-slate-600">
+                          <div className="mt-2 flex items-center gap-1 text-xs text-[var(--text-secondary)]">
                             <ClockIcon className="h-3 w-3" />
                             <span>{timeAgo}</span>
                           </div>

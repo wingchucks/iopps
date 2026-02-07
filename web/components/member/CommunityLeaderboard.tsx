@@ -76,7 +76,7 @@ export default function CommunityLeaderboard({
       case 2:
         return <Medal className="h-5 w-5 text-[var(--text-secondary)]" />;
       case 3:
-        return <Medal className="h-5 w-5 text-amber-600" />;
+        return <Medal className="h-5 w-5 text-[var(--amber)]" />;
       default:
         return <span className="text-foreground0 font-medium">#{rank}</span>;
     }
@@ -115,7 +115,7 @@ export default function CommunityLeaderboard({
   if (!leaderboard || leaderboard.entries.length === 0) {
     return (
       <div className="text-center py-8">
-        <Trophy className="h-12 w-12 mx-auto text-slate-600 mb-3" />
+        <Trophy className="h-12 w-12 mx-auto text-[var(--text-secondary)] mb-3" />
         <p className="text-[var(--text-muted)]">No leaderboard data yet</p>
         <p className="text-sm text-foreground0 mt-1">
           Be one of the first to climb the ranks!

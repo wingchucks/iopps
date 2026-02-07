@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
         <p className="text-xs uppercase tracking-[0.4em] text-[#14B8A6]">
           Password Reset
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-slate-900">
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl text-[var(--text-primary)]">
           Forgot your password?
         </h1>
         <p className="mt-3 text-sm text-foreground0 sm:text-base">
@@ -65,9 +65,9 @@ export default function ForgotPasswordPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 shadow-sm">
         <div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-medium text-[var(--text-secondary)]">
             Email address
           </label>
           <input
@@ -76,14 +76,14 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your.email@example.com"
-            className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-accent focus:outline-none"
+            className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-accent focus:outline-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? "Sending..." : "Send reset link"}
         </button>
@@ -104,8 +104,8 @@ export default function ForgotPasswordPage() {
         </div>
       </form>
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs text-foreground0">
-        <p className="font-semibold text-slate-600 mb-2">Need help?</p>
+      <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--background)] p-4 text-xs text-foreground0">
+        <p className="font-semibold text-[var(--text-secondary)] mb-2">Need help?</p>
         <p>
           If you&apos;re having trouble resetting your password, please{" "}
           <Link href="/contact" className="text-[#14B8A6] hover:underline">

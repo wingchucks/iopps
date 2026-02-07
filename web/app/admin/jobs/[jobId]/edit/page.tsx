@@ -462,7 +462,7 @@ export default function AdminJobEditPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-xl bg-accent px-8 py-3 font-semibold text-slate-900 transition hover:bg-[#16cdb8] disabled:opacity-50"
+            className="rounded-xl bg-accent px-8 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#16cdb8] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

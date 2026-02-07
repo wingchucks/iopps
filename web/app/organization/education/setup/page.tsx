@@ -471,7 +471,7 @@ export default function SchoolSetupPage() {
                   />
                 ) : (
                   <div className="h-24 w-24 rounded-xl bg-surface border border-[var(--card-border)] flex items-center justify-center">
-                    <AcademicCapIcon className="h-10 w-10 text-slate-600" />
+                    <AcademicCapIcon className="h-10 w-10 text-[var(--text-secondary)]" />
                   </div>
                 )}
                 <div className="flex-1">
@@ -510,7 +510,7 @@ export default function SchoolSetupPage() {
               ) : (
                 <div className="h-40 rounded-xl bg-surface border border-[var(--card-border)] flex items-center justify-center mb-3">
                   <div className="text-center">
-                    <PhotoIcon className="mx-auto h-10 w-10 text-slate-600" />
+                    <PhotoIcon className="mx-auto h-10 w-10 text-[var(--text-secondary)]" />
                     <p className="mt-2 text-sm text-foreground0">
                       No banner uploaded
                     </p>

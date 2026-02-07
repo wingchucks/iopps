@@ -294,7 +294,7 @@ export default function BillingPage() {
           </div>
         ) : (
           <div className="bg-slate-900/30 rounded-xl p-6 text-center">
-            <SparklesIcon className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <SparklesIcon className="w-10 h-10 text-[var(--text-secondary)] mx-auto mb-3" />
             <p className="text-[var(--text-muted)] mb-4">No active subscription</p>
             <Link
               href="/pricing#employers"
@@ -382,7 +382,7 @@ export default function BillingPage() {
           </div>
         ) : payments.length === 0 ? (
           <div className="text-center py-8 text-foreground0">
-            <DocumentTextIcon className="w-10 h-10 mx-auto mb-3 text-slate-600" />
+            <DocumentTextIcon className="w-10 h-10 mx-auto mb-3 text-[var(--text-secondary)]" />
             <p>No payments yet</p>
             <p className="text-sm mt-1">
               Your payment history will appear here

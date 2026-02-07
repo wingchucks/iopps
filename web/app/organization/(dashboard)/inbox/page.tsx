@@ -104,7 +104,7 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
           <p className="text-sm text-foreground0 line-clamp-2">{item.preview}</p>
 
           {item.relatedEntity && (
-            <p className="text-xs text-slate-600 mt-2">
+            <p className="text-xs text-[var(--text-secondary)] mt-2">
               Re: {item.relatedEntity.title}
             </p>
           )}
@@ -114,7 +114,7 @@ function InboxItemCard({ item, onMarkRead }: InboxItemCardProps) {
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <span className="text-xs text-foreground0">{formattedTime}</span>
           {item.isRead ? (
-            <EnvelopeOpenIcon className="w-4 h-4 text-slate-600" />
+            <EnvelopeOpenIcon className="w-4 h-4 text-[var(--text-secondary)]" />
           ) : (
             <EnvelopeIcon className="w-4 h-4 text-accent" />
           )}
@@ -250,7 +250,7 @@ export default function InboxPage() {
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="bg-card border border-card-border rounded-2xl p-12 text-center">
-          <InboxIcon className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <InboxIcon className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">No messages yet</h3>
           <p className="text-foreground0 max-w-md mx-auto">
             When people contact you, apply for jobs, or inquire about your programs, their messages will appear here.

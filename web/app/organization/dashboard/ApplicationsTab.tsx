@@ -108,7 +108,7 @@ export default function ApplicationsTab() {
 
       {/* Stats */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="rounded-3xl bg-gradient-to-br from-slate-500/10 to-slate-600/10 p-6 shadow-xl shadow-slate-900/20">
+        <div className="rounded-3xl bg-gradient-to-br from-slate-500/10 to-slate-600/10 p-6 shadow-xl shadow-sm/20">
           <p className="text-xs uppercase tracking-[0.3em] text-foreground0">Total</p>
           <h3 className="mt-2 text-3xl font-semibold text-white">
             {statusCounts.total}
@@ -149,7 +149,7 @@ export default function ApplicationsTab() {
           </h3>
         </div>
 
-        <div className="rounded-3xl bg-gradient-to-br from-slate-600/10 to-slate-700/10 p-6 shadow-xl shadow-slate-900/20">
+        <div className="rounded-3xl bg-gradient-to-br from-slate-600/10 to-slate-700/10 p-6 shadow-xl shadow-sm/20">
           <p className="text-xs uppercase tracking-[0.3em] text-foreground0">
             Rejected
           </p>

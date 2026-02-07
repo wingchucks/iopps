@@ -130,7 +130,7 @@ export default function OnboardingChecklist({
             <div
               className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
                 item.completed
-                  ? "bg-accent text-slate-900"
+                  ? "bg-accent text-[var(--text-primary)]"
                   : "bg-surface text-[var(--text-muted)]"
               }`}
             >

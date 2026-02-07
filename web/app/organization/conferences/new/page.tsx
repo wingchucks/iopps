@@ -82,7 +82,7 @@ export default function NewConferencePage() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Login
           </Link>
@@ -103,7 +103,7 @@ export default function NewConferencePage() {
         <div className="flex gap-3">
           <Link
             href="/register?role=employer"
-            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+            className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
           >
             Register as Employer
           </Link>
@@ -132,7 +132,7 @@ export default function NewConferencePage() {
             setError(null);
             setCreating(false);
           }}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Try Again
         </button>

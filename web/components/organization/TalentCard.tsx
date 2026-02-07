@@ -78,7 +78,7 @@ export default function TalentCard({ member, onInvite }: TalentCardProps) {
 
                 <button
                     onClick={() => onInvite && onInvite(member.id)}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
                 >
                     Contact / Invite
                 </button>

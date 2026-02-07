@@ -101,7 +101,7 @@ export function TrustedPartners() {
                   className="group relative flex-shrink-0 flex items-center justify-center
                     h-28 w-52 sm:h-36 sm:w-72
                     rounded-xl sm:rounded-2xl
-                    bg-slate-50 border border-slate-200
+                    bg-[var(--background)] border border-[var(--border)]
                     p-4 sm:p-6
                     shadow-lg shadow-black/10
                     transition-all duration-300 ease-out
@@ -138,7 +138,7 @@ export function TrustedPartners() {
           </p>
           <Link
             href={buttonHref}
-            className="group relative inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-slate-900 transition-all duration-200 bg-teal-400 rounded-full hover:bg-teal-300 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 focus:ring-offset-background"
+            className="group relative inline-flex items-center justify-center px-8 py-3 text-sm font-bold text-[var(--text-primary)] transition-all duration-200 bg-teal-400 rounded-full hover:bg-teal-300 hover:shadow-[0_0_20px_rgba(20,184,166,0.4)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 focus:ring-offset-background"
           >
             {buttonText}
             <svg

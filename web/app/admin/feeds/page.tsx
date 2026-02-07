@@ -448,7 +448,7 @@ export default function AdminFeedsPage() {
                 </div>
                 <button
                     onClick={openAddModal}
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
                 >
                     Add new auto import
                 </button>
@@ -458,7 +458,7 @@ export default function AdminFeedsPage() {
             <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 overflow-hidden">
                 {feeds.length === 0 ? (
                     <div className="p-12 text-center">
-                        <svg className="mx-auto h-12 w-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="mx-auto h-12 w-12 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z" />
                         </svg>
                         <p className="mt-4 text-[var(--text-muted)]">
@@ -556,7 +556,7 @@ export default function AdminFeedsPage() {
                                             <button
                                                 onClick={() => syncFeed(feed.id)}
                                                 disabled={syncing === feed.id || !feed.active}
-                                                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50"
+                                                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition hover:bg-[#0F9488] disabled:opacity-50"
                                                 title="Import jobs now"
                                             >
                                                 {syncing === feed.id ? "Importing..." : "Import"}
@@ -644,7 +644,7 @@ export default function AdminFeedsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                                    className="flex-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
                                 >
                                     Add Import
                                 </button>
@@ -709,7 +709,7 @@ export default function AdminFeedsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+                                    className="flex-1 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
                                 >
                                     Save Changes
                                 </button>

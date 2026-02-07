@@ -88,7 +88,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
     return (
       <FeedLayout activeNav="events" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <div className="rounded-2xl border border-slate-200 bg-white p-12">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-12">
             <svg
               className="mx-auto h-16 w-16 text-[var(--text-muted)]"
               fill="none"
@@ -111,7 +111,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                 />
               )}
             </svg>
-            <h1 className="mt-6 text-2xl font-bold text-slate-700">
+            <h1 className="mt-6 text-2xl font-bold text-[var(--text-secondary)]">
               {isEnded ? "Conference Has Ended" : "Conference Not Found"}
             </h1>
             <p className="mt-2 text-foreground0">
@@ -182,11 +182,11 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
         {/* Owner Banner */}
         {isEmployerOwner && (
-          <div className="mt-6 rounded-2xl border border-amber-300/30 bg-amber-50 p-6">
+          <div className="mt-6 rounded-2xl border border-amber-300/30 bg-[var(--amber-bg)] p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <svg
-                  className="h-6 w-6 text-amber-600"
+                  className="h-6 w-6 text-[var(--amber)]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -199,17 +199,17 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                   />
                 </svg>
                 <div>
-                  <p className="font-semibold text-amber-700">
+                  <p className="font-semibold text-[var(--amber)]">
                     You published this conference
                   </p>
-                  <p className="text-sm text-amber-600">
+                  <p className="text-sm text-[var(--amber)]">
                     {conference.viewsCount || 0} views
                   </p>
                 </div>
               </div>
               <Link
                 href={`/organization/conferences/${conference.id}/edit`}
-                className="inline-flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-600 transition-colors hover:bg-amber-100"
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--amber-bg)] px-4 py-2 text-sm font-semibold text-[var(--amber)] transition-colors hover:bg-amber-100"
               >
                 Edit Conference
                 <svg
@@ -235,11 +235,11 @@ export default function ConferenceDetailClient({ conference: initialConference, 
           {/* Main Column */}
           <div className="space-y-8 lg:col-span-2">
             {/* About Section */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-700">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
+              <h2 className="text-xl font-bold text-[var(--text-secondary)]">
                 About This Conference
               </h2>
-              <div className="mt-4 space-y-4 text-slate-600">
+              <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
                 {conference.description.split("\n").map((paragraph, i) => (
                   <p key={i} className="leading-relaxed">
                     {paragraph}
@@ -249,7 +249,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
               {/* Target Audience */}
               {conference.targetAudience && conference.targetAudience.length > 0 && (
-                <div className="mt-6 border-t border-slate-200 pt-4">
+                <div className="mt-6 border-t border-[var(--border)] pt-4">
                   <h3 className="text-sm font-medium uppercase tracking-wider text-foreground0">
                     Who Should Attend
                   </h3>
@@ -289,7 +289,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                       />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-slate-700">
+                  <h2 className="text-xl font-bold text-[var(--text-secondary)]">
                     Indigenous Protocols
                   </h2>
                 </div>
@@ -300,7 +300,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                       <h3 className="text-sm font-medium text-[#0D9488]">
                         Territory Acknowledgement
                       </h3>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                      <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
                         {conference.territoryAcknowledgement}
                       </p>
                     </div>
@@ -311,7 +311,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                       <h3 className="text-sm font-medium text-[#0D9488]">
                         Elder Acknowledgement
                       </h3>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                      <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
                         {conference.elderAcknowledgement}
                       </p>
                     </div>
@@ -322,7 +322,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                       <h3 className="text-sm font-medium text-[#0D9488]">
                         Cultural Protocols
                       </h3>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                      <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
                         {conference.indigenousProtocols}
                       </p>
                     </div>
@@ -394,8 +394,8 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
             {/* Sponsors Section */}
             {conference.sponsors && conference.sponsors.length > 0 && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-                <h2 className="text-xl font-bold text-slate-700">Sponsors</h2>
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
+                <h2 className="text-xl font-bold text-[var(--text-secondary)]">Sponsors</h2>
                 <p className="mt-1 text-sm text-foreground0">
                   Thank you to our sponsors for making this event possible
                 </p>
@@ -420,7 +420,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                                 href={sponsor.websiteUrl || "#"}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 p-3 transition-colors hover:border-slate-400"
+                                className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 transition-colors hover:border-slate-400"
                               >
                                 {sponsor.logoUrl ? (
                                   <img
@@ -429,7 +429,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                                     className="h-10 w-auto max-w-[120px] object-contain"
                                   />
                                 ) : (
-                                  <span className="font-medium text-slate-600">
+                                  <span className="font-medium text-[var(--text-secondary)]">
                                     {sponsor.name}
                                   </span>
                                 )}
@@ -446,8 +446,8 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
             {/* FAQ Section */}
             {conference.faqs && conference.faqs.length > 0 && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-                <h2 className="text-xl font-bold text-slate-700">
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
+                <h2 className="text-xl font-bold text-[var(--text-secondary)]">
                   Frequently Asked Questions
                 </h2>
 
@@ -455,9 +455,9 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                   {conference.faqs.map((faq, index) => (
                     <details
                       key={index}
-                      className="group rounded-lg border border-slate-300 bg-slate-50"
+                      className="group rounded-lg border border-[var(--border)] bg-[var(--background)]"
                     >
-                      <summary className="flex cursor-pointer items-center justify-between p-4 font-medium text-slate-700">
+                      <summary className="flex cursor-pointer items-center justify-between p-4 font-medium text-[var(--text-secondary)]">
                         {faq.question}
                         <svg
                           className="h-5 w-5 text-foreground0 transition-transform group-open:rotate-180"
@@ -473,7 +473,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                           />
                         </svg>
                       </summary>
-                      <div className="border-t border-slate-300 p-4">
+                      <div className="border-t border-[var(--border)] p-4">
                         <p className="text-sm leading-relaxed text-foreground0">
                           {faq.answer}
                         </p>
@@ -485,8 +485,8 @@ export default function ConferenceDetailClient({ conference: initialConference, 
             )}
 
             {/* Registration Section */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-slate-700">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8">
+              <h2 className="text-xl font-bold text-[var(--text-secondary)]">
                 Register to Attend
               </h2>
 
@@ -578,8 +578,8 @@ export default function ConferenceDetailClient({ conference: initialConference, 
 
             {/* Sign-up CTA for non-logged users */}
             {!user && (
-              <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 text-center">
-                <h3 className="text-lg font-bold text-slate-700">
+              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 sm:p-8 text-center">
+                <h3 className="text-lg font-bold text-[var(--text-secondary)]">
                   Join IOPPS to stay updated
                 </h3>
                 <p className="mt-2 text-foreground0">
@@ -595,7 +595,7 @@ export default function ConferenceDetailClient({ conference: initialConference, 
                   </Link>
                   <Link
                     href="/register"
-                    className="rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
+                    className="rounded-lg border border-[var(--border)] px-6 py-3 font-semibold text-[var(--text-secondary)] transition-colors hover:border-[#0D9488] hover:text-[#0D9488]"
                   >
                     Create Account
                   </Link>

@@ -287,7 +287,7 @@ export default function EditEmployerPage() {
                   <img
                     src={logoUrl}
                     alt="Company logo"
-                    className="h-24 w-24 rounded-lg border border-[var(--card-border)] bg-white object-contain p-2"
+                    className="h-24 w-24 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-2"
                   />
                   <button
                     onClick={handleRemoveLogo}
@@ -510,7 +510,7 @@ export default function EditEmployerPage() {
                     className="peer sr-only"
                   />
                   <div className="h-6 w-11 rounded-full bg-slate-700 peer-checked:bg-accent transition-colors"></div>
-                  <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5"></div>
+                  <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform peer-checked:translate-x-5"></div>
                 </div>
                 <div>
                   <span className="font-medium text-foreground">Featured on Partner Carousel</span>
@@ -538,7 +538,7 @@ export default function EditEmployerPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-lg bg-accent px-6 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:opacity-50"
+              className="rounded-lg bg-accent px-6 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

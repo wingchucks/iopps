@@ -65,7 +65,7 @@ export default function SavedJobsPage() {
     return (
       <FeedLayout>
         <div className="py-10 space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Please sign in</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-4xl">Please sign in</h1>
           <p className="text-sm text-foreground0">
             Log in or register as a community member to see your saved jobs.
           </p>
@@ -78,7 +78,7 @@ export default function SavedJobsPage() {
             </Link>
             <Link
               href="/register"
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:border-[#0D9488] hover:text-[#0D9488]"
+              className="rounded-md border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:border-[#0D9488] hover:text-[#0D9488]"
             >
               Register
             </Link>
@@ -92,7 +92,7 @@ export default function SavedJobsPage() {
     return (
       <FeedLayout>
         <div className="py-10 space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-4xl">
             Community member area
           </h1>
           <p className="text-sm text-foreground0">
@@ -111,7 +111,7 @@ export default function SavedJobsPage() {
             <p className="text-xs uppercase tracking-[0.3em] text-[#0D9488]">
               Saved jobs
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-4xl">
               Keep track of opportunities
             </h1>
             <p className="mt-2 text-sm text-foreground0">
@@ -121,7 +121,7 @@ export default function SavedJobsPage() {
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <Link
                 href="/member/dashboard"
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-700 transition hover:border-[#0D9488] hover:text-[#0D9488]"
+                className="rounded-md border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-[var(--text-secondary)] transition hover:border-[#0D9488] hover:text-[#0D9488]"
               >
                 Go to Dashboard &rarr;
               </Link>
@@ -133,12 +133,12 @@ export default function SavedJobsPage() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="Search job or employer"
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#0D9488] focus:outline-none"
+              className="rounded-md border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#0D9488] focus:outline-none"
             />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#0D9488] focus:outline-none"
+              className="rounded-md border border-[var(--border)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[#0D9488] focus:outline-none"
             >
               <option value="all">All</option>
               <option value="active">Active only</option>
@@ -165,13 +165,13 @@ export default function SavedJobsPage() {
             {filteredJobs.map((entry) => (
               <article
                 key={entry.id}
-                className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+                className="rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-4 shadow-sm"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
                   <div>
                     <Link
                       href={`/careers/${entry.jobId}`}
-                      className="text-lg font-semibold text-slate-900 hover:text-[#0D9488]"
+                      className="text-lg font-semibold text-[var(--text-primary)] hover:text-[#0D9488]"
                     >
                       {entry.job?.title}
                     </Link>
@@ -179,7 +179,7 @@ export default function SavedJobsPage() {
                       {entry.job?.employerName}
                     </p>
                   </div>
-                  <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
+                  <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                     {entry.job?.employmentType}
                   </span>
                 </div>

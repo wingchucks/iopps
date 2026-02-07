@@ -140,7 +140,7 @@ export default function OverviewTab({
     return (
         <div className="space-y-8">
             {/* Opportunity Feed Banner */}
-            <Link href="/hub" className="block group">
+            <Link href="/discover" className="block group">
                 <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-slate-900/50 p-6 backdrop-blur transition-all hover:border-accent/50 hover:shadow-lg hover:shadow-teal-500/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">

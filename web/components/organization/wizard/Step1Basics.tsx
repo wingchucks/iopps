@@ -98,7 +98,7 @@ export default function Step1Basics({ data, updateData, onNext }: Step1Props) {
                                 onChange={(e) => updateData({ remoteFlag: e.target.checked })}
                                 className="sr-only"
                             />
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${data.remoteFlag ? 'translate-x-6' : 'translate-x-1'}`} />
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-[var(--card-bg)] transition-transform ${data.remoteFlag ? 'translate-x-6' : 'translate-x-1'}`} />
                         </div>
                         <span className="text-sm font-medium text-foreground">
                             Remote / Hybrid Friendly
@@ -111,7 +111,7 @@ export default function Step1Basics({ data, updateData, onNext }: Step1Props) {
                 <button
                     onClick={onNext}
                     disabled={!isValid}
-                    className="rounded-xl bg-accent px-8 py-3 font-semibold text-slate-900 transition-all hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl bg-accent px-8 py-3 font-semibold text-[var(--text-primary)] transition-all hover:bg-[#16cdb8] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     Next: Description
                 </button>

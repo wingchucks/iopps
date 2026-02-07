@@ -164,7 +164,7 @@ export default function EditFundingPage({
         </h1>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -192,7 +192,7 @@ export default function EditFundingPage({
         </h1>
         <Link
           href="/organization/dashboard?tab=business"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Back to Dashboard
         </Link>

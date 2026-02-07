@@ -231,7 +231,7 @@ function AdminScholarshipsContent() {
             </div>
             <Link
               href="/organization/scholarships/new"
-              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-accent/90"
+              className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-accent/90"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -249,7 +249,7 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-accent text-slate-900"
+              ? "bg-accent text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
@@ -258,7 +258,7 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-slate-900"
+              ? "bg-green-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
@@ -267,7 +267,7 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-slate-900"
+              ? "bg-slate-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
@@ -276,7 +276,7 @@ function AdminScholarshipsContent() {
           <button
             onClick={() => setFilter("expired")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "expired"
-              ? "bg-amber-500 text-slate-900"
+              ? "bg-amber-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-amber-500"
               }`}
           >

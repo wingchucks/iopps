@@ -108,7 +108,7 @@ export default function EditScholarshipPage() {
         </p>
         <Link
           href="/login"
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors"
+          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors"
         >
           Login
         </Link>
@@ -517,7 +517,7 @@ export default function EditScholarshipPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-accent/90 transition-colors disabled:opacity-60"
+            className="rounded-md bg-accent px-6 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-accent/90 transition-colors disabled:opacity-60"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

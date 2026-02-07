@@ -232,7 +232,7 @@ export default function ShareButtons({
         {webShareSupported && (
           <button
             onClick={handleWebShare}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-[#0D9488] border border-accent hover:bg-accent hover:text-white transition-all duration-200"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-surface text-[#0D9488] border border-accent hover:bg-accent hover:text-white transition-all duration-200"
             title="Share"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +247,7 @@ export default function ShareButtons({
           <button
             key={button.name}
             onClick={button.onClick}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-300 transition-all duration-200 ${button.color}`}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-surface text-[var(--text-secondary)] border border-[var(--border)] transition-all duration-200 ${button.color}`}
             title={button.label}
           >
             {button.icon}
@@ -260,7 +260,7 @@ export default function ShareButtons({
           onClick={handleCopyLink}
           className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${copied
               ? 'bg-accent text-white border-accent'
-              : 'bg-slate-100 text-[#0D9488] border-slate-300 hover:bg-accent hover:text-white'
+              : 'bg-surface text-[#0D9488] border-[var(--border)] hover:bg-accent hover:text-white'
             } border`}
           title={copied ? 'Copied!' : 'Copy Link'}
         >

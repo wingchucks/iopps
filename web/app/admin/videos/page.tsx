@@ -139,7 +139,7 @@ function VideoForm({
               onChange={(e) => setFormData({ ...formData, isIOPPSInterview: e.target.checked })}
               className="peer sr-only"
             />
-            <div className="peer h-6 w-11 rounded-full bg-slate-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-[var(--card-border)] after:bg-slate-400 after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:after:bg-white peer-focus:outline-none"></div>
+            <div className="peer h-6 w-11 rounded-full bg-slate-700 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-[var(--card-border)] after:bg-slate-400 after:transition-all after:content-[''] peer-checked:bg-accent peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:after:bg-[var(--card-bg)] peer-focus:outline-none"></div>
           </label>
           <span className="text-sm text-[var(--text-secondary)]">
             {formData.isIOPPSInterview ? "IOPPS Interview" : "Employer Promotional Video"}
@@ -164,7 +164,7 @@ function VideoForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-slate-900 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving..." : submitLabel}
         </button>
@@ -430,7 +430,7 @@ export default function AdminVideosPage() {
                       <img
                         src={employer.logoUrl}
                         alt={`${employer.organizationName} logo`}
-                        className="h-10 w-10 rounded-lg border border-[var(--card-border)] bg-white object-contain p-1"
+                        className="h-10 w-10 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-1"
                       />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface">
@@ -459,7 +459,7 @@ export default function AdminVideosPage() {
         <div className="lg:col-span-2">
           {!selectedEmployer ? (
             <div className="rounded-lg border border-[var(--card-border)] bg-surface p-12 text-center">
-              <VideoCameraIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <VideoCameraIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <h3 className="mt-4 text-lg font-medium text-[var(--text-secondary)]">Select an Employer</h3>
               <p className="mt-2 text-sm text-foreground0">
                 Choose an employer from the list to manage their videos
@@ -479,7 +479,7 @@ export default function AdminVideosPage() {
                     <img
                       src={selectedEmployer.logoUrl}
                       alt={`${selectedEmployer.organizationName} logo`}
-                      className="h-14 w-14 rounded-lg border border-[var(--card-border)] bg-white object-contain p-1"
+                      className="h-14 w-14 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] object-contain p-1"
                     />
                   ) : (
                     <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface">

@@ -205,7 +205,7 @@ export default function SubscriptionPage() {
             </p>
             <Link
               href="/register?role=employer"
-              className="inline-flex items-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+              className="inline-flex items-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[#16cdb8]"
             >
               Create employer account
             </Link>
@@ -281,7 +281,7 @@ export default function SubscriptionPage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-slate-900 transition-all hover:bg-[#16cdb8]"
+                  className="inline-flex items-center justify-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[#16cdb8]"
                 >
                   View Pricing & Plans
                 </Link>

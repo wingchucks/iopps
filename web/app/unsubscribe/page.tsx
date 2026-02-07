@@ -114,16 +114,16 @@ function UnsubscribeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8 text-center">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-sm p-8 text-center">
           {/* Loading State */}
           {status === "loading" && (
             <>
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface">
                 <EnvelopeIcon className="h-8 w-8 text-foreground0" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">Processing...</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Processing...</h1>
               <p className="mt-2 text-foreground0">Please wait while we process your request.</p>
             </>
           )}
@@ -134,14 +134,14 @@ function UnsubscribeContent() {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10">
                 <EnvelopeIcon className="h-8 w-8 text-amber-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">Unsubscribe</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Unsubscribe</h1>
               <p className="mt-4 text-foreground0">
-                You're about to unsubscribe <span className="text-slate-800">{verifiedEmail}</span> from{" "}
-                <span className="text-slate-800">{getTypeLabel(type)}</span>.
+                You're about to unsubscribe <span className="text-[var(--text-primary)]">{verifiedEmail}</span> from{" "}
+                <span className="text-[var(--text-primary)]">{getTypeLabel(type)}</span>.
               </p>
               <button
                 onClick={handleUnsubscribe}
-                className="mt-6 w-full rounded-lg bg-accent px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
+                className="mt-6 w-full rounded-lg bg-accent px-4 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0D9488]"
               >
                 Confirm Unsubscribe
               </button>
@@ -160,7 +160,7 @@ function UnsubscribeContent() {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
                 <CheckCircleIcon className="h-8 w-8 text-green-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">Unsubscribed</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Unsubscribed</h1>
               <p className="mt-4 text-foreground0">{message}</p>
               <p className="mt-2 text-sm text-foreground0">
                 You'll still receive important account notifications.
@@ -168,13 +168,13 @@ function UnsubscribeContent() {
               <div className="mt-6 space-y-3">
                 <Link
                   href="/member/email-preferences"
-                  className="block w-full rounded-lg border border-slate-200 px-4 py-3 font-medium text-slate-800 transition hover:bg-slate-100"
+                  className="block w-full rounded-lg border border-[var(--border)] px-4 py-3 font-medium text-[var(--text-primary)] transition hover:bg-surface"
                 >
                   Manage Email Preferences
                 </Link>
                 <Link
                   href="/"
-                  className="block w-full rounded-lg bg-accent px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
+                  className="block w-full rounded-lg bg-accent px-4 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0D9488]"
                 >
                   Return to IOPPS
                 </Link>
@@ -188,18 +188,18 @@ function UnsubscribeContent() {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
                 <ExclamationCircleIcon className="h-8 w-8 text-red-500" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">Something went wrong</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Something went wrong</h1>
               <p className="mt-4 text-foreground0">{message}</p>
               <div className="mt-6 space-y-3">
                 <Link
                   href="/member/email-preferences"
-                  className="block w-full rounded-lg bg-accent px-4 py-3 font-semibold text-slate-900 transition hover:bg-[#0D9488]"
+                  className="block w-full rounded-lg bg-accent px-4 py-3 font-semibold text-[var(--text-primary)] transition hover:bg-[#0D9488]"
                 >
                   Manage Preferences (Login Required)
                 </Link>
                 <Link
                   href="/"
-                  className="block w-full rounded-lg border border-slate-200 px-4 py-3 font-medium text-slate-800 transition hover:bg-slate-100"
+                  className="block w-full rounded-lg border border-[var(--border)] px-4 py-3 font-medium text-[var(--text-primary)] transition hover:bg-surface"
                 >
                   Return to IOPPS
                 </Link>
@@ -224,7 +224,7 @@ export default function UnsubscribePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
           <p className="text-foreground0">Loading...</p>
         </div>
       }

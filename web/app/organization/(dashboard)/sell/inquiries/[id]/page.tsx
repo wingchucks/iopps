@@ -225,7 +225,7 @@ export default function VendorInquiryDetailPage() {
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       <p
                         className={`text-xs mt-1 ${
-                          isFromEmployer ? 'text-slate-700' : 'text-foreground0'
+                          isFromEmployer ? 'text-[var(--text-secondary)]' : 'text-foreground0'
                         }`}
                       >
                         {formatMessageTime(message.createdAt)}

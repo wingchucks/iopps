@@ -26,12 +26,12 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
     return (
       <FeedLayout activeNav="business" fullWidth>
         <div className="mx-auto max-w-4xl py-12 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">
             {error || "Grant not found"}
           </h1>
           <Link
             href="/business/funding"
-            className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+            className="mt-6 inline-block rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
           >
             Back to Funding
           </Link>
@@ -65,19 +65,19 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
     switch (status) {
       case "active":
         return (
-          <span className="rounded-md bg-emerald-50 border border-emerald-200 px-3 py-1 text-sm font-semibold text-emerald-600">
+          <span className="rounded-md bg-[var(--accent-bg)] border border-emerald-200 px-3 py-1 text-sm font-semibold text-accent">
             Currently Open
           </span>
         );
       case "upcoming":
         return (
-          <span className="rounded-md bg-amber-50 border border-amber-200 px-3 py-1 text-sm font-semibold text-amber-600">
+          <span className="rounded-md bg-[var(--amber-bg)] border border-[var(--amber)] px-3 py-1 text-sm font-semibold text-[var(--amber)]">
             Coming Soon
           </span>
         );
       case "closed":
         return (
-          <span className="rounded-md bg-slate-50 border border-slate-200 px-3 py-1 text-sm font-semibold text-foreground0">
+          <span className="rounded-md bg-[var(--background)] border border-[var(--border)] px-3 py-1 text-sm font-semibold text-foreground0">
             Applications Closed
           </span>
         );
@@ -91,39 +91,39 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
       <div className="mx-auto max-w-4xl py-8">
         {/* Breadcrumb */}
         <nav className="mb-6 text-sm text-foreground0">
-          <Link href="/" className="hover:text-slate-900 transition-colors">
+          <Link href="/" className="hover:text-[var(--text-primary)] transition-colors">
             Home
           </Link>
           <span className="mx-2">&rarr;</span>
-          <Link href="/business" className="hover:text-slate-900 transition-colors">
+          <Link href="/business" className="hover:text-[var(--text-primary)] transition-colors">
             Business
           </Link>
           <span className="mx-2">&rarr;</span>
-          <Link href="/business/funding" className="hover:text-slate-900 transition-colors">
+          <Link href="/business/funding" className="hover:text-[var(--text-primary)] transition-colors">
             Funding
           </Link>
           <span className="mx-2">&rarr;</span>
-          <span className="text-slate-900">{grant.title}</span>
+          <span className="text-[var(--text-primary)]">{grant.title}</span>
         </nav>
 
         {/* Grant Header */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             {getStatusBadge(grant.status)}
-            <span className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 capitalize">
+            <span className="inline-flex items-center rounded-lg border border-[var(--border)] bg-surface px-3 py-1 text-xs font-medium text-[var(--text-secondary)] capitalize">
               {grant.grantType?.replace("_", " ")}
             </span>
             {grant.featured && (
-              <span className="rounded-md bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-600">
+              <span className="rounded-md bg-[var(--amber-bg)] border border-[var(--amber)] px-3 py-1 text-xs font-semibold text-[var(--amber)]">
                 Featured
               </span>
             )}
           </div>
 
-          <h1 className="text-3xl font-bold text-slate-900">{grant.title}</h1>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)]">{grant.title}</h1>
 
           <div className="mt-3 flex items-center gap-2 text-base">
-            <div className="flex items-center gap-2 text-slate-600">
+            <div className="flex items-center gap-2 text-[var(--text-secondary)]">
               <svg className="h-5 w-5 text-[#14B8A6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -134,7 +134,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
           {/* Amount and Deadline */}
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {grant.amount?.display && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-base font-semibold text-emerald-600">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-[var(--accent-bg)] px-4 py-2 text-base font-semibold text-accent">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -142,7 +142,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
               </span>
             )}
             {deadline && (
-              <span className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-base font-medium text-amber-600">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-[var(--amber)] bg-[var(--amber-bg)] px-4 py-2 text-base font-medium text-[var(--amber)]">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -158,7 +158,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
                 href={grant.applicationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]"
               >
                 Apply Now
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +169,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
           )}
 
           {/* Share Buttons */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-6 pt-6 border-t border-[var(--border)]">
             <ShareButtons
               item={{
                 id: grant.id,
@@ -182,9 +182,9 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
         </div>
 
         {/* Description */}
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
-          <h2 className="text-xl font-bold text-slate-800">About This Grant</h2>
-          <div className="mt-4 space-y-4 text-slate-600">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">About This Grant</h2>
+          <div className="mt-4 space-y-4 text-[var(--text-secondary)]">
             {grant.description.split("\n").map((paragraph, i) => (
               <p key={i} className="leading-relaxed">
                 {paragraph}
@@ -195,31 +195,31 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
 
         {/* Eligibility */}
         {grant.eligibility && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
-            <h2 className="text-xl font-bold text-slate-800">Eligibility Requirements</h2>
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">Eligibility Requirements</h2>
             <div className="mt-4 space-y-4">
               {grant.eligibility.indigenousOwned && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">Indigenous-owned business (priority or required)</span>
+                  <span className="text-[var(--text-secondary)]">Indigenous-owned business (priority or required)</span>
                 </div>
               )}
               {grant.eligibility.womenOwned && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">Women-owned business eligible</span>
+                  <span className="text-[var(--text-secondary)]">Women-owned business eligible</span>
                 </div>
               )}
               {grant.eligibility.youthOwned && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">Youth entrepreneur eligible</span>
+                  <span className="text-[var(--text-secondary)]">Youth entrepreneur eligible</span>
                 </div>
               )}
               {grant.eligibility.minYearsInBusiness && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">
+                  <span className="text-[var(--text-secondary)]">
                     Minimum {grant.eligibility.minYearsInBusiness} year(s) in business
                   </span>
                 </div>
@@ -227,7 +227,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
               {grant.eligibility.businessTypes && grant.eligibility.businessTypes.length > 0 && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">
+                  <span className="text-[var(--text-secondary)]">
                     Business types: {grant.eligibility.businessTypes.join(", ")}
                   </span>
                 </div>
@@ -235,7 +235,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
               {grant.eligibility.industries && grant.eligibility.industries.length > 0 && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">
+                  <span className="text-[var(--text-secondary)]">
                     Industries: {grant.eligibility.industries.join(", ")}
                   </span>
                 </div>
@@ -243,7 +243,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
               {grant.eligibility.provinces && grant.eligibility.provinces.length > 0 && (
                 <div className="flex items-start gap-3">
                   <span className="text-[#14B8A6]">✓</span>
-                  <span className="text-slate-600">
+                  <span className="text-[var(--text-secondary)]">
                     Regions: {grant.eligibility.provinces.join(", ")}
                   </span>
                 </div>
@@ -257,7 +257,7 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
                     {grant.eligibility.requirements.map((req, i) => (
                       <li key={i} className="flex items-start gap-3">
                         <span className="text-foreground0">•</span>
-                        <span className="text-slate-600">{req}</span>
+                        <span className="text-[var(--text-secondary)]">{req}</span>
                       </li>
                     ))}
                   </ul>
@@ -269,9 +269,9 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
 
         {/* Application Process */}
         {grant.applicationProcess && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8">
-            <h2 className="text-xl font-bold text-slate-800">How to Apply</h2>
-            <div className="mt-4 text-slate-600 whitespace-pre-wrap">
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-8">
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">How to Apply</h2>
+            <div className="mt-4 text-[var(--text-secondary)] whitespace-pre-wrap">
               {grant.applicationProcess}
             </div>
           </div>
@@ -279,13 +279,13 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
 
         {/* Contact Information */}
         {(grant.contactEmail || grant.contactPhone || grant.providerWebsite) && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground0">
               Contact Information
             </h3>
             <div className="mt-4 space-y-2">
               {grant.contactEmail && (
-                <p className="text-slate-600">
+                <p className="text-[var(--text-secondary)]">
                   <span className="text-foreground0">Email:</span>{" "}
                   <a href={`mailto:${grant.contactEmail}`} className="text-[#14B8A6] hover:underline">
                     {grant.contactEmail}
@@ -293,12 +293,12 @@ export default function GrantDetailClient({ grant, error }: GrantDetailClientPro
                 </p>
               )}
               {grant.contactPhone && (
-                <p className="text-slate-600">
+                <p className="text-[var(--text-secondary)]">
                   <span className="text-foreground0">Phone:</span> {grant.contactPhone}
                 </p>
               )}
               {grant.providerWebsite && (
-                <p className="text-slate-600">
+                <p className="text-[var(--text-secondary)]">
                   <span className="text-foreground0">Website:</span>{" "}
                   <a
                     href={grant.providerWebsite}

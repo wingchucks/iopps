@@ -198,7 +198,7 @@ function ActivityItemRow({ activity }: ActivityItemRowProps) {
           </span>
           {activity.actor && (
             <>
-              <span className="text-slate-700">•</span>
+              <span className="text-[var(--text-secondary)]">•</span>
               <span className="text-xs text-foreground0 truncate">
                 {activity.actor}
               </span>
@@ -207,7 +207,7 @@ function ActivityItemRow({ activity }: ActivityItemRowProps) {
         </div>
       </div>
       {activity.href && (
-        <ArrowRightIcon className="h-4 w-4 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+        <ArrowRightIcon className="h-4 w-4 text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
       )}
     </div>
   );
@@ -332,7 +332,7 @@ export function CompactActivityList({
             <span className="text-[var(--text-muted)] truncate flex-1">
               {activity.title}
             </span>
-            <span className="text-slate-600 flex-shrink-0">
+            <span className="text-[var(--text-secondary)] flex-shrink-0">
               {formatTimeAgo(activity.timestamp)}
             </span>
           </div>

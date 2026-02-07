@@ -248,7 +248,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                           {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
                           {exp.location && (
                             <>
-                              <span className="text-slate-600">|</span>
+                              <span className="text-[var(--text-secondary)]">|</span>
                               <MapPin className="h-3.5 w-3.5" />
                               {exp.location}
                             </>

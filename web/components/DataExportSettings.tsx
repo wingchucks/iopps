@@ -171,7 +171,7 @@ export default function DataExportSettings() {
             >
               Select All
             </button>
-            <span className="text-slate-600">|</span>
+            <span className="text-[var(--text-secondary)]">|</span>
             <button
               onClick={deselectAll}
               disabled={noneSelected}
@@ -194,7 +194,7 @@ export default function DataExportSettings() {
                 {checked ? (
                   <CheckSquare className="h-5 w-5 text-accent flex-shrink-0" />
                 ) : (
-                  <Square className="h-5 w-5 text-slate-600 flex-shrink-0" />
+                  <Square className="h-5 w-5 text-[var(--text-secondary)] flex-shrink-0" />
                 )}
                 <span
                   className={`text-sm font-medium ${checked ? "text-foreground" : "text-foreground0"}`}

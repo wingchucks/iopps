@@ -38,8 +38,8 @@ export function SearchBarRow({
           onChange={(e) => onChange(e.target.value)}
           className={`w-full rounded-full py-3 pl-12 pr-4 focus:outline-none focus:ring-2 ${
             isHero
-              ? "bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/60 focus:ring-white/50"
-              : "bg-surface border border-[var(--card-border)] text-white placeholder-slate-400 focus:ring-[#14B8A6]/50 focus:border-[#14B8A6]"
+              ? "bg-[var(--card-bg)]/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/60 focus:ring-white/50"
+              : "bg-surface border border-[var(--card-border)] text-white placeholder-[var(--text-muted)] focus:ring-[#14B8A6]/50 focus:border-[#14B8A6]"
           }`}
         />
       </div>
@@ -48,7 +48,7 @@ export function SearchBarRow({
           onClick={onFiltersClick}
           className={`flex items-center justify-center gap-2 rounded-full px-6 py-3 transition-colors ${
             isHero
-              ? "bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+              ? "bg-[var(--card-bg)]/10 backdrop-blur-sm border border-white/20 text-white hover:bg-[var(--card-bg)]/20"
               : "bg-surface border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6] hover:text-white"
           }`}
         >
@@ -58,8 +58,8 @@ export function SearchBarRow({
             <span
               className={`flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
                 isHero
-                  ? "bg-white text-blue-900"
-                  : "bg-accent text-slate-900"
+                  ? "bg-[var(--card-bg)] text-blue-900"
+                  : "bg-accent text-[var(--text-primary)]"
               }`}
             >
               !

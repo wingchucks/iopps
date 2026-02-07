@@ -33,7 +33,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   format: "bg-slate-800/60 text-[var(--text-secondary)]",
   category: "bg-accent/20 text-[#14B8A6]",
   "happening-now": "bg-red-500/90 text-white animate-pulse",
-  upcoming: "bg-accent/90 text-slate-900",
+  upcoming: "bg-accent/90 text-[var(--text-primary)]",
   trc92: "bg-orange-500/10 text-orange-400 border border-orange-500/30",
 };
 
@@ -74,10 +74,10 @@ export function DiscoveryBadge({
         </svg>
       )}
       {variant === "livestream" && !icon && (
-        <span className="h-2 w-2 rounded-full bg-white" />
+        <span className="h-2 w-2 rounded-full bg-[var(--card-bg)]" />
       )}
       {variant === "happening-now" && !icon && (
-        <span className="h-2 w-2 rounded-full bg-white" />
+        <span className="h-2 w-2 rounded-full bg-[var(--card-bg)]" />
       )}
       {variant === "trc92" && !icon && (
         <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">

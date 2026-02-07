@@ -356,7 +356,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
             </div>
             <button
               onClick={exportToCSV}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-[#0F9488]"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[#0F9488]"
             >
               Export CSV
             </button>
@@ -557,7 +557,7 @@ ${analytics.topLocations.map(l => `${l.location},${l.count} jobs`).join("\n")}
               <div className="space-y-4">
                 {analytics.topEmployers.map((employer, index) => (
                   <div key={employer.name} className="flex items-center gap-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-bold text-slate-900">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-bold text-[var(--text-primary)]">
                       {index + 1}
                     </div>
                     <div className="flex-1">

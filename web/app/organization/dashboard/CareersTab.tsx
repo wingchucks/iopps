@@ -587,7 +587,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
             <p className="text-center text-[var(--text-muted)]">Loading jobs...</p>
           ) : filteredJobs.length === 0 ? (
             <div className="rounded-xl bg-surface p-8 text-center">
-              <BriefcaseIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <BriefcaseIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <p className="mt-4 text-[var(--text-secondary)]">
                 {jobs.length === 0
                   ? "No jobs posted yet. Create your first job posting to get started."
@@ -713,7 +713,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
             <p className="text-center text-[var(--text-muted)]">Loading training programs...</p>
           ) : filteredTrainingPrograms.length === 0 ? (
             <div className="rounded-xl bg-surface p-8 text-center">
-              <AcademicCapIcon className="mx-auto h-12 w-12 text-slate-600" />
+              <AcademicCapIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
               <p className="mt-4 text-[var(--text-secondary)]">
                 {trainingPrograms.length === 0
                   ? "No training programs posted yet. Share your training opportunities with Indigenous learners."
@@ -867,7 +867,7 @@ export default function CareersTab({ initialView = "jobs" }: CareersTabProps) {
               <p className="text-center text-[var(--text-muted)]">Loading applications...</p>
             ) : filteredApplications.length === 0 ? (
               <div className="rounded-xl bg-surface p-8 text-center">
-                <UserGroupIcon className="mx-auto h-12 w-12 text-slate-600" />
+                <UserGroupIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
                 <p className="mt-4 text-[var(--text-secondary)]">
                   {applications.length === 0
                     ? "No applications received yet. Applications will appear here as candidates apply to your jobs."

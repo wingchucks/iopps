@@ -137,7 +137,7 @@ export default function MessageThread({
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <svg
-                className="mx-auto h-12 w-12 text-slate-600"
+                className="mx-auto h-12 w-12 text-[var(--text-secondary)]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -175,7 +175,7 @@ export default function MessageThread({
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                     isOwn
-                      ? "bg-accent text-slate-900"
+                      ? "bg-accent text-[var(--text-primary)]"
                       : "bg-surface text-foreground"
                   }`}
                 >
@@ -184,7 +184,7 @@ export default function MessageThread({
                   </p>
                   <p
                     className={`mt-1 text-xs ${
-                      isOwn ? "text-slate-700" : "text-foreground0"
+                      isOwn ? "text-[var(--text-secondary)]" : "text-foreground0"
                     }`}
                   >
                     {time}
@@ -212,7 +212,7 @@ export default function MessageThread({
           <button
             type="submit"
             disabled={!newMessage.trim() || sending}
-            className="flex-shrink-0 rounded-lg bg-accent px-4 py-2.5 font-medium text-slate-900 transition hover:bg-[#0F9488] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-shrink-0 rounded-lg bg-accent px-4 py-2.5 font-medium text-[var(--text-primary)] transition hover:bg-[#0F9488] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? (
               <svg

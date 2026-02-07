@@ -141,7 +141,7 @@ export default function EditProgramPage({
         </h1>
         <Link
           href="/login"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Login
         </Link>
@@ -169,7 +169,7 @@ export default function EditProgramPage({
         </h1>
         <Link
           href="/organization/dashboard?tab=education"
-          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-slate-900"
+          className="inline-block rounded-md bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
         >
           Back to Dashboard
         </Link>
@@ -296,7 +296,7 @@ export default function EditProgramPage({
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--card-bg)] transition-transform ${
                     isPublished ? "translate-x-6" : "translate-x-1"
                   }`}
                 />

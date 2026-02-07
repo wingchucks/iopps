@@ -196,7 +196,7 @@ export function EndorseButton({ targetUserId, targetSkills = [], className }: En
                   }`}
                 >
                   <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                    className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--card-bg)] transition-transform ${
                       isElder ? "left-6" : "left-1"
                     }`}
                   />

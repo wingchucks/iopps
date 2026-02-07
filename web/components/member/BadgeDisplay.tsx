@@ -291,7 +291,7 @@ export default function BadgeDisplay({
                     className="group flex flex-col items-center opacity-50 hover:opacity-75 transition-opacity"
                   >
                     <div className="w-14 h-14 rounded-full bg-surface flex items-center justify-center border-2 border-[var(--card-border)]">
-                      <Icon className="h-7 w-7 text-slate-600" />
+                      <Icon className="h-7 w-7 text-[var(--text-secondary)]" />
                     </div>
                     <span className="text-xs text-foreground0 mt-2 text-center truncate w-full">
                       {item.badge.name}
@@ -306,7 +306,7 @@ export default function BadgeDisplay({
       {/* Empty State */}
       {badges.length === 0 && !showProgress && (
         <div className="text-center py-8">
-          <Award className="h-12 w-12 mx-auto text-slate-600 mb-3" />
+          <Award className="h-12 w-12 mx-auto text-[var(--text-secondary)] mb-3" />
           <p className="text-[var(--text-muted)]">No badges earned yet</p>
           <p className="text-sm text-foreground0 mt-1">
             Complete your profile and engage with the community to earn badges!

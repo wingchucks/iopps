@@ -212,7 +212,7 @@ export function JobsTabContent() {
                   </div>
                 </div>
               </div>
-              <button className="hidden sm:block rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-[#16cdb8]">
+              <button className="hidden sm:block rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-[var(--text-primary)] transition-colors hover:bg-[#16cdb8]">
                 View Job →
               </button>
             </Link>
@@ -240,7 +240,7 @@ export function JobsTabContent() {
         </p>
         <Link
           href="/organization/jobs/new"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold text-slate-900 hover:bg-[#16cdb8] transition-colors text-sm"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] transition-colors text-sm"
         >
           Post a Job
         </Link>

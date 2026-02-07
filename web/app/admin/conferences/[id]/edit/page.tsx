@@ -249,7 +249,7 @@ export default function AdminEditConferencePage() {
                   className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[var(--card-border)] p-8 transition hover:border-[#14B8A6]"
                 >
                   <svg
-                    className="h-12 w-12 text-slate-600"
+                    className="h-12 w-12 text-[var(--text-secondary)]"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -416,7 +416,7 @@ export default function AdminEditConferencePage() {
             <button
               type="submit"
               disabled={saving || uploading}
-              className="rounded-lg bg-accent px-6 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8] disabled:opacity-50"
+              className="rounded-lg bg-accent px-6 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8] disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

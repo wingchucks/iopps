@@ -114,8 +114,8 @@ export function DatePicker({
           disabled={isDisabled}
           className={`
             w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors
-            ${!isCurrentMonth ? "text-slate-600" : "text-[var(--text-secondary)]"}
-            ${isSelected ? "bg-accent text-slate-900 font-semibold" : ""}
+            ${!isCurrentMonth ? "text-[var(--text-secondary)]" : "text-[var(--text-secondary)]"}
+            ${isSelected ? "bg-accent text-[var(--text-primary)] font-semibold" : ""}
             ${!isSelected && isTodayDate ? "border border-[#14B8A6] text-[#14B8A6]" : ""}
             ${!isSelected && !isTodayDate && isCurrentMonth && !isDisabled ? "hover:bg-surface" : ""}
             ${isDisabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}

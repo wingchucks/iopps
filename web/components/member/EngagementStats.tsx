@@ -155,7 +155,7 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
                 </div>
                 <p className="text-xs text-foreground0 mt-1">{card.subValue}</p>
               </div>
-              <ChevronRight className="absolute top-4 right-4 h-4 w-4 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight className="absolute top-4 right-4 h-4 w-4 text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           );
 

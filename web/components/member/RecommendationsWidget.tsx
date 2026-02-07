@@ -132,7 +132,7 @@ export default function RecommendationsWidget({
           <h3 className="font-semibold text-white">Recommended for You</h3>
         </div>
         <div className="text-center py-8">
-          <Sparkles className="h-12 w-12 mx-auto text-slate-600 mb-3" />
+          <Sparkles className="h-12 w-12 mx-auto text-[var(--text-secondary)] mb-3" />
           <p className="text-[var(--text-muted)]">Complete your profile to get personalized recommendations</p>
           <Link
             href="/member/dashboard?tab=profile"
@@ -186,7 +186,7 @@ export default function RecommendationsWidget({
                   )}
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-accent transition-colors" />
+              <ChevronRight className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-accent transition-colors" />
             </Link>
           )}
 
@@ -210,7 +210,7 @@ export default function RecommendationsWidget({
                   </span>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-accent transition-colors" />
+              <ChevronRight className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-accent transition-colors" />
             </Link>
           )}
 
@@ -234,7 +234,7 @@ export default function RecommendationsWidget({
                   </span>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-accent transition-colors" />
+              <ChevronRight className="h-5 w-5 text-[var(--text-secondary)] group-hover:text-accent transition-colors" />
             </Link>
           )}
 
@@ -346,7 +346,7 @@ export default function RecommendationsWidget({
                       </div>
                     )}
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-600 flex-shrink-0" />
+                  <ChevronRight className="h-5 w-5 text-[var(--text-secondary)] flex-shrink-0" />
                 </div>
               </Link>
             ))}
@@ -406,7 +406,7 @@ export default function RecommendationsWidget({
                       </div>
                     )}
                   </div>
-                  <ChevronRight className="h-5 w-5 text-slate-600 flex-shrink-0" />
+                  <ChevronRight className="h-5 w-5 text-[var(--text-secondary)] flex-shrink-0" />
                 </div>
               </Link>
             ))}
@@ -472,7 +472,7 @@ export default function RecommendationsWidget({
                         </div>
                       )}
                     </div>
-                    <ChevronRight className="h-5 w-5 text-slate-600 flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-[var(--text-secondary)] flex-shrink-0" />
                   </div>
                 </Link>
               );

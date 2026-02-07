@@ -226,7 +226,7 @@ function AdminJobsContent() {
         </div>
         <Link
           href="/organization/jobs/new"
-          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#16cdb8]"
+          className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-[var(--text-primary)] hover:bg-[#16cdb8]"
         >
           <BriefcaseIcon className="h-4 w-4" />
           Post New Job
@@ -239,7 +239,7 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("all")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "all"
-              ? "bg-accent text-slate-900"
+              ? "bg-accent text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[#14B8A6]"
               }`}
           >
@@ -248,7 +248,7 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("active")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "active"
-              ? "bg-green-500 text-slate-900"
+              ? "bg-green-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-green-500"
               }`}
           >
@@ -257,7 +257,7 @@ function AdminJobsContent() {
           <button
             onClick={() => setFilter("inactive")}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${filter === "inactive"
-              ? "bg-slate-500 text-slate-900"
+              ? "bg-slate-500 text-[var(--text-primary)]"
               : "border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-slate-500"
               }`}
           >
@@ -282,7 +282,7 @@ function AdminJobsContent() {
       <div className="rounded-xl border border-[var(--card-border)] bg-slate-900/60 overflow-hidden">
         {filteredJobs.length === 0 ? (
           <div className="p-12 text-center">
-            <BriefcaseIcon className="mx-auto h-12 w-12 text-slate-600" />
+            <BriefcaseIcon className="mx-auto h-12 w-12 text-[var(--text-secondary)]" />
             <p className="mt-4 text-[var(--text-muted)]">
               {searchQuery ? "No jobs match your search." : "No jobs found."}
             </p>

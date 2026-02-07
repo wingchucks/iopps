@@ -176,13 +176,13 @@ export default function OrganizationSignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-[var(--background)]">
       {/* Minimal header */}
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-[var(--border)] bg-[var(--card-bg)]">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="text-xl font-black tracking-tight text-teal-600"
+            className="text-xl font-black tracking-tight text-accent"
           >
             IOPPS
           </Link>
@@ -193,7 +193,7 @@ export default function OrganizationSignupPage() {
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:py-16">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
               Register Your Organization
             </h1>
             <p className="mt-2 text-sm text-foreground0">
@@ -217,10 +217,10 @@ export default function OrganizationSignupPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <div className="w-full border-t border-[var(--border)]" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-slate-50 px-4 text-[var(--text-muted)]">
+                <span className="bg-[var(--background)] px-4 text-[var(--text-muted)]">
                   Or register with email
                 </span>
               </div>
@@ -228,7 +228,7 @@ export default function OrganizationSignupPage() {
 
             <form
               onSubmit={handleSubmit}
-              className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+              className="space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm sm:p-8"
             >
               <AuthInput
                 label="Organization Name"
@@ -282,17 +282,17 @@ export default function OrganizationSignupPage() {
               />
 
               {/* OCAP/CARE Consent */}
-              <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 cursor-pointer">
+              <label className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={consent}
                   onChange={(e) => setConsent(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-accent focus:ring-teal-500"
                 />
-                <span className="text-sm text-slate-600 leading-relaxed">
+                <span className="text-sm text-[var(--text-secondary)] leading-relaxed">
                   I agree to uphold{" "}
-                  <span className="font-semibold text-slate-800">OCAP</span> (Ownership, Control, Access, Possession) and{" "}
-                  <span className="font-semibold text-slate-800">CARE</span> (Collective Benefit, Authority to Control, Responsibility, Ethics) principles for Indigenous data sovereignty.
+                  <span className="font-semibold text-[var(--text-primary)]">OCAP</span> (Ownership, Control, Access, Possession) and{" "}
+                  <span className="font-semibold text-[var(--text-primary)]">CARE</span> (Collective Benefit, Authority to Control, Responsibility, Ethics) principles for Indigenous data sovereignty.
                 </span>
               </label>
 
@@ -316,11 +316,11 @@ export default function OrganizationSignupPage() {
 
               <p className="text-center text-xs text-foreground0">
                 By creating an account you agree to our{" "}
-                <Link href="/privacy" className="text-teal-600 hover:underline">
+                <Link href="/privacy" className="text-accent hover:underline">
                   Privacy Policy
                 </Link>{" "}
                 and{" "}
-                <Link href="/terms" className="text-teal-600 hover:underline">
+                <Link href="/terms" className="text-accent hover:underline">
                   Terms of Service
                 </Link>
               </p>
@@ -330,7 +330,7 @@ export default function OrganizationSignupPage() {
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-semibold text-teal-600 hover:underline"
+                className="font-semibold text-accent hover:underline"
               >
                 Log in
               </Link>

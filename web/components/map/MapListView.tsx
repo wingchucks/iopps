@@ -61,7 +61,7 @@ export default function MapListView({
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-xl p-4 animate-pulse"
+            className="bg-[var(--card-bg)] rounded-xl p-4 animate-pulse"
           >
             <div className="h-4 bg-slate-700 rounded w-1/4 mb-3" />
             <div className="h-5 bg-slate-700 rounded w-3/4 mb-2" />
@@ -75,8 +75,8 @@ export default function MapListView({
   if (opportunities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <MapPinIcon className="w-12 h-12 text-slate-600 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-600 mb-2">
+        <MapPinIcon className="w-12 h-12 text-[var(--text-secondary)] mb-4" />
+        <h3 className="text-lg font-semibold text-[var(--text-secondary)] mb-2">
           No opportunities found
         </h3>
         <p className="text-sm text-foreground0 max-w-md">
@@ -89,7 +89,7 @@ export default function MapListView({
   return (
     <div className="flex flex-col h-full">
       {/* Sort Controls */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--card-bg)]">
         <span className="text-sm text-foreground0">
           {opportunities.length} {opportunities.length === 1 ? "result" : "results"}
         </span>
@@ -98,7 +98,7 @@ export default function MapListView({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="text-sm bg-[var(--card-bg)] border border-[var(--border)] rounded-lg px-2 py-1 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-accent"
           >
             <option value="distance">Distance</option>
             <option value="title">Name</option>
@@ -137,7 +137,7 @@ function OpportunityCard({
 
   return (
     <div
-      className="bg-white hover:bg-slate-100 border border-slate-200 rounded-xl p-4 transition-colors cursor-pointer"
+      className="bg-[var(--card-bg)] hover:bg-surface border border-[var(--border)] rounded-xl p-4 transition-colors cursor-pointer"
       onClick={onClick}
     >
       {/* Header */}
@@ -158,7 +158,7 @@ function OpportunityCard({
       </div>
 
       {/* Title & Organization */}
-      <h3 className="text-base font-semibold text-slate-900 mb-1 line-clamp-2">
+      <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1 line-clamp-2">
         {title}
       </h3>
       <p className="text-sm text-foreground0 mb-2">{organization}</p>

@@ -90,9 +90,9 @@ export default function DiscoverPage() {
     return (
       <FeedLayout activeNav="community" fullWidth>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center p-8 rounded-2xl border border-slate-200 bg-white max-w-md">
-            <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign in to Discover</h2>
+          <div className="text-center p-8 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] max-w-md">
+            <Users className="h-16 w-16 mx-auto text-[var(--text-secondary)] mb-4" />
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Sign in to Discover</h2>
             <p className="text-foreground0 mb-6">
               Connect with Indigenous professionals who share your interests and goals.
             </p>
@@ -108,11 +108,11 @@ export default function DiscoverPage() {
   return (
     <FeedLayout activeNav="community" fullWidth>
       {/* Header */}
-      <div className="border-b border-slate-200 bg-white">
+      <div className="border-b border-[var(--border)] bg-[var(--card-bg)]">
         <div className="container max-w-6xl mx-auto px-4 py-6">
           <Link
             href="/members"
-            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-slate-900 mb-4"
+            className="inline-flex items-center gap-2 text-sm text-foreground0 hover:text-[var(--text-primary)] mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Directory
@@ -123,7 +123,7 @@ export default function DiscoverPage() {
                 <Sparkles className="h-8 w-8 text-purple-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">People You May Know</h1>
+                <h1 className="text-2xl font-bold text-[var(--text-primary)]">People You May Know</h1>
                 <p className="text-foreground0 text-sm">
                   Personalized recommendations based on your profile
                 </p>
@@ -133,7 +133,7 @@ export default function DiscoverPage() {
               variant="outline"
               onClick={refreshRecommendations}
               disabled={refreshing}
-              className="border-slate-200"
+              className="border-[var(--border)]"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
@@ -149,8 +149,8 @@ export default function DiscoverPage() {
           </div>
         ) : recommendations.length === 0 ? (
           <div className="text-center py-20">
-            <Users className="h-16 w-16 mx-auto text-slate-600 mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">No recommendations yet</h3>
+            <Users className="h-16 w-16 mx-auto text-[var(--text-secondary)] mb-4" />
+            <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">No recommendations yet</h3>
             <p className="text-foreground0 mb-6 max-w-md mx-auto">
               Complete your profile with your skills, experience, and interests to get personalized
               connection recommendations.
@@ -164,7 +164,7 @@ export default function DiscoverPage() {
             {/* High Match Section */}
             {recommendations.filter(r => r.matchScore >= 50).length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                   <Star className="h-5 w-5 text-amber-400" />
                   Top Matches
                 </h2>
@@ -175,7 +175,7 @@ export default function DiscoverPage() {
                     .map((person) => (
                       <div
                         key={person.userId}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 hover:border-accent/30 transition-all"
+                        className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-5 hover:border-accent/30 transition-all"
                       >
                         <div className="flex items-start gap-4">
                           <Link href={`/member/${person.userId}`}>
@@ -188,7 +188,7 @@ export default function DiscoverPage() {
                           </Link>
                           <div className="flex-1 min-w-0">
                             <Link href={`/member/${person.userId}`}>
-                              <h3 className="font-semibold text-slate-900 truncate hover:text-accent transition-colors">
+                              <h3 className="font-semibold text-[var(--text-primary)] truncate hover:text-accent transition-colors">
                                 {person.displayName}
                               </h3>
                             </Link>
@@ -264,7 +264,7 @@ export default function DiscoverPage() {
             {/* Other Recommendations */}
             {recommendations.filter(r => r.matchScore < 50).length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                   <UserPlus className="h-5 w-5 text-blue-400" />
                   More Suggestions
                 </h2>
@@ -274,7 +274,7 @@ export default function DiscoverPage() {
                     .map((person) => (
                       <div
                         key={person.userId}
-                        className="rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 transition-all flex items-center gap-4"
+                        className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 hover:border-[var(--border)] transition-all flex items-center gap-4"
                       >
                         <Link href={`/member/${person.userId}`}>
                           <Avatar className="h-12 w-12 border-2 border-white">
@@ -286,7 +286,7 @@ export default function DiscoverPage() {
                         </Link>
                         <div className="flex-1 min-w-0">
                           <Link href={`/member/${person.userId}`}>
-                            <h3 className="font-medium text-slate-900 hover:text-accent transition-colors">
+                            <h3 className="font-medium text-[var(--text-primary)] hover:text-accent transition-colors">
                               {person.displayName}
                             </h3>
                           </Link>
@@ -312,7 +312,7 @@ export default function DiscoverPage() {
                           </span>
                           <ConnectionButton
                             targetUserId={person.userId}
-                            className="px-3 py-1.5 text-sm border-slate-200"
+                            className="px-3 py-1.5 text-sm border-[var(--border)]"
                           />
                         </div>
                       </div>
@@ -322,26 +322,26 @@ export default function DiscoverPage() {
             )}
 
             {/* Tips Section */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">Improve Your Recommendations</h3>
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6">
+              <h3 className="font-semibold text-[var(--text-primary)] mb-4">Improve Your Recommendations</h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="p-4 rounded-xl bg-white border border-slate-200">
+                <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
                   <Briefcase className="h-8 w-8 text-blue-400 mb-3" />
-                  <h4 className="font-medium text-slate-900 mb-1">Add Your Experience</h4>
+                  <h4 className="font-medium text-[var(--text-primary)] mb-1">Add Your Experience</h4>
                   <p className="text-sm text-foreground0">
                     Connect with others who've worked at similar companies or in similar roles.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-white border border-slate-200">
+                <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
                   <Building2 className="h-8 w-8 text-purple-400 mb-3" />
-                  <h4 className="font-medium text-slate-900 mb-1">List Your Skills</h4>
+                  <h4 className="font-medium text-[var(--text-primary)] mb-1">List Your Skills</h4>
                   <p className="text-sm text-foreground0">
                     Find professionals with complementary or shared skills.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-white border border-slate-200">
+                <div className="p-4 rounded-xl bg-[var(--card-bg)] border border-[var(--border)]">
                   <GraduationCap className="h-8 w-8 text-amber-400 mb-3" />
-                  <h4 className="font-medium text-slate-900 mb-1">Add Your Education</h4>
+                  <h4 className="font-medium text-[var(--text-primary)] mb-1">Add Your Education</h4>
                   <p className="text-sm text-foreground0">
                     Connect with alumni from your school or program.
                   </p>

@@ -75,26 +75,16 @@ const nextConfig: NextConfig = {
   /* Redirects for backwards compatibility */
   async redirects() {
     return [
-      // Hub to Discover redirect
+      // Hub to Discover redirect (backwards compat for old /hub URL)
       {
         source: "/hub",
         destination: "/discover",
         permanent: false,
       },
-      // Admin route consolidation
-      {
-        source: "/admin/employers",
-        destination: "/admin/organizations",
-        permanent: false,
-      },
+      // Admin route consolidation (only redirect routes that have destination pages)
       {
         source: "/admin/members",
         destination: "/admin/users",
-        permanent: false,
-      },
-      {
-        source: "/admin/vendors",
-        destination: "/admin/shop",
         permanent: false,
       },
       // Employer to Organization redirects

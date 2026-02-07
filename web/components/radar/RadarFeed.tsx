@@ -204,7 +204,7 @@ export function RadarFeed() {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${activeTab === tab
-                                ? "bg-accent text-slate-900 shadow-lg shadow-teal-500/20"
+                                ? "bg-accent text-[var(--text-primary)] shadow-lg shadow-teal-500/20"
                                 : "bg-surface text-[var(--text-muted)] border border-[var(--card-border)] hover:border-[var(--card-border)]"
                                 }`}
                         >
