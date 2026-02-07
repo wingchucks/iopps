@@ -14,6 +14,7 @@ import {
   colors,
   Icon,
 } from "@/components/opportunity-graph";
+import { EVENTS_SIDEBAR_LINKS } from "@/lib/constants/navigation";
 
 function EventsRightSidebar() {
   return (
@@ -43,13 +44,7 @@ function EventsRightSidebar() {
           <Icon name="calendar" size={16} color={colors.accent} />
           Events Hub
         </div>
-        {[
-          { label: "Pow Wows", href: "/community/powwows" },
-          { label: "Conferences", href: "/conferences" },
-          { label: "All Events", href: "/community" },
-          { label: "Nations Map", href: "/map" },
-          { label: "Host an Event", href: "/organization/events/new" },
-        ].map((link, i) => (
+        {EVENTS_SIDEBAR_LINKS.map((link, i) => (
           <Link
             key={i}
             href={link.href}

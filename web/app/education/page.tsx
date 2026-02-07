@@ -14,6 +14,7 @@ import {
   colors,
   Icon,
 } from "@/components/opportunity-graph";
+import { EDUCATION_SIDEBAR_LINKS } from "@/lib/constants/navigation";
 
 function EducationRightSidebar() {
   return (
@@ -43,12 +44,7 @@ function EducationRightSidebar() {
           <Icon name="academic" size={16} color={colors.accent} />
           Education Hub
         </div>
-        {[
-          { label: "Browse Schools", href: "/education/schools" },
-          { label: "Find Scholarships", href: "/education/scholarships" },
-          { label: "Training Programs", href: "/careers/programs" },
-          { label: "List Your School", href: "/organization/education/setup" },
-        ].map((link, i) => (
+        {EDUCATION_SIDEBAR_LINKS.map((link, i) => (
           <Link
             key={i}
             href={link.href}

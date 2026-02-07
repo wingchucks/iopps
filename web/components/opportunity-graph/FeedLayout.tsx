@@ -15,8 +15,15 @@ import NotificationBell from "@/components/NotificationBell";
 import { colors } from "./tokens";
 import { Icon, IconName } from "./Icon";
 import { Avatar } from "./Avatar";
-
-type NavId = "feed" | "careers" | "education" | "events" | "live" | "nations" | "business" | "community" | "organizations" | "pricing";
+import {
+  NAV_ITEMS,
+  BOTTOM_NAV,
+  QUICK_LINKS,
+  FOOTER_LINKS,
+  resolveHref,
+  type NavId,
+} from "@/lib/constants/navigation";
+import { TREATY_ACKNOWLEDGMENT } from "@/lib/constants/content";
 
 interface FeedLayoutProps {
   children: React.ReactNode;
@@ -24,27 +31,6 @@ interface FeedLayoutProps {
   rightSidebar?: React.ReactNode;
   showFab?: boolean;
   fullWidth?: boolean;
-}
-
-const NAV_ITEMS: { id: NavId; icon: IconName; label: string; href: string }[] = [
-  { id: "feed", icon: "home", label: "Home Feed", href: "/discover" },
-  { id: "careers", icon: "briefcase", label: "Careers", href: "/careers" },
-  { id: "education", icon: "academic", label: "Education", href: "/education" },
-  { id: "events", icon: "calendar", label: "Events", href: "/community" },
-  { id: "live", icon: "video", label: "IOPPS Live", href: "/live" },
-  { id: "nations", icon: "map", label: "Nations Map", href: "/map" },
-];
-
-const BOTTOM_NAV: { icon: IconName; label: string; href: string | ((loggedIn: boolean) => string) }[] = [
-  { icon: "home", label: "Feed", href: "/discover" },
-  { icon: "briefcase", label: "Jobs", href: "/careers" },
-  { icon: "search", label: "Search", href: "/search" },
-  { icon: "bell", label: "Alerts", href: (loggedIn) => loggedIn ? "/member/dashboard?tab=alerts" : "/login" },
-  { icon: "user", label: "Profile", href: (loggedIn) => loggedIn ? "/member/profile" : "/login" },
-];
-
-function resolveHref(href: string | ((loggedIn: boolean) => string), loggedIn: boolean): string {
-  return typeof href === "function" ? href(loggedIn) : href;
 }
 
 export function FeedLayout({
@@ -241,12 +227,7 @@ function DefaultRightSidebar() {
       {/* Quick Links */}
       <div className="feed-quick-links">
         <div className="feed-quick-links-header">Quick Links</div>
-        {[
-          { label: "Post a Job", href: "/organization/jobs/new" },
-          { label: "Browse Training", href: "/careers" },
-          { label: "Find Scholarships", href: "/education" },
-          { label: "Upcoming Events", href: "/community" },
-        ].map((link, i) => (
+        {QUICK_LINKS.map((link, i) => (
           <Link key={i} href={link.href} className="feed-quick-link">
             {link.label} →
           </Link>
@@ -255,15 +236,13 @@ function DefaultRightSidebar() {
 
       {/* Footer */}
       <div className="feed-footer">
-        IOPPS operates on Treaty 6 Territory, the traditional homeland of the Cree, Metis, and many
-        other Indigenous peoples.
+        {TREATY_ACKNOWLEDGMENT}
         <div className="feed-footer-links">
-          <Link href="/about">About</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <Link href="/contact">Help</Link>
+          {FOOTER_LINKS.map((link) => (
+            <Link key={link.href} href={link.href}>{link.label}</Link>
+          ))}
         </div>
-        © 2026 IOPPS.ca
+        © {new Date().getFullYear()} IOPPS.ca
       </div>
     </>
   );
