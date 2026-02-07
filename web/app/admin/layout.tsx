@@ -223,9 +223,9 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0B0D10] text-[var(--text-muted)]">
+      <div className="flex min-h-screen items-center justify-center bg-background text-[var(--text-muted)]" data-admin>
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-teal-500" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--card-border)] border-t-accent" />
           <span>Loading admin panel...</span>
         </div>
       </div>
@@ -237,7 +237,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0D10]">
+    <div className="min-h-screen bg-background" data-admin>
       <div className="flex h-screen overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden w-64 flex-col border-r border-[var(--card-border)] bg-surface md:flex">
@@ -297,7 +297,7 @@ export default function AdminLayout({
           </div>
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto bg-[#0B0D10] p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-background p-6">{children}</main>
         </div>
       </div>
 
