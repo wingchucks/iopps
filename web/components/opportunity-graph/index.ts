@@ -34,5 +34,9 @@ export { FilterBar, SearchInput, FilterSelect, FilterChips, SectionHeader } from
 // Layout
 export { FeedLayout } from "./FeedLayout";
 
+// Sidebar
+export { SidebarLinkCard } from "./SidebarLinkCard";
+export { SidebarCTACard } from "./SidebarCTACard";
+
 // Feed
 export { OpportunityFeed } from "./OpportunityFeed";
