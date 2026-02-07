@@ -13,7 +13,11 @@ import { createPost } from "@/lib/firestore";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
-export function CreatePost() {
+interface CreatePostProps {
+    onPostCreated?: () => void;
+}
+
+export function CreatePost({ onPostCreated }: CreatePostProps = {}) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [content, setContent] = useState("");
@@ -46,7 +50,7 @@ export function CreatePost() {
                 description: "Your update is live.",
             });
 
-            // Ideally refresh the feed here
+            onPostCreated?.();
         } catch (error) {
             console.error("Failed to post", error);
             toast({

@@ -7,11 +7,11 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { 
-  listJobPostings, 
-  listScholarships, 
-  listConferences, 
-  listPowwowEvents, 
+import {
+  listJobPostings,
+  listScholarships,
+  listConferences,
+  listPowwowEvents,
   listLiveStreams,
   listTrainingPrograms,
   listApprovedVendors,
@@ -19,22 +19,25 @@ import {
   toggleSavedJob,
   toggleSavedConference,
   listSavedConferenceIds,
+  getFeedPosts,
 } from "@/lib/firestore";
 import { useAuth } from "@/components/AuthProvider";
 import { colors, typeConfig } from "./tokens";
 import { OpportunityCard, OpportunityItem } from "./OpportunityCard";
-import { 
-  jobToOpportunity, 
-  scholarshipToOpportunity, 
-  eventToOpportunity, 
+import {
+  jobToOpportunity,
+  scholarshipToOpportunity,
+  eventToOpportunity,
   livestreamToOpportunity,
   trainingToOpportunity,
   vendorToOpportunity,
+  postToOpportunity,
 } from "./adapters";
+import { CreatePost } from "@/components/social/CreatePost";
 import { Icon } from "./Icon";
 import type { OpportunityType } from "./tokens";
 
-type FeedTab = "all" | "jobs" | "education" | "shop" | "events" | "live";
+type FeedTab = "all" | "jobs" | "education" | "shop" | "events" | "live" | "community";
 
 interface OpportunityFeedProps {
   initialTab?: FeedTab;
@@ -61,6 +64,7 @@ const tabs: { id: FeedTab; label: string; icon: string }[] = [
   { id: "shop", label: "Shop", icon: "🛍" },
   { id: "events", label: "Events", icon: "📅" },
   { id: "live", label: "Live", icon: "🎥" },
+  { id: "community", label: "Community", icon: "💬" },
 ];
 
 export function OpportunityFeed({
@@ -81,6 +85,7 @@ export function OpportunityFeed({
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch saved items when user is logged in
   useEffect(() => {
@@ -117,7 +122,7 @@ export function OpportunityFeed({
 
       try {
         // Only fetch content types that are needed
-        const [jobs, scholarships, conferences, powwows, livestreams, training, vendors] = await Promise.all([
+        const [jobs, scholarships, conferences, powwows, livestreams, training, vendors, socialPostsResult] = await Promise.all([
           shouldFetch(["job"]) ? listJobPostings({ activeOnly: true }).catch(() => []) : Promise.resolve([]),
           shouldFetch(["scholarship"]) ? listScholarships().catch(() => []) : Promise.resolve([]),
           shouldFetch(["conference", "event"]) ? listConferences().catch(() => []) : Promise.resolve([]),
@@ -125,6 +130,7 @@ export function OpportunityFeed({
           shouldFetch(["livestream"]) ? listLiveStreams().catch(() => []) : Promise.resolve([]),
           shouldFetch(["program"]) ? listTrainingPrograms().catch(() => []) : Promise.resolve([]),
           shouldFetch(["product", "service"]) ? listApprovedVendors().catch(() => []) : Promise.resolve([]),
+          shouldFetch(["update"]) ? getFeedPosts(20).catch(() => ({ posts: [], lastSnapshot: undefined })) : Promise.resolve({ posts: [], lastSnapshot: undefined }),
         ]);
 
         // Convert to OpportunityItems
@@ -136,6 +142,7 @@ export function OpportunityFeed({
           ...livestreams.map(livestreamToOpportunity),
           ...training.map(trainingToOpportunity),
           ...vendors.map(vendorToOpportunity),
+          ...socialPostsResult.posts.map(postToOpportunity),
         ];
 
         // Smart sorting: Live first, then interleave by type for variety
@@ -182,7 +189,7 @@ export function OpportunityFeed({
 
     loadFeed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxItems, contentTypes?.join(",")]);
+  }, [maxItems, contentTypes?.join(","), refreshKey]);
 
   // Filter items based on active tab
   const filteredItems = useMemo(() => {
@@ -192,6 +199,7 @@ export function OpportunityFeed({
     if (activeTab === "events") return items.filter(i => ["event", "conference"].includes(i.type));
     if (activeTab === "shop") return items.filter(i => ["product", "service"].includes(i.type));
     if (activeTab === "live") return items.filter(i => i.type === "livestream");
+    if (activeTab === "community") return items.filter(i => i.type === "update");
     return items;
   }, [items, activeTab]);
 
@@ -325,51 +333,7 @@ export function OpportunityFeed({
 
       {/* Quick Composer (for logged-in users) */}
       {showBanner && user && (
-        <div
-          style={{
-            background: colors.surface,
-            borderRadius: 12,
-            border: `1px solid ${colors.border}`,
-            padding: 16,
-            marginBottom: 16,
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: colors.accentBg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 14,
-              fontWeight: 700,
-              color: colors.accent,
-            }}
-          >
-            {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "?"}
-          </div>
-          <a
-            href="/organization/jobs/new"
-            style={{
-              flex: 1,
-              padding: "10px 16px",
-              borderRadius: 20,
-              background: colors.bg,
-              border: `1px solid ${colors.border}`,
-              color: colors.textMuted,
-              fontSize: 14,
-              textDecoration: "none",
-              cursor: "pointer",
-            }}
-          >
-            Share an opportunity, event, or update...
-          </a>
-        </div>
+        <CreatePost onPostCreated={() => setRefreshKey(k => k + 1)} />
       )}
 
       {/* Featured Section */}

@@ -4,7 +4,7 @@
  * Convert Firestore data types to OpportunityItem format.
  */
 
-import type { JobPosting, Scholarship, Conference, PowwowEvent, TrainingProgram, LiveStreamEvent, Vendor } from "@/lib/types";
+import type { JobPosting, Scholarship, Conference, PowwowEvent, TrainingProgram, LiveStreamEvent, Vendor, Post } from "@/lib/types";
 import type { OpportunityItem, OpportunityAuthor, OpportunityMeta } from "./OpportunityCard";
 import { formatDistanceToNow } from "date-fns";
 
@@ -254,6 +254,49 @@ export function livestreamToOpportunity(stream: LiveStreamEvent): OpportunityIte
     meta,
     live: isLive,
     href: `/live/${stream.id}`,
+  };
+}
+
+/**
+ * Convert a social Post to OpportunityItem
+ */
+export function postToOpportunity(post: Post): OpportunityItem {
+  const author: OpportunityAuthor = {
+    id: post.authorId,
+    name: post.authorName || "Community Member",
+    verified: post.authorType === "organization",
+    avatarUrl: post.authorAvatarUrl,
+  };
+
+  // Title: first line of content, truncated to ~80 chars
+  const firstLine = (post.content || "").split("\n")[0].trim();
+  const title = firstLine.length > 80
+    ? firstLine.slice(0, 77) + "..."
+    : firstLine || "Community Update";
+
+  // Summary: full content truncated to ~200 chars
+  const fullContent = (post.content || "").replace(/\s+/g, " ").trim();
+  const summary = fullContent.length > 200
+    ? fullContent.slice(0, 197) + "..."
+    : fullContent;
+
+  // Total reactions (love + honor + fire), fallback to likesCount
+  const totalReactions = post.reactionsCount
+    ? (post.reactionsCount.love || 0) + (post.reactionsCount.honor || 0) + (post.reactionsCount.fire || 0)
+    : post.likesCount || 0;
+
+  return {
+    id: post.id,
+    type: "update",
+    author,
+    title,
+    summary,
+    time: formatRelativeTime(post.createdAt),
+    engagement: {
+      saves: totalReactions,
+      comments: post.commentsCount,
+    },
+    href: `/posts/${post.id}`,
   };
 }
 

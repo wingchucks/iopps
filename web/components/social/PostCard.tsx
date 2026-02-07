@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Post, Comment } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import { Post, Comment, ReactionType } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, Share2, MoreHorizontal } from "lucide-react";
-import { toggleLikePost, hasUserLikedPost } from "@/lib/firestore";
+import { MoreHorizontal } from "lucide-react";
+import { getUserReaction } from "@/lib/firestore/social";
+import ReactionBar from "@/components/social/ReactionBar";
 import { useAuth } from "@/components/AuthProvider";
 
 interface PostCardProps {
@@ -16,40 +18,22 @@ interface PostCardProps {
 
 export function PostCard({ post }: PostCardProps) {
     const { user } = useAuth();
-    const [liked, setLiked] = useState(false);
-    const [likesCount, setLikesCount] = useState(post.likesCount);
+    const router = useRouter();
+    const [userReaction, setUserReaction] = useState<ReactionType | null>(null);
 
-    // Check if user has already liked this post
+    // Check if user has already reacted to this post
     useEffect(() => {
         if (!user) {
-            setLiked(false);
+            setUserReaction(null);
             return;
         }
 
-        hasUserLikedPost(post.id, user.uid)
-            .then(setLiked)
+        getUserReaction(post.id, user.uid)
+            .then(setUserReaction)
             .catch((err) => {
-                console.error("Failed to check like status:", err);
+                console.error("Failed to check reaction status:", err);
             });
     }, [post.id, user]);
-
-    const handleLike = async () => {
-        if (!user) return;
-
-        // Optimistic update
-        const newLiked = !liked;
-        setLiked(newLiked);
-        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
-
-        try {
-            await toggleLikePost(post.id, user.uid);
-        } catch (error) {
-            // Revert if failed
-            setLiked(!newLiked);
-            setLikesCount(prev => !newLiked ? prev + 1 : prev - 1);
-            console.error("Failed to toggle like", error);
-        }
-    };
 
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -100,7 +84,7 @@ export function PostCard({ post }: PostCardProps) {
     };
 
     return (
-        <Card className="mb-4 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-border/80 transition-colors">
+        <Card className="mb-4 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-border/80 transition-colors cursor-pointer" onClick={() => router.push(`/posts/${post.id}`)}>
             <CardHeader className="flex flex-row items-center gap-4 p-4 pb-2">
                 <Avatar>
                     <AvatarImage src={post.authorAvatarUrl} alt={post.authorName} />
@@ -141,28 +125,15 @@ export function PostCard({ post }: PostCardProps) {
                 )}
             </CardContent>
 
-            <CardFooter className="p-2 px-4 border-t flex flex-col items-stretch">
-                <div className="flex justify-between w-full mb-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`gap-2 ${liked ? 'text-red-500' : 'text-muted-foreground'}`}
-                        onClick={handleLike}
-                    >
-                        <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                        <span>{likesCount}</span>
-                    </Button>
-
-                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={toggleComments}>
-                        <MessageCircle className="h-4 w-4" />
-                        <span>{post.commentsCount}</span>
-                    </Button>
-
-                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                        <Share2 className="h-4 w-4" />
-                        <span>{post.sharesCount}</span>
-                    </Button>
-                </div>
+            <CardFooter className="p-2 px-4 border-t flex flex-col items-stretch" onClick={(e) => e.stopPropagation()}>
+                <ReactionBar
+                    postId={post.id}
+                    reactionsCount={post.reactionsCount || { love: 0, honor: 0, fire: 0 }}
+                    commentsCount={post.commentsCount}
+                    sharesCount={post.sharesCount}
+                    userReaction={userReaction}
+                    onCommentClick={toggleComments}
+                />
 
                 {/* Comments Section */}
                 {showComments && (

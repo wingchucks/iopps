@@ -26,7 +26,7 @@ export type {
 } from "./OpportunityCard";
 
 // Adapters
-export { jobToOpportunity, scholarshipToOpportunity, eventToOpportunity } from "./adapters";
+export { jobToOpportunity, scholarshipToOpportunity, eventToOpportunity, postToOpportunity } from "./adapters";
 
 // Filters
 export { FilterBar, SearchInput, FilterSelect, FilterChips, SectionHeader } from "./FilterBar";
