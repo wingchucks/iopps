@@ -264,6 +264,10 @@ export interface EmployerProfile {
   teamSettings?: TeamSettings;
   // Notification Preferences
   notificationPreferences?: EmployerNotificationPreferences;
+  // Engagement counters (new)
+  jobCount?: number;
+  followerCount?: number;
+  profileViews?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -743,6 +747,9 @@ export interface JobApplication {
     type: string;
     path: string;
   }[];
+  // Application flow fields (new)
+  interestStatement?: string;
+  portfolioURL?: string;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }
@@ -778,6 +785,9 @@ export interface PortfolioItem {
   tags?: string[];
 }
 
+export type MemberType = "jobSeeker" | "professional" | "communityMember";
+export type ExperienceLevel = "student" | "entry" | "mid" | "senior" | "executive";
+
 export interface MemberProfile {
   id: string;
   userId: string;
@@ -798,6 +808,19 @@ export interface MemberProfile {
   indigenousAffiliation?: string;
   availableForInterviews?: string;
   messagingHandle?: string;
+  // Identity fields (new)
+  nation?: string;
+  territory?: string;
+  band?: string;
+  pronouns?: string;
+  // Career fields (new)
+  memberType?: MemberType;
+  openToWork?: boolean;
+  jobTypes?: string[];
+  preferredLocations?: string[];
+  willingToRelocate?: boolean;
+  experienceLevel?: ExperienceLevel;
+  industry?: string;
   // Quick Apply Settings
   quickApplyEnabled?: boolean; // Allow using saved resume for quick applications
   defaultCoverLetter?: string; // Pre-filled cover letter for quick applies
