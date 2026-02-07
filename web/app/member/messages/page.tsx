@@ -1,15 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { getMemberConversations, getConversation } from "@/lib/firestore";
+import { getConversation, getOtherParticipant } from "@/lib/firestore";
 import type { Conversation } from "@/lib/types";
-import ConversationList from "@/components/messaging/ConversationList";
+import type { PeerConversation } from "@/lib/firestore/messaging";
 import MessageThread from "@/components/messaging/MessageThread";
-import { Suspense, useMemo } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import PeerMessageThread from "@/components/messaging/PeerMessageThread";
+import NewMessageDialog from "@/components/messaging/NewMessageDialog";
+import { useRealtimeConversations } from "@/components/messaging/useRealtimeConversations";
+import { useRealtimeMessages } from "@/components/messaging/useRealtimeMessages";
+import { Suspense } from "react";
+import {
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
+import { Users, Briefcase, MessageSquare, Plus } from "lucide-react";
+
+type ConversationType = "all" | "employers" | "peers";
+
+// Combined conversation type for the list
+type AnyConversation =
+  | (Conversation & { conversationType: "employer" })
+  | (PeerConversation & { conversationType: "peer" });
 
 function MemberMessagesContent() {
   const { user, role, loading: authLoading } = useAuth();
@@ -17,81 +31,127 @@ function MemberMessagesContent() {
   const searchParams = useSearchParams();
   const conversationIdParam = searchParams?.get("id");
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
-    useState<Conversation | null>(null);
-  const [loading, setLoading] = useState(true);
+    useState<AnyConversation | null>(null);
+  const [filter, setFilter] = useState<ConversationType>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [newMessageOpen, setNewMessageOpen] = useState(false);
 
-  // Filter conversations by search query
-  const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) return conversations;
-    const query = searchQuery.toLowerCase();
-    return conversations.filter(
-      (c) =>
-        c.employerName?.toLowerCase().includes(query) ||
-        c.jobTitle?.toLowerCase().includes(query) ||
-        c.lastMessage?.toLowerCase().includes(query)
-    );
-  }, [conversations, searchQuery]);
+  // Real-time conversations
+  const {
+    employerConversations,
+    peerConversations,
+    loading,
+  } = useRealtimeConversations(user?.uid ?? null);
+
+  // Real-time messages for selected conversation
+  const { messages: realtimeMessages } = useRealtimeMessages(
+    selectedConversation?.id ?? null
+  );
 
   useEffect(() => {
     if (authLoading) return;
-
     if (!user || role !== "community") {
       router.push("/");
+    }
+  }, [user, role, authLoading, router]);
+
+  // Handle deep link to specific conversation
+  useEffect(() => {
+    if (!conversationIdParam || loading || !user) return;
+
+    // Check peer conversations first
+    const peerConvo = peerConversations.find((c) => c.id === conversationIdParam);
+    if (peerConvo) {
+      setSelectedConversation({ ...peerConvo, conversationType: "peer" });
       return;
     }
 
-    loadConversations();
-  }, [user, role, authLoading, router]);
-
-  useEffect(() => {
-    // Load specific conversation from URL param
-    if (conversationIdParam && user) {
-      loadConversationById(conversationIdParam);
+    // Check employer conversations
+    const employerConvo = employerConversations.find(
+      (c) => c.id === conversationIdParam
+    );
+    if (employerConvo) {
+      setSelectedConversation({ ...employerConvo, conversationType: "employer" });
+      return;
     }
-  }, [conversationIdParam, user]);
 
-  async function loadConversations() {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const convos = await getMemberConversations(user.uid);
-      setConversations(convos);
-
-      // If there's a conversation ID in URL, select it
-      if (conversationIdParam) {
-        const selected = convos.find((c) => c.id === conversationIdParam);
-        if (selected) {
-          setSelectedConversation(selected);
+    // If not found locally, try to fetch it
+    const fetchConversation = async () => {
+      try {
+        const convo = await getConversation(conversationIdParam);
+        if (convo) {
+          if ("type" in convo && (convo as Record<string, unknown>).type === "peer") {
+            setSelectedConversation({
+              ...(convo as unknown as PeerConversation),
+              conversationType: "peer",
+            });
+          } else if (convo.memberId === user.uid) {
+            setSelectedConversation({ ...convo, conversationType: "employer" });
+          }
         }
+      } catch (error) {
+        console.error("Error fetching conversation:", error);
       }
-    } catch (error) {
-      console.error("Error loading conversations:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+    };
+    fetchConversation();
+  }, [conversationIdParam, loading, peerConversations, employerConversations, user]);
 
-  async function loadConversationById(id: string) {
-    try {
-      const convo = await getConversation(id);
-      if (convo && convo.memberId === user?.uid) {
-        setSelectedConversation(convo);
-        // Add to list if not already there
-        setConversations((prev) => {
-          if (prev.find((c) => c.id === id)) return prev;
-          return [convo, ...prev];
-        });
-      }
-    } catch (error) {
-      console.error("Error loading conversation:", error);
-    }
-  }
+  // Combine and sort conversations
+  const allConversations: AnyConversation[] = useMemo(() => {
+    return [
+      ...employerConversations.map((c) => ({
+        ...c,
+        conversationType: "employer" as const,
+      })),
+      ...peerConversations.map((c) => ({
+        ...c,
+        conversationType: "peer" as const,
+      })),
+    ].sort((a, b) => {
+      const timeA = a.lastMessageAt?.seconds || a.createdAt?.seconds || 0;
+      const timeB = b.lastMessageAt?.seconds || b.createdAt?.seconds || 0;
+      return timeB - timeA;
+    });
+  }, [employerConversations, peerConversations]);
 
-  function handleSelectConversation(conversation: Conversation) {
+  // Filter + search
+  const filteredConversations = useMemo(() => {
+    let result = allConversations;
+
+    // Type filter
+    if (filter === "employers") {
+      result = result.filter((c) => c.conversationType === "employer");
+    } else if (filter === "peers") {
+      result = result.filter((c) => c.conversationType === "peer");
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((c) => {
+        if (c.conversationType === "employer") {
+          const ec = c as Conversation;
+          return (
+            ec.employerName?.toLowerCase().includes(q) ||
+            ec.jobTitle?.toLowerCase().includes(q) ||
+            ec.lastMessage?.toLowerCase().includes(q)
+          );
+        } else {
+          const pc = c as PeerConversation;
+          const other = getOtherParticipant(pc, user!.uid);
+          return (
+            other.name?.toLowerCase().includes(q) ||
+            pc.lastMessage?.toLowerCase().includes(q)
+          );
+        }
+      });
+    }
+
+    return result;
+  }, [allConversations, filter, searchQuery, user]);
+
+  function handleSelectConversation(conversation: AnyConversation) {
     setSelectedConversation(conversation);
     // Update URL without full navigation
     const url = new URL(window.location.href);
@@ -99,10 +159,24 @@ function MemberMessagesContent() {
     window.history.pushState({}, "", url.toString());
   }
 
-  function handleMessageSent() {
-    // Refresh conversations to update last message
-    loadConversations();
-  }
+  const handleConversationCreated = useCallback(
+    (conversationId: string) => {
+      // The real-time listener will pick up the new conversation automatically
+      // Update URL to show the new conversation
+      const url = new URL(window.location.href);
+      url.searchParams.set("id", conversationId);
+      window.history.pushState({}, "", url.toString());
+
+      // Wait briefly for real-time data, then try to select
+      setTimeout(() => {
+        const peer = peerConversations.find((c) => c.id === conversationId);
+        if (peer) {
+          setSelectedConversation({ ...peer, conversationType: "peer" });
+        }
+      }, 500);
+    },
+    [peerConversations]
+  );
 
   if (authLoading || loading) {
     return (
@@ -129,121 +203,347 @@ function MemberMessagesContent() {
                 href="/member/dashboard"
                 className="text-sm text-slate-400 hover:text-[#14B8A6]"
               >
-                ← Dashboard
+                &larr; Dashboard
               </Link>
               <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-50">
                 Messages
               </h1>
-              <p className="mt-1 text-sm text-slate-400">
-                Messages from employers about your applications
-              </p>
+              <p className="mt-1 text-sm text-slate-400">Your conversations</p>
             </div>
+            <button
+              onClick={() => setNewMessageOpen(true)}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-lg hover:shadow-emerald-500/30"
+            >
+              <Plus className="h-4 w-4" />
+              New Message
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="mx-auto max-w-7xl px-4 pt-4">
+        <div className="flex gap-2 rounded-lg bg-slate-800/50 p-1 w-fit">
+          <button
+            onClick={() => setFilter("all")}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
+              filter === "all"
+                ? "bg-slate-700 text-white"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            All ({allConversations.length})
+          </button>
+          <button
+            onClick={() => setFilter("employers")}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-1.5 ${
+              filter === "employers"
+                ? "bg-slate-700 text-white"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Briefcase className="h-3.5 w-3.5" />
+            Employers ({employerConversations.length})
+          </button>
+          <button
+            onClick={() => setFilter("peers")}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition flex items-center gap-1.5 ${
+              filter === "peers"
+                ? "bg-slate-700 text-white"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Members ({peerConversations.length})
+          </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
-          <div className="grid h-[calc(100vh-280px)] min-h-[500px] md:grid-cols-[320px_1fr]">
-            {/* Conversation List */}
-            <div className="border-r border-slate-800 overflow-y-auto">
-              <div className="border-b border-slate-800 p-4 space-y-3">
-                <h2 className="font-semibold text-white">Conversations</h2>
-                {/* Search */}
-                <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Search conversations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
-                  />
+      <div className="mx-auto max-w-7xl px-4 py-4">
+        {allConversations.length === 0 ? (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-12 text-center">
+            <MessageSquare className="mx-auto h-16 w-16 text-slate-600" />
+            <h3 className="mt-4 text-lg font-semibold text-white">
+              No messages yet
+            </h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Connect with other members or apply to jobs to start conversations.
+            </p>
+            <button
+              onClick={() => setNewMessageOpen(true)}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-lg hover:shadow-emerald-500/30"
+            >
+              <Plus className="h-4 w-4" />
+              Start a Conversation
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+            <div className="grid h-[calc(100vh-300px)] min-h-[500px] md:grid-cols-[320px_1fr]">
+              {/* Conversation List */}
+              <div className="border-r border-slate-800 overflow-y-auto">
+                <div className="border-b border-slate-800 p-4 space-y-3">
+                  <h2 className="font-semibold text-white">Conversations</h2>
+                  {/* Search */}
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="text"
+                      placeholder="Search conversations..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#14B8A6]/50"
+                    />
+                  </div>
                 </div>
-              </div>
-              <ConversationList
-                conversations={filteredConversations}
-                selectedId={selectedConversation?.id}
-                onSelect={handleSelectConversation}
-                userType="member"
-                loading={loading}
-              />
-            </div>
-
-            {/* Message Thread */}
-            <div className="hidden md:block">
-              {selectedConversation ? (
-                <MessageThread
-                  conversation={selectedConversation}
+                <PeerAwareConversationList
+                  conversations={filteredConversations}
+                  selectedId={selectedConversation?.id}
+                  onSelect={handleSelectConversation}
                   currentUserId={user.uid}
-                  userType="member"
-                  onMessageSent={handleMessageSent}
+                  loading={false}
                 />
-              ) : (
-                <div className="flex h-full items-center justify-center text-slate-400">
-                  <div className="text-center">
-                    <svg
-                      className="mx-auto h-16 w-16 text-slate-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+              </div>
+
+              {/* Message Thread */}
+              <div className="hidden md:block">
+                {selectedConversation ? (
+                  selectedConversation.conversationType === "peer" ? (
+                    <PeerMessageThread
+                      conversation={selectedConversation as PeerConversation}
+                      currentUserId={user.uid}
+                      realtimeMessages={realtimeMessages}
+                    />
+                  ) : (
+                    <MessageThread
+                      conversation={selectedConversation as Conversation}
+                      currentUserId={user.uid}
+                      userType="member"
+                      realtimeMessages={realtimeMessages}
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full items-center justify-center text-slate-400">
+                    <div className="text-center">
+                      <MessageSquare className="mx-auto h-16 w-16 text-slate-600" />
+                      <p className="mt-4">
+                        Select a conversation to view messages
+                      </p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        Chat with employers about jobs or connect with other
+                        members
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile: Show thread if selected */}
+              {selectedConversation && (
+                <div className="absolute inset-0 z-10 bg-[#020306] md:hidden">
+                  <div className="h-full">
+                    <button
+                      onClick={() => setSelectedConversation(null)}
+                      className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-400"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    <p className="mt-4">Select a conversation to view messages</p>
-                    <p className="mt-2 text-sm text-slate-500">
-                      Employers will message you here about your job applications
-                    </p>
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      Back to conversations
+                    </button>
+                    <div className="h-[calc(100%-48px)]">
+                      {selectedConversation.conversationType === "peer" ? (
+                        <PeerMessageThread
+                          conversation={
+                            selectedConversation as PeerConversation
+                          }
+                          currentUserId={user.uid}
+                          realtimeMessages={realtimeMessages}
+                        />
+                      ) : (
+                        <MessageThread
+                          conversation={selectedConversation as Conversation}
+                          currentUserId={user.uid}
+                          userType="member"
+                          realtimeMessages={realtimeMessages}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Mobile: Show thread if selected */}
-            {selectedConversation && (
-              <div className="absolute inset-0 z-10 bg-[#020306] md:hidden">
-                <div className="h-full">
-                  <button
-                    onClick={() => setSelectedConversation(null)}
-                    className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-400"
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                    Back to conversations
-                  </button>
-                  <div className="h-[calc(100%-48px)]">
-                    <MessageThread
-                      conversation={selectedConversation}
-                      currentUserId={user.uid}
-                      userType="member"
-                      onMessageSent={handleMessageSent}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </div>
+
+      {/* New Message Dialog */}
+      <NewMessageDialog
+        open={newMessageOpen}
+        onOpenChange={setNewMessageOpen}
+        currentUserId={user.uid}
+        currentUserName={user.displayName || undefined}
+        currentUserAvatar={user.photoURL || undefined}
+        onConversationCreated={handleConversationCreated}
+      />
     </div>
   );
+}
+
+// Peer-aware conversation list component
+interface PeerAwareConversationListProps {
+  conversations: AnyConversation[];
+  selectedId?: string;
+  onSelect: (conversation: AnyConversation) => void;
+  currentUserId: string;
+  loading?: boolean;
+}
+
+function PeerAwareConversationList({
+  conversations,
+  selectedId,
+  onSelect,
+  currentUserId,
+  loading,
+}: PeerAwareConversationListProps) {
+  if (loading) {
+    return (
+      <div className="p-4">
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-16 rounded-lg bg-slate-800/50" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (conversations.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <MessageSquare className="mx-auto h-12 w-12 text-slate-600" />
+        <p className="mt-3 text-sm text-slate-400">No conversations found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-slate-800">
+      {conversations.map((conversation) => {
+        let displayName: string;
+        let unreadCount: number;
+        let subtitle: string | null = null;
+        let icon: React.ReactNode;
+
+        if (conversation.conversationType === "peer") {
+          const peerConvo = conversation as PeerConversation;
+          const other = getOtherParticipant(peerConvo, currentUserId);
+          displayName = other.name || "Member";
+          const isParticipant1 = peerConvo.participant1Id === currentUserId;
+          unreadCount = isParticipant1
+            ? peerConvo.participant1UnreadCount
+            : peerConvo.participant2UnreadCount;
+          icon = <Users className="h-4 w-4" />;
+        } else {
+          const employerConvo = conversation as Conversation;
+          displayName = employerConvo.employerName || "Employer";
+          unreadCount = employerConvo.memberUnreadCount || 0;
+          subtitle = employerConvo.jobTitle
+            ? `Re: ${employerConvo.jobTitle}`
+            : null;
+          icon = <Briefcase className="h-4 w-4" />;
+        }
+
+        const isSelected = selectedId === conversation.id;
+        const lastMessageTime = conversation.lastMessageAt
+          ? formatTimeAgo(
+              conversation.lastMessageAt.seconds
+                ? new Date(conversation.lastMessageAt.seconds * 1000)
+                : new Date()
+            )
+          : "";
+
+        return (
+          <button
+            key={conversation.id}
+            onClick={() => onSelect(conversation)}
+            className={`w-full p-4 text-left transition hover:bg-slate-800/50 ${
+              isSelected
+                ? "bg-slate-800/70 border-l-2 border-emerald-500"
+                : ""
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500">{icon}</span>
+                  <span
+                    className={`font-medium truncate ${
+                      unreadCount > 0 ? "text-white" : "text-slate-300"
+                    }`}
+                  >
+                    {displayName}
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="flex-shrink-0 rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-semibold text-slate-900">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                {subtitle && (
+                  <p className="mt-0.5 text-xs text-slate-500 truncate">
+                    {subtitle}
+                  </p>
+                )}
+                {conversation.lastMessage && (
+                  <p
+                    className={`mt-1 text-sm truncate ${
+                      unreadCount > 0 ? "text-slate-300" : "text-slate-500"
+                    }`}
+                  >
+                    {conversation.lastMessage}
+                  </p>
+                )}
+              </div>
+              {lastMessageTime && (
+                <span className="flex-shrink-0 text-xs text-slate-500">
+                  {lastMessageTime}
+                </span>
+              )}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "now";
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays < 7) return `${diffDays}d`;
+
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export default function MemberMessagesPage() {

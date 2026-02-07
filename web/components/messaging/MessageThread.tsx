@@ -14,6 +14,7 @@ interface MessageThreadProps {
   currentUserId: string;
   userType: "employer" | "member";
   onMessageSent?: () => void;
+  realtimeMessages?: Message[];
 }
 
 export default function MessageThread({
@@ -21,6 +22,7 @@ export default function MessageThread({
   currentUserId,
   userType,
   onMessageSent,
+  realtimeMessages,
 }: MessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +36,19 @@ export default function MessageThread({
       ? conversation.memberName || conversation.memberEmail || "Applicant"
       : conversation.employerName || "Employer";
 
+  // Use real-time messages if provided, otherwise load manually
   useEffect(() => {
-    loadMessages();
+    if (realtimeMessages) {
+      setMessages(realtimeMessages);
+      setLoading(false);
+    } else {
+      loadMessages();
+    }
     // Mark messages as read when opening conversation
     markMessagesAsRead(conversation.id, currentUserId, userType).catch(
       console.error
     );
-  }, [conversation.id, currentUserId, userType]);
+  }, [conversation.id, currentUserId, userType, realtimeMessages]);
 
   useEffect(() => {
     scrollToBottom();

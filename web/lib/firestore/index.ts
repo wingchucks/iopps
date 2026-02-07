@@ -76,6 +76,7 @@ export {
   getMemberProfile,
   upsertMemberProfile,
   searchMembers,
+  searchMembersByName,
   listMembersForDirectory,
 } from "./members";
 export type { ListMembersOptions } from "./members";
@@ -203,6 +204,10 @@ export {
   markPeerMessagesAsRead,
   getUnreadPeerMessageCount,
   getOtherParticipant,
+  // Query helpers for real-time listeners
+  getConversationsQuery,
+  getPeerConversationsQueries,
+  getMessagesQuery,
 } from "./messaging";
 export type { PeerConversation } from "./messaging";
 

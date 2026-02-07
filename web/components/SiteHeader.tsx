@@ -6,7 +6,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
-import { getUnreadMessageCount } from "@/lib/firestore";
+import { getUnreadMessageCount, getUnreadPeerMessageCount } from "@/lib/firestore";
+import { MessageSquare } from "lucide-react";
 
 // Updated nav links with Feed first
 const navLinks = [
@@ -44,11 +45,16 @@ export default function SiteHeader() {
       if (!user || !role) return;
 
       try {
-        // Fetch for community members (any role that's not employer/admin/moderator) or employer roles
         const isCommunityMember = role !== "employer" && role !== "admin" && role !== "moderator";
-        if (isCommunityMember || role === "employer") {
-          const userType = isCommunityMember ? "member" : "employer";
-          const count = await getUnreadMessageCount(user.uid, userType);
+        if (isCommunityMember) {
+          // Community members: sum employer conversations + peer DM unread counts
+          const [employerCount, peerCount] = await Promise.all([
+            getUnreadMessageCount(user.uid, "member"),
+            getUnreadPeerMessageCount(user.uid),
+          ]);
+          setUnreadMessageCount(employerCount + peerCount);
+        } else if (role === "employer") {
+          const count = await getUnreadMessageCount(user.uid, "employer");
           setUnreadMessageCount(count);
         }
       } catch (error) {
@@ -142,6 +148,21 @@ export default function SiteHeader() {
                   <div className="text-xs text-white/60">Loading...</div>
                 ) : user ? (
                   <>
+                    {/* Messages icon with badge */}
+                    {(role === "community" || role === "employer") && (
+                      <Link
+                        href={role === "community" ? "/member/messages" : "/organization/dashboard?tab=messages"}
+                        className="relative rounded-full border border-white/30 bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20"
+                        aria-label="Messages"
+                      >
+                        <MessageSquare className="h-5 w-5" />
+                        {unreadMessageCount > 0 && (
+                          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#14B8A6] px-1 text-[10px] font-bold text-slate-900">
+                            {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                     <NotificationBell />
                     <div className="relative" ref={menuRef}>
                       <button

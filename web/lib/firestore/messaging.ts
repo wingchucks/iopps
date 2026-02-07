@@ -18,6 +18,8 @@ import {
   checkFirebase,
 } from "./shared";
 import type { Conversation, Message } from "@/lib/types";
+import { getMemberSettings } from "./memberSettings";
+import { getConnectionStatus } from "./social";
 
 // Create or get existing conversation between employer and member
 export async function getOrCreateConversation(params: {
@@ -280,6 +282,36 @@ export async function getOrCreatePeerConversation(params: {
     return { id: existingDoc.id, ...existingDoc.data() } as PeerConversation;
   }
 
+  // Privacy enforcement: check target user's messaging preferences
+  // The "target" is the user who did NOT initiate (userId2 is the target by convention)
+  const targetUserId = params.userId2;
+  const senderUserId = params.userId1;
+
+  try {
+    const targetSettings = await getMemberSettings(targetUserId);
+    if (targetSettings) {
+      const allowFrom = targetSettings.allowMessagesFrom || "connections";
+
+      if (allowFrom === "none") {
+        throw new Error("MESSAGING_BLOCKED");
+      }
+
+      if (allowFrom === "connections") {
+        const connectionStatus = await getConnectionStatus(senderUserId, targetUserId);
+        if (connectionStatus !== "accepted") {
+          throw new Error("CONNECTION_REQUIRED");
+        }
+      }
+      // "everyone" → allow
+    }
+  } catch (error) {
+    // Re-throw our typed errors, but don't block on settings fetch failures
+    if (error instanceof Error && (error.message === "MESSAGING_BLOCKED" || error.message === "CONNECTION_REQUIRED")) {
+      throw error;
+    }
+    console.error("Error checking messaging privacy:", error);
+  }
+
   // Determine which user info goes where based on sorted order
   const user1IsFirst = params.userId1 === participant1Id;
 
@@ -465,4 +497,52 @@ export function getOtherParticipant(conversation: PeerConversation, currentUserI
     name: isParticipant1 ? conversation.participant2Name : conversation.participant1Name,
     avatar: isParticipant1 ? conversation.participant2Avatar : conversation.participant1Avatar,
   };
+}
+
+// ============================================
+// QUERY HELPERS (for onSnapshot real-time listeners)
+// ============================================
+
+/**
+ * Get query for employer conversations (for a member)
+ */
+export function getConversationsQuery(userId: string, userType: "employer" | "member") {
+  const userField = userType === "employer" ? "employerId" : "memberId";
+  return query(
+    collection(db!, conversationsCollection),
+    where(userField, "==", userId),
+    where("status", "==", "active"),
+    orderBy("lastMessageAt", "desc")
+  );
+}
+
+/**
+ * Get queries for peer conversations (returns 2 queries since user can be participant1 or participant2)
+ */
+export function getPeerConversationsQueries(userId: string) {
+  return [
+    query(
+      collection(db!, conversationsCollection),
+      where("type", "==", "peer"),
+      where("participant1Id", "==", userId),
+      where("status", "==", "active")
+    ),
+    query(
+      collection(db!, conversationsCollection),
+      where("type", "==", "peer"),
+      where("participant2Id", "==", userId),
+      where("status", "==", "active")
+    ),
+  ];
+}
+
+/**
+ * Get query for messages in a conversation (ordered by createdAt asc)
+ */
+export function getMessagesQuery(conversationId: string) {
+  return query(
+    collection(db!, messagesCollection),
+    where("conversationId", "==", conversationId),
+    orderBy("createdAt", "asc")
+  );
 }

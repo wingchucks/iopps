@@ -18,12 +18,14 @@ interface PeerMessageThreadProps {
   conversation: PeerConversation;
   currentUserId: string;
   onMessageSent?: () => void;
+  realtimeMessages?: Message[];
 }
 
 export default function PeerMessageThread({
   conversation,
   currentUserId,
   onMessageSent,
+  realtimeMessages,
 }: PeerMessageThreadProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,11 +36,17 @@ export default function PeerMessageThread({
 
   const otherParticipant = getOtherParticipant(conversation, currentUserId);
 
+  // Use real-time messages if provided, otherwise load manually
   useEffect(() => {
-    loadMessages();
+    if (realtimeMessages) {
+      setMessages(realtimeMessages);
+      setLoading(false);
+    } else {
+      loadMessages();
+    }
     // Mark messages as read when opening conversation
     markPeerMessagesAsRead(conversation.id, currentUserId).catch(console.error);
-  }, [conversation.id, currentUserId]);
+  }, [conversation.id, currentUserId, realtimeMessages]);
 
   useEffect(() => {
     scrollToBottom();

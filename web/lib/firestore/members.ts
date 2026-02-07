@@ -99,6 +99,47 @@ export async function searchMembers(
   }
 }
 
+/**
+ * Search members by display name (prefix search)
+ */
+export async function searchMembersByName(
+  searchQuery: string,
+  maxResults: number = 10
+): Promise<MemberProfile[]> {
+  try {
+    const firestore = checkFirebase();
+    if (!firestore) return [];
+
+    const ref = collection(firestore, memberCollection);
+
+    if (!searchQuery.trim()) {
+      // Return recent members when no query
+      const q = query(ref, limit(maxResults));
+      const snap = await getDocs(q);
+      return snap.docs
+        .map(doc => ({ ...doc.data(), id: doc.id } as MemberProfile))
+        .filter(m => m.displayName && m.displayName.trim().length > 0);
+    }
+
+    // Firestore prefix search on displayName
+    const searchTerm = searchQuery.trim();
+    const q = query(
+      ref,
+      where("displayName", ">=", searchTerm),
+      where("displayName", "<=", searchTerm + "\uf8ff"),
+      limit(maxResults)
+    );
+
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(doc => ({ ...doc.data(), id: doc.id } as MemberProfile))
+      .filter(m => m.displayName && m.displayName.trim().length > 0);
+  } catch (error) {
+    console.error("Error searching members by name:", error);
+    return [];
+  }
+}
+
 export interface ListMembersOptions {
   searchQuery?: string;
   location?: string;
