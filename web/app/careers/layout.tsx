@@ -20,15 +20,7 @@ export const metadata: Metadata = {
     title: "Indigenous Jobs & Careers | IOPPS.ca",
     description:
       "Find career opportunities with employers committed to Indigenous hiring across Canada. Browse jobs from organizations supporting economic reconciliation.",
-    url: "/jobs",
-    images: [
-      {
-        url: "/og-jobs.png",
-        width: 1200,
-        height: 630,
-        alt: "IOPPS Indigenous Jobs Board",
-      },
-    ],
+    url: "/careers",
   },
   twitter: {
     card: "summary_large_image",
@@ -37,7 +29,7 @@ export const metadata: Metadata = {
       "Find career opportunities with employers committed to Indigenous hiring across Canada.",
   },
   alternates: {
-    canonical: "/jobs",
+    canonical: "/careers",
   },
 };
 

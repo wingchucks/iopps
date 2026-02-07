@@ -1066,8 +1066,8 @@ service cloud.firestore {
       // Admins can read all
       allow read: if isAdminOrModerator();
 
-      // Anyone can create click events (public analytics tracking)
-      allow create: if true;
+      // Signed-in users can create click events (analytics tracking)
+      allow create: if isSignedIn();
 
       // No updates or deletes from client
       allow update, delete: if false;
@@ -1083,8 +1083,8 @@ service cloud.firestore {
       // Admins can read all
       allow read: if isAdminOrModerator();
 
-      // Anyone can create view events (public analytics tracking)
-      allow create: if true;
+      // Signed-in users can create view events (analytics tracking)
+      allow create: if isSignedIn();
 
       // No updates or deletes from client
       allow update, delete: if false;
@@ -1100,8 +1100,8 @@ service cloud.firestore {
       // Admins can read all
       allow read: if isAdminOrModerator();
 
-      // Anyone can create analytics events (public tracking)
-      allow create: if true;
+      // Signed-in users can create analytics events (tracking)
+      allow create: if isSignedIn();
 
       // No updates or deletes from client
       allow update, delete: if false;
@@ -1117,8 +1117,9 @@ service cloud.firestore {
       // Admins can read all
       allow read: if isAdminOrModerator();
 
-      // Anyone can create/update daily stats (aggregated from events)
-      allow create, update: if true;
+      // Signed-in users can create daily stats; updates restricted to server
+      allow create: if isSignedIn();
+      allow update: if false;
 
       // No deletes from client
       allow delete: if false;
@@ -1326,8 +1327,8 @@ service cloud.firestore {
     // CONTENT FLAGS (Reports / Moderation)
     // ===========================================================================
     match /contentFlags/{flagId} {
-      // Anyone can create a flag (allow anonymous reports)
-      allow create: if true;
+      // Signed-in users can create a flag (report content)
+      allow create: if isSignedIn();
 
       // Only admins/moderators can read, update, or delete flags
       allow read, update, delete: if isSignedIn() && isAdminOrModerator();

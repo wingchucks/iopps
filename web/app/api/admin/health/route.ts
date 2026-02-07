@@ -31,8 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Check admin role via custom claims
     const isAdmin = decodedToken.admin === true ||
-                    decodedToken.role === "admin" ||
-                    decodedToken.email === "nathan.arias@iopps.ca";
+                    decodedToken.role === "admin";
 
     if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
