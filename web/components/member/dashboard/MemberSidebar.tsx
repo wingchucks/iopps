@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import {
     Squares2X2Icon,
     BriefcaseIcon,
@@ -28,6 +29,7 @@ export default function MemberSidebar({
     onSectionChange,
     badges = {},
 }: MemberSidebarProps) {
+    const router = useRouter();
 
     const careerNav = [
         { id: 'applications' as const, label: 'Applications', icon: BriefcaseIcon, badge: badges.applications },
@@ -116,7 +118,13 @@ export default function MemberSidebar({
                                 label={item.label}
                                 active={activeSection === item.id}
                                 badge={item.badge}
-                                onClick={() => onSectionChange(item.id)}
+                                onClick={() => {
+                                    if (item.id === 'settings') {
+                                        router.push('/member/settings');
+                                    } else {
+                                        onSectionChange(item.id);
+                                    }
+                                }}
                                 colorVariant="shared"
                             />
                         ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Squares2X2Icon,
     BriefcaseIcon,
@@ -12,6 +13,7 @@ import {
     BookmarkIcon,
     BellIcon,
     ChartBarIcon,
+    Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 
 export type MemberSection =
@@ -50,12 +52,15 @@ export default function MemberMobileNav({
         { id: 'messages' as const, label: 'Messages', icon: ChatBubbleLeftRightIcon, badge: badges.messages },
     ];
 
+    const router = useRouter();
+
     // More menu items
     const moreItems = [
         { id: 'saved-jobs' as const, label: 'Saved Jobs', icon: BookmarkIcon },
         { id: 'job-alerts' as const, label: 'Job Alerts', icon: BellIcon },
         { id: 'analytics' as const, label: 'Analytics', icon: ChartBarIcon },
         { id: 'profile' as const, label: 'Profile', icon: UserCircleIcon },
+        { id: 'settings' as const, label: 'Settings', icon: Cog6ToothIcon },
     ];
 
     // Check if active section is in more menu
@@ -64,7 +69,11 @@ export default function MemberMobileNav({
     const isOtherActive = !tabs.some(t => t.id === activeSection) && !moreItems.some(t => t.id === activeSection);
 
     const handleTabClick = (section: MemberSection) => {
-        onSectionChange(section);
+        if (section === 'settings') {
+            router.push('/member/settings');
+        } else {
+            onSectionChange(section);
+        }
         setShowMoreMenu(false);
     };
 

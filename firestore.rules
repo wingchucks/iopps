@@ -1182,6 +1182,24 @@ service cloud.firestore {
     }
 
     // ===========================================================================
+    // NOTIFICATION PREFERENCES (Per-member notification settings)
+    // ===========================================================================
+    match /notificationPreferences/{userId} {
+      // Users can read their own preferences
+      allow read: if isSignedIn() && request.auth.uid == userId;
+
+      // Admins can read all preferences
+      allow read: if isAdminOrModerator();
+
+      // Users can create/update their own preferences
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+
+      // No client-side deletes
+      allow delete: if false;
+    }
+
+    // ===========================================================================
     // MEMBER PROFILE VIEWS (Member Analytics)
     // ===========================================================================
     match /member_profile_views/{viewId} {
