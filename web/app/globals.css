@@ -1,47 +1,105 @@
 @import "tailwindcss";
 
+/* ===== LIGHT-FIRST THEME SYSTEM ===== */
 :root {
-  /* Brand Colors */
-  --accent: #14B8A6;       /* IOPPS teal */
-  --accent-soft: #0B8A7A;  /* darker teal */
-  --accent-hover: #16cdb8; /* teal hover state */
-
-  /* Base Colors */
-  --background: #020617;   /* slate-950 */
-  --foreground: #e2e8f0;   /* slate-200 */
-
-  /* Card System */
-  --card-bg: #08090C;      /* dark card background */
-  --card-border: rgba(30, 41, 59, 0.8); /* slate-800 with 80% opacity */
-  --card-border-hover: rgba(20, 184, 166, 0.7); /* accent with 70% opacity */
+  /* Background & Surface */
+  --background: #F8F9FA;
+  --foreground: #111827;
+  --surface: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --card-border: #E5E7EB;
+  --card-border-hover: rgba(13, 148, 136, 0.5);
 
   /* Input System */
-  --input-bg: #020617;     /* slate-950 */
-  --input-border: #1e293b; /* slate-800 */
-  --input-focus: #14B8A6;  /* accent teal */
+  --input-bg: #FFFFFF;
+  --input-border: #E5E7EB;
+  --input-focus: #0D9488;
 
   /* Text Colors */
-  --text-primary: #f8fafc;    /* slate-50 */
-  --text-secondary: #cbd5e1;  /* slate-300 */
-  --text-muted: #94a3b8;      /* slate-400 */
-  --text-subtle: #64748b;     /* slate-500 */
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --text-subtle: #9CA3AF;
+
+  /* Brand Accent (Teal) */
+  --accent: #0D9488;
+  --accent-soft: #0B7C72;
+  --accent-hover: #0F766E;
+  --accent-bg: #F0FDFA;
+  --accent-lt: #CCFBF1;
+
+  /* Navy */
+  --navy: #0F1B2D;
+  --navy-lt: #1A2A40;
+
+  /* Amber */
+  --amber: #D97706;
+  --amber-bg: #FFFBEB;
+  --amber-lt: #FEF3C7;
+
+  /* Borders */
+  --border: #E5E7EB;
+  --border-lt: #F3F4F6;
 
   /* Semantic Colors */
-  --success: #14B8A6;      /* teal */
-  --warning: #fbbf24;      /* amber-400 */
-  --error: #ef4444;        /* red-500 */
-  --info: #38bdf8;         /* sky-400 */
+  --success: #0D9488;
+  --warning: #D97706;
+  --error: #ef4444;
+  --info: #0EA5E9;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --surface: #0f172a;
+  --card-bg: #08090C;
+  --card-border: rgba(30, 41, 59, 0.8);
+  --card-border-hover: rgba(20, 184, 166, 0.7);
+
+  --input-bg: #020617;
+  --input-border: #1e293b;
+  --input-focus: #14B8A6;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+
+  --accent: #14B8A6;
+  --accent-soft: #0B8A7A;
+  --accent-hover: #16cdb8;
+  --accent-bg: rgba(20, 184, 166, 0.1);
+  --accent-lt: rgba(20, 184, 166, 0.2);
+
+  --navy: #0F1B2D;
+  --navy-lt: #1A2A40;
+
+  --amber: #fbbf24;
+  --amber-bg: rgba(251, 191, 36, 0.1);
+  --amber-lt: rgba(251, 191, 36, 0.2);
+
+  --border: #1e293b;
+  --border-lt: #0f172a;
+
+  --success: #14B8A6;
+  --warning: #fbbf24;
+  --error: #ef4444;
+  --info: #38bdf8;
 }
 
 @theme inline {
   /* Base colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
 
-  /* Brand accent colors - use as text-accent, bg-accent, border-accent, etc. */
+  /* Brand accent colors */
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-lt: var(--accent-lt);
 
   /* Card system */
   --color-card: var(--card-bg);
@@ -53,6 +111,24 @@
   --color-input-border: var(--input-border);
   --color-input-focus: var(--input-focus);
 
+  /* Text colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Navy */
+  --color-navy: var(--navy);
+  --color-navy-lt: var(--navy-lt);
+
+  /* Amber */
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-amber-lt: var(--amber-lt);
+
+  /* Border */
+  --color-border: var(--border);
+  --color-border-lt: var(--border-lt);
+
   /* Semantic colors */
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -60,33 +136,31 @@
   --color-info: var(--info);
 
   /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* Removed light mode override to keep dark theme consistent */
-/* @media (prefers-color-scheme: light) {
-  :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-  }
-} */
-
+/* ===== BASE STYLES ===== */
 html,
 body {
   min-height: 100%;
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(20, 184, 166, 0.15), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.15), transparent 55%),
-    #020617;
+  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Global Focus States */
+/* Dark mode body gradient (subtle) */
+[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.08), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.08), transparent 55%),
+    var(--background);
+}
+
+/* ===== GLOBAL FOCUS STATES ===== */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -96,7 +170,6 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Input Focus Override (for bordered inputs) */
 input:focus,
 select:focus,
 textarea:focus {
@@ -105,15 +178,12 @@ textarea:focus {
 }
 
 /* ===== MOBILE-FIRST TOUCH OPTIMIZATION ===== */
-
-/* Ensure minimum touch target sizes on mobile (44px minimum per Apple/Google guidelines) */
 @media (pointer: coarse) {
   button,
   [role="button"] {
     min-height: 44px;
   }
 
-  /* Form inputs get larger padding on touch devices */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -123,11 +193,10 @@ textarea:focus {
   input[type="search"],
   textarea,
   select {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
     min-height: 48px;
   }
 
-  /* Larger checkboxes and radio buttons */
   input[type="checkbox"],
   input[type="radio"] {
     width: 22px;
@@ -136,19 +205,15 @@ textarea:focus {
   }
 }
 
-/* Mobile-specific improvements */
 @media (max-width: 640px) {
-  /* Better card padding on mobile */
   .mobile-card-padding {
     padding: 1.25rem !important;
   }
 
-  /* Prevent horizontal scroll on mobile */
   body {
     overflow-x: hidden;
   }
 
-  /* Sticky bottom action bars for mobile */
   .sticky-bottom-bar {
     position: fixed;
     bottom: 0;
@@ -161,7 +226,6 @@ textarea:focus {
   }
 }
 
-/* Safe area insets for notched phones */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .has-safe-area {
     padding-bottom: env(safe-area-inset-bottom);
@@ -174,13 +238,11 @@ textarea:focus {
   }
 }
 
-/* Smooth scrolling for better mobile experience */
 html {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Prevent text selection issues on mobile buttons */
 button,
 [role="button"] {
   -webkit-user-select: none;
@@ -188,7 +250,6 @@ button,
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Improve scrollbar styling for mobile */
 @media (max-width: 640px) {
   ::-webkit-scrollbar {
     width: 4px;
@@ -205,9 +266,8 @@ button,
   }
 }
 
-/* ===== AUTH PAGE ANIMATIONS ===== */
+/* ===== ANIMATIONS ===== */
 
-/* Fade in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -219,26 +279,57 @@ button,
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-fade-in-delay {
-  animation: fadeIn 0.4s ease-out 0.1s forwards;
-  opacity: 0;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-/* Auth card hover effects */
-.auth-card {
-  transition: all 0.2s ease;
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-.auth-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(20, 184, 166, 0.1);
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
-/* Success checkmark animation */
+@keyframes confetti {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) rotate(720deg);
+  }
+}
+
 @keyframes checkmark {
   0% {
     stroke-dashoffset: 100;
@@ -247,13 +338,6 @@ button,
     stroke-dashoffset: 0;
   }
 }
-
-.animate-checkmark {
-  stroke-dasharray: 100;
-  animation: checkmark 0.6s ease-out forwards;
-}
-
-/* ===== HEADER GRADIENT ANIMATION ===== */
 
 @keyframes gradient-shift {
   0% {
@@ -267,13 +351,6 @@ button,
   }
 }
 
-.animate-gradient {
-  background-size: 300% 300%;
-  animation: gradient-shift 8s ease infinite;
-}
-
-/* ===== CAROUSEL ANIMATIONS ===== */
-
 @keyframes scroll {
   0% {
     transform: translateX(0);
@@ -283,21 +360,116 @@ button,
   }
 }
 
+@keyframes ioppsPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-fade-in-delay {
+  animation: fadeIn 0.4s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s ease-out forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 33%, rgba(255,255,255,0.1) 50%, transparent 66%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-confetti {
+  animation: confetti 1s ease-out forwards;
+}
+
+.animate-checkmark {
+  stroke-dasharray: 100;
+  animation: checkmark 0.6s ease-out forwards;
+}
+
+.animate-gradient {
+  background-size: 300% 300%;
+  animation: gradient-shift 8s ease infinite;
+}
+
 .animate-scroll {
   animation: scroll 40s linear infinite;
+}
+
+.animate-iopps-pulse {
+  animation: ioppsPulse 1.5s ease-in-out infinite;
 }
 
 .pause-on-hover:hover {
   animation-play-state: paused;
 }
 
-/* ===== IOPPS SOCIAL OPPORTUNITY GRAPH ===== */
-
-@keyframes ioppsPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+/* Interactive utility classes */
+.btn-hover {
+  transition: all 0.2s ease;
 }
 
-.animate-iopps-pulse {
-  animation: ioppsPulse 1.5s ease-in-out infinite;
+.btn-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .btn-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .card-hover:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Auth card hover effects */
+.auth-card {
+  transition: all 0.2s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(13, 148, 136, 0.1);
+}
+
+/* ===== ADMIN AMBER THEME SCOPE ===== */
+[data-admin] {
+  --accent: #D97706;
+  --accent-soft: #B45309;
+  --accent-hover: #F59E0B;
+  --accent-bg: #FFFBEB;
+  --accent-lt: #FEF3C7;
+}
+
+[data-theme="dark"][data-admin],
+[data-theme="dark"] [data-admin] {
+  --accent: #fbbf24;
+  --accent-soft: #f59e0b;
+  --accent-hover: #fcd34d;
+  --accent-bg: rgba(251, 191, 36, 0.1);
+  --accent-lt: rgba(251, 191, 36, 0.2);
 }

@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type AnchorHTMLAttributes } from
 import Link from "next/link";
 
 type BaseProps = {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "navy" | "amber";
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   loading?: boolean;
@@ -25,15 +25,19 @@ type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const variantStyles = {
   primary:
-    "bg-gradient-to-r from-accent to-accent-soft text-slate-900 font-semibold hover:from-accent-hover hover:to-accent shadow-lg shadow-accent/20",
+    "bg-[var(--accent)] text-white font-semibold hover:bg-[var(--accent-hover)] shadow-sm",
   secondary:
-    "bg-slate-800/40 border border-slate-700/50 text-slate-200 hover:border-accent/50 hover:text-accent",
+    "bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
   outline:
-    "border border-accent/50 text-accent hover:bg-accent/10 hover:border-accent",
+    "border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-bg)]",
   ghost:
-    "text-slate-300 hover:bg-slate-800/50 hover:text-accent",
+    "text-[var(--text-secondary)] hover:bg-[var(--border-lt)] hover:text-[var(--text-primary)]",
   danger:
-    "bg-red-600/20 border border-red-500/50 text-red-400 hover:bg-red-600/30 hover:border-red-500",
+    "bg-red-600/10 border border-red-500/50 text-red-500 hover:bg-red-600/20",
+  navy:
+    "bg-[var(--navy)] text-white font-semibold hover:bg-[var(--navy-lt)] shadow-sm",
+  amber:
+    "bg-[var(--amber)] text-white font-semibold hover:opacity-90 shadow-sm",
 };
 
 const sizeStyles = {
@@ -42,7 +46,6 @@ const sizeStyles = {
   lg: "px-6 py-3 text-base rounded-xl",
 };
 
-// Loading spinner component (defined outside to avoid recreation on each render)
 const LoadingSpinner = () => (
   <svg
     className="h-4 w-4 animate-spin"
@@ -67,19 +70,6 @@ const LoadingSpinner = () => (
   </svg>
 );
 
-/**
- * Unified Button component with consistent styling across the platform.
- *
- * @example
- * // Primary button
- * <Button variant="primary">Submit</Button>
- *
- * // Link button
- * <Button href="/jobs" variant="secondary">View Jobs</Button>
- *
- * // Loading state
- * <Button variant="primary" loading>Submitting...</Button>
- */
 const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
   (props, ref) => {
     const {
@@ -93,7 +83,7 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
     } = props;
 
     const baseStyles =
-      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+      "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]";
 
     const combinedClassName = [
       baseStyles,
@@ -106,7 +96,6 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
       .filter(Boolean)
       .join(" ");
 
-    // Render as Link if href is provided
     if ("href" in rest && rest.href) {
       const { href, external, ...linkRest } = rest as ButtonAsLink;
 
@@ -139,7 +128,6 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
       );
     }
 
-    // Render as button
     const buttonRest = rest as ButtonAsButton;
     return (
       <button

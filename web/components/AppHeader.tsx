@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import NotificationBell from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { colors, Icon, Avatar } from "@/components/opportunity-graph";
 
 export function AppHeader() {
@@ -45,6 +46,7 @@ export function AppHeader() {
           </Link>
 
           <div className="app-actions">
+            <ThemeToggle />
             {isLoggedIn && <NotificationBell />}
             <Link href={isLoggedIn ? "/member/dashboard" : "/login"} className="app-avatar-link">
               <Avatar name={userName} src={userAvatar} size={36} ring />

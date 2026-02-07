@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   userScalable: true,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#14B8A6" },
+    { media: "(prefers-color-scheme: light)", color: "#F8F9FA" },
     { media: "(prefers-color-scheme: dark)", color: "#020617" },
   ],
 };
@@ -118,6 +118,12 @@ export default function RootLayout({
             __html: JSON.stringify(websiteSchema),
           }}
         />
+        {/* Theme initialization — runs before paint to prevent flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('iopps-theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark')}else{document.documentElement.setAttribute('data-theme','light')}}catch(e){}})()`,
+          }}
+        />
         {/* Service Worker Registration for PWA */}
         <script
           dangerouslySetInnerHTML={{
@@ -126,10 +132,10 @@ export default function RootLayout({
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').then(
                     function(registration) {
-                      
+
                     },
                     function(err) {
-                      
+
                     }
                   );
                 });
@@ -138,7 +144,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-slate-950 text-slate-100`}>
+      <body className={`${inter.className} bg-background text-foreground`}>
         <AuthProvider>
           {!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && (
             <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-medium text-amber-500">
@@ -150,9 +156,9 @@ export default function RootLayout({
         </AuthProvider>
         <Toaster position="bottom-right" toastOptions={{
           style: {
-            background: '#1e293b',
-            color: '#fff',
-            border: '1px solid #334155',
+            background: 'var(--card-bg)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--card-border)',
           },
         }} />
         <PerformanceMonitor />
