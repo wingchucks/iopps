@@ -17,7 +17,7 @@ import {
     DocumentSnapshot
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { Post, Comment, Connection, Activity, AuthorType, PostType, PostVisibility, MemberProfile } from "../types";
+import { Post, Comment, Connection, Activity, AuthorType, PostType, PostVisibility, MemberProfile, ReactionType, Reaction, ReactionsCount } from "../types";
 
 // Helper to ensure DB is initialized
 function getDb() {
@@ -388,5 +388,110 @@ export async function getOrganizationFollowStatus(userId: string, orgId: string)
     const followRef = doc(firestore, "organizations", orgId, "followers", userId);
     const snap = await getDoc(followRef);
     return snap.exists();
+}
+
+// ============================================
+// POST DETAIL
+// ============================================
+
+export async function getPost(postId: string): Promise<Post | null> {
+    const firestore = getDb();
+    const postRef = doc(firestore, "posts", postId);
+    const snap = await getDoc(postRef);
+    if (!snap.exists()) return null;
+    return snap.data() as Post;
+}
+
+// ============================================
+// REACTIONS (Love / Honor / Fire)
+// ============================================
+
+export async function addReaction(postId: string, userId: string, type: ReactionType): Promise<void> {
+    const firestore = getDb();
+    const reactionRef = doc(firestore, "posts", postId, "reactions", userId);
+    const postRef = doc(firestore, "posts", postId);
+
+    // Check if user already has a reaction
+    const existingSnap = await getDoc(reactionRef);
+    const existingType = existingSnap.exists() ? (existingSnap.data() as Reaction).type : null;
+
+    // Set the new reaction
+    await setDoc(reactionRef, {
+        userId,
+        type,
+        createdAt: serverTimestamp(),
+    });
+
+    // Update counts: decrement old type if different, increment new type
+    const updates: Record<string, unknown> = {
+        [`reactionsCount.${type}`]: increment(1),
+    };
+    if (existingType && existingType !== type) {
+        updates[`reactionsCount.${existingType}`] = increment(-1);
+    }
+    await updateDoc(postRef, updates);
+}
+
+export async function removeReaction(postId: string, userId: string): Promise<void> {
+    const firestore = getDb();
+    const reactionRef = doc(firestore, "posts", postId, "reactions", userId);
+    const postRef = doc(firestore, "posts", postId);
+
+    const snap = await getDoc(reactionRef);
+    if (!snap.exists()) return;
+
+    const type = (snap.data() as Reaction).type;
+    await deleteDoc(reactionRef);
+    await updateDoc(postRef, {
+        [`reactionsCount.${type}`]: increment(-1),
+    });
+}
+
+export async function getUserReaction(postId: string, userId: string): Promise<ReactionType | null> {
+    const firestore = getDb();
+    const reactionRef = doc(firestore, "posts", postId, "reactions", userId);
+    const snap = await getDoc(reactionRef);
+    if (!snap.exists()) return null;
+    return (snap.data() as Reaction).type;
+}
+
+// ============================================
+// THREADED COMMENTS
+// ============================================
+
+export interface ThreadedComment extends Comment {
+    replies: ThreadedComment[];
+}
+
+export async function getThreadedComments(postId: string): Promise<ThreadedComment[]> {
+    const firestore = getDb();
+    const commentsRef = collection(firestore, "posts", postId, "comments");
+    const q = query(commentsRef, orderBy("createdAt", "asc"));
+    const snapshot = await getDocs(q);
+
+    const allComments = snapshot.docs.map(d => d.data() as Comment);
+
+    // Separate top-level and replies
+    const topLevel: ThreadedComment[] = [];
+    const replyMap = new Map<string, ThreadedComment[]>();
+
+    for (const comment of allComments) {
+        const threaded: ThreadedComment = { ...comment, replies: [] };
+
+        if (comment.parentCommentId) {
+            const existing = replyMap.get(comment.parentCommentId) || [];
+            existing.push(threaded);
+            replyMap.set(comment.parentCommentId, existing);
+        } else {
+            topLevel.push(threaded);
+        }
+    }
+
+    // Attach replies to their parents
+    for (const comment of topLevel) {
+        comment.replies = replyMap.get(comment.id) || [];
+    }
+
+    return topLevel;
 }
 

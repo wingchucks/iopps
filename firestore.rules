@@ -836,6 +836,14 @@ service cloud.firestore {
           isAdminOrModerator()
         );
       }
+
+      // Subcollection: reactions (Love / Honor / Fire)
+      match /reactions/{userId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.auth.uid == userId;
+        allow update: if isSignedIn() && request.auth.uid == userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
     }
 
     // ===========================================================================

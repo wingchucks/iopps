@@ -2693,6 +2693,19 @@ export interface BusinessGrant {
 export type AuthorType = 'member' | 'organization' | 'system';
 export type PostType = 'status' | 'share_job' | 'share_scholarship' | 'share_event' | 'share_product' | 'article' | 'poll';
 export type PostVisibility = 'public' | 'connections' | 'private';
+export type ReactionType = 'love' | 'honor' | 'fire';
+
+export interface ReactionsCount {
+  love: number;
+  honor: number;
+  fire: number;
+}
+
+export interface Reaction {
+  userId: string;
+  type: ReactionType;
+  createdAt: Timestamp;
+}
 
 export interface Post {
   id: string;
@@ -2708,6 +2721,7 @@ export interface Post {
   likesCount: number;
   commentsCount: number;
   sharesCount: number;
+  reactionsCount?: ReactionsCount;
   referenceId?: string; // ID of the shared entity (job, scholarship, etc.)
   referenceData?: any; // Cached data of the shared entity for display
   isEdited?: boolean;
@@ -2724,6 +2738,8 @@ export interface Comment {
   authorAvatarUrl?: string;
   content: string;
   likesCount: number;
+  parentCommentId?: string | null;
+  isElder?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
