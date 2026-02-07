@@ -6,94 +6,32 @@
 
 "use client";
 
-import Link from "next/link";
 import {
   FeedLayout,
   OpportunityFeed,
   SectionHeader,
+  SidebarLinkCard,
+  SidebarCTACard,
   colors,
-  Icon,
 } from "@/components/opportunity-graph";
 import { EVENTS_SIDEBAR_LINKS } from "@/lib/constants/navigation";
 
 function EventsRightSidebar() {
   return (
     <>
-      {/* Event Links */}
-      <div
-        style={{
-          background: colors.surface,
-          borderRadius: 12,
-          border: `1px solid ${colors.border}`,
-          overflow: "hidden",
-          marginBottom: 16,
-        }}
-      >
-        <div
-          style={{
-            padding: "14px 16px",
-            borderBottom: `1px solid ${colors.borderLt}`,
-            fontSize: 14,
-            fontWeight: 700,
-            color: colors.text,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Icon name="calendar" size={16} color={colors.accent} />
-          Events Hub
-        </div>
-        {EVENTS_SIDEBAR_LINKS.map((link, i) => (
-          <Link
-            key={i}
-            href={link.href}
-            style={{
-              display: "block",
-              padding: "10px 16px",
-              fontSize: 13,
-              color: colors.accent,
-              textDecoration: "none",
-              borderBottom: `1px solid ${colors.bg}`,
-            }}
-          >
-            {link.label} →
-          </Link>
-        ))}
-      </div>
-
-      {/* Host Event CTA */}
-      <div
-        style={{
-          background: `linear-gradient(135deg, ${colors.purple} 0%, ${colors.pink} 100%)`,
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 16,
-          color: "#fff",
-        }}
-      >
-        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>
-          Hosting an Event?
-        </div>
-        <p style={{ fontSize: 13, opacity: 0.9, marginBottom: 12, lineHeight: 1.5 }}>
-          List your pow wow, conference, or cultural gathering and reach Indigenous communities across North America.
-        </p>
-        <Link
-          href="/organization/events/new"
-          style={{
-            display: "inline-block",
-            padding: "8px 16px",
-            borderRadius: 8,
-            background: "#fff",
-            color: colors.purple,
-            fontSize: 13,
-            fontWeight: 600,
-            textDecoration: "none",
-          }}
-        >
-          List Your Event
-        </Link>
-      </div>
+      <SidebarLinkCard
+        title="Events Hub"
+        icon="calendar"
+        links={EVENTS_SIDEBAR_LINKS}
+      />
+      <SidebarCTACard
+        title="Hosting an Event?"
+        description="List your pow wow, conference, or cultural gathering and reach Indigenous communities across North America."
+        buttonLabel="List Your Event"
+        buttonHref="/organization/events/new"
+        gradient={`linear-gradient(135deg, ${colors.purple} 0%, ${colors.pink} 100%)`}
+        buttonTextColor={colors.purple}
+      />
     </>
   );
 }
