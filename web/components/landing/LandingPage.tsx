@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { FOOTER_LINKS_FULL } from "@/lib/constants/navigation";
+import { TREATY_ACKNOWLEDGMENT, HERO_STATS } from "@/lib/constants/content";
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -224,11 +226,7 @@ export default function LandingPage() {
 
           {/* Stats */}
           <div className="mx-auto mt-14 grid max-w-xl grid-cols-3 gap-6 sm:mt-16 sm:gap-8">
-            {[
-              { value: "105+", label: "Jobs" },
-              { value: "2,400+", label: "Members" },
-              { value: "50+", label: "Organizations" },
-            ].map((stat) => (
+            {HERO_STATS.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-2xl font-extrabold text-white sm:text-3xl lg:text-4xl">
                   {stat.value}
@@ -403,10 +401,8 @@ export default function LandingPage() {
           {/* Treaty acknowledgment */}
           <div className="border-b border-[var(--card-border)] pb-8">
             <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-              IOPPS operates on Treaty 6 Territory, the traditional homeland of
-              the Cree, Metis, and many other Indigenous peoples. We honour the
-              Treaties and relationships with the land and all peoples who call
-              it home.
+              {TREATY_ACKNOWLEDGMENT} We honour the Treaties and relationships
+              with the land and all peoples who call it home.
             </p>
           </div>
 
@@ -419,48 +415,15 @@ export default function LandingPage() {
             </div>
 
             <nav className="flex flex-wrap gap-x-6 gap-y-2">
-              <Link
-                href="/about"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                About
-              </Link>
-              <Link
-                href="/careers"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                Jobs
-              </Link>
-              <Link
-                href="/education"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                Education
-              </Link>
-              <Link
-                href="/community"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                Events
-              </Link>
-              <Link
-                href="/privacy"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                Privacy
-              </Link>
-              <Link
-                href="/terms"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                Terms
-              </Link>
-              <Link
-                href="/contact"
-                className="text-sm text-[var(--text-muted)] transition hover:text-white"
-              >
-                Contact
-              </Link>
+              {FOOTER_LINKS_FULL.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-[var(--text-muted)] transition hover:text-white"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </nav>
           </div>
 

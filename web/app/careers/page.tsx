@@ -14,6 +14,7 @@ import {
   colors,
   Icon,
 } from "@/components/opportunity-graph";
+import { CAREERS_SIDEBAR_LINKS } from "@/lib/constants/navigation";
 
 function CareersRightSidebar() {
   return (
@@ -43,13 +44,7 @@ function CareersRightSidebar() {
           <Icon name="briefcase" size={16} color={colors.accent} />
           Career Tools
         </div>
-        {[
-          { label: "Browse All Jobs", href: "/careers/jobs" },
-          { label: "Training Programs", href: "/careers/programs" },
-          { label: "My Applications", href: "/member/applications" },
-          { label: "Job Alerts", href: "/member/alerts" },
-          { label: "Post a Job", href: "/organization/jobs/new" },
-        ].map((link, i) => (
+        {CAREERS_SIDEBAR_LINKS.map((link, i) => (
           <Link
             key={i}
             href={link.href}
