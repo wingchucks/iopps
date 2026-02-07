@@ -14,6 +14,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   // Pages using FeedLayout have their own complete layout with header
   const isFeedRoute =
     pathname === "/" ||
+    pathname?.startsWith("/signup") ||
+    pathname?.startsWith("/hub") ||
     pathname?.startsWith("/careers") ||
     pathname?.startsWith("/education") ||
     pathname?.startsWith("/business") ||

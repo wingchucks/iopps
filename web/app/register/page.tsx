@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   createUserWithEmailAndPassword,
@@ -66,13 +66,25 @@ const INTENT_OPTIONS: {
 ];
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterPageInner />
+    </Suspense>
+  );
+}
+
+function RegisterPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signInWithGoogle } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<UserRole | null>(null);
+  const initialRole = searchParams.get("role");
+  const [role, setRole] = useState<UserRole | null>(
+    initialRole === "community" || initialRole === "employer" ? initialRole : null
+  );
   const [employerIntent, setEmployerIntent] = useState<EmployerIntent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
