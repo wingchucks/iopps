@@ -1286,5 +1286,35 @@ service cloud.firestore {
       // Only admins can delete
       allow delete: if isAdmin();
     }
+
+    // ===========================================================================
+    // ENDORSEMENTS
+    // ===========================================================================
+    match /endorsements/{endorsementId} {
+      // Anyone can read endorsements (public profiles)
+      allow read: if true;
+
+      // Authenticated users can create endorsements (must be the endorser)
+      allow create: if isSignedIn() &&
+        request.resource.data.endorserId == request.auth.uid;
+
+      // Only the endorser can delete their own endorsement
+      allow delete: if isSignedIn() &&
+        resource.data.endorserId == request.auth.uid;
+
+      // No updates - delete and re-create instead
+      allow update: if false;
+    }
+
+    // ===========================================================================
+    // CONTENT FLAGS (Reports / Moderation)
+    // ===========================================================================
+    match /contentFlags/{flagId} {
+      // Anyone can create a flag (allow anonymous reports)
+      allow create: if true;
+
+      // Only admins/moderators can read, update, or delete flags
+      allow read, update, delete: if isSignedIn() && isAdminOrModerator();
+    }
   }
 }

@@ -680,6 +680,19 @@ export {
 export type { ListNewsOptions } from "./news";
 
 // ============================================
+// ENDORSEMENTS
+// ============================================
+export {
+  giveEndorsement,
+  getEndorsementsForUser,
+  getEndorsementsGivenBy,
+  deleteEndorsement,
+  hasEndorsed,
+  getTopSkills,
+} from "./endorsements";
+export type { GiveEndorsementData } from "./endorsements";
+
+// ============================================
 // ORGANIZATION DIRECTORY VISIBILITY
 // ============================================
 // NOTE: visibility.ts uses firebase-admin and is SERVER-ONLY.

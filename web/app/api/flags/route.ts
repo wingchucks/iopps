@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 // Valid content types and reasons
 const VALID_CONTENT_TYPES = ['job', 'vendor', 'product', 'member', 'employer', 'post', 'comment'];
-const VALID_REASONS = ['spam', 'inappropriate', 'misleading', 'offensive', 'scam', 'duplicate', 'other'];
+const VALID_REASONS = ['spam', 'inappropriate', 'misleading', 'offensive', 'scam', 'duplicate', 'cultural_concern', 'other'];
 const VALID_STATUSES = ['pending', 'reviewed', 'resolved', 'dismissed'];
 const VALID_ACTIONS = ['none', 'warned', 'removed', 'banned'];
 

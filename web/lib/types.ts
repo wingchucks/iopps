@@ -1146,7 +1146,7 @@ export interface VendorInquiry {
 
 // Content Flag / Report for moderation queue
 export type FlaggedContentType = 'job' | 'vendor' | 'product' | 'member' | 'employer' | 'post' | 'comment';
-export type FlagReason = 'spam' | 'inappropriate' | 'misleading' | 'offensive' | 'scam' | 'duplicate' | 'other';
+export type FlagReason = 'spam' | 'inappropriate' | 'misleading' | 'offensive' | 'scam' | 'duplicate' | 'cultural_concern' | 'other';
 export type FlagStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
 
 export interface ContentFlag {
@@ -2749,6 +2749,7 @@ export interface Connection {
   requesterId: string;
   recipientId: string;
   status: 'pending' | 'accepted' | 'declined' | 'blocked';
+  message?: string;
   requesterName?: string;
   requesterAvatarUrl?: string;
   requesterTagline?: string;
@@ -2767,6 +2768,23 @@ export interface Activity {
   referenceId: string;
   content?: string;
   createdAt: Timestamp;
+}
+
+export type EndorsementRelationship = 'colleague' | 'mentor' | 'mentee' | 'supervisor' | 'community_member' | 'elder' | 'other';
+
+export interface Endorsement {
+  id: string;
+  endorserId: string;
+  endorseeId: string;
+  skill: string;
+  relationship: EndorsementRelationship;
+  isElder: boolean;
+  message?: string;
+  endorserName: string;
+  endorserPhotoURL?: string;
+  endorserNation?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 // ============================================

@@ -20,6 +20,7 @@ const REASON_OPTIONS: { value: FlagReason; label: string; description: string }[
   { value: "offensive", label: "Offensive", description: "Hateful, harmful, or abusive content" },
   { value: "scam", label: "Scam/Fraud", description: "Fraudulent or suspicious activity" },
   { value: "duplicate", label: "Duplicate", description: "Same content posted multiple times" },
+  { value: "cultural_concern", label: "Cultural Concern", description: "Misrepresentation of Indigenous culture or practices" },
   { value: "other", label: "Other", description: "Other issue not listed above" },
 ];
 

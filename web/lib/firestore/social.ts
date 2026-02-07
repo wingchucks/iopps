@@ -160,7 +160,7 @@ export async function getComments(postId: string) {
 // CONNECTIONS
 // ============================================
 
-export async function sendConnectionRequest(requesterId: string, recipientId: string) {
+export async function sendConnectionRequest(requesterId: string, recipientId: string, message?: string) {
     const firestore = getDb();
 
     // Fetch profiles for denormalization
@@ -191,6 +191,7 @@ export async function sendConnectionRequest(requesterId: string, recipientId: st
         requesterId,
         recipientId,
         status: 'pending',
+        message: message || undefined,
         requesterName: requesterData?.displayName || "Member",
         requesterAvatarUrl: requesterData?.photoURL || "",
         requesterTagline: requesterData?.tagline || "",

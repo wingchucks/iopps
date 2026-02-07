@@ -32,6 +32,7 @@ const REASON_LABELS: Record<FlagReason, string> = {
   offensive: "Offensive",
   scam: "Scam/Fraud",
   duplicate: "Duplicate",
+  cultural_concern: "Cultural Concern",
   other: "Other",
 };
 

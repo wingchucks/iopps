@@ -10,6 +10,8 @@ import { formatDistanceToNow } from "date-fns";
 import { MoreHorizontal } from "lucide-react";
 import { getUserReaction } from "@/lib/firestore/social";
 import ReactionBar from "@/components/social/ReactionBar";
+import { ShareButton } from "@/components/social/ShareButton";
+import ReportContentButton from "@/components/ReportContentButton";
 import { useAuth } from "@/components/AuthProvider";
 
 interface PostCardProps {
@@ -99,9 +101,14 @@ export function PostCard({ post }: PostCardProps) {
                     </div>
                     <p className="text-xs text-muted-foreground">{post.authorTagline}</p>
                 </div>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
+                <div onClick={(e) => e.stopPropagation()}>
+                    <ReportContentButton
+                        contentType="post"
+                        contentId={post.id}
+                        contentTitle={post.content?.slice(0, 80)}
+                        variant="icon"
+                    />
+                </div>
             </CardHeader>
 
             <CardContent className="p-4 pt-2 space-y-3">
@@ -126,14 +133,24 @@ export function PostCard({ post }: PostCardProps) {
             </CardContent>
 
             <CardFooter className="p-2 px-4 border-t flex flex-col items-stretch" onClick={(e) => e.stopPropagation()}>
-                <ReactionBar
-                    postId={post.id}
-                    reactionsCount={post.reactionsCount || { love: 0, honor: 0, fire: 0 }}
-                    commentsCount={post.commentsCount}
-                    sharesCount={post.sharesCount}
-                    userReaction={userReaction}
-                    onCommentClick={toggleComments}
-                />
+                <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                        <ReactionBar
+                            postId={post.id}
+                            reactionsCount={post.reactionsCount || { love: 0, honor: 0, fire: 0 }}
+                            commentsCount={post.commentsCount}
+                            sharesCount={post.sharesCount}
+                            userReaction={userReaction}
+                            onCommentClick={toggleComments}
+                        />
+                    </div>
+                    <ShareButton
+                        entityId={post.id}
+                        type={post.type}
+                        data={{ title: post.content?.slice(0, 60), provider: post.authorName }}
+                        className="ml-1"
+                    />
+                </div>
 
                 {/* Comments Section */}
                 {showComments && (
