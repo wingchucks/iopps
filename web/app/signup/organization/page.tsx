@@ -112,7 +112,7 @@ export default function OrganizationSignupPage() {
         status: "pending",
       });
 
-      router.push("/onboarding/organization");
+      router.push("/welcome");
     } catch (err) {
       console.error(err);
       setError(getAuthErrorMessage(err, "Could not create account. Please try again."));
@@ -166,7 +166,7 @@ export default function OrganizationSignupPage() {
         });
       }
 
-      router.push("/onboarding/organization");
+      router.push("/welcome");
     } catch (err) {
       console.error(err);
       setError(getAuthErrorMessage(err, "Unable to sign in with Google. Please try again."));
