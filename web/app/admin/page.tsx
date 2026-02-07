@@ -328,11 +328,19 @@ export default function AdminDashboard() {
           />
           <QueueCard
             type="flagged"
-            title="Flagged Items"
+            title="Flagged Content"
             items={[]}
-            href="/admin/jobs"
+            href="/admin/moderation"
             loading={isLoading}
             emptyMessage="No flagged content"
+          />
+          <QueueCard
+            type="pending"
+            title="Verification Queue"
+            items={[]}
+            href="/admin/verification"
+            loading={isLoading}
+            emptyMessage="No pending verifications"
           />
           <QueueCard
             type="failed"
@@ -341,14 +349,6 @@ export default function AdminDashboard() {
             href="/admin/feeds"
             loading={isLoading}
             emptyMessage="All imports healthy"
-          />
-          <QueueCard
-            type="payment"
-            title="Payment Issues"
-            items={[]}
-            href="/admin/employers"
-            loading={isLoading}
-            emptyMessage="No payment issues"
           />
         </QueueGrid>
       </div>

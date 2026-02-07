@@ -81,6 +81,7 @@ function useNavigationGroups(): NavGroup[] {
       label: "Moderation",
       items: [
         { name: "Flagged Content", href: "/admin/moderation", icon: FlagIcon },
+        { name: "Verification", href: "/admin/verification", icon: ShieldCheckIcon },
       ],
       defaultOpen: true,
     },
