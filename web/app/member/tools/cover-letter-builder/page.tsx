@@ -4,8 +4,6 @@ import { useState, useRef } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import toast from "react-hot-toast";
 
 // Template Designs
@@ -49,6 +47,9 @@ export default function CoverLetterBuilder() {
         setLoading(true);
 
         try {
+            const { default: jsPDF } = await import("jspdf");
+            const { default: html2canvas } = await import("html2canvas");
+
             const element = letterRef.current;
             const canvas = await html2canvas(element, {
                 scale: 2,

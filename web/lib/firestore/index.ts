@@ -1,6 +1,9 @@
 // Re-export all Firestore operations from domain files
 // This provides a single entry point for all Firestore functions
 
+// Shared Utilities
+export { toDate } from "./timestamps";
+
 // Employers
 export {
   getEmployerProfile,

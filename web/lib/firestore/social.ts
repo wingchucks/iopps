@@ -363,9 +363,8 @@ export async function followOrganization(userId: string, orgId: string) {
     const orgRef = doc(firestore, "organizations", orgId);
     await updateDoc(orgRef, {
         followersCount: increment(1)
-    }).catch(() => {
-        // Ignore error if specific field doesn't exist yet, or handle gracefully
-        // Ideally we ensure the Organization type has this field
+    }).catch((err) => {
+        console.error("Failed to update follower count:", err);
     });
 
     return true;
@@ -381,7 +380,9 @@ export async function unfollowOrganization(userId: string, orgId: string) {
     const orgRef = doc(firestore, "organizations", orgId);
     await updateDoc(orgRef, {
         followersCount: increment(-1)
-    }).catch(() => { });
+    }).catch((err) => {
+        console.error("Failed to update follower count:", err);
+    });
 
     return true;
 }

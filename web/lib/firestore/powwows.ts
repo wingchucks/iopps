@@ -17,25 +17,7 @@ import {
   checkFirebase,
 } from "./shared";
 import type { PowwowEvent, PowwowRegistration } from "@/lib/types";
-
-// Helper to convert various timestamp formats to Date
-// Handles date-only strings (YYYY-MM-DD) as local time, not UTC
-function toDate(timestamp: any): Date | null {
-  if (!timestamp) return null;
-  if (timestamp instanceof Date) return timestamp;
-  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
-  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
-  if (timestamp.toDate) return timestamp.toDate();
-  if (typeof timestamp === "string") {
-    // If it's a date-only string (YYYY-MM-DD), parse as local time not UTC
-    if (/^\d{4}-\d{2}-\d{2}$/.test(timestamp)) {
-      const [year, month, day] = timestamp.split('-').map(Number);
-      return new Date(year, month - 1, day);
-    }
-    return new Date(timestamp);
-  }
-  return null;
-}
+import { toDate } from "./timestamps";
 
 // Check if a pow wow has ended based on endDate
 export function isPowwowExpired(powwow: PowwowEvent): boolean {

@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
 // Types
 export type JobDescriptionInput = {
   title: string;
@@ -71,11 +69,6 @@ export type PosterAnalysisResult = {
   rawText?: string;
 };
 
-// Initialize Google AI (only if API key is available)
-const genAI = process.env.GOOGLE_AI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-  : null;
-
 /**
  * Generate a job description using Google AI
  * @param input Job details to generate description from
@@ -85,7 +78,7 @@ export async function generateJobDescription(
   input: JobDescriptionInput
 ): Promise<JobDescriptionOutput> {
   // Stub: Return placeholder data if AI is not configured
-  if (!genAI || !process.env.GOOGLE_AI_API_KEY) {
+  if (!process.env.GOOGLE_AI_API_KEY) {
     console.warn("Google AI not configured, returning placeholder data");
     return {
       description:
@@ -135,6 +128,8 @@ Format your response as JSON with this structure:
 }`;
 
   try {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -172,7 +167,7 @@ export async function analyzePosterImage(
   eventType: PosterAnalysisType
 ): Promise<PosterAnalysisResult> {
   // Return placeholder if AI is not configured
-  if (!genAI || !process.env.GOOGLE_AI_API_KEY) {
+  if (!process.env.GOOGLE_AI_API_KEY) {
     console.warn("Google AI not configured, returning placeholder data");
     return getPlaceholderResult(eventType);
   }
@@ -272,6 +267,8 @@ Return ONLY a valid JSON object with this structure:
   };
 
   try {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     const result = await model.generateContent([

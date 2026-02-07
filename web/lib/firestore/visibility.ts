@@ -22,6 +22,7 @@ import type {
   VisibilitySource,
   VisibilitySourceDetails,
 } from "@/lib/types";
+import { toDate } from "./timestamps";
 
 // Constants for visibility duration
 const STANDARD_JOB_VISIBILITY_DAYS = 30;
@@ -62,23 +63,6 @@ interface RecomputeResult {
   directoryVisibleUntil: Date | null;
   sourceDetails: LocalSourceDetails;
   error?: string;
-}
-
-/**
- * Convert various timestamp formats to Date safely
- */
-function toDate(ts: any): Date | null {
-  if (!ts) return null;
-  if (ts instanceof Date) return ts;
-  if (ts._seconds !== undefined) return new Date(ts._seconds * 1000);
-  if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
-  if (typeof ts.toDate === "function") return ts.toDate();
-  if (typeof ts === "string") {
-    const d = new Date(ts);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof ts === "number") return new Date(ts);
-  return null;
 }
 
 /**

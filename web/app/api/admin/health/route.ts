@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/firebase-admin";
+import { verifyAdminToken } from "@/lib/api-auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { stripe } from "@/lib/stripe";
 
@@ -17,25 +17,8 @@ interface HealthCheck {
 export async function GET(request: NextRequest) {
   try {
     // Verify admin authentication
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!auth) {
-      return NextResponse.json({ error: "Firebase Admin not initialized" }, { status: 500 });
-    }
-
-    const token = authHeader.substring(7);
-    const decodedToken = await auth.verifyIdToken(token);
-
-    // Check admin role via custom claims
-    const isAdmin = decodedToken.admin === true ||
-                    decodedToken.role === "admin";
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const authResult = await verifyAdminToken(request);
+    if (!authResult.success) return authResult.response;
 
     const healthChecks: HealthCheck[] = [];
 

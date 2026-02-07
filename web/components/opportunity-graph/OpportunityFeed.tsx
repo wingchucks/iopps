@@ -99,8 +99,8 @@ export function OpportunityFeed({
     async function loadSavedItems() {
       try {
         const [savedJobIds, savedConferenceIds] = await Promise.all([
-          listSavedJobIds(uid).catch(() => []),
-          listSavedConferenceIds(uid).catch(() => []),
+          listSavedJobIds(uid).catch(() => []), // Graceful degradation: show empty saved list if query fails
+          listSavedConferenceIds(uid).catch(() => []), // Graceful degradation: show empty saved list if query fails
         ]);
         setSavedIds(new Set([...savedJobIds, ...savedConferenceIds]));
       } catch (err) {
@@ -123,6 +123,7 @@ export function OpportunityFeed({
 
       try {
         // Only fetch content types that are needed
+        // Graceful degradation: each source catches independently so one failure doesn't block others
         const [jobs, scholarships, conferences, powwows, livestreams, training, vendors, socialPostsResult] = await Promise.all([
           shouldFetch(["job"]) ? listJobPostings({ activeOnly: true }).catch(() => []) : Promise.resolve([]),
           shouldFetch(["scholarship"]) ? listScholarships().catch(() => []) : Promise.resolve([]),

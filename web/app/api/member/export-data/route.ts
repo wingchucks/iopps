@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, db } from "@/lib/firebase-admin";
+import { db } from "@/lib/firebase-admin";
+import { verifyAuthToken } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -30,18 +31,14 @@ function escCsv(val: unknown): string {
 // Export member data (OCAP/CARE compliant data portability)
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authResult = await verifyAuthToken(request);
+    if (!authResult.success) return authResult.response;
 
-    if (!auth || !db) {
+    if (!db) {
       return NextResponse.json({ error: "Not initialized" }, { status: 500 });
     }
 
-    const token = authHeader.substring(7);
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
+    const userId = authResult.decodedToken.uid;
 
     const { searchParams } = new URL(request.url);
     const format = searchParams.get("format") || "json";

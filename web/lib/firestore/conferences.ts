@@ -21,21 +21,11 @@ import {
 } from "./shared";
 import type { Conference, ConferenceRegistration, ConferenceVisibilityTier } from "@/lib/types";
 import { MOCK_CONFERENCES } from "../mockData";
+import { toDate } from "./timestamps";
 
 // Constants for visibility system
 export const FREE_VISIBILITY_DAYS = 45;
 export const FAR_FUTURE_EVENT_DAYS = 90; // Show warning for events more than 90 days out
-
-// Helper to convert various timestamp formats to Date
-function toDate(timestamp: any): Date | null {
-  if (!timestamp) return null;
-  if (timestamp instanceof Date) return timestamp;
-  if (timestamp._seconds) return new Date(timestamp._seconds * 1000);
-  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
-  if (timestamp.toDate) return timestamp.toDate();
-  if (typeof timestamp === "string") return new Date(timestamp);
-  return null;
-}
 
 // Check if a conference has ended based on endDate
 export function isConferenceExpired(conference: Conference): boolean {

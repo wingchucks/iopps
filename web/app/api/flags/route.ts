@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
+import { verifyAuthToken } from "@/lib/api-auth";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -137,18 +138,14 @@ export async function POST(request: NextRequest) {
 // Get content flags (admin/moderator only)
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authResult = await verifyAuthToken(request);
+    if (!authResult.success) return authResult.response;
 
-    if (!auth || !db) {
+    if (!db) {
       return NextResponse.json({ error: "Not initialized" }, { status: 500 });
     }
 
-    const token = authHeader.substring(7);
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
+    const userId = authResult.decodedToken.uid;
 
     // Verify admin/moderator role
     const userDoc = await db.collection("users").doc(userId).get();
@@ -231,18 +228,14 @@ export async function GET(request: NextRequest) {
 // Update flag status (admin/moderator only)
 export async function PATCH(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authResult = await verifyAuthToken(request);
+    if (!authResult.success) return authResult.response;
 
-    if (!auth || !db) {
+    if (!db) {
       return NextResponse.json({ error: "Not initialized" }, { status: 500 });
     }
 
-    const token = authHeader.substring(7);
-    const decodedToken = await auth.verifyIdToken(token);
-    const userId = decodedToken.uid;
+    const userId = authResult.decodedToken.uid;
 
     // Verify admin/moderator role
     const userDoc = await db.collection("users").doc(userId).get();

@@ -27,9 +27,9 @@ export function RadarFeed() {
     async function fetchRadar() {
       try {
         const [jobs, scholarships, powwows] = await Promise.all([
-          listJobPostings().catch(() => []),
-          listScholarships().catch(() => []),
-          listPowwowEvents().catch(() => []),
+          listJobPostings().catch(() => []), // Graceful degradation: show empty list if query fails
+          listScholarships().catch(() => []), // Graceful degradation: show empty list if query fails
+          listPowwowEvents().catch(() => []), // Graceful degradation: show empty list if query fails
         ]);
 
         const mapped: Opportunity[] = [

@@ -545,7 +545,9 @@ function NewJobPageContent() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-          }).catch(() => { });
+          }).catch((err) => {
+            console.error("Failed to send admin notification:", err);
+          });
         }
         clearDraft();
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
@@ -563,7 +565,9 @@ function NewJobPageContent() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-          }).catch(() => { });
+          }).catch((err) => {
+            console.error("Failed to send admin notification:", err);
+          });
         }
         clearDraft();
         router.push(`/organization/jobs/success?job_id=${id}&subscription=true${isScheduled ? '&scheduled=true' : ''}`);
@@ -600,7 +604,9 @@ function NewJobPageContent() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type: "new_job", jobTitle: formData.title, employerName: organizationName, location: formData.location }),
-          }).catch(() => { });
+          }).catch((err) => {
+            console.error("Failed to send admin notification:", err);
+          });
         }
         clearDraft();
         router.push(`/organization/jobs/success?job_id=${id}&credit=true${isScheduled ? '&scheduled=true' : ''}`);

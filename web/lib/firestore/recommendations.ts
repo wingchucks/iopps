@@ -500,7 +500,7 @@ export async function getJobRecommendations(
     const [profile, settings, connections] = await Promise.all([
       getMemberProfile(userId),
       getMemberSettings(userId),
-      getMyConnections(userId).catch(() => []),
+      getMyConnections(userId).catch(() => []), // Graceful degradation: proceed with empty connections if query fails
     ]);
 
     if (!profile) return [];
@@ -809,7 +809,7 @@ export async function getNetworkingRecommendations(
     const [profile, settings, existingConnections] = await Promise.all([
       getMemberProfile(userId),
       getMemberSettings(userId),
-      getMyConnections(userId).catch(() => []),
+      getMyConnections(userId).catch(() => []), // Graceful degradation: proceed with empty connections if query fails
     ]);
 
     if (!profile) return [];

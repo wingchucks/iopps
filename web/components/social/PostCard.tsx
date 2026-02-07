@@ -44,7 +44,9 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
 
         isPostSaved(user.uid, post.id)
             .then(setSaved)
-            .catch(() => {});
+            .catch((err) => {
+                console.error("Failed to check saved status:", err);
+            });
     }, [post.id, user]);
 
     const [showComments, setShowComments] = useState(false);

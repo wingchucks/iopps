@@ -71,7 +71,9 @@ export default function ProfileNudge() {
           setDismissed(true);
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error("Failed to load member profile:", err);
+      })
       .finally(() => setLoading(false));
   }, [user]);
 

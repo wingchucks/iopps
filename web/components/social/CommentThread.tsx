@@ -328,7 +328,9 @@ function CommentItem({
     if (!currentUserId) return;
     hasUserLikedComment(postId, comment.id, currentUserId)
       .then(setLiked)
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Failed to check comment like status:", err);
+      });
   }, [postId, comment.id, currentUserId]);
 
   const handleToggleLike = async () => {
