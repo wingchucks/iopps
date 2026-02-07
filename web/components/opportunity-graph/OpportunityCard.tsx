@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import { colors, typeConfig, OpportunityType } from "./tokens";
-import { Icon } from "./Icon";
+import { Icon, IconName } from "./Icon";
 import { Avatar } from "./Avatar";
 import { Badge, Tag } from "./Badge";
 import { Button, EngagementButton } from "./Button";
@@ -320,7 +320,7 @@ export function OpportunityCard({ item, compact = false, onNavigate, onSave }: O
                 Watch Replay
               </Button>
             ) : (
-              <Button variant="primary" size="sm" icon={config.ctaIcon as React.ReactNode}>
+              <Button variant="primary" size="sm" icon={config.ctaIcon as IconName}>
                 {config.cta}
               </Button>
             )
