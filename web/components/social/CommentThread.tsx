@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   addComment,
   getThreadedComments,
+  deleteComment,
+  toggleLikeComment,
+  hasUserLikedComment,
   type ThreadedComment,
 } from "@/lib/firestore/social";
+import { getEndorsementsForUser } from "@/lib/firestore/endorsements";
 import { formatDistanceToNow } from "date-fns";
-import { Loader2, MessageCircle, Reply, Send } from "lucide-react";
+import { Heart, Loader2, MessageCircle, Reply, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
+
+type SortMode = "newest" | "relevant";
 
 interface CommentThreadProps {
   postId: string;
@@ -23,6 +29,7 @@ export default function CommentThread({ postId }: CommentThreadProps) {
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
 
   useEffect(() => {
     const loadComments = async () => {
@@ -41,11 +48,28 @@ export default function CommentThread({ postId }: CommentThreadProps) {
     loadComments();
   }, [postId]);
 
+  const sortedComments = useMemo(() => {
+    if (sortMode === "relevant") {
+      return [...comments].sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+    }
+    return comments;
+  }, [comments, sortMode]);
+
   const handleSubmitComment = async () => {
     if (!user || !newComment.trim()) return;
 
     try {
       setSubmitting(true);
+
+      // Check Elder status
+      let isElder = false;
+      try {
+        const endorsements = await getEndorsementsForUser(user.uid);
+        isElder = endorsements.some((e) => e.isElder);
+      } catch {
+        // Endorsement check is non-critical
+      }
+
       const comment = await addComment(postId, {
         postId,
         authorId: user.uid,
@@ -53,6 +77,7 @@ export default function CommentThread({ postId }: CommentThreadProps) {
         authorName: user.displayName || "Anonymous",
         authorAvatarUrl: user.photoURL || undefined,
         content: newComment.trim(),
+        isElder,
       });
 
       setComments((prev) => [
@@ -73,6 +98,15 @@ export default function CommentThread({ postId }: CommentThreadProps) {
 
     try {
       setSubmitting(true);
+
+      let isElder = false;
+      try {
+        const endorsements = await getEndorsementsForUser(user.uid);
+        isElder = endorsements.some((e) => e.isElder);
+      } catch {
+        // non-critical
+      }
+
       const comment = await addComment(postId, {
         postId,
         authorId: user.uid,
@@ -81,9 +115,9 @@ export default function CommentThread({ postId }: CommentThreadProps) {
         authorAvatarUrl: user.photoURL || undefined,
         content: replyText.trim(),
         parentCommentId,
+        isElder,
       });
 
-      // Add reply to the correct parent
       setComments((prev) =>
         prev.map((c) =>
           c.id === parentCommentId
@@ -101,6 +135,29 @@ export default function CommentThread({ postId }: CommentThreadProps) {
     }
   };
 
+  const handleDeleteComment = async (commentId: string, parentId?: string | null) => {
+    if (!user) return;
+    try {
+      await deleteComment(postId, commentId, user.uid);
+      if (parentId) {
+        // Remove reply from parent
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === parentId
+              ? { ...c, replies: c.replies.filter((r) => r.id !== commentId) }
+              : c
+          )
+        );
+      } else {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      }
+      toast.success("Comment deleted");
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      toast.error("Failed to delete comment");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -111,10 +168,37 @@ export default function CommentThread({ postId }: CommentThreadProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-white flex items-center gap-2">
-        <MessageCircle className="h-5 w-5 text-emerald-400" />
-        Comments ({comments.reduce((acc, c) => acc + 1 + c.replies.length, 0)})
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-white flex items-center gap-2">
+          <MessageCircle className="h-5 w-5 text-emerald-400" />
+          Comments ({comments.reduce((acc, c) => acc + 1 + c.replies.length, 0)})
+        </h3>
+
+        {comments.length > 1 && (
+          <div className="flex items-center gap-1 text-xs">
+            <button
+              onClick={() => setSortMode("newest")}
+              className={`px-2 py-1 rounded-full transition-colors ${
+                sortMode === "newest"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-slate-500 hover:text-slate-300"
+              }`}
+            >
+              Newest
+            </button>
+            <button
+              onClick={() => setSortMode("relevant")}
+              className={`px-2 py-1 rounded-full transition-colors ${
+                sortMode === "relevant"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "text-slate-500 hover:text-slate-300"
+              }`}
+            >
+              Most Relevant
+            </button>
+          </div>
+        )}
+      </div>
 
       {comments.length === 0 ? (
         <p className="text-sm text-slate-500 py-4 text-center">
@@ -122,21 +206,31 @@ export default function CommentThread({ postId }: CommentThreadProps) {
         </p>
       ) : (
         <div className="space-y-4">
-          {comments.map((comment) => (
+          {sortedComments.map((comment) => (
             <div key={comment.id}>
               <CommentItem
                 comment={comment}
+                postId={postId}
+                currentUserId={user?.uid}
                 onReply={() => {
                   setReplyingTo(replyingTo === comment.id ? null : comment.id);
                   setReplyText("");
                 }}
+                onDelete={() => handleDeleteComment(comment.id)}
               />
 
               {/* Replies */}
               {comment.replies.length > 0 && (
                 <div className="ml-10 mt-2 space-y-2 border-l-2 border-slate-800 pl-4">
                   {comment.replies.map((reply) => (
-                    <CommentItem key={reply.id} comment={reply} isReply />
+                    <CommentItem
+                      key={reply.id}
+                      comment={reply}
+                      postId={postId}
+                      currentUserId={user?.uid}
+                      isReply
+                      onDelete={() => handleDeleteComment(reply.id, comment.id)}
+                    />
                   ))}
                 </div>
               )}
@@ -213,19 +307,52 @@ export default function CommentThread({ postId }: CommentThreadProps) {
 
 function CommentItem({
   comment,
+  postId,
+  currentUserId,
   isReply,
   onReply,
+  onDelete,
 }: {
   comment: ThreadedComment;
+  postId: string;
+  currentUserId?: string;
   isReply?: boolean;
   onReply?: () => void;
+  onDelete?: () => void;
 }) {
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(comment.likesCount || 0);
+  const [liking, setLiking] = useState(false);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    hasUserLikedComment(postId, comment.id, currentUserId)
+      .then(setLiked)
+      .catch(() => {});
+  }, [postId, comment.id, currentUserId]);
+
+  const handleToggleLike = async () => {
+    if (!currentUserId || liking) return;
+    setLiking(true);
+    try {
+      const nowLiked = await toggleLikeComment(postId, comment.id, currentUserId);
+      setLiked(nowLiked);
+      setLikesCount((c) => c + (nowLiked ? 1 : -1));
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    } finally {
+      setLiking(false);
+    }
+  };
+
   const timestamp = comment.createdAt?.toDate
     ? formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true })
     : "Just now";
 
+  const isOwner = currentUserId && comment.authorId === currentUserId;
+
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 group">
       <div
         className={`flex-shrink-0 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400 ${
           isReply ? "h-7 w-7" : "h-9 w-9"
@@ -255,6 +382,15 @@ function CommentItem({
                 {"\uD83E\uDEB6"} Elder
               </span>
             )}
+            {isOwner && onDelete && (
+              <button
+                onClick={onDelete}
+                className="ml-auto opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all"
+                title="Delete comment"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
           <p className="text-sm text-slate-300 mt-0.5 whitespace-pre-wrap">
             {comment.content}
@@ -262,6 +398,18 @@ function CommentItem({
         </div>
         <div className="flex items-center gap-4 mt-1 px-2">
           <span className="text-xs text-slate-500">{timestamp}</span>
+          <button
+            onClick={handleToggleLike}
+            disabled={!currentUserId || liking}
+            className={`flex items-center gap-1 text-xs transition-colors ${
+              liked
+                ? "text-rose-400"
+                : "text-slate-500 hover:text-rose-400"
+            }`}
+          >
+            <Heart className={`h-3 w-3 ${liked ? "fill-current" : ""}`} />
+            {likesCount > 0 && likesCount}
+          </button>
           {onReply && (
             <button
               onClick={onReply}

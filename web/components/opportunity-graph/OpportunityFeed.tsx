@@ -34,6 +34,7 @@ import {
   postToOpportunity,
 } from "./adapters";
 import { CreatePost } from "@/components/social/CreatePost";
+import ProfileNudge from "@/components/social/ProfileNudge";
 import { Icon } from "./Icon";
 import type { OpportunityType } from "./tokens";
 
@@ -335,6 +336,9 @@ export function OpportunityFeed({
       {showBanner && user && (
         <CreatePost onPostCreated={() => setRefreshKey(k => k + 1)} />
       )}
+
+      {/* Profile Nudge (for logged-in users with incomplete profiles) */}
+      {showBanner && user && <ProfileNudge />}
 
       {/* Featured Section */}
       {showFeatured && featuredItems.length > 0 && !loading && activeTab === "all" && (

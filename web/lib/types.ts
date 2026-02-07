@@ -813,6 +813,14 @@ export interface MemberProfile {
   updatedAt?: Timestamp | null;
 }
 
+export interface SavedPost {
+  id: string;
+  postId: string;
+  memberId: string;
+  createdAt?: Timestamp | null;
+  post?: Post | null;
+}
+
 export interface SavedJob {
   id: string;
   jobId: string;

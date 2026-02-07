@@ -14,10 +14,12 @@ import {
     serverTimestamp,
     Timestamp,
     deleteDoc,
+    addDoc,
+    documentId,
     DocumentSnapshot
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { Post, Comment, Connection, Activity, AuthorType, PostType, PostVisibility, MemberProfile, ReactionType, Reaction, ReactionsCount } from "../types";
+import { Post, Comment, Connection, Activity, AuthorType, PostType, PostVisibility, MemberProfile, ReactionType, Reaction, ReactionsCount, SavedPost } from "../types";
 
 // Helper to ensure DB is initialized
 function getDb() {
@@ -494,5 +496,171 @@ export async function getThreadedComments(postId: string): Promise<ThreadedComme
     }
 
     return topLevel;
+}
+
+// ============================================
+// DELETE POST
+// ============================================
+
+export async function deletePost(postId: string, userId: string): Promise<void> {
+    const firestore = getDb();
+    const postRef = doc(firestore, "posts", postId);
+    const snap = await getDoc(postRef);
+
+    if (!snap.exists()) {
+        throw new Error("Post not found");
+    }
+
+    const post = snap.data() as Post;
+    if (post.authorId !== userId) {
+        throw new Error("You can only delete your own posts");
+    }
+
+    await deleteDoc(postRef);
+}
+
+// ============================================
+// DELETE COMMENT
+// ============================================
+
+export async function deleteComment(postId: string, commentId: string, userId: string): Promise<void> {
+    const firestore = getDb();
+    const commentRef = doc(firestore, "posts", postId, "comments", commentId);
+    const postRef = doc(firestore, "posts", postId);
+    const snap = await getDoc(commentRef);
+
+    if (!snap.exists()) {
+        throw new Error("Comment not found");
+    }
+
+    const comment = snap.data() as Comment;
+    if (comment.authorId !== userId) {
+        throw new Error("You can only delete your own comments");
+    }
+
+    await deleteDoc(commentRef);
+    await updateDoc(postRef, {
+        commentsCount: increment(-1)
+    });
+}
+
+// ============================================
+// COMMENT LIKES
+// ============================================
+
+export async function toggleLikeComment(postId: string, commentId: string, userId: string): Promise<boolean> {
+    const firestore = getDb();
+    const likeRef = doc(firestore, "posts", postId, "comments", commentId, "likes", userId);
+    const commentRef = doc(firestore, "posts", postId, "comments", commentId);
+
+    const likeSnap = await getDoc(likeRef);
+
+    if (likeSnap.exists()) {
+        // Unlike
+        await deleteDoc(likeRef);
+        await updateDoc(commentRef, {
+            likesCount: increment(-1)
+        });
+        return false;
+    } else {
+        // Like
+        await setDoc(likeRef, {
+            userId,
+            createdAt: serverTimestamp()
+        });
+        await updateDoc(commentRef, {
+            likesCount: increment(1)
+        });
+        return true;
+    }
+}
+
+export async function hasUserLikedComment(postId: string, commentId: string, userId: string): Promise<boolean> {
+    const firestore = getDb();
+    const likeRef = doc(firestore, "posts", postId, "comments", commentId, "likes", userId);
+    const likeSnap = await getDoc(likeRef);
+    return likeSnap.exists();
+}
+
+// ============================================
+// SAVED POSTS
+// ============================================
+
+const savedPostsCollection = "savedPosts";
+
+export async function toggleSavePost(memberId: string, postId: string, shouldSave: boolean): Promise<void> {
+    const firestore = getDb();
+    const snapshot = await getDocs(
+        query(
+            collection(firestore, savedPostsCollection),
+            where("memberId", "==", memberId),
+            where("postId", "==", postId)
+        )
+    );
+
+    if (shouldSave) {
+        if (snapshot.empty) {
+            await addDoc(collection(firestore, savedPostsCollection), {
+                memberId,
+                postId,
+                createdAt: serverTimestamp(),
+            });
+        }
+    } else {
+        await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)));
+    }
+}
+
+export async function listSavedPosts(memberId: string): Promise<SavedPost[]> {
+    const firestore = getDb();
+    const ref = collection(firestore, savedPostsCollection);
+    const q = query(
+        ref,
+        where("memberId", "==", memberId),
+        orderBy("createdAt", "desc"),
+        limit(100)
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) return [];
+
+    const postIds = snap.docs.map((d) => (d.data() as SavedPost).postId);
+
+    // Batch fetch posts
+    const postsMap = new Map<string, Post>();
+    const batchSize = 30;
+    for (let i = 0; i < postIds.length; i += batchSize) {
+        const batchIds = postIds.slice(i, i + batchSize);
+        if (batchIds.length > 0) {
+            const postsRef = collection(firestore, "posts");
+            const postsQuery = query(postsRef, where(documentId(), "in", batchIds));
+            const postsSnap = await getDocs(postsQuery);
+            postsSnap.docs.forEach((postDoc) => {
+                postsMap.set(postDoc.id, { ...postDoc.data() as Post, id: postDoc.id });
+            });
+        }
+    }
+
+    return snap.docs.map((d) => {
+        const data = d.data() as SavedPost;
+        return {
+            ...data,
+            id: d.id,
+            post: postsMap.get(data.postId) || null,
+        };
+    });
+}
+
+export async function isPostSaved(memberId: string, postId: string): Promise<boolean> {
+    const firestore = getDb();
+    const snapshot = await getDocs(
+        query(
+            collection(firestore, savedPostsCollection),
+            where("memberId", "==", memberId),
+            where("postId", "==", postId),
+            limit(1)
+        )
+    );
+    return !snapshot.empty;
 }
 

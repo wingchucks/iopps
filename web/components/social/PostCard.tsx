@@ -7,23 +7,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
-import { MoreHorizontal } from "lucide-react";
-import { getUserReaction } from "@/lib/firestore/social";
+import { Bookmark, MoreHorizontal, Trash2 } from "lucide-react";
+import { getUserReaction, deletePost, toggleSavePost, isPostSaved } from "@/lib/firestore/social";
 import ReactionBar from "@/components/social/ReactionBar";
 import { ShareButton } from "@/components/social/ShareButton";
 import ReportContentButton from "@/components/ReportContentButton";
 import { useAuth } from "@/components/AuthProvider";
+import toast from "react-hot-toast";
 
 interface PostCardProps {
     post: Post;
+    onDeleted?: (postId: string) => void;
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, onDeleted }: PostCardProps) {
     const { user } = useAuth();
     const router = useRouter();
     const [userReaction, setUserReaction] = useState<ReactionType | null>(null);
+    const [saved, setSaved] = useState(false);
+    const [savingBookmark, setSavingBookmark] = useState(false);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
-    // Check if user has already reacted to this post
     useEffect(() => {
         if (!user) {
             setUserReaction(null);
@@ -35,6 +41,10 @@ export function PostCard({ post }: PostCardProps) {
             .catch((err) => {
                 console.error("Failed to check reaction status:", err);
             });
+
+        isPostSaved(user.uid, post.id)
+            .then(setSaved)
+            .catch(() => {});
     }, [post.id, user]);
 
     const [showComments, setShowComments] = useState(false);
@@ -47,9 +57,6 @@ export function PostCard({ post }: PostCardProps) {
         if (!showComments && comments.length === 0) {
             setCommentsLoading(true);
             try {
-                // Determine authorType - default to member for now
-                // Ideally this would come from a cleaner reusable import
-                // But for now verify we have the import
                 const { getComments } = await import("@/lib/firestore/social");
                 const loadedComments = await getComments(post.id);
                 setComments(loadedComments);
@@ -70,7 +77,7 @@ export function PostCard({ post }: PostCardProps) {
             const comment = await addComment(post.id, {
                 postId: post.id,
                 authorId: user.uid,
-                authorType: 'member', // TODO use actual type
+                authorType: 'member',
                 authorName: user.displayName || 'Anonymous',
                 authorAvatarUrl: user.photoURL || undefined,
                 content: newComment,
@@ -84,6 +91,42 @@ export function PostCard({ post }: PostCardProps) {
             setSubmittingComment(false);
         }
     };
+
+    const handleToggleSave = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user || savingBookmark) return;
+        setSavingBookmark(true);
+        try {
+            const newSaved = !saved;
+            await toggleSavePost(user.uid, post.id, newSaved);
+            setSaved(newSaved);
+            toast.success(newSaved ? "Post saved" : "Post unsaved");
+        } catch (error) {
+            console.error("Failed to toggle save:", error);
+            toast.error("Failed to save post");
+        } finally {
+            setSavingBookmark(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!user || deleting) return;
+        setDeleting(true);
+        try {
+            await deletePost(post.id, user.uid);
+            toast.success("Post deleted");
+            onDeleted?.(post.id);
+        } catch (error) {
+            console.error("Failed to delete post:", error);
+            toast.error("Failed to delete post");
+        } finally {
+            setDeleting(false);
+            setConfirmDelete(false);
+            setShowDropdown(false);
+        }
+    };
+
+    const isAuthor = user?.uid === post.authorId;
 
     return (
         <Card className="mb-4 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-border/80 transition-colors cursor-pointer" onClick={() => router.push(`/posts/${post.id}`)}>
@@ -101,13 +144,54 @@ export function PostCard({ post }: PostCardProps) {
                     </div>
                     <p className="text-xs text-muted-foreground">{post.authorTagline}</p>
                 </div>
-                <div onClick={(e) => e.stopPropagation()}>
-                    <ReportContentButton
-                        contentType="post"
-                        contentId={post.id}
-                        contentTitle={post.content?.slice(0, 80)}
-                        variant="icon"
-                    />
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="p-1.5 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+                    >
+                        <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                    {showDropdown && (
+                        <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
+                            {isAuthor && !confirmDelete && (
+                                <button
+                                    onClick={() => setConfirmDelete(true)}
+                                    className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete Post
+                                </button>
+                            )}
+                            {isAuthor && confirmDelete && (
+                                <div className="px-4 py-3 space-y-2">
+                                    <p className="text-xs text-slate-400">Delete this post?</p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleDelete}
+                                            disabled={deleting}
+                                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                        >
+                                            {deleting ? "..." : "Yes, delete"}
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmDelete(false)}
+                                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="border-t border-slate-800">
+                                <ReportContentButton
+                                    contentType="post"
+                                    contentId={post.id}
+                                    contentTitle={post.content?.slice(0, 80)}
+                                    variant="icon"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </CardHeader>
 
@@ -117,7 +201,6 @@ export function PostCard({ post }: PostCardProps) {
                 {/* Render Media */}
                 {post.mediaUrls && post.mediaUrls.length > 0 && (
                     <div className="rounded-md overflow-hidden bg-muted/20">
-                        {/* Simple single image for now */}
                         <img src={post.mediaUrls[0]} alt="Post content" className="w-full h-auto object-cover max-h-96" />
                     </div>
                 )}
@@ -144,12 +227,26 @@ export function PostCard({ post }: PostCardProps) {
                             onCommentClick={toggleComments}
                         />
                     </div>
-                    <ShareButton
-                        entityId={post.id}
-                        type={post.type}
-                        data={{ title: post.content?.slice(0, 60), provider: post.authorName }}
-                        className="ml-1"
-                    />
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={handleToggleSave}
+                            disabled={savingBookmark || !user}
+                            className={`p-2 rounded-full transition-colors ${
+                                saved
+                                    ? "text-emerald-400"
+                                    : "text-slate-500 hover:text-emerald-400"
+                            }`}
+                            title={saved ? "Unsave post" : "Save post"}
+                        >
+                            <Bookmark className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
+                        </button>
+                        <ShareButton
+                            entityId={post.id}
+                            type={post.type}
+                            data={{ title: post.content?.slice(0, 60), provider: post.authorName }}
+                            className="ml-0"
+                        />
+                    </div>
                 </div>
 
                 {/* Comments Section */}

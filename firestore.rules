@@ -263,6 +263,15 @@ service cloud.firestore {
         allow update, delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
     }
 
+    match /savedPosts/{savedId} {
+        // Users can only read their own saved posts
+        allow read: if isSignedIn() && resource.data.memberId == request.auth.uid;
+        // Users can only create saved posts for themselves
+        allow create: if isSignedIn() && request.resource.data.memberId == request.auth.uid;
+        // Users can only update/delete their own saved posts
+        allow update, delete: if isSignedIn() && resource.data.memberId == request.auth.uid;
+    }
+
     // ===========================================================================
     // CONFERENCES
     // ===========================================================================
@@ -835,6 +844,13 @@ service cloud.firestore {
           resource.data.authorId == request.auth.uid ||
           isAdminOrModerator()
         );
+
+        // Subcollection: comment likes
+        match /likes/{likeId} {
+          allow read: if true;
+          allow create: if isSignedIn() && request.auth.uid == likeId;
+          allow delete: if isSignedIn() && request.auth.uid == likeId;
+        }
       }
 
       // Subcollection: reactions (Love / Honor / Fire)

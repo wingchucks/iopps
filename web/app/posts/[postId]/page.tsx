@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { getPost, getUserReaction } from "@/lib/firestore/social";
+import { getPost, getUserReaction, deletePost } from "@/lib/firestore/social";
 import type { Post, ReactionType, ReactionsCount } from "@/lib/types";
 import ReactionBar from "@/components/social/ReactionBar";
+import { ShareButton } from "@/components/social/ShareButton";
 import CommentThread from "@/components/social/CommentThread";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const DEFAULT_REACTIONS: ReactionsCount = { love: 0, honor: 0, fire: 0 };
 
@@ -22,6 +23,10 @@ function PostDetailContent() {
   const [userReaction, setUserReaction] = useState<ReactionType | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!postId) return;
@@ -51,6 +56,21 @@ function PostDetailContent() {
 
     loadPost();
   }, [postId, user]);
+
+  const handleDelete = async () => {
+    if (!user || !post || deleting) return;
+    setDeleting(true);
+    try {
+      await deletePost(post.id, user.uid);
+      toast.success("Post deleted");
+      router.back();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast.error("Failed to delete post");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -85,6 +105,8 @@ function PostDetailContent() {
   const timestamp = post.createdAt?.toDate
     ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true })
     : "Just now";
+
+  const isAuthor = user?.uid === post.authorId;
 
   return (
     <div className="min-h-screen bg-[#020306]">
@@ -126,6 +148,53 @@ function PostDetailContent() {
                 {post.authorTagline && `${post.authorTagline} · `}{timestamp}
               </p>
             </div>
+
+            {/* Dropdown menu */}
+            {isAuthor && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="p-1.5 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+                {showDropdown && (
+                  <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-xl z-50 overflow-hidden">
+                    {!confirmDelete ? (
+                      <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-slate-800 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Post
+                      </button>
+                    ) : (
+                      <div className="px-4 py-3 space-y-2">
+                        <p className="text-xs text-slate-400">Delete this post?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                          >
+                            {deleting ? "..." : "Yes, delete"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setConfirmDelete(false);
+                              setShowDropdown(false);
+                            }}
+                            className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Post Body */}
@@ -167,14 +236,22 @@ function PostDetailContent() {
             </div>
           )}
 
-          {/* Reaction Bar */}
-          <ReactionBar
-            postId={post.id}
-            reactionsCount={post.reactionsCount || DEFAULT_REACTIONS}
-            commentsCount={post.commentsCount}
-            sharesCount={post.sharesCount}
-            userReaction={userReaction}
-          />
+          {/* Reaction Bar + Share */}
+          <div className="flex items-center justify-between">
+            <ReactionBar
+              postId={post.id}
+              reactionsCount={post.reactionsCount || DEFAULT_REACTIONS}
+              commentsCount={post.commentsCount}
+              sharesCount={post.sharesCount}
+              userReaction={userReaction}
+              onShareClick={() => setShowShareModal(true)}
+            />
+            <ShareButton
+              entityId={post.id}
+              type={post.type}
+              data={{ title: post.content?.slice(0, 60), provider: post.authorName }}
+            />
+          </div>
         </div>
 
         {/* Comment Thread */}
