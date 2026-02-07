@@ -2924,6 +2924,13 @@ export interface OrganizationProfile extends Omit<EmployerProfile, 'socialLinks'
   // Keep legacy socialLinks for backward compatibility
   socialLinks?: SocialLinks;
 
+  // Onboarding fields
+  territory?: string; // Treaty territory
+  size?: string; // Organization size (1-10, 11-50, etc.)
+  yearEstablished?: number; // Year founded
+  sector?: string; // Industry/sector
+  onboardingComplete?: boolean; // Onboarding completion flag
+
   // Soft delete fields
   deletedAt?: Timestamp | null;
   deletedBy?: string;

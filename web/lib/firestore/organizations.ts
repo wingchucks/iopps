@@ -160,6 +160,15 @@ export interface CreateOrganizationInput {
   description?: string;
   website?: string;
   enabledModules?: OrganizationModule[];
+  // Onboarding fields
+  territory?: string;
+  size?: string;
+  yearEstablished?: number;
+  sector?: string;
+  nation?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  onboardingComplete?: boolean;
 }
 
 /**
@@ -199,6 +208,14 @@ export async function createOrganizationProfile(
     enabledModules: input.enabledModules || [],
     links: input.website ? { website: input.website } : {},
     status: "pending",
+    ...(input.territory && { territory: input.territory }),
+    ...(input.size && { size: input.size }),
+    ...(input.yearEstablished && { yearEstablished: input.yearEstablished }),
+    ...(input.sector && { sector: input.sector }),
+    ...(input.nation && { nation: input.nation }),
+    ...(input.contactEmail && { contactEmail: input.contactEmail }),
+    ...(input.contactPhone && { contactPhone: input.contactPhone }),
+    ...(input.onboardingComplete !== undefined && { onboardingComplete: input.onboardingComplete }),
     createdAt: serverTimestamp() as unknown as Timestamp,
     updatedAt: serverTimestamp() as unknown as Timestamp,
   };

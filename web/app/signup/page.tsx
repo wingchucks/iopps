@@ -83,7 +83,7 @@ export default function SignupPage() {
 
             {/* Organization Card */}
             <Link
-              href="/register?role=employer"
+              href="/signup/organization"
               className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md sm:p-8"
             >
               <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
