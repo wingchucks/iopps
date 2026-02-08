@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(JobBillingContent.tsx)",
       "Bash(npx vercel:*)",
       "Bash(git restore:*)",
       "Bash(firebase deploy:*)",
