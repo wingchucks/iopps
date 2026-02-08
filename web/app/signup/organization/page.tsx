@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -20,7 +20,7 @@ import { createPendingEmployerProfile } from "@/lib/firestore";
 
 export default function OrganizationSignupPage() {
   const router = useRouter();
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, redirectLoading, user } = useAuth();
   const [organizationName, setOrganizationName] = useState("");
   const [contactPerson, setContactPerson] = useState("");
   const [email, setEmail] = useState("");
@@ -30,6 +30,13 @@ export default function OrganizationSignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Handle return from Google redirect sign-in
+  useEffect(() => {
+    if (!redirectLoading && user) {
+      router.push("/onboarding/organization");
+    }
+  }, [redirectLoading, user, router]);
 
   const notifyWithRetry = async (data: Record<string, unknown>, retries = 2) => {
     for (let i = 0; i <= retries; i++) {
