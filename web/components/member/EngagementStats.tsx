@@ -240,13 +240,15 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
           {stats.profileViews.total < 10 && (
             <li className="flex items-start gap-2">
               <span className="text-accent">-</span>
-              Complete your profile to attract more views
+              <Link href="/member/profile" className="text-accent hover:underline transition-colors">
+                Complete your profile to attract more views
+              </Link>
             </li>
           )}
           {stats.connections.total < 5 && (
             <li className="flex items-start gap-2">
               <span className="text-accent">-</span>
-              <Link href="/members" className="hover:text-accent transition-colors">
+              <Link href="/members" className="text-accent hover:underline transition-colors">
                 Browse the community directory and connect with others
               </Link>
             </li>
@@ -254,7 +256,7 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
           {stats.posts.total < 1 && (
             <li className="flex items-start gap-2">
               <span className="text-accent">-</span>
-              <Link href="/network" className="hover:text-accent transition-colors">
+              <Link href="/network" className="text-accent hover:underline transition-colors">
                 Share your first post to introduce yourself
               </Link>
             </li>
@@ -262,7 +264,7 @@ export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
           {stats.applications.total < 3 && (
             <li className="flex items-start gap-2">
               <span className="text-accent">-</span>
-              <Link href="/careers" className="hover:text-accent transition-colors">
+              <Link href="/careers" className="text-accent hover:underline transition-colors">
                 Explore job opportunities and apply
               </Link>
             </li>
