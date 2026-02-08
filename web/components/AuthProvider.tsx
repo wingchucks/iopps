@@ -50,6 +50,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [redirectLoading, setRedirectLoading] = useState(false);
   const redirectHandled = useRef(false);
 
+  /** Create or update user doc in Firestore after Google sign-in */
+  const ensureUserDoc = async (fbUser: FirebaseUser): Promise<{ isNewUser: boolean }> => {
+    // Super admin - skip Firestore operations to avoid permission errors
+    if (isSuperAdmin(fbUser.email)) {
+      return { isNewUser: false };
+    }
+
+    if (!db) return { isNewUser: false };
+
+    try {
+      const userRef = doc(db, "users", fbUser.uid);
+      const userSnap = await getDoc(userRef);
+      const isNewUser = !userSnap.exists();
+
+      if (isNewUser) {
+        await setDoc(userRef, {
+          id: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName || "",
+          photoURL: fbUser.photoURL || "",
+          role: "community",
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        const existingData = userSnap.data();
+        await setDoc(
+          userRef,
+          {
+            email: fbUser.email,
+            displayName: fbUser.displayName || existingData.displayName || "",
+            photoURL: fbUser.photoURL || existingData.photoURL || "",
+          },
+          { merge: true }
+        );
+      }
+
+      return { isNewUser };
+    } catch (error) {
+      console.error("Error during sign-in Firestore operations:", error);
+      return { isNewUser: false };
+    }
+  };
+
   /* ---- Handle redirect result on mount (for signInWithRedirect flow) ---- */
   useEffect(() => {
     if (!auth || redirectHandled.current) return;
@@ -139,49 +182,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     if (!auth) throw new Error("Auth not available");
     await signOut(auth);
-  };
-
-  /** Create or update user doc in Firestore after Google sign-in */
-  const ensureUserDoc = async (fbUser: FirebaseUser): Promise<{ isNewUser: boolean }> => {
-    // Super admin - skip Firestore operations to avoid permission errors
-    if (isSuperAdmin(fbUser.email)) {
-      return { isNewUser: false };
-    }
-
-    if (!db) return { isNewUser: false };
-
-    try {
-      const userRef = doc(db, "users", fbUser.uid);
-      const userSnap = await getDoc(userRef);
-      const isNewUser = !userSnap.exists();
-
-      if (isNewUser) {
-        await setDoc(userRef, {
-          id: fbUser.uid,
-          email: fbUser.email,
-          displayName: fbUser.displayName || "",
-          photoURL: fbUser.photoURL || "",
-          role: "community",
-          createdAt: serverTimestamp(),
-        });
-      } else {
-        const existingData = userSnap.data();
-        await setDoc(
-          userRef,
-          {
-            email: fbUser.email,
-            displayName: fbUser.displayName || existingData.displayName || "",
-            photoURL: fbUser.photoURL || existingData.photoURL || "",
-          },
-          { merge: true }
-        );
-      }
-
-      return { isNewUser };
-    } catch (error) {
-      console.error("Error during sign-in Firestore operations:", error);
-      return { isNewUser: false };
-    }
   };
 
   const signInWithGoogle = async (): Promise<{ isNewUser: boolean }> => {
