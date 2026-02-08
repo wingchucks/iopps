@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/components/AuthProvider";
 import { ArrowLeft, Award, Trash2, User, Shield } from "lucide-react";
 import { getEndorsementsForUser, getEndorsementsGivenBy, deleteEndorsement } from "@/lib/firestore/endorsements";
 import type { Endorsement } from "@/lib/types";
+import { useAsyncData } from "@/lib/hooks";
 import toast from "react-hot-toast";
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
@@ -22,36 +23,27 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 function EndorsementsContent() {
   const { user } = useAuth();
   const [tab, setTab] = useState<"received" | "given">("received");
-  const [received, setReceived] = useState<Endorsement[]>([]);
-  const [given, setGiven] = useState<Endorsement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [givenOverride, setGivenOverride] = useState<Endorsement[] | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
+  const { data, loading, refetch } = useAsyncData(
+    async () => {
+      if (!user) return null;
+      const [r, g] = await Promise.all([
+        getEndorsementsForUser(user.uid),
+        getEndorsementsGivenBy(user.uid),
+      ]);
+      return { received: r, given: g };
+    },
+    [user?.uid]
+  );
 
-    async function load() {
-      setLoading(true);
-      try {
-        const [r, g] = await Promise.all([
-          getEndorsementsForUser(user!.uid),
-          getEndorsementsGivenBy(user!.uid),
-        ]);
-        setReceived(r);
-        setGiven(g);
-      } catch (err) {
-        console.error("Failed to load endorsements:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
-  }, [user]);
+  const received = data?.received ?? [];
+  const given = givenOverride ?? data?.given ?? [];
 
   const handleDelete = async (endorsementId: string) => {
     try {
       await deleteEndorsement(endorsementId);
-      setGiven((prev) => prev.filter((e) => e.id !== endorsementId));
+      setGivenOverride(given.filter((e) => e.id !== endorsementId));
       toast.success("Endorsement removed");
     } catch {
       toast.error("Failed to remove endorsement");

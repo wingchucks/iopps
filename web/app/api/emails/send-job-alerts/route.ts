@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { db } from "@/lib/firebase-admin";
 import type { JobAlert, JobAlertFrequency, JobPosting } from "@/lib/types";
 import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 // Mark this route as dynamic
 export const dynamic = "force-dynamic";
@@ -20,17 +21,8 @@ interface MatchedAlert {
 
 export async function POST(request: NextRequest) {
   // Verify cron secret for scheduled calls - REQUIRED in all environments
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    console.error("CRON_SECRET environment variable is not configured");
-    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
 
   // Check if Firebase Admin is initialized
   if (!db) {

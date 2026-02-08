@@ -11,6 +11,7 @@ import {
 } from "@/lib/job-description-parser";
 import { validateExternalUrl } from "@/lib/url-validator";
 import { FieldValue } from "firebase-admin/firestore";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -130,16 +131,9 @@ function matchesKeywordFilter(
 }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Verify CRON_SECRET for security - REQUIRED in all environments
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
 
   if (!db) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });

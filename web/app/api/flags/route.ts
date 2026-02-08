@@ -54,6 +54,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate and sanitize reasonDetails
+    let sanitizedReasonDetails: string | null = null;
+    if (reasonDetails) {
+      if (typeof reasonDetails !== 'string') {
+        return NextResponse.json(
+          { error: "reasonDetails must be a string" },
+          { status: 400 }
+        );
+      }
+      // Trim whitespace and strip HTML tags
+      sanitizedReasonDetails = reasonDetails.trim().replace(/<[^>]*>/g, '');
+      if (sanitizedReasonDetails.length === 0) {
+        return NextResponse.json(
+          { error: "reasonDetails cannot be empty" },
+          { status: 400 }
+        );
+      }
+      if (sanitizedReasonDetails.length > 1000) {
+        return NextResponse.json(
+          { error: "reasonDetails must be 1000 characters or fewer" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate email format if provided
     if (reporterEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -111,7 +136,7 @@ export async function POST(request: NextRequest) {
       reporterEmail: reporterEmail || null,
       reporterName: reporterName || null,
       reason,
-      reasonDetails: reasonDetails || null,
+      reasonDetails: sanitizedReasonDetails,
       status: "pending",
       reviewedBy: null,
       reviewedAt: null,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   getMemberEngagementStats,
@@ -8,6 +7,7 @@ import {
   getMilestoneProgress,
 } from "@/lib/firestore";
 import type { MemberEngagementStats, EngagementMilestone } from "@/lib/firestore";
+import { useAsyncData } from "@/lib/hooks";
 import {
   Eye,
   Users,
@@ -31,30 +31,23 @@ interface EngagementStatsProps {
 
 export default function EngagementStats({ onNavigate }: EngagementStatsProps) {
   const { user } = useAuth();
-  const [stats, setStats] = useState<MemberEngagementStats | null>(null);
-  const [milestones, setMilestones] = useState<EngagementMilestone[]>([]);
-  const [milestoneProgress, setMilestoneProgress] = useState({ achieved: 0, total: 0, percentage: 0 });
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) return;
+  const { data, loading } = useAsyncData(
+    async () => {
+      if (!user) return null;
+      const engagementStats = await getMemberEngagementStats(user.uid);
+      return {
+        stats: engagementStats,
+        milestones: checkMilestones(engagementStats),
+        milestoneProgress: getMilestoneProgress(engagementStats),
+      };
+    },
+    [user?.uid]
+  );
 
-    const loadStats = async () => {
-      try {
-        setLoading(true);
-        const engagementStats = await getMemberEngagementStats(user.uid);
-        setStats(engagementStats);
-        setMilestones(checkMilestones(engagementStats));
-        setMilestoneProgress(getMilestoneProgress(engagementStats));
-      } catch (error) {
-        console.error("Error loading engagement stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStats();
-  }, [user]);
+  const stats = data?.stats ?? null;
+  const milestones = data?.milestones ?? [];
+  const milestoneProgress = data?.milestoneProgress ?? { achieved: 0, total: 0, percentage: 0 };
 
   const getTrendIcon = (trend: "up" | "down" | "stable") => {
     switch (trend) {

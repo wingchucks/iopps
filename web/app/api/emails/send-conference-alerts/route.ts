@@ -10,6 +10,7 @@ import {
   getUnsubscribeUrl,
   conferenceAlertText,
 } from "@/lib/emails/templates";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,18 +19,9 @@ export const maxDuration = 300;
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://iopps.ca";
 
 export async function POST(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    console.error("CRON_SECRET not configured");
-    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Verify cron secret - REQUIRED in all environments
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
 
   if (!db) {
     console.error("Firebase Admin not initialized");

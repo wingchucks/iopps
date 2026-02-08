@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import { expireStaleVisibility, recomputeOrganizationVisibility } from "@/lib/firestore/visibility";
 import { FieldValue } from "firebase-admin/firestore";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 // Mark this route as dynamic to prevent static analysis
 export const dynamic = "force-dynamic";
@@ -21,21 +22,8 @@ export const maxDuration = 300; // 5 minutes for processing many orgs
  */
 export async function GET(request: NextRequest) {
   // Verify CRON_SECRET for security - REQUIRED in all environments
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    console.error("[expire-directory-visibility] CRON_SECRET not configured");
-    return NextResponse.json(
-      { error: "Server configuration error" },
-      { status: 503 }
-    );
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    console.warn("[expire-directory-visibility] Unauthorized cron request");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
 
   // Check if Firebase Admin is initialized
   if (!db) {

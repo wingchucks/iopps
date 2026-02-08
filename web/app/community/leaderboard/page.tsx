@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getRisingStars, getMonthlySpotlight } from "@/lib/firestore";
 import type { LeaderboardEntry } from "@/lib/firestore";
+import { useAsyncData } from "@/lib/hooks";
 import CommunityLeaderboard from "@/components/member/CommunityLeaderboard";
 import { FeedLayout } from "@/components/opportunity-graph";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,29 +19,20 @@ import {
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
-  const [spotlight, setSpotlight] = useState<LeaderboardEntry[]>([]);
-  const [risingStars, setRisingStars] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [spotlightData, risingData] = await Promise.all([
-          getMonthlySpotlight(),
-          getRisingStars(3),
-        ]);
-        setSpotlight(spotlightData);
-        setRisingStars(risingData);
-      } catch (error) {
-        console.error("Error loading leaderboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const { data, loading } = useAsyncData(
+    async () => {
+      const [spotlightData, risingData] = await Promise.all([
+        getMonthlySpotlight(),
+        getRisingStars(3),
+      ]);
+      return { spotlight: spotlightData, risingStars: risingData };
+    },
+    []
+  );
 
-    loadData();
-  }, []);
+  const spotlight = data?.spotlight ?? [];
+  const risingStars = data?.risingStars ?? [];
 
   const getInitials = (name?: string) => {
     if (!name) return "?";

@@ -109,42 +109,18 @@ export async function POST(request: NextRequest) {
     let event: Stripe.Event | undefined;
 
     try {
-        // Verify webhook signature - try live secret first, then test secret
-        const liveSecret = process.env.STRIPE_WEBHOOK_SECRET;
-        const testSecret = process.env.STRIPE_WEBHOOK_SECRET_TEST;
-        
-        if (!liveSecret && !testSecret) {
-            console.error("No STRIPE_WEBHOOK_SECRET or STRIPE_WEBHOOK_SECRET_TEST is set");
+        // Verify webhook signature using the production secret only
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+        if (!webhookSecret) {
+            console.error("STRIPE_WEBHOOK_SECRET is not set");
             return NextResponse.json(
                 { error: "Webhook secret not configured" },
                 { status: 500 }
             );
         }
 
-        // Try live secret first
-        let verificationError: Error | null = null;
-        if (liveSecret) {
-            try {
-                event = stripe.webhooks.constructEvent(body, signature, liveSecret);
-            } catch (liveError) {
-                verificationError = liveError as Error;
-            }
-        }
-        
-        // If live secret failed or doesn't exist, try test secret
-        if (!event && testSecret) {
-            try {
-                event = stripe.webhooks.constructEvent(body, signature, testSecret);
-                console.log("Webhook verified with test secret");
-            } catch (testError) {
-                // Both failed, use the original error
-                verificationError = verificationError || (testError as Error);
-            }
-        }
-        
-        if (!event) {
-            throw verificationError || new Error("Webhook verification failed");
-        }
+        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Webhook signature verification failed:", message);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export type JobAlertFrequency = "instant" | "daily" | "weekly";
 
@@ -7,17 +8,8 @@ export async function handleJobAlertCron(
   frequency: JobAlertFrequency
 ): Promise<NextResponse> {
   // Verify cron secret from Vercel - REQUIRED in all environments
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    console.error("CRON_SECRET environment variable is not configured");
-    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronSecret(request);
+  if (authError) return authError;
 
   // Forward to main handler with the specified frequency
   const baseUrl = request.nextUrl.origin;
@@ -25,7 +17,7 @@ export async function handleJobAlertCron(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: authHeader || "",
+      Authorization: request.headers.get("authorization") || "",
     },
     body: JSON.stringify({ frequency }),
   });

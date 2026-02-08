@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { verifyCronSecret } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -9,13 +10,9 @@ export const runtime = "nodejs";
 // Runs every 15 minutes (configured in vercel.json)
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret
-    const authHeader = request.headers.get("Authorization");
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Verify cron secret - REQUIRED in all environments
+    const authError = verifyCronSecret(request);
+    if (authError) return authError;
 
     if (!db) {
       return NextResponse.json({ error: "Database not available" }, { status: 503 });

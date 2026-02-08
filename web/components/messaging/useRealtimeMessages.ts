@@ -25,7 +25,8 @@ export function useRealtimeMessages(conversationId: string | null) {
         const msgs = snapshot.docs.map(
           (doc) => ({ id: doc.id, ...doc.data() } as Message)
         );
-        setMessages(msgs);
+        // Query is ordered desc for limit efficiency; reverse to chronological order
+        setMessages(msgs.reverse());
         setLoading(false);
       },
       (error) => {

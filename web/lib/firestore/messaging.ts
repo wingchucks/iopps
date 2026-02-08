@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   increment,
+  limit as firestoreLimit,
   orderBy,
   query,
   serverTimestamp,
@@ -145,16 +146,21 @@ export async function getConversationMessages(
 ): Promise<Message[]> {
   checkFirebase();
 
+  // Fetch the most recent N messages by querying desc with a limit,
+  // then reverse to return in ascending (chronological) order.
+  // This avoids fetching ALL messages and slicing client-side.
   const q = query(
     collection(db!, messagesCollection),
     where("conversationId", "==", conversationId),
-    orderBy("createdAt", "asc")
+    orderBy("createdAt", "desc"),
+    firestoreLimit(limitCount)
   );
 
   const snapshot = await getDocs(q);
   const messages = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Message));
 
-  return messages.slice(-limitCount);
+  // Reverse to chronological order (oldest first)
+  return messages.reverse();
 }
 
 export async function markMessagesAsRead(
@@ -471,20 +477,43 @@ export async function markPeerMessagesAsRead(
 }
 
 /**
- * Get unread peer message count for a user
+ * Get unread peer message count for a user.
+ * Runs two parallel queries (participant1 / participant2) and sums unread counts
+ * directly from the docs, avoiding the overhead of getPeerConversations() which
+ * constructs full PeerConversation objects and sorts them.
  */
 export async function getUnreadPeerMessageCount(userId: string): Promise<number> {
   checkFirebase();
 
-  const conversations = await getPeerConversations(userId);
+  // Query conversations where user is participant1
+  const q1 = query(
+    collection(db!, conversationsCollection),
+    where("type", "==", "peer"),
+    where("participant1Id", "==", userId),
+    where("status", "==", "active")
+  );
 
-  return conversations.reduce((total, conv) => {
-    const isParticipant1 = conv.participant1Id === userId;
-    const unreadCount = isParticipant1
-      ? conv.participant1UnreadCount
-      : conv.participant2UnreadCount;
-    return total + (unreadCount || 0);
-  }, 0);
+  // Query conversations where user is participant2
+  const q2 = query(
+    collection(db!, conversationsCollection),
+    where("type", "==", "peer"),
+    where("participant2Id", "==", userId),
+    where("status", "==", "active")
+  );
+
+  const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+  // When user is participant1, their unread field is participant1UnreadCount
+  let total = 0;
+  for (const d of snapshot1.docs) {
+    total += d.data().participant1UnreadCount || 0;
+  }
+  // When user is participant2, their unread field is participant2UnreadCount
+  for (const d of snapshot2.docs) {
+    total += d.data().participant2UnreadCount || 0;
+  }
+
+  return total;
 }
 
 /**
@@ -537,12 +566,16 @@ export function getPeerConversationsQueries(userId: string) {
 }
 
 /**
- * Get query for messages in a conversation (ordered by createdAt asc)
+ * Get query for messages in a conversation (ordered by createdAt desc with limit).
+ * Used with onSnapshot for real-time listeners. Returns most recent messages
+ * to avoid streaming the entire conversation history.
+ * Note: consumers should reverse the results to display in chronological order.
  */
-export function getMessagesQuery(conversationId: string) {
+export function getMessagesQuery(conversationId: string, limitCount: number = 100) {
   return query(
     collection(db!, messagesCollection),
     where("conversationId", "==", conversationId),
-    orderBy("createdAt", "asc")
+    orderBy("createdAt", "desc"),
+    firestoreLimit(limitCount)
   );
 }
