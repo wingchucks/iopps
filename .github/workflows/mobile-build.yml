@@ -59,7 +59,7 @@ jobs:
           curl -o app-release.apk "$BUILD_URL"
 
       - name: Upload Android APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: android-apk
           path: mobile/app-release.apk
@@ -117,7 +117,7 @@ jobs:
           curl -o app.ipa "$BUILD_URL"
 
       - name: Upload iOS IPA
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ios-ipa
           path: mobile/app.ipa
