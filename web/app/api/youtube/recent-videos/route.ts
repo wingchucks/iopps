@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRecentVideos } from "@/lib/youtube";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 300; // Revalidate every 5 minutes
 
 export async function GET(request: Request) {
@@ -15,7 +14,7 @@ export async function GET(request: Request) {
       { videos },
       {
         headers: {
-          "Cache-Control": "public, max-age=300, stale-while-revalidate=60",
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
         },
       }
     );

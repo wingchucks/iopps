@@ -33,7 +33,7 @@ export default function SignupPage() {
             {/* Community Member Card */}
             <Link
               href="/signup/member"
-              className="group relative rounded-2xl border-l-4 border-l-accent border-y border-r border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8"
+              className="group relative rounded-2xl border-l-4 border-l-accent border-y border-r border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md focus-within:shadow-md active:shadow-md sm:p-8"
             >
               <span className="inline-flex items-center rounded-full bg-[var(--accent-bg)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
                 Always free
@@ -84,7 +84,7 @@ export default function SignupPage() {
             {/* Organization Card */}
             <Link
               href="/signup/organization"
-              className="group relative rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8"
+              className="group relative rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md focus-within:shadow-md active:shadow-md sm:p-8"
             >
               <span className="inline-flex items-center rounded-full bg-[var(--border-lt)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 Free &amp; paid tiers

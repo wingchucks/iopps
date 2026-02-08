@@ -51,10 +51,10 @@ export function GrantCard({ grant, featured = false }: GrantCardProps) {
   return (
     <Link
       href={`/business/grants/${grant.slug || grant.id}`}
-      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 ${
+      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-emerald-500/10 focus-within:shadow-2xl focus-within:shadow-emerald-500/10 active:shadow-2xl active:shadow-emerald-500/10 ${
         featured
           ? 'border-accent/50 ring-1 ring-emerald-500/20'
-          : 'border-[var(--card-border)] hover:border-accent/30'
+          : 'border-[var(--card-border)] hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30'
       }`}
     >
       {/* Header with Provider Logo */}

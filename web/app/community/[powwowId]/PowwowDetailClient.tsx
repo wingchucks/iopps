@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import ShareButtons from "@/components/ShareButtons";
 import type { PowwowEvent } from "@/lib/types";
 

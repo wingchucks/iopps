@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getUserBadges,
   getBadgeProgress,
@@ -305,13 +306,12 @@ export default function BadgeDisplay({
 
       {/* Empty State */}
       {badges.length === 0 && !showProgress && (
-        <div className="text-center py-8">
-          <Award className="h-12 w-12 mx-auto text-[var(--text-secondary)] mb-3" />
-          <p className="text-[var(--text-muted)]">No badges earned yet</p>
-          <p className="text-sm text-foreground0 mt-1">
-            Complete your profile and engage with the community to earn badges!
-          </p>
-        </div>
+        <EmptyState
+          icon={<Award className="h-12 w-12" />}
+          title="No badges earned yet"
+          description="Complete your profile and engage with the community to earn badges!"
+          className="border-0 bg-transparent"
+        />
       )}
 
       {/* Badge Detail Dialog */}

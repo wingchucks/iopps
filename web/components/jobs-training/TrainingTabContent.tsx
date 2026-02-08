@@ -362,7 +362,7 @@ export function TrainingTabContent() {
               >
                 Load more programs
                 <svg
-                  className="h-4 w-4 transition-transform group-hover:translate-y-0.5"
+                  className="h-4 w-4 transition-transform group-hover:translate-y-0.5 group-active:translate-y-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -438,10 +438,10 @@ function TrainingCard({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 active:-translate-y-1 ${
         featured || program.featured
           ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5"
-          : "border-[var(--card-border)] bg-surface hover:border-[#14B8A6]/50"
+          : "border-[var(--card-border)] bg-surface hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50"
       }`}
     >
       {/* Header */}

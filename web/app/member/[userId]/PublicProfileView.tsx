@@ -304,7 +304,7 @@ export default function PublicProfileView({ profile }: PublicProfileViewProps) {
                     {profile.portfolio.map((item: PortfolioItem) => (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-[var(--card-border)] bg-surface p-4 hover:border-accent/30 transition-colors"
+                        className="rounded-xl border border-[var(--card-border)] bg-surface p-4 hover:border-accent/30 focus-within:border-accent/30 transition-colors"
                       >
                         <h3 className="font-semibold text-white">{item.title}</h3>
                         <p className="mt-1 text-sm text-[var(--text-muted)] line-clamp-2">{item.description}</p>

@@ -11,8 +11,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { globalSearch, type GlobalSearchResults } from "@/lib/firestore";
 import type { JobPosting } from "@/lib/types";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import {
-  FeedLayout,
   SectionHeader,
   colors,
   Icon,

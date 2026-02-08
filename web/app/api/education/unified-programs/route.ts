@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 import type { UnifiedEducationListing, ProgramSource, UnifiedProgramType, ProgramLevel, NorthAmericanRegion, ProgramTuition } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // Helper to convert Firestore timestamp to date string
@@ -293,6 +292,10 @@ export async function GET(req: NextRequest) {
       limit,
       offset,
       hasMore: offset + limit < total,
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
     });
   } catch (error) {
     console.error("Error listing unified programs:", error);

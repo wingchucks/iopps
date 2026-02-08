@@ -25,7 +25,7 @@ export function BackToTop() {
         <button
             onClick={scrollToTop}
             aria-label="Back to top"
-            className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-accent/30 transition-all hover:bg-accent-hover hover:shadow-xl hover:shadow-accent/40 hover:scale-110 animate-in fade-in slide-in-from-bottom-4 duration-300 md:bottom-8"
+            className="fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-accent/30 transition-all hover:bg-accent-hover hover:shadow-xl hover:shadow-accent/40 hover:scale-110 active:bg-accent-hover active:shadow-xl active:shadow-accent/40 active:scale-110 animate-in fade-in slide-in-from-bottom-4 duration-300 md:bottom-8"
         >
             <ChevronUpIcon className="h-6 w-6" />
         </button>

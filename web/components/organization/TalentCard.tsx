@@ -20,7 +20,7 @@ export default function TalentCard({ member, onInvite }: TalentCardProps) {
         .substring(0, 2);
 
     return (
-        <div className="group relative overflow-hidden rounded-xl border border-[var(--card-border)] bg-surface p-6 transition-all hover:border-[#14B8A6]/50 hover:bg-slate-900/80">
+        <div className="group relative overflow-hidden rounded-xl border border-[var(--card-border)] bg-surface p-6 transition-all hover:border-[#14B8A6]/50 hover:bg-slate-900/80 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-lg font-bold text-[#14B8A6]">

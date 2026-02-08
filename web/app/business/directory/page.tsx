@@ -13,7 +13,8 @@ import {
   GlobeAltIcon,
   CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
-import { FeedLayout, SectionHeader } from '@/components/opportunity-graph';
+import { FeedLayout } from '@/components/opportunity-graph/dynamic';
+import { SectionHeader } from '@/components/opportunity-graph';
 import { useAuth } from '@/components/AuthProvider';
 import { getActiveVendors, getFeaturedVendors } from '@/lib/firebase/shop';
 import { listServices } from '@/lib/firestore';
@@ -366,11 +367,11 @@ export default function BusinessDirectoryPage() {
             <Link
               key={`${item.type}-${item.id}`}
               href={getItemUrl(item)}
-              className={`group relative block overflow-hidden rounded-2xl bg-[var(--card-bg)] border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+              className={`group relative block overflow-hidden rounded-2xl bg-[var(--card-bg)] border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:shadow-xl ${
                 item.featured
                   ? item.type === 'vendor'
-                    ? 'border-accent/50 ring-1 ring-teal-500/20 hover:shadow-teal-500/10'
-                    : 'border-indigo-500/50 ring-1 ring-indigo-500/20 hover:shadow-indigo-500/10'
+                    ? 'border-accent/50 ring-1 ring-teal-500/20 hover:shadow-teal-500/10 active:shadow-teal-500/10'
+                    : 'border-indigo-500/50 ring-1 ring-indigo-500/20 hover:shadow-indigo-500/10 active:shadow-indigo-500/10'
                   : 'border-[var(--border)] hover:border-[var(--border)]'
               }`}
             >

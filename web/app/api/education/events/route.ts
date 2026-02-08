@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
-export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
@@ -65,7 +64,11 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ events });
+    return NextResponse.json({ events }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Error listing education events:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

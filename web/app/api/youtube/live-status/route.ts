@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkLiveStatus } from "@/lib/youtube";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 60; // Revalidate every 60 seconds
 
 export async function GET() {
@@ -10,7 +9,7 @@ export async function GET() {
 
     return NextResponse.json(liveStatus, {
       headers: {
-        "Cache-Control": "public, max-age=60, stale-while-revalidate=30",
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
       },
     });
   } catch (error) {

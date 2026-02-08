@@ -257,7 +257,7 @@ export default function LandingPage() {
 
           <div className="mt-12 grid gap-6 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {/* Territory Discovery */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md active:shadow-md sm:p-8">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
                   className="h-6 w-6 text-accent"
@@ -284,7 +284,7 @@ export default function LandingPage() {
             </div>
 
             {/* Community Endorsements */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md active:shadow-md sm:p-8">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
                   className="h-6 w-6 text-accent"
@@ -311,7 +311,7 @@ export default function LandingPage() {
             </div>
 
             {/* Data Sovereignty */}
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md sm:p-8">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 shadow-sm transition hover:shadow-md active:shadow-md sm:p-8">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
                 <svg
                   className="h-6 w-6 text-accent"
@@ -360,7 +360,7 @@ export default function LandingPage() {
             {/* Careers */}
             <Link
               href="/careers"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md focus-within:border-[var(--card-border-hover)] focus-within:shadow-md active:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)] transition group-hover:scale-105">
                 <svg
@@ -387,7 +387,7 @@ export default function LandingPage() {
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent">
                 Explore jobs
                 <svg
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
+                  className="h-4 w-4 transition group-hover:translate-x-0.5 group-active:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -405,7 +405,7 @@ export default function LandingPage() {
             {/* Education */}
             <Link
               href="/education"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md focus-within:border-[var(--card-border-hover)] focus-within:shadow-md active:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)] transition group-hover:scale-105">
                 <svg
@@ -432,7 +432,7 @@ export default function LandingPage() {
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent">
                 Find programs
                 <svg
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
+                  className="h-4 w-4 transition group-hover:translate-x-0.5 group-active:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -450,7 +450,7 @@ export default function LandingPage() {
             {/* Events */}
             <Link
               href="/community"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md focus-within:border-[var(--card-border-hover)] focus-within:shadow-md active:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)] transition group-hover:scale-105">
                 <svg
@@ -477,7 +477,7 @@ export default function LandingPage() {
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent">
                 See events
                 <svg
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
+                  className="h-4 w-4 transition group-hover:translate-x-0.5 group-active:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -495,7 +495,7 @@ export default function LandingPage() {
             {/* Shop Indigenous */}
             <Link
               href="/business"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md focus-within:border-[var(--card-border-hover)] focus-within:shadow-md active:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)] transition group-hover:scale-105">
                 <svg
@@ -522,7 +522,7 @@ export default function LandingPage() {
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent">
                 Browse directory
                 <svg
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
+                  className="h-4 w-4 transition group-hover:translate-x-0.5 group-active:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -540,7 +540,7 @@ export default function LandingPage() {
             {/* IOPPS Live */}
             <Link
               href="/live"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md focus-within:border-[var(--card-border-hover)] focus-within:shadow-md active:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)] transition group-hover:scale-105">
                 <svg
@@ -567,7 +567,7 @@ export default function LandingPage() {
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent">
                 Watch now
                 <svg
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
+                  className="h-4 w-4 transition group-hover:translate-x-0.5 group-active:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -585,7 +585,7 @@ export default function LandingPage() {
             {/* Nations Map */}
             <Link
               href="/map"
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition hover:border-[var(--card-border-hover)] hover:shadow-md focus-within:border-[var(--card-border-hover)] focus-within:shadow-md active:shadow-md"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-bg)] transition group-hover:scale-105">
                 <svg
@@ -612,7 +612,7 @@ export default function LandingPage() {
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent">
                 Open map
                 <svg
-                  className="h-4 w-4 transition group-hover:translate-x-0.5"
+                  className="h-4 w-4 transition group-hover:translate-x-0.5 group-active:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

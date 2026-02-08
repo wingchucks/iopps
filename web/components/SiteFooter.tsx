@@ -104,7 +104,7 @@ export default function SiteFooter() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-[var(--text-muted)] transition hover:border-accent/50 hover:bg-slate-800/60 hover:text-accent"
+                  className="group flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--card-border)] bg-surface text-[var(--text-muted)] transition hover:border-accent/50 hover:bg-slate-800/60 hover:text-accent focus:border-accent/50 focus:text-accent active:border-accent/50 active:text-accent"
                   aria-label={`Visit our ${social.name} page`}
                 >
                   {social.icon}

@@ -13,6 +13,7 @@ import {
 import { getEndorsementsForUser } from "@/lib/firestore/endorsements";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, Loader2, MessageCircle, Reply, Send, Trash2 } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import toast from "react-hot-toast";
 
 type SortMode = "newest" | "relevant";
@@ -201,9 +202,12 @@ export default function CommentThread({ postId }: CommentThreadProps) {
       </div>
 
       {comments.length === 0 ? (
-        <p className="text-sm text-foreground0 py-4 text-center">
-          No comments yet. Be the first to share your thoughts.
-        </p>
+        <EmptyState
+          icon={<MessageCircle className="h-10 w-10" />}
+          title="No comments yet"
+          description="Be the first to share your thoughts."
+          className="py-6 border-0 bg-transparent"
+        />
       ) : (
         <div className="space-y-4">
           {sortedComments.map((comment) => (

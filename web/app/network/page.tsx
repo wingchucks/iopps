@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, UserPlus, Users, Search, Building2 } from "lucide-react";
 import { MemberProfile, Connection } from "@/lib/types";
 import { Input } from "@/components/ui/input";
-import { FeedLayout } from '@/components/opportunity-graph';
+import { FeedLayout } from '@/components/opportunity-graph/dynamic';
 
 export default function NetworkPage() {
     const { user } = useAuth();
@@ -157,7 +157,7 @@ export default function NetworkPage() {
                         ))
                     ) : (
                         orgSuggestions.map((org) => (
-                            <Card key={org.id} className="bg-[var(--card-bg)] border-[var(--border)] flex flex-col items-center p-6 text-center hover:border-accent/30 transition-all hover:bg-[var(--background)] group relative overflow-hidden">
+                            <Card key={org.id} className="bg-[var(--card-bg)] border-[var(--border)] flex flex-col items-center p-6 text-center hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30 transition-all hover:bg-[var(--background)] group relative overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                                 <Avatar className="h-16 w-16 mb-3 border-2 border-white group-hover:border-accent/50 transition-colors shadow-lg">
                                     <AvatarImage src={org.logoUrl} />
@@ -186,7 +186,7 @@ export default function NetworkPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {suggestions.map((person) => (
-                        <Card key={person.id} className="bg-[var(--card-bg)] border-[var(--border)] overflow-hidden hover:border-accent/30 transition-all group">
+                        <Card key={person.id} className="bg-[var(--card-bg)] border-[var(--border)] overflow-hidden hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30 transition-all group">
                             {/* Banner - Clickable */}
                             <Link href={`/member/${person.id}`} className="block">
                                 <div className="h-20 bg-gradient-to-br from-slate-100 to-slate-200 relative">

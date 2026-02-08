@@ -488,7 +488,7 @@ export default async function EmployerPublicProfilePage({ params, searchParams }
               <Link
                 key={job.id}
                 href={`/careers/${job.id}`}
-                className="block rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-6 hover:border-[#14B8A6]/50 hover:bg-[var(--background)] transition-all shadow-sm"
+                className="block rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-6 hover:border-[#14B8A6]/50 hover:bg-[var(--background)] focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50 transition-all shadow-sm"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">

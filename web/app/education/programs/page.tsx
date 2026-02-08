@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { SectionHeader } from "@/components/opportunity-graph";
 import { EmptyState } from "@/components/EmptyState";
 import type { UnifiedEducationListing, ProgramSource, ProgramLevel, ProgramDelivery } from "@/lib/types";
 import {

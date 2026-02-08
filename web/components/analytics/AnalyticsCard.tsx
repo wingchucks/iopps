@@ -63,7 +63,7 @@ export function AnalyticsCard({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-[var(--card-border)]/80 bg-card p-6 shadow-lg shadow-black/30 transition-all duration-300 hover:border-accent/50">
+    <div className="group relative overflow-hidden rounded-2xl border border-[var(--card-border)]/80 bg-card p-6 shadow-lg shadow-black/30 transition-all duration-300 hover:border-accent/50 focus-within:border-accent/50">
       {/* Background gradient on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent/0 to-accent/0 opacity-0 transition-opacity duration-300 group-hover:from-accent/5 group-hover:to-transparent group-hover:opacity-100" />
 

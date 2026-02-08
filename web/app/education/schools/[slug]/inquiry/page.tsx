@@ -21,7 +21,7 @@ import {
   CheckCircleIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 
 export default function SchoolInquiryPage({
   params,

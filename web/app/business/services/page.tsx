@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
-import { FeedLayout } from '@/components/opportunity-graph';
+import { FeedLayout } from '@/components/opportunity-graph/dynamic';
 import { ServiceCard } from '@/components/shop';
 import { listServices, getFeaturedServices } from '@/lib/firestore';
 import { useAuth } from '@/components/AuthProvider';

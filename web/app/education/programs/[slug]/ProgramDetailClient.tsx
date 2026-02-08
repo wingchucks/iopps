@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { useAuth } from "@/components/AuthProvider";
 import {
   getSchool,

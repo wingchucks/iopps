@@ -131,7 +131,7 @@ export function PostCard({ post, onDeleted }: PostCardProps) {
     const isAuthor = user?.uid === post.authorId;
 
     return (
-        <Card className="mb-4 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-border/80 transition-colors cursor-pointer" onClick={() => router.push(`/posts/${post.id}`)}>
+        <Card className="mb-4 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-border/80 focus-within:border-border/80 active:border-border/80 transition-colors cursor-pointer" onClick={() => router.push(`/posts/${post.id}`)}>
             <CardHeader className="flex flex-row items-center gap-4 p-4 pb-2">
                 <Avatar>
                     <AvatarImage src={post.authorAvatarUrl} alt={post.authorName} />

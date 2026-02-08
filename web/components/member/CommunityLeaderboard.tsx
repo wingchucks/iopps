@@ -9,6 +9,7 @@ import {
 } from "@/lib/firestore";
 import type { LeaderboardEntry, LeaderboardData, LeaderboardType } from "@/lib/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Trophy,
   Medal,
@@ -114,13 +115,12 @@ export default function CommunityLeaderboard({
 
   if (!leaderboard || leaderboard.entries.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Trophy className="h-12 w-12 mx-auto text-[var(--text-secondary)] mb-3" />
-        <p className="text-[var(--text-muted)]">No leaderboard data yet</p>
-        <p className="text-sm text-foreground0 mt-1">
-          Be one of the first to climb the ranks!
-        </p>
-      </div>
+      <EmptyState
+        icon={<Trophy className="h-12 w-12" />}
+        title="No leaderboard data yet"
+        description="Be one of the first to climb the ranks!"
+        className="border-0 bg-transparent"
+      />
     );
   }
 

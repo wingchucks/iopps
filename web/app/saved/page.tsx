@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { listSavedJobs } from "@/lib/firestore";
 import type { SavedJob } from "@/lib/types";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 
 type StatusFilter = "all" | "active" | "inactive";
 

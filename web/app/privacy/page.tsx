@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 
 export default function PrivacyPolicyPage() {
   return (

@@ -4,9 +4,10 @@
  * Pow wows, conferences, and community events through the unified feed layout.
  */
 
+"use client";
+
+import { FeedLayout, OpportunityFeed } from "@/components/opportunity-graph/dynamic";
 import {
-  FeedLayout,
-  OpportunityFeed,
   SectionHeader,
   SidebarLinkCard,
   SidebarCTACard,

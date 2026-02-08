@@ -152,7 +152,7 @@ export default function WelcomePage() {
               <Link
                 key={step.href}
                 href={step.href}
-                className={`group rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-5 text-left transition hover:shadow-md ${
+                className={`group rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-5 text-left transition hover:shadow-md focus-within:shadow-md active:shadow-md ${
                   step.primary ? "border-l-4 border-l-teal-500" : ""
                 }`}
               >

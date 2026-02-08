@@ -19,6 +19,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { TRAINING_PRODUCTS, TrainingProductType } from "@/lib/stripe";
 import toast from "react-hot-toast";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default function OrganizationTrainingPage() {
   const { user, role, loading } = useAuth();
@@ -114,34 +115,9 @@ export default function OrganizationTrainingPage() {
 
   const getStatusBadge = (program: TrainingProgram) => {
     if (!program.active) {
-      return (
-        <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
-          Inactive
-        </span>
-      );
+      return <StatusBadge status="inactive" />;
     }
-    switch (program.status) {
-      case "approved":
-        return (
-          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-emerald-300">
-            Approved
-          </span>
-        );
-      case "pending":
-        return (
-          <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
-            Pending Review
-          </span>
-        );
-      case "rejected":
-        return (
-          <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300">
-            Rejected
-          </span>
-        );
-      default:
-        return null;
-    }
+    return <StatusBadge status={program.status} />;
   };
 
   if (loading) {

@@ -49,7 +49,7 @@ const SidebarItem = ({ icon: Icon, label, active = false, badge = 0 }: any) => (
 );
 
 const StatCard = ({ icon: Icon, value, label }: any) => (
-    <div className="bg-surface border border-[var(--card-border)]/80 p-6 rounded-2xl hover:border-[#14B8A6]/50 transition-all group">
+    <div className="bg-surface border border-[var(--card-border)]/80 p-6 rounded-2xl hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50 transition-all group">
         <div className="flex items-center gap-4 mb-2">
             <div className="p-2.5 rounded-xl bg-surface text-[var(--text-muted)] group-hover:text-[#14B8A6] transition-colors">
                 <Icon size={20} />
@@ -224,13 +224,13 @@ export default function EnhancedDashboard() {
                         <h2 className="text-xl font-bold text-foreground mb-6 flex items-center justify-between">
                             {activeMode === 'employer' ? 'Recent Applications' : 'Product Performance'}
                             <button className="text-xs text-[#14B8A6] font-semibold hover:underline flex items-center gap-1 group">
-                                View All <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                View All <ChevronRight size={14} className="group-hover:translate-x-1 group-active:translate-x-1 transition-transform" />
                             </button>
                         </h2>
 
                         <div className="space-y-4">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="flex items-center justify-between p-5 rounded-2xl bg-slate-900/40 border border-[var(--card-border)]/50 hover:border-[#14B8A6]/30 transition-all cursor-pointer group">
+                                <div key={i} className="flex items-center justify-between p-5 rounded-2xl bg-slate-900/40 border border-[var(--card-border)]/50 hover:border-[#14B8A6]/30 focus-within:border-[#14B8A6]/30 active:border-[#14B8A6]/30 transition-all cursor-pointer group">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center text-[var(--text-muted)] group-hover:bg-accent/10 group-hover:text-[#14B8A6] transition-all">
                                             {activeMode === 'employer' ? <UserCircle size={24} /> : <Package size={24} />}

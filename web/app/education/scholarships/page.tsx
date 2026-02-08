@@ -5,7 +5,8 @@ import Link from "next/link";
 import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon, AcademicCapIcon, CurrencyDollarIcon, CalendarIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { listScholarships } from "@/lib/firestore";
 import type { Scholarship } from "@/lib/types";
-import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { SectionHeader } from "@/components/opportunity-graph";
 
 const AWARD_TYPES = ["All", "Scholarship", "Grant", "Bursary"] as const;
 const EDUCATION_LEVELS = ["All", "High School", "Post-secondary", "Graduate", "Community"] as const;
@@ -353,7 +354,7 @@ function ScholarshipsContent() {
                     className="group inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-8 py-3.5 text-sm font-semibold text-[var(--text-primary)] transition-all hover:border-[#14B8A6] hover:text-[#14B8A6]"
                   >
                     Load more scholarships
-                    <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4 transition-transform group-hover:translate-y-0.5 group-active:translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>

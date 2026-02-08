@@ -212,7 +212,7 @@ export default function MobileAppPage() {
                     ].map((feature) => (
                         <div
                             key={feature.title}
-                            className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition hover:border-[#14B8A6]/30 hover:bg-[var(--background)]"
+                            className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition hover:border-[#14B8A6]/30 hover:bg-[var(--background)] active:border-[#14B8A6]/30"
                         >
                             <div className="text-4xl">{feature.icon}</div>
                             <h3 className="mt-4 text-lg font-semibold text-[var(--text-primary)]">

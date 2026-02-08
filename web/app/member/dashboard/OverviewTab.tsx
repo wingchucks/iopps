@@ -141,7 +141,7 @@ export default function OverviewTab({
         <div className="space-y-8">
             {/* Opportunity Feed Banner */}
             <Link href="/discover" className="block group">
-                <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-slate-900/50 p-6 backdrop-blur transition-all hover:border-accent/50 hover:shadow-lg hover:shadow-teal-500/10">
+                <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-slate-900/50 p-6 backdrop-blur transition-all hover:border-accent/50 hover:shadow-lg hover:shadow-teal-500/10 focus-within:border-accent/50 focus-within:shadow-lg focus-within:shadow-teal-500/10 active:shadow-lg active:shadow-teal-500/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/20 text-2xl">
@@ -154,7 +154,7 @@ export default function OverviewTab({
                         </div>
                         <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-medium group-hover:bg-accent/30 transition-colors">
                             Open Feed
-                            <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+                            <span className="transform group-hover:translate-x-1 group-active:translate-x-1 transition-transform">→</span>
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import EmployerInterviewSection from "@/components/employer/EmployerInterviewSection";
 import JobVideoSection from "@/components/jobs/JobVideoSection";
 import ShareButtons from "@/components/ShareButtons";

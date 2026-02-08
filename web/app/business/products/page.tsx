@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { listAllProducts, getVendor } from "@/lib/firebase/shop";
 import { useAuth } from "@/components/AuthProvider";
 import type { VendorProduct, Vendor } from "@/lib/types";
@@ -207,7 +207,7 @@ function ProductsPageContent() {
               <Link
                 key={product.id}
                 href={`/business/${vendor?.slug || product.vendorId}#product-${product.id}`}
-                className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden transition-all hover:border-teal-300 hover:-translate-y-1"
+                className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden transition-all hover:border-teal-300 hover:-translate-y-1 focus-within:border-teal-300 active:border-teal-300 active:-translate-y-1"
               >
                 {/* Product Image */}
                 <div className="relative h-48 bg-gradient-to-br from-[#14B8A6]/10 to-sky-500/5">

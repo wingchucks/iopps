@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { SectionHeader } from "@/components/opportunity-graph";
 import { listBusinessGrants } from "@/lib/firestore";
 import type { BusinessGrant, BusinessGrantType, BusinessGrantStatus, NorthAmericanRegion } from "@/lib/types";
 import { NORTH_AMERICAN_REGIONS } from "@/lib/types";
@@ -235,7 +236,7 @@ export default function BusinessFundingPage() {
             <Link
               key={grant.id}
               href={`/business/funding/${grant.slug || grant.id}`}
-              className="group flex flex-col sm:flex-row gap-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-teal-300"
+              className="group flex flex-col sm:flex-row gap-6 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-teal-300 focus-within:border-teal-300 active:border-teal-300"
             >
               {/* Icon/Logo */}
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/20 border border-[#14B8A6]/40 shrink-0">

@@ -15,6 +15,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default function OrganizationServicesPage() {
   const { user, loading } = useAuth();
@@ -55,36 +56,9 @@ export default function OrganizationServicesPage() {
     }
   };
 
-  const getStatusBadge = (service: Service) => {
-    switch (service.status) {
-      case "active":
-        return (
-          <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-emerald-300">
-            Active
-          </span>
-        );
-      case "pending":
-        return (
-          <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300">
-            Pending Review
-          </span>
-        );
-      case "suspended":
-        return (
-          <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-300">
-            Suspended
-          </span>
-        );
-      case "draft":
-        return (
-          <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
-            Draft
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+  const getStatusBadge = (service: Service) => (
+    <StatusBadge status={service.status} />
+  );
 
   if (loading) {
     return (

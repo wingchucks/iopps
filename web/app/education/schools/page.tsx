@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { SectionHeader } from "@/components/opportunity-graph";
 import { listSchools } from "@/lib/firestore";
 import type { School, SchoolType } from "@/lib/types";
 
@@ -191,7 +192,7 @@ export default function SchoolsPage() {
             <Link
               key={school.id}
               href={`/education/schools/${school.slug || school.id}`}
-              className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
+              className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50 active:-translate-y-1"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-accent/20 border border-[#14B8A6]/40">

@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { format, isPast, isFuture, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function HireInterviewsPage() {
   const { user } = useAuth();
@@ -99,20 +100,9 @@ export default function HireInterviewsPage() {
     return true;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'scheduled':
-        return <span className="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">Scheduled</span>;
-      case 'completed':
-        return <span className="px-2 py-0.5 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">Completed</span>;
-      case 'cancelled':
-        return <span className="px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400 border border-red-500/20">Cancelled</span>;
-      case 'no-show':
-        return <span className="px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20">No Show</span>;
-      default:
-        return null;
-    }
-  };
+  const getStatusBadge = (status: string) => (
+    <StatusBadge status={status} className="px-2 py-0.5" />
+  );
 
   const getTypeIcon = (type: string) => {
     switch (type) {

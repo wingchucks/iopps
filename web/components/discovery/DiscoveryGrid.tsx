@@ -54,7 +54,7 @@ export function LoadMoreButton({
       >
         {label}
         <svg
-          className="h-4 w-4 transition-transform group-hover:translate-y-0.5"
+          className="h-4 w-4 transition-transform group-hover:translate-y-0.5 group-active:translate-y-0.5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

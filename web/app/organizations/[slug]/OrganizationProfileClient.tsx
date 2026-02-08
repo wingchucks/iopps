@@ -27,7 +27,7 @@ import {
   XMarkIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { FeedLayout } from '@/components/opportunity-graph';
+import { FeedLayout } from '@/components/opportunity-graph/dynamic';
 import { useAuth } from '@/components/AuthProvider';
 import CompanyIntroVideo from '@/components/employer/CompanyIntroVideo';
 import EmployerInterviewSection from '@/components/employer/EmployerInterviewSection';
@@ -1427,7 +1427,7 @@ function JobsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolean 
           <Link
             key={job.id}
             href={`/jobs/${job.id}`}
-            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-5 hover:border-accent/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-5 hover:border-accent/50 focus-within:border-accent/50 active:border-accent/50 transition-colors"
           >
             {/* Header with badges */}
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -1595,7 +1595,7 @@ function ProgramsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: bool
           <Link
             key={scholarship.id}
             href={`/scholarships/${scholarship.id}`}
-            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-5 hover:border-accent/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] p-5 hover:border-accent/50 focus-within:border-accent/50 active:border-accent/50 transition-colors"
           >
             {/* Header with icon and amount */}
             <div className="flex items-start gap-3">
@@ -1698,7 +1698,7 @@ function OfferingsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boo
         <Link
           key={service.id}
           href={`/business/services/${service.id}`}
-          className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 transition-colors"
+          className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 focus-within:border-accent/50 active:border-accent/50 transition-colors"
         >
           {/* Cover Image */}
           <div className="relative h-36 bg-gradient-to-br from-slate-100 to-slate-200">
@@ -1898,7 +1898,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                 <Link
                   key={conf.id}
                   href={`/conferences/${conf.id}`}
-                  className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 transition-colors"
+                  className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 focus-within:border-accent/50 active:border-accent/50 transition-colors"
                 >
                   {/* Cover Image */}
                   <div className="relative h-36 bg-gradient-to-br from-purple-50 to-slate-100">
@@ -1996,7 +1996,7 @@ function EventsTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boolea
                 <Link
                   key={powwow.id}
                   href={`/powwows/${powwow.id}`}
-                  className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-rose-500/50 transition-colors"
+                  className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-rose-500/50 focus-within:border-rose-500/50 active:border-rose-500/50 transition-colors"
                 >
                   {/* Cover Image */}
                   <div className="relative h-36 bg-gradient-to-br from-rose-50 to-slate-100">
@@ -2181,7 +2181,7 @@ function FundingTab({ org, canEdit }: { org: OrganizationProfile; canEdit: boole
           <Link
             key={grant.id}
             href={`/business/funding/${grant.slug || grant.id}`}
-            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 transition-colors"
+            className="group flex flex-col rounded-xl bg-[var(--card-bg)] border border-[var(--border)] overflow-hidden hover:border-accent/50 focus-within:border-accent/50 active:border-accent/50 transition-colors"
           >
             {/* Header with gradient */}
             <div className="relative h-24 bg-gradient-to-br from-emerald-50 to-slate-100 p-4">

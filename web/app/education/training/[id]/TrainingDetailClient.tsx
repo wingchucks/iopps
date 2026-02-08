@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/AuthProvider";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import ShareButtons from "@/components/ShareButtons";
 import {
   incrementTrainingProgramViews,

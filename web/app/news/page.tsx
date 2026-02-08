@@ -9,8 +9,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import {
-  FeedLayout,
   SectionHeader,
   colors,
   Icon,

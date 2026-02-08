@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import ShareButtons from "@/components/ShareButtons";
 import { incrementGrantViews } from "@/lib/firestore";
 import type { BusinessGrant } from "@/lib/types";

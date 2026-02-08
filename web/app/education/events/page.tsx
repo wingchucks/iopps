@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { listEducationEvents } from "@/lib/firestore";
 import type { EducationEvent, EducationEventType, EducationEventFormat } from "@/lib/types";
 
@@ -209,7 +209,7 @@ export default function EducationEventsPage() {
             <Link
               key={event.id}
               href={`/education/events/${event.id}`}
-              className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50"
+              className="group flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50"
             >
               {/* Date Box */}
               <div className="flex flex-col items-center justify-center rounded-xl bg-accent/20 border border-[#14B8A6]/40 p-4 shrink-0 w-20">

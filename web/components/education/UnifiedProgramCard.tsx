@@ -53,7 +53,7 @@ export function UnifiedProgramCard({ program, onProviderClick }: UnifiedProgramC
   return (
     <Link
       href={detailUrl}
-      className="group rounded-2xl border border-[var(--card-border)] bg-surface p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1"
+      className="group rounded-2xl border border-[var(--card-border)] bg-surface p-6 transition-all hover:border-[#14B8A6]/50 hover:-translate-y-1 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50 active:-translate-y-1"
     >
       {/* Header: Icon + Badges */}
       <div className="flex justify-between items-start mb-4">

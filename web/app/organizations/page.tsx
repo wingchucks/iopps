@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { SectionHeader } from "@/components/opportunity-graph";
 import { EmptyState } from "@/components/EmptyState";
 import { listEmployers } from "@/lib/firestore";
 import type { EmployerProfile, IndustryType, OrganizationProfile } from "@/lib/types";
@@ -154,7 +155,7 @@ export default function OrganizationsPage() {
               <Link
                 key={org.id}
                 href={org.slug ? `/organizations/${org.slug}` : `/employers/${org.id}`}
-                className="group relative block overflow-hidden rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30"
+                className="group relative block overflow-hidden rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#14B8A6]/10 hover:border-[#14B8A6]/30 focus-within:shadow-xl focus-within:shadow-[#14B8A6]/10 focus-within:border-[#14B8A6]/30 active:shadow-xl active:shadow-[#14B8A6]/10 active:border-[#14B8A6]/30"
               >
                 {/* Banner/Cover */}
                 <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">

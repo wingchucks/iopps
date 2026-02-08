@@ -35,9 +35,9 @@ export default function TrainingCard({ program, featured = false }: TrainingCard
     const isFree = !program.cost || program.cost.toLowerCase().includes('free') || program.cost === '$0';
 
     return (
-        <div className={`group flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 ${featured
-            ? "border-accent/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5 hover:border-accent/50"
-            : "border-[var(--card-border)] bg-surface hover:border-accent/30"
+        <div className={`group flex flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1 active:-translate-y-1 ${featured
+            ? "border-accent/30 bg-gradient-to-br from-teal-500/10 to-emerald-500/5 hover:border-accent/50 focus-within:border-accent/50 active:border-accent/50"
+            : "border-[var(--card-border)] bg-surface hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30"
             }`}>
             {/* Header / Banner */}
             <div className="relative px-5 py-4 border-b border-[var(--card-border)] bg-surface">

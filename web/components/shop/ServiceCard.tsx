@@ -14,10 +14,10 @@ export function ServiceCard({ service, featured = false }: ServiceCardProps) {
   return (
     <Link
       href={`/business/services/${service.id}`}
-      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 ${
+      className={`group relative block overflow-hidden rounded-2xl bg-surface backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-500/10 focus-within:shadow-2xl focus-within:shadow-indigo-500/10 active:shadow-2xl active:shadow-indigo-500/10 ${
         featured
           ? 'border-indigo-500/50 ring-1 ring-indigo-500/20'
-          : 'border-[var(--card-border)] hover:border-indigo-500/30'
+          : 'border-[var(--card-border)] hover:border-indigo-500/30 focus-within:border-indigo-500/30 active:border-indigo-500/30'
       }`}
     >
       {/* Cover Image */}

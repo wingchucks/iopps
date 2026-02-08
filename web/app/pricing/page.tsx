@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FeedLayout, SectionHeader } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { SectionHeader } from "@/components/opportunity-graph";
 import { useAuth } from "@/components/AuthProvider";
 import {
   PricingTabs,

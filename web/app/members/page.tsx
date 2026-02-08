@@ -20,7 +20,7 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import type { MemberProfile } from "@/lib/types";
 
 type ViewMode = "grid" | "list";
@@ -280,7 +280,7 @@ export default function MembersDirectoryPage() {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden hover:border-accent/30 transition-all group"
+                className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30 transition-all group"
               >
                 {/* Banner */}
                 <Link href={`/member/${member.id}`}>
@@ -351,7 +351,7 @@ export default function MembersDirectoryPage() {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 hover:border-accent/30 transition-all flex items-center gap-4"
+                className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30 transition-all flex items-center gap-4"
               >
                 <Link href={`/member/${member.id}`}>
                   <Avatar className="h-14 w-14 border-2 border-white hover:border-accent/50 transition-colors">

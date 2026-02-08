@@ -8,7 +8,7 @@ import type { NetworkingRecommendation } from "@/lib/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ConnectionButton } from "@/components/social/ConnectionButton";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import {
   Users,
   Sparkles,
@@ -175,7 +175,7 @@ export default function DiscoverPage() {
                     .map((person) => (
                       <div
                         key={person.userId}
-                        className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-5 hover:border-accent/30 transition-all"
+                        className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-5 hover:border-accent/30 focus-within:border-accent/30 active:border-accent/30 transition-all"
                       >
                         <div className="flex items-start gap-4">
                           <Link href={`/member/${person.userId}`}>

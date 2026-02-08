@@ -23,10 +23,10 @@ export function DiscoveryCardWrapper({
   onClick,
   className = "",
 }: DiscoveryCardWrapperProps) {
-  const baseStyles = `group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-1`;
+  const baseStyles = `group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-1 active:-translate-y-1`;
   const featuredStyles = featured
-    ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 hover:border-amber-500/50"
-    : "border-[var(--card-border)] bg-surface hover:border-[#14B8A6]/50";
+    ? "border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 hover:border-amber-500/50 focus-within:border-amber-500/50 active:border-amber-500/50"
+    : "border-[var(--card-border)] bg-surface hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50";
 
   const cardContent = (
     <>
@@ -177,7 +177,7 @@ interface ViewDetailsLinkProps {
 export function ViewDetailsLink({ className = "" }: ViewDetailsLinkProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 text-sm font-semibold text-[#14B8A6] group-hover:gap-2 transition-all ${className}`}
+      className={`inline-flex items-center gap-1 text-sm font-semibold text-[#14B8A6] group-hover:gap-2 group-active:gap-2 transition-all ${className}`}
     >
       View details
       <svg

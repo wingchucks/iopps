@@ -232,7 +232,7 @@ export default function OrganizationEducationPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/organization/education/programs"
-          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 focus-within:border-violet-500/50 active:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
@@ -255,7 +255,7 @@ export default function OrganizationEducationPage() {
 
         <Link
           href="/organization/education/inquiries"
-          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 focus-within:border-violet-500/50 active:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
@@ -282,7 +282,7 @@ export default function OrganizationEducationPage() {
 
         <Link
           href="/organization/education/events"
-          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 focus-within:border-violet-500/50 active:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
@@ -305,7 +305,7 @@ export default function OrganizationEducationPage() {
 
         <Link
           href="/organization/scholarships"
-          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 focus-within:border-violet-500/50 active:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
@@ -326,7 +326,7 @@ export default function OrganizationEducationPage() {
 
         <Link
           href={`/education/schools/${school.slug || school.id}`}
-          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 transition-colors"
+          className="group rounded-xl border border-[var(--card-border)] bg-surface p-6 hover:border-violet-500/50 focus-within:border-violet-500/50 active:border-violet-500/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-xl bg-purple-500/20 flex items-center justify-center">

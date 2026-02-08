@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { collection, getCountFromServer, query, where } from "firebase/firestore";
 
+export const revalidate = 300; // Revalidate every 5 minutes
+
 // Cache stats for 5 minutes
 let cachedStats: { jobs: number; conferences: number; scholarships: number; vendors: number } | null = null;
 let cacheTime = 0;
@@ -13,7 +15,7 @@ export async function GET() {
         if (cachedStats && Date.now() - cacheTime < CACHE_DURATION) {
             return NextResponse.json(cachedStats, {
                 headers: {
-                    "Cache-Control": "public, max-age=300",
+                    "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
                 },
             });
         }
@@ -67,7 +69,7 @@ export async function GET() {
 
         return NextResponse.json(cachedStats, {
             headers: {
-                "Cache-Control": "public, max-age=300",
+                "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
             },
         });
     } catch (error) {

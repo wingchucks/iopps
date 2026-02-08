@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { useAuth } from "@/components/AuthProvider";
 import { saveSchool, unsaveSchool, incrementSchoolViews } from "@/lib/firestore";
 import type { School, EducationProgram, Scholarship, EducationEvent } from "@/lib/types";
@@ -299,7 +299,7 @@ export default function SchoolDetailClient({
                 <Link
                   key={program.id}
                   href={`/education/programs/${program.slug || program.id}`}
-                  className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className="text-xs font-semibold text-[#14B8A6] uppercase">{program.category}</span>
@@ -333,7 +333,7 @@ export default function SchoolDetailClient({
                 <Link
                   key={scholarship.id}
                   href={`/education/scholarships/${scholarship.id}`}
-                  className="group flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50"
                 >
                   <div>
                     <h3 className="font-bold text-[var(--text-primary)] mb-1 group-hover:text-[#14B8A6] transition-colors">
@@ -377,7 +377,7 @@ export default function SchoolDetailClient({
                 <Link
                   key={event.id}
                   href={`/education/events/${event.id}`}
-                  className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50"
+                  className="group rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] p-6 transition-all hover:border-[#14B8A6]/50 focus-within:border-[#14B8A6]/50 active:border-[#14B8A6]/50"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className="rounded-md bg-accent/20 border border-[#14B8A6]/40 px-2 py-1 text-xs font-semibold text-[#14B8A6] capitalize">

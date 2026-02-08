@@ -139,7 +139,7 @@ export default function JobMatchBadge({ job, profile, showDetails = false }: Job
   const style = getBadgeStyle(match.score);
 
   return (
-    <div className="relative group">
+    <div className="relative group" tabIndex={0} role="button" aria-label={`${match.score}% match`}>
       <span
         className={`inline-flex items-center gap-1.5 rounded-full ${style.bg} border ${style.border} px-2.5 py-1 text-xs font-semibold ${style.text}`}
       >
@@ -149,7 +149,7 @@ export default function JobMatchBadge({ job, profile, showDetails = false }: Job
 
       {/* Tooltip with reasons */}
       {(showDetails || match.reasons.length > 0) && (
-        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50">
+        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block group-focus-within:block z-50">
           <div className="bg-surface border border-[var(--card-border)] rounded-lg p-3 shadow-xl min-w-[180px]">
             <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2">Why this matches:</p>
             <ul className="space-y-1">

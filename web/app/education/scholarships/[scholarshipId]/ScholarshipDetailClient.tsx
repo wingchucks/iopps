@@ -3,7 +3,7 @@
 import { useEffect, useState, FormEvent, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import ShareButtons from "@/components/ShareButtons";
 import { useAuth } from "@/components/AuthProvider";
 import { createScholarshipApplication, getMemberProfile } from "@/lib/firestore";

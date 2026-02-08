@@ -5,7 +5,8 @@ import { getFeedPosts } from "@/lib/firestore";
 import { Post } from "@/lib/types";
 import { PostCard } from "./PostCard";
 import { CreatePost } from "./CreatePost";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export function Feed() {
     const [posts, setPosts] = useState<Post[]>([]);
@@ -36,9 +37,11 @@ export function Feed() {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : posts.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <p>No posts yet. Be the first to share something!</p>
-                    </div>
+                    <EmptyState
+                        icon={<MessageSquare className="h-12 w-12" />}
+                        title="No posts yet"
+                        description="Be the first to share something!"
+                    />
                 ) : (
                     posts.map(post => (
                         <PostCard key={post.id} post={post} />

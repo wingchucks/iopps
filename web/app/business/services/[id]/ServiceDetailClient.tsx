@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import ShareButtons from "@/components/ShareButtons";
 import { incrementServiceViews, trackServiceContactClick } from "@/lib/firestore";
 import { getServiceContact } from "@/lib/utils/serviceContact";

@@ -30,7 +30,7 @@ function VideoCard({ video }: { video: YouTubeVideo }) {
       href={`https://www.youtube.com/watch?v=${video.id}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-surface transition-all hover:border-[var(--card-border)] hover:bg-surface hover:-translate-y-1"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-surface transition-all hover:border-[var(--card-border)] hover:bg-surface hover:-translate-y-1 active:-translate-y-1"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

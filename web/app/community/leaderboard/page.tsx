@@ -6,7 +6,7 @@ import { getRisingStars, getMonthlySpotlight } from "@/lib/firestore";
 import type { LeaderboardEntry } from "@/lib/firestore";
 import { useAsyncData } from "@/lib/hooks";
 import CommunityLeaderboard from "@/components/member/CommunityLeaderboard";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Trophy,

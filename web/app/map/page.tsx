@@ -17,7 +17,8 @@ import type {
   MapContentType,
 } from "@/lib/map/types";
 import { filtersToParams, paramsToFilters } from "@/lib/map/types";
-import { FeedLayout, colors } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
+import { colors } from "@/components/opportunity-graph";
 
 // Dynamically import MapClient (no SSR for Leaflet)
 const MapClient = dynamic(() => import("./MapClient"), {

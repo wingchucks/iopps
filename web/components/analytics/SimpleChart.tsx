@@ -244,9 +244,10 @@ export function BarChart({
             <div
               key={i}
               className="group relative flex flex-1 flex-col items-center justify-end"
+              tabIndex={0}
             >
               {/* Tooltip on hover */}
-              <div className="absolute -top-10 hidden rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-foreground shadow-lg group-hover:block">
+              <div className="absolute -top-10 hidden rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-foreground shadow-lg group-hover:block group-focus-within:block">
                 {item.value}
               </div>
 

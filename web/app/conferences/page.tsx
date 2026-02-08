@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * IOPPS Conferences Page — Social Feed Pattern
  *
@@ -5,9 +7,9 @@
  */
 
 import Link from "next/link";
+
+import { FeedLayout, OpportunityFeed } from "@/components/opportunity-graph/dynamic";
 import {
-  FeedLayout,
-  OpportunityFeed,
   SectionHeader,
   colors,
   Icon,

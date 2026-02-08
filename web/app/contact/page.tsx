@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { createContactSubmission } from "@/lib/firestore";
-import { FeedLayout } from "@/components/opportunity-graph";
+import { FeedLayout } from "@/components/opportunity-graph/dynamic";
 
 export default function ContactPage() {
   const [name, setName] = useState("");

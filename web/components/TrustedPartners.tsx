@@ -105,7 +105,8 @@ export function TrustedPartners() {
                     p-4 sm:p-6
                     shadow-lg shadow-black/10
                     transition-all duration-300 ease-out
-                    hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-500/10"
+                    hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-500/10
+                    active:shadow-xl active:shadow-teal-500/10"
                 >
                   {/* Logo container - full color, no grayscale */}
                   <div className="relative h-full w-full flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
@@ -142,7 +143,7 @@ export function TrustedPartners() {
           >
             {buttonText}
             <svg
-              className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"
+              className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1 group-active:translate-x-1"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

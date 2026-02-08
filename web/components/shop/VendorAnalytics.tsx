@@ -164,6 +164,7 @@ export default function VendorAnalytics() {
               <div
                 key={day.date}
                 className="flex-1 group relative"
+                tabIndex={0}
               >
                 <div
                   className={`w-full rounded-t transition-all ${
@@ -171,7 +172,7 @@ export default function VendorAnalytics() {
                   }`}
                   style={{ height: `${Math.max(height, 2)}%` }}
                 />
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block z-10">
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block group-focus-within:block z-10">
                   <div className="bg-surface border border-[var(--card-border)] rounded-lg px-2 py-1 text-xs whitespace-nowrap">
                     <p className="text-white font-medium">{day.views} views</p>
                     <p className="text-[var(--text-muted)]">

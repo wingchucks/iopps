@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, db } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
-export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
@@ -48,7 +47,11 @@ export async function GET(req: NextRequest) {
       ...doc.data(),
     }));
 
-    return NextResponse.json({ schools });
+    return NextResponse.json({ schools }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Error listing schools:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
