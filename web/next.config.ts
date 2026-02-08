@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  /* Monorepo root — prevents lockfile-detection from choosing user home dir */
+  outputFileTracingRoot: path.join(__dirname, ".."),
+
   /* Performance Optimizations */
   images: {
     formats: ["image/avif", "image/webp"],
