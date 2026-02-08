@@ -148,3 +148,46 @@ Configured in `/web/vercel.json`:
 - Job alert emails (instant/daily/weekly)
 - Job expiration checks (daily)
 - RSS feed syncing (hourly/daily/weekly)
+
+## Design System (Post-Migration)
+
+### Theme System
+- CSS variables in `:root` (light) + `[data-theme="dark"]` (dark). Toggle via `ThemeToggle.tsx`
+- Color classes: `bg-background`, `bg-surface`, `text-foreground`, `text-accent`, `border-[var(--card-border)]`
+- Admin panel uses amber accent: `[data-admin]` attribute overrides `--accent` to `#D97706`
+
+### UI Components
+- Custom components: `Tag`, `Av`, `StatBox`, `EBtn`, `Progress`, `ProgressBar`, `ThemeToggle`
+- Button variants: `primary`, `secondary`, `outline`, `ghost`, `danger`, `navy`, `amber`
+- Toggle switch: `h-7 w-12 rounded-full` with `h-5 w-5` knob, accent when on, border when off
+
+### Page Wrapper Pattern
+All member pages follow: `"use client"` + `ProtectedRoute` + `bg-background` + back link + title + component + `pb-24`
+
+### Settings Pages
+Located at `web/app/member/settings/{feature}/page.tsx` with corresponding components in `web/components/settings/`
+
+## Agent Team Guidelines
+
+When working as part of an agent team, follow these ownership boundaries to avoid file conflicts:
+
+### Frontend Teammate
+- Owns: `web/app/`, `web/components/`, `web/public/`
+- Can read (not edit): `web/lib/`, `firestore.rules`
+
+### Backend Teammate
+- Owns: `web/lib/firestore/`, `web/app/api/`, `firestore.rules`, `storage.rules`
+- Can read (not edit): `web/components/`, `web/app/` (non-API pages)
+
+### QA / Review Teammate
+- Read-only across all files
+- Runs: `npm run build`, `npm run lint`, `npx tsc --noEmit` in `/web`
+- Reports issues to the team lead
+
+### General Rules for All Teammates
+- Never edit files outside your ownership boundary without coordinating via the task list
+- Use the design system variables — no hardcoded colors (`#hex` values)
+- Follow existing patterns: check a similar file before creating something new
+- Firestore operations go in `web/lib/firestore/` — don't inline database calls in components
+- All new pages need `ProtectedRoute` wrapper with appropriate role checks
+- Production URL: `https://www.iopps.ca` — Firebase project: `iopps-c2224`

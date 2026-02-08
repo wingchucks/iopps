@@ -56,6 +56,8 @@ interface OpportunityFeedProps {
   showBanner?: boolean;
   /** Show the featured section. Defaults to true. */
   showFeatured?: boolean;
+  /** Optional external filter applied before tab filtering. */
+  filterFn?: (item: OpportunityItem) => boolean;
 }
 
 const tabs: { id: FeedTab; label: string; icon: string }[] = [
@@ -79,6 +81,7 @@ export function OpportunityFeed({
   emptyMessage,
   showBanner = true,
   showFeatured = true,
+  filterFn,
 }: OpportunityFeedProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<FeedTab>(initialTab);
@@ -193,17 +196,18 @@ export function OpportunityFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxItems, contentTypes?.join(","), refreshKey]);
 
-  // Filter items based on active tab
+  // Filter items based on external filterFn + active tab
   const filteredItems = useMemo(() => {
-    if (activeTab === "all") return items;
-    if (activeTab === "jobs") return items.filter(i => i.type === "job");
-    if (activeTab === "education") return items.filter(i => ["program", "scholarship"].includes(i.type));
-    if (activeTab === "events") return items.filter(i => ["event", "conference"].includes(i.type));
-    if (activeTab === "shop") return items.filter(i => ["product", "service"].includes(i.type));
-    if (activeTab === "live") return items.filter(i => i.type === "livestream");
-    if (activeTab === "community") return items.filter(i => i.type === "update");
-    return items;
-  }, [items, activeTab]);
+    const result = filterFn ? items.filter(filterFn) : items;
+    if (activeTab === "all") return result;
+    if (activeTab === "jobs") return result.filter(i => i.type === "job");
+    if (activeTab === "education") return result.filter(i => ["program", "scholarship"].includes(i.type));
+    if (activeTab === "events") return result.filter(i => ["event", "conference"].includes(i.type));
+    if (activeTab === "shop") return result.filter(i => ["product", "service"].includes(i.type));
+    if (activeTab === "live") return result.filter(i => i.type === "livestream");
+    if (activeTab === "community") return result.filter(i => i.type === "update");
+    return result;
+  }, [items, activeTab, filterFn]);
 
   // Handle save/unsave action
   const handleSave = useCallback(async (itemId: string, shouldSave: boolean) => {

@@ -18,6 +18,7 @@ import {
 import toast from "react-hot-toast";
 
 // Sub-components
+import EngagementStats from "@/components/member/EngagementStats";
 import ProfileHeader from "@/components/member/profile/ProfileHeader";
 import ExperienceSection from "@/components/member/profile/ExperienceSection";
 import EducationSection from "@/components/member/profile/EducationSection";
@@ -146,6 +147,13 @@ export default function MemberProfile({
             onProfileUpdate={handleProfileUpdate}
           />
         </div>
+
+        {/* Engagement Stats (owner only) */}
+        {isOwner && (
+          <div className="mt-6 px-4 sm:px-0">
+            <EngagementStats onNavigate={(tab) => handleTabChange(tab)} />
+          </div>
+        )}
 
         {/* Profile body sections - staggered fade-in */}
         <div className="mt-6 space-y-6 px-4 sm:px-0 stagger-children">

@@ -31,18 +31,14 @@ export async function upsertMemberProfile(
   data: Omit<MemberProfile, "id" | "userId" | "createdAt" | "updatedAt">
 ) {
   const ref = doc(db!, memberCollection, userId);
-  const base = {
-    displayName: data.displayName ?? "",
-    location: data.location ?? "",
-    skills: data.skills ?? [],
-    experience: data.experience ?? "",
-    education: data.education ?? "",
-    resumeUrl: data.resumeUrl ?? "",
-    coverLetterTemplate: data.coverLetterTemplate ?? "",
-    indigenousAffiliation: data.indigenousAffiliation ?? "",
-    availableForInterviews: data.availableForInterviews ?? "",
-    messagingHandle: data.messagingHandle ?? "",
-  };
+  // Only include fields that are explicitly provided to avoid overwriting
+  // existing data with empty strings on partial updates.
+  const base: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      base[key] = value;
+    }
+  }
 
   const snap = await getDoc(ref);
   if (snap.exists()) {

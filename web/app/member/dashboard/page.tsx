@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 /**
  * Legacy /member/dashboard redirect page.
@@ -87,12 +88,14 @@ function DashboardRedirectContent() {
 
 export default function MemberDashboardRedirect() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
-      </div>
-    }>
-      <DashboardRedirectContent />
-    </Suspense>
+    <ProtectedRoute allowedRoles={["community", "employer", "admin", "moderator"]}>
+      <Suspense fallback={
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+        </div>
+      }>
+        <DashboardRedirectContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }

@@ -27,6 +27,7 @@ export default function MemberProfilePage() {
   const [messagingHandle, setMessagingHandle] = useState("");
   const [availability, setAvailability] = useState("");
   const [quickApplyEnabled, setQuickApplyEnabled] = useState(false);
+  const [bio, setBio] = useState("");
   const [defaultCoverLetter, setDefaultCoverLetter] = useState("");
 
   // Modal states
@@ -47,6 +48,7 @@ export default function MemberProfilePage() {
 
         if (profile) {
           setDisplayName(profile.displayName || "");
+          setBio(profile.bio || "");
           setLocation(profile.location || "");
           setSkills(profile.skills || []);
           setExperience(profile.experience || []);
@@ -71,6 +73,7 @@ export default function MemberProfilePage() {
   const profileCompletion = useMemo(() => {
     const fields = [
       displayName,
+      bio,
       location,
       skills.length > 0 ? "skills" : "",
       experience.length > 0 ? "experience" : "",
@@ -82,7 +85,7 @@ export default function MemberProfilePage() {
     ];
     const filled = fields.filter((field) => field && field.toString().trim().length > 0).length;
     return Math.round((filled / fields.length) * 100) || 0;
-  }, [availability, displayName, education, experience, indigenousAffiliation, location, messagingHandle, resumeUrl, skills]);
+  }, [availability, bio, displayName, education, experience, indigenousAffiliation, location, messagingHandle, resumeUrl, skills]);
 
   // Save profile
   const handleSave = async () => {
@@ -92,6 +95,7 @@ export default function MemberProfilePage() {
     try {
       await upsertMemberProfile(user.uid, {
         displayName,
+        bio,
         location,
         skills,
         experience,
@@ -344,6 +348,19 @@ export default function MemberProfilePage() {
                   className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                   placeholder="Your full name"
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text-secondary)]">Bio / Headline</label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full rounded-xl border border-accent/20 bg-surface px-4 py-3 text-foreground placeholder-slate-500 transition-all focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  placeholder="Write a brief introduction about yourself..."
+                />
+                <p className="mt-1 text-xs text-[var(--text-muted)]">{bio.length}/500 characters</p>
               </div>
 
               <div>
