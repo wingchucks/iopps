@@ -33,9 +33,9 @@ export default function PassportPage() {
             return;
         }
 
-        // Redirect employers to their organization dashboard
+        // Redirect employers to the feed
         if (!loading && user && role === "employer") {
-            router.replace("/organization");
+            router.replace("/discover");
             return;
         }
 

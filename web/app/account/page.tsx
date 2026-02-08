@@ -85,10 +85,10 @@ export default function AccountPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/organization"
+              href="/discover"
               className="inline-flex rounded-md bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-primary)] hover:bg-accent/90"
             >
-              Go to Dashboard
+              Go to Feed
             </Link>
           </div>
         </div>

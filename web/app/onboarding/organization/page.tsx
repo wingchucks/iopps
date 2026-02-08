@@ -299,7 +299,7 @@ export default function OrganizationOnboardingPage() {
         });
       }
 
-      router.push("/organization");
+      router.push("/discover");
     } catch (err: unknown) {
       console.error("Onboarding save error:", err);
       setError(err instanceof Error ? err.message : "Failed to save. Please try again.");
@@ -833,10 +833,10 @@ export default function OrganizationOnboardingPage() {
           {existingProfile && (
             <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
               <Link
-                href="/organization"
+                href="/discover"
                 className="text-accent hover:underline"
               >
-                Skip to Dashboard
+                Skip to Feed
               </Link>
             </p>
           )}

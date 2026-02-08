@@ -36,9 +36,9 @@ const employerSteps: StepCard[] = [
     icon: BuildingOffice2Icon,
   },
   {
-    title: "Explore Dashboard",
-    description: "See your analytics, manage listings, and track applications.",
-    href: "/organization",
+    title: "Explore Feed",
+    description: "Discover opportunities, connect with talent, and grow your reach.",
+    href: "/discover",
     icon: SparklesIcon,
   },
 ];
