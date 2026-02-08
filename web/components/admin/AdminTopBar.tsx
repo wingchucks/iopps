@@ -224,8 +224,13 @@ function GlobalSearch() {
     setIsSearching(true);
 
     try {
-      // Call the admin search API
-      const response = await fetch(`/api/admin/search?q=${encodeURIComponent(searchQuery)}&limit=10`);
+      // Call the admin search API with auth token
+      const { getAuth } = await import("firebase/auth");
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch(`/api/admin/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
       if (response.ok) {
         const data = await response.json();

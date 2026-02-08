@@ -107,9 +107,9 @@
 
 ### Test 10: Card Navigation
 - [ ] **Pending Approvals** card → Click → Goes to `/admin/employers?status=pending`
-- [ ] **Flagged Items** card → Click → Goes to `/admin/jobs`
+- [ ] **Flagged Content** card → Click → Goes to `/admin/moderation`
 - [ ] **Failed Imports** card → Click → Goes to `/admin/feeds`
-- [ ] **Payment Issues** card → Click → Goes to `/admin/employers`
+- [ ] **Verification Queue** card → Click → Goes to `/admin/verification`
 
 **Result:** ⬚ PASS / ⬚ FAIL
 **Notes:** _________________________________

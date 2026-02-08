@@ -36,12 +36,13 @@ export default function AdminEmployersPage() {
   const { user, role } = useAuth();
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") || "";
+  const initialStatus = searchParams.get("status") as EmployerStatus | null;
 
   const [allEmployers, setAllEmployers] = useState<EmployerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  // Default to "all" to show complete list on page load
-  const [filter, setFilter] = useState<EmployerStatus | "all">("all");
+  // Default to "all", but respect ?status= query param if provided
+  const [filter, setFilter] = useState<EmployerStatus | "all">(initialStatus || "all");
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [expandedId, setExpandedId] = useState<string | null>(null);
