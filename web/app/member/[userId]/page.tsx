@@ -7,42 +7,47 @@ interface PageProps {
   params: Promise<{ userId: string }>;
 }
 
-// Generate metadata for SEO
+// Generate metadata for SEO — wrapped in try/catch so metadata errors
+// don't crash the page render (the page function will handle its own errors)
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { userId } = await params;
-  const profile = await getMemberProfileServer(userId);
+  try {
+    const { userId } = await params;
+    const profile = await getMemberProfileServer(userId);
 
-  if (!profile) {
+    if (!profile) {
+      return {
+        title: "Profile Not Found | IOPPS",
+      };
+    }
+
+    const title = profile.displayName
+      ? `${profile.displayName} | IOPPS Community`
+      : "Community Member | IOPPS";
+
+    const description = profile.bio
+      ? profile.bio.slice(0, 160)
+      : profile.tagline || `View ${profile.displayName || "this member"}'s profile on IOPPS`;
+
     return {
-      title: "Profile Not Found | IOPPS",
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: "profile",
+        images: profile.avatarUrl || profile.photoURL
+          ? [{ url: profile.avatarUrl || profile.photoURL || "" }]
+          : [],
+      },
+      twitter: {
+        card: "summary",
+        title,
+        description,
+      },
     };
+  } catch {
+    return { title: "Member Profile | IOPPS" };
   }
-
-  const title = profile.displayName
-    ? `${profile.displayName} | IOPPS Community`
-    : "Community Member | IOPPS";
-
-  const description = profile.bio
-    ? profile.bio.slice(0, 160)
-    : profile.tagline || `View ${profile.displayName || "this member"}'s profile on IOPPS`;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "profile",
-      images: profile.avatarUrl || profile.photoURL
-        ? [{ url: profile.avatarUrl || profile.photoURL || "" }]
-        : [],
-    },
-    twitter: {
-      card: "summary",
-      title,
-      description,
-    },
-  };
 }
 
 export default async function PublicProfilePage({ params }: PageProps) {

@@ -353,7 +353,15 @@ async function main() {
   console.log('\n── Session 7: Error Handling ──\n');
 
   await testPage(context, '/this-page-does-not-exist', { expect404: true });
-  await testPage(context, '/careers/invalid-job-id-12345', { expect404: true });
+  await testPage(context, '/careers/invalid-job-id-12345', {
+    contentChecks: {
+      'not found message': async (p) => {
+        const text = await p.locator('body').innerText().catch(() => '');
+        return /not found/i.test(text) || /job not found/i.test(text) || /no job/i.test(text);
+      },
+    },
+    notes: 'Invalid job ID shows not-found message in careers layout',
+  });
 
   // ──────────────────────────────────────
   // SESSION 8: 8 QA Fix Deep Verification

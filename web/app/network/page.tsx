@@ -23,7 +23,10 @@ export default function NetworkPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
 
         async function loadData() {
             setLoading(true);

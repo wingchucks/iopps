@@ -215,6 +215,62 @@ const nextConfig: NextConfig = {
         destination: "/organization/jobs/new",
         permanent: true,
       },
+      // Organization sub-route aliases (QA fix)
+      {
+        source: "/organization/manage/profile",
+        destination: "/organization/profile",
+        permanent: false,
+      },
+      {
+        source: "/organization/manage/team",
+        destination: "/organization/team",
+        permanent: false,
+      },
+      {
+        source: "/organization/manage/billing",
+        destination: "/organization/billing",
+        permanent: false,
+      },
+      {
+        source: "/organization/manage/settings",
+        destination: "/organization/settings",
+        permanent: false,
+      },
+      {
+        source: "/organization/hire/talent-pool",
+        destination: "/organization/hire/talent",
+        permanent: false,
+      },
+      {
+        source: "/organization/host/conferences/new",
+        destination: "/organization/conferences/new",
+        permanent: false,
+      },
+      {
+        source: "/organization/vendor/products",
+        destination: "/organization/sell/offerings",
+        permanent: false,
+      },
+      {
+        source: "/organization/vendor/orders",
+        destination: "/organization/sell/inquiries",
+        permanent: false,
+      },
+      {
+        source: "/organization/vendor/store-settings",
+        destination: "/organization/shop/setup",
+        permanent: false,
+      },
+      {
+        source: "/organization/training/programs/new",
+        destination: "/organization/training/new",
+        permanent: false,
+      },
+      {
+        source: "/organization/training/programs",
+        destination: "/organization/training",
+        permanent: false,
+      },
     ];
   },
 };
