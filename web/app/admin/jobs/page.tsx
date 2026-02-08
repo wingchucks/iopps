@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
@@ -15,7 +15,6 @@ import {
   serverTimestamp,
   limit,
   startAfter,
-  where,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -29,7 +28,6 @@ import {
   XCircleIcon,
   MapPinIcon,
   BuildingOfficeIcon,
-  CalendarDaysIcon,
   BriefcaseIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
@@ -59,18 +57,7 @@ function AdminJobsContent() {
   const [activeJobsCount, setActiveJobsCount] = useState(0);
   const [inactiveJobsCount, setInactiveJobsCount] = useState(0);
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user || (role !== "admin" && role !== "moderator")) {
-      router.push("/");
-      return;
-    }
-
-    loadJobs();
-  }, [user, role, authLoading, router]);
-
-  async function loadJobs(loadMore = false) {
+  const loadJobs = useCallback(async (loadMore = false) => {
     try {
       if (!loadMore) {
         setLoading(true);
@@ -130,7 +117,18 @@ function AdminJobsContent() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [lastDoc]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user || (role !== "admin" && role !== "moderator")) {
+      router.push("/");
+      return;
+    }
+
+    loadJobs();
+  }, [user, role, authLoading, router, loadJobs]);
 
   async function toggleJobStatus(jobId: string, currentStatus: boolean) {
     if (!user) return;
@@ -325,6 +323,7 @@ function AdminJobsContent() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           {job.employerLogoUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={job.employerLogoUrl}
                               alt={`${job.employerName} logo`}

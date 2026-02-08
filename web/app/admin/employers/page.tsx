@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, isGrantValid, updateEmployerCarouselFeature, clearPendingEmployerApprovalFlag } from "@/lib/firestore";
+import { listEmployers, updateEmployerStatus, grantEmployerFreePosting, revokeEmployerFreePosting, getGrantConfig, getGrantRemainingCredits, updateEmployerCarouselFeature, clearPendingEmployerApprovalFlag } from "@/lib/firestore";
+import type { Timestamp } from "firebase/firestore";
 import { EmployerProfile, EmployerStatus, GrantType, FreePostingGrant } from "@/lib/types";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -22,14 +23,10 @@ import {
   ClockIcon,
   BuildingOfficeIcon,
   GiftIcon,
-  EyeIcon,
   PlayCircleIcon,
   VideoCameraIcon,
   XMarkIcon,
-  PencilSquareIcon,
-  CurrencyDollarIcon,
   SparklesIcon,
-  KeyIcon,
   DocumentIcon,
 } from "@heroicons/react/24/outline";
 
@@ -73,7 +70,12 @@ export default function AdminEmployersPage() {
     jobs: Array<{ id: string; title: string; employerId: string; reason: string }>;
   } | null>(null);
 
-  const fetchEmployers = async () => {
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    setToastMessage({ type, message });
+    setTimeout(() => setToastMessage(null), 4000);
+  }, []);
+
+  const fetchEmployers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await listEmployers();
@@ -84,16 +86,11 @@ export default function AdminEmployersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchEmployers();
-  }, []);
-
-  const showToast = (type: "success" | "error", message: string) => {
-    setToastMessage({ type, message });
-    setTimeout(() => setToastMessage(null), 4000);
-  };
+  }, [fetchEmployers]);
 
   const handleApprove = async (employerId: string, employerName: string, employerEmail?: string) => {
     if (!user) return;
@@ -139,7 +136,7 @@ export default function AdminEmployersPage() {
     }
   };
 
-  const handleReject = async (employerId: string, employerName: string) => {
+  const handleReject = async (employerId: string, _employerName: string) => {
     setRejectModalId(employerId);
   };
 
@@ -373,7 +370,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
   };
 
   const handleToggleCarouselFeature = async (employer: EmployerProfile) => {
-    const currentlyFeatured = (employer as any).featuredOnCarousel;
+    const currentlyFeatured = (employer as EmployerProfile & { featuredOnCarousel?: boolean }).featuredOnCarousel;
     const newValue = !currentlyFeatured;
 
     setProcessingId(employer.id);
@@ -457,7 +454,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
     if (grant.expiresAt) {
       const expiresDate = grant.expiresAt instanceof Date
         ? grant.expiresAt
-        : (grant.expiresAt as any).toDate?.() || new Date(grant.expiresAt as unknown as string);
+        : (grant.expiresAt as Timestamp).toDate?.() || new Date(grant.expiresAt as unknown as string);
       lines.push(`Expires: ${expiresDate.toLocaleDateString()}`);
     }
 
@@ -527,7 +524,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
     return { total, incomplete, pending, approved, rejected };
   }, [allEmployers]);
 
-  const formatDate = (timestamp: any) => {
+  const formatDate = (timestamp: Timestamp | null | undefined) => {
     if (!timestamp) return "Unknown";
     try {
       return timestamp.toDate().toLocaleDateString("en-US", {
@@ -807,6 +804,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                     {/* Left: Logo and Info */}
                     <div className="flex gap-4">
                       {employer.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={employer.logoUrl}
                           alt={`${employer.organizationName} logo`}
@@ -836,7 +834,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                               {getGrantLabel(employer.freePostingGrant)}
                             </span>
                           )}
-                          {(employer as any).featuredOnCarousel && (
+                          {(employer as EmployerProfile & { featuredOnCarousel?: boolean }).featuredOnCarousel && (
                             <span className="inline-flex items-center rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-0.5 text-xs font-medium text-purple-400" title="Featured on homepage Partner Carousel">
                               <SparklesIcon className="mr-1 h-3 w-3" />
                               Carousel
@@ -996,7 +994,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                             if (employer.logoUrl) {
                               statusItems.push({
                                 id: `carousel-${employer.id}`,
-                                label: (employer as any).featuredOnCarousel ? "Remove from Carousel" : "Feature on Carousel",
+                                label: (employer as EmployerProfile & { featuredOnCarousel?: boolean }).featuredOnCarousel ? "Remove from Carousel" : "Feature on Carousel",
                                 onClick: () => handleToggleCarouselFeature(employer),
                                 disabled: !!processingId,
                               });
@@ -1313,6 +1311,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
               <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-[var(--card-border)] bg-surface p-6">
                 <div className="flex gap-4">
                   {employer.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={employer.logoUrl}
                       alt={`${employer.organizationName} logo`}

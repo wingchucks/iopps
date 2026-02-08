@@ -69,9 +69,9 @@ const CATEGORIES: { value: NewsCategory; label: string }[] = [
 // Helper
 // ============================================================================
 
-function formatDate(ts: any): string {
+function formatDate(ts: Timestamp | Date | string | null | undefined): string {
   if (!ts) return "—";
-  const d = ts?.toDate ? ts.toDate() : new Date(ts);
+  const d = ts instanceof Timestamp ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString("en-CA", {
     year: "numeric",
     month: "short",
@@ -376,6 +376,7 @@ export default function AdminNewsPage() {
       };
 
       if (editingId) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { createdBy, ...updateData } = articleData;
         await updateNewsArticle(editingId, updateData);
         toast.success("Article updated");
