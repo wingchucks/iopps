@@ -53,7 +53,7 @@ export function FeedLayout({
   showFab = true,
   fullWidth = false,
 }: FeedLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, role } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const { openDrawer: openMessageDrawer, unreadCount: messageUnreadCount } = useMessageDrawer();
@@ -511,14 +511,14 @@ export function FeedLayout({
       </div>
 
       {/* ============================================================ */}
-      {/*  Floating Action Button (desktop)                             */}
+      {/*  Floating Action Button — employer/admin only                 */}
       {/* ============================================================ */}
-      {showFab && (
+      {showFab && isLoggedIn && (role === "employer" || role === "admin") && (
         <Link
-          href={isLoggedIn ? "/organization/jobs/new" : "/login"}
+          href="/organization/jobs/new"
           className="feed-fab"
-          title={isLoggedIn ? "Post a job" : "Sign in to post"}
-          aria-label={isLoggedIn ? "Post a job" : "Sign in to post"}
+          title="Post a job"
+          aria-label="Post a job"
         >
           <Icon name="plus" size={24} color="#fff" />
         </Link>
@@ -536,19 +536,19 @@ export function FeedLayout({
           const isCreatePost = item.action === "create-post";
 
           if (isCreatePost) {
+            // Only show job-posting action for employers/admins;
+            // community members go to the social feed to create posts
+            const createDest = !isLoggedIn
+              ? "/login"
+              : role === "employer" || role === "admin"
+                ? "/organization/jobs/new"
+                : "/discover";
             return (
               <button
                 key={item.label}
                 className="feed-bottom-nav-item feed-bottom-nav-create"
                 aria-label={item.label}
-                onClick={() => {
-                  // Placeholder: navigate to a create page or open a modal
-                  if (isLoggedIn) {
-                    router.push("/organization/jobs/new");
-                  } else {
-                    router.push("/login");
-                  }
-                }}
+                onClick={() => router.push(createDest)}
               >
                 <Icon
                   name={item.icon}
