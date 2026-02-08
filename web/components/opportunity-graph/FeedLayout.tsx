@@ -13,14 +13,14 @@ import { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
-import NotificationBell from "@/components/NotificationBell";
+import { useMessageDrawer } from "@/components/messaging";
+import { useNotifications, NotificationDropdown, UnreadBadge as NotificationUnreadBadge } from "@/components/notifications";
 import { colors } from "./tokens";
 import { Icon } from "./Icon";
 import { Avatar } from "./Avatar";
 import {
   NAV_ITEMS,
   BOTTOM_NAV,
-  ICON_NAV_ITEMS,
   AVATAR_MENU_ITEMS,
   QUICK_LINKS,
   FOOTER_LINKS,
@@ -56,10 +56,14 @@ export function FeedLayout({
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const { openDrawer: openMessageDrawer, unreadCount: messageUnreadCount } = useMessageDrawer();
+  const { isOpen: notificationsOpen, toggleDropdown: toggleNotifications, closeDropdown: closeNotifications } = useNotifications();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const notificationBellRef = useRef<HTMLButtonElement>(null);
 
   const avatarMenuRef = useRef<HTMLDivElement>(null);
 
@@ -115,12 +119,13 @@ export function FeedLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ---- Close avatar menu on route change ---- */
+  /* ---- Close menus on route change ---- */
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- sync UI state with route change
     setAvatarMenuOpen(false);
     setMobileMenuOpen(false);
-  }, [pathname]);
+    closeNotifications();
+  }, [pathname, closeNotifications]);
 
   /* ---- Keyboard support for avatar dropdown ---- */
   const handleAvatarKeyDown = useCallback(
@@ -206,22 +211,48 @@ export function FeedLayout({
 
           {/* Right-side actions */}
           <div className="feed-actions">
-            {/* Desktop icon nav items (messages) */}
-            {isLoggedIn &&
-              ICON_NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="feed-icon-btn"
-                  aria-label={item.label}
-                  title={item.label}
-                >
-                  <Icon name={item.icon} size={20} color={colors.textSoft} />
-                </Link>
-              ))}
+            {/* Desktop messages button */}
+            {isLoggedIn && (
+              <button
+                type="button"
+                className="feed-icon-btn"
+                aria-label="Messages"
+                title="Messages"
+                onClick={openMessageDrawer}
+                style={{ position: "relative" }}
+              >
+                <Icon name="mail" size={20} color={colors.textSoft} />
+                {messageUnreadCount > 0 && (
+                  <span className="feed-unread-badge">
+                    {messageUnreadCount > 9 ? "9+" : messageUnreadCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* Notification bell */}
-            {isLoggedIn && <NotificationBell />}
+            {isLoggedIn && (
+              <div style={{ position: "relative" }}>
+                <button
+                  ref={notificationBellRef}
+                  type="button"
+                  className="feed-icon-btn"
+                  aria-label="Notifications"
+                  title="Notifications"
+                  aria-expanded={notificationsOpen}
+                  aria-haspopup="true"
+                  data-notification-bell
+                  onClick={toggleNotifications}
+                >
+                  <Icon name="bell" size={20} color={colors.textSoft} />
+                  <NotificationUnreadBadge />
+                </button>
+                <NotificationDropdown
+                  isOpen={notificationsOpen}
+                  onClose={closeNotifications}
+                />
+              </div>
+            )}
 
             {/* Mobile search icon */}
             <Link
@@ -525,6 +556,37 @@ export function FeedLayout({
                   color={colors.accent}
                 />
                 <span>{item.label}</span>
+              </button>
+            );
+          }
+
+          // Messages bottom nav: open drawer instead of navigating
+          if (item.label === "Messages") {
+            return (
+              <button
+                key={item.label}
+                className="feed-bottom-nav-item"
+                aria-label={item.label}
+                onClick={() => {
+                  if (isLoggedIn) {
+                    openMessageDrawer();
+                  } else {
+                    router.push("/login");
+                  }
+                }}
+                style={{ position: "relative" }}
+              >
+                <Icon
+                  name={item.icon}
+                  size={22}
+                  color={colors.textSoft}
+                />
+                <span>{item.label}</span>
+                {isLoggedIn && messageUnreadCount > 0 && (
+                  <span className="feed-bottom-nav-badge">
+                    {messageUnreadCount > 9 ? "9+" : messageUnreadCount}
+                  </span>
+                )}
               </button>
             );
           }
@@ -1203,6 +1265,46 @@ const feedLayoutStyles = `
   }
   @media (min-width: 768px) {
     .feed-fab { bottom: 30px; right: 30px; }
+  }
+
+  /* ---- Unread Badge (desktop icon buttons) ---- */
+  .feed-unread-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  /* ---- Unread Badge (mobile bottom nav) ---- */
+  .feed-bottom-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
   }
 
   /* ---- Pulse Animation ---- */

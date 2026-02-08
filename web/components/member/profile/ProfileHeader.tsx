@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { useMessageDrawer } from "@/components/messaging";
 import { ConnectionButton } from "@/components/social/ConnectionButton";
 import { ImageUploader, InlineEditField, SettingsDrawer } from "@/components/shared/inline-edit";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,6 +45,7 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   const { user, role } = useAuth();
   const router = useRouter();
+  const { openConversation } = useMessageDrawer();
   const [startingChat, setStartingChat] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -179,7 +181,7 @@ export default function ProfileHeader({
     }
   };
 
-  // Start conversation
+  // Start conversation — opens the message drawer instead of navigating
   const handleStartConversation = async () => {
     if (!user) {
       toast.error("Please sign in to send messages");
@@ -200,9 +202,7 @@ export default function ProfileHeader({
         user2Name: profile.displayName,
         user2Avatar: profile.avatarUrl || profile.photoURL,
       });
-      router.push(
-        `/member/messages?id=${conversation.id}`
-      );
+      openConversation(conversation.id);
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast.error("Failed to start conversation. Please try again.");

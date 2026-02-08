@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";
 import { generateOrganizationSchema, generateWebsiteSchema } from "@/lib/seo";
 import MainLayout from "@/components/MainLayout";
+import Providers from "@/components/Providers";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 import { Toaster } from "react-hot-toast";
 
@@ -152,13 +153,15 @@ export default function RootLayout({
           Skip to main content
         </a>
         <AuthProvider>
-          {!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && (
-            <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-medium text-amber-500">
-              <span className="mr-2">⚠️</span>
-              <strong>Demo Mode:</strong> Running with mock data because Firebase is not configured.
-            </div>
-          )}
-          <MainLayout>{children}</MainLayout>
+          <Providers>
+            {!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && (
+              <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-medium text-amber-500">
+                <span className="mr-2">⚠️</span>
+                <strong>Demo Mode:</strong> Running with mock data because Firebase is not configured.
+              </div>
+            )}
+            <MainLayout>{children}</MainLayout>
+          </Providers>
         </AuthProvider>
         <Toaster position="bottom-right" toastOptions={{
           style: {
