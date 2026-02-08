@@ -29,9 +29,10 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'auth/invalid-action-code': 'This reset link is invalid. Please request a new one.',
 
   // Google sign-in errors
-  'auth/popup-closed-by-user': 'Sign-in cancelled. Please try again when ready.',
-  'auth/popup-blocked': 'Pop-up blocked. Please allow pop-ups for this site and try again.',
+  'auth/popup-closed-by-user': 'Redirecting to Google sign-in...',
+  'auth/popup-blocked': 'Redirecting to Google sign-in...',
   'auth/cancelled-popup-request': 'Sign-in cancelled. Please try again.',
+  'auth/unauthorized-domain': 'This domain is not authorized for sign-in. Please contact support.',
   'auth/account-exists-with-different-credential': 'An account already exists with this email using a different sign-in method.',
 
   // Session errors

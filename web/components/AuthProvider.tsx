@@ -4,6 +4,8 @@ import {
   onAuthStateChanged,
   signOut,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   User as FirebaseUser,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
@@ -12,6 +14,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   ReactNode,
 } from "react";
 import { auth, db, googleProvider } from "@/lib/firebase";
@@ -33,6 +36,7 @@ type AuthContextValue = {
   user: FirebaseUser | null;
   role: UserRole | null;
   loading: boolean;
+  redirectLoading: boolean;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<{ isNewUser: boolean }>;
 };
@@ -43,6 +47,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirectLoading, setRedirectLoading] = useState(false);
+  const redirectHandled = useRef(false);
+
+  /* ---- Handle redirect result on mount (for signInWithRedirect flow) ---- */
+  useEffect(() => {
+    if (!auth || redirectHandled.current) return;
+    redirectHandled.current = true;
+
+    // Check if we're returning from a redirect sign-in
+    const pending = sessionStorage.getItem("iopps_google_redirect");
+    if (pending) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: show loading during redirect return
+      setRedirectLoading(true);
+      getRedirectResult(auth)
+        .then(async (result) => {
+          if (result?.user) {
+            sessionStorage.removeItem("iopps_google_redirect");
+            // Firestore user doc creation is handled in ensureUserDoc
+            await ensureUserDoc(result.user);
+          }
+        })
+        .catch((err) => {
+          console.error("Redirect sign-in error:", err);
+        })
+        .finally(() => {
+          sessionStorage.removeItem("iopps_google_redirect");
+          setRedirectLoading(false);
+        });
+    }
+  }, []);
 
   useEffect(() => {
     if (!auth) {
@@ -107,44 +141,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOut(auth);
   };
 
-  const signInWithGoogle = async (): Promise<{ isNewUser: boolean }> => {
-    if (!auth || !db) {
-      throw new Error("Authentication is not available in offline mode");
-    }
-
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-
+  /** Create or update user doc in Firestore after Google sign-in */
+  const ensureUserDoc = async (fbUser: FirebaseUser): Promise<{ isNewUser: boolean }> => {
     // Super admin - skip Firestore operations to avoid permission errors
-    if (isSuperAdmin(user.email)) {
+    if (isSuperAdmin(fbUser.email)) {
       return { isNewUser: false };
     }
 
+    if (!db) return { isNewUser: false };
+
     try {
-      // Check if user document exists
-      const userRef = doc(db, "users", user.uid);
+      const userRef = doc(db, "users", fbUser.uid);
       const userSnap = await getDoc(userRef);
       const isNewUser = !userSnap.exists();
 
       if (isNewUser) {
-        // Create new user document with default role
         await setDoc(userRef, {
-          id: user.uid,
-          email: user.email,
-          displayName: user.displayName || "",
-          photoURL: user.photoURL || "",
-          role: "community", // Default role for new Google sign-ins
+          id: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName || "",
+          photoURL: fbUser.photoURL || "",
+          role: "community",
           createdAt: serverTimestamp(),
         });
       } else {
-        // Update existing user with latest profile info
         const existingData = userSnap.data();
         await setDoc(
           userRef,
           {
-            email: user.email,
-            displayName: user.displayName || existingData.displayName || "",
-            photoURL: user.photoURL || existingData.photoURL || "",
+            email: fbUser.email,
+            displayName: fbUser.displayName || existingData.displayName || "",
+            photoURL: fbUser.photoURL || existingData.photoURL || "",
           },
           { merge: true }
         );
@@ -153,13 +180,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { isNewUser };
     } catch (error) {
       console.error("Error during sign-in Firestore operations:", error);
-      // Return false for isNewUser on error - user is still authenticated
       return { isNewUser: false };
     }
   };
 
+  const signInWithGoogle = async (): Promise<{ isNewUser: boolean }> => {
+    if (!auth || !db) {
+      throw new Error("Authentication is not available in offline mode");
+    }
+
+    try {
+      // Try popup first (best UX — no page navigation)
+      const result = await signInWithPopup(auth, googleProvider);
+      return await ensureUserDoc(result.user);
+    } catch (popupError) {
+      const errorCode = (popupError as { code?: string })?.code;
+
+      // If popup failed due to browser blocking (third-party cookies, popup blocker),
+      // fall back to redirect flow which is more reliable
+      if (
+        errorCode === "auth/popup-closed-by-user" ||
+        errorCode === "auth/popup-blocked" ||
+        errorCode === "auth/cancelled-popup-request"
+      ) {
+        // Mark that we're starting a redirect so we can handle the result on return
+        sessionStorage.setItem("iopps_google_redirect", "1");
+        await signInWithRedirect(auth, googleProvider);
+        // Page will navigate away — this promise won't resolve
+        return { isNewUser: false };
+      }
+
+      // Re-throw other errors (invalid-credential, network, etc.)
+      throw popupError;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, role, loading, logout, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, role, loading, redirectLoading, logout, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

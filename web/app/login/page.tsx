@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -39,12 +39,21 @@ async function getRedirectPath(userId: string): Promise<string> {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, redirectLoading, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // When returning from a Google redirect sign-in, auto-navigate once auth resolves
+  useEffect(() => {
+    if (!redirectLoading && user) {
+      getRedirectPath(user.uid).then((path) => {
+        router.push(path);
+      });
+    }
+  }, [redirectLoading, user, router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -75,7 +84,7 @@ export default function LoginPage() {
 
     try {
       await signInWithGoogle();
-      // For Google sign-in, check role after auth completes
+      // If popup succeeded (didn't fall back to redirect), navigate now
       if (auth?.currentUser) {
         const redirectPath = await getRedirectPath(auth.currentUser.uid);
         router.push(redirectPath);
@@ -89,6 +98,21 @@ export default function LoginPage() {
       setGoogleLoading(false);
     }
   };
+
+  // Show loading state when returning from Google redirect
+  if (redirectLoading) {
+    return (
+      <AuthLayout title="Sign In" subtitle="Welcome back">
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <svg className="animate-spin h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p className="text-sm text-foreground0">Completing Google sign-in...</p>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout title="Sign In" subtitle="Welcome back">

@@ -710,35 +710,35 @@ const feedLayoutStyles = `
     gap: 8px;
   }
   @media (min-width: 768px) {
-    .feed-header-inner { padding: 0 24px; height: 60px; gap: 12px; }
+    .feed-header-inner { padding: 0 20px; height: 56px; gap: 16px; }
+  }
+  @media (min-width: 1024px) {
+    .feed-header-inner { padding: 0 24px; gap: 20px; }
   }
 
   /* ---- Logo ---- */
   .feed-logo {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 6px;
     text-decoration: none;
     flex-shrink: 0;
   }
   .feed-logo-text {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 900;
     color: ${colors.accent};
     letter-spacing: -0.5px;
-  }
-  @media (min-width: 768px) {
-    .feed-logo-text { font-size: 22px; }
   }
 
   /* ---- Desktop Search Bar ---- */
   .feed-search {
     display: none;
-    flex: 0 1 320px;
+    flex: 0 1 240px;
     align-items: center;
     gap: 8px;
-    padding: 7px 14px;
-    border-radius: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
     background: ${colors.bg};
     border: 1px solid ${colors.border};
   }
@@ -751,7 +751,7 @@ const feedLayoutStyles = `
     border: none;
     outline: none;
     background: transparent;
-    font-size: 14px;
+    font-size: 13px;
     color: ${colors.text};
     font-family: inherit;
   }
@@ -761,13 +761,18 @@ const feedLayoutStyles = `
   @media (min-width: 768px) {
     .feed-search { display: flex; }
   }
+  @media (min-width: 1200px) {
+    .feed-search { flex: 0 1 280px; }
+  }
 
   /* ---- Desktop Top Nav (center) ---- */
   .feed-topnav {
     display: none;
-    align-items: center;
-    gap: 2px;
-    margin: 0 auto;
+    align-items: stretch;
+    gap: 0;
+    flex: 1;
+    justify-content: center;
+    height: 100%;
   }
   @media (min-width: 1024px) {
     .feed-topnav { display: flex; }
@@ -776,15 +781,16 @@ const feedLayoutStyles = `
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
-    padding: 6px 16px;
+    padding: 0 14px;
     text-decoration: none;
     border-bottom: 2px solid transparent;
     transition: border-color 0.15s, color 0.15s;
-    min-width: 64px;
+    position: relative;
   }
   .feed-topnav-item:hover {
-    border-bottom-color: ${colors.border};
+    background: ${colors.bg};
   }
   .feed-topnav-item.active {
     border-bottom-color: ${colors.accent};
@@ -804,12 +810,11 @@ const feedLayoutStyles = `
   .feed-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     flex-shrink: 0;
-    margin-left: auto;
   }
   @media (min-width: 768px) {
-    .feed-actions { gap: 8px; }
+    .feed-actions { gap: 4px; }
   }
 
   /* Icon button (messages etc.) */
@@ -817,11 +822,14 @@ const feedLayoutStyles = `
     display: none;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     text-decoration: none;
     transition: background 0.15s;
+    background: none;
+    border: none;
+    cursor: pointer;
   }
   .feed-icon-btn:hover {
     background: ${colors.bg};
@@ -851,7 +859,7 @@ const feedLayoutStyles = `
   /* Sign-in button (when not logged in, desktop only) */
   .feed-signin-btn {
     display: none;
-    padding: 6px 16px;
+    padding: 6px 18px;
     border-radius: 20px;
     background: ${colors.accent};
     color: #fff;
@@ -865,7 +873,7 @@ const feedLayoutStyles = `
     background: ${colors.accentDk};
   }
   @media (min-width: 768px) {
-    .feed-signin-btn { display: block; }
+    .feed-signin-btn { display: inline-block; }
   }
 
   /* ---- Avatar Dropdown ---- */
@@ -874,20 +882,20 @@ const feedLayoutStyles = `
     display: none;
   }
   @media (min-width: 768px) {
-    .feed-avatar-wrapper { display: block; }
+    .feed-avatar-wrapper { display: flex; align-items: center; }
   }
   .feed-avatar-btn {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 0;
+    padding: 4px;
     background: none;
     border: none;
     cursor: pointer;
     border-radius: 24px;
-    transition: opacity 0.15s;
+    transition: background 0.15s;
   }
-  .feed-avatar-btn:hover { opacity: 0.85; }
+  .feed-avatar-btn:hover { background: ${colors.bg}; }
   .feed-avatar-chevron {
     transition: transform 0.15s;
   }
