@@ -71,7 +71,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "jobs", icon: "briefcase", label: "Jobs", href: "/careers" },
   { id: "education", icon: "academic", label: "Education", href: "/education" },
   { id: "events", icon: "calendar", label: "Events", href: "/community" },
-  { id: "business", icon: "building", label: "Business", href: "/business/directory" },
+  { id: "business", icon: "building", label: "Business", href: "/business" },
 ];
 
 /* ------------------------------------------------------------------ */
