@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin";
-import Stripe from "stripe";
-import { TRAINING_PRODUCTS } from "@/lib/stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-11-17.clover",
-});
+import { stripe, TRAINING_PRODUCTS } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
   try {
