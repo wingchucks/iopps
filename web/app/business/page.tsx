@@ -6,6 +6,7 @@
 
 "use client";
 
+import { useAuth } from "@/components/AuthProvider";
 import { FeedLayout, OpportunityFeed } from "@/components/opportunity-graph/dynamic";
 import {
   SectionHeader,
@@ -26,6 +27,15 @@ const CATEGORIES = [
 ];
 
 function BusinessRightSidebar() {
+  const { user, role } = useAuth();
+
+  const ctaHref =
+    !user
+      ? "/login"
+      : role === "employer" || role === "admin"
+        ? "/organization/shop/setup"
+        : "/register?role=employer";
+
   return (
     <>
       <SidebarLinkCard
@@ -36,7 +46,7 @@ function BusinessRightSidebar() {
         title="Own an Indigenous Business?"
         description="List your business for FREE and connect with customers across Canada."
         buttonLabel="List Your Business"
-        buttonHref="/organization/shop/setup"
+        buttonHref={ctaHref}
         gradient={`linear-gradient(135deg, ${colors.orange} 0%, ${colors.pink} 100%)`}
         buttonTextColor={colors.orange}
       />
