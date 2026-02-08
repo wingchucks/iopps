@@ -40,7 +40,7 @@ export function JobPreviewModal({ isOpen, onClose, jobData }: JobPreviewModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4 pt-10">
-      <div className="w-full max-w-3xl rounded-2xl border border-[var(--card-border)] bg-surface shadow-xl mb-10">
+      <div className="w-full max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-surface shadow-xl mb-10">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--card-border)] px-6 py-4">
           <div>

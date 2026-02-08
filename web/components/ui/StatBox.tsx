@@ -12,6 +12,8 @@ interface StatBoxProps {
 export function StatBox({ icon, value, label, className }: StatBoxProps) {
   return (
     <div
+      role="region"
+      aria-label={label}
       className={cn(
         "flex flex-col items-center gap-1 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 text-center",
         className

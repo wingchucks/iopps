@@ -46,14 +46,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isMemberDashboard = pathname?.startsWith("/member/") || pathname === "/member";
 
   if (isAdminRoute) {
-    return <>{children}</>;
+    return <main id="main-content">{children}</main>;
   }
 
   // These routes have their own complete layouts (FeedLayout or dashboard)
   if (isFeedRoute || isOrgDashboard || isMemberDashboard) {
     return (
       <>
-        {children}
+        <main id="main-content">{children}</main>
         <BackToTop />
       </>
     );
@@ -63,7 +63,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <div style={{ minHeight: "100vh", paddingBottom: "70px" }}>
       <AppHeader />
-      <main>{children}</main>
+      <main id="main-content">{children}</main>
       <BackToTop />
     </div>
   );

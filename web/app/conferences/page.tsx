@@ -4,8 +4,6 @@
  * Conferences & summits through the unified feed layout.
  */
 
-"use client";
-
 import Link from "next/link";
 import {
   FeedLayout,

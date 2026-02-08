@@ -5,8 +5,6 @@
  * using the shared FeedLayout for consistent navigation across the site.
  */
 
-"use client";
-
 import { FeedLayout, OpportunityFeed } from "@/components/opportunity-graph";
 
 export default function DiscoverPage() {

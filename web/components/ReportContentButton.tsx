@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { FlagIcon, XMarkIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import type { FlaggedContentType, FlagReason } from "@/lib/types";
 
@@ -38,6 +38,61 @@ export default function ReportContentButton({
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isOpen]);
+
+  // Focus trap inside modal
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (e.key !== "Tab" || !modalRef.current) return;
+
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    },
+    []
+  );
+
+  // Auto-focus modal when opened, return focus on close
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      firstFocusable?.focus();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,9 +167,11 @@ export default function ReportContentButton({
   return (
     <>
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(true)}
         className={`${buttonStyles[variant]} ${className}`}
         title="Report this content"
+        aria-label={variant === "icon" ? "Report this content" : undefined}
       >
         {buttonContent[variant]}
       </button>
@@ -123,9 +180,17 @@ export default function ReportContentButton({
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            setIsOpen(false);
+            triggerRef.current?.focus();
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Report content"
+          onKeyDown={handleKeyDown}
         >
           <div
+            ref={modalRef}
             className="w-full max-w-md rounded-2xl border border-[var(--card-border)] bg-surface p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -141,10 +206,14 @@ export default function ReportContentButton({
                 </div>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  triggerRef.current?.focus();
+                }}
+                aria-label="Close"
                 className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-surface hover:text-white"
               >
-                <XMarkIcon className="h-5 w-5" />
+                <XMarkIcon className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -240,7 +309,10 @@ export default function ReportContentButton({
                 <div className="flex gap-3 justify-end pt-2">
                   <button
                     type="button"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => {
+                      setIsOpen(false);
+                      triggerRef.current?.focus();
+                    }}
                     className="rounded-lg border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-surface transition-colors"
                   >
                     Cancel

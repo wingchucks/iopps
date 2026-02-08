@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export type JobAlertFrequency = "instant" | "daily" | "weekly";
+
+export async function handleJobAlertCron(
+  request: NextRequest,
+  frequency: JobAlertFrequency
+): Promise<NextResponse> {
+  // Verify cron secret from Vercel - REQUIRED in all environments
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    console.error("CRON_SECRET environment variable is not configured");
+    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Forward to main handler with the specified frequency
+  const baseUrl = request.nextUrl.origin;
+  const response = await fetch(`${baseUrl}/api/emails/send-job-alerts`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: authHeader || "",
+    },
+    body: JSON.stringify({ frequency }),
+  });
+
+  // Handle JSON parse errors gracefully
+  let data;
+  try {
+    const text = await response.text();
+    data = text ? JSON.parse(text) : { error: "Empty response" };
+  } catch (parseError) {
+    console.error("Failed to parse job alerts response:", parseError);
+    return NextResponse.json(
+      { error: "Failed to parse response from job alerts handler" },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json(data, { status: response.status });
+}

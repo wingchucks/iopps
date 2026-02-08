@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface EBtnProps {
   icon: React.ReactNode;
   label?: string;
+  "aria-label"?: string;
   count?: number;
   active?: boolean;
   onClick?: () => void;
@@ -14,6 +15,7 @@ interface EBtnProps {
 export function EBtn({
   icon,
   label,
+  "aria-label": ariaLabel,
   count,
   active = false,
   onClick,
@@ -22,6 +24,7 @@ export function EBtn({
   return (
     <button
       onClick={onClick}
+      aria-label={ariaLabel || label}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
         active

@@ -1,44 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { handleJobAlertCron } from "../shared";
 
-export const maxDuration = 300; // 5 minutes timeout for cron job
+export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret from Vercel - REQUIRED in all environments
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    console.error("CRON_SECRET environment variable is not configured");
-    return NextResponse.json({ error: "Server configuration error" }, { status: 503 });
-  }
-
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Forward to main handler with instant frequency
-  const baseUrl = request.nextUrl.origin;
-  const response = await fetch(`${baseUrl}/api/emails/send-job-alerts`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: authHeader || "",
-    },
-    body: JSON.stringify({ frequency: "instant" }),
-  });
-
-  // Handle JSON parse errors gracefully
-  let data;
-  try {
-    const text = await response.text();
-    data = text ? JSON.parse(text) : { error: "Empty response" };
-  } catch (parseError) {
-    console.error("Failed to parse job alerts response:", parseError);
-    return NextResponse.json(
-      { error: "Failed to parse response from job alerts handler" },
-      { status: 502 }
-    );
-  }
-
-  return NextResponse.json(data, { status: response.status });
+  return handleJobAlertCron(request, "instant");
 }

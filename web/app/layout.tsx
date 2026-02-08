@@ -145,6 +145,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-background text-foreground`}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-white focus:font-medium focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <AuthProvider>
           {!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && (
             <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-medium text-amber-500">

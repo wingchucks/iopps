@@ -4,8 +4,6 @@
  * Scholarships + Training programs displayed through the unified feed layout.
  */
 
-"use client";
-
 import {
   FeedLayout,
   OpportunityFeed,

@@ -497,8 +497,8 @@ export default function AdminNewsPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-surface">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[600px] text-sm">
               <thead>
                 <tr className="border-b border-[var(--card-border)] text-left">
                   <th className="px-4 py-3 font-medium text-[var(--text-muted)]">Title</th>
@@ -565,7 +565,7 @@ export default function AdminNewsPage() {
                         </button>
                         <button
                           onClick={() => startEdit(article)}
-                          className="rounded-md p-1.5 text-[var(--text-muted)] hover:bg-surface hover:text-white"
+                          className="rounded-md p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:bg-surface hover:text-white"
                           title="Edit"
                         >
                           <PencilSquareIcon className="h-4 w-4" />
@@ -584,7 +584,7 @@ export default function AdminNewsPage() {
                               },
                             })
                           }
-                          className="rounded-md p-1.5 text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
+                          className="rounded-md p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-400"
                           title="Delete"
                         >
                           <TrashIcon className="h-4 w-4" />

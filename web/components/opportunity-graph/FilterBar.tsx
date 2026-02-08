@@ -114,7 +114,7 @@ export function FilterSelect({ value, onChange, options, label }: FilterSelectPr
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      aria-label={label}
+      aria-label={label || "Filter"}
       style={{
         padding: "8px 12px",
         borderRadius: 8,

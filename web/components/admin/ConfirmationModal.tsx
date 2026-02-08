@@ -145,7 +145,7 @@ export function ConfirmationModal({
     >
       <div
         ref={modalRef}
-        className="w-full max-w-md rounded-xl border border-[var(--card-border)] bg-surface p-6 shadow-2xl"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-[var(--card-border)] bg-surface p-6 shadow-2xl"
       >
         {/* Header */}
         <div className="flex items-start gap-4">

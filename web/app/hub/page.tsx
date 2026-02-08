@@ -1,5 +1,3 @@
-"use client";
-
 import { FeedLayout, OpportunityFeed } from "@/components/opportunity-graph";
 
 export default function HubPage() {

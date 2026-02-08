@@ -37,10 +37,10 @@ export default function DashboardSidebar({
 
   // Load collapsed state from localStorage
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect -- hydration-safe pattern
     const stored = localStorage.getItem(`${COLLAPSE_STORAGE_PREFIX}${storageKey}`);
     if (stored !== null) {
-      setCollapsed(stored === "true");
+      setCollapsed(stored === "true"); // eslint-disable-line react-hooks/set-state-in-effect -- hydration-safe pattern
     }
   }, [storageKey]);
 
@@ -85,6 +85,7 @@ export default function DashboardSidebar({
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"

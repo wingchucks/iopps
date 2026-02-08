@@ -288,8 +288,8 @@ function AdminJobsContent() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[800px]">
               <thead>
                 <tr className="border-b border-[var(--card-border)] text-left text-sm text-[var(--text-muted)]">
                   <th className="px-6 py-4 font-medium">Job</th>
@@ -373,14 +373,14 @@ function AdminJobsContent() {
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/careers/${job.id}`}
-                            className="rounded-md p-2 text-[var(--text-muted)] transition hover:bg-slate-700 hover:text-white"
+                            className="rounded-md p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] transition hover:bg-slate-700 hover:text-white"
                             title="View public page"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/admin/jobs/${job.id}/edit`}
-                            className="rounded-md p-2 text-[var(--text-muted)] transition hover:bg-slate-700 hover:text-white"
+                            className="rounded-md p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] transition hover:bg-slate-700 hover:text-white"
                             title="Edit"
                           >
                             <PencilSquareIcon className="h-4 w-4" />
@@ -402,7 +402,7 @@ function AdminJobsContent() {
                           <button
                             onClick={() => deleteJob(job.id, job.title)}
                             disabled={isProcessing}
-                            className="rounded-md p-2 text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                            className="rounded-md p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                             title="Delete"
                           >
                             <TrashIcon className="h-4 w-4" />

@@ -131,7 +131,7 @@ export function AddToCalendarButton({
 // Calendar provider icons
 function GoogleCalendarIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8.25h15v11.25zM9 10.5H6.75v2.25H9V10.5zm4.125 0h-2.25v2.25h2.25V10.5zM17.25 10.5H15v2.25h2.25V10.5zM9 14.625H6.75v2.25H9v-2.25zm4.125 0h-2.25v2.25h2.25v-2.25zm4.125 0H15v2.25h2.25v-2.25z" />
     </svg>
   );
@@ -139,7 +139,7 @@ function GoogleCalendarIcon({ className }: { className?: string }) {
 
 function OutlookIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M21.75 5.25h-7.5v13.5h7.5c.413 0 .75-.337.75-.75V6c0-.413-.337-.75-.75-.75zM8.25 12c0-1.657 1.343-3 3-3s3 1.343 3 3-1.343 3-3 3-3-1.343-3-3zm3-1.5c-.825 0-1.5.675-1.5 1.5s.675 1.5 1.5 1.5 1.5-.675 1.5-1.5-.675-1.5-1.5-1.5zM2.25 6v12c0 .413.337.75.75.75h9.75V5.25H3c-.413 0-.75.337-.75.75z" />
     </svg>
   );
@@ -147,7 +147,7 @@ function OutlookIcon({ className }: { className?: string }) {
 
 function AppleCalendarIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" />
     </svg>
   );

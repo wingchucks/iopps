@@ -910,7 +910,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                       {/* View Profile Button */}
                       <button
                         onClick={() => setPreviewModalId(employer.id)}
-                        className="flex items-center justify-center gap-2 rounded-md border border-[var(--card-border)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-accent hover:text-accent"
+                        className="flex items-center justify-center gap-2 rounded-md border border-[var(--card-border)] px-4 py-2 min-h-[44px] text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-accent hover:text-accent"
                       >
                         View
                       </button>
@@ -1063,7 +1063,7 @@ const handleFixJobs = async (dryRun: boolean = true, employerId?: string) => {
                       {employer.description && employer.description.length > 100 && (
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : employer.id)}
-                          className="flex items-center justify-center gap-1 rounded-md border border-[var(--card-border)] px-3 py-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
+                          className="flex items-center justify-center gap-1 rounded-md border border-[var(--card-border)] px-3 py-2 min-w-[44px] min-h-[44px] text-sm font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--card-border)] hover:text-[var(--text-secondary)]"
                         >
                           {isExpanded ? (
                             <ChevronUpIcon className="h-4 w-4" />

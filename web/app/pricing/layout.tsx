@@ -13,7 +13,7 @@ export const metadata: Metadata = {
           type: "website",
     },
     twitter: {
-          card: "summary",
+          card: "summary_large_image",
           title: "Pricing & Plans | Partner with IOPPS",
           description:
                   "Flexible pricing for job postings, conferences, and Indigenous business listings.",

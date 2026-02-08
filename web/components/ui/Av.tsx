@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface AvProps {
@@ -40,8 +41,10 @@ function getInitials(name: string): string {
 }
 
 export function Av({ name, src, size = 40, ring = false, className }: AvProps) {
+  const [imgError, setImgError] = useState(false);
   const color = palette[hashName(name) % palette.length];
   const initials = getInitials(name);
+  const showImage = src && !imgError;
 
   return (
     <div
@@ -51,17 +54,19 @@ export function Av({ name, src, size = 40, ring = false, className }: AvProps) {
         ring && "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--background)]",
         className
       )}
-      style={src ? undefined : { backgroundColor: color }}
+      style={showImage ? undefined : { backgroundColor: color }}
       aria-label={name}
+      role="img"
     >
-      {src ? (
-        <img
+      {showImage ? (
+        <img // eslint-disable-line @next/next/no-img-element -- avatar with dynamic src
           src={src}
           alt={name}
           className="h-full w-full rounded-full object-cover"
+          onError={() => setImgError(true)}
         />
       ) : (
-        <span>{initials}</span>
+        <span aria-hidden="true">{initials}</span>
       )}
     </div>
   );
